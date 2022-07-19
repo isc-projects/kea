@@ -5,9 +5,9 @@
 {"Dhcp4":
 
 {
-// Kea is told to listen on the ethX interface only.
+// Kea is told to listen on the eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // Set up the storage for leases.
@@ -22,7 +22,7 @@
     {
       "pools": [ { "pool": "192.0.2.1 - 192.0.2.200" } ],
       "subnet": "192.0.2.0/24",
-      "interface": "ethX"
+      "interface": "eth0"
     }
   ],
 

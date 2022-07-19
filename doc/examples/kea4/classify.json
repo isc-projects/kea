@@ -3,9 +3,9 @@
 
 { "Dhcp4": {
 
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-      "interfaces": [ "ethX" ]
+      "interfaces": [ "eth0" ]
   },
 
 // Let's use the simplest backend: memfile and use some reasonable values
@@ -81,7 +81,7 @@
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
         "subnet": "192.0.2.0/24",
         "client-class": "VoIP",
-        "interface": "ethX"
+        "interface": "eth0"
     },
 
     // This one doesn't have any client-class specified, so everyone
@@ -97,7 +97,7 @@
             "hw-address": "1a:1b:1c:1d:1e:1f",
             "client-classes": [ "VoIP" ]
         } ],
-        "interface": "ethX"
+        "interface": "eth0"
     },
 
     // The following list defines a subnet with pools. For some pools
@@ -119,7 +119,7 @@
            } ],
 
         "subnet": "192.0.4.0/23",
-        "interface": "ethY"
+        "interface": "eth1"
     }
   ],
 

@@ -11,9 +11,9 @@
     // either "all" or "server1" will be used by this instance.
     "server-tag": "server1",
 
-    // Kea is told to listen on ethX interface only.
+    // Kea is told to listen on eth0 interface only.
     "interfaces-config": {
-        "interfaces": [ "ethX" ]
+        "interfaces": [ "eth0" ]
     },
 
     // Use memfile lease database backend.

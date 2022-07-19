@@ -4,9 +4,9 @@
 
 { "Dhcp4": {
 
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-      "interfaces": [ "ethX" ]
+      "interfaces": [ "eth0" ]
   },
 
 // Let's use the simplest backend: memfile and use some reasonable values
@@ -89,7 +89,7 @@
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
         "subnet": "192.0.2.0/24",
         "client-class": "VoIP",
-        "interface": "ethX"
+        "interface": "eth0"
     },
 // This one doesn't have any client-class specified, so everyone
 // is allowed in. The normal subnet selection rules still apply,
@@ -104,7 +104,7 @@
             "hw-address": "1a:1b:1c:1d:1e:1f",
             "client-classes": [ "VoIP" ]
         } ],
-        "interface": "ethX",
+        "interface": "eth0",
         "require-client-classes": [ "second_subnet" ]
     },
 
@@ -125,15 +125,15 @@
                "pool":  "192.0.5.1 - 192.0.5.200"
            } ],
            "subnet": "192.0.4.0/23",
-           "interface": "ethY"
+           "interface": "eth1"
         },
 // This subnet is divided in two pools for unknown and known
 // (i.e. which have a reservation) clients. The built-in KNOWN and
 // UNKNOWN classes are set or not at host reservation lookup (KNOWN if
 // this returns something, UNKNOWN if this finds nothing) and client
-//classes depending on it are evaluated.
+// classes depending on it are evaluated.
 // This happens after subnet selection and before address allocation
-//from pools.
+// from pools.
         {
            "pools": [
                 {

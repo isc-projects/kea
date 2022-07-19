@@ -1229,7 +1229,7 @@
       {
         "code": 114,
         "data": "https://default.example.org",
-        "name": "default-url"
+        "name": "v4-captive-portal"
       },
 
       // Option code 115 is unassigned.
@@ -1489,13 +1489,6 @@
         "code": 159,
         "data": "2, 3/4",
         "name": "v4-portparams"
-      },
-
-      // Type: string
-      {
-        "code": 160,
-        "data": "portal",
-        "name": "v4-captive-portal"
       },
 
       // Option codes 161-209 are unassigned.

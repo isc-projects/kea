@@ -201,7 +201,7 @@ ConstElementPtr
 ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr args) {
     if (!ControlledDhcpv6Srv::getInstance()) {
         LOG_WARN(dhcp6_logger, DHCP6_NOT_RUNNING);
-        return(createAnswer(CONTROL_RESULT_ERROR, "Shutdown failure."));
+        return (createAnswer(CONTROL_RESULT_ERROR, "Shutdown failure."));
     }
 
     int exit_value = 0;

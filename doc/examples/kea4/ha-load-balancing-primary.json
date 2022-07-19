@@ -14,7 +14,7 @@
     // Add names of your network interfaces to listen on.
     "interfaces-config": {
         // The DHCPv4 server listens on this interface.
-        "interfaces": [ "ethX" ]
+        "interfaces": [ "eth0" ]
     },
 
     // Control socket is required for communication between the Control

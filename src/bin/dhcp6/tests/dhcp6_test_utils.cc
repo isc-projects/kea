@@ -8,13 +8,13 @@
 #include <gtest/gtest.h>
 #include <cc/command_interpreter.h>
 #include <dhcp/option6_status_code.h>
+#include <dhcp/tests/pkt_captures.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
-#include <dhcp/tests/pkt_captures.h>
 #include <log/logger_support.h>
-#include <dhcpsrv/cfg_multi_threading.h>
-#include <util/pointer_util.h>
 #include <stats/stats_mgr.h>
+#include <util/pointer_util.h>
 #include <cstdio>
 #include <sstream>
 #include <string.h>
@@ -210,7 +210,6 @@ Dhcpv6SrvTest::checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
 
     return (lease);
 }
-
 
 Pkt6Ptr
 Dhcpv6SrvTest::createMessage(uint8_t message_type, Lease::Type lease_type,
@@ -812,12 +811,21 @@ Dhcpv6SrvTest::testReceiveStats(uint8_t pkt_type, const std::string& stat_name) 
 }
 
 void
-Dhcpv6SrvTest::configure(const std::string& config) {
-    configure(config, srv_);
+Dhcpv6SrvTest::configure(const std::string& config,
+                         const bool commit,
+                         const bool open_sockets,
+                         const bool create_managers,
+                         const bool test) {
+    configure(config, srv_, commit, open_sockets, create_managers, test);
 }
 
 void
-Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
+Dhcpv6SrvTest::configure(const std::string& config,
+                         NakedDhcpv6Srv& srv,
+                         const bool commit,
+                         const bool open_sockets,
+                         const bool create_managers,
+                         const bool test) {
     setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
     MultiThreadingCriticalSection cs;
     ConstElementPtr json;
@@ -825,7 +833,9 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
         json = parseJSON(config);
     } catch (const std::exception& ex) {
         // Fatal failure on parsing error
-        FAIL() << "config parsing failed, test is broken: " << ex.what();
+        FAIL() << "parsing failure:"
+               << "config:" << config << std::endl
+               << "error: " << ex.what();
     }
 
     ConstElementPtr status;
@@ -837,12 +847,21 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     configureMultiThreading(multi_threading_, json);
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json, test));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode) << "configuration failed, test is broken: "
         << comment->str();
+
+    // Use specified lease database backend.
+    if (create_managers) {
+        ASSERT_NO_THROW( {
+            CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+            cfg_db->setAppendedParameters("universe=6");
+            cfg_db->createManagers();
+        } );
+    }
 
     try {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
@@ -851,7 +870,14 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
             << ex.what();
     }
 
-    CfgMgr::instance().commit();
+    if (commit) {
+        CfgMgr::instance().commit();
+    }
+
+    // Opening sockets.
+    if (open_sockets) {
+        IfaceMgr::instance().openSockets6();
+    }
 }
 
 NakedDhcpv6SrvTest::NakedDhcpv6SrvTest()

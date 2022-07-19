@@ -198,7 +198,7 @@ ConstElementPtr
 ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr args) {
     if (!ControlledDhcpv4Srv::getInstance()) {
         LOG_WARN(dhcp4_logger, DHCP4_NOT_RUNNING);
-        return(createAnswer(CONTROL_RESULT_ERROR, "Shutdown failure."));
+        return (createAnswer(CONTROL_RESULT_ERROR, "Shutdown failure."));
     }
 
     int exit_value = 0;

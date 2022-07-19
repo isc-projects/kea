@@ -8,9 +8,9 @@
 // initial proposal was not best and way to migrate to something else.
 {
     "Dhcp6": {
-        // Kea is told to listen on ethX interface only.
+        // Kea is told to listen on eth0 interface only.
         "interfaces-config": {
-            "interfaces": [ "ethX" ]
+            "interfaces": [ "eth0" ]
         },
 
         // You also need to tell where to store lease information.
@@ -29,7 +29,7 @@
             {
                 "pools": [ { "pool": "2001:db8:2::/80" } ],
                 "subnet": "2001:db8:2::/64",
-                "interface": "ethX"
+                "interface": "eth0"
             }
         ],
 
@@ -114,7 +114,7 @@
                     // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
                     "subnet": "2001:db8:1::/64",
-                    "pools": [ { "pool": "2001:db8:1:abcd::/64" } ],
+                    "pools": [ { "pool": "2001:db8:1:0:abcd::/80" } ],
                     "valid-lifetime": 40
                 },
 

@@ -11,7 +11,7 @@
         // As with any other configuration, you need to tell Kea the interface
         // names, so it would listen to incoming traffic.
         "interfaces-config": {
-            "interfaces": [ "ethX" ]
+            "interfaces": [ "eth0" ]
         },
 
         // You also need to tell where to store lease information.

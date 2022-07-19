@@ -764,7 +764,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_MAX_ROW_ERRORS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("max_row_errors", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("max-row-errors", driver.loc_);
     }
 }
 

@@ -5,9 +5,9 @@
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // Let's use a Memfile backend to store leases.
@@ -32,7 +32,7 @@
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
-      "interface": "ethX",
+      "interface": "eth0",
 // Include MAP-E Container option for hosts connected to this subnet.
       "option-data": [
         {

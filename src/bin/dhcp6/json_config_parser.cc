@@ -664,8 +664,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         if (hosts_databases) {
             parameter_name = "hosts-databases";
             CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-            db::DbAccessParser parser;
             for (auto it : hosts_databases->listValue()) {
+                db::DbAccessParser parser;
                 std::string access_string;
                 parser.parse(access_string, it);
                 cfg_db_access->setHostDbAccessString(access_string);

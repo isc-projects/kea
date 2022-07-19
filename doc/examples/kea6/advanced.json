@@ -2,7 +2,7 @@
 // It attempts to showcase some of the more advanced features.
 // Topology wise, it's a basic scenario with one IPv6 subnet configured.
 // It is assumed that one subnet (2001:db8:1::/64) is available directly
-// over ethX interface.
+// over eth0 interface.
 //
 // The following features are currently showcased here:
 // 1. Configuration of MAC/hardware address sources in DHCPv6
@@ -14,9 +14,9 @@
 { "Dhcp6":
 
 {
-    // Kea is told to listen on ethX network interface only.
+    // Kea is told to listen on eth0 network interface only.
     "interfaces-config": {
-        "interfaces": [ "ethX" ],
+        "interfaces": [ "eth0" ],
 
         // This makes interfaces to be re-detected at each (re-)configuration.
         // By default it is true.
@@ -132,8 +132,8 @@
             "prefix": "2001:db8:abcd::",
             "prefix-len": 48,
             "delegated-len": 64,
-            "excluded-prefix": "2001:db8:abcd:1234::",
-            "excluded-prefix-len": 72,
+            "excluded-prefix": "2001:db8:abcd:0:1234::",
+            "excluded-prefix-len": 80,
 
             // Another user-context for this PD pool. Again, you can put
             // anything you want in there as long as it's valid JSON and
@@ -145,7 +145,7 @@
         ], // end of pools
 
         "subnet": "2001:db8:1::/64",
-        "interface": "ethX",
+        "interface": "eth0",
 
         // Sometimes the relay may use an odd IPv6 address that's not matching
         // the subnet. This is discouraged, but there are valid cases when it

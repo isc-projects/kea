@@ -4,9 +4,9 @@
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // Let's use the simplest backend: memfile and use some reasonable values
@@ -70,7 +70,7 @@
         "pools": [ { "pool": "2001:db8:1::/80" } ],
         "subnet": "2001:db8:1::/64",
         "client-class": "cable-modems",
-        "interface": "ethX"
+        "interface": "eth0"
     },
 // The following subnet contains a class reservation for a client using
 // DUID 01:02:03:04:05:0A:0B:0C:0D:0E. This client will always be assigned
@@ -83,7 +83,7 @@
             "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
             "client-classes": [ "cable-modems" ]
         } ],
-        "interface": "ethX",
+        "interface": "eth0",
         "require-client-classes": [ "second_subnet" ]
     },
 // The following subnet contains a pool with a class constraint: only
@@ -91,19 +91,19 @@
     {
         "pools": [
            {
-               "pool": "2001:db8:3::/80",
+               "pool": "2001:db8:4::/80",
                "client-class": "cable-modems"
            } ],
          "subnet": "2001:db8:4::/64",
-         "interface": "ethY"
+         "interface": "eth1"
     },
 // This subnet is divided in two pools for unknown and known
 // (i.e. which have a reservation) clients. The built-in KNOWN and
 // UNKNOWN classes are set or not at host reservation lookup (KNOWN if
 // this returns something, UNKNOWN if this finds nothing) and client
-//classes depending on it are evaluated.
+// classes depending on it are evaluated.
 // This happens after subnet selection and before address allocation
-//from pools.
+// from pools.
     {
         "pools": [
             {

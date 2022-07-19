@@ -4,9 +4,9 @@
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // Let's use the simplest backend: memfile and use some reasonable values
@@ -24,10 +24,10 @@
 // One packet can belong to zero or more classes.
   "client-classes": [
 
-// The first class attempts to match all packets coming in on ethX interface.
+// The first class attempts to match all packets coming in on eth0 interface.
   {
       "name": "lab",
-      "test": "pkt.iface == 'ethX'",
+      "test": "pkt.iface == 'eth0'",
       "option-data": [{
           "name": "dns-servers",
           "data": "2001:db8::1"
@@ -59,7 +59,7 @@
         "pools": [ { "pool": "2001:db8:1::/80" } ],
         "subnet": "2001:db8:1::/64",
         "client-class": "cable-modems",
-        "interface": "ethX"
+        "interface": "eth0"
     },
 
     // The following subnet contains a class reservation for a client using
@@ -73,7 +73,7 @@
             "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
             "client-classes": [ "cable-modems" ]
         } ],
-        "interface": "ethX"
+        "interface": "eth0"
     },
 
     // The following subnet contains a pool with a class constraint: only
@@ -81,11 +81,11 @@
     {
         "pools": [
            {
-               "pool": "2001:db8:3::/80",
+               "pool": "2001:db8:4::/80",
                "client-class": "cable-modems"
            } ],
          "subnet": "2001:db8:4::/64",
-         "interface": "ethY"
+         "interface": "eth1"
     }
 
   ],

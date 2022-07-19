@@ -87,7 +87,6 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
-
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
 
@@ -301,8 +300,8 @@ Dhcpv4SrvTest::basicOptionsPresent(const Pkt4Ptr& pkt) {
                                             "dhcp-lease-time " << errmsg.str()));
 
     }
-    return (::testing::AssertionSuccess());
 
+    return (::testing::AssertionSuccess());
 }
 
 ::testing::AssertionResult
@@ -801,15 +800,19 @@ Dhcpv4SrvTest::buildCfgOptionTest(IOAddress expected_server_id,
 void
 Dhcpv4SrvTest::configure(const std::string& config,
                          const bool commit,
-                         const bool open_sockets) {
-    configure(config, srv_, commit, open_sockets);
+                         const bool open_sockets,
+                         const bool create_managers,
+                         const bool test) {
+    configure(config, srv_, commit, open_sockets, create_managers, test);
 }
 
 void
 Dhcpv4SrvTest::configure(const std::string& config,
                          NakedDhcpv4Srv& srv,
                          const bool commit,
-                         const bool open_sockets) {
+                         const bool open_sockets,
+                         const bool create_managers,
+                         const bool test) {
     setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
     MultiThreadingCriticalSection cs;
     ConstElementPtr json;
@@ -818,8 +821,8 @@ Dhcpv4SrvTest::configure(const std::string& config,
     } catch (const std::exception& ex){
         // Fatal failure on parsing error
         FAIL() << "parsing failure:"
-                << "config:" << config << std::endl
-                << "error: " << ex.what();
+               << "config:" << config << std::endl
+               << "error: " << ex.what();
     }
 
     ConstElementPtr status;
@@ -831,18 +834,21 @@ Dhcpv4SrvTest::configure(const std::string& config,
     configureMultiThreading(multi_threading_, json);
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json, test));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
-    ASSERT_EQ(0, rcode) << comment->stringValue();
+    ASSERT_EQ(0, rcode) << "configuration failed, test is broken: "
+        << comment->str();
 
     // Use specified lease database backend.
-    ASSERT_NO_THROW( {
-        CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
-        cfg_db->setAppendedParameters("universe=4");
-        cfg_db->createManagers();
-    } );
+    if (create_managers) {
+        ASSERT_NO_THROW( {
+            CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+            cfg_db->setAppendedParameters("universe=4");
+            cfg_db->createManagers();
+        } );
+    }
 
     try {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());

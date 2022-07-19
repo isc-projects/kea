@@ -1754,7 +1754,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
 
     // Reconfigure the server. Now, the first client get's second client's
     // reservation and vice versa.
-    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[5], *client1.getServer()));
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[5], *client1.getServer(), true, true, false));
 
     // The first client is trying to renew the lease but should get a different lease
     // because its lease is now reserved for some other client. The client won't be

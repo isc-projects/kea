@@ -18,9 +18,9 @@
 { "Dhcp4":
 
 {
-    // Kea is told to listen on ethX interface only.
+    // Kea is told to listen on eth0 interface only.
     "interfaces-config": {
-        "interfaces": [ "ethX" ],
+        "interfaces": [ "eth0" ],
 
         // This specifies what type of socket Kea uses. Currently supported
         // are 'raw' (which is the default) and 'udp'. Raw has the benefit

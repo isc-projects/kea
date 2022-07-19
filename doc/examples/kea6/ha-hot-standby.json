@@ -10,9 +10,9 @@
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
     "interfaces-config": {
-        "interfaces": [ "ethX" ]
+        "interfaces": [ "eth0" ]
     },
 
     // Control socket is required for communication between the Control
@@ -113,7 +113,7 @@
                 }
              ],
 
-             "interface": "ethX"
+             "interface": "eth0"
     }
   ],
 

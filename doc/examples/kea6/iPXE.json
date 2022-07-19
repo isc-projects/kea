@@ -5,7 +5,7 @@
    // Mandatory part of the config that list interfaces on which
    // Kea will listen for incoming traffic.
       "interfaces-config": {
-         "interfaces": [ "ethX" ]
+         "interfaces": [ "eth0" ]
       },
 
 // Two classes are migrated form ISC-DHCP example:

@@ -9,9 +9,9 @@
 { "Dhcp4":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // We need to specify the database used to store leases. As of June
@@ -144,7 +144,7 @@
 // Note: flexible identifier requires flex_id hook library to be
 // loaded to work.
     {
-        "flex-id": "s0mEVaLue",
+        "flex-id": "'s0mEVaLue'",
         "ip-address": "192.0.2.206"
     }
   ],

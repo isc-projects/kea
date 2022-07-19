@@ -62,10 +62,10 @@
                 ]
             }
         ],
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
         "interfaces-config": {
             "interfaces": [
-                "ethX"
+                "eth0"
             ]
         },
 // We need to specify the database used to store leases.
@@ -76,7 +76,7 @@
 // here. We tell Kea that it is directly available over local interface.
         "subnet4": [
             {
-                "interface": "ethX",
+                "interface": "eth0",
                 "pools": [
                     {
                         "pool": "192.0.2.50-192.0.2.50"

@@ -7,7 +7,7 @@
 "Dhcp4":
 {
   "interfaces-config": {
-    "interfaces": [ "eno33554984" ]
+    "interfaces": [ "eth0" ]
   },
 
   "lease-database": {
@@ -21,7 +21,7 @@
   "subnet4": [
    {    "subnet": "10.10.10.0/24",
 // Don't forget the "4o6-" before "interface" here!
-        "4o6-interface": "eno33554984",
+        "4o6-interface": "eth0",
         "4o6-subnet": "2001:db8:1:1::/64",
         "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ] }
   ],

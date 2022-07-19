@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config_backend/base_config_backend.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp/tests/pkt_captures.h>
@@ -39,6 +40,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <dirent.h>
 
 #include <arpa/inet.h>
 
@@ -47,6 +49,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::cb;
 using namespace isc::config;
 using namespace isc::dhcp::test;
 using namespace isc::util;
@@ -144,7 +147,6 @@ void checkStringInBuffer( const std::string& exp_string, const OptionBuffer& buf
     std::string buffer_string(buffer.begin(), buffer.end());
     EXPECT_EQ(exp_string, std::string(buffer_string.c_str()));
 }
-
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -353,7 +355,6 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
 
     // The local port is always DHCPv4 server port 67.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
-
 
     // No specific interface is selected as outbound interface and no specific
     // local address is provided. The IfaceMgr will figure out which interface to use.
@@ -759,7 +760,6 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     // query has been received.
     EXPECT_EQ("eth1", resp->getIface());
     EXPECT_EQ(ETH1_INDEX, resp->getIndex());
-
 }
 
 // This test verifies that the destination address of the response message
@@ -1065,7 +1065,6 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
     ASSERT_THROW_MSG(srv.processDecline(pkt), RFCViolation,
                     "Mandatory 'Requested IP address' option missing in DHCPDECLINE"
                     " sent from [hwtype=1 00:fe:fe:fe:fe:fe], cid=[no info], tid=0x4d2");
-
 
     // Now let's add a requested address. This should not throw.
     OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
@@ -1437,7 +1436,6 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
                                (*test).exp_t1_, (*test).exp_t2_);
         }
     }
-
 }
 
 // Check that option 58 and 59 are included when calculate-tee-times
@@ -1578,7 +1576,6 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
         }
     }
 }
-
 
 // This test verifies that incoming DISCOVER can be handled properly, that an
 // OFFER is generated, that the response has an address and that address
@@ -1897,7 +1894,6 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     checkResponse(ack, DHCPACK, 1234);
     checkClientId(ack, clientid);
 }
-
 
 // This test verifies that incoming (positive) REQUEST/Renewing can be handled properly, that a
 // REPLY is generated, that the response has an address and that address
@@ -2776,6 +2772,106 @@ Dhcpv4SrvTest::portsServerPort() {
     EXPECT_EQ(srv.server_port_, offer->getLocalPort());
 }
 
+void
+Dhcpv4SrvTest::loadConfigFile(const string& path) {
+    CfgMgr::instance().clear();
+
+    LibDHCP::clearRuntimeOptionDefs();
+
+    IfaceMgrTestConfig test_config(true);
+
+    // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
+    NakedDhcpv4Srv srv(0);
+    EXPECT_EQ(0, srv.server_port_);
+
+    ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
+            [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv4Ptr {
+                return (ConfigBackendDHCPv4Ptr());
+            });
+
+    ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("postgresql",
+            [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv4Ptr {
+                return (ConfigBackendDHCPv4Ptr());
+            });
+
+    // TimerMgr uses IO service to run asynchronous timers.
+    TimerMgr::instance()->setIOService(srv.getIOService());
+
+    // CommandMgr uses IO service to run asynchronous socket operations.
+    CommandMgr::instance().setIOService(srv.getIOService());
+
+    // LeaseMgr uses IO service to run asynchronous timers.
+    LeaseMgr::setIOService(srv.getIOService());
+
+    // HostMgr uses IO service to run asynchronous timers.
+    HostMgr::setIOService(srv.getIOService());
+
+    Parser4Context parser;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parser.parseFile(path, Parser4Context::PARSER_DHCP4));
+    ASSERT_TRUE(json);
+
+    // Check the logic next.
+    ConstElementPtr dhcp4 = json->get("Dhcp4");
+    ASSERT_TRUE(dhcp4);
+    ElementPtr mutable_config = boost::const_pointer_cast<Element>(dhcp4);
+    mutable_config->set(string("hooks-libraries"), Element::createList());
+    ASSERT_NO_THROW(Dhcpv4SrvTest::configure(dhcp4->str(), true, true, true, true));
+
+    LeaseMgrFactory::destroy();
+    HostMgr::create();
+
+    TimerMgr::instance()->unregisterTimers();
+
+    // Close the command socket (if it exists).
+    CommandMgr::instance().closeCommandSocket();
+
+    // CommandMgr uses IO service to run asynchronous socket operations.
+    CommandMgr::instance().setIOService(IOServicePtr());
+
+    // LeaseMgr uses IO service to run asynchronous timers.
+    LeaseMgr::setIOService(IOServicePtr());
+
+    // HostMgr uses IO service to run asynchronous timers.
+    HostMgr::setIOService(IOServicePtr());
+}
+
+void
+Dhcpv4SrvTest::checkConfigFiles() {
+    IfaceMgrTestConfig test_config(true);
+    string path = CFG_EXAMPLES;
+
+    DIR* dir = opendir(path.c_str());
+    if (!dir) {
+        return;
+    }
+
+    // Set of sorted files by name.
+    std::set<std::string> files;
+
+    for (struct dirent* dent = readdir(dir); dent; dent = readdir(dir)) {
+        std::string name(dent->d_name);
+        // Skip current and parent directory and files with no extension.
+        if (name.size() < (sizeof(".json") - 1)) {
+            continue;
+        }
+
+        // Skip non .json files.
+        if (name.substr(name.size() - (sizeof(".json") - 1)) != ".json") {
+            continue;
+        }
+        name = path + "/" + name;
+        files.emplace(name);
+    }
+
+    for (const auto& file: files) {
+        string label("Checking configuration from file: ");
+        label += file;
+        SCOPED_TRACE(label);
+        loadConfigFile(file);
+    }
+}
+
 } // end of isc::dhcp::test namespace
 } // end of isc::dhcp namespace
 } // end of isc namespace
@@ -2822,12 +2918,15 @@ TEST_F(Dhcpv4SrvTest, portsServerPortMultiTHreading) {
     portsServerPort();
 }
 
+TEST_F(Dhcpv4SrvTest, checkConfigFiles) {
+    checkConfigFiles();
+}
+
 /// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
 /// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
 /// selectSubnetRelayInterfaceId. Note that the concept of interface-id is not
 /// present in the DHCPv4, so not everything is applicable directly.
 /// See ticket #3057
-
 
 // Checks whether the server uses default (0.0.0.0) siaddr value, unless
 // explicitly specified
@@ -3823,7 +3922,6 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     query->addOption(opt2);
     query->getDeferredOptions().push_back(245);
 
-
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
                                                  DHO_DHCP_PARAMETER_REQUEST_LIST));
@@ -3858,7 +3956,6 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     ASSERT_TRUE(opt32);
     EXPECT_EQ(12345678, opt32->getValue());
 }
-
 
 // Checks effect of persistency (aka always-true) flag on the PRL
 TEST_F(Dhcpv4SrvTest, prlPersistency) {

@@ -5,9 +5,9 @@
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // We need to specify the database used to store leases. As of
@@ -57,7 +57,7 @@
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
-      "interface": "ethX"
+      "interface": "eth0"
     }
   ],
 

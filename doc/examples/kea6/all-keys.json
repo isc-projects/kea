@@ -258,13 +258,13 @@
         "hosts-databases": [
             {
                 // Name of the database to connect to.
-                "name": "kea",
+                "name": "keatest",
 
                 // Host on which the database resides.
                 "host": "localhost",
 
                 // Database password.
-                "password": "kea",
+                "password": "keatest",
 
                 // Port on which the database is available.
                 "port": 3306,
@@ -273,7 +273,7 @@
                 "type": "mysql",
 
                 // User name to be used to access the database.
-                "user": "kea",
+                "user": "keatest",
 
                 // Read only mode.
                 "readonly": false,
@@ -293,13 +293,13 @@
             },
             {
                 // Name of the database to connect to.
-                "name": "kea",
+                "name": "keatest",
 
                 // Host on which the database resides.
                 "host": "localhost",
 
                 // Database password.
-                "password": "kea",
+                "password": "keatest",
 
                 // Port on which the database is available.
                 "port": 5432,
@@ -308,11 +308,14 @@
                 "type": "postgresql",
 
                 // User name to be used to access the database.
-                "user": "kea"
+                "user": "keatest"
             },
             {
+                // Name of the database to connect to.
+                "name": "keatest",
+
                 // Database password.
-                "password": "kea",
+                "password": "keatest",
 
                 // Port on which the database is available.
                 "port": 9042,
@@ -321,7 +324,7 @@
                 "type": "mysql",
 
                 // User name to be used to access the database.
-                "user": "kea",
+                "user": "keatest",
 
                 // Connection reconnect wait time.
                 // This parameter governs how long Kea waits before attempting
@@ -362,7 +365,7 @@
             // Specifies a list of interfaces on which the Kea DHCPv6
             // server should listen to the DHCP requests.
             "interfaces": [
-                "ethX"
+                "eth0"
             ],
 
             // Boolean flag indicating if the available interfaces should
@@ -658,7 +661,7 @@
 
                 // Specifies that this shared network is selected for the
                 // requests received on the particular interface.
-                "interface": "ethX",
+                "interface": "eth0",
 
                 // Specifies the content of the interface-id option used
                 // by relays to identify the interface on the relay to
@@ -784,7 +787,7 @@
 
                         // Specifies that this subnet is selected for the requests
                         // received on the particular interface.
-                        "interface": "ethX",
+                        "interface": "eth0",
 
                         // Specifies the content of the interface-id option used
                         // by relays to identify the interface on the relay to

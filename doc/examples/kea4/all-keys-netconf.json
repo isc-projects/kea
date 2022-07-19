@@ -298,13 +298,13 @@
         "hosts-databases": [
             {
                 // Name of the database to connect to.
-                "name": "kea",
+                "name": "keatest",
 
                 // Host on which the database resides.
                 "host": "localhost",
 
                 // Database password.
-                "password": "kea",
+                "password": "keatest",
 
                 // Port on which the database is available.
                 "port": 3306,
@@ -313,7 +313,7 @@
                 "type": "mysql",
 
                 // User name to be used to access the database.
-                "user": "kea",
+                "user": "keatest",
 
                 // Read only mode.
                 "readonly": false,
@@ -334,13 +334,13 @@
             },
             {
                 // Name of the database to connect to.
-                "name": "kea",
+                "name": "keatest",
 
                 // Host on which the database resides.
                 "host": "localhost",
 
                 // Database password.
-                "password": "kea",
+                "password": "keatest",
 
                 // Port on which the database is available.
                 "port": 5432,
@@ -349,7 +349,7 @@
                 "type": "postgresql",
 
                 // User name to be used to access the database.
-                "user": "kea",
+                "user": "keatest",
 
                 // Connection reconnect wait time.
                 // This parameter governs how long Kea waits before attempting
@@ -398,7 +398,7 @@
             // Specifies a list of interfaces on which the Kea DHCPv4
             // server should listen to the DHCP requests.
             "interfaces": [
-                "ethX"
+                "eth0"
             ],
 
             // Enumeration which indicates what interface should be used
@@ -689,7 +689,7 @@
 
                 // Specifies that this shared network is selected for the
                 // requests received on the particular interface.
-                "interface": "ethX",
+                "interface": "eth0",
 
                 // Shared network level flag specifying whether the client
                 // identifier should be used for identifying clients.
@@ -778,7 +778,7 @@
                         "4o6-subnet": "2001:db8:1:1::/64",
 
                         // Subnet level authoritative flag.
-                        "authoritative": true,
+                        "authoritative": false,
 
                         // Subnet level bootfile name, set in 'file' field.
                         "boot-file-name": "",
@@ -823,7 +823,7 @@
 
                         // Specifies that this subnet is selected for the requests
                         // received on the particular interface.
-                        "interface": "ethX",
+                        "interface": "eth0",
 
                         // Subnet level flag specifying whether the client identifier
                         // should be used for identifying clients.

@@ -6,13 +6,15 @@
 
 /// @file   dhcp6_test_utils.h
 ///
-/// @brief  This file contains utility classes used for DHCPv6 server testing
+/// @brief This file contains utility classes used for DHCPv6 server testing
 
 #ifndef DHCP6_TEST_UTILS_H
 #define DHCP6_TEST_UTILS_H
 
 #include <gtest/gtest.h>
 
+#include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/parser_context.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
@@ -26,8 +28,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcp6/dhcp6_srv.h>
-#include <dhcp6/parser_context.h>
 #include <hooks/hooks_manager.h>
 #include <util/multi_threading_mgr.h>
 
@@ -68,7 +68,6 @@ struct SpecializedTypeWrapper {
     ValueType value_;
 };
 
-
 /// @brief Class representing strongly typed IAID.
 struct IAID : public SpecializedTypeWrapper<uint32_t> {
     /// @brief Constructor
@@ -80,7 +79,7 @@ struct IAID : public SpecializedTypeWrapper<uint32_t> {
 
 /// @brief Class representing strongly typed value for strict IAID checks.
 ///
-/// Strict IAID checks are used to verify that  the particular address has been
+/// Strict IAID checks are used to verify that the particular address has been
 /// assign to a specific IA. In many cases we don't check that because it may
 /// not be possible to predict to which IA the specific lease will be assigned.
 struct StrictIAIDChecking : public SpecializedTypeWrapper<bool> {
@@ -106,7 +105,6 @@ struct StrictIAIDChecking : public SpecializedTypeWrapper<bool> {
     }
 };
 
-
 /// @brief Base class for DHCPv6 server testing.
 ///
 /// Currently it configures the test data path directory in
@@ -128,7 +126,6 @@ private:
 
     /// @brief Holds the original data directory.
     std::string original_datadir_;
-
 };
 
 /// @brief "naked" Dhcpv6Srv class that exposes internal members
@@ -360,7 +357,7 @@ public:
     /// @brief Generate binary data option
     ///
     /// Creates an Option in the V6 space with the given type and binary data
-    /// of the given number of bytes.  The data is initialized to the values
+    /// of the given number of bytes. The data is initialized to the values
     /// 100 to 100 + n, where n is the desired number of bytes.
     ///
     /// @param type option type for the new option
@@ -567,13 +564,36 @@ public:
     /// @brief Runs DHCPv6 configuration from the JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
-    void configure(const std::string& config);
+    /// @param commit A boolean flag indicating if the new configuration
+    /// should be committed (if true), or not (if false).
+    /// @param open_sockets A boolean flag indicating if sockets should
+    /// be opened (if true), or not (if false).
+    /// @param create_managers A boolean flag indicating if managers should be
+    /// recreated.
+    /// @param test A boolean flag which indicates if only testing config.
+    void configure(const std::string& config,
+                   const bool commit = true,
+                   const bool open_sockets = false,
+                   const bool create_managers = true,
+                   const bool test = false);
 
     /// @brief Configure the DHCPv6 server using the JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
     /// @param srv Server to be configured.
-    void configure(const std::string& config, NakedDhcpv6Srv& srv);
+    /// @param commit A boolean flag indicating if the new configuration
+    /// should be committed (if true), or not (if false).
+    /// @param open_sockets A boolean flag indicating if sockets should
+    /// be opened (if true), or not (if false).
+    /// @param create_managers A boolean flag indicating if managers should be
+    /// recreated.
+    /// @param test A boolean flag which indicates if only testing config.
+    void configure(const std::string& config,
+                   NakedDhcpv6Srv& srv,
+                   const bool commit = true,
+                   const bool open_sockets = false,
+                   const bool create_managers = true,
+                   const bool test = false);
 
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_NA option
@@ -599,7 +619,6 @@ public:
     checkIA_PD(const isc::dhcp::Pkt6Ptr& rsp, uint32_t expected_iaid,
                uint32_t expected_t1, uint32_t expected_t2);
 
-
     // Check that generated IAADDR option contains expected address
     // and lifetime values match the configured subnet
     /// @param expected_pref check that lease preferedlifetime has the not-zero
@@ -611,7 +630,6 @@ public:
                      isc::dhcp::Lease::Type type,
                      uint32_t expected_pref = 0,
                      uint32_t expected_valid = 0) {
-
 
         // Check that the assigned address is indeed from the configured pool.
         // Note that when comparing addresses, we compare the textual
@@ -800,7 +818,7 @@ public:
     /// @brief Performs negative RELEASE test
     ///
     /// See releaseReject and pdReleaseReject tests for detailed
-    /// explanation.  In essence the test attempts to perform couple
+    /// explanation. In essence the test attempts to perform couple
     /// failed RELEASE scenarios.
     ///
     /// This method does not throw, but uses gtest macros to signify failures.
@@ -821,6 +839,14 @@ public:
     void setMultiThreading(bool enabled) {
         multi_threading_ = enabled;
     }
+
+    /// @breif Check if example files contain valid configuration.
+    void checkConfigFiles();
+
+    /// @brief Check if the server configuration stored in file is valid.
+    ///
+    /// @param path The path to the configuration file.
+    void loadConfigFile(const std::string& path);
 
     /// A subnet used in most tests.
     isc::dhcp::Subnet6Ptr subnet_;

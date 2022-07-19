@@ -1,14 +1,14 @@
 // This is an example configuration file for DHCPv6 server in Kea.
 // It's a basic scenario with one IPv6 subnet configured. It is
 // assumed that one subnet (2001:db8:1::/64 is available directly
-// over ethX interface.
+// over eth0 interface.
 
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // We need to specify the database used to store leases. As of
@@ -37,7 +37,7 @@
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
-      "interface": "ethX"
+      "interface": "eth0"
     }
   ],
 
