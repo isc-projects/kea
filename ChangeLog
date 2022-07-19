@@ -1,3 +1,7 @@
+1961.	[build]		razvan
+	Library version numbers bumped for Kea 2.0.3 stable version.
+	(Gitlab #2488)
+
 1960.	[bug]		marcin
 	A bug in the allocation engine, which caused it to write an
 	allocated lease under the wrong subnet ID within a shared
