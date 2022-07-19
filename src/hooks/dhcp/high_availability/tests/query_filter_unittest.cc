@@ -768,7 +768,8 @@ QueryFilterTest::loadBalancingHaTypes4() {
     ASSERT_TRUE(server1_pkt && server2_pkt) << "do not have both scopes in "
                 << max_scope_tries << ", load balance broken?";
 
-    for (uint8_t msg_type = DHCP_NOTYPE; msg_type < DHCP_TYPES_EOF; ++msg_type) {
+    // We exceed DHCP_TYPES_EOF just to be sure.
+    for (uint8_t msg_type = 0; msg_type < DHCP_TYPES_EOF + 2; ++msg_type) {
         // All message types should be in scope for server1.
         server1_pkt->setType(msg_type);
 
@@ -778,7 +779,7 @@ QueryFilterTest::loadBalancingHaTypes4() {
         EXPECT_TRUE(is_in_scope);
 
         server2_pkt->setType(msg_type);
-        scope_class = "";
+        scope_class.clear();
         is_in_scope = filter.inScope(server2_pkt, scope_class);
         switch (msg_type) {
             case DHCPDISCOVER:
@@ -843,7 +844,8 @@ QueryFilterTest::loadBalancingHaTypes6() {
     ASSERT_TRUE(server1_pkt && server2_pkt) << "do not have both scopes in "
                 << max_scope_tries << ", load balance broken?";
 
-    for (uint8_t msg_type = DHCPV6_NOTYPE; msg_type < DHCPV6_TYPES_EOF; ++msg_type) {
+    // We exceed DHCPV6_TYPES_EOF just to be sure.
+    for (uint8_t msg_type = 0; msg_type < DHCPV6_TYPES_EOF + 2; ++msg_type) {
         // All message types should be in scope for server1.
         server1_pkt->setType(msg_type);
 
@@ -853,7 +855,7 @@ QueryFilterTest::loadBalancingHaTypes6() {
         EXPECT_TRUE(is_in_scope);
 
         server2_pkt->setType(msg_type);
-        scope_class = "";
+        scope_class.clear();
         is_in_scope = filter.inScope(server2_pkt, scope_class);
         switch (msg_type) {
             case DHCPV6_SOLICIT:

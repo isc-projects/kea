@@ -92,6 +92,9 @@ std::array<bool, DHCPV6_TYPES_EOF> v6_ha_types = {
     false,  // DHCPV6_LEASEQUERY_DATA      = 17
     false,  // DHCPV6_RECONFIGURE_REQUEST  = 18
     false,  // DHCPV6_RECONFIGURE_REPLY    = 19
+    /// @todo There is some question as to whether DHCPV4_QUERY should get load-balanced
+    /// or not. It may not provide sufficient information to properly scope it. For now
+    /// we will not load-balance them.
     false,  // DHCPV6_DHCPV4_QUERY         = 20
     false,  // DHCPV6_DHCPV4_RESPONSE      = 21
     false,  // DHCPV6_ACTIVELEASEQUERY     = 22
