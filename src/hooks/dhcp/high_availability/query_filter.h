@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ namespace ha {
 /// load balancing of the DHCP queries, when configured to do so.
 ///
 /// The query filter uses a term "scope" to identify group of DHCP queries
-/// processed by a given server. Currently, we support load balanacing
+/// processed by a given server. Currently, we support load balancing
 /// between two servers. Therefore, in this mode of operation, there are two
 /// scopes named after servers responsible for processing packets belonging
 /// to those scopes, e.g. "server1" and "server2".
