@@ -112,7 +112,7 @@ typedef boost::shared_ptr<ControlSocketBase> ControlSocketBasePtr;
 /// @param ctrl_sock The control socket configuration.
 /// @return A pointer to a control socket communication object.
 /// @throw NotImplemented if no specialization was called.
-template <CfgControlSocket::Type TYPE>  ControlSocketBasePtr
+template <CfgControlSocket::Type TYPE> ControlSocketBasePtr
 createControlSocket(CfgControlSocketPtr ctrl_sock) {
     isc_throw(NotImplemented, "not specialized createControlSocket");
 }
@@ -123,7 +123,7 @@ createControlSocket(CfgControlSocketPtr ctrl_sock) {
 /// @return A pointer to a control socket communication object.
 /// @throw BadValue if called with null or an unknown type.
 ControlSocketBasePtr
-createControlSocket(CfgControlSocketPtr ctrl_sock);
+controlSocketFactory(CfgControlSocketPtr ctrl_sock);
 
 } // namespace netconf
 } // namespace isc

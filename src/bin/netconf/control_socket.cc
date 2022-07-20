@@ -20,7 +20,7 @@ namespace isc {
 namespace netconf {
 
 ControlSocketBasePtr
-createControlSocket(CfgControlSocketPtr ctrl_sock) {
+controlSocketFactory(CfgControlSocketPtr ctrl_sock) {
     if (!ctrl_sock) {
         isc_throw(BadValue, "null control socket configuration");
     }

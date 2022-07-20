@@ -202,7 +202,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     }
     ControlSocketBasePtr comm;
     try {
-        comm = createControlSocket(ctrl_sock);
+        comm = controlSocketFactory(ctrl_sock);
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
@@ -395,7 +395,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
     }
     ControlSocketBasePtr comm;
     try {
-        comm = createControlSocket(ctrl_sock);
+        comm = controlSocketFactory(ctrl_sock);
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "control socket creation failed with " << ex.what();
@@ -556,7 +556,7 @@ NetconfAgent::change(S_Session sess, const CfgServersMapPair& service_pair) {
     }
     ControlSocketBasePtr comm;
     try {
-        comm = createControlSocket(ctrl_sock);
+        comm = controlSocketFactory(ctrl_sock);
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
@@ -642,7 +642,7 @@ NetconfAgent::done(S_Session sess, const CfgServersMapPair& service_pair) {
     // the server.
     ControlSocketBasePtr comm;
     try {
-        comm = createControlSocket(ctrl_sock);
+        comm = controlSocketFactory(ctrl_sock);
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
