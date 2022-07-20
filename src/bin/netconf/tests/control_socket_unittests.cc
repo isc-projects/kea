@@ -75,7 +75,7 @@ TEST(StdoutControlSocketTest, createControlSocket) {
                                      "",
                                      Url("http://127.0.0.1:8000/")));
     ASSERT_TRUE(cfg);
-    ControlSocketBasePtr cs = createControlSocket(cfg);
+    ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     StdoutControlSocketPtr scs =
         boost::dynamic_pointer_cast<StdoutControlSocket>(cs);
@@ -301,7 +301,7 @@ UnixControlSocketTest::reflectServer() {
 TEST_F(UnixControlSocketTest, createControlSocket) {
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
-    ControlSocketBasePtr cs = createControlSocket(cfg);
+    ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     UnixControlSocketPtr ucs =
         boost::dynamic_pointer_cast<UnixControlSocket>(cs);
@@ -627,7 +627,7 @@ HttpControlSocketTest::createReflectListener() {
 TEST_F(HttpControlSocketTest, createControlSocket) {
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
-    ControlSocketBasePtr cs = createControlSocket(cfg);
+    ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     HttpControlSocketPtr hcs =
         boost::dynamic_pointer_cast<HttpControlSocket>(cs);
