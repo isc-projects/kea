@@ -5604,6 +5604,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Improve hosts indexes for better performance of global reservations
+-- Create new index that uses only dhcp4_identifier.
+CREATE INDEX key_dhcp4_identifier on hosts (dhcp_identifier, dhcp_identifier_type);
+-- Create new index that uses only dhcp4_identifier.
+CREATE INDEX key_dhcp6_identifier on hosts (dhcp_identifier, dhcp_identifier_type);
+
+-- Modify existing indexes to include subnet_id values of 0, so index is also used
+-- for global reservations.
+DROP INDEX key_dhcp4_identifier_subnet_id;
+CREATE UNIQUE INDEX key_dhcp4_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp4_subnet_id ASC)
+    WHERE (dhcp4_subnet_id IS NOT NULL);
+
+DROP INDEX key_dhcp6_identifier_subnet_id;
+CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
+    WHERE (dhcp6_subnet_id IS NOT NULL);
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '13', minor = '0';
