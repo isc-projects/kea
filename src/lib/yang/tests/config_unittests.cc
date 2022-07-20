@@ -339,7 +339,7 @@ TEST_F(ConfigTestKeaV4, examples4) {
         "hooks-radius.json",
         "leases-expiration.json",
         "multiple-options.json",
-        //"mysql-reservations.json", commented for new TLS parameters
+        "mysql-reservations.json",
         "pgsql-reservations.json",
         "reservations.json",
         "several-subnets.json",
@@ -380,7 +380,7 @@ TEST_F(ConfigTestKeaV6, examples6) {
         "iPXE.json",
         "leases-expiration.json",
         "multiple-options.json",
-        //"mysql-reservations.json", commented for new TLS parameters
+        "mysql-reservations.json",
         "pgsql-reservations.json",
         "reservations.json",
         "several-subnets.json",

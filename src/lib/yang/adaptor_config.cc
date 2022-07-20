@@ -654,5 +654,5 @@ AdaptorConfig::preProcess6(ConstElementPtr config) {
     preProcess(mutable_dhcp, "subnet6", DHCP6_SPACE);
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc

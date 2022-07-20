@@ -69,5 +69,5 @@ AdaptorSubnet::updateRelay(ElementPtr subnet) {
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc

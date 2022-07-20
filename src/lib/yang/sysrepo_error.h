@@ -20,7 +20,7 @@ public:
     {}
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc
 
 #endif // ISC_SYSREPO_ERROR_H

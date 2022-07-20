@@ -288,7 +288,7 @@ protected:
                            const std::string& space);
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc
 
 #endif // ISC_ADAPTOR_CONFIG_H

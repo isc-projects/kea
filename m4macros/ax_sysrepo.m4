@@ -189,7 +189,7 @@ AC_DEFUN([AX_SYSREPO], [
       )],
       [AC_MSG_RESULT([no])
        AX_DISPLAY_LIBRARY_WARNINGS()
-       AC_MSG_ERROR([Count not integrate with Sysrepo C++ bindings. Make sure that the sysrepo-cpp/Session.hpp header and the libsysrepo-cpp.so library can be found.])]
+       AC_MSG_ERROR([Could not integrate with Sysrepo C++ bindings. Make sure that the sysrepo-cpp/Session.hpp header and the libsysrepo-cpp.so library can be found.])]
     )
 
     # Restore flags.

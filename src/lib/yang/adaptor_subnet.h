@@ -60,7 +60,7 @@ public:
     static void updateRelay(isc::data::ElementPtr subnet);
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc
 
 #endif // ISC_ADAPTOR_SUBNET_H

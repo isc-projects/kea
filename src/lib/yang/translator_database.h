@@ -27,6 +27,10 @@ namespace yang {
 ///     "port": <port>,
 ///     "lfc-interval": <lfc interval>,
 ///     "readonly": <readonly flag>,
+///     "trust-anchor": <trust anchor>,
+///     "cert-file": <cert file>,
+///     "key-file": <key file>,
+///     "cipher-list": <cipher list>,
 ///     "connect-timeout": <connect timeout>,
 ///     "max-reconnect-tries": <maximum reconnect tries>,
 ///     "reconnect-wait-time": <reconnect wait time>,
@@ -48,6 +52,10 @@ namespace yang {
 ///    +--rw port?                  uint16
 ///    +--rw lfc-interval?          uint32
 ///    +--rw readonly?              boolean
+///    +--rw trust-anchor?          string
+///    +--rw cert-file?             string
+///    +--rw key-file?              string
+///    +--rw cipher-list?           string
 ///    +--rw connect-timeout?       uint32
 ///    +--rw max-reconnect-tries?   uint32
 ///    +--rw reconnect-wait-time?   uint32

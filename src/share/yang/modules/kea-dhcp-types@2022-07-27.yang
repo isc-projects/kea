@@ -16,6 +16,16 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2022-07-27 {
+    description "Added TLS parameters for database connections: trust-anchor,
+                 cert-file, key-file, cipher-list. Added parameters which govern
+                 the way the server behaves regarding detection of configured
+                 interfaces: service-sockets-require-all,
+                 service-sockets-max-retries, service-sockets-retry-wait-time.
+                 Added parameters which govern reservations lookup:
+                 early-global-reservations-lookup, reservations-lookup-first.";
+  }
+
   revision 2021-11-24 {
     description "Fixed store-extended-info. Added several containers and leaves:
                  compatibility, lenient-option-parsing, multi-threading,
@@ -217,6 +227,22 @@ module kea-dhcp-types {
                    read-only mode. This does not make sense for lease
                    databases, only for host reservations and possibly
                    for upcoming config backend.";
+    }
+    leaf trust-anchor {
+      type string;
+      description "TLS trust anchor.";
+    }
+    leaf cert-file {
+      type string;
+      description "TLS certificate file.";
+    }
+    leaf key-file {
+      type string;
+      description "TLS key file.";
+    }
+    leaf cipher-list {
+      type string;
+      description "TLS cipher list.";
     }
     leaf connect-timeout {
       type uint32;
@@ -636,6 +662,37 @@ module kea-dhcp-types {
     }
   }
 
+  grouping interfaces-service-sockets-require-all {
+    description "Interfaces service-sockets-require-all grouping.";
+    leaf service-sockets-require-all {
+      type boolean;
+      description "Kea tries to bind the service sockets during initialization.
+                   It may fail due to a port being already opened or
+                   misconfiguration. Kea can suppress these errors and only logs
+                   them. This flag prevents starting the DHCP server without
+                   binding all sockets.";
+    }
+  }
+
+  grouping interfaces-service-sockets-max-retries {
+    description "Interfaces service-sockets-max-retries grouping.";
+    leaf service-sockets-max-retries {
+      type uint32;
+      description "Kea tries to bind the service sockets during initialization.
+                   This option specifies how many times binding to interface
+                   will be retried.";
+    }
+  }
+
+  grouping interfaces-service-sockets-retry-wait-time {
+    description "Interfaces service-sockets-retry-wait-time grouping.";
+    leaf service-sockets-retry-wait-time {
+      type uint32;
+      description "The time interval in milliseconds to wait before the next
+                   attempt to retry opening a service socket.";
+    }
+  }
+
   grouping class-name {
     description "Client class name grouping.";
     leaf name {
@@ -970,6 +1027,23 @@ module kea-dhcp-types {
       type boolean;
       description
         "whether Kea should enforce a single reservation per address";
+    }
+  }
+
+  grouping early-global-reservations-lookup {
+    leaf early-global-reservations-lookup {
+      type boolean;
+      description
+        "whether an early global host reservations lookup should be performed";
+    }
+  }
+
+  grouping reservations-lookup-first {
+    leaf reservations-lookup-first {
+      type boolean;
+      description
+        "whether host reservations lookup should be performed before lease
+         lookup";
     }
   }
 

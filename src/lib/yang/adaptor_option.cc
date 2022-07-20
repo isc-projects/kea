@@ -124,5 +124,5 @@ AdaptorOption::initCodesInternal(OptionCodes& codes, const string& space,
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc

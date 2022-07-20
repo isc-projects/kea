@@ -92,7 +92,7 @@ protected:
                               isc::data::ConstElementPtr pools);
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc
 
 #endif // ISC_ADAPTOR_POOL_H

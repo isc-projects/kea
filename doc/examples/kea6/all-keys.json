@@ -279,7 +279,6 @@
                 "readonly": false,
 
                 // Next entries are for the OpenSSL support in MySQL.
-
                 // Trust anchor aka certificate authority file or directory.
                 "trust-anchor": "my-ca",
 
@@ -326,8 +325,8 @@
 
                 // Connection reconnect wait time.
                 // This parameter governs how long Kea waits before attempting
-                // to reconnect. Expressed in milliseconds. The default is 2000 [ms]
-                // for Casandra and 0 (disabled) for MySQL and PostgreSQL.
+                // to reconnect. Expressed in milliseconds. The default is 0
+                // (disabled) for MySQL and PostgreSQL.
                 "reconnect-wait-time": 3000,
 
                 // Connection maximum reconnect tries.

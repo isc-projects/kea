@@ -64,5 +64,5 @@ AdaptorHost::quoteIdentifier(ElementPtr host) {
     host->set("flex-id", Element::create(tmp.str()));
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc

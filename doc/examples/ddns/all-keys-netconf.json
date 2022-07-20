@@ -68,7 +68,8 @@
                 // Name of the zone (required).
                 "name": "example.com.",
 
-                // Name of the TSIG key used to protect DNS updates.
+                // Name of the TSIG key used to protect DNS updates for
+                // names in the domain.
                 "key-name": "d2.md5.key",
 
                 // List of DNS servers where to send DNS updates.
@@ -78,7 +79,11 @@
                         "ip-address": "2001:db8:1::10",
 
                         // DNS server UDP port. Default is 53 (DNS service).
-                        "port": 7802
+                        "port": 7802,
+
+                        // Name of the TSIG key used to protect DNS updates
+                        // sent to the DNS server.
+                        "key-name": "d2.sha1.key"
                     }
                 ]
             }
@@ -94,7 +99,8 @@
                 // Name of the zone (required).
                 "name": "2.0.192.in-addr.arpa.",
 
-                // Name of the TSIG key used to protect DNS updates.
+                // Name of the TSIG key used to protect DNS updates for
+                // names in the domain.
                 "key-name": "d2.sha1.key",
 
                 // List of DNS servers where to send DNS updates.
@@ -104,7 +110,10 @@
                         "ip-address": "172.16.1.1",
 
                         // DNS server UDP port. Default is 53 (DNS service).
-                        "port": 5301
+                        "port": 5301,
+
+                        // Name of the TSIG key used to protect DNS updates
+                        "key-name": "d2.md5.key"
                     }
                 ]
             }

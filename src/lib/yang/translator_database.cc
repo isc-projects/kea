@@ -49,54 +49,22 @@ TranslatorDatabase::getDatabaseKea(const string& xpath) {
     }
     ElementPtr result = Element::createMap();
     result->set("type", type);
-    ConstElementPtr user = getItem(xpath + "/user");
-    if (user) {
-        result->set("user", user);
-    }
-    ConstElementPtr password = getItem(xpath + "/password");
-    if (password) {
-        result->set("password", password);
-    }
-    ConstElementPtr host = getItem(xpath + "/host");
-    if (host) {
-        result->set("host", host);
-    }
-    ConstElementPtr name = getItem(xpath + "/name");
-    if (name) {
-        result->set("name", name);
-    }
-    ConstElementPtr persist = getItem(xpath + "/persist");
-    if (persist) {
-        result->set("persist", persist);
-    }
-    ConstElementPtr port = getItem(xpath + "/port");
-    if (port) {
-        result->set("port", port);
-    }
-    ConstElementPtr lfc_interval = getItem(xpath + "/lfc-interval");
-    if (lfc_interval) {
-        result->set("lfc-interval", lfc_interval);
-    }
-    ConstElementPtr readonly = getItem(xpath + "/readonly");
-    if (readonly) {
-        result->set("readonly", readonly);
-    }
-    ConstElementPtr connect_timeout = getItem(xpath + "/connect-timeout");
-    if (connect_timeout) {
-        result->set("connect-timeout", connect_timeout);
-    }
-    ConstElementPtr max_reconnect = getItem(xpath + "/max-reconnect-tries");
-    if (max_reconnect) {
-        result->set("max-reconnect-tries", max_reconnect);
-    }
-    ConstElementPtr reconnect_time = getItem(xpath + "/reconnect-wait-time");
-    if (reconnect_time) {
-        result->set("reconnect-wait-time", reconnect_time);
-    }
-    ConstElementPtr max_row_errors = getItem(xpath + "/max-row-errors");
-    if (max_row_errors) {
-        result->set("max-row-errors", max_row_errors);
-    }
+    checkAndGetLeaf(result, xpath, "user");
+    checkAndGetLeaf(result, xpath, "password");
+    checkAndGetLeaf(result, xpath, "host");
+    checkAndGetLeaf(result, xpath, "name");
+    checkAndGetLeaf(result, xpath, "persist");
+    checkAndGetLeaf(result, xpath, "port");
+    checkAndGetLeaf(result, xpath, "lfc-interval");
+    checkAndGetLeaf(result, xpath, "readonly");
+    checkAndGetLeaf(result, xpath, "trust-anchor");
+    checkAndGetLeaf(result, xpath, "cert-file");
+    checkAndGetLeaf(result, xpath, "key-file");
+    checkAndGetLeaf(result, xpath, "cipher-list");
+    checkAndGetLeaf(result, xpath, "connect-timeout");
+    checkAndGetLeaf(result, xpath, "max-reconnect-tries");
+    checkAndGetLeaf(result, xpath, "reconnect-wait-time");
+    checkAndGetLeaf(result, xpath, "max-row-errors");
     checkAndGetLeaf(result, xpath, "on-fail");
     ConstElementPtr context = getItem(xpath + "/user-context");
     if (context) {
@@ -140,54 +108,22 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
         }
         setItem(xpath + "/database-type", type, SR_STRING_T);
     }
-    ConstElementPtr user = elem->get("user");
-    if (user) {
-        setItem(xpath + "/user", user, SR_STRING_T);
-    }
-    ConstElementPtr password = elem->get("password");
-    if (password) {
-        setItem(xpath + "/password", password, SR_STRING_T);
-    }
-    ConstElementPtr host = elem->get("host");
-    if (host) {
-        setItem(xpath + "/host", host, SR_STRING_T);
-    }
-    ConstElementPtr name = elem->get("name");
-    if (name) {
-        setItem(xpath + "/name", name, SR_STRING_T);
-    }
-    ConstElementPtr persist = elem->get("persist");
-    if (persist) {
-        setItem(xpath + "/persist", persist, SR_BOOL_T);
-    }
-    ConstElementPtr port = elem->get("port");
-    if (port) {
-        setItem(xpath + "/port", port, SR_UINT16_T);
-    }
-    ConstElementPtr lfc_interval = elem->get("lfc-interval");
-    if (lfc_interval) {
-        setItem(xpath + "/lfc-interval", lfc_interval, SR_UINT32_T);
-    }
-    ConstElementPtr readonly = elem->get("readonly");
-    if (readonly) {
-        setItem(xpath + "/readonly", readonly, SR_BOOL_T);
-    }
-    ConstElementPtr connect_timeout = elem->get("connect-timeout");
-    if (connect_timeout) {
-        setItem(xpath + "/connect-timeout", connect_timeout, SR_UINT32_T);
-    }
-    ConstElementPtr max_reconnect = elem->get("max-reconnect-tries");
-    if (max_reconnect) {
-        setItem(xpath + "/max-reconnect-tries", max_reconnect, SR_UINT32_T);
-    }
-    ConstElementPtr reconnect_wait = elem->get("reconnect-wait-time");
-    if (reconnect_wait) {
-        setItem(xpath + "/reconnect-wait-time", reconnect_wait, SR_UINT32_T);
-    }
-    ConstElementPtr max_row_errors = elem->get("max-row-errors");
-    if (max_row_errors) {
-        setItem(xpath + "/max-row-errors", max_row_errors, SR_UINT32_T);
-    }
+    checkAndSetLeaf(elem, xpath, "user", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "password", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "host", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "name", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "persist", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "port", SR_UINT16_T);
+    checkAndSetLeaf(elem, xpath, "lfc-interval", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "readonly", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "trust-anchor", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "cert-file", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "key-file", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "cipher-list", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "connect-timeout", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "max-reconnect-tries", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "reconnect-wait-time", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "max-row-errors", SR_UINT32_T);
     checkAndSetLeaf(elem, xpath, "on-fail", SR_STRING_T);
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {

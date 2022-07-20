@@ -22,11 +22,11 @@ static const std::map<std::string, std::string> YANG_REVISIONS = {
     { "ietf-dhcpv6-options", "2018-09-04" },
     { "ietf-dhcpv6-server", "2018-09-04" },
     { "kea-types", "2019-08-12" },
-    { "kea-dhcp-types", "2021-11-24" },
-    { "kea-dhcp4-server", "2021-11-24" },
-    { "kea-dhcp6-server", "2021-11-24" },
+    { "kea-dhcp-types", "2022-07-27" },
+    { "kea-dhcp4-server", "2022-07-27" },
+    { "kea-dhcp6-server", "2022-07-27" },
     { "kea-ctrl-agent", "2019-08-12" },
-    { "kea-dhcp-ddns", "2019-08-12" }
+    { "kea-dhcp-ddns", "2022-07-27" }
 };
 
 }  // namespace yang

@@ -276,7 +276,20 @@
                 "user": "kea",
 
                 // Read only mode.
-                "readonly": false
+                "readonly": false,
+
+                // Next entries are for the OpenSSL support in MySQL.
+                // Trust anchor aka certificate authority file or directory.
+                "trust-anchor": "my-ca",
+
+                // Client certificate file name.
+                "cert-file": "my-cert",
+
+                // Private key file name.
+                "key-file": "my-key",
+
+                // Cipher list (see the OpenSSL ciphers command manual).
+                "cipher-list": "AES"
             },
             {
                 // Name of the database to connect to.
@@ -299,8 +312,8 @@
 
                 // Connection reconnect wait time.
                 // This parameter governs how long Kea waits before attempting
-                // to reconnect. Expressed in milliseconds. The default is 2000 [ms]
-                // for Casandra and 0 (disabled) for MySQL and PostgreSQL.
+                // to reconnect. Expressed in milliseconds. The default is 0
+                // (disabled) for MySQL and PostgreSQL.
                 "reconnect-wait-time": 3000,
 
                 // Connection maximum reconnect tries.
@@ -343,8 +356,33 @@
             // be re-detected upon server reconfiguration. The default value
             // is true which means that the interfaces are always
             // re-detected.
-            "re-detect": true
+            "re-detect": true,
+
+            // Kea tries to bind the service sockets during initialization. It may
+            // fail due to a port being already opened or misconfiguration. Kea can
+            // suppress these errors and only logs them. This flag prevents starting
+            // the DHCP server without binding all sockets. If unspecified, it
+            // defaults to false.
+            "service-sockets-require-all": true,
+
+            // Kea tries to bind the service sockets during initialization. This
+            // option specifies how many times binding to interface will be retried.
+            // The default value is 0 which means that the operation will not be
+            // repeated.
+            "service-sockets-max-retries": 5,
+
+            // The time interval in milliseconds to wait before the next attempt to
+            // retry opening a service socket.
+            "service-sockets-retry-wait-time": 5000
         },
+
+        // Boolean parameter which controls whether an early global host
+        // reservations lookup should be performed. This lookup takes place
+        // before subnet selection and when a global reservation is found
+        // with some client classes, it triggers a second phase classification.
+        // It can also be used to drop queries using host reservations as a
+        // decision table indexed by reservation identifiers.
+        "early-global-reservations-lookup": true,
 
         // Boolean parameter which controls DHCP server's behavior with respect
         // to creating host reservations for the same IP address or delegated
@@ -362,6 +400,13 @@
         // configuration error will occur. The MySQL and PostgreSQL backends do
         // support this mode.
         "ip-reservations-unique": true,
+
+        /// Boolean parameter which controls whether host reservations lookup
+        /// should be performed before lease lookup. This parameter has effect
+        /// only when multi-threading is disabled. When multi-threading is
+        /// enabled, host reservations lookup is always performed first to avoid
+        /// lease lookup resource locking.
+        "reservations-lookup-first": true,
 
         // Specifies credentials to access lease database.
         "lease-database": {

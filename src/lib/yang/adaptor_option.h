@@ -105,7 +105,7 @@ protected:
                                   size_t params_size);
 };
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc
 
 #endif // ISC_ADAPTOR_OPTION_H

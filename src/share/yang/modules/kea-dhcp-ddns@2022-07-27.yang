@@ -16,6 +16,11 @@ module kea-dhcp-ddns {
   description "This model defines a YANG data model that can be
     used to configure and manage a Kea DHCP-DDNS server.";
 
+  revision 2022-07-27 {
+    description "Added GSS-TSIG key-name configration parameter for DNS
+                 servers";
+  }
+
   revision 2019-08-12 {
     description "Initial revision";
     reference "";
@@ -60,6 +65,11 @@ module kea-dhcp-ddns {
             leaf port {
               type uint16;
               description "DNS server port.";
+            }
+            leaf key-name {
+              type string;
+              description "Name of the TSIG key used to protect DNS updates for
+                           this server.";
             }
             leaf user-context {
               type kea:user-context;

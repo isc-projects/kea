@@ -304,5 +304,5 @@ Adaptor::modify(ConstElementPtr path, ConstElementPtr actions,
     applyDown(path, actions, config, 0);
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // end of namespace isc::yang
+}  // end of namespace isc
