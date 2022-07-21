@@ -13,13 +13,13 @@
 	(Gitlab #2409, #2485)
 
 1959.	[bug]		razvan, marcin
-	Fixed a crash in HA+MT scenario caused by a race condition
+	Fixed a crash in the HA+MT scenario caused by a race condition
 	between resetting the CalloutHandle state and accessing hook
 	point parameters from different threads when unparking packets.
 	(Gitlab #2473, #2477)
 
 1958.	[build]		andrei
-	Froze sphinx dependency versions used to build documentation.
+	Froze Sphinx dependency versions used to build documentation.
 	Added the update-python-dependencies Makefile rule to bump the
 	versions.
 	(Gitlab #2161, #2340)
