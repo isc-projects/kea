@@ -59,11 +59,6 @@ Role assignment is governed by the configured role-assignment method.
 Role Configuration
 ------------------
 
-If role assignment returns an empty role, the configuration of the
-``default`` role is used; by default the request is rejected.
-If role assignment returns a not-empty role without a configuration,
-the configuration of the ``unknown`` role is used.
-
 .. table:: Role configuration parameters
 
    +------------------+----------------------------------------------------+
@@ -85,6 +80,19 @@ the configuration of the ``unknown`` role is used.
    +------------------+----------------------------------------------------+
    | response-filters | the filters to apply to responses                  |
    +------------------+----------------------------------------------------+
+
+.. note::
+
+   The role assignment can fail, for instance with ``cert-subject`` when
+   the client certificate was not required, or it has no subject common
+   name and instead a DNS alternative subject name. In this case the role
+   assignment returns the empty role and the ``default-role`` entry is used.
+
+   The role assignment can return an unexpected value e.g. with an
+   unregistered role name or a typing error. In this case the ``unknown-role``
+   entry is used.
+
+   Both ``default-role`` and ``unknown-role`` default to reject all commands.
 
 API Commands
 ------------
