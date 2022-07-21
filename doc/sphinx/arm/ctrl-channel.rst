@@ -171,13 +171,6 @@ that depends on the specific command.
 
 .. note::
 
-   When sending commands via the Control Agent, it is possible to specify
-   multiple services at which the command is targeted. CA forwards this
-   command to each service individually. Thus, the CA response to the
-   controlling client contains an array of individual responses.
-
-.. note::
-
    Since Kea 1.9.7, it is possible to put comments in commands as
    in the configuration file. For instance:
 
@@ -194,6 +187,72 @@ that depends on the specific command.
            ...*/
        }
    }
+
+.. _ctrl-channel-control-agent-command-response-format:
+
+Control Agent Command Response Format
+=====================================
+
+When sending commands via the Control Agent, it is possible to specify
+multiple services at which the command is targeted. CA forwards this
+command to each service individually. Thus, the CA response to the
+controlling client is always wrapped in an array (JSON list) of
+individual responses.  For example, the response for a command sent
+to one service would be structured as follows:
+
+::
+
+    [
+        {
+            "result": 0|1|2|3,
+            "text": "textual description",
+            "arguments": {
+                "argument1": "value1",
+                argument2": "value2",
+            ...
+        }
+    ]
+
+
+If the command is sent to more than one service, the array would
+contain responses from each service, in the order they were requested:
+
+::
+
+    [
+        {
+            "result": 0|1|2|3,
+            "text": "textual description",
+            "arguments": {
+                "argument1": "value1",
+                argument2": "value2",
+            ...
+        },
+        {
+            "result": 0|1|2|3,
+            "text": "textual description",
+            "arguments": {
+                "argument1": "value1",
+                argument2": "value2",
+            ...
+        },
+        ...
+    ]
+
+An exception to this are authentication or authorization errors which cause CA
+to reject the entirely.  The response to such an error will be formatted
+as a single entry (JSON map) as follows:
+
+::
+
+    {
+        "result": 403,
+        "text": "Forbidden"
+    }
+
+
+These types of errors are possible on systems configured for either basic
+authentication or agents that load the RBAC hook library.
 
 .. _ctrl-channel-client:
 
