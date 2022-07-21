@@ -2081,7 +2081,7 @@ available.
 The following is an example response to the ``status-get`` command, including
 the HA status of two ``load-balancing`` servers:
 
-::
+.. code-block:: json
 
    {
        "result": 0,
@@ -2117,7 +2117,10 @@ the HA status of two ``load-balancing`` servers:
            "multi-threading-enabled": true,
            "thread-pool-size": 4,
            "packet-queue-size": 64,
-           "packet-queue-statistics": [ 0.2, 0.1, 0.1 ]
+           "packet-queue-statistics": [ 0.2, 0.1, 0.1 ],
+           "sockets": {
+               "status": "ready"
+           }
        }
    }
 
