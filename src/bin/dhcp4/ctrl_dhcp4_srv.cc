@@ -748,6 +748,30 @@ ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
         status->set("multi-threading-enabled", Element::create(false));
     }
 
+    // Iterate through the interfaces and get all the errors.
+    ElementPtr socket_errors(Element::createList());
+    for (IfacePtr const& interface : IfaceMgr::instance().getIfaces()) {
+        for (std::string const& error : interface->getErrors()) {
+            socket_errors->add(Element::create(error));
+        }
+    }
+
+    // Abstract the information from all sockets into a single status.
+    ElementPtr sockets(Element::createMap());
+    if (socket_errors->empty()) {
+        sockets->set("status", Element::create("ready"));
+    } else {
+        ReconnectCtlPtr const reconnect_ctl(
+            CfgMgr::instance().getCurrentCfg()->getCfgIface()->getReconnectCtl());
+        if (reconnect_ctl && reconnect_ctl->retriesLeft()) {
+            sockets->set("status", Element::create("retrying"));
+        } else {
+            sockets->set("status", Element::create("failed"));
+        }
+        sockets->set("errors", socket_errors);
+    }
+    status->set("sockets", sockets);
+
     return (createAnswer(0, status));
 }
 

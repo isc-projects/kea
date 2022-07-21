@@ -523,6 +523,9 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
     int bcast_num = 0;
 
     for (IfacePtr iface : ifaces_) {
+        // Clear any errors from previous socket opening.
+        iface->clearErrors();
+
         // If the interface is inactive, there is nothing to do. Simply
         // proceed to the next detected interface.
         if (iface->inactive4_) {
@@ -537,21 +540,21 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
         // Relax the check when the loopback interface was explicitly
         // allowed
         if (iface->flag_loopback_ && !allow_loopback_) {
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                             "must not open socket on the loopback"
                             " interface " << iface->getName());
             continue;
         }
 
         if (!iface->flag_up_) {
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                             "the interface " << iface->getName()
                             << " is down");
             continue;
         }
 
         if (!iface->flag_running_) {
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                             "the interface " << iface->getName()
                             << " is not running");
             continue;
@@ -559,7 +562,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
         IOAddress out_address("0.0.0.0");
         if (!iface->getAddress4(out_address)) {
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                             "the interface " << iface->getName()
                             << " has no usable IPv4 addresses configured");
             continue;
@@ -590,7 +593,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             // assume that binding to the device is not supported and we
             // cease opening sockets and display the appropriate message.
             if (is_open_as_broadcast && !isDirectResponseSupported() && bcast_num > 0) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                                "Binding socket to an interface is not"
                                " supported on this OS; therefore only"
                                " one socket listening to broadcast traffic"
@@ -610,7 +613,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                          is_open_as_broadcast,
                                          is_open_as_broadcast);
                 } catch (const Exception& ex) {
-                    IFACEMGR_ERROR(SocketConfigError, error_handler,
+                    IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                         "Failed to open socket on interface "
                             << iface->getName()
                             << ", reason: "
@@ -649,6 +652,11 @@ IfaceMgr::openSockets6(const uint16_t port,
     int count = 0;
 
     for (IfacePtr iface : ifaces_) {
+        // Clear any errors from previous socket opening.
+        iface->clearErrors();
+
+        // If the interface is inactive, there is nothing to do. Simply
+        // proceed to the next detected interface.
         if (iface->inactive6_) {
             continue;
         }
@@ -661,17 +669,17 @@ IfaceMgr::openSockets6(const uint16_t port,
         // Relax the check when the loopback interface was explicitly
         // allowed
         if (iface->flag_loopback_ && !allow_loopback_) {
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                            "must not open socket on the loopback"
                            " interface " << iface->getName());
             continue;
         } else if (!iface->flag_up_) {
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                            "the interface " << iface->getName()
                            << " is down");
             continue;
         } else if (!iface->flag_running_) {
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                            "the interface " << iface->getName()
                            << " is not running");
             continue;
@@ -690,7 +698,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                 try {
                     IfaceMgr::openSocket(iface->getName(), addr, port, false, false);
                 } catch (const Exception& ex) {
-                    IFACEMGR_ERROR(SocketConfigError, error_handler,
+                    IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                         "Failed to open unicast socket on interface "
                         << iface->getName()
                         << ", reason: " << ex.what());
@@ -734,7 +742,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                     // suppressing an exception in a system-specific function.
                     IfaceMgr::openMulticastSocket(*iface, addr, port);
                 } catch (const Exception& ex) {
-                    IFACEMGR_ERROR(SocketConfigError, error_handler,
+                    IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
                         "Failed to open multicast socket on interface "
                         << iface->getName() << ", reason: " << ex.what());
                     continue;
@@ -1992,6 +2000,21 @@ IfaceMgr::configureDHCPPacketQueue(uint16_t family, data::ConstElementPtr queue_
     }
 
     return(enable_queue);
+}
+
+void
+Iface::addError(std::string const& message) {
+    errors_.push_back(message);
+}
+
+void
+Iface::clearErrors() {
+    errors_.clear();
+}
+
+Iface::ErrorBuffer const&
+Iface::getErrors() const {
+    return errors_;
 }
 
 } // end of namespace isc::dhcp

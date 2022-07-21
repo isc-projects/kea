@@ -59,7 +59,7 @@ CfgIface::multipleAddressesPerInterfaceActive() {
 
 void
 CfgIface::openSockets(const uint16_t family, const uint16_t port,
-                      const bool use_bcast) const {
+                      const bool use_bcast) {
     // Close any open sockets because we're going to modify some properties
     // of the IfaceMgr. Those modifications require that sockets are closed.
     closeSockets();
@@ -169,8 +169,8 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
     }
 
-    auto reconnect_ctl = makeReconnectCtl();
-    auto sopen = openSocketsWithRetry(reconnect_ctl, family, port, can_use_bcast);
+    reconnect_ctl_ = makeReconnectCtl();
+    auto sopen = openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast);
 
     if (!sopen) {
         // If no socket were opened, log a warning because the server will

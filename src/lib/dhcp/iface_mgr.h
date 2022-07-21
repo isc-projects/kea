@@ -138,6 +138,12 @@ public:
     /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
 
+    /// @brief A type definition for a list of error messages
+    using ErrorBuffer = std::vector<std::string>;
+
+    /// @brief A smart pointer type for @ref ErrorBuffer
+    using ErrorBufferPtr = std::shared_ptr<ErrorBuffer>;
+
     /// @brief Iface constructor.
     ///
     /// Creates Iface object that represents network interface.
@@ -392,6 +398,19 @@ public:
         read_buffer_.resize(new_size);
     }
 
+    /// @brief Add an error to the list of messages.
+    ///
+    /// @param message the error message
+    void addError(std::string const& message);
+
+    /// @brief Clears all errors.
+    void clearErrors();
+
+    /// @brief Get the consistent list of error messages.
+    ///
+    /// @return the list of messages
+    ErrorBuffer const& getErrors() const;
+
 protected:
     /// Socket used to send data.
     SocketCollection sockets_;
@@ -457,6 +476,14 @@ private:
     ///
     /// See @c Iface manager description for details.
     std::vector<uint8_t> read_buffer_;
+
+    /// @brief List of errors that occured since the last attempt to open sockets
+    ///
+    /// This list needs to always have a consistent view of the errors. They should all belong to
+    /// the same session of socket opening i.e. the same call to openSockets[46]. This is currently
+    /// ensured by openSockets[46] and all the places where these errors are being used i.e. the
+    /// status-get handler, being sequential.
+    ErrorBuffer errors_;
 };
 
 /// @brief Type definition for the pointer to an @c Iface object.
@@ -1571,11 +1598,11 @@ private:
     /// @brief Manager for DHCPv6 packet implementations and queues
     PacketQueueMgr6Ptr packet_queue_mgr6_;
 
-    /// DHCP packet receiver.
+    /// @brief DHCP packet receiver.
     isc::util::WatchedThreadPtr dhcp_receiver_;
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace isc::dhcp
+}  // namespace isc
 
 #endif // IFACE_MGR_H

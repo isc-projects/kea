@@ -563,7 +563,7 @@ IfaceMgr::openMulticastSocket(Iface& iface,
         sock = openSocket(iface.getName(), addr, port, iface.flag_multicast_);
 
     } catch (const Exception& ex) {
-        IFACEMGR_ERROR(SocketConfigError, error_handler,
+        IFACEMGR_ERROR(SocketConfigError, error_handler, IfacePtr(),
                        "Failed to open link-local socket on "
                        "interface " << iface.getName() << ": "
                        << ex.what());
@@ -591,7 +591,7 @@ IfaceMgr::openMulticastSocket(Iface& iface,
             // bound to link-local address - this is everything or
             // nothing strategy.
             iface.delSocket(sock);
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, IfacePtr(),
                            "Failed to open multicast socket on"
                            " interface " << iface.getName()
                            << ", reason: " << ex.what());
