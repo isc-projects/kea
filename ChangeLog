@@ -1,3 +1,8 @@
+2044.	[func]		tmark
+	Modified indexes on the hosts table in the postgresql
+	schema to improve performance on host reservation searches.
+	(Gitlab #2452)
+
 2043.	[func]		andrei
 	The status-get command now shows the status of the sockets being
 	opened for receiving DHCP requests and a list of errors for the
