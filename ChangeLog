@@ -30,8 +30,8 @@
 	(Gitlab #2473)
 
 2036.	[build]		andrei
-	Added a tool that checks whether there are any missing REST commands
-	from the API Reference section of the ARM.
+	Added a tool that checks whether there are any missing REST
+	commands from the API Reference section of the ARM.
 	See tools/check-for-missing-api-commands.sh.
 	It has been integrated into Gitlab CI and runs on every push.
 	(Gitlab #2379)
