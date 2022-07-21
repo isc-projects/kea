@@ -2,8 +2,8 @@
 	HA now applies load balancing and scoping only to inbound
 	client packet types that apply to client lease fulfillment,
 	e.g. DHCPDISCOVER, DHCPREQUEST, DHCPV6_SOLICIT, DHCPV6_REQUEST,
-	etc. Prior to this it was indiscriminatly balancing and
-	scoping all inbound packets including those related to lease
+	etc. Prior to this HA indiscriminately balanced and
+	scoped all inbound packets, including those related to lease
 	query.
 	(Gitlab #1781)
 
@@ -19,37 +19,37 @@
 2038.	[func]		djt
 	Added a new statistic to kea-dhcp4 that counts host
 	reservation conflicts. It is tracked at both the global
-	and subnet level as v4-reservation-conflicts and
-	subnet[id].v4-reservation-conflicts respectively.
+	and subnet levels as v4-reservation-conflicts and
+	subnet[id].v4-reservation-conflicts, respectively.
 	(Gitlab #2419)
 
 2037.	[bug]		razvan, marcin
-	Fixed a crash in HA+MT scenario caused by a race condition
+	Fixed a crash in the HA+MT scenario caused by a race condition
 	between resetting the CalloutHandle state and accessing hook
 	point parameters from different threads when unparking packets.
 	(Gitlab #2473)
 
 2036.	[build]		andrei
-	Added a tool that checks if there are any missing REST commands
+	Added a tool that checks whether there are any missing REST commands
 	from the API Reference section of the ARM.
 	See tools/check-for-missing-api-commands.sh.
 	It has been integrated into Gitlab CI and runs on every push.
 	(Gitlab #2379)
 
 2035.	[doc]		Daniel Bjors
-	The developer's guide now correctly uses the Lease4CollectionPtr
+	The Developer's Guide now correctly uses the Lease4CollectionPtr
 	and Lease6CollectionPtr types. Thanks to Daniel Bjors for
 	reporting this typo.
 	(Gitlab #2447)
 
 2034.	[func]		andrei
 	The PostgreSQL schema has been changed to provide initial support
-	for the lease limiting feature, part of the limits hook library.
+	for the lease-limiting feature, part of the limits hook library.
 	(Gitlab #2445)
 
 2033.	[func]		tmark
-	Functionality needed to support the lease limiting feature of
-	of the limits hook library has been added Memfile_LeaseMgr.
+	Functionality needed to support the lease-limiting feature of
+	of the limits hook library has been added to Memfile_LeaseMgr.
 	(Gitlab #2436)
 
 Kea 2.1.7 (development) released on June 29, 2022
