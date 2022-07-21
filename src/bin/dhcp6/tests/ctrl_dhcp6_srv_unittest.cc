@@ -10,6 +10,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -995,7 +996,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
 
     std::string response_txt;
 
-    // Send the version-get command
+    // Send the status-get command.
     sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
     ConstElementPtr response;
     ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
@@ -1089,6 +1090,85 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     ASSERT_TRUE(found_queue_stats);
     ASSERT_EQ(Element::list, found_queue_stats->getType());
     EXPECT_EQ(3, found_queue_stats->size());
+}
+
+// Checks that socket status exists in status-get responses.
+TEST_F(CtrlChannelDhcpv6SrvTest, statusGetSockets) {
+    // Create dummy interfaces to test socket status.
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+
+    // Send the status-get command.
+    createUnixChannelServer();
+    string response_text;
+    sendUnixCommand(R"({ "command": "status-get" })", response_text);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_text));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    ConstElementPtr result(response->get("result"));
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments(response->get("arguments"));
+    ASSERT_TRUE(arguments);
+    ASSERT_EQ(Element::map, arguments->getType());
+
+    ConstElementPtr sockets(arguments->get("sockets"));
+    ASSERT_TRUE(sockets);
+    ASSERT_EQ(Element::map, sockets->getType());
+
+    ConstElementPtr status(sockets->get("status"));
+    ASSERT_TRUE(status);
+    ASSERT_EQ(Element::string, status->getType());
+    EXPECT_EQ("ready", status->stringValue());
+
+    ConstElementPtr errors(sockets->get("errors"));
+    ASSERT_FALSE(errors);
+}
+
+// Checks that socket status includes errors in status-get responses.
+TEST_F(CtrlChannelDhcpv6SrvTest, statusGetSocketsErrors) {
+    // Create dummy interfaces to test socket status and add a custom down interface.
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+    test_config.addIface("down_interface", 4);
+    test_config.setIfaceFlags("down_interface", FlagLoopback(false), FlagUp(false),
+                              FlagRunning(true), FlagInactive4(false),
+                              FlagInactive6(false));
+
+    // Send the status-get command.
+    createUnixChannelServer();
+    string response_text;
+    sendUnixCommand(R"({ "command": "status-get" })", response_text);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_text));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    ConstElementPtr result(response->get("result"));
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments(response->get("arguments"));
+    ASSERT_TRUE(arguments);
+    ASSERT_EQ(Element::map, arguments->getType());
+
+    ConstElementPtr sockets(arguments->get("sockets"));
+    ASSERT_TRUE(sockets);
+    ASSERT_EQ(Element::map, sockets->getType());
+
+    ConstElementPtr status(sockets->get("status"));
+    ASSERT_TRUE(status);
+    ASSERT_EQ(Element::string, status->getType());
+    EXPECT_EQ("failed", status->stringValue());
+
+    ConstElementPtr errors(sockets->get("errors"));
+    ASSERT_TRUE(errors);
+    ASSERT_EQ(Element::list, errors->getType());
+    ASSERT_EQ(1, errors->size());
+
+    ConstElementPtr error(errors->get(0));
+    ASSERT_TRUE(error);
+    ASSERT_EQ(Element::string, error->getType());
+    ASSERT_EQ("the interface down_interface is down", error->stringValue());
 }
 
 // This test verifies that the DHCP server handles server-tag-get command
