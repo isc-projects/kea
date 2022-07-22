@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,9 +35,9 @@ command.
    PostHttpRequestJsonPtr. The "response" argument is the response in
    case of errors. The purpose of this callout is to implement authentication
    and authorization. It is called after basic HTTP authentication.
-   The next step status is ignored: if the response is set the processing
-   will stop and the response is returned. In particular the command is not
-   forwarded.
+   The next step status is used only to ask to reset the handle : if
+   the response is set the processing will stop and the response is
+   returned. In particular the command is not forwarded.
 
  @subsection agentHooksResponse response
 
@@ -52,5 +52,18 @@ command.
    response which will be sent back to the requesting client.  It is
    called after command processing.  The next step status is ignored:
    the response possibly modified will be sent back.
+
+@section agentHooksHandle Handle and hook unload
+
+The callout handle attached to the "request" argument can keep a pointer
+to the hook address space which prevents the hook to be unloaded
+when the "config-get" or "config-reload" command is executed.
+
+The "next step status" of the "auth" callout point can be set to any
+value other than CONTINUE to ask the callout handle to be reset. This
+must be done when the command is "config-get" or "config-reload" or
+when the "response" callout point is not used or when the callout
+context does not transmit values between the "auth" and "response"
+callout points.
 
 */

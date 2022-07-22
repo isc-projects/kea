@@ -117,6 +117,7 @@ createDynamicHttpResponse(HttpRequestPtr request) {
     }
 
     // Callout point for "auth".
+    bool reset_handle = false;
     if (HooksManager::calloutsPresent(Hooks.hook_index_auth_)) {
         // Get callout handle.
         CalloutHandlePtr callout_handle = request->getCalloutHandle();
@@ -131,13 +132,21 @@ createDynamicHttpResponse(HttpRequestPtr request) {
         callout_handle->getArgument("request", request);
         callout_handle->getArgument("response", http_response);
 
-        // Ignore status as the HTTP response is used instead.
+        // Status other than continue means 'please reset the handle'.
+        if (callout_handle->getStatus() != CalloutHandle::NEXT_STEP_CONTINUE) {
+            reset_handle = true;
+        }
     }
 
     // The basic HTTP authentication check or a callout failed and
     // left a response.
     if (http_response) {
         return (http_response);
+    }
+
+    // Reset the handle when a hook asks for.
+    if (reset_handle) {
+        request->resetCalloutHandle();
     }
 
     // The request is always non-null, because this is verified by the
