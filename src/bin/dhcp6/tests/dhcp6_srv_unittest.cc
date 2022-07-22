@@ -210,13 +210,13 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     // Close the command socket (if it exists).
     CommandMgr::instance().closeCommandSocket();
 
-    // CommandMgr uses IO service to run asynchronous socket operations.
+    // Reset CommandMgr IO service.
     CommandMgr::instance().setIOService(IOServicePtr());
 
-    // LeaseMgr uses IO service to run asynchronous timers.
+    // Reset LeaseMgr IO service.
     LeaseMgr::setIOService(IOServicePtr());
 
-    // HostMgr uses IO service to run asynchronous timers.
+    // Reset HostMgr IO service.
     HostMgr::setIOService(IOServicePtr());
 }
 
@@ -3578,6 +3578,8 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     }
 }
 
+/// @brief Check that example files from documentation are valid (can be parsed
+/// and loaded).
 TEST_F(Dhcpv6SrvTest, checkConfigFiles) {
     checkConfigFiles();
 }
