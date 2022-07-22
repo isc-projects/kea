@@ -1,3 +1,7 @@
+2045.	[build]		tmark
+	The library version numbers have been bumped for the Kea 2.2.0
+	(Gitlab #2504)
+
 2044.	[func]		tmark
 	Modified indexes on the hosts table in the postgresql
 	schema to improve performance on host reservation searches.
