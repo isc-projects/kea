@@ -1817,7 +1817,8 @@ def prepare_system_local(features, check_times):
     elif system == 'alpine':
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
-                    'boost-libs', 'boost-dev', 'procps', 'tar', 'log4cplus', 'log4cplus-dev']
+                    'boost-libs', 'boost-dev', 'procps', 'tar', 'log4cplus', 'log4cplus-dev',
+                    'gzip']
 
         if 'docs' in features:
             if revision == '3.10':
