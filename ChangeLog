@@ -1,12 +1,6 @@
 2042.	[func]		razvan
-	Added missing parameters to YANG modules, including TLS parameters
-	for database connections: trust-anchor, cert-file, key-file,
-	cipher-list, parameters which govern the way the server behaves
-	regarding detection of configured interfaces:
-	service-sockets-require-all, service-sockets-max-retries,
-	service-sockets-retry-wait-time, and parameters which govern
-	reservations lookup: early-global-reservations-lookup,
-	reservations-lookup-first.
+	Added missing parameters to YANG modules, including TLS
+	parameters for database connections.
 	(Gitlab #2224)
 
 2041.	[bug]		tmark
