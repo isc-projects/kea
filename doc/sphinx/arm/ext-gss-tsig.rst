@@ -452,7 +452,7 @@ zone similar to the one configured in Kea. To do that, open the "DNS Manager" an
 click "Action" and "New Zone"; finally, follow the New Zone Wizard to add a new zone.
 
 The standard requires both anti-replay and sequence services. Experiences with the BIND 9 nsupdate
-showed the sequence service led to problems so it is disable by default in the hook. It seems
+showed the sequence service led to problems so it is disabled by default in the hook. It seems
 the anti-replay service can also lead to problems with Microsoft DNS servers so it is now
 configurable. Note that these security services are useless for DNS dynamic update which was
 designed to run over UDP so with out of order and duplicated messages.
