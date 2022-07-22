@@ -229,7 +229,7 @@ enum DHCPv6MessageType {
    DHCPV6_DHCPV4_RESPONSE      = 21,
    /* RFC 7653 */
    DHCPV6_ACTIVELEASEQUERY     = 22,
-   HCPV6_STARTTLS              = 23,
+   DHCPV6_STARTTLS             = 23,
    /* RFC 8156 */
    DHCPV6_BNDUPD               = 24,
    DHCPV6_BNDREPLY             = 25,

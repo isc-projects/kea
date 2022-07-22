@@ -742,7 +742,7 @@ pgsql_upgrade_12_to_13_test() {
         assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
         assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-        # SELECT should finish succesfully and the subnet counter should be 0.
+        # SELECT should finish successfully and the subnet counter should be 0.
         query="SELECT leases FROM lease${v}_stat WHERE subnet_id = 1 AND state = 0 LIMIT 1"
         run_command \
             pgsql_execute "${query}"
@@ -750,7 +750,7 @@ pgsql_upgrade_12_to_13_test() {
         assert_str_eq '0' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
         if test "${json_supported}" = 't'; then
-            # SELECT should finish succesfully and the client class counter should be 0.
+            # SELECT should finish successfully and the client class counter should be 0.
             query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1"
             run_command \
                 pgsql_execute "${query}"

@@ -138,11 +138,8 @@ public:
     /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
 
-    /// @brief A type definition for a list of error messages
+    /// @brief Type definition for a list of error messages
     using ErrorBuffer = std::vector<std::string>;
-
-    /// @brief A smart pointer type for @ref ErrorBuffer
-    using ErrorBufferPtr = std::shared_ptr<ErrorBuffer>;
 
     /// @brief Iface constructor.
     ///
@@ -477,7 +474,7 @@ private:
     /// See @c Iface manager description for details.
     std::vector<uint8_t> read_buffer_;
 
-    /// @brief List of errors that occured since the last attempt to open sockets
+    /// @brief List of errors that occurred since the last attempt to open sockets
     ///
     /// This list needs to always have a consistent view of the errors. They should all belong to
     /// the same session of socket opening i.e. the same call to openSockets[46]. This is currently

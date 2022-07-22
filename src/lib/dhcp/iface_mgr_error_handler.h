@@ -29,7 +29,7 @@
 /// @param ex_type Exception to be thrown if error_handler is NULL.
 /// @param handler Error handler function to be called or NULL to indicate
 /// that exception should be thrown instead.
-/// @param iface Pointer to the interafce for which the error is logged. Can be null.
+/// @param iface Pointer to the interface for which the error is logged. Can be null.
 /// @param stream stream object holding an error string.
 #define IFACEMGR_ERROR(ex_type, handler, iface, stream) \
 { \

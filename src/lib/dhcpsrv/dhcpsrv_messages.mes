@@ -1113,7 +1113,7 @@ the specified relay address.
 
 % DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS No subnet selected because no suitable address to use for subnet selection was found.
 A debug message issued when the server was find a suitable address to use for
-susubnet selection.
+subnet selection.
 
 % DHCPSRV_SUBNET4_SELECT_NO_RAI_OPTIONS No RAI options found to use for subnet selection.
 A debug message issued by the server when the client query does not include RAI

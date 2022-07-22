@@ -504,7 +504,7 @@ TEST_F(ClassLeaseCounterTest, getLeaseClientClassesTest) {
 
     // Iterate over the invalid scenarios.
     for (auto scenario : invalid_scenarios) {
-        // Cosntruct the lease and context.
+        // Construct the lease and context.
         lease = leaseFactory(Lease::TYPE_V4);
         ElementPtr ctx;
         ASSERT_NO_THROW(ctx = Element::fromJSON(scenario.ctx_json_))
@@ -547,7 +547,7 @@ TEST_F(ClassLeaseCounterTest, getLeaseClientClassesTest) {
 
     // Iterate over the scenarios.
     for (auto scenario : valid_scenarios) {
-        // Cosntruct the lease and context.
+        // Construct the lease and context.
         lease = leaseFactory(Lease::TYPE_V4);
         if (!scenario.ctx_json_.empty()) {
             ElementPtr ctx;

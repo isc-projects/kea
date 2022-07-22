@@ -1,7 +1,7 @@
 2043.	[func]		andrei
 	The status-get command now shows the status of the sockets being
-	opened up for listening to DHCP requests and a list of errors for
-	the sockets that were not created succesfully.
+	opened for receiving DHCP requests and a list of errors for the
+	sockets that were not created successfully.
 	(Gitlab #2434)
 
 2042.	[func]		razvan

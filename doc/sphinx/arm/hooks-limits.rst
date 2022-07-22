@@ -176,7 +176,7 @@ around it, or the hook library configuration. The same applies to the value of `
 limiting. However, that use case is best achieved with rate limiting; it puts less computational
 strain on Kea, since the action of dropping the request or sending a NAK is decided earlier.
 
-In terms of rate limiting, client classes are evalated at the ``pkt4_receive`` and the
+In terms of rate limiting, client classes are evaluated at the ``pkt4_receive`` and the
 ``pkt6_receive`` callout, respectively, so that rate limits are checked as early as possible in the
 packet-processing cycle. Thus, only those classes which are assigned to the packet solely via an
 independent test expression can be used. Classes that depend on host reservations or the special
