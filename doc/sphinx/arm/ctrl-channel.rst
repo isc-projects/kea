@@ -208,7 +208,7 @@ to one service would be structured as follows:
             "text": "textual description",
             "arguments": {
                 "argument1": "value1",
-                argument2": "value2",
+                "argument2": "value2",
             ...
         }
     ]
@@ -225,7 +225,7 @@ contain responses from each service, in the order they were requested:
             "text": "textual description",
             "arguments": {
                 "argument1": "value1",
-                argument2": "value2",
+                "argument2": "value2",
             ...
         },
         {
@@ -233,7 +233,7 @@ contain responses from each service, in the order they were requested:
             "text": "textual description",
             "arguments": {
                 "argument1": "value1",
-                argument2": "value2",
+                "argument2": "value2",
             ...
         },
         ...
