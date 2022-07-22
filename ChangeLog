@@ -1,6 +1,7 @@
 2044.	[func]		tmark
 	Modified indexes on the hosts table in the postgresql
 	schema to improve performance on host reservation searches.
+	Thanks to Paul Kutzer for suggesting these changes.
 	(Gitlab #2452)
 
 2043.	[func]		andrei
