@@ -82,7 +82,6 @@ public:
     /// @brief Add a string to the vector of expected strings
     ///
     /// @param new_string the string to add to the end of the vector
-    /// @return void
     void addString(const string& new_string);
 
     vector<string> exp_strings_;

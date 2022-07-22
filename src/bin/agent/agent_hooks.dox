@@ -32,12 +32,12 @@ command.
  - @b Description: this callout is executed when Control Agent receives a
    control command over the RESTful interface (HTTP).
    The "request" argument is a pointer to the request, in fact a
-   PostHttpRequestJsonPtr. The "response" argument is the response in
-   case of errors. The purpose of this callout is to implement authentication
+   PostHttpRequestJsonPtr. The "response" argument is the response in case
+   of errors. The purpose of this callout is to implement authentication
    and authorization. It is called after basic HTTP authentication.
-   The next step status is used only to ask to reset the handle : if
-   the response is set the processing will stop and the response is
-   returned. In particular the command is not forwarded.
+   The next step status is used only to ask to reset the handle: if the
+   response is set the processing will stop and the response is returned.
+   In particular the command is not forwarded.
 
  @subsection agentHooksResponse response
 

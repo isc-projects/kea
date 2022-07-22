@@ -93,7 +93,6 @@ protected:
     /// @param subnets The subnet list.
     /// @param set The reference to the set of assigned IDs.
     /// @param next The next ID.
-    /// @return True if all subnets have an ID, false otherwise.
     static void subnetsAssignID(isc::data::ConstElementPtr subnets,
                                 SubnetIDSet& set, isc::dhcp::SubnetID& next);
 
@@ -106,7 +105,6 @@ protected:
     /// @param set The reference to the set of assigned IDs.
     /// @param next The next ID.
     /// @param subsel The subnet list name.
-    /// @return True if all subnets have an ID, false otherwise.
     static void sharedNetworksAssignID(isc::data::ConstElementPtr networks,
                                        SubnetIDSet& set,
                                        isc::dhcp::SubnetID& next,

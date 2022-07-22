@@ -516,8 +516,8 @@ public:
     /// Sets interface name over which packet was received or is
     /// going to be transmitted.
     ///
-    /// @return interface name
-    void setIface(const std::string& iface ) { iface_ = iface; };
+    /// @param iface The interface name
+    void setIface(const std::string& iface) { iface_ = iface; };
 
     /// @brief Sets remote hardware address.
     ///

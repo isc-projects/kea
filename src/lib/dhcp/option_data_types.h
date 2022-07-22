@@ -400,7 +400,6 @@ public:
     /// @param tuple reference of the tuple to read into
     /// @throw isc::dhcp::BadDataTypeCast when the data being read
     /// is truncated.
-    /// @return tuple being read.
     static void readTuple(const std::vector<uint8_t>& buf,
                           OpaqueDataTuple& tuple);
 
