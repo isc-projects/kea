@@ -224,30 +224,47 @@ void
 Dhcpv6SrvTest::checkConfigFiles() {
     IfaceMgrTestConfig test_config(true);
     string path = CFG_EXAMPLES;
-
-    DIR* dir = opendir(path.c_str());
-    if (!dir) {
-        return;
+    vector<string> examples = {
+        "advanced.json",
+#if defined (HAVE_MYSQL) && defined (HAVE_PGSQL)
+        "all-keys-netconf.json",
+        "all-options.json",
+#endif
+        "backends.json",
+        "classify.json",
+        "classify2.json",
+        "comments.json",
+#if defined (HAVE_MYSQL)
+        "config-backend.json",
+#endif
+        "dhcpv4-over-dhcpv6.json",
+        "duid.json",
+        "global-reservations.json",
+        "ha-hot-standby.json",
+        "hooks.json",
+        "iPXE.json",
+        "leases-expiration.json",
+        "multiple-options.json",
+#if defined (HAVE_MYSQL)
+        "mysql-reservations.json",
+#endif
+#if defined (HAVE_PGSQL)
+        "pgsql-reservations.json",
+#endif
+        "reservations.json",
+        "several-subnets.json",
+        "shared-network.json",
+        "simple.json",
+        "softwire46.json",
+        "stateless.json",
+        "tee-times.json",
+        "with-ddns.json",
+    };
+    vector<string> files;
+    for (string example : examples) {
+        string file = path + "/" + example;
+        files.push_back(file);
     }
-
-    // Set of sorted files by name.
-    std::set<std::string> files;
-
-    for (struct dirent* dent = readdir(dir); dent; dent = readdir(dir)) {
-        std::string name(dent->d_name);
-        // Skip current and parent directory and files with no extension.
-        if (name.size() < (sizeof(".json") - 1)) {
-            continue;
-        }
-
-        // Skip non .json files.
-        if (name.substr(name.size() - (sizeof(".json") - 1)) != ".json") {
-            continue;
-        }
-        name = path + "/" + name;
-        files.emplace(name);
-    }
-
     for (const auto& file: files) {
         string label("Checking configuration from file: ");
         label += file;
