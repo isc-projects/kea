@@ -1214,6 +1214,7 @@ ssl_key = {cert_dir}/kea-client.key
         execute(cmd, raise_error=False)
 
     elif system == 'alpine':
+        execute('sudo sed -i "/^skip-networking$/d" /etc/my.cnf.d/mariadb-server.cnf')
         execute('sudo rc-update add mariadb')
         execute('sudo /etc/init.d/mariadb setup', raise_error=False)
         execute('sudo /etc/init.d/mariadb restart')
