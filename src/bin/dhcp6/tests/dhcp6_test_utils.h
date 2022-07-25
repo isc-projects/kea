@@ -840,7 +840,7 @@ public:
         multi_threading_ = enabled;
     }
 
-    /// @breif Check if example files contain valid configuration.
+    /// @brief Check if example files contain valid configuration.
     void checkConfigFiles();
 
     /// @brief Check if the server configuration stored in file is valid.

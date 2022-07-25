@@ -650,7 +650,7 @@ public:
     /// @brief Checks if server port can be overridden in packets being sent.
     void portsServerPort();
 
-    /// @breif Check if example files contain valid configuration.
+    /// @brief Check if example files contain valid configuration.
     void checkConfigFiles();
 
     /// @brief Check if the server configuration stored in file is valid.

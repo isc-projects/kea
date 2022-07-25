@@ -1063,7 +1063,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         // In MT there are 2 cases:
         // 1. packet is unparked before current thread smart pointer to
         //    ScopedCalloutHandleState is destroyed:
-        //  - the lamba uses the smart pointer to set the callout which adds the
+        //  - the lambda uses the smart pointer to set the callout which adds the
         //    task, but the task is added after ScopedCalloutHandleState is
         //    destroyed, on the destruction of the last reference which is held
         //    by the current thread.
@@ -1071,7 +1071,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         //    ScopedCalloutHandleState is destroyed:
         //  - the current thread reference to ScopedCalloutHandleState is
         //    destroyed, but the reference in the lambda keeps it alive until
-        //    the lamba is called and the last reference is released, at which
+        //    the lambda is called and the last reference is released, at which
         //    time the task is actually added.
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
