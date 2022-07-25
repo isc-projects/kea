@@ -1,5 +1,7 @@
+Kea 2.2.0 (stable) released on July 27, 2022
+
 2045.	[build]		tmark
-	Library version numbers bumped for Kea 2.2.0 stable version.
+	Bumped library version numbers for the Kea 2.2.0 stable release.
 	(Gitlab #2504)
 
 2044.	[func]		tmark
@@ -10,8 +12,8 @@
 
 2043.	[func]		andrei
 	The status-get command now shows the status of the sockets being
-	opened for receiving DHCP requests and a list of errors for the
-	sockets that were not created successfully.
+	opened to receive DHCP requests, and a list of errors for the
+	sockets that were not successfully created.
 	(Gitlab #2434)
 
 2042.	[func]		razvan
@@ -23,7 +25,7 @@
 	HA now applies load balancing and scoping only to inbound
 	client packet types that apply to client lease fulfillment,
 	e.g. DHCPDISCOVER, DHCPREQUEST, DHCPV6_SOLICIT, DHCPV6_REQUEST,
-	etc. Prior to this HA indiscriminately balanced and
+	etc. Previously, HA indiscriminately balanced and
 	scoped all inbound packets, including those related to lease
 	query.
 	(Gitlab #1781)
@@ -33,28 +35,30 @@
 	(Gitlab #2491)
 
 2039.	[doc]		andrei
-	Updated limits hook library ARM documentation to reflect
+	Updated the limits hook library ARM documentation to reflect
 	support for lease limits.
 	(Gitlab #2481)
 
 2038.	[func]		djt
 	Added a new statistic to kea-dhcp4 that counts host
-	reservation conflicts. It is tracked at both the global
-	and subnet levels as v4-reservation-conflicts and
-	subnet[id].v4-reservation-conflicts, respectively.
+	reservation conflicts. They are now tracked at both
+	the global and subnet levels, as v4-reservation-conflicts
+	and subnet[id].v4-reservation-conflicts, respectively.
 	(Gitlab #2419)
 
 2037.	[bug]		razvan, marcin
 	Fixed a crash in the HA+MT scenario caused by a race condition
-	between resetting the CalloutHandle state and accessing hook
-	point parameters from different threads when unparking packets.
+	which occurred between resetting the CalloutHandle state and
+	accessing the hook point parameters, from different threads,
+	when unparking packets.
 	(Gitlab #2473)
 
 2036.	[build]		andrei
 	Added a tool that checks whether there are any missing REST
 	commands from the API Reference section of the ARM.
 	See tools/check-for-missing-api-commands.sh.
-	It has been integrated into Gitlab CI and runs on every push.
+	It has been integrated into the Gitlab CI and runs on every
+	push.
 	(Gitlab #2379)
 
 2035.	[doc]		Daniel Bjors

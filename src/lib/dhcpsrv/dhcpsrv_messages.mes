@@ -1111,10 +1111,6 @@ the specified interface name.
 A debug message issued when the server was unable to select a subnet using
 the specified relay address.
 
-% DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS No subnet selected because no suitable address to use for subnet selection was found.
-A debug message issued when the server was find a suitable address to use for
-subnet selection.
-
 % DHCPSRV_SUBNET4_SELECT_NO_RAI_OPTIONS No RAI options found to use for subnet selection.
 A debug message issued by the server when the client query does not include RAI
 options suitable for use with subnet selection.
@@ -1123,17 +1119,21 @@ options suitable for use with subnet selection.
 A debug message issued when no relay address was specified to use for subnet
 selection.
 
+% DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS No subnet selected because no suitable address to use for subnet selection was found.
+A debug message issued when the server was find a suitable address to use for
+subnet selection.
+
 % DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH No subnet matches address: %1
 A debug message issued when the server was unable to select a subnet using
 the specified address.
 
-% DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH No subnet matches interface: %1
-A debug message issued when the server was unable to select a subnet using
-the specified interface name.
-
 % DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH No subnet matches interface id: %1
 A debug message issued when the server was unable to select a subnet using
 the specified interface id.
+
+% DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH No subnet matches interface: %1
+A debug message issued when the server was unable to select a subnet using
+the specified interface name.
 
 % DHCPSRV_TIMERMGR_CALLBACK_FAILED running handler for timer %1 caused exception: %2
 This error message is emitted when the timer elapsed and the
