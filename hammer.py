@@ -1481,10 +1481,10 @@ def prepare_system_local(features, check_times):
     # prepare rhel
     elif system == 'rhel':
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make', 'mariadb-devel',
+                    'libtool', 'log4cplus-devel', 'make',
                     'openssl-devel', 'postgresql-devel']
 
-        if revision == '7':
+        if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
             # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
             packages.append('boost169-devel')
@@ -1492,17 +1492,32 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
 
-        # TODO:
-        # if 'mysql' in features:
-        #     packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
+        if 'docs' in features and int(revision) < 9:
+            packages.extend(['python3-virtualenv'])
 
-        # if 'pgsql' in features:
-        #     packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+        if 'mysql' in features:
+            packages.extend(['mariadb', 'mariadb-server'])
+            if int(revision) < 9:
+                packages.extend(['mariadb-devel'])
+            else:
+                packages.extend(['mariadb-connector-c-devel'])
+
+        if 'pgsql' in features:
+            if revision == '9':
+                execute('sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm',
+                        env=env, timeout=60, check_times=check_times)
+                execute('sudo dnf -qy module disable postgresql',
+                        env=env, timeout=60, check_times=check_times)
+                packages.extend(['postgresql14-devel', 'postgresql14-server'])
+            else:
+                packages.extend(['postgresql-server-devel', 'postgresql-server'])
+            packages.extend(['postgresql', 'libpq-devel'])
 
         if 'radius' in features:
-            packages.extend(['git'])
-            if 'forge' in features:
-                packages.extend(['freeradius'])
+            packages.extend(['freeradius', 'git'])
+
+        if 'gssapi' in features:
+            packages.extend(['krb5-devel'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
@@ -1526,6 +1541,12 @@ def prepare_system_local(features, check_times):
 
         if 'cql' in features:
             _install_cassandra_rpm(system, revision, env, check_times)
+
+        if 'docs' in features:
+            execute('python3 -m venv ~/venv',
+                    env=env, timeout=60, check_times=check_times)
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+                    env=env, timeout=120, check_times=check_times)
 
     # prepare ubuntu
     elif system == 'ubuntu':
@@ -2049,7 +2070,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20210528132302.fc34'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
-    elif system == 'centos' and revision == '8':
+    elif system in ['centos', 'rhel'] and revision == '8':
         frc_version = 'isc20200318134606.el8'
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
