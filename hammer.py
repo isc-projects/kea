@@ -1825,6 +1825,8 @@ def prepare_system_local(features, check_times):
                 packages.extend(['py-sphinx', 'py-sphinx_rtd_theme'])
             elif revision == '3.11':
                 packages.extend(['py3-sphinx'])
+            elif revision == '3.16':
+                packages.extend(['py3-pip'])
             else:
                 packages.extend(['py3-sphinx', 'py3-sphinx_rtd_theme'])
 
@@ -1859,6 +1861,10 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
+
+        # work around outdated sphinx packages on alpine 3.16
+        if 'docs' in features and revision == '3.16':
+            execute('sudo pip3 install -U sphinx sphinx_rtd_theme')
 
         # check for existence of 'vagrant' user and 'abuild' group before adding him to the group
         try:
