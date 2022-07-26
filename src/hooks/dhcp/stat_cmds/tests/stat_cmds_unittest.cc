@@ -53,12 +53,11 @@ public:
     }
 
     /// @brief Set family.
-    void setFamily(bool v6 = false) {
-        if (!v6) {
-            CfgMgr::instance().setFamily(AF_INET);
+    void setFamily(uint16_t family = AF_INET) {
+        CfgMgr::instance().setFamily(family);
+        if (family == AF_INET) {
             Daemon::setProcName("kea-dhcp4");
         } else {
-            CfgMgr::instance().setFamily(AF_INET6);
             Daemon::setProcName("kea-dhcp6");
         }
     }
@@ -636,7 +635,7 @@ struct TestScenario {
 
 // Verifies detection of invalid v4 input parameters.
 TEST_F(StatCmdsTest, StatLease4GetBadParams) {
-    setFamily(false);
+    setFamily(AF_INET);
 
     // Initialize lease manager
     initLeaseMgr4();
@@ -804,7 +803,7 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
 // Verifies result content for valid v4 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
 TEST_F(StatCmdsTest, statLease4GetValid) {
-    setFamily(false);
+    setFamily(AF_INET);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -1004,7 +1003,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
 // Verifies result content for valid v4 statistic commands that
 // result in no matching subnets.
 TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
-    setFamily(false);
+    setFamily(AF_INET);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -1065,7 +1064,7 @@ TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
 
 // Verifies detection of invalid v6 input parameters.
 TEST_F(StatCmdsTest, StatLease6GetBadParams) {
-    setFamily(true);
+    setFamily(AF_INET6);
 
     // Initialize lease manager
     initLeaseMgr6();
@@ -1233,7 +1232,7 @@ TEST_F(StatCmdsTest, StatLease6GetBadParams) {
 // Verifies result content for valid v6 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
 TEST_F(StatCmdsTest, statLease6GetValid) {
-    setFamily(true);
+    setFamily(AF_INET6);
 
     // Initialize lease manager
     initLeaseMgr6();
@@ -1440,7 +1439,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
 // Verifies result content for valid v6 statistic commands that
 // result in no matching subnets.
 TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
-    setFamily(true);
+    setFamily(AF_INET6);
 
     // Initialize lease manager
     initLeaseMgr6();
@@ -1501,7 +1500,7 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
 // Verifies that statistics for v4 subnets which no longer
 // exist are dropped from the result sets.
 TEST_F(StatCmdsTest, statLease4OrphanedStats) {
-    setFamily(false);
+    setFamily(AF_INET);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -1553,7 +1552,7 @@ TEST_F(StatCmdsTest, statLease4OrphanedStats) {
 // Verifies that statistics for v6 subnets which no longer
 // exist are dropped from the result sets.
 TEST_F(StatCmdsTest, statLease6OrphanedStats) {
-    setFamily(true);
+    setFamily(AF_INET6);
 
     // Initialize lease manager.
     initLeaseMgr6();
@@ -1604,4 +1603,3 @@ TEST_F(StatCmdsTest, statLease6OrphanedStats) {
 }
 
 } // end of anonymous namespace
-

@@ -51,12 +51,11 @@ public:
     }
 
     /// @brief Set family.
-    void setFamily(bool v6) {
-        if (!v6) {
-            isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
+    void setFamily(uint16_t family) {
+        isc::dhcp::CfgMgr::instance().setFamily(family);
+        if (family == AF_INET) {
             isc::process::Daemon::setProcName("kea-dhcp4");
         } else {
-            isc::dhcp::CfgMgr::instance().setFamily(AF_INET6);
             isc::process::Daemon::setProcName("kea-dhcp6");
         }
     }

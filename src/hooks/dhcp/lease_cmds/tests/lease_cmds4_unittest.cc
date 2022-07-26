@@ -47,7 +47,7 @@ class Lease4CmdsTest : public LeaseCmdsTest {
 public:
     /// @brief Constructor.
     Lease4CmdsTest() {
-        setFamily(false);
+        setFamily(AF_INET);
     }
 
     /// @brief Checks if specified response contains IPv4 lease

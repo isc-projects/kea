@@ -19,7 +19,7 @@ using namespace isc::process;
 using namespace isc::hooks;
 
 void
-LibLoadTest::validDaemonTest(const std::string& daemon_name, uint8_t family,
+LibLoadTest::validDaemonTest(const std::string& daemon_name, uint16_t family,
                              const ElementPtr& params) {
     // Set family and daemon's proc name.
     CfgMgr::instance().setFamily(family);
@@ -37,7 +37,7 @@ LibLoadTest::validDaemonTest(const std::string& daemon_name, uint8_t family,
 }
 
 void
-LibLoadTest::invalidDaemonTest(const std::string& daemon_name, uint8_t family,
+LibLoadTest::invalidDaemonTest(const std::string& daemon_name, uint16_t family,
                                const ElementPtr& params) {
     // Set family and daemon's proc name.
     CfgMgr::instance().setFamily(family);

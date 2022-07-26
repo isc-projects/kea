@@ -47,7 +47,7 @@ class Lease6CmdsTest : public LeaseCmdsTest {
 public:
     /// @brief Constructor.
     Lease6CmdsTest() {
-        setFamily(true);
+        setFamily(AF_INET6);
     }
 
     /// @brief Checks if specified response contains IPv6 lease
