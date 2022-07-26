@@ -408,6 +408,11 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     return exitcode
 
 
+def _append_to_file(file_name, line):
+    with open(file_name, encoding='utf-8', mode='a') as f:
+        f.write(line + '\n')
+
+
 def _prepare_installed_packages_cache_for_debs():
     pkg_cache = {}
 
@@ -2151,7 +2156,6 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     cmd += 'gpgcheck=0\n'
     cmd += "EOF\n\""
     execute(cmd)
-    frc = []
     if system == 'fedora' and revision == '28':
         frc_version = 'isc20190916210635.fc28'
     elif system == 'fedora' and revision == '29':
@@ -2179,9 +2183,14 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
 
-    frc.append('freeradius-client-1.1.7-%s' % frc_version)
-    frc.append('freeradius-client-devel-1.1.7-%s' % frc_version)
-    install_pkgs(frc, env=env, check_times=check_times)
+    freeradius_client_packages = []
+    freeradius_client_packages.append('freeradius-client-1.1.7-{}'.format(frc_version))
+    freeradius_client_packages.append('freeradius-client-devel-1.1.7-{}'.format(frc_version))
+
+    install_pkgs(freeradius_client_packages, env=env, check_times=check_times)
+
+    for i in freeradius_client_packages:
+        _append_to_file('freeradius-pkgs.txt', i)
 
     # unpack kea sources tarball
     execute('sudo rm -rf kea-src', dry_run=dry_run)
@@ -2262,8 +2271,14 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
 
-    install_pkgs('libfreeradius-client=1.1.7-{0} libfreeradius-client-dev=1.1.7-{0}'.format(frc_version),
-                 env=env, check_times=check_times)
+    freeradius_client_packages = []
+    freeradius_client_packages.append('libfreeradius-client-1.1.7-{}'.format(frc_version))
+    freeradius_client_packages.append('libfreeradius-client-dev-1.1.7-{}'.format(frc_version))
+
+    install_pkgs(freeradius_client_packages, env=env, check_times=check_times)
+
+    for i in freeradius_client_packages:
+        _append_to_file('freeradius-pkgs.txt', i)
 
     # unpack tarball
     execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
