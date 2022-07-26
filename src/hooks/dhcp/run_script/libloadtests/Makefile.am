@@ -45,6 +45,7 @@ run_script_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
+run_script_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_script_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

@@ -27,6 +27,10 @@ public:
         unloadLibraries();
     }
 
+    virtual void SetUp() {
+        valid_params_ = validConfigParams();
+    }
+
     /// @brief Destructor. Unloads any previously loaded libraries.
     ~LibLoadTest() {
         unloadLibraries();
@@ -91,11 +95,19 @@ public:
                            uint16_t family = AF_INET,
                            const isc::data::ElementPtr& params = isc::data::ElementPtr());
 
+    /// @brief Creates a set configuration parameters valid for the library.
+    virtual isc::data::ElementPtr validConfigParams() {
+        return (isc::data::Element::createMap());
+    }
+
     /// @brief full pathname to the library so file under test;
     std::string lib_so_name_;
 
     /// @brief Libraries
     isc::hooks::HookLibsCollection libraries_;
+
+    /// @brief Contains a set configuration parameters valid for the library.
+    isc::data::ElementPtr valid_params_;
 };
 
 }  // namespace test

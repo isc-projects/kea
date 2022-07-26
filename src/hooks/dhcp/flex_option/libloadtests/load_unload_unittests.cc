@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks_manager.h>
 #include <process/daemon.h>
+#include <testutils/lib_load_test_fixture.h>
 
 #include <gtest/gtest.h>
 #include <errno.h>
@@ -30,124 +31,46 @@ using namespace isc::process;
 namespace {
 
 /// @brief Test fixture for testing loading and unloading the flex-option library
-class LibLoadTest : public ::testing::Test {
+class FlexOptionLibLoadTest : public isc::test::LibLoadTest {
 public:
     /// @brief Constructor
-    LibLoadTest() {
-        reset();
+    FlexOptionLibLoadTest() : LibLoadTest(FLEX_OPTION_LIB_SO) {
     }
 
     /// @brief Destructor
-    /// Removes files that may be left over from previous tests
-    virtual ~LibLoadTest() {
-        reset();
+    virtual ~FlexOptionLibLoadTest() {
     }
 
-    /// @brief Removes files that may be left over from previous tests
-    virtual void reset() {
-        HooksManager::unloadLibraries();
+    /// @brief Creates a set configuration parameters valid for the library.
+    virtual ElementPtr validConfigParams() {
+        ElementPtr params = Element::createMap();
+        ElementPtr options = Element::createList();
+        params->set("options", options);
+        return (params);
     }
-
-    void addLib(const std::string& lib, ConstElementPtr params) {
-        libraries_.push_back(make_pair(lib, params));
-    }
-
-    bool loadLibs() {
-        return (HooksManager::loadLibraries(libraries_));
-    }
-
-    void unloadLibs() {
-        EXPECT_NO_THROW(HooksManager::unloadLibraries());
-    }
-
-    HookLibsCollection libraries_;
 };
 
-// Simple test that checks the library can be loaded in a DHCPv4 server.
-TEST_F(LibLoadTest, validLoadDhcp4) {
-
-    // Prepare parameters for the callout parameters library.
-    ElementPtr params = Element::createMap();
-    ElementPtr options = Element::createList();
-    params->set("options", options);
-
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET);
-    Daemon::setProcName("kea-dhcp4");
-
-    addLib(FLEX_OPTION_LIB_SO, params);
-    EXPECT_TRUE(loadLibs());
+// Simple V4 test that checks the library can be loaded and unloaded several times.
+TEST_F(FlexOptionLibLoadTest, validLoadDhcp4) {
+    validDaemonTest("kea-dhcp4", AF_INET, valid_params_);
 }
 
 // Simple test that checks the library can be loaded in a DHCPv6 server.
-TEST_F(LibLoadTest, validLoadDhcp6) {
-
-    // Prepare parameters for the callout parameters library.
-    ElementPtr params = Element::createMap();
-    ElementPtr options = Element::createList();
-    params->set("options", options);
-
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET6);
-    Daemon::setProcName("kea-dhcp6");
-
-    addLib(FLEX_OPTION_LIB_SO, params);
-    EXPECT_TRUE(loadLibs());
+TEST_F(FlexOptionLibLoadTest, validLoadDhcp6) {
+    validDaemonTest("kea-dhcp6", AF_INET6, valid_params_);
 }
 
-// Simple test that checks the library can be loaded in a DHCPv4 server
-// only if it is set for IPv4.
-TEST_F(LibLoadTest, invalidLoadDhcp4) {
+// Simple test that checks the library cannot by loaded by invalid daemons.
+TEST_F(FlexOptionLibLoadTest, invalidDaemonLoad) {
+    // V4 is invalid when family is AF_INET6
+    invalidDaemonTest("kea-dhcp4", AF_INET6, valid_params_);
 
-    // Prepare parameters for the callout parameters library.
-    ElementPtr params = Element::createMap();
-    ElementPtr options = Element::createList();
-    params->set("options", options);
+    // V6 is invalid when family is AF_INET
+    invalidDaemonTest("kea-dhcp6", AF_INET, valid_params_);
 
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET6);
-    Daemon::setProcName("kea-dhcp4");
-
-    addLib(FLEX_OPTION_LIB_SO, params);
-    EXPECT_FALSE(loadLibs());
-}
-
-// Simple test that checks the library can be loaded in a DHCPv6 server
-// only if it is set for IPv6.
-TEST_F(LibLoadTest, invalidLoadDhcp6) {
-
-    // Prepare parameters for the callout parameters library.
-    ElementPtr params = Element::createMap();
-    ElementPtr options = Element::createList();
-    params->set("options", options);
-
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET);
-    Daemon::setProcName("kea-dhcp6");
-
-    addLib(FLEX_OPTION_LIB_SO, params);
-    EXPECT_FALSE(loadLibs());
-}
-
-// Simple test that checks the library can be loaded and unloaded several times.
-TEST_F(LibLoadTest, validLoad) {
-
-    // Prepare parameters for the callout parameters library.
-    ElementPtr params = Element::createMap();
-    ElementPtr options = Element::createList();
-    params->set("options", options);
-
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET);
-    Daemon::setProcName("kea-dhcp4");
-
-    addLib(FLEX_OPTION_LIB_SO, params);
-
-    EXPECT_TRUE(loadLibs());
-    unloadLibs();
-
-    EXPECT_TRUE(loadLibs());
-    unloadLibs();
+    invalidDaemonTest("kea-ctrl-agent", AF_INET, valid_params_);
+    invalidDaemonTest("kea-dhcp-ddns", AF_INET, valid_params_);
+    invalidDaemonTest("bogus", AF_INET, valid_params_);
 }
 
 } // end of anonymous namespace
