@@ -122,6 +122,10 @@ exclude_patterns = [
     'arm/hooks-user-chk.rst',
 ]
 
+# Leave quotes and dashes unchanged and don't convert them to typographically
+# correct entities.
+smartquotes = False
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
