@@ -25,6 +25,8 @@ LibLoadTest::validDaemonTest(const std::string& daemon_name, uint16_t family,
     CfgMgr::instance().setFamily(family);
     process::Daemon::setProcName(daemon_name);
 
+    clearLibraries();
+
     // Adding the library to the list of libraries should work.
     ASSERT_NO_THROW_LOG(addLibrary(lib_so_name_, params));
 
@@ -42,6 +44,8 @@ LibLoadTest::invalidDaemonTest(const std::string& daemon_name, uint16_t family,
     // Set family and daemon's proc name.
     CfgMgr::instance().setFamily(family);
     process::Daemon::setProcName(daemon_name);
+
+    clearLibraries();
 
     // Adding the library to the list of libraries should work.
     ASSERT_NO_THROW_LOG(addLibrary(lib_so_name_, params));
