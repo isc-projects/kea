@@ -1,3 +1,10 @@
+2046.	[doc]		andrei
+	Disabled smart quotes in Sphinx configuration to leave quotes
+	unchanged. Prior to this change, quotes were converted into
+	left-quotes and right-quotes. This made it difficult for users to
+	copy and use chunks of configuration directly from the ARM.
+	(Gitlab #2513)
+
 Kea 2.2.0 (stable) released on July 27, 2022
 
 2045.	[build]		tmark
