@@ -45,7 +45,6 @@ flex_option_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
-flex_option_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

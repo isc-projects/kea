@@ -10,8 +10,7 @@
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <process/daemon.h>
-
-#include <gtest/gtest.h>
+#include <testutils/gtest_utils.h>
 
 namespace isc {
 namespace test {
@@ -78,9 +77,27 @@ public:
     /// AF_INET or AF_INET6. Defaults to AF_INET.
     /// @param params ElementPtr to set of parameters that are valid for the library.
     /// Defaults to an empty pointer.
+    ///
+    /// @note: implemented here to avoid dependency with the dhcpsrv library.
     void validDaemonTest(const std::string& daemon_name,
                          uint16_t family = AF_INET,
-                         const isc::data::ElementPtr& params = isc::data::ElementPtr());
+                         const isc::data::ElementPtr& params = isc::data::ElementPtr()) {
+            // Set family and daemon's proc name.
+        isc::dhcp::CfgMgr::instance().setFamily(family);
+        isc::process::Daemon::setProcName(daemon_name);
+
+        clearLibraries();
+
+        // Adding the library to the list of libraries should work.
+        ASSERT_NO_THROW_LOG(addLibrary(lib_so_name_, params));
+
+        // Should be able to load and unload the library more than once.
+        ASSERT_NO_THROW_LOG(loadLibraries());
+        ASSERT_NO_THROW_LOG(unloadLibraries());
+
+        ASSERT_NO_THROW_LOG(loadLibraries());
+        ASSERT_NO_THROW_LOG(unloadLibraries());
+    }
 
     /// @brief Verifies that an invalid daemon cannot load the library.
     ///
@@ -91,9 +108,24 @@ public:
     /// AF_INET or AF_INET6. Defaults to AF_INET.
     /// @param params ElementPtr to set of parameters that are valid
     /// for the library. Defaults to an empty pointer.
+    ///
+    /// @note: implemented here to avoid dependency with the dhcpsrv library.
     void invalidDaemonTest(const std::string& daemon_name,
                            uint16_t family = AF_INET,
-                           const isc::data::ElementPtr& params = isc::data::ElementPtr());
+                           const isc::data::ElementPtr& params = isc::data::ElementPtr()) {
+        // Set family and daemon's proc name.
+        isc::dhcp::CfgMgr::instance().setFamily(family);
+        isc::process::Daemon::setProcName(daemon_name);
+
+        clearLibraries();
+
+        // Adding the library to the list of libraries should work.
+        ASSERT_NO_THROW_LOG(addLibrary(lib_so_name_, params));
+
+        // Loading the library should fail.
+        ASSERT_FALSE(loadLibraries()) << "library: " << lib_so_name_
+            << ", should not have loaded for: " << daemon_name;
+    }
 
     /// @brief Creates a set configuration parameters valid for the library.
     virtual isc::data::ElementPtr validConfigParams() {

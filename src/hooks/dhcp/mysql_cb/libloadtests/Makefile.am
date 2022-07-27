@@ -39,7 +39,6 @@ hook_load_unittests_LDADD  += $(top_builddir)/src/lib/http/libkea-http.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/database/libkea-database.la
-hook_load_unittests_LDADD  += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
