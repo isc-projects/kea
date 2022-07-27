@@ -240,7 +240,7 @@ contain responses from each service, in the order they were requested:
     ]
 
 An exception to this are authentication or authorization errors which cause CA
-to reject the entirely.  The response to such an error will be formatted
+to reject the command entirely.  The response to such an error will be formatted
 as a single entry (JSON map) as follows:
 
 ::
