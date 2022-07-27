@@ -28,8 +28,7 @@ hook_load_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCL
 hook_load_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 hook_load_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
-hook_load_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/pgsql_cb/libdhcp_pgsql_cb.la
-hook_load_unittests_LDADD  += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+hook_load_unittests_LDADD   = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/eval/libkea-eval.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 hook_load_unittests_LDADD  += $(top_builddir)/src/lib/process/libkea-process.la
