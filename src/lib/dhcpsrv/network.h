@@ -20,9 +20,16 @@
 #include <dhcpsrv/d2_client_cfg.h>
 #include <util/triplet.h>
 #include <util/optional.h>
+
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <cstdint>
+
 #include <functional>
 #include <string>
 
@@ -35,9 +42,31 @@ inline void unused(Args const& ...) {}
 namespace isc {
 namespace dhcp {
 
-/// List of IOAddresses
-typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
+/// @brief Tag for the list of IO addresses as a list.
+struct IOAddressListasListTag { };
 
+/// @brief Tag for the list of IO addresses as a set.
+struct IOAddressListasSetTag { };
+
+/// @brief List of IO addresses
+typedef boost::multi_index_container<
+    // Multi index container holds IO addresses.
+    asiolink::IOAddress,
+    // Indexes.
+    boost::multi_index::indexed_by<
+        // First and default index allows for in order iteration.
+        boost::multi_index::sequenced<
+            boost::multi_index::tag<IOAddressListasListTag>
+        >,
+        // Second index allows for checking existence.
+        boost::multi_index::hashed_unique<
+            boost::multi_index::tag<IOAddressListasSetTag>,
+            boost::multi_index::identity<asiolink::IOAddress>
+        >
+    >
+> IOAddressList;
+
+// @brief Forward declaration of the Network class.
 class Network;
 
 /// @brief Pointer to the @ref Network object.
