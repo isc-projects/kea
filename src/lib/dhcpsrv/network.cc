@@ -133,7 +133,7 @@ Network::toElement() const {
 
     ElementPtr relay_map = Element::createMap();
     ElementPtr address_list = Element::createList();
-    const IOAddressList addresses =  getRelayAddresses();
+    const IOAddressList addresses = getRelayAddresses();
     for (auto address = addresses.begin(); address != addresses.end(); ++address) {
         address_list->add(Element::create((*address).toText()));
     }
