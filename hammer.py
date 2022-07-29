@@ -57,6 +57,7 @@ SYSTEMS = {
     'centos': [
         '7',
         '8',
+        '9',
     ],
     'rhel': [
         '8',
@@ -270,9 +271,11 @@ def get_system_revision():
                             vals[key.strip()] = val.strip().replace('"', '')
 
                 for i in ['ID', 'ID_LIKE']:
-                    if i in vals and vals[i] in SYSTEMS:
-                        system = vals[i]
-                        break
+                    if i in vals:
+                        system_candidate=vals[i].strip('"')
+                        if system_candidate in SYSTEMS:
+                            system = system_candidate
+                            break
                 if system is None:
                     raise Exception('cannot determine system')
 
@@ -493,7 +496,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         # skip_missing_names_on_install used to detect case when one packet is not found and no error is returned
         # but we want an error
         cmd = 'sudo yum install -y --setopt=skip_missing_names_on_install=False'
-    elif system == 'fedora' or (system in ['centos', 'rhel'] and revision in ['8', '9']):
+    elif system in ['centos', 'fedora', 'rhel']:
         cmd = 'sudo dnf -y install'
     elif system in ['debian', 'ubuntu']:
         # prepare the command for ubuntu/debian
@@ -1504,7 +1507,7 @@ def prepare_system_local(features, check_times):
         install_pkgs('epel-release', env=env, check_times=check_times)
 
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make', 'mariadb-devel',
+                    'libtool', 'log4cplus-devel', 'make',
                     'openssl-devel', 'postgresql-devel']
 
         if revision == '7':
@@ -1513,20 +1516,30 @@ def prepare_system_local(features, check_times):
             packages.append('boost169-devel')
 
         if 'native-pkg' in features:
-            packages.extend(['rpm-build', 'python3-devel'])
+            packages.extend(['bison', 'flex', 'rpm-build', 'python3-devel'])
 
         if 'docs' in features:
-            packages.extend(['python3-virtualenv'])
+            packages.extend(['python3-pip'])
 
         if 'mysql' in features:
-            packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
+            packages.extend(['mariadb', 'mariadb-server'])
+            if int(revision) < 9:
+                packages.extend(['mariadb-devel'])
+            else:
+                packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-server'])
+            packages.extend(['libpq-devel', 'postgresql', 'postgresql-server'])
             if revision == '7':
                 packages.extend(['postgresql-devel'])
-            else:
+            elif revision == '8':
                 packages.extend(['postgresql-server-devel'])
+            else:
+                execute('sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm',
+                        env=env, timeout=60, check_times=check_times)
+                execute('sudo dnf -qy module info postgresql 2>/dev/null && sudo dnf -qy module disable postgresql',
+                        env=env, timeout=60, check_times=check_times)
+                packages.extend(['libpq-devel', 'postgresql14-devel', 'postgresql14-server'])
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -1555,7 +1568,9 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, check_times=check_times)
 
         if 'docs' in features:
-            execute('virtualenv-3 ~/venv',
+            execute('pip install virtualenv',
+                    env=env, timeout=120, check_times=check_times)
+            execute('python3 -m venv ~/venv',
                     env=env, timeout=60, check_times=check_times)
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
@@ -1585,15 +1600,15 @@ def prepare_system_local(features, check_times):
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            if revision == '9':
+            packages.extend(['postgresql', 'libpq-devel'])
+            if int(revision) < 9:
+                packages.extend(['postgresql-server-devel', 'postgresql-server'])
+            else:
                 execute('sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm',
                         env=env, timeout=60, check_times=check_times)
-                execute('sudo dnf -qy module info postgresql 2>/dev/null && sudo dnf -qy module disable postgresql || true',
+                execute('sudo dnf -qy module info postgresql 2>/dev/null && sudo dnf -qy module disable postgresql',
                         env=env, timeout=60, check_times=check_times)
                 packages.extend(['postgresql14-devel', 'postgresql14-server'])
-            else:
-                packages.extend(['postgresql-server-devel', 'postgresql-server'])
-            packages.extend(['postgresql', 'libpq-devel'])
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -2780,7 +2795,7 @@ def _get_features(args):
         if args.command == 'build':
             features.discard('unittest')
 
-    return features
+    return sorted(features)
 
 
 def _print_summary(results, features):
