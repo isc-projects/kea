@@ -5,12 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <sstream>
 
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config_backend/base_config_backend.h>
+#include <dhcp4/dhcp4_log.h>
+#include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp/tests/pkt_captures.h>
@@ -25,9 +27,6 @@
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp4/dhcp4_log.h>
-#include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -36,16 +35,27 @@
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <util/encode/hex.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#endif
+
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
 #include <cstdlib>
-#include <dirent.h>
+#include <sstream>
 
 #include <arpa/inet.h>
+#include <dirent.h>
 
 using namespace std;
 using namespace isc;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
@@ -2772,6 +2782,17 @@ Dhcpv4SrvTest::portsServerPort() {
     EXPECT_EQ(srv.server_port_, offer->getLocalPort());
 }
 
+#if defined (HAVE_MYSQL)
+/// @brief Check if SSL/TLS support is available and configured.
+bool hasMySQLTls() {
+    std::string tls = getMySQLTlsEnv();
+    if (tls.empty()) {
+        tls = getMySQLTlsServer();
+    }
+    return (tls == "YES");
+}
+#endif
+
 void
 Dhcpv4SrvTest::loadConfigFile(const string& path) {
     CfgMgr::instance().clear();
@@ -2816,6 +2837,31 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     ASSERT_TRUE(dhcp4);
     ElementPtr mutable_config = boost::const_pointer_cast<Element>(dhcp4);
     mutable_config->set(string("hooks-libraries"), Element::createList());
+#if defined (HAVE_MYSQL)
+    bool tls_required = false;
+    ConstElementPtr hosts = dhcp4->get("hosts-database");
+    if (hosts) {
+        ConstElementPtr tls = hosts->get("trust-anchor");
+        if (tls) {
+            tls_required = true;
+        }
+    }
+    hosts = dhcp4->get("hosts-databases");
+    if (hosts) {
+        for (auto& host : hosts->listValue()) {
+            ConstElementPtr tls = host->get("trust-anchor");
+            if (tls) {
+                tls_required = true;
+                break;
+            }
+        }
+    }
+    if (tls_required && !hasMySQLTls()) {
+        std::cout << "SSL/TLS support is not available or configured: "
+                  << "skipping this test for " << path << "\n";
+        return;
+    }
+#endif
     ASSERT_NO_THROW(Dhcpv4SrvTest::configure(dhcp4->str(), true, true, true, true));
 
     LeaseMgrFactory::destroy();
@@ -2836,8 +2882,38 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     HostMgr::setIOService(IOServicePtr());
 }
 
+/// @brief Class which handles initialization of database
+/// backend for testing configurations.
+class DBInitializer {
+    public:
+        /// @brief Constructor.
+        ///
+        /// Created database schema.
+        DBInitializer() {
+#if defined (HAVE_MYSQL)
+            db::test::createMySQLSchema();
+#endif
+#if defined (HAVE_PGSQL)
+            db::test::createPgSQLSchema();
+#endif
+        }
+
+        /// @brief Destructor.
+        ///
+        /// Destroys database schema.
+        ~DBInitializer() {
+#if defined (HAVE_MYSQL)
+            db::test::destroyMySQLSchema();
+#endif
+#if defined (HAVE_PGSQL)
+            db::test::destroyPgSQLSchema();
+#endif
+        }
+};
+
 void
 Dhcpv4SrvTest::checkConfigFiles() {
+    DBInitializer dbi();
     IfaceMgrTestConfig test_config(true);
     string path = CFG_EXAMPLES;
     vector<string> examples = {
@@ -2928,7 +3004,7 @@ TEST_F(Dhcpv4SrvTest, portsServerPort) {
     portsServerPort();
 }
 
-TEST_F(Dhcpv4SrvTest, portsServerPortMultiTHreading) {
+TEST_F(Dhcpv4SrvTest, portsServerPortMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     portsServerPort();
 }

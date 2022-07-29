@@ -10,6 +10,10 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config_backend/base_config_backend.h>
+#include <dhcp6/json_config_parser.h>
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp/tests/pkt_captures.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
@@ -27,26 +31,33 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/utils.h>
-#include <dhcp6/json_config_parser.h>
+#include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 #include <util/encode/hex.h>
-#include <stats/stats_mgr.h>
-#include <dhcp6/tests/dhcp6_test_utils.h>
-#include <dhcp6/tests/dhcp6_client.h>
-#include <dhcp/tests/pkt_captures.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#endif
 
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <gtest/gtest.h>
-#include <unistd.h>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
+
 #include <dirent.h>
+#include <unistd.h>
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db::test;
 using namespace isc::cb;
 using namespace isc::config;
 using namespace isc::data;
@@ -156,6 +167,17 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+#if defined (HAVE_MYSQL)
+/// @brief Check if SSL/TLS support is available and configured.
+bool hasMySQLTls() {
+    std::string tls = getMySQLTlsEnv();
+    if (tls.empty()) {
+        tls = getMySQLTlsServer();
+    }
+    return (tls == "YES");
+}
+#endif
+
 void
 Dhcpv6SrvTest::loadConfigFile(const string& path) {
     CfgMgr::instance().clear();
@@ -200,6 +222,31 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     ASSERT_TRUE(dhcp6);
     ElementPtr mutable_config = boost::const_pointer_cast<Element>(dhcp6);
     mutable_config->set(string("hooks-libraries"), Element::createList());
+#if defined (HAVE_MYSQL)
+    bool tls_required = false;
+    ConstElementPtr hosts = dhcp6->get("hosts-database");
+    if (hosts) {
+        ConstElementPtr tls = hosts->get("trust-anchor");
+        if (tls) {
+            tls_required = true;
+        }
+    }
+    hosts = dhcp6->get("hosts-databases");
+    if (hosts) {
+        for (auto& host : hosts->listValue()) {
+            ConstElementPtr tls = host->get("trust-anchor");
+            if (tls) {
+                tls_required = true;
+                break;
+            }
+        }
+    }
+    if (tls_required && !hasMySQLTls()) {
+        std::cout << "SSL/TLS support is not available or configured: "
+                  << "skipping this test for " << path << "\n";
+        return;
+    }
+#endif
     ASSERT_NO_THROW(Dhcpv6SrvTest::configure(dhcp6->str(), true, true, true, true));
 
     LeaseMgrFactory::destroy();
@@ -220,8 +267,38 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     HostMgr::setIOService(IOServicePtr());
 }
 
+/// @brief Class which handles initialization of database
+/// backend for testing configurations.
+class DBInitializer {
+    public:
+        /// @brief Constructor.
+        ///
+        /// Created database schema.
+        DBInitializer() {
+#if defined (HAVE_MYSQL)
+            db::test::createMySQLSchema();
+#endif
+#if defined (HAVE_PGSQL)
+            db::test::createPgSQLSchema();
+#endif
+        }
+
+        /// @brief Destructor.
+        ///
+        /// Destroys database schema.
+        ~DBInitializer() {
+#if defined (HAVE_MYSQL)
+            db::test::destroyMySQLSchema();
+#endif
+#if defined (HAVE_PGSQL)
+            db::test::destroyPgSQLSchema();
+#endif
+        }
+};
+
 void
 Dhcpv6SrvTest::checkConfigFiles() {
+    DBInitializer dbi();
     IfaceMgrTestConfig test_config(true);
     string path = CFG_EXAMPLES;
     vector<string> examples = {

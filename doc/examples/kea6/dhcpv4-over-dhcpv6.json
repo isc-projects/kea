@@ -12,8 +12,8 @@
   },
 
   "lease-database": {
-    "type": "memfile",
-    "name": "leases6"
+      "type": "memfile",
+      "name": "/tmp/kea-dhcp6.csv"
   },
 
   "preferred-lifetime": 3000,
@@ -22,10 +22,10 @@
   "rebind-timer": 2000,
 
   "subnet6": [
-   {   "subnet": "2001:db8:1:1::/64",
-       "interface": "eth0",
-       "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ] }
-   ],
+   {    "subnet": "2001:db8:1:1::/64",
+        "interface": "eth0",
+        "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ] }
+  ],
 
 // This enables DHCPv4-over-DHCPv6 support
   "dhcp4o6-port": 6767,
@@ -38,9 +38,9 @@
       "csv-format": true,
 // Put the server address here
       "data": "2001:db8:1:1::1" }
-   ],
+  ],
 
-   "loggers": [
+  "loggers": [
     {
       "name": "kea-dhcp6",
       "output_options": [
