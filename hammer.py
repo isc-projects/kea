@@ -1587,7 +1587,7 @@ def prepare_system_local(features, check_times):
             if revision == '9':
                 execute('sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm',
                         env=env, timeout=60, check_times=check_times)
-                execute('sudo dnf -qy module disable postgresql',
+                execute('sudo dnf -qy module info postgresql 2>/dev/null && sudo dnf -qy module disable postgresql || true',
                         env=env, timeout=60, check_times=check_times)
                 packages.extend(['postgresql14-devel', 'postgresql14-server'])
             else:
