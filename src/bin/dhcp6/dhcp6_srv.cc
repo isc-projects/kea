@@ -76,6 +76,7 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <map>
 #include <set>
 
 using namespace isc;
@@ -1469,7 +1470,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         return;
     }
 
-    std::vector<uint16_t> requested_opts;
+    set<uint16_t> requested_opts;
 
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
@@ -1479,8 +1480,13 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
 
     // Get the list of options that client requested.
     if (option_oro) {
-        requested_opts = option_oro->getValues();
+        set<uint16_t> oro_req_opts;
+        for (uint16_t code : option_oro->getValues()) {
+            static_cast<void>(oro_req_opts.insert(code));
+        }
+        requested_opts = oro_req_opts;
     }
+
     // Iterate on the configured option list to add persistent options
     for (CfgOptionList::const_iterator copts = co_list.begin();
          copts != co_list.end(); ++copts) {
@@ -1495,7 +1501,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
              desc != range.second; ++desc) {
             // Add the persistent option code to requested options
             if (desc->option_) {
-                requested_opts.push_back(desc->option_->getType());
+                uint16_t code = desc->option_->getType();
+                static_cast<void>(requested_opts.insert(code));
             }
         }
     }
@@ -1512,6 +1519,43 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                     answer->addOption(desc.option_);
                     break;
                 }
+            }
+        }
+    }
+
+    // Special cases for vendor class. Vendor options are done later.
+    if (requested_opts.count(D6O_VENDOR_CLASS) > 0) {
+        set<uint32_t> vendor_ids;
+        for (auto opt : answer->getOptions(D6O_VENDOR_CLASS)) {
+            if (opt.first != D6O_VENDOR_CLASS) {
+                continue;
+            }
+            OptionVendorClassPtr vendor_class;
+            vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+            if (vendor_class) {
+                int32_t vendor_id = vendor_class->getVendorId();
+                static_cast<void>(vendor_ids.insert(vendor_id));
+            }
+        }
+        // Iterate on the configured option list
+        for (CfgOptionList::const_iterator copts = co_list.begin();
+             copts != co_list.end(); ++copts) {
+            for (OptionDescriptor desc : (*copts)->getList(DHCP6_OPTION_SPACE,
+                                                           D6O_VENDOR_CLASS)) {
+                if (!desc.option_) {
+                    continue;
+                }
+                OptionVendorClassPtr vendor_class =
+                    boost::dynamic_pointer_cast<OptionVendorClass>(desc.option_);
+                if (!vendor_class) {
+                    continue;
+                }
+                // Is the vendor id already in the response?
+                if (vendor_ids.count(vendor_class->getVendorId()) > 0) {
+                    continue;
+                }
+                // Got it: add it.
+                answer->addOption(desc.option_);
             }
         }
     }
@@ -1534,51 +1578,72 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         return;
     }
 
-    uint32_t vendor_id = 0;
+    set<uint32_t> vendor_ids;
 
     // The server could have provided the option using client classification or
-    // hooks. If there's a vendor info option in the response already, use that.
-    OptionVendorPtr vendor_rsp(boost::dynamic_pointer_cast<OptionVendor>(
-        answer->getOption(D6O_VENDOR_OPTS)));
-    if (vendor_rsp) {
-        vendor_id = vendor_rsp->getVendorId();
+    // hooks. If there're vendor info options in the response already, use them.
+    map<uint32_t, OptionVendorPtr> vendor_rsps;
+    for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
+        if (opt.first != D6O_VENDOR_OPTS) {
+            continue;
+        }
+        OptionVendorPtr vendor_rsp;
+        vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+        if (vendor_rsp) {
+            uint32_t vendor_id = vendor_rsp->getVendorId();
+            vendor_rsps[vendor_id] = vendor_rsp;
+            static_cast<void>(vendor_ids.insert(vendor_id));
+        }
     }
 
     // Otherwise, try to get the vendor-id from the client packet's
     // vendor-specific information option (17).
-    OptionVendorPtr vendor_req;
-    if (vendor_id == 0) {
-        vendor_req = boost::dynamic_pointer_cast<OptionVendor>(
-            question->getOption(D6O_VENDOR_OPTS));
-        if (vendor_req) {
-            vendor_id = vendor_req->getVendorId();
+    map<uint32_t, OptionVendorPtr> vendor_reqs;
+    if (vendor_ids.empty()) {
+        for (auto opt : question->getOptions(D6O_VENDOR_OPTS)) {
+            if (opt.first != D6O_VENDOR_OPTS) {
+                continue;
+            }
+            OptionVendorPtr vendor_req;
+            vendor_req = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+            if (vendor_req) {
+                uint32_t vendor_id = vendor_req->getVendorId();
+                vendor_reqs[vendor_id] = vendor_req;
+                static_cast<void>(vendor_ids.insert(vendor_id));
+            }
         }
     }
 
     // Finally, try to get the vendor-id from the client packet's vendor-class
     // option (16).
-    if (vendor_id == 0) {
-        OptionVendorClassPtr vendor_class(
-            boost::dynamic_pointer_cast<OptionVendorClass>(
-                question->getOption(D6O_VENDOR_CLASS)));
-        if (vendor_class) {
-            vendor_id = vendor_class->getVendorId();
+    if (vendor_ids.empty()) {
+        for (auto opt : question->getOptions(D6O_VENDOR_CLASS)) {
+            if (opt.first != D6O_VENDOR_CLASS) {
+                continue;
+            }
+            OptionVendorClassPtr vendor_class;
+            vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+            if (vendor_class) {
+                uint32_t vendor_id = vendor_class->getVendorId();
+                static_cast<void>(vendor_ids.insert(vendor_id));
+            }
         }
     }
 
     // If there's no vendor option in either request or response, then there's no way
-    // to figure out what the vendor-id value is and we give up.
-    if (vendor_id == 0) {
+    // to figure out what the vendor-id values are and we give up.
+    if (vendor_ids.empty()) {
         return;
     }
 
-    std::vector<uint16_t> requested_opts;
+    map<uint32_t, set<uint16_t> > requested_opts;
 
     // Let's try to get ORO within that vendor-option.
     // This is specific to vendor-id=4491 (Cable Labs). Other vendors may have
     // different policies.
     OptionUint16ArrayPtr oro;
-    if (vendor_id == VENDOR_ID_CABLE_LABS && vendor_req) {
+    if (vendor_reqs.count(VENDOR_ID_CABLE_LABS) > 0) {
+        OptionVendorPtr vendor_req = vendor_reqs[VENDOR_ID_CABLE_LABS];
         OptionPtr oro_generic = vendor_req->getOption(DOCSIS3_V6_ORO);
         if (oro_generic) {
             // Vendor ID 4491 makes Kea look at DOCSIS3_V6_OPTION_DEFINITIONS
@@ -1586,63 +1651,74 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
             // created as an OptionUint16Array, but might not be for other
             // vendor IDs.
             oro = boost::dynamic_pointer_cast<OptionUint16Array>(oro_generic);
-            if (oro) {
-                requested_opts = oro->getValues();
+        }
+        if (oro) {
+            set<uint16_t> oro_req_opts;
+            for (uint16_t code : oro->getValues()) {
+                static_cast<void>(oro_req_opts.insert(code));
             }
+            requested_opts[VENDOR_ID_CABLE_LABS] = oro_req_opts;
         }
     }
 
     // Iterate on the configured option list to add persistent options
-    for (CfgOptionList::const_iterator copts = co_list.begin();
-         copts != co_list.end(); ++copts) {
-        const OptionContainerPtr& opts = (*copts)->getAll(vendor_id);
-        if (!opts) {
-            continue;
-        }
-        // Get persistent options
-        const OptionContainerPersistIndex& idx = opts->get<2>();
-        const OptionContainerPersistRange& range = idx.equal_range(true);
-        for (OptionContainerPersistIndex::const_iterator desc = range.first;
-             desc != range.second; ++desc) {
-            // Add the persistent option code to requested options
-            if (desc->option_) {
-                requested_opts.push_back(desc->option_->getType());
+    for (uint32_t vendor_id : vendor_ids) {
+        for (CfgOptionList::const_iterator copts = co_list.begin();
+             copts != co_list.end(); ++copts) {
+            const OptionContainerPtr& opts = (*copts)->getAll(vendor_id);
+            if (!opts) {
+                continue;
+            }
+            // Get persistent options
+            const OptionContainerPersistIndex& idx = opts->get<2>();
+            const OptionContainerPersistRange& range = idx.equal_range(true);
+            for (OptionContainerPersistIndex::const_iterator desc = range.first;
+                 desc != range.second; ++desc) {
+                if (!desc->option_) {
+                    continue;
+                }
+                // Add the persistent option code to requested options
+                uint16_t code = desc->option_->getType();
+                static_cast<void>(requested_opts[vendor_id].insert(code));
             }
         }
-    }
 
-    // If there is nothing to add don't do anything then.
-    if (requested_opts.empty()) {
-        return;
-    }
+        // If there is nothing to add don't do anything then with this vendor.
+        if (requested_opts[vendor_id].empty()) {
+            continue;
+        }
 
-    if (!vendor_rsp) {
         // It's possible that the vendor opts option was inserted already
         // by client class or a hook. If that is so, let's use it.
-        vendor_rsp.reset(new OptionVendor(Option::V6, vendor_id));
-    }
+        OptionVendorPtr vendor_rsp;
+        if (vendor_rsps.count(vendor_id) > 0) {
+            vendor_rsp = vendor_rsps[vendor_id];
+        } else {
+            vendor_rsp.reset(new OptionVendor(Option::V6, vendor_id));
+        }
 
-    // Get the list of options that client requested.
-    bool added = false;
+        // Get the list of options that client requested.
+        bool added = false;
 
-    for (uint16_t opt : requested_opts) {
-        if (!vendor_rsp->getOption(opt)) {
-            for (CfgOptionList::const_iterator copts = co_list.begin();
-                 copts != co_list.end(); ++copts) {
-                OptionDescriptor desc = (*copts)->get(vendor_id, opt);
-                if (desc.option_) {
-                    vendor_rsp->addOption(desc.option_);
-                    added = true;
-                    break;
+        for (uint16_t opt : requested_opts[vendor_id]) {
+            if (!vendor_rsp->getOption(opt)) {
+                for (CfgOptionList::const_iterator copts = co_list.begin();
+                     copts != co_list.end(); ++copts) {
+                    OptionDescriptor desc = (*copts)->get(vendor_id, opt);
+                    if (desc.option_) {
+                        vendor_rsp->addOption(desc.option_);
+                        added = true;
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    // If we added some sub-options and the vendor opts option is not in
-    // the response already, then add it.
-    if (added && !answer->getOption(D6O_VENDOR_OPTS)) {
-        answer->addOption(vendor_rsp);
+        // If we added some sub-options and the vendor opts option is not in
+        // the response already, then add it.
+        if (added && (vendor_rsps.count(vendor_id) == 0)) {
+            answer->addOption(vendor_rsp);
+        }
     }
 }
 
@@ -3871,24 +3947,28 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 }
 
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
-    OptionVendorClassPtr vclass = boost::dynamic_pointer_cast<
-        OptionVendorClass>(pkt->getOption(D6O_VENDOR_CLASS));
+    OptionVendorClassPtr vclass;
+    for (auto opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
+        if (opt.first != D6O_VENDOR_CLASS) {
+            continue;
+        }
+        vclass = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+        if (!vclass || vclass->getTuplesNum() == 0) {
+            continue;
+        }
 
-    if (!vclass || vclass->getTuplesNum() == 0) {
-        return;
-    }
+        if (vclass->hasTuple(DOCSIS3_CLASS_MODEM)) {
+            pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM);
+            classes += VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM + " ";
 
-    if (vclass->hasTuple(DOCSIS3_CLASS_MODEM)) {
-        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM);
-        classes += VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM + " ";
+        } else if (vclass->hasTuple(DOCSIS3_CLASS_EROUTER)) {
+            pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
+            classes += VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER + " ";
 
-    } else if (vclass->hasTuple(DOCSIS3_CLASS_EROUTER)) {
-        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
-        classes += VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER + " ";
-
-    } else {
-        pkt->addClass(VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText());
-        classes + VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText() + " ";
+        } else {
+            pkt->addClass(VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText());
+            classes + VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText() + " ";
+        }
     }
 }
 

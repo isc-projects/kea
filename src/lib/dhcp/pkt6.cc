@@ -168,6 +168,71 @@ Pkt6::getAnyRelayOption(const uint16_t option_code,
     return (OptionPtr());
 }
 
+OptionCollection
+Pkt6::getNonCopiedAnyRelayOptions(const uint16_t option_code,
+                                  const RelaySearchOrder& order) const {
+    if (relay_info_.empty()) {
+        // There's no relay info, this is a direct message
+        return (OptionCollection());
+    }
+
+    int start = 0; // First relay to check
+    int end = 0;   // Last relay to check
+    int direction = 0; // How we going to iterate: forward or backward?
+
+    prepareGetAnyRelayOption(order, start, end, direction);
+
+    // This is a tricky loop. It must go from start to end, but it must work in
+    // both directions (start > end; or start < end). We can't use regular
+    // exit condition, because we don't know whether to use i <= end or i >= end.
+    // That's why we check if in the next iteration we would go past the
+    // list (end + direction). It is similar to STL concept of end pointing
+    // to a place after the last element
+    for (int i = start; i != end + direction; i += direction) {
+        OptionCollection opts = getNonCopiedRelayOptions(option_code, i);
+        if (!opts.empty()) {
+            return (opts);
+        }
+    }
+
+    // We iterated over specified relays and haven't found what we were
+    // looking for
+    return (OptionCollection());
+}
+
+OptionCollection
+Pkt6::getAnyRelayOptions(const uint16_t option_code,
+                         const RelaySearchOrder& order) {
+
+    if (relay_info_.empty()) {
+        // There's no relay info, this is a direct message
+        return (OptionCollection());
+    }
+
+    int start = 0; // First relay to check
+    int end = 0;   // Last relay to check
+    int direction = 0; // How we going to iterate: forward or backward?
+
+    prepareGetAnyRelayOption(order, start, end, direction);
+
+    // This is a tricky loop. It must go from start to end, but it must work in
+    // both directions (start > end; or start < end). We can't use regular
+    // exit condition, because we don't know whether to use i <= end or i >= end.
+    // That's why we check if in the next iteration we would go past the
+    // list (end + direction). It is similar to STL concept of end pointing
+    // to a place after the last element
+    for (int i = start; i != end + direction; i += direction) {
+        OptionCollection opts = getRelayOptions(option_code, i);
+        if (!opts.empty()) {
+            return (opts);
+        }
+    }
+
+    // We iterated over specified relays and haven't found what we were
+    // looking for
+    return (OptionCollection());
+}
+
 OptionPtr
 Pkt6::getNonCopiedRelayOption(const uint16_t opt_type,
                               const uint8_t relay_level) const {
@@ -205,6 +270,51 @@ Pkt6::getRelayOption(const uint16_t opt_type, const uint8_t relay_level) {
     }
 
     return (OptionPtr());
+}
+
+OptionCollection
+Pkt6::getNonCopiedRelayOptions(const uint16_t opt_type,
+                               const uint8_t relay_level) const {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed "
+                  << relay_info_.size() << " time(s)."
+                  << " There is no info about "
+                  << relay_level + 1 << " relay.");
+    }
+
+    std::pair<OptionCollection::const_iterator,
+              OptionCollection::const_iterator> range =
+        relay_info_[relay_level].options_.equal_range(opt_type);
+    return (OptionCollection(range.first, range.second));
+}
+
+OptionCollection
+Pkt6::getRelayOptions(const uint16_t opt_type,
+                      const uint8_t relay_level) {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed "
+                  << relay_info_.size() << " time(s)."
+                  << " There is no info about "
+                  << relay_level + 1 << " relay.");
+    }
+
+    OptionCollection options_copy;
+
+    std::pair<OptionCollection::iterator,
+              OptionCollection::iterator> range =
+        relay_info_[relay_level].options_.equal_range(opt_type);
+    // If options should be copied on retrieval, we should now iterate over
+    // matching options, copy them and replace the original ones with new
+    // instances.
+    if (copy_retrieved_options_) {
+        for (OptionCollection::iterator opt_it = range.first;
+             opt_it != range.second; ++opt_it) {
+            OptionPtr option_copy = opt_it->second->clone();
+            opt_it->second = option_copy;
+        }
+    }
+    // Finally, return updated options. This can also be empty in some cases.
+    return (OptionCollection(range.first, range.second));
 }
 
 const isc::asiolink::IOAddress&
@@ -846,11 +956,16 @@ Pkt6::getMACFromIPv6RelayOpt() {
 HWAddrPtr
 Pkt6::getMACFromDocsisModem() {
     HWAddrPtr mac;
-    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
-        OptionVendor>(getNonCopiedOption(D6O_VENDOR_OPTS));
-
-    // Check if this is indeed DOCSIS3 environment
-    if (vendor && vendor->getVendorId() == VENDOR_ID_CABLE_LABS) {
+    OptionVendorPtr vendor;
+    for (auto opt : getNonCopiedOptions(D6O_VENDOR_OPTS)) {
+        if (opt.first != D6O_VENDOR_OPTS) {
+            continue;
+        }
+        vendor = boost::dynamic_pointer_cast< OptionVendor>(opt.second);
+        // Check if this is indeed DOCSIS3 environment
+        if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+            continue;
+        }
         // If it is, try to get device-id option
         OptionPtr device_id = vendor->getOption(DOCSIS3_V6_DEVICE_ID);
         if (device_id) {
@@ -858,6 +973,7 @@ Pkt6::getMACFromDocsisModem() {
             if (!device_id->getData().empty()) {
                 mac.reset(new HWAddr(device_id->getData(), HTYPE_DOCSIS));
                 mac->source_ = HWAddr::HWADDR_SOURCE_DOCSIS_MODEM;
+                break;
             }
         }
     }
@@ -867,25 +983,32 @@ Pkt6::getMACFromDocsisModem() {
 
 HWAddrPtr
 Pkt6::getMACFromDocsisCMTS() {
-    HWAddrPtr mac;
+    if (relay_info_.empty()) {
+        return (HWAddrPtr());
+    }
 
     // If the message passed through a CMTS, there'll
     // CMTS-specific options in it.
-    if (!relay_info_.empty()) {
-        OptionVendorPtr vendor = boost::dynamic_pointer_cast<
-            OptionVendor>(getAnyRelayOption(D6O_VENDOR_OPTS,
-                                            RELAY_SEARCH_FROM_CLIENT));
-
+    HWAddrPtr mac;
+    OptionVendorPtr vendor;
+    for (auto opt : getAnyRelayOptions(D6O_VENDOR_OPTS,
+                                       RELAY_SEARCH_FROM_CLIENT)) {
+        if (opt.first != D6O_VENDOR_OPTS) {
+            continue;
+        }
+        vendor = boost::dynamic_pointer_cast< OptionVendor>(opt.second);
         // Check if this is indeed DOCSIS3 environment
-        if (vendor && vendor->getVendorId() == VENDOR_ID_CABLE_LABS) {
-            // Try to get cable modem mac
-            OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
+        if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+            continue;
+        }
+        // Try to get cable modem mac
+        OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
 
-            // If the option contains any data, use it as MAC address
-            if (cm_mac && !cm_mac->getData().empty()) {
-                mac.reset(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS));
-                mac->source_ = HWAddr::HWADDR_SOURCE_DOCSIS_CMTS;
-            }
+        // If the option contains any data, use it as MAC address
+        if (cm_mac && !cm_mac->getData().empty()) {
+            mac.reset(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS));
+            mac->source_ = HWAddr::HWADDR_SOURCE_DOCSIS_CMTS;
+            break;
         }
     }
 

@@ -96,7 +96,7 @@ void
 CfgOption::replace(const OptionDescriptor& desc, const std::string& option_space) {
     if (!desc.option_) {
         isc_throw(isc::BadValue, "option being replaced must not be NULL");
-    } 
+    }
 
     // Check for presence of options.
     OptionContainerPtr options = getAll(option_space);
@@ -109,10 +109,10 @@ CfgOption::replace(const OptionDescriptor& desc, const std::string& option_space
     OptionContainerTypeIndex& idx = options->get<1>();
     auto const& od_itr = idx.find(desc.option_->getType());
     if (od_itr == idx.end()) {
-        isc_throw(isc::BadValue, "cannot replace option: " 
+        isc_throw(isc::BadValue, "cannot replace option: "
                   << option_space << ":" << desc.option_->getType()
                   << ", it does not exist");
-    } 
+    }
 
     idx.replace(od_itr, desc);
 }
@@ -154,7 +154,7 @@ CfgOption::createOptions(CfgOptionDefPtr cfg_def) {
     for (auto space : getOptionSpaceNames()) {
         for (auto opt_desc : *(getAll(space))) {
             if (createDescriptorOption(cfg_def, space, opt_desc)) {
-                // Option was recreated, let's replace the descriptor. 
+                // Option was recreated, let's replace the descriptor.
                 replace(opt_desc,space);
             }
         }

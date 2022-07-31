@@ -246,9 +246,25 @@ protected:
     /// @param relay_level Nesting level as described for
     /// @ref Pkt6::getRelayOption.
     ///
-    /// @return Pointer to the option or NULL if such option doesn't exist.
+    /// @return Pointer to the option or null if such option doesn't exist.
     OptionPtr getNonCopiedRelayOption(const uint16_t opt_type,
                                       const uint8_t relay_level) const;
+
+    /// @brief Returns all option instances inserted by relay agent.
+    ///
+    /// This is a variant of the @ref Pkt6::getRelayOptions function which
+    /// never copies an option returned. This method should be only used by
+    /// the @ref Pkt6 class and derived classes. Any external callers should
+    /// use @ref getRelayOption which copies the option before returning it
+    /// when the @ref Pkt::copy_retrieved_options_ flag is set to true.
+    ///
+    /// @param opt_type Code of the requested option.
+    /// @param relay_level Nesting level as described for
+    /// @ref Pkt6::getRelayOption.
+    ///
+    /// @return Collection of options found.
+    OptionCollection getNonCopiedRelayOptions(const uint16_t opt_type,
+                                              const uint8_t relay_level) const;
 
 public:
 
@@ -266,8 +282,26 @@ public:
     /// @param option_code code of the requested option
     /// @param nesting_level see description above
     ///
-    /// @return pointer to the option (or NULL if there is no such option)
+    /// @return pointer to the option (or null if there is no such option)
     OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
+
+    /// @brief Returns options inserted by relay
+    ///
+    /// Returns options from specified relay scope (inserted by a given relay
+    /// if this is received packet or to be decapsulated by a given relay if
+    /// this is a transmitted packet). nesting_level specifies which relay
+    /// scope is to be used. 0 is the outermost encapsulation (relay closest to
+    /// the server). pkt->relay_info_.size() - 1 is the innermost encapsulation
+    /// (relay closest to the client).
+    ///
+    /// @throw isc::OutOfRange if nesting level has invalid value.
+    ///
+    /// @param option_code code of the requested option
+    /// @param nesting_level see description above
+    ///
+    /// @return Collection of options found.
+    OptionCollection getRelayOptions(uint16_t option_code,
+                                     uint8_t nesting_level);
 
 private:
 
@@ -303,9 +337,24 @@ protected:
     /// @param option_code Searched option.
     /// @param order Option search order (see @ref RelaySearchOrder).
     ///
-    /// @return Option pointer or NULL, if no option matches specified criteria.
+    /// @return Option pointer or null, if no option matches specified criteria.
     OptionPtr getNonCopiedAnyRelayOption(const uint16_t option_code,
                                          const RelaySearchOrder& order) const;
+
+    /// @brief Returns pointers to instances of specified option.
+    ///
+    /// This is a variant of @ref getAnyRelayOptions but it never copies
+    /// an option returned. This method should be only used by
+    /// the @ref Pkt6 class and derived classes. Any external callers should
+    /// use @ref getAnyRelayOption which copies the option before returning it
+    /// when the @ref Pkt::copy_retrieved_options_ flag is set to true.
+    ///
+    /// @param option_code Searched option.
+    /// @param order Option search order (see @ref RelaySearchOrder).
+    ///
+    /// @return Collection of options found.
+    OptionCollection getNonCopiedAnyRelayOptions(const uint16_t option_code,
+                                                 const RelaySearchOrder& order) const;
 
 public:
 
@@ -318,9 +367,22 @@ public:
     ///
     /// @param option_code searched option
     /// @param order option search order (see @ref RelaySearchOrder)
-    /// @return option pointer (or NULL if no option matches specified criteria)
+    /// @return option pointer (or null if no option matches specified criteria)
     OptionPtr getAnyRelayOption(const uint16_t option_code,
                                 const RelaySearchOrder& order);
+
+    /// @brief Return first instances of a specified option
+    ///
+    /// When a client's packet traverses multiple relays, each passing relay may
+    /// insert extra options. This method allows the specific instances of a given
+    /// option to be obtained (e.g. closest to the client, closest to the server,
+    /// etc.) See @ref RelaySearchOrder for a detailed description.
+    ///
+    /// @param option_code searched option
+    /// @param order option search order (see @ref RelaySearchOrder)
+    /// @return Collection of options found.
+    OptionCollection getAnyRelayOptions(const uint16_t option_code,
+                                        const RelaySearchOrder& order);
 
     /// @brief return the link address field from a relay option
     ///
