@@ -921,13 +921,102 @@ TEST_F(CfgOptionTest, get) {
         std::ostringstream stream;
         // First, try the invalid option space name.
         OptionDescriptor desc = cfg.get("isc", code);
-        // Returned descriptor should contain NULL option ptr.
+        // Returned descriptor should contain null option ptr.
         EXPECT_FALSE(desc.option_);
         // Now, try the valid option space.
         desc = cfg.get(DHCP6_OPTION_SPACE, code);
         // Test that the option code matches the expected code.
         ASSERT_TRUE(desc.option_);
         EXPECT_EQ(code, desc.option_->getType());
+    }
+}
+
+// This test verifies that multiple options can be retrieved from the
+// configuration using option code and option space.
+TEST_F(CfgOptionTest, getList) {
+    CfgOption cfg;
+
+    // Add twice 10 options to a "dhcp4" option space in the subnet.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(cfg.add(option, false, DHCP4_OPTION_SPACE));
+        OptionPtr option2(new Option(Option::V4, code, OptionBuffer(10, 0xEE)));
+        ASSERT_NO_THROW(cfg.add(option2, false, DHCP4_OPTION_SPACE));
+    }
+
+    // Check that we can get each added option descriptors.
+    for (uint16_t code = 100; code < 110; ++code) {
+        std::ostringstream stream;
+        // First, try the invalid option space name.
+        OptionDescriptorList list = cfg.getList("isc", code);
+        // Returned descriptor list should be empty.
+        EXPECT_TRUE(list.empty());
+        // Now, try the valid option space.
+        list = cfg.getList(DHCP4_OPTION_SPACE, code);
+        // Test that the option code matches the expected code.
+        ASSERT_EQ(2, list.size());
+        OptionDescriptor desc = list[0];
+        ASSERT_TRUE(desc.option_);
+        EXPECT_EQ(code, desc.option_->getType());
+        OptionBuffer content = desc.option_->getData();
+        ASSERT_EQ(10, content.size());
+        uint8_t val = content[8];
+        EXPECT_TRUE((val == 0xFF) || (val == 0xEE));
+        desc =  list[1];
+        ASSERT_TRUE(desc.option_);
+        EXPECT_EQ(code, desc.option_->getType());
+        content = desc.option_->getData();
+        ASSERT_EQ(10, content.size());
+        if (val == 0xFF) {
+            EXPECT_EQ(0xEE, content[4]);
+        } else {
+            EXPECT_EQ(0xFF, content[4]);
+        }
+    }
+}
+
+// This test verifies that multiple options can be retrieved from the
+// configuration using option code and vendor space.
+TEST_F(CfgOptionTest, getListVendor) {
+    CfgOption cfg;
+    std::string vendor_space("vendor-12345678");
+
+    // Add twice 10 options to a "dhcp4" option space in the subnet.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(cfg.add(option, false, vendor_space));
+        OptionPtr option2(new Option(Option::V4, code, OptionBuffer(10, 0xEE)));
+        ASSERT_NO_THROW(cfg.add(option2, false, vendor_space));
+    }
+
+    // Check that we can get each added option descriptors.
+    for (uint16_t code = 100; code < 110; ++code) {
+        std::ostringstream stream;
+        // First, try the invalid option space name.
+        OptionDescriptorList list = cfg.getList(11111111, code);
+        // Returned descriptor list should be empty.
+        EXPECT_TRUE(list.empty());
+        // Now, try the valid option space.
+        list = cfg.getList(12345678, code);
+        // Test that the option code matches the expected code.
+        ASSERT_EQ(2, list.size());
+        OptionDescriptor desc = list[0];
+        ASSERT_TRUE(desc.option_);
+        EXPECT_EQ(code, desc.option_->getType());
+        OptionBuffer content = desc.option_->getData();
+        ASSERT_EQ(10, content.size());
+        uint8_t val = content[8];
+        EXPECT_TRUE((val == 0xFF) || (val == 0xEE));
+        desc =  list[1];
+        ASSERT_TRUE(desc.option_);
+        EXPECT_EQ(code, desc.option_->getType());
+        content = desc.option_->getData();
+        ASSERT_EQ(10, content.size());
+        if (val == 0xFF) {
+            EXPECT_EQ(0xEE, content[4]);
+        } else {
+            EXPECT_EQ(0xFF, content[4]);
+        }
     }
 }
 

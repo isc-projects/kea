@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,8 +22,9 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
-#include <string>
 #include <list>
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -32,6 +33,9 @@ class OptionDescriptor;
 
 /// A pointer to option descriptor.
 typedef boost::shared_ptr<OptionDescriptor> OptionDescriptorPtr;
+
+/// A list of option descriptors.
+typedef std::vector<OptionDescriptor> OptionDescriptorList;
 
 /// @brief Option descriptor.
 ///
@@ -532,14 +536,15 @@ public:
     ///
     /// @note If there are multiple options with the same key, only one will
     /// be returned.  No indication will be given of the presence of others,
-    /// and the instance returned is not determinable.
+    /// and the instance returned is not determinable. So please use
+    /// the next method when multiple instances of the option are expected.
     ///
     /// @param key Option space name or vendor identifier.
     /// @param option_code Code of the option to be returned.
     /// @tparam Selector one of: @c std::string or @c uint32_t
     ///
     /// @return Descriptor of the option. If option hasn't been found, the
-    /// descriptor holds NULL option.
+    /// descriptor holds null option.
     template<typename Selector>
     OptionDescriptor get(const Selector& key,
                          const uint16_t option_code) const {
@@ -558,6 +563,40 @@ public:
         }
 
         return (*od_itr);
+    }
+
+    /// @brief Returns options for the specified key and option code.
+    ///
+    /// The key should be a string, in which case it specifies an option space
+    /// name, or an uint32_t value, in which case it specifies a vendor
+    /// identifier.
+    ///
+    /// @param key Option space name or vendor identifier.
+    /// @param option_code Code of the option to be returned.
+    /// @tparam Selector one of: @c std::string or @c uint32_t
+    ///
+    /// @return List of Descriptors of the option.
+    template<typename Selector>
+    OptionDescriptorList getList(const Selector& key,
+                                 const uint16_t option_code) const {
+
+        OptionDescriptorList list;
+        // Check for presence of options.
+        OptionContainerPtr options = getAll(key);
+        if (!options || options->empty()) {
+            return (list);
+        }
+
+        // Some options present, locate the one we are interested in.
+        const OptionContainerTypeIndex& idx = options->get<1>();
+        OptionContainerTypeRange range = idx.equal_range(option_code);
+        // This code copies descriptors and can be optimized not doing this.
+        for (OptionContainerTypeIndex::const_iterator od_itr = range.first;
+             od_itr != range.second; ++od_itr) {
+            list.push_back(*od_itr);
+        }
+
+        return (list);
     }
 
     /// @brief Deletes option for the specified option space and option code.
