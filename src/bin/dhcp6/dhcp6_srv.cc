@@ -1523,7 +1523,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
-    // Special cases for vendor class. Vendor options are done later.
+    // Special cases for vendor class and options.
     if (requested_opts.count(D6O_VENDOR_CLASS) > 0) {
         set<uint32_t> vendor_ids;
         for (auto opt : answer->getOptions(D6O_VENDOR_CLASS)) {
@@ -1552,6 +1552,42 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                 }
                 // Is the vendor id already in the response?
                 if (vendor_ids.count(vendor_class->getVendorId()) > 0) {
+                    continue;
+                }
+                // Got it: add it.
+                answer->addOption(desc.option_);
+            }
+        }
+    }
+
+    if (requested_opts.count(D6O_VENDOR_OPTS) > 0) {
+        set<uint32_t> vendor_ids;
+        for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
+            if (opt.first != D6O_VENDOR_OPTS) {
+                continue;
+            }
+            OptionVendorPtr vendor_opts;
+            vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+            if (vendor_opts) {
+                int32_t vendor_id = vendor_opts->getVendorId();
+                static_cast<void>(vendor_ids.insert(vendor_id));
+            }
+        }
+        // Iterate on the configured option list
+        for (CfgOptionList::const_iterator copts = co_list.begin();
+             copts != co_list.end(); ++copts) {
+            for (OptionDescriptor desc : (*copts)->getList(DHCP6_OPTION_SPACE,
+                                                           D6O_VENDOR_OPTS)) {
+                if (!desc.option_) {
+                    continue;
+                }
+                OptionVendorPtr vendor_opts =
+                    boost::dynamic_pointer_cast<OptionVendor>(desc.option_);
+                if (!vendor_opts) {
+                    continue;
+                }
+                // Is the vendor id already in the response?
+                if (vendor_ids.count(vendor_opts->getVendorId()) > 0) {
                     continue;
                 }
                 // Got it: add it.
