@@ -40,6 +40,8 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 
+namespace {
+
 /// @brief Class dedicated to testing vendor options in DHCPv6
 class VendorOptsTest : public Dhcpv6SrvTest {
 public:
@@ -636,4 +638,163 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
     vector<uint8_t> subopt2bin = subopt2->toBinary(false);
     string txt(subopt2bin.begin(), subopt2bin.end());
     EXPECT_EQ("tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img", txt);
+}
+
+// Checks if it's possible to have 2 vendor-class options and 2 vendor-opts
+// options with different vendor IDs.
+TEST_F(VendorOptsTest, multipleVendor) {
+    Dhcp6Client client;
+
+    // The config defines 2 vendors with for each a vendor-class option,
+    // a vendor-opts option and a custom vendor suboption, all having
+    // the always send flag set to true.
+    // The encoding for the option-class option is a bit hairy: first is
+    // the vendor id (uint32) and the remaining is a binary which stands
+    // for tuples so length (uint16) x value.
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"foo\","
+        "            \"code\": 123,"
+        "            \"space\": \"vendor-1234\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"bar\","
+        "            \"code\": 456,"
+        "            \"space\": \"vendor-5678\","
+        "            \"type\": \"string\""
+        "        }"
+        "    ],"
+        "    \"option-data\": ["
+        "        {"
+        "            \"name\": \"vendor-class\","
+        "            \"always-send\": true,"
+        "            \"data\": \"1234, 0003666f6f\""
+        "        },"
+        "        {"
+        "            \"name\": \"vendor-class\","
+        "            \"always-send\": true,"
+        "            \"data\": \"5678, 0003626172\""
+        "        },"
+        "        {"
+        "            \"name\": \"vendor-opts\","
+        "            \"always-send\": true,"
+        "            \"data\": \"1234\""
+        "        },"
+        "        {"
+        "            \"name\": \"vendor-opts\","
+        "            \"always-send\": true,"
+        "            \"data\": \"5678\""
+        "        },"
+        "        {"
+        "            \"name\": \"foo\","
+        "            \"always-send\": true,"
+        "            \"space\": \"vendor-1234\","
+        "            \"data\": \"foo\""
+        "        },"
+        "        {"
+        "            \"name\": \"bar\","
+        "            \"always-send\": true,"
+        "            \"space\": \"vendor-5678\","
+        "            \"data\": \"bar\""
+        "        }"
+        "    ],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/64\", "
+        "    \"interface\": \"eth0\" "
+        " } ]"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Let's check whether the server is not able to process this packet.
+    EXPECT_NO_THROW(client.doSolicit());
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check there're vendor-class options.
+    const OptionCollection& classes =
+        client.getContext().response_->getOptions(D6O_VENDOR_CLASS);
+    ASSERT_EQ(2, classes.size());
+    OptionVendorClassPtr opt_class1234;
+    OptionVendorClassPtr opt_class5678;
+    for (auto opt : classes) {
+        ASSERT_EQ(D6O_VENDOR_CLASS, opt.first);
+        OptionVendorClassPtr opt_class =
+            boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+        ASSERT_TRUE(opt_class);
+        uint32_t vendor_id = opt_class->getVendorId();
+        if (vendor_id == 1234) {
+            ASSERT_FALSE(opt_class1234);
+            opt_class1234 = opt_class;
+            break;
+        }
+        ASSERT_EQ(5678, vendor_id);
+        ASSERT_FALSE(opt_class5678);
+        opt_class5678 = opt_class;
+    }
+
+    // Verify first vendor-class option.
+    ASSERT_TRUE(opt_class1234);
+    ASSERT_EQ(1, opt_class1234->getTuplesNum());
+    EXPECT_EQ("foo", opt_class1234->getTuple(0).getText());
+
+    // Verify second vendor-class option.
+    ASSERT_TRUE(opt_class5678);
+    ASSERT_EQ(1, opt_class5678->getTuplesNum());
+    EXPECT_EQ("bar", opt_class5678->getTuple(0).getText());
+
+    // Check there're vendor-opts options.
+    const OptionCollection& options =
+        client.getContext().response_->getOptions(D6O_VENDOR_OPTS);
+    ASSERT_EQ(2, options.size());
+    OptionVendorPtr opt_opts1234;
+    OptionVendorPtr opt_opts5678;
+    for (auto opt : options) {
+        ASSERT_EQ(D6O_VENDOR_OPTS, opt.first);
+        OptionVendorPtr opt_opts =
+            boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+        ASSERT_TRUE(opt_opts);
+        uint32_t vendor_id = opt_opts->getVendorId();
+        if (vendor_id == 1234) {
+            ASSERT_FALSE(opt_opts1234);
+            opt_opts1234 = opt_opts;
+            break;
+        }
+        ASSERT_EQ(5678, vendor_id);
+        ASSERT_FALSE(opt_opts5678);
+        opt_opts5678 = opt_opts;
+    }
+
+    // Verify first vendor-opts option.
+    ASSERT_TRUE(opt_opts1234);
+    OptionCollection subs1234 = opt_opts1234->getOptions();
+    cerr << "opts1234: " << opt_opts1234->toText() << "\n";
+    ASSERT_EQ(1, subs1234.size());
+    OptionPtr sub1234 = subs1234.begin()->second;
+    ASSERT_TRUE(sub1234);
+    EXPECT_EQ(123, sub1234->getType());
+    OptionStringPtr opt_foo =
+        boost::dynamic_pointer_cast<OptionString>(sub1234);
+    ASSERT_TRUE(opt_foo);
+    EXPECT_EQ("foo", opt_foo->getValue());
+
+    // Verify second vendor-opts option.
+    ASSERT_TRUE(opt_opts5678);
+    OptionCollection subs5678 = opt_opts5678->getOptions();
+    ASSERT_EQ(1, subs5678.size());
+    OptionPtr sub5678 = subs5678.begin()->second;
+    ASSERT_TRUE(sub5678);
+    EXPECT_EQ(456, sub5678->getType());
+    OptionStringPtr opt_bar =
+        boost::dynamic_pointer_cast<OptionString>(sub5678);
+    ASSERT_TRUE(opt_bar);
+    EXPECT_EQ("bar", opt_bar->getValue());
+}
+
 }
