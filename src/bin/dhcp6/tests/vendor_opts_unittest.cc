@@ -623,7 +623,7 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
     EXPECT_NO_THROW(client.doSolicit());
     ASSERT_TRUE(client.getContext().response_);
 
-    // Check there's a response.
+    // Check whether there's a response.
     OptionPtr rsp = client.getContext().response_->getOption(D6O_VENDOR_OPTS);
     ASSERT_TRUE(rsp);
 
@@ -717,7 +717,7 @@ TEST_F(VendorOptsTest, twoVendors) {
     EXPECT_NO_THROW(client.doSolicit());
     ASSERT_TRUE(client.getContext().response_);
 
-    // Check there're vendor-class options.
+    // Check whether there are vendor-class options.
     const OptionCollection& classes =
         client.getContext().response_->getOptions(D6O_VENDOR_CLASS);
     ASSERT_EQ(2, classes.size());
@@ -749,7 +749,7 @@ TEST_F(VendorOptsTest, twoVendors) {
     ASSERT_EQ(1, opt_class5678->getTuplesNum());
     EXPECT_EQ("bar", opt_class5678->getTuple(0).getText());
 
-    // Check there're vendor-opts options.
+    // Check whether there are vendor-opts options.
     const OptionCollection& options =
         client.getContext().response_->getOptions(D6O_VENDOR_OPTS);
     ASSERT_EQ(2, options.size());
@@ -884,7 +884,7 @@ TEST_F(VendorOptsTest, threeVendors) {
     EXPECT_NO_THROW(client.doSolicit());
     ASSERT_TRUE(client.getContext().response_);
 
-    // Check there're vendor-opts options.
+    // Check whether there are vendor-opts options.
     const OptionCollection& options =
         client.getContext().response_->getOptions(D6O_VENDOR_OPTS);
     ASSERT_EQ(3, options.size());
