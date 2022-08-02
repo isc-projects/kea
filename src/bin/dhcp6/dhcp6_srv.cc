@@ -1527,9 +1527,6 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
     if (requested_opts.count(D6O_VENDOR_CLASS) > 0) {
         set<uint32_t> vendor_ids;
         for (auto opt : answer->getOptions(D6O_VENDOR_CLASS)) {
-            if (opt.first != D6O_VENDOR_CLASS) {
-                continue;
-            }
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_class) {
@@ -1551,11 +1548,13 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                     continue;
                 }
                 // Is the vendor id already in the response?
-                if (vendor_ids.count(vendor_class->getVendorId()) > 0) {
+                uint32_t vendor_id = vendor_class->getVendorId();
+                if (vendor_ids.count(vendor_id) > 0) {
                     continue;
                 }
                 // Got it: add it.
                 answer->addOption(desc.option_);
+                static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
     }
@@ -1563,9 +1562,6 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
     if (requested_opts.count(D6O_VENDOR_OPTS) > 0) {
         set<uint32_t> vendor_ids;
         for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
-            if (opt.first != D6O_VENDOR_OPTS) {
-                continue;
-            }
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
@@ -1587,11 +1583,13 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                     continue;
                 }
                 // Is the vendor id already in the response?
-                if (vendor_ids.count(vendor_opts->getVendorId()) > 0) {
+                uint32_t vendor_id = vendor_opts->getVendorId();
+                if (vendor_ids.count(vendor_id) > 0) {
                     continue;
                 }
                 // Got it: add it.
                 answer->addOption(desc.option_);
+                static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
     }
@@ -1620,9 +1618,6 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     // hooks. If there're vendor info options in the response already, use them.
     map<uint32_t, OptionVendorPtr> vendor_rsps;
     for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
-        if (opt.first != D6O_VENDOR_OPTS) {
-            continue;
-        }
         OptionVendorPtr vendor_rsp;
         vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_rsp) {
@@ -1632,37 +1627,27 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         }
     }
 
-    // Otherwise, try to get the vendor-id from the client packet's
+    // Next, try to get the vendor-id from the client packet's
     // vendor-specific information option (17).
     map<uint32_t, OptionVendorPtr> vendor_reqs;
-    if (vendor_ids.empty()) {
-        for (auto opt : question->getOptions(D6O_VENDOR_OPTS)) {
-            if (opt.first != D6O_VENDOR_OPTS) {
-                continue;
-            }
-            OptionVendorPtr vendor_req;
-            vendor_req = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
-            if (vendor_req) {
-                uint32_t vendor_id = vendor_req->getVendorId();
-                vendor_reqs[vendor_id] = vendor_req;
-                static_cast<void>(vendor_ids.insert(vendor_id));
-            }
+    for (auto opt : question->getOptions(D6O_VENDOR_OPTS)) {
+        OptionVendorPtr vendor_req;
+        vendor_req = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+        if (vendor_req) {
+            uint32_t vendor_id = vendor_req->getVendorId();
+            vendor_reqs[vendor_id] = vendor_req;
+            static_cast<void>(vendor_ids.insert(vendor_id));
         }
     }
 
     // Finally, try to get the vendor-id from the client packet's vendor-class
     // option (16).
-    if (vendor_ids.empty()) {
-        for (auto opt : question->getOptions(D6O_VENDOR_CLASS)) {
-            if (opt.first != D6O_VENDOR_CLASS) {
-                continue;
-            }
-            OptionVendorClassPtr vendor_class;
-            vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
-            if (vendor_class) {
-                uint32_t vendor_id = vendor_class->getVendorId();
-                static_cast<void>(vendor_ids.insert(vendor_id));
-            }
+    for (auto opt : question->getOptions(D6O_VENDOR_CLASS)) {
+        OptionVendorClassPtr vendor_class;
+        vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+        if (vendor_class) {
+            uint32_t vendor_id = vendor_class->getVendorId();
+            static_cast<void>(vendor_ids.insert(vendor_id));
         }
     }
 
@@ -3985,9 +3970,6 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
     OptionVendorClassPtr vclass;
     for (auto opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
-        if (opt.first != D6O_VENDOR_CLASS) {
-            continue;
-        }
         vclass = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (!vclass || vclass->getTuplesNum() == 0) {
             continue;

@@ -343,7 +343,7 @@ protected:
 
     /// @brief Returns pointers to instances of specified option.
     ///
-    /// This is a variant of @ref getAnyRelayOptions but it never copies
+    /// This is a variant of @ref getAllRelayOptions but it never copies
     /// an option returned. This method should be only used by
     /// the @ref Pkt6 class and derived classes. Any external callers should
     /// use @ref getAnyRelayOption which copies the option before returning it
@@ -353,7 +353,7 @@ protected:
     /// @param order Option search order (see @ref RelaySearchOrder).
     ///
     /// @return Collection of options found.
-    OptionCollection getNonCopiedAnyRelayOptions(const uint16_t option_code,
+    OptionCollection getNonCopiedAllRelayOptions(const uint16_t option_code,
                                                  const RelaySearchOrder& order) const;
 
 public:
@@ -373,15 +373,17 @@ public:
 
     /// @brief Return first instances of a specified option
     ///
-    /// When a client's packet traverses multiple relays, each passing relay may
-    /// insert extra options. This method allows the specific instances of a given
-    /// option to be obtained (e.g. closest to the client, closest to the server,
-    /// etc.) See @ref RelaySearchOrder for a detailed description.
+    /// When a client's packet traverses multiple relays, each passing
+    /// relay may insert extra options. This method allows the
+    /// specific instances of a given option to be obtained in the
+    /// specified order (e.g. first closest to the client, first
+    /// closest to the server, etc.) See @ref RelaySearchOrder for a
+    /// detailed description.
     ///
     /// @param option_code searched option
     /// @param order option search order (see @ref RelaySearchOrder)
     /// @return Collection of options found.
-    OptionCollection getAnyRelayOptions(const uint16_t option_code,
+    OptionCollection getAllRelayOptions(const uint16_t option_code,
                                         const RelaySearchOrder& order);
 
     /// @brief return the link address field from a relay option

@@ -169,7 +169,7 @@ Pkt6::getAnyRelayOption(const uint16_t option_code,
 }
 
 OptionCollection
-Pkt6::getNonCopiedAnyRelayOptions(const uint16_t option_code,
+Pkt6::getNonCopiedAllRelayOptions(const uint16_t option_code,
                                   const RelaySearchOrder& order) const {
     if (relay_info_.empty()) {
         // There's no relay info, this is a direct message
@@ -188,20 +188,18 @@ Pkt6::getNonCopiedAnyRelayOptions(const uint16_t option_code,
     // That's why we check if in the next iteration we would go past the
     // list (end + direction). It is similar to STL concept of end pointing
     // to a place after the last element
+    OptionCollection opts;
     for (int i = start; i != end + direction; i += direction) {
-        OptionCollection opts = getNonCopiedRelayOptions(option_code, i);
-        if (!opts.empty()) {
-            return (opts);
-        }
+        std::pair<OptionCollection::const_iterator,
+                  OptionCollection::const_iterator> range =
+            relay_info_[i].options_.equal_range(option_code);
+        opts.insert(range.first, range.second);
     }
-
-    // We iterated over specified relays and haven't found what we were
-    // looking for
-    return (OptionCollection());
+    return (opts);
 }
 
 OptionCollection
-Pkt6::getAnyRelayOptions(const uint16_t option_code,
+Pkt6::getAllRelayOptions(const uint16_t option_code,
                          const RelaySearchOrder& order) {
 
     if (relay_info_.empty()) {
@@ -221,16 +219,24 @@ Pkt6::getAnyRelayOptions(const uint16_t option_code,
     // That's why we check if in the next iteration we would go past the
     // list (end + direction). It is similar to STL concept of end pointing
     // to a place after the last element
+    OptionCollection opts;
     for (int i = start; i != end + direction; i += direction) {
-        OptionCollection opts = getRelayOptions(option_code, i);
-        if (!opts.empty()) {
-            return (opts);
+        std::pair<OptionCollection::iterator,
+                  OptionCollection::iterator> range =
+            relay_info_[i].options_.equal_range(option_code);
+        // If options should be copied on retrieval, we should now iterate over
+        // matching options, copy them and replace the original ones with new
+        // instances.
+        if (copy_retrieved_options_) {
+            for (OptionCollection::iterator opt_it = range.first;
+                 opt_it != range.second; ++opt_it) {
+                OptionPtr option_copy = opt_it->second->clone();
+                opt_it->second = option_copy;
+            }
         }
+        opts.insert(range.first, range.second);
     }
-
-    // We iterated over specified relays and haven't found what we were
-    // looking for
-    return (OptionCollection());
+    return (opts);
 }
 
 OptionPtr
@@ -991,7 +997,7 @@ Pkt6::getMACFromDocsisCMTS() {
     // CMTS-specific options in it.
     HWAddrPtr mac;
     OptionVendorPtr vendor;
-    for (auto opt : getAnyRelayOptions(D6O_VENDOR_OPTS,
+    for (auto opt : getAllRelayOptions(D6O_VENDOR_OPTS,
                                        RELAY_SEARCH_FROM_CLIENT)) {
         if (opt.first != D6O_VENDOR_OPTS) {
             continue;
