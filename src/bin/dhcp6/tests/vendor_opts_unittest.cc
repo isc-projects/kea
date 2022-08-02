@@ -642,7 +642,7 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
 
 // Checks if it's possible to have 2 vendor-class options and 2 vendor-opts
 // options with different vendor IDs.
-TEST_F(VendorOptsTest, multipleVendor) {
+TEST_F(VendorOptsTest, twoVendors) {
     Dhcp6Client client;
 
     // The config defines 2 vendors with for each a vendor-class option,
@@ -732,7 +732,7 @@ TEST_F(VendorOptsTest, multipleVendor) {
         if (vendor_id == 1234) {
             ASSERT_FALSE(opt_class1234);
             opt_class1234 = opt_class;
-            break;
+            continue;
         }
         ASSERT_EQ(5678, vendor_id);
         ASSERT_FALSE(opt_class5678);
@@ -764,7 +764,7 @@ TEST_F(VendorOptsTest, multipleVendor) {
         if (vendor_id == 1234) {
             ASSERT_FALSE(opt_opts1234);
             opt_opts1234 = opt_opts;
-            break;
+            continue;
         }
         ASSERT_EQ(5678, vendor_id);
         ASSERT_FALSE(opt_opts5678);
@@ -774,7 +774,6 @@ TEST_F(VendorOptsTest, multipleVendor) {
     // Verify first vendor-opts option.
     ASSERT_TRUE(opt_opts1234);
     OptionCollection subs1234 = opt_opts1234->getOptions();
-    cerr << "opts1234: " << opt_opts1234->toText() << "\n";
     ASSERT_EQ(1, subs1234.size());
     OptionPtr sub1234 = subs1234.begin()->second;
     ASSERT_TRUE(sub1234);
@@ -785,6 +784,158 @@ TEST_F(VendorOptsTest, multipleVendor) {
     EXPECT_EQ("foo", opt_foo->getValue());
 
     // Verify second vendor-opts option.
+    ASSERT_TRUE(opt_opts5678);
+    OptionCollection subs5678 = opt_opts5678->getOptions();
+    ASSERT_EQ(1, subs5678.size());
+    OptionPtr sub5678 = subs5678.begin()->second;
+    ASSERT_TRUE(sub5678);
+    EXPECT_EQ(456, sub5678->getType());
+    OptionStringPtr opt_bar =
+        boost::dynamic_pointer_cast<OptionString>(sub5678);
+    ASSERT_TRUE(opt_bar);
+    EXPECT_EQ("bar", opt_bar->getValue());
+}
+
+// Checks if it's possible to have 3 vendor-opts options with
+// different vendor IDs selected using the 3 ways (vendor-opts in
+// response, vendor-opts in query and vendor-class in query).
+TEST_F(VendorOptsTest, threeVendors) {
+    Dhcp6Client client;
+
+    // The config defines 2 vendors with for each a vendor-opts option
+    // and a custom vendor suboption, and a suboption for DOCSIS.
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"foo\","
+        "            \"code\": 123,"
+        "            \"space\": \"vendor-1234\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"bar\","
+        "            \"code\": 456,"
+        "            \"space\": \"vendor-5678\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"config-file\","
+        "            \"code\": 33,"
+        "            \"space\": \"vendor-4491\","
+        "            \"type\": \"string\""
+        "        }"
+        "    ],"
+        "    \"option-data\": ["
+        "        {"
+        "            \"name\": \"vendor-opts\","
+        "            \"always-send\": true,"
+        "            \"data\": \"1234\""
+        "        },"
+        "        {"
+        "            \"name\": \"vendor-opts\","
+        "            \"data\": \"5678\""
+        "        },"
+        "        {"
+        "            \"name\": \"foo\","
+        "            \"always-send\": true,"
+        "            \"space\": \"vendor-1234\","
+        "            \"data\": \"foo\""
+        "        },"
+        "        {"
+        "            \"name\": \"bar\","
+        "            \"always-send\": true,"
+        "            \"space\": \"vendor-5678\","
+        "            \"data\": \"bar\""
+        "        },"
+        "        {"
+        "            \"name\": \"config-file\","
+        "            \"space\": \"vendor-4491\","
+        "            \"data\": \"normal_erouter_v6.cm\""
+        "        }"
+        "    ],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/64\", "
+        "    \"interface\": \"eth0\" "
+        " } ]"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Add a vendor-class for vendor id 5678.
+    OptionVendorClassPtr cclass(new OptionVendorClass(Option::V6, 5678));
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    tuple = "bar";
+    cclass->addTuple(tuple);
+    client.addExtraOption(cclass);
+
+    // Add a DOCSIS vendor-opts with an ORO.
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, DOCSIS3_V6_ORO));
+    oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33.
+    OptionPtr vendor(new OptionVendor(Option::V6, 4491));
+    vendor->addOption(oro);
+    client.addExtraOption(vendor);
+
+    // Let's check whether the server is not able to process this packet.
+    EXPECT_NO_THROW(client.doSolicit());
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check there're vendor-opts options.
+    const OptionCollection& options =
+        client.getContext().response_->getOptions(D6O_VENDOR_OPTS);
+    ASSERT_EQ(3, options.size());
+    OptionVendorPtr opt_opts1234;
+    OptionVendorPtr opt_docsis;
+    OptionVendorPtr opt_opts5678;
+    for (auto opt : options) {
+        ASSERT_EQ(D6O_VENDOR_OPTS, opt.first);
+        OptionVendorPtr opt_opts =
+            boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+        ASSERT_TRUE(opt_opts);
+        uint32_t vendor_id = opt_opts->getVendorId();
+        if (vendor_id == 1234) {
+            ASSERT_FALSE(opt_opts1234);
+            opt_opts1234 = opt_opts;
+            continue;
+        }
+        if (vendor_id == 4491) {
+            ASSERT_FALSE(opt_docsis);
+            opt_docsis = opt_opts;
+            continue;
+        }
+        ASSERT_EQ(5678, vendor_id);
+        ASSERT_FALSE(opt_opts5678);
+        opt_opts5678 = opt_opts;
+    }
+
+    // Verify first vendor-opts option.
+    ASSERT_TRUE(opt_opts1234);
+    OptionCollection subs1234 = opt_opts1234->getOptions();
+    ASSERT_EQ(1, subs1234.size());
+    OptionPtr sub1234 = subs1234.begin()->second;
+    ASSERT_TRUE(sub1234);
+    EXPECT_EQ(123, sub1234->getType());
+    OptionStringPtr opt_foo =
+        boost::dynamic_pointer_cast<OptionString>(sub1234);
+    ASSERT_TRUE(opt_foo);
+    EXPECT_EQ("foo", opt_foo->getValue());
+
+    // Verify DOCSIS vendor-opts option.
+    ASSERT_TRUE(opt_docsis);
+    OptionCollection subs_docsis = opt_docsis->getOptions();
+    ASSERT_EQ(1, subs_docsis.size());
+    OptionPtr cfile = subs_docsis.begin()->second;
+    ASSERT_TRUE(cfile);
+    EXPECT_EQ(33, cfile->getType());
+    OptionStringPtr cfile_str = boost::dynamic_pointer_cast<OptionString>(cfile);
+    ASSERT_TRUE(cfile_str);
+    EXPECT_EQ("normal_erouter_v6.cm", cfile_str->getValue());
+
+    // Verify last vendor-opts option.
     ASSERT_TRUE(opt_opts5678);
     OptionCollection subs5678 = opt_opts5678->getOptions();
     ASSERT_EQ(1, subs5678.size());

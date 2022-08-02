@@ -73,7 +73,9 @@ public:
 
     using Pkt6::getNonCopiedOptions;
     using Pkt6::getNonCopiedRelayOption;
+    using Pkt6::getNonCopiedRelayOptions;
     using Pkt6::getNonCopiedAnyRelayOption;
+    using Pkt6::getNonCopiedAllRelayOptions;
 };
 
 typedef boost::shared_ptr<NakedPkt6> NakedPkt6Ptr;
@@ -700,6 +702,7 @@ TEST_F(Pkt6Test, relayUnpack) {
     EXPECT_EQ(2, msg->relay_info_[0].options_.size());
 
     // There should be interface-id option
+    EXPECT_EQ(1, msg->getRelayOptions(D6O_INTERFACE_ID, 0).size());
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 0));
     OptionBuffer data = opt->getData();
     EXPECT_EQ(32, opt->len()); // 28 bytes of data + 4 bytes header
@@ -708,6 +711,7 @@ TEST_F(Pkt6Test, relayUnpack) {
     EXPECT_TRUE(0 == memcmp("ISAM144|299|ipv6|nt:vp:1:110", &data[0], 28));
 
     // Get the remote-id option
+    EXPECT_EQ(1, msg->getRelayOptions(D6O_REMOTE_ID, 0).size());
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 0));
     EXPECT_EQ(22, opt->len()); // 18 bytes of data + 4 bytes header
     boost::shared_ptr<OptionCustom> custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
@@ -725,6 +729,7 @@ TEST_F(Pkt6Test, relayUnpack) {
     // Part 2: Check options inserted by the second relay
 
     // Get the interface-id from the second relay
+    EXPECT_EQ(1, msg->getRelayOptions(D6O_INTERFACE_ID, 1).size());
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 1));
     data = opt->getData();
     EXPECT_EQ(25, opt->len()); // 21 bytes + 4 bytes header
@@ -732,6 +737,7 @@ TEST_F(Pkt6Test, relayUnpack) {
     EXPECT_TRUE(0 == memcmp("ISAM144 eth 1/1/05/01", &data[0], 21));
 
     // Get the remote-id option
+    EXPECT_EQ(1, msg->getRelayOptions(D6O_REMOTE_ID, 1).size());
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 1));
     EXPECT_EQ(8, opt->len());
     custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
@@ -742,6 +748,7 @@ TEST_F(Pkt6Test, relayUnpack) {
 
     // Let's check if there is no leak between options stored in
     // the SOLICIT message and the relay.
+    EXPECT_TRUE(msg->getRelayOptions(D6O_IA_NA, 1).empty());
     EXPECT_FALSE(opt = msg->getRelayOption(D6O_IA_NA, 1));
 
 
@@ -853,6 +860,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     // There should be exactly one option
     EXPECT_EQ(1, clone->relay_info_[0].options_.size());
+    EXPECT_EQ(1, clone->getRelayOptions(200, 0).size());
     OptionPtr opt = clone->getRelayOption(200, 0);
     EXPECT_TRUE(opt);
     EXPECT_EQ(opt->getType() , optRelay1->getType());
@@ -894,6 +902,50 @@ TEST_F(Pkt6Test, getRelayOption) {
 
     opt_iface_id = msg->getNonCopiedRelayOption(D6O_INTERFACE_ID, 0);
     EXPECT_TRUE(opt_iface_id == opt_iface_id_returned);
+}
+
+TEST_F(Pkt6Test, getRelayOptions) {
+    NakedPkt6Ptr msg(boost::dynamic_pointer_cast<NakedPkt6>(capture2()));
+    ASSERT_TRUE(msg);
+
+    ASSERT_NO_THROW(msg->unpack());
+    ASSERT_EQ(2, msg->relay_info_.size());
+
+    OptionCollection opts_iface_id =
+        msg->getNonCopiedRelayOptions(D6O_INTERFACE_ID, 0);
+    ASSERT_EQ(1, opts_iface_id.size());
+
+    OptionPtr opt_iface_id = msg->getNonCopiedRelayOption(D6O_INTERFACE_ID, 0);
+    ASSERT_TRUE(opt_iface_id);
+
+    OptionCollection opts_iface_id_returned =
+        msg->getRelayOptions(D6O_INTERFACE_ID, 0);
+    ASSERT_EQ(1, opts_iface_id_returned.size());
+
+    OptionPtr opt_iface_id_returned = msg->getRelayOption(D6O_INTERFACE_ID, 0);
+    ASSERT_TRUE(opt_iface_id_returned);
+
+    EXPECT_TRUE(opt_iface_id == opt_iface_id_returned);
+    EXPECT_TRUE(opts_iface_id == opts_iface_id_returned);
+    EXPECT_TRUE(opts_iface_id.begin()->second == opt_iface_id);
+    EXPECT_TRUE(opts_iface_id_returned.begin()->second == opt_iface_id_returned);
+
+    msg->setCopyRetrievedOptions(true);
+
+    opts_iface_id_returned = msg->getRelayOptions(D6O_INTERFACE_ID, 0);
+    ASSERT_EQ(1, opts_iface_id_returned.size());
+    opt_iface_id_returned = msg->getRelayOption(D6O_INTERFACE_ID, 0);
+    EXPECT_FALSE(opt_iface_id == opt_iface_id_returned);
+    EXPECT_FALSE(opts_iface_id.begin()->second == opt_iface_id_returned);
+    EXPECT_FALSE(opts_iface_id_returned.begin()->second == opt_iface_id);
+    EXPECT_FALSE(opts_iface_id_returned.begin()->second == opt_iface_id_returned);
+
+    opt_iface_id = msg->getNonCopiedRelayOption(D6O_INTERFACE_ID, 0);
+    EXPECT_TRUE(opt_iface_id == opt_iface_id_returned);
+
+    opts_iface_id_returned = msg->getNonCopiedRelayOptions(D6O_INTERFACE_ID, 0);
+    opts_iface_id = msg->getNonCopiedRelayOptions(D6O_INTERFACE_ID, 0);
+    EXPECT_TRUE(opts_iface_id == opts_iface_id_returned);
 }
 
 // This test verifies that options added by relays to the message can be
@@ -950,6 +1002,10 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_FALSE(opt);
     opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_LAST);
     EXPECT_FALSE(opt);
+    EXPECT_TRUE(msg->getAllRelayOptions(300, Pkt6::RELAY_SEARCH_FROM_CLIENT).empty());
+    EXPECT_TRUE(msg->getAllRelayOptions(300, Pkt6::RELAY_SEARCH_FROM_SERVER).empty());
+    EXPECT_TRUE(msg->getAllRelayOptions(300, Pkt6::RELAY_GET_FIRST).empty());
+    EXPECT_TRUE(msg->getAllRelayOptions(300, Pkt6::RELAY_GET_LAST).empty());
 
     // Option 200 is added in every relay.
 
@@ -959,25 +1015,50 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_TRUE(opt == relay3_opt1);
+    OptionCollection opts =
+        msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_EQ(3, opts.size());
+    EXPECT_TRUE(opt == opts.begin()->second);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_EQ(3, opts.size());
+    EXPECT_TRUE(opts.begin()->second == relay3_opt1);
 
-    // We want to ge that one inserted by relay1 (first match, starting from
+    // We want to get that one inserted by relay1 (first match, starting from
     // closest to the server.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
     EXPECT_TRUE(opt == relay1_opt1);
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_EQ(3, opts.size());
+    EXPECT_TRUE(opt == opts.begin()->second);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_EQ(3, opts.size());
+    EXPECT_TRUE(opts.begin()->second == relay1_opt1);
 
     // We just want option from the first relay (closest to the client)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_TRUE(opt == relay3_opt1);
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_GET_FIRST);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(opt == opts.begin()->second);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_GET_FIRST);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(opts.begin()->second == relay3_opt1);
 
     // We just want option from the last relay (closest to the server)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
     EXPECT_TRUE(opt == relay1_opt1);
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_GET_LAST);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(opt == opts.begin()->second);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_GET_LAST);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(opts.begin()->second == relay1_opt1);
 
     // Enable copying options when they are retrieved and redo the tests
     // but expect that options are still equal but different pointers
@@ -994,6 +1075,14 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(relay3_opt1);
     EXPECT_TRUE(opt == relay3_opt1);
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_EQ(3, opts.size());
+    EXPECT_TRUE(opt == opts.begin()->second);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_EQ(3, opts.size());
+    EXPECT_FALSE(opts.begin()->second == relay3_opt1);
+    relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_TRUE(opts.begin()->second == relay3_opt1);
 
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
@@ -1002,6 +1091,14 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(relay1_opt1);
     EXPECT_TRUE(opt == relay1_opt1);
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_EQ(3, opts.size());
+    EXPECT_TRUE(opt == opts.begin()->second);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_EQ(3, opts.size());
+    EXPECT_FALSE(opts.begin()->second == relay1_opt1);
+    relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_TRUE(opts.begin()->second == relay1_opt1);
 
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(opt);
@@ -1010,6 +1107,14 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(relay3_opt1);
     EXPECT_TRUE(opt == relay3_opt1);
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_GET_FIRST);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(opt == opts.begin()->second);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_GET_FIRST);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_FALSE(opts.begin()->second == relay3_opt1);
+    relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
+    EXPECT_TRUE(opts.begin()->second == relay3_opt1);
 
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(opt);
@@ -1018,6 +1123,14 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(relay1_opt1);
     EXPECT_TRUE(opt == relay1_opt1);
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_GET_LAST);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(opt == opts.begin()->second);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_GET_LAST);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_FALSE(opts.begin()->second == relay1_opt1);
+    relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
+    EXPECT_TRUE(opts.begin()->second == relay1_opt1);
 
     // Disable copying options and continue with other tests.
     msg->setCopyRetrievedOptions(false);
@@ -1027,29 +1140,65 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay2_opt1));
+    opts = msg->getNonCopiedAllRelayOptions(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(opts.begin()->second == relay2_opt1);
+    opts = msg->getAllRelayOptions(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(relay2_opt1->equals(opts.begin()->second));
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay2_opt1));
+    opts = msg->getNonCopiedAllRelayOptions(100, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(opts.begin()->second == relay2_opt1);
+    opts = msg->getAllRelayOptions(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_EQ(1, opts.size());
+    EXPECT_TRUE(relay2_opt1->equals(opts.begin()->second));
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_FIRST);
     EXPECT_FALSE(opt);
+    opts = msg->getNonCopiedAllRelayOptions(100, Pkt6::RELAY_GET_FIRST);
+    EXPECT_TRUE(opts.empty());
+    opts = msg->getAllRelayOptions(100, Pkt6::RELAY_GET_FIRST);
+    EXPECT_TRUE(opts.empty());
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_LAST);
     EXPECT_FALSE(opt);
+    opts = msg->getNonCopiedAllRelayOptions(100, Pkt6::RELAY_GET_LAST);
+    EXPECT_TRUE(opts.empty());
+    opts = msg->getAllRelayOptions(100, Pkt6::RELAY_GET_LAST);
+    EXPECT_TRUE(opts.empty());
 
     // Finally, try to get an option that does not exist
     opt = msg->getAnyRelayOption(500, Pkt6::RELAY_GET_FIRST);
     EXPECT_FALSE(opt);
+    opts = msg->getNonCopiedAllRelayOptions(500, Pkt6::RELAY_GET_FIRST);
+    EXPECT_TRUE(opts.empty());
+    opts = msg->getAllRelayOptions(500, Pkt6::RELAY_GET_FIRST);
+    EXPECT_TRUE(opts.empty());
 
     opt = msg->getAnyRelayOption(500, Pkt6::RELAY_GET_LAST);
     EXPECT_FALSE(opt);
+    opts = msg->getNonCopiedAllRelayOptions(500, Pkt6::RELAY_GET_LAST);
+    EXPECT_TRUE(opts.empty());
+    opts = msg->getAllRelayOptions(500, Pkt6::RELAY_GET_LAST);
+    EXPECT_TRUE(opts.empty());
 
     opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_SERVER);
     EXPECT_FALSE(opt);
+    opts = msg->getNonCopiedAllRelayOptions(500, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_TRUE(opts.empty());
+    opts = msg->getAllRelayOptions(500, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_TRUE(opts.empty());
 
     opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     EXPECT_FALSE(opt);
+    opts = msg->getNonCopiedAllRelayOptions(500, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_TRUE(opts.empty());
+    opts = msg->getAllRelayOptions(500, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_TRUE(opts.empty());
 }
 
 // Tests whether Pkt6::toText() properly prints out all parameters, including
