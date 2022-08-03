@@ -1015,13 +1015,23 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_TRUE(opt == relay3_opt1);
-    OptionCollection opts =
+
+    // Check collections.
+    OptionCollection opts0 =
         msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    EXPECT_EQ(3, opts.size());
-    EXPECT_TRUE(opt == opts.begin()->second);
-    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    EXPECT_EQ(3, opts.size());
-    EXPECT_TRUE(opts.begin()->second == relay3_opt1);
+    EXPECT_EQ(3, opts0.size());
+    vector<OptionPtr> lopts0;
+    for (auto it : opts0) {
+        lopts0.push_back(it.second);
+    }
+    ASSERT_EQ(3, lopts0.size());
+    EXPECT_TRUE(lopts0[0] == opt);
+    EXPECT_TRUE(lopts0[0] == relay3_opt1);
+    EXPECT_TRUE(lopts0[1] == relay2_opt4);
+    EXPECT_TRUE(lopts0[2] == relay1_opt1);
+    OptionCollection opts =
+        msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_TRUE(opts == opts0);
 
     // We want to get that one inserted by relay1 (first match, starting from
     // closest to the server.
@@ -1029,12 +1039,27 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
     EXPECT_TRUE(opt == relay1_opt1);
+
+    // Check collections.
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     EXPECT_EQ(3, opts.size());
-    EXPECT_TRUE(opt == opts.begin()->second);
-    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    EXPECT_EQ(3, opts.size());
-    EXPECT_TRUE(opts.begin()->second == relay1_opt1);
+    vector<OptionPtr> lopts;
+    for (auto it : opts) {
+        lopts.push_back(it.second);
+    }
+    ASSERT_EQ(3, lopts.size());
+    EXPECT_TRUE(lopts[0] == opt);
+    EXPECT_TRUE(lopts[0] == relay1_opt1);
+    EXPECT_TRUE(lopts[1] == relay2_opt4);
+    EXPECT_TRUE(lopts[2] == relay3_opt1);
+    EXPECT_TRUE(opts == msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER));
+
+    // Check reverse order.
+    vector<OptionPtr> ropts;
+    for (auto it = opts.rbegin(); it != opts.rend(); ++it) {
+        ropts.push_back(it->second);
+    }
+    EXPECT_TRUE(lopts0 == ropts);
 
     // We just want option from the first relay (closest to the client)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
@@ -1065,6 +1090,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // are returned.
     msg->setCopyRetrievedOptions(true);
 
+    // From client.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
@@ -1075,15 +1101,36 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(relay3_opt1);
     EXPECT_TRUE(opt == relay3_opt1);
-    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    EXPECT_EQ(3, opts.size());
-    EXPECT_TRUE(opt == opts.begin()->second);
-    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    EXPECT_EQ(3, opts.size());
-    EXPECT_FALSE(opts.begin()->second == relay3_opt1);
-    relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    EXPECT_TRUE(opts.begin()->second == relay3_opt1);
 
+    // Check collections.
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    lopts0.clear();
+    for (auto it : opts) {
+        lopts0.push_back(it.second);
+    }
+    ASSERT_EQ(3, lopts0.size());
+    EXPECT_TRUE(lopts0[0] == opt);
+    EXPECT_TRUE(lopts0[0] == relay3_opt1);
+    EXPECT_TRUE(lopts0[1] == relay2_opt4);
+    EXPECT_TRUE(lopts0[2] == relay1_opt1);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    lopts.clear();
+    for (auto it : opts) {
+        lopts.push_back(it.second);
+    }
+    ASSERT_EQ(3, lopts.size());
+    EXPECT_TRUE(relay3_opt1->equals(lopts[0]));
+    EXPECT_FALSE(lopts[0] == lopts0[0]);
+    EXPECT_TRUE(relay2_opt4->equals(lopts[1]));
+    EXPECT_FALSE(lopts[1] == lopts0[1]);
+    EXPECT_TRUE(relay1_opt1->equals(lopts[2]));
+    EXPECT_FALSE(lopts[2] == lopts0[2]);
+    // Get current values for next tests.
+    relay3_opt1 = lopts[0];
+    relay2_opt4 = lopts[1];
+    relay1_opt1 = lopts[2];
+
+    // From server.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
@@ -1091,15 +1138,32 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(relay1_opt1);
     EXPECT_TRUE(opt == relay1_opt1);
-    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    EXPECT_EQ(3, opts.size());
-    EXPECT_TRUE(opt == opts.begin()->second);
-    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    EXPECT_EQ(3, opts.size());
-    EXPECT_FALSE(opts.begin()->second == relay1_opt1);
-    relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    EXPECT_TRUE(opts.begin()->second == relay1_opt1);
 
+    // Check collections.
+    opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    lopts0.clear();
+    for (auto it : opts) {
+        lopts0.push_back(it.second);
+    }
+    ASSERT_EQ(3, lopts0.size());
+    EXPECT_TRUE(lopts0[0] == opt);
+    EXPECT_TRUE(lopts0[0] == relay1_opt1);
+    EXPECT_TRUE(lopts0[1] == relay2_opt4);
+    EXPECT_TRUE(lopts0[2] == relay3_opt1);
+    opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    lopts.clear();
+    for (auto it : opts) {
+        lopts.push_back(it.second);
+    }
+    ASSERT_EQ(3, lopts.size());
+    EXPECT_TRUE(relay1_opt1->equals(lopts[0]));
+    EXPECT_FALSE(lopts[0] == lopts0[0]);
+    EXPECT_TRUE(relay2_opt4->equals(lopts[1]));
+    EXPECT_FALSE(lopts[1] == lopts0[1]);
+    EXPECT_TRUE(relay3_opt1->equals(lopts[2]));
+    EXPECT_FALSE(lopts[2] == lopts0[2]);
+
+    // First.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
@@ -1116,6 +1180,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     EXPECT_TRUE(opts.begin()->second == relay3_opt1);
 
+    // Last.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
