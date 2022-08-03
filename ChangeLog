@@ -1,8 +1,9 @@
 2048.	[bug]		fdupont
 	Set broadcast MAC destination address in DHCPv4 replies
 	when the IP address is broadcast. Thanks to Joost Bekkers
-	for contributing the path and reporting it improves
-	compatibility with Cisco Small Business switches.
+	for reporting the issue and contributing the patch.  This
+	improves Kea's compatibility with Cisco Small Business
+	switches.
 	(Gitlab #2211)
 
 2047.	[func]		fdupont
