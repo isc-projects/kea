@@ -631,6 +631,12 @@ fields, the result will be an empty string. Some examples follow:
            split ('one.two..four', '.', 4) == 'four'
            split ('one.two..four', '.', 5) == ''
 
+.. note::
+
+   To use hard to escape character as a delimiter, you can use its ASCI value.
+   For example you can split by ``single quote`` using ``0x27``:
+   ``split(option[39].text, 0x27, 1)``
+
 Ifelse
 ------
 
