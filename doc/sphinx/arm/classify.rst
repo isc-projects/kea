@@ -633,7 +633,7 @@ fields, the result will be an empty string. Some examples follow:
 
 .. note::
 
-   To use hard to escape character as a delimiter, you can use its ASCI value.
+   To use a hard to escape character as a delimiter, you can use its ASCII hex value.
    For example you can split by ``single quote`` using ``0x27``:
    ``split(option[39].text, 0x27, 1)``
 
