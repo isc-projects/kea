@@ -2782,16 +2782,21 @@ Dhcpv4SrvTest::portsServerPort() {
     EXPECT_EQ(srv.server_port_, offer->getLocalPort());
 }
 
-#if defined (HAVE_MYSQL)
-/// @brief Check if SSL/TLS support is available and configured.
-bool hasMySQLTls() {
-    std::string tls = getMySQLTlsEnv();
-    if (tls.empty()) {
-        tls = getMySQLTlsServer();
+/// @brief Remove TLS parameters from configuration element.
+void removeTlsParameters(ConstElementPtr elem) {
+    if (elem) {
+        ElementPtr mutable_elem = boost::const_pointer_cast<Element>(elem);
+        std::vector<std::string> tls_parameters= {
+            "trust-anchor",
+            "cert-file",
+            "key-file",
+            "cipher-list"
+        };
+        for (auto const& parameter : tls_parameters) {
+            mutable_elem->remove(parameter);
+        }
     }
-    return (tls == "YES");
 }
-#endif
 
 void
 Dhcpv4SrvTest::loadConfigFile(const string& path) {
@@ -2837,31 +2842,15 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     ASSERT_TRUE(dhcp4);
     ElementPtr mutable_config = boost::const_pointer_cast<Element>(dhcp4);
     mutable_config->set(string("hooks-libraries"), Element::createList());
-#if defined (HAVE_MYSQL)
-    bool tls_required = false;
+    // Remove TLS parameters
     ConstElementPtr hosts = dhcp4->get("hosts-database");
-    if (hosts) {
-        ConstElementPtr tls = hosts->get("trust-anchor");
-        if (tls) {
-            tls_required = true;
-        }
-    }
+    removeTlsParameters(hosts);
     hosts = dhcp4->get("hosts-databases");
     if (hosts) {
         for (auto& host : hosts->listValue()) {
-            ConstElementPtr tls = host->get("trust-anchor");
-            if (tls) {
-                tls_required = true;
-                break;
-            }
+            removeTlsParameters(host);
         }
     }
-    if (tls_required && !hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test for " << path << "\n";
-        return;
-    }
-#endif
     ASSERT_NO_THROW(Dhcpv4SrvTest::configure(dhcp4->str(), true, true, true, true));
 
     LeaseMgrFactory::destroy();
@@ -2913,7 +2902,7 @@ class DBInitializer {
 
 void
 Dhcpv4SrvTest::checkConfigFiles() {
-    DBInitializer dbi();
+    DBInitializer dbi;
     IfaceMgrTestConfig test_config(true);
     string path = CFG_EXAMPLES;
     vector<string> examples = {
