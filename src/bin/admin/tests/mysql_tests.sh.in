@@ -1358,7 +1358,7 @@ mysql_lease4_dump_test() {
              "${output_file}.tmp" \
              "/tmp/$(basename "${output_file}").tmp" \
     ; do
-        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        if printf '%s' "$@" | grep 'y' > /dev/null; then
             touch "${i}"
         else
             rm -f "${i}"
@@ -1387,7 +1387,7 @@ insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,
     # Dump lease4 to output_file
     run_command \
         "${kea_admin}" lease-dump mysql -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" \
-            -d "${db_scripts_dir}" -o "${output_file}" "${@}"
+            -d "${db_scripts_dir}" -o "${output_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -1422,7 +1422,7 @@ mysql_lease6_dump_test() {
              "${output_file}.tmp" \
              "/tmp/$(basename "${output_file}").tmp" \
     ; do
-        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        if printf '%s' "$@" | grep 'y' > /dev/null; then
             touch "${i}"
         else
             rm -f "${i}"
@@ -1450,7 +1450,7 @@ insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,
     # Dump lease4 to output_file
     run_command \
         "${kea_admin}" lease-dump mysql -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" \
-            -d "${db_scripts_dir}" -o "${output_file}" "${@}"
+            -d "${db_scripts_dir}" -o "${output_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -1493,7 +1493,7 @@ mysql_lease4_upload_test() {
              "${output_file}.tmp" \
              "/tmp/$(basename "${input_file}").tmp" \
     ; do
-        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        if printf '%s' "$@" | grep 'y' > /dev/null; then
             touch "${i}"
         else
             rm -f "${i}"
@@ -1510,14 +1510,14 @@ mysql_lease4_upload_test() {
     run_command \
         "${kea_admin}" lease-upload mysql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -i "${input_file}" "${@}"
+            -i "${input_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -4 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
         "${kea_admin}" lease-dump mysql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -o "${output_file}" "${@}"
+            -o "${output_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
@@ -1564,7 +1564,7 @@ mysql_lease6_upload_test() {
              "${output_file}.tmp" \
              "/tmp/$(basename "${input_file}").tmp" \
     ; do
-        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        if printf '%s' "$@" | grep 'y' > /dev/null; then
             touch "${i}"
         else
             rm -f "${i}"
@@ -1581,14 +1581,14 @@ mysql_lease6_upload_test() {
     run_command \
         "${kea_admin}" lease-upload mysql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -i "${input_file}" "${@}"
+            -i "${input_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -6 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
         "${kea_admin}" lease-dump mysql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -o "${output_file}" "${@}"
+            -o "${output_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
