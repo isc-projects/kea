@@ -48,14 +48,14 @@ dump_file=""
 dump_qry=""
 
 # Include the installed admin-utils.sh if available. Fallback to sources otherwise.
-if test -d "@datarootdir@/@PACKAGE_NAME@"; then
+if test -f "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"; then
     . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
     . "@abs_top_srcdir@/src/bin/admin/admin-utils.sh"
 fi
 
 # Find the installed kea-lfc if available. Fallback to sources otherwise.
-if test -d "@sbindir@"; then
+if test -x "@sbindir@/kea-lfc"; then
     kea_lfc="@sbindir@/kea-lfc"
 else
     kea_lfc="@abs_top_builddir@/src/bin/lfc/kea-lfc"
