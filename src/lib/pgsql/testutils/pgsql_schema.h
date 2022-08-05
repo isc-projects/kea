@@ -30,7 +30,7 @@ std::string validPgSQLConnectionString();
 /// function fails it will then attempt to destroy the database
 /// schema by running the SQL script:
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/dhcpdb_drop.pgsql
+///  <DATABASE_SCRIPTS_DIR>/pgsql/dhcpdb_drop.pgsql
 ///
 /// The default behavior of wiping the data only may be overridden
 /// in one of two ways:
@@ -53,7 +53,7 @@ void destroyPgSQLSchema(bool show_err = false, bool force = false);
 /// call @c destroyPgSQLSchema to forcibly remove the existing
 /// schema and then submits the SQL script:
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/dhcpdb_create.pgsql
+///  <DATABASE_SCRIPTS_DIR>/pgsql/dhcpdb_create.pgsql
 ///
 /// to the unit test PgSQL database.
 ///
@@ -73,7 +73,7 @@ void createPgSQLSchema(bool show_err = false, bool force = false);
 ///
 /// Runs the shell script
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/wipe_data.sh
+///  <DATABASE_WIPE_DIR>/pgsql/wipe_data.sh
 ///
 /// This will fail if there is no schema, if the existing schema
 /// version is incorrect (i.e. does not match PGSQL_SCHEMA_VERSION_MAJOR

@@ -47,7 +47,7 @@ void createMySQLSchema(bool show_err, bool force) {
 
 bool wipeMySQLData(bool show_err) {
     std::ostringstream cmd;
-    cmd << "sh " << DATABASE_SCRIPTS_DIR << "/";
+    cmd << "sh " << DATABASE_WIPE_DIR << "/";
 
     std::ostringstream version;
     version << MYSQL_SCHEMA_VERSION_MAJOR  << "." << MYSQL_SCHEMA_VERSION_MINOR;

@@ -30,7 +30,7 @@ std::string validMySQLConnectionString();
 /// function fails it will then attempt to destroy the database
 /// schema by running the SQL script:
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.mysql
+///  <DATABASE_SCRIPT_DIR>/mysql/dhcpdb_drop.mysql
 ///
 /// The default behavior of wiping the data only may be overridden
 /// in one of two ways:
@@ -53,7 +53,7 @@ void destroyMySQLSchema(bool show_err = false, bool force = false);
 /// will call @c destroyMySQLSchema to forcibly remove the
 /// existing schema and then submits the SQL script:
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
+///  <DATABASE_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
 ///
 /// to the unit test MySQL database.
 ///
@@ -73,7 +73,7 @@ void createMySQLSchema(bool show_err = false, bool force = false);
 ///
 /// Runs the shell script
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/wipe_data.sh
+///  <DATABASE_WIPE_DIR>/mysql/wipe_data.sh
 ///
 /// This will fail if there is no schema, if the existing schema
 /// version is incorrect (i.e. does not match MYSQL_SCHEMA_VERSION_MAJOR
