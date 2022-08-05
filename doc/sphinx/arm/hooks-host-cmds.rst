@@ -271,7 +271,8 @@ Here's an example of a result returned when the host was found successfully:
        "option-data": [
 
        ],
-       "server-hostname": "server-hostname.example.org"
+       "server-hostname": "server-hostname.example.org",
+       "subnet-id": 4
      },
      "result": 0,
      "text": "Host found."
@@ -320,7 +321,8 @@ returns some IPv4 hosts:
                    "ip-address": "192.0.2.100",
                    "next-server": "192.0.0.2",
                    "option-data": [ ],
-                   "server-hostname": "server-hostname.example.org"
+                   "server-hostname": "server-hostname.example.org",
+                   "subnet-id": 1
                },
                ...
                {
@@ -331,7 +333,8 @@ returns some IPv4 hosts:
                    "ip-address": "192.0.2.200",
                    "next-server": "192.0.0.2",
                    "option-data": [ ],
-                   "server-hostname": "server-hostname.example.org"
+                   "server-hostname": "server-hostname.example.org",
+                   "subnet-id": 1
                }
            ]
        },
