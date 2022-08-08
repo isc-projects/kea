@@ -276,7 +276,7 @@ mysql_upgrade_schema_to_version() {
     fi
 
     # Check if there are any files in it
-    num_files=$(find ${upgrade_scripts_dir}/upgrade*.sh -type f | wc -l)
+    num_files=$(find ${upgrade_scripts_dir} -name 'upgrade*.sh' -type f | wc -l)
     if [ "${num_files}" -eq 0 ]; then
         upgrade_scripts_dir=@abs_top_builddir@/src/share/database/scripts/mysql
 
