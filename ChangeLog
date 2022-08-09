@@ -1,3 +1,8 @@
+2049.	[build]		razvan, fdupont
+	The distcheck rule is able to compile and run unittests for
+	database backends, GSS-TSIG and Sysrepo/NETCONF.
+	(Gitlab #2071)
+
 2048.	[bug]		fdupont
 	Set broadcast MAC destination address in DHCPv4 replies
 	when the IP address is broadcast. Thanks to Joost Bekkers
