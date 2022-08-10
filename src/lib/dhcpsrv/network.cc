@@ -36,7 +36,7 @@ Network::RelayInfo::hasAddresses() const {
 
 bool
 Network::RelayInfo::containsAddress(const asiolink::IOAddress& addr) const {
-    auto const& index = addresses_.get<IOAddressListasSetTag>();
+    auto const& index = addresses_.get<IOAddressListSetTag>();
     return (index.find(addr) != index.end());
 }
 

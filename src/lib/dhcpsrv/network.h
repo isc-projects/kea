@@ -28,8 +28,8 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <cstdint>
 
+#include <cstdint>
 #include <functional>
 #include <string>
 
@@ -43,10 +43,10 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Tag for the list of IO addresses as a list.
-struct IOAddressListasListTag { };
+struct IOAddressListListTag { };
 
 /// @brief Tag for the list of IO addresses as a set.
-struct IOAddressListasSetTag { };
+struct IOAddressListSetTag { };
 
 /// @brief List of IO addresses
 typedef boost::multi_index_container<
@@ -56,11 +56,11 @@ typedef boost::multi_index_container<
     boost::multi_index::indexed_by<
         // First and default index allows for in order iteration.
         boost::multi_index::sequenced<
-            boost::multi_index::tag<IOAddressListasListTag>
+            boost::multi_index::tag<IOAddressListListTag>
         >,
         // Second index allows for checking existence.
         boost::multi_index::hashed_unique<
-            boost::multi_index::tag<IOAddressListasSetTag>,
+            boost::multi_index::tag<IOAddressListSetTag>,
             boost::multi_index::identity<asiolink::IOAddress>
         >
     >
