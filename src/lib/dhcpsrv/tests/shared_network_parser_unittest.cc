@@ -38,7 +38,7 @@ public:
         /// @brief indicates if parsing should pass or fail
         bool should_parse_;
         /// @brief list of addresses expected after parsing
-        IOAddressList addresses_;
+        std::vector<IOAddress> addresses_;
     };
 
     /// @brief virtual destructor
