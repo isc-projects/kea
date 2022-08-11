@@ -55,7 +55,6 @@
 
 using namespace std;
 using namespace isc;
-using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;

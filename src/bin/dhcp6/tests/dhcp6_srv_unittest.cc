@@ -57,7 +57,6 @@
 
 using namespace isc;
 using namespace isc::asiolink;
-using namespace isc::db::test;
 using namespace isc::cb;
 using namespace isc::config;
 using namespace isc::data;
