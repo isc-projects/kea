@@ -1762,10 +1762,16 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if 'docs' in features:
+            # FreeBSD 11 and earlier should have python 3.7
+            # FreeBSD 12 seems to have python 3.8
+            # FreeBSD 13 has python 3.9
             if float(revision.split('.')[0]) < 12.0:
                 packages.extend(['py37-sphinx', 'py37-sphinx_rtd_theme'])
             else:
-                packages.extend(['py38-sphinx', 'py38-sphinx_rtd_theme'])
+                if revision.startswith(('12')):
+                    packages.extend(['py38-sphinx', 'py38-sphinx_rtd_theme'])
+                else:
+                    packages.extend(['py39-sphinx', 'py39-sphinx_rtd_theme'])
 
         if 'mysql' in features:
             if revision.startswith(('11', '12')):
