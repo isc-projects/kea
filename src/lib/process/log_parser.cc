@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,18 +66,13 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     }
     info.name_ = name_ptr->stringValue();
 
-    // Get severity
+    // Get the severity.
+    // If not configured, set it to DEFAULT to inherit it from the root logger later.
     isc::data::ConstElementPtr severity_ptr = entry->get("severity");
-    if (!severity_ptr) {
-        isc_throw(BadValue, "loggers entry does not have a mandatory "
-                  "'severity' element (" << entry->getPosition() << ")");
-    }
-    try {
-        info.severity_ = isc::log::getSeverity(severity_ptr->stringValue().c_str());
-    } catch (const std::exception&) {
-        isc_throw(BadValue, "Unsupported severity value '"
-                  << severity_ptr->stringValue() << "' ("
-                  << severity_ptr->getPosition() << ")");
+    if (severity_ptr) {
+        info.severity_ = getSeverity(severity_ptr->stringValue());
+    } else {
+        info.severity_ = DEFAULT;
     }
 
     // Get debug logging level

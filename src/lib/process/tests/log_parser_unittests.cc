@@ -1,16 +1,18 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <cc/data.h>
 #include <process/log_parser.h>
 #include <process/process_messages.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <process/d_log.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 
 #include <gtest/gtest.h>
@@ -130,7 +132,7 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
 }
 
-// Checks if the LogConfigParser class fails when the configuration
+// Check that LogConfigParser can parse configuration that
 // lacks a severity entry.
 TEST_F(LoggingTest, parsingNoSeverity) {
 
@@ -158,7 +160,23 @@ TEST_F(LoggingTest, parsingNoSeverity) {
     ConstElementPtr config = Element::fromJSON(config_txt);
     config = config->get("loggers");
 
-    EXPECT_THROW(parser.parseConfiguration(config), BadValue);
+    // No exception should be thrown.
+    EXPECT_NO_THROW_LOG(parser.parseConfiguration(config));
+
+    // Entries should be the ones set.
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    LoggingInfo const& logging_info(storage->getLoggingInfo()[0]);
+    EXPECT_EQ("kea", logging_info.name_);
+    EXPECT_EQ(99, logging_info.debuglevel_);
+    ASSERT_EQ(1, logging_info.destinations_.size());
+    EXPECT_EQ("stdout" , logging_info.destinations_[0].output_);
+    EXPECT_TRUE(logging_info.destinations_[0].flush_);
+
+    // Severity should default to DEFAULT.
+    EXPECT_EQ(isc::log::DEFAULT, logging_info.severity_);
+
+    // Pattern should default to empty string.
+    EXPECT_TRUE(logging_info.destinations_[0].pattern_.empty());
 }
 
 // Checks if the LogConfigParser class is able to transform JSON structures
