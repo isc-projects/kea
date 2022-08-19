@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,6 +25,7 @@
 #include <log/logger.h>
 #include <log/logger_level.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <log/logger_specification.h>
 #include <log/message_initializer.h>
 #include <log/output_option.h>
@@ -443,4 +444,68 @@ TEST_F(LoggerManagerTest, logDuplicatedMessages) {
     // duplicates.
     LoggerManager::logDuplicatedMessages();
     ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+}
+
+// Check that output options can be inherited.
+TEST_F(LoggerManagerTest, outputOptionsInheritance) {
+    LoggerManager manager;
+    SpecificationForFileLogger file_spec;
+    vector<LoggerSpecification> specs;
+
+    // Create the root logger configuration with a file output option.
+    string root_name(getRootLoggerName());
+    LoggerSpecification root_spec(root_name);
+    OutputOption root_option;
+    root_option.destination = OutputOption::DEST_FILE;
+    root_option.filename = file_spec.getFileName();
+    root_option.pattern = "%p %m\n";
+    root_spec.addOutputOption(root_option);
+    specs.push_back(root_spec);
+
+    // Create a child logger configuration without any output options.
+    // It should inherit the output option from the root logger.
+    string foo_name(root_name + ".foo");
+    LoggerSpecification foo_spec(foo_name);
+    specs.push_back(foo_spec);
+
+    // Create another child logger configuration with a console output option.
+    string bar_name(root_name + ".bar");
+    LoggerSpecification bar_spec(bar_name);
+    OutputOption bar_option;
+    bar_option.destination = OutputOption::DEST_CONSOLE;
+    bar_option.pattern = "%p %m\n";
+    bar_spec.addOutputOption(bar_option);
+    specs.push_back(bar_spec);
+
+    // Check the number of output options for each specification.
+    EXPECT_EQ(root_spec.optionCount(), 1);
+    EXPECT_EQ(foo_spec.optionCount(), 0);
+    EXPECT_EQ(bar_spec.optionCount(), 1);
+
+    // Process all the specifications.
+    manager.process(specs.begin(), specs.end());
+
+    // Log two messages each.
+    Logger root_logger(root_name.c_str());
+    Logger foo_logger(foo_name.c_str());
+    Logger bar_logger(bar_name.c_str());
+    LOG_INFO(root_logger, "from root logger 1");
+    LOG_INFO(foo_logger, "from foo logger 1");
+    LOG_INFO(bar_logger, "from bar logger 1");
+    LOG_INFO(root_logger, "from root logger 2");
+    LOG_INFO(foo_logger, "from foo logger 2");
+    LOG_INFO(bar_logger, "from bar logger 2");
+
+    // Check that root and foo were logged to file and that bar which
+    // had an explicit console configuration did not.
+    std::ifstream ifs(file_spec.getFileName());
+    std::stringstream s;
+    s << ifs.rdbuf();
+    std::string const result(s.str());
+    EXPECT_NE(result.find("INFO from root logger 1"), string::npos);
+    EXPECT_NE(result.find("INFO from foo logger 1"), string::npos);
+    EXPECT_EQ(result.find("INFO from bar logger 1"), string::npos);
+    EXPECT_NE(result.find("INFO from root logger 2"), string::npos);
+    EXPECT_NE(result.find("INFO from foo logger 2"), string::npos);
+    EXPECT_EQ(result.find("INFO from bar logger 2"), string::npos);
 }

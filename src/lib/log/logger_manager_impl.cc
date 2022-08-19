@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,8 +62,10 @@ LoggerManagerImpl::processEnd() {
 // add output specifications.
 void
 LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
-    log4cplus::Logger logger = log4cplus::Logger::getInstance(
-                                   expandLoggerName(spec.getName()));
+    string const& name(spec.getName());
+    string const& root_logger_name(getRootLoggerName());
+
+    log4cplus::Logger logger = log4cplus::Logger::getInstance(expandLoggerName(name));
 
     // Set severity level according to specification entry.
     logger.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
@@ -72,36 +74,48 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
     // Set the additive flag.
     logger.setAdditivity(spec.getAdditive());
 
+    // Replace all appenders for this logger.
+    logger.removeAllAppenders();
+
+    if (name == root_logger_name) {
+        // Store a copy of the root specification. It might be required later.
+        root_spec_ = spec;
+    }
+
     // Output options given?
     if (spec.optionCount() > 0) {
-        // Replace all appenders for this logger.
-        logger.removeAllAppenders();
+        // If there are output options provided, continue with the given spec.
+        appenderFactory(logger, spec);
+    } else {
+        // If there are no output options, inherit them from the root logger.
+        appenderFactory(logger, root_spec_);
+    }
+}
 
-        // Now process output specifications.
-        for (LoggerSpecification::const_iterator i = spec.begin();
-             i != spec.end(); ++i) {
-            switch (i->destination) {
-            case OutputOption::DEST_CONSOLE:
-                createConsoleAppender(logger, *i);
-                break;
+void
+LoggerManagerImpl::appenderFactory(log4cplus::Logger& logger,
+                                   LoggerSpecification const& spec) {
+    for (OutputOption const& i : spec) {
+        switch (i.destination) {
+        case OutputOption::DEST_CONSOLE:
+            createConsoleAppender(logger, i);
+            break;
 
-            case OutputOption::DEST_FILE:
-                createFileAppender(logger, *i);
-                break;
+        case OutputOption::DEST_FILE:
+            createFileAppender(logger, i);
+            break;
 
-            case OutputOption::DEST_SYSLOG:
-                createSyslogAppender(logger, *i);
-                break;
+        case OutputOption::DEST_SYSLOG:
+            createSyslogAppender(logger, i);
+            break;
 
-            default:
-                // Not a valid destination.  As we are in the middle of updating
-                // logging destinations, we could be in the situation where
-                // there are no valid appenders.  For this reason, throw an
-                // exception.
-                isc_throw(UnknownLoggingDestination,
-                          "Unknown logging destination, code = " <<
-                          i->destination);
-            }
+        default:
+            // Not a valid destination.  As we are in the middle of updating
+            // logging destinations, we could be in the situation where
+            // there are no valid appenders.  For this reason, throw an
+            // exception.
+            isc_throw(UnknownLoggingDestination,
+                      "Unknown logging destination, code = " << i.destination);
         }
     }
 }
