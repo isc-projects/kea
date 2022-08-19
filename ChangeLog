@@ -1,3 +1,8 @@
+2052.	[func]		andrei
+	Omitted logger configuration entries are now properly inherited
+	from the root logger as the ARM suggests.
+	(Gitlab #2537)
+
 2051.	[func]		razvan
 	Added support for bulk lease query options defined in RFC 6926.
 	The bulk lease query functionality has not been implemented yet.
