@@ -872,7 +872,7 @@ ControlledDhcpv6Srv::processCommand(const string& command,
 
     } catch (const isc::Exception& ex) {
         return (isc::config::createAnswer(1, "Error while processing command '"
-                                          + command + "':" + ex.what() +
+                                          + command + "': " + ex.what() +
                                           ", params: '" + txt + "'"));
     }
 }
