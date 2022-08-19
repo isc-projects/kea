@@ -17,7 +17,7 @@ set -eu
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Include admin utilities
-. "@abs_top_srcdir@/src/bin/admin/admin-utils.sh"
+. "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 
 # Set location of the kea-admin.
 kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"

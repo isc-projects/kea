@@ -26,7 +26,7 @@ shellcheck:
   stage: test
   script:
     - SCRIPTS=
-    - SCRIPTS+="src/bin/admin/admin-utils.sh "
+    - SCRIPTS+="src/bin/admin/admin-utils.sh.in "
     - SCRIPTS+="src/bin/admin/kea-admin.in "
     - SCRIPTS+="src/bin/admin/tests/admin_tests.sh.in "
     - SCRIPTS+="src/bin/admin/tests/memfile_tests.sh.in "

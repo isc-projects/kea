@@ -1394,6 +1394,7 @@ AC_CONFIG_FILES([m4macros/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/bin/Makefile])
 AC_CONFIG_FILES([src/bin/admin/Makefile])
+AC_CONFIG_FILES([src/bin/admin/admin-utils.sh])
 AC_CONFIG_FILES([src/bin/admin/kea-admin],
                 [chmod +x src/bin/admin/kea-admin])
 AC_CONFIG_FILES([src/bin/admin/tests/Makefile])

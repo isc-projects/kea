@@ -51,7 +51,7 @@ dump_qry=""
 if test -f "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"; then
     . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
-    . "@abs_top_srcdir@/src/bin/admin/admin-utils.sh"
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
 # Find the installed kea-lfc if available. Fallback to sources otherwise.
