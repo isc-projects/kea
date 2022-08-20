@@ -20,7 +20,6 @@ pair.
 
 .. code-block:: none
 
-  ```
    +-host-1-+       +-host-2-+
    |        |       |        |
    |   CA <===\   /===> CA   |    ===== - HTTP connection
@@ -30,7 +29,6 @@ pair.
    | DHCPv4 ==/   \== DHCPv4 |
    |        |       |        |
    +--------+       +--------+
-  ```
 
 The CA on host-1 and CA on host-2 both listen on port 8000. The DHCP servers communicate
 with each other via the CAs, which forward control commands to the DHCP servers over the UNIX domain

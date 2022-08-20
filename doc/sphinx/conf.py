@@ -266,7 +266,12 @@ def run_generate_docs(_):
         [ '../examples/template-power-user-home/kea-ca-1.conf', 'template-power-user-home-ca-1.conf' ],
         [ '../examples/template-power-user-home/kea-ca-2.conf', 'template-power-user-home-ca-2.conf' ],
         [ '../examples/template-power-user-home/kea-dhcp4-1.conf', 'template-power-user-home-dhcp4-1.conf' ],
-        [ '../examples/template-power-user-home/kea-dhcp4-2.conf', 'template-power-user-home-dhcp4-2.conf' ]
+        [ '../examples/template-power-user-home/kea-dhcp4-2.conf', 'template-power-user-home-dhcp4-2.conf' ],
+        [ '../examples/template-ha-mt-tls/info.md', 'template-ha-mt-tls.md' ],
+        [ '../examples/template-ha-mt-tls/kea-ca-1.conf', 'template-ha-mt-tls-ca-1.conf' ],
+        [ '../examples/template-ha-mt-tls/kea-ca-2.conf', 'template-ha-mt-tls-ca-2.conf' ],
+        [ '../examples/template-ha-mt-tls/kea-dhcp4-1.conf', 'template-ha-mt-tls-dhcp4-1.conf' ],
+        [ '../examples/template-ha-mt-tls/kea-dhcp4-2.conf', 'template-ha-mt-tls-dhcp4-2.conf' ]
     ]
 
     from shutil import copyfile

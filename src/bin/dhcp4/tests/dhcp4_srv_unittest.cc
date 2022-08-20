@@ -2919,7 +2919,8 @@ Dhcpv4SrvTest::checkConfigFiles() {
 #endif
         "dhcpv4-over-dhcpv6.json",
         "global-reservations.json",
-        "ha-load-balancing-primary.json",
+        "ha-load-balancing-server1-mt-with-tls.json",
+        "ha-load-balancing-server2-mt.json",
         "hooks.json",
         "hooks-radius.json",
         "leases-expiration.json",

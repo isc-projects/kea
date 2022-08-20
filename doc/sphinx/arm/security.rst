@@ -54,7 +54,7 @@ that must be used:
 - OpenSSL versions 1.1.x and later have been tested and are supported. Many
   recent operating system versions include TLS 1.3 support.
 
-- OpenSSL 3.x is not yet released; it is unknown whether Kea will build with it.
+- OpenSSL 3.x has been released and Kea will build with it.
 
 - LibreSSL 3.2.4 has been tested. LibreSSL shares the OpenSSL 1.0.2 API, so
   it should work, but is not supported.

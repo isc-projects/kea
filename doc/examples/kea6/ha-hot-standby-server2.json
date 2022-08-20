@@ -6,12 +6,14 @@
 // on this other server. Also, the interface configuration depends on the
 // network settings of the particular machine.
 //
-// The servers using this configuration work in hot standby mode..
-{ "Dhcp6":
-
+// The servers using this configuration work in hot standby mode.
 {
-// Kea is told to listen on eth0 interface only.
+
+// DHCPv6 configuration starts here.
+"Dhcp6": {
+    // Add names of your network interfaces to listen on.
     "interfaces-config": {
+        // The DHCPv6 server listens on this interface.
         "interfaces": [ "eth0" ]
     },
 
@@ -31,7 +33,7 @@
     // There are dedicated examples for each backend. See Section 7.2.2 "Lease
     // Storage" for details.
     "lease-database": {
-        // Memfile is the simplest and easiest backend to use. It's a in-memory
+        // Memfile is the simplest and easiest backend to use. It's an in-memory
         "type": "memfile"
     },
 
@@ -39,6 +41,9 @@
     // libdhcp_ha.so. The former handles incoming lease updates from the HA peers.
     // The latter implements high availability feature for Kea.
     "hooks-libraries": [
+        // The lease_cmds library must be loaded because HA makes use of it to
+        // deliver lease updates to the server as well as synchronize the
+        // lease database after failure.
         {
             "library": "/opt/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
@@ -73,30 +78,30 @@
                     // the partner but appear to not receive any response.
                     "max-unacked-clients": 5,
                     "peers": [
-                         // This is the configuration of our HA peer.
-                         {
-                             "name": "server1",
-                             // Specifies the URL on which the partner's control
-                             // channel can be reached. The Control Agent is required
-                             // to run on the partner's machine with "http-host" and
-                             // "http-port" values set to the corresponding values.
-                             "url": "http://192.168.56.33:8000/",
-                             // Th partner is primary. Our is standby.
-                             "role": "primary"
-                         },
-                         // This is the configuration of this server instance.
-                         {
-                             "name": "server2",
-                             // This specifies the URL of our server instance. The
-                             // Control Agent must run along with our DHCPv6 server
-                             // instance and the "http-host" and "http-port" must be
-                             // set to the corresponding values.
-                             "url": "http://192.168.56.66:8000/",
-                             // Out server is standby. The partner is primary.
-                             "role": "standby"
-                         }
-                     ]
-                 } ]
+                        // This is the configuration of our HA peer.
+                        {
+                            "name": "server1",
+                            // Specifies the URL on which the partner's control
+                            // channel can be reached. The Control Agent is required
+                            // to run on the partner's machine with "http-host" and
+                            // "http-port" values set to the corresponding values.
+                            "url": "http://192.168.56.33:8000/",
+                            // The partner is primary. Our is standby.
+                            "role": "primary"
+                        },
+                        // This is the configuration of this server instance.
+                        {
+                            "name": "server2",
+                            // This specifies the URL of our server instance. The
+                            // Control Agent must run along with our DHCPv6 server
+                            // instance and the "http-host" and "http-port" must be
+                            // set to the corresponding values.
+                            "url": "http://192.168.56.66:8000/",
+                            // Out server is standby. The partner is primary.
+                            "role": "standby"
+                        }
+                    ]
+                } ]
             }
         }
     ],
@@ -105,17 +110,17 @@
     // least subnet and pool entries.
     "subnet6": [
         {
-             "subnet": "2001:db8:1::/64",
+            "subnet": "2001:db8:1::/64",
 
-             "pools": [
+            "pools": [
                 {
                     "pool": "2001:db8:1::100 - 2001:db8:1::250"
                 }
-             ],
+            ],
 
              "interface": "eth0"
-    }
-  ],
+        }
+    ],
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
@@ -123,19 +128,22 @@
 // or 'syslog', which will store output messages via syslog.
     "loggers": [
         {
+            // This section affects kea-dhcp6, which is the base logger for DHCPv6
+            // component. It tells DHCPv6 server to write all log messages (on
+            // severity INFO or more) to a file.
             "name": "kea-dhcp6",
             "output_options": [
                 {
                     "output": "stdout"
                 }
             ],
-            "debuglevel": 0,
-            "severity": "INFO"
+            "severity": "INFO",
+            "debuglevel": 0
         },
         {
             // This section specifies configuration of the HA hooks library specific
             // logger.
-            "name": "kea-dhcp4.ha-hooks",
+            "name": "kea-dhcp6.ha-hooks",
             "output_options": [
                 {
                     "output": "stdout"
@@ -146,5 +154,4 @@
         }
     ]
 }
-
 }
