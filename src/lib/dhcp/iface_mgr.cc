@@ -1999,7 +1999,7 @@ IfaceMgr::configureDHCPPacketQueue(uint16_t family, data::ConstElementPtr queue_
         }
     }
 
-    return(enable_queue);
+    return (enable_queue);
 }
 
 void

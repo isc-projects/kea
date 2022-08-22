@@ -485,8 +485,8 @@ protected:
     /// Currently it is a no-op, it always returns NULL.
     ///
     /// @return always NULL
-    virtual HWAddrPtr getMACFromRemoteIdRelayOption(){
-        return(HWAddrPtr());
+    virtual HWAddrPtr getMACFromRemoteIdRelayOption() {
+        return (HWAddrPtr());
     }
 
     /// @brief local HW address (dst if receiving packet, src if sending packet)

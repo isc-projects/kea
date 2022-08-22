@@ -99,7 +99,7 @@ public:
     virtual data::ElementPtr getInfo() const {
        data::ElementPtr info = data::Element::createMap();
        info->set("queue-type", data::Element::create(queue_type_));
-       return(info);
+       return (info);
     }
 
     /// @brief Fetches a JSON string representation of queue operational info

@@ -2134,6 +2134,35 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     rdnss_buf.end(),
                                     typeid(OptionCustom));
 
+    // Initialize test buffer for Vendor Class option.
+    const char status_code_data[] = {
+        0x02, 0x65, 0x72, 0x72, 0x6f, 0x72
+    };
+    std::vector<uint8_t> status_code_buf(status_code_data,
+                                         status_code_data + sizeof(status_code_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_STATUS_CODE, status_code_buf.begin(),
+                                    status_code_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_BASE_TIME, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_START_TIME_OF_STATE, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_QUERY_START_TIME, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_QUERY_END_TIME, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_STATE, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DATA_SOURCE, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
     LibDhcpTest::testStdOptionDefs4(DHO_V4_PORTPARAMS, begin, begin + 4,
                                     typeid(OptionCustom));
 
@@ -2206,14 +2235,14 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
         0x00, 0x01, 0x02
     };
     std::vector<uint8_t> vclass_buf(vclass_data,
-                                    vclass_data + sizeof(vclass_data));;
+                                    vclass_data + sizeof(vclass_data));
 
     // Initialize test buffer for Bootfile Param option.
     const char bparam_data[] = {
         0x00, 0x01, 0x02
     };
     std::vector<uint8_t> bparam_buf(bparam_data,
-                                    bparam_data + sizeof(bparam_data));;
+                                    bparam_data + sizeof(bparam_data));
 
     // The actual test starts here for all supported option codes.
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, begin, end,

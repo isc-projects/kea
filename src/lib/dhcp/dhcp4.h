@@ -145,7 +145,7 @@ enum DHCPOptionType {
     DHO_STDASERVER                   = 76,
     DHO_USER_CLASS                   = 77, /* RFC3004 */
     DHO_DIRECTORY_AGENT              = 78, /* RFC2610 */
-    DHO_SERVICE_SCOPE                = 79, /* RFC4039 */
+    DHO_SERVICE_SCOPE                = 79, /* RFC2610 */
 //  DHO_RAPID_COMMIT                 = 80, /* RFC4702 */
     DHO_FQDN                         = 81, /* RFC4702 */
     DHO_DHCP_AGENT_OPTIONS           = 82, /* RFC3046 */
@@ -203,13 +203,13 @@ enum DHCPOptionType {
     DHO_RDNSS_SELECT                 = 146,
     // 147-149 are removed/unassigned
     // 150 have multiple definitions
-//  DHO_STATUS_CODE                  = 151,
-//  DHO_BASE_TIME                    = 152,
-//  DHO_START_TIME_OF_STATE          = 153,
-//  DHO_QUERY_START_TIME             = 154,
-//  DHO_QUERY_END_TIME               = 155,
-//  DHO_DHCP_STATE                   = 156,
-//  DHO_DATA_SOURCE                  = 157,
+    DHO_STATUS_CODE                  = 151, /* RFC6926 */
+    DHO_BASE_TIME                    = 152, /* RFC6926 */
+    DHO_START_TIME_OF_STATE          = 153, /* RFC6926 */
+    DHO_QUERY_START_TIME             = 154, /* RFC6926 */
+    DHO_QUERY_END_TIME               = 155, /* RFC6926 */
+    DHO_DHCP_STATE                   = 156, /* RFC6926 */
+    DHO_DATA_SOURCE                  = 157, /* RFC6926 */
 //  DHO_V4_PCP_SERVER                = 158,
     DHO_V4_PORTPARAMS                = 159,
     // 160 used to be assigned in RFC7710, but was removed in RFC8910
