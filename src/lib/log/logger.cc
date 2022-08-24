@@ -204,6 +204,11 @@ Logger::setInterprocessSync(isc::log::interprocess::InterprocessSync* sync) {
     getLoggerPtr()->setInterprocessSync(sync);
 }
 
+bool
+Logger::hasAppender(OutputOption::Destination const destination) {
+    return getLoggerPtr()->hasAppender(destination);
+}
+
 // Comparison (testing only)
 
 bool

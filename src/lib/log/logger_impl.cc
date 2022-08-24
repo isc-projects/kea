@@ -20,9 +20,12 @@
 #include <boost/static_assert.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <log4cplus/version.h>
 #include <log4cplus/configurator.h>
+#include <log4cplus/consoleappender.h>
+#include <log4cplus/fileappender.h>
 #include <log4cplus/loggingmacros.h>
+#include <log4cplus/syslogappender.h>
+#include <log4cplus/version.h>
 
 #include <log/logger.h>
 #include <log/logger_impl.h>
@@ -196,6 +199,32 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
     if (!locker.unlock()) {
         LOG4CPLUS_ERROR(logger_, "Unable to unlock logger lockfile");
     }
+}
+
+bool
+LoggerImpl::hasAppender(OutputOption::Destination const destination) {
+    // Get the appender for the name under which this logger is registered.
+    log4cplus::SharedAppenderPtrList appenders(
+        log4cplus::Logger::getInstance(name_).getAllAppenders());
+
+    // If there are no appenders, they might be under the root name.
+    if (appenders.size() == 0) {
+        appenders = log4cplus::Logger::getInstance(getRootLoggerName()).getAllAppenders();
+    }
+
+    for (log4cplus::helpers::SharedObjectPtr<log4cplus::Appender> logger : appenders) {
+        if (destination == OutputOption::DEST_CONSOLE &&
+            dynamic_cast<log4cplus::ConsoleAppender*>(logger.get())) {
+            return true;
+        } else if (destination == OutputOption::DEST_FILE &&
+                   dynamic_cast<log4cplus::FileAppender*>(logger.get())) {
+            return true;
+        } else if (destination == OutputOption::DEST_SYSLOG &&
+                   dynamic_cast<log4cplus::SysLogAppender*>(logger.get())) {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace log

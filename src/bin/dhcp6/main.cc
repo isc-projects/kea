@@ -16,6 +16,7 @@
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
+#include <log/output_option.h>
 #include <process/daemon.h>
 
 #include <boost/lexical_cast.hpp>
@@ -240,8 +241,15 @@ main(int argc, char* argv[]) {
             server.init(config_file);
         } catch (const std::exception& ex) {
 
+            // Let's log out what went wrong.
             try {
-                // Let's log out what went wrong.
+                // Log with the current logger, but only if it's not
+                // configured with console output so as to not log twice.
+                if (!dhcp6_logger.hasAppender(isc::log::OutputOption::DEST_CONSOLE)) {
+                    LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
+                }
+
+                // Log on the console as well.
                 isc::log::LoggerManager log_manager;
                 log_manager.process();
                 LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());

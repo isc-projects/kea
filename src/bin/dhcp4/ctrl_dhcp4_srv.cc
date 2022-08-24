@@ -414,18 +414,19 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
 
         // Use new configuration.
         CfgMgr::instance().commit();
-    } else {
+    } else if (CfgMgr::instance().getCurrentCfg()->getSequence() != 0) {
         // Ok, we applied the logging from the upcoming configuration, but
         // there were problems with the config. As such, we need to back off
-        // and revert to the previous logging configuration.
+        // and revert to the previous logging configuration. This is not done if
+        // sequence == 0, because that would mean always reverting to stdout by
+        // default, and it is arguably more helpful to have the error in a
+        // potential file or syslog configured in the upcoming configuration.
         CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
 
-        if (CfgMgr::instance().getCurrentCfg()->getSequence() != 0) {
-            // Not initial configuration so someone can believe we reverted
-            // to the previous configuration. It is not the case so be clear
-            // about this.
-            LOG_FATAL(dhcp4_logger, DHCP4_CONFIG_UNRECOVERABLE_ERROR);
-        }
+        // Not initial configuration so someone can believe we reverted
+        // to the previous configuration. It is not the case so be clear
+        // about this.
+        LOG_FATAL(dhcp4_logger, DHCP4_CONFIG_UNRECOVERABLE_ERROR);
     }
 
     return (result);
