@@ -14,8 +14,10 @@
 #include <log/logger.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
+#include <log/logger_support.h>
 #include <log/log_messages.h>
 #include <log/interprocess/interprocess_sync_file.h>
+#include <log/output_option.h>
 #include <log/tests/log_test_messages.h>
 
 #include <iostream>
@@ -33,7 +35,8 @@ using namespace std;
 class LoggerTest : public ::testing::Test {
 public:
     LoggerTest() {
-        // Initialization of logging is done in main()
+        // Initialize logging before each test, even if it is already done in main().
+        isc::log::initLogger();
     }
     ~LoggerTest() {
         LoggerManager::reset();
@@ -453,4 +456,53 @@ TEST_F(LoggerTest, Lock) {
 
     EXPECT_TRUE(sync->wasLocked());
     EXPECT_TRUE(sync->wasUnlocked());
+}
+
+// Checks that hasAppender() reports
+TEST_F(LoggerTest, HasAppender) {
+    // Create a logger.
+    Logger logger("logger");
+
+    // By default, loggers have a file appender to /dev/null.
+    EXPECT_FALSE(logger.hasAppender(OutputOption::DEST_CONSOLE));
+    EXPECT_TRUE(logger.hasAppender(OutputOption::DEST_FILE));
+    EXPECT_FALSE(logger.hasAppender(OutputOption::DEST_SYSLOG));
+
+    // -- Create some specifications. --
+
+    OutputOption console;
+    console.destination = OutputOption::DEST_CONSOLE;
+    LoggerSpecification spec_console("logger");
+    spec_console.addOutputOption(console);
+
+    OutputOption file;
+    file.destination = OutputOption::DEST_FILE;
+    file.filename = "/dev/null";
+    LoggerSpecification spec_file("logger");
+    spec_file.addOutputOption(file);
+
+    OutputOption syslog;
+    syslog.destination = OutputOption::DEST_SYSLOG;
+    LoggerSpecification spec_syslog("logger");
+    spec_syslog.addOutputOption(syslog);
+
+    LoggerManager manager;
+
+    // Check console.
+    manager.process(spec_console);
+    EXPECT_TRUE(logger.hasAppender(OutputOption::DEST_CONSOLE));
+    EXPECT_FALSE(logger.hasAppender(OutputOption::DEST_FILE));
+    EXPECT_FALSE(logger.hasAppender(OutputOption::DEST_SYSLOG));
+
+    // Check file.
+    manager.process(spec_file);
+    EXPECT_FALSE(logger.hasAppender(OutputOption::DEST_CONSOLE));
+    EXPECT_TRUE(logger.hasAppender(OutputOption::DEST_FILE));
+    EXPECT_FALSE(logger.hasAppender(OutputOption::DEST_SYSLOG));
+
+    // Check syslog.
+    manager.process(spec_syslog);
+    EXPECT_FALSE(logger.hasAppender(OutputOption::DEST_CONSOLE));
+    EXPECT_FALSE(logger.hasAppender(OutputOption::DEST_FILE));
+    EXPECT_TRUE(logger.hasAppender(OutputOption::DEST_SYSLOG));
 }
