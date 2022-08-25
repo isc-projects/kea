@@ -92,21 +92,13 @@ is_new_tag_stable_release=$(is_stable_release "${new_release_tag}" && printf tru
 # if any file has changed in a specific library director
 # there are 4 possible cases
 # 1. old release is stable and new release is stable
-#    new_version = old_version + 1
+#    new_version = old_version + 1 (only for updated libs)
 # 2. old release is stable and new release is development
-#    new_version = old_version + 11
+#    new_version = old_version + 1 (only for updated libs) and + 10 (for all libs)
 # 3. old release is development and new release is development
-#    if latest development has already added 10 it means that the old_release version is different than latest_stable version
-#        new_version = old_version + 1
-#    else it means that the old_release has not incremented the version since latest_stable
-#        new_version = old_version + 11
+#    new_version = old_version + 1 (only for updated libs)
 # 4. old release is development and new release is stable
-#    illegal as there should only be stable to stable bump lib versions
-
-if ! ${is_old_tag_stable_release} && ${is_new_tag_stable_release}; then
-  printf 'ERROR: illegal bump in lib versions from development release to stable release\n' >&2
-  exit 1
-fi
+#    new_version = old_version + 1 (only for updated libs)
 
 # Get root path.
 root_path=$(cd "$(dirname "${0}")/.." && pwd)
@@ -120,19 +112,13 @@ if test -n "${diff}"; then
   exit 1
 fi
 
-latest_stable_release_tag=$(find_latest_stable_release_tag "$(printf '%s' "${old_release_tag}" | cut -d '.' -f1)")
 increment_extra=10
 increment=1
 
-old_hooks_version=$(grep KEA_HOOKS_VERSION "src/lib/hooks/hooks.h" | cut -d '=' -f 2 | tr -d ' ' | tr -d ';')
-new_hooks_version=$((old_hooks_version + increment))
-
-if ! ${is_new_tag_stable_release} && ${is_old_tag_stable_release}; then
-  major=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 1)
-  middle=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 2)
-  minor=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 3)
-  new_hooks_version="${major}$(printf '%02d' "${middle}")$(printf '%02d' "${minor}")"
-fi
+major=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 1)
+middle=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 2)
+minor=$(echo "${new_release_tag}" | cut -d '-' -f 2 | cut -d '.' -f 3)
+new_hooks_version="${major}$(printf '%02d' "${middle}")$(printf '%02d' "${minor}")"
 
 sed -i "s/^\/\/ Version .* of the hooks framework, set for Kea .*/\/\/ Version ${new_hooks_version} of the hooks framework, set for $(echo "${new_release_tag}" | tr '-' ' ')/" "src/lib/hooks/hooks.h"
 sed -i "s/KEA_HOOKS_VERSION.*/KEA_HOOKS_VERSION = ${new_hooks_version};/" "src/lib/hooks/hooks.h"
@@ -145,10 +131,19 @@ for lib in $(git diff --name-only "${old_release_tag}" src/lib | cut -d '/' -f 3
 
   old_version=$(grep '\-version\-info' "src/lib/${lib}/Makefile.am" | tr -s ' ' | rev | cut -d ' ' -f 1 | rev | cut -d ':' -f 1)
   new_version=$((old_version + increment))
-  if ! ${is_new_tag_stable_release}; then
-    if ${is_old_tag_stable_release} || test "$(git diff -U0 "${latest_stable_release_tag}" "${old_release_tag}" "src/lib/${lib}/Makefile.am" | grep '^+' | grep -v '^+++ ' | grep -c '\-version\-info')" -eq 0; then
-      new_version=$((new_version + increment_extra))
-    fi
-  fi
   sed -i "s/version-info .*/version-info ${new_version}:0:0/" "src/lib/${lib}/Makefile.am"
 done
+
+if ! ${is_new_tag_stable_release} && ${is_old_tag_stable_release}; then
+  for lib in $(find 'src/lib' -mindepth 1 -maxdepth 1 -type d | cut -d '/' -f 3 | sort -uV); do
+    # Skip over files and anything that is not a directory.
+    if test ! -d "src/lib/${lib}"; then
+      continue
+    fi
+
+    old_version=$(grep '\-version\-info' "src/lib/${lib}/Makefile.am" | tr -s ' ' | rev | cut -d ' ' -f 1 | rev | cut -d ':' -f 1)
+    new_version=$((old_version + increment_extra))
+    sed -i "s/version-info .*/version-info ${new_version}:0:0/" "src/lib/${lib}/Makefile.am"
+  done
+fi
+
