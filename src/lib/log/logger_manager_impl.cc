@@ -88,6 +88,8 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
         appenderFactory(logger, spec);
     } else {
         // If there are no output options, inherit them from the root logger.
+        // It's important that root_spec_.getName() is not used further since it
+        // may be different than the logger being configured here.
         appenderFactory(logger, root_spec_);
     }
 }

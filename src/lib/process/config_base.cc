@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,9 +6,11 @@
 
 #include <config.h>
 
-#include <process/config_base.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <log/logger_specification.h>
+#include <process/config_base.h>
+
 #include <list>
 
 using namespace isc::log;
@@ -19,11 +21,15 @@ namespace process {
 
 void
 ConfigBase::applyLoggingCfg() const {
-
     std::list<LoggerSpecification> specs;
-    for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
-         it != logging_info_.end(); ++it) {
-        specs.push_back(it->toSpec());
+    for (LoggingInfo const& logging_info : logging_info_) {
+        if (logging_info.name_ == getRootLoggerName()) {
+            // Root logger has to be processed first if we expect child loggers
+            // to inherit configuration from it.
+            specs.push_front(logging_info.toSpec());
+        } else {
+            specs.push_back(logging_info.toSpec());
+        }
     }
     LoggerManager manager;
     manager.process(specs.begin(), specs.end());
@@ -133,5 +139,5 @@ ConfigBase::toElement() const {
     return (result);
 }
 
-};
-};
+}  // namespace process
+}  // namespace isc
