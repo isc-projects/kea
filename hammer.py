@@ -1782,6 +1782,7 @@ def prepare_system_local(features, check_times):
             _, output = execute("pkg search python | grep -Eo '^python-[0-9]+\.[0-9]+' | cut -d '-' -f 2 | tr -d '.'",
                                 capture=True)
             pyv = output.strip()
+            log.info(">>>>> Detected Sphinx packages version: py%s-sphinx", pyv)
             packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme'])
 
         if 'mysql' in features:
