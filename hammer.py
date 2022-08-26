@@ -2272,8 +2272,8 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
 
     freeradius_client_packages = []
-    freeradius_client_packages.append('libfreeradius-client-1.1.7-{}'.format(frc_version))
-    freeradius_client_packages.append('libfreeradius-client-dev-1.1.7-{}'.format(frc_version))
+    freeradius_client_packages.append('libfreeradius-client=1.1.7-{}'.format(frc_version))
+    freeradius_client_packages.append('libfreeradius-client-dev=1.1.7-{}'.format(frc_version))
 
     install_pkgs(freeradius_client_packages, env=env, check_times=check_times)
 
