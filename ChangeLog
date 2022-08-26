@@ -1,3 +1,10 @@
+2050.	[build]		andrei, tomek
+	Fixed problem with preparing system using hammer on FreeBSD 13.0.
+	The available sphinx and python versions are now detected dynamically.
+	This should prevent future package upgrades (e.g. to python 3.10)
+	from breaking our builds again.
+	(Gitlab #2534)
+
 2049.	[build]		razvan, fdupont
 	The distcheck rule is able to compile and run unittests for
 	database backends, GSS-TSIG and Sysrepo/NETCONF.
