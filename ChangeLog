@@ -1,3 +1,14 @@
+2054.	[build]         razvan
+	The library version numbers have been bumped for the Kea 2.3.0
+	development release.
+	(Gitlab #2546)
+
+2053.	[doc]		razvan
+	A new appendix for configuration templates added to Kea ARM.
+	which include High Availability with multi-threading and secure
+	connections using TLS.
+	(Gitlab #2441)
+
 2052.	[func]		andrei
 	Omitted logger configuration entries are now properly inherited
 	from the root logger as the ARM suggests.

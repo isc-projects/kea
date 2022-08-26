@@ -7,7 +7,7 @@ lib_LTLIBRARIES = libkea-exceptions.la
 
 libkea_exceptions_la_SOURCES = exceptions.h exceptions.cc
 libkea_exceptions_la_SOURCES += isc_assert.h
-libkea_exceptions_la_LDFLAGS = -no-undefined -version-info 13:0:0
+libkea_exceptions_la_LDFLAGS = -no-undefined -version-info 23:0:0
 
 CLEANFILES = *.gcno *.gcda
 
