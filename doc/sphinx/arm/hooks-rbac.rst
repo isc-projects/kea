@@ -53,7 +53,7 @@ Role assignment is governed by the configured role-assignment method.
    +----------------------+---------------------------------------------------------+
    | basic-authentication | user ID of basic HTTP authentication                    |
    +----------------------+---------------------------------------------------------+
-   | custom-value         | for extension                                           |
+   | custom-value         | another role can be designed in external hooks          |
    +----------------------+---------------------------------------------------------+
 
 Role Configuration
@@ -100,7 +100,15 @@ API Commands
 All commands of the REST API are described in files in the source directory
 ``src/share/api``, or in installed Kea
 in ``.../share/kea/api``. The ``rbac`` hook reads these files to take the name,
-the access right (i.e. ``read`` or ``write``), and the hook name.
+the access right (i.e. ``read`` or ``write``), and the hook name. Access right
+can be modified in the file but changes will be applied after Control-agent
+restart. Removing commands definitions from ``.../share/kea/api`` have it's
+consequences. If access control list is based on ``read`` or ``write`` and
+definition file is missing Control-agent will always reject such command.
+If access controls list is using ``commands`` to specify name of a command
+and definition file from ``.../share/kea/api`` of this particular command
+is missing Control-agent will log an error on startup and exit.
+
 
 .. table:: Extra command-definition parameters
 
@@ -194,6 +202,7 @@ The global parameters are:
 -  ``access-control-lists``: the named access control list definitions
    (each definition is a single entry map; the name of the entry is
    the name of the access list, and the value is the specification).
+   Name can be used in other parts of configuration e.g. accept-commands.
 
 -  ``roles``: the role configurations.
 
@@ -336,6 +345,66 @@ This is the pseudo-code of the accept/reject decision algorithm which returns
        }
    }
 
+Custom hook commands, commands redefinition.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It's possible to have custom hook with new commands. In this case managing
+new command via Role Based Access Control can be done in two ways.
+
+Using ``command`` global parameter:
+
+.. code-block:: javascript
+
+    ...
+    "commands": [
+            {
+                "name": "my-new-command",
+                "access": "write",
+                "hook": "my-custom-hook"
+            }
+        ]
+
+defining it's name, access type, and hook name. In roles new command can be
+used:
+
+.. code-block:: javascript
+
+    ...
+    "roles": [
+        {
+            "name": "user1",
+            "accept-commands": {
+                "commands": [ "my-new-command" ] },
+            "reject-commands": "WRITE",
+            "list-match-first": "accept"
+        },
+        {
+            "name": "user2",
+            "accept-commands": { "hook": "my-custom-hook" }
+            "reject-commands": "ALL",
+            "list-match-first": "accept"
+        }
+    ]
+
+Second option is to create custom file in ``.../share/kea/api`` and define
+access type of a custom command.
+
+It's possible also to redefine existing command by removing it's definition
+file from ``.../share/kea/api`` and define it in global ``commands`` parameter:
+
+.. code-block:: javascript
+
+    ...
+    "commands": [
+            {
+                "name": "dhcp-disable",
+                "access": "read",
+                "hook": "my-custom-hook-3"
+            }
+        ]
+
+With this approach administrator can put configurations of all already existing
+commands inside Control-agent configuration file.
+
 Extensive Example
 ~~~~~~~~~~~~~~~~~
 
@@ -437,3 +506,63 @@ which must be checked first as "config-get" has the read-access right.
 To check any configuration, it is a good idea to use the "list-commands"
 response filter, which shows errors such as missing (rejected) commands
 and extra (accepted) commands.
+
+``access-control-lists`` can be used for definitions of access control lists
+and later reused in roles:
+
+ .. code-block:: javascript
+
+    ...
+    "access-control-lists":[
+        {
+            "my-list-one":{
+                "or":[
+                {
+                    "hook": "subnet_cmds"
+                },
+                {
+                    "commands":[ "list-commands" ]
+                }
+                ]
+            }
+        },
+        {
+            "my-list-two":{
+                "and":[
+                "READ",
+                {
+                    "not":{
+                        "commands":[ "config-get" ]
+                    }
+                }
+                ]
+            }
+        },
+        {
+            "my-list-three":{
+                "or":[
+                { "hook":"subnet_cmds" },
+                { "hook":"class_cmds" },
+                { "hook":"lease_cmds" }
+                ]
+            }
+        }
+    ],
+    "roles":[
+        {
+            "name":"admin",
+            "accept-commands":"my-list-one",
+            "reject-commands":"ALL",
+            "list-match-first":"accept"
+        },
+        {
+            "name":"admin2",
+            "accept-commands":"my-list-two",
+            "reject-commands":"ALL",
+            "list-match-first":"accept"
+        }
+    ],
+    "unknown-role":{
+        "accept-commands":"my-list-three",
+        "reject-commands":"ALL"
+    }
