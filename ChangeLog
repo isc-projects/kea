@@ -1,3 +1,8 @@
+2051.	[func]		razvan
+	Added support for bulk lease query options defined in RFC 6926.
+	The bulk lease query functionality has not been implemented yet.
+	(Gitlab #2527)
+
 2050.	[build]		andrei, tomek
 	Fixed problem with preparing system using hammer on FreeBSD
 	13.0. The available sphinx and python versions are now detected
