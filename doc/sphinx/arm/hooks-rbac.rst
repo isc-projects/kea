@@ -101,13 +101,14 @@ All commands of the REST API are described in files in the source directory
 ``src/share/api``, or in installed Kea
 in ``.../share/kea/api``. The ``rbac`` hook reads these files to take the name,
 the access right (i.e. ``read`` or ``write``), and the hook name. Access right
-can be modified in the file but changes will be applied after Control-agent
-restart. Removing commands definitions from ``.../share/kea/api`` have it's
-consequences. If access control list is based on ``read`` or ``write`` and
-definition file is missing Control-agent will always reject such command.
-If access controls list is using ``commands`` to specify name of a command
-and definition file from ``.../share/kea/api`` of this particular command
-is missing Control-agent will log an error on startup and exit.
+can be modified in the file but changes will be applied after Control Agent
+restart. Removing command definitions from ``.../share/kea/api`` has its
+consequences. If the access control list is based on ``read`` or ``write`` and
+the definition file is missing, the Control Agent will always reject such
+a command.  If the access controls list is using ``commands`` to specify the
+name of a command and the definition file from ``.../share/kea/api`` of this
+particular command is missing, the Control Agent will log an error on startup
+and exit.
 
 
 .. table:: Extra command-definition parameters
@@ -202,7 +203,7 @@ The global parameters are:
 -  ``access-control-lists``: the named access control list definitions
    (each definition is a single entry map; the name of the entry is
    the name of the access list, and the value is the specification).
-   Name can be used in other parts of configuration e.g. accept-commands.
+   The name is used in other parts of configuration e.g. accept-commands.
 
 -  ``roles``: the role configurations.
 
@@ -347,10 +348,10 @@ This is the pseudo-code of the accept/reject decision algorithm which returns
 
 Custom hook commands, commands redefinition.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-It's possible to have custom hook with new commands. In this case managing
-new command via Role Based Access Control can be done in two ways.
+It is possible to have a custom hook with new commands. In this case managing
+a new command via Role Based Access Control can be done in two ways.
 
-Using ``command`` global parameter:
+Using the ``command`` global parameter:
 
 .. code-block:: javascript
 
@@ -363,8 +364,8 @@ Using ``command`` global parameter:
             }
         ]
 
-defining it's name, access type, and hook name. In roles new command can be
-used:
+to define its name, access type, and hook name. And in ``roles`` the new
+command can then be specified:
 
 .. code-block:: javascript
 
@@ -385,11 +386,11 @@ used:
         }
     ]
 
-Second option is to create custom file in ``.../share/kea/api`` and define
-access type of a custom command.
+The second method is to create a custom file in ``.../share/kea/api`` and define
+the access type of the custom command(s).
 
-It's possible also to redefine existing command by removing it's definition
-file from ``.../share/kea/api`` and define it in global ``commands`` parameter:
+It is also possible to redefine existing an command by removing its definition
+file from ``.../share/kea/api`` and defining it in the ``commands`` global parameter:
 
 .. code-block:: javascript
 
@@ -402,8 +403,8 @@ file from ``.../share/kea/api`` and define it in global ``commands`` parameter:
             }
         ]
 
-With this approach administrator can put configurations of all already existing
-commands inside Control-agent configuration file.
+With this approach an administrator can put configurations of all existing
+commands inside the Control Agent's configuration file.
 
 Extensive Example
 ~~~~~~~~~~~~~~~~~
