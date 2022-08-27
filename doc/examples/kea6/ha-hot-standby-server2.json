@@ -78,7 +78,7 @@
                     // the partner but appear to not receive any response.
                     "max-unacked-clients": 5,
                     "peers": [
-                        // This is the configuration of our HA peer.
+                        // This is the configuration of the HA peer.
                         {
                             "name": "server1",
                             // Specifies the URL on which the partner's control
@@ -86,18 +86,19 @@
                             // to run on the partner's machine with "http-host" and
                             // "http-port" values set to the corresponding values.
                             "url": "http://192.168.56.33:8000/",
-                            // The partner is primary. Our is standby.
+                            // The partner is primary. This server is standby.
                             "role": "primary"
                         },
                         // This is the configuration of this server instance.
                         {
                             "name": "server2",
-                            // This specifies the URL of our server instance. The
-                            // Control Agent must run along with our DHCPv6 server
+                            // This specifies the URL of this server instance. The
+                            // Control Agent must run along with this DHCPv6 server
                             // instance and the "http-host" and "http-port" must be
                             // set to the corresponding values.
                             "url": "http://192.168.56.66:8000/",
-                            // Out server is standby. The partner is primary.
+                            // This server is standby. The other one must be
+                            // primary.
                             "role": "standby"
                         }
                     ]

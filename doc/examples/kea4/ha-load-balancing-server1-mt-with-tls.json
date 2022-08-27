@@ -135,6 +135,9 @@
                     // hundreds of thausands of clients), you may need to increase it
                     // further. The default value is 60000ms (60 seconds).
                     "sync-timeout": 60000,
+                    // To not experience performance degradation when the Kea server is
+                    // processing packets on multiple threads, the High Availablility module
+                    // must be configured in a similar way.
                     "multi-threading": {
                         "enable-multi-threading": true,
                         // When running in MT mode, the dedicated listener is used to handle
@@ -149,10 +152,11 @@
                         // This is the configuration of this server instance.
                         {
                             "name": "server1",
-                            // This specifies the URL of our server instance. The
-                            // Control Agent is not required run along with our DHCPv4 server
-                            // instance. The "http-host" and "http-port" values must be
-                            // set to different values then the Control Agent.
+                            // This specifies the URL of this server instance. The
+                            // Control Agent is not required to run along with this DHCPv4 server
+                            // instance if multi-threading is enabled.
+                            // The "http-host" and "http-port" values must be set to different
+                            // values then the ones used by the Control Agent.
                             "url": "http://192.168.56.33:8000/",
                             // Trust anchor aka certificate authority file or directory.
                             "trust-anchor": "/usr/lib/kea/CA.pem",
@@ -160,18 +164,20 @@
                             "cert-file": "/usr/lib/kea/server1_cert.pem",
                             // Private key file name.
                             "key-file": "/usr/lib/kea/server1_key.pem",
+                            // Client certificates are required and verified.
+                            "require-client-certs": true,
                             // This server is primary. The other one must be
                             // secondary.
                             "role": "primary"
                         },
-                        // This is the configuration of our HA peer.
+                        // This is the configuration of the HA peer.
                         {
                             "name": "server2",
                             // Specifies the URL on which the partner's control
                             // channel can be reached. The Control Agent is not required
-                            // to run on the partner's machine. The "http-host" and
-                            // "http-port" values must be set to different values then the
-                            // Control Agent.
+                            // to run on the partner's machine if multi-threading is enabled.
+                            // The "http-host" and "http-port" values must be set to different
+                            // values then the ones used by the Control Agent.
                             "url": "http://192.168.56.66:8000/",
                             // Trust anchor aka certificate authority file or directory.
                             "trust-anchor": "/usr/lib/kea/CA.pem",
@@ -179,7 +185,9 @@
                             "cert-file": "/usr/lib/kea/server2_cert.pem",
                             // Private key file name.
                             "key-file": "/usr/lib/kea/server2_key.pem",
-                            // The partner is a secondary. Our is primary.
+                            // Client certificates are required and verified.
+                            "require-client-certs": true,
+                            // The partner is secondary. This server is primary.
                             "role": "secondary"
                         }
                     ]

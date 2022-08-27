@@ -32,10 +32,10 @@ listener, which forward only the lease updates commands to the peer server.
 Deployment Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The setup is not expected to scale automatically. This example uses 4 thread for
+The setup is not expected to scale automatically. This example uses 4 threads for
 processing DHCP traffic, 4 threads for listening and handling HA peer HTTP requests
 and 4 threads for sending lease updates to the HA peer. The thread queue used to
-store incomming HDCP requests is set to 64, but specific values for better
+store incomming DHCP requests is set to 64, but specific values for better
 performance must be determined on the deployment setup by doing proper testing
 and benchmarks.
 
