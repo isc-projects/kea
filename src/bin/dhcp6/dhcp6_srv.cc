@@ -1530,7 +1530,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_class) {
-                int32_t vendor_id = vendor_class->getVendorId();
+                uint32_t vendor_id = vendor_class->getVendorId();
                 static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
@@ -1565,7 +1565,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
-                int32_t vendor_id = vendor_opts->getVendorId();
+                uint32_t vendor_id = vendor_opts->getVendorId();
                 static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
@@ -3967,7 +3967,7 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
     // the response via Dhcp6To4Ipc.
 }
 
-void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
+void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt) {
     OptionVendorClassPtr vclass;
     for (auto opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
         vclass = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
@@ -3977,15 +3977,12 @@ void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
 
         if (vclass->hasTuple(DOCSIS3_CLASS_MODEM)) {
             pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM);
-            classes += VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM + " ";
 
         } else if (vclass->hasTuple(DOCSIS3_CLASS_EROUTER)) {
             pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
-            classes += VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER + " ";
 
         } else {
             pkt->addClass(VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText());
-            classes + VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText() + " ";
         }
     }
 }
@@ -3993,10 +3990,9 @@ void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
 void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
     // All packets belongs to ALL
     pkt->addClass("ALL");
-    string classes = "ALL ";
 
     // First: built-in vendor class processing
-    classifyByVendor(pkt, classes);
+    classifyByVendor(pkt);
 
     // Run match expressions on classes not depending on KNOWN/UNKNOWN.
     evaluateClasses(pkt, false);

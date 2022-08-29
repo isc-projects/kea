@@ -1041,14 +1041,12 @@ public:
 
 private:
 
-    /// @public
     /// @brief Assign class using vendor-class-identifier options
     ///
     /// @note This is the first part of @ref classifyPacket
     ///
     /// @param pkt packet to be classified
-    /// @param classes a reference to added class names for logging
-    void classifyByVendor(const Pkt6Ptr& pkt, std::string& classes);
+    void classifyByVendor(const Pkt6Ptr& pkt);
 
     /// @brief Update FQDN based on the reservations in the current subnet.
     ///
