@@ -26,6 +26,7 @@ extern const isc::log::MessageID HA_CONFIGURATION_FAILED;
 extern const isc::log::MessageID HA_CONFIGURATION_SUCCESSFUL;
 extern const isc::log::MessageID HA_CONFIG_AUTO_FAILOVER_DISABLED;
 extern const isc::log::MessageID HA_CONFIG_DHCP_MT_DISABLED;
+extern const isc::log::MessageID HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED;
 extern const isc::log::MessageID HA_CONFIG_LEASE_SYNCING_DISABLED;
 extern const isc::log::MessageID HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER;
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER;

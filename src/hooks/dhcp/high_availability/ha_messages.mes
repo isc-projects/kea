@@ -124,6 +124,11 @@ sending appropriate ha-scopes command.
 This informational message is issued when HA configuration has enabled
 multi-threading while Kea global configuration has multi-threading disabled.
 
+% HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED HA multi-threading is disabled while Kea global multi-threading is enabled which most likely cause performance degradation.
+This warning message is issued when HA configuration has disabled
+multi-threading while Kea global configuration has multi-threading enabled.
+This will likely cause performance degradation.
+
 % HA_CONFIG_LEASE_SYNCING_DISABLED lease database synchronization between HA servers is disabled
 This warning message is issued when the lease database synchronization is
 administratively disabled. This is valid configuration if the leases are

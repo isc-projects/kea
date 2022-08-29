@@ -25,6 +25,7 @@ extern const isc::log::MessageID HA_CONFIGURATION_FAILED = "HA_CONFIGURATION_FAI
 extern const isc::log::MessageID HA_CONFIGURATION_SUCCESSFUL = "HA_CONFIGURATION_SUCCESSFUL";
 extern const isc::log::MessageID HA_CONFIG_AUTO_FAILOVER_DISABLED = "HA_CONFIG_AUTO_FAILOVER_DISABLED";
 extern const isc::log::MessageID HA_CONFIG_DHCP_MT_DISABLED = "HA_CONFIG_DHCP_MT_DISABLED";
+extern const isc::log::MessageID HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED = "HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED";
 extern const isc::log::MessageID HA_CONFIG_LEASE_SYNCING_DISABLED = "HA_CONFIG_LEASE_SYNCING_DISABLED";
 extern const isc::log::MessageID HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER = "HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER";
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER = "HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER";
@@ -130,6 +131,7 @@ const char* values[] = {
     "HA_CONFIGURATION_SUCCESSFUL", "HA hook library has been successfully configured",
     "HA_CONFIG_AUTO_FAILOVER_DISABLED", "auto-failover disabled for %1",
     "HA_CONFIG_DHCP_MT_DISABLED", "HA multi-threading has been disabled, it cannot be enabled when Kea global multi-threading is disabled",
+    "HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED", "HA multi-threading is disabled while Kea global multi-threading is enabled which most likely cause performance degradation.",
     "HA_CONFIG_LEASE_SYNCING_DISABLED", "lease database synchronization between HA servers is disabled",
     "HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER", "bypassing SYNCING state because lease database synchronization is administratively disabled",
     "HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER", "unusual configuration where \"send-lease-updates\": %1 and \"sync-leases\": %2",
