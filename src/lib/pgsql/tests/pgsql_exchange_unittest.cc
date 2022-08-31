@@ -977,6 +977,11 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
     // Create an empty array.
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
+    // Make sure we catch values before the epoch.
+    ptime christmas1969(date(1969, Dec, 25));
+    ASSERT_THROW_MSG(bind_array->addTimestamp(christmas1969), BadValue,
+                     "Time value is before the epoch");
+
     // Make sure we catch values that are too big.
     time_duration duration = hours(10) + minutes(14) + seconds(15);
     ptime day_too_far(date(2038, Jan, 21), duration);
