@@ -1,10 +1,11 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 
@@ -15,29 +16,6 @@
 
 namespace isc {
 namespace asiolink {
-
-namespace {
-// A trivial wrapper for std::function.  SunStudio doesn't seem to be capable
-// of handling a std::function object if directly passed to
-// io_service::post().
-class CallbackWrapper {
-public:
-
-    /// \brief Constructor
-    CallbackWrapper(const std::function<void()>& callback) :
-        callback_(callback) {}
-
-    /// \brief Function operator
-    void operator()() {
-        callback_();
-    }
-
-private:
-
-    /// \brief The callback function
-    std::function<void()> callback_;
-};
-}
 
 class IOServiceImpl {
 private:
@@ -118,8 +96,7 @@ public:
     ///
     /// \param callback The callback to be run on the IO service.
     void post(const std::function<void ()>& callback) {
-        const CallbackWrapper wrapper(callback);
-        io_service_.post(wrapper);
+        io_service_.post(callback);
     }
 
 private:
