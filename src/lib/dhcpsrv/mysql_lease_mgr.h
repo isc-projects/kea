@@ -997,6 +997,12 @@ private:
     /// @brief Clears the class-lease count map.
     virtual void clearClassLeaseCounts() override;
 
+    /// @brief Write V4 leases to a file.
+    virtual void writeLeases4(const std::string& /*filename*/) override;
+
+    /// @brief Write V6 leases to a file.
+    virtual void writeLeases6(const std::string& /*filename*/) override;
+
     /// @brief Check Error and Throw Exception
     ///
     /// This method invokes @ref MySqlConnection::checkError.

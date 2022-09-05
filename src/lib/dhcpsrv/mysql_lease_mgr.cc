@@ -3210,6 +3210,16 @@ MySqlLeaseMgr::clearClassLeaseCounts() {
     isc_throw(NotImplemented, "MySqlLeaseMgr::clearClassLeaseCounts() not implemented");
 }
 
+void
+MySqlLeaseMgr::writeLeases4(const std::string&) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::writeLeases4() not implemented");
+}
+
+void
+MySqlLeaseMgr::writeLeases6(const std::string&) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::writeLeases6() not implemented");
+}
+
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startLeaseStatsQuery4() {
     // Get a context

@@ -1056,6 +1056,12 @@ private:
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
 
+    /// @brief Write V4 leases to a file.
+    virtual void writeLeases4(const std::string& /*filename*/) override;
+
+    /// @brief Write V6 leases to a file.
+    virtual void writeLeases6(const std::string& /*filename*/) override;
+
     /// @brief Context RAII Allocator.
     class PgSqlLeaseContextAlloc {
     public:

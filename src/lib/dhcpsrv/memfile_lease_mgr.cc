@@ -2428,5 +2428,71 @@ Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
     isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases6ByLink not implemented");
 }
 
+void
+Memfile_LeaseMgr::writeLeases4(const std::string& filename) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        writeLeases4Internal(filename);
+    } else {
+        writeLeases4Internal(filename);
+    }
+}
+
+void
+Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
+    if (lease_file4_->getFilename() == filename) {
+        lease_file4_->close();
+    }
+    try {
+        std::ostringstream old;
+        old << filename << ".bak" << getpid();
+        ::rename(filename.c_str(), old.str().c_str());
+        CSVLeaseFile4 backup(filename);
+        backup.open();
+        for (const auto& lease : storage4_) {
+            backup.append(*lease);
+        }
+        backup.close();
+    } catch (const std::exception&) {
+        if (lease_file4_->getFilename() == filename) {
+            lease_file4_->open(true);
+        }
+        throw;
+    }
+}
+
+void
+Memfile_LeaseMgr::writeLeases6(const std::string& filename) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        writeLeases6Internal(filename);
+    } else {
+        writeLeases6Internal(filename);
+    }
+}
+
+void
+Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
+    if (lease_file6_->getFilename() == filename) {
+        lease_file6_->close();
+    }
+    try {
+        std::ostringstream old;
+        old << filename << ".bak" << getpid();
+        ::rename(filename.c_str(), old.str().c_str());
+        CSVLeaseFile6 backup(filename);
+        backup.open();
+        for (const auto& lease : storage6_) {
+            backup.append(*lease);
+        }
+        backup.close();
+    } catch (const std::exception&) {
+        if (lease_file6_->getFilename() == filename) {
+            lease_file6_->open(true);
+        }
+        throw;
+    }
+}
+
 }  // namespace dhcp
 }  // namespace isc

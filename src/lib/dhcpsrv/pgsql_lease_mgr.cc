@@ -2413,6 +2413,16 @@ PgSqlLeaseMgr::clearClassLeaseCounts() {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::clearClassLeaseCounts() not implemented");
 }
 
+void
+PgSqlLeaseMgr::writeLeases4(const std::string&) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::writeLeases4() not implemented");
+}
+
+void
+PgSqlLeaseMgr::writeLeases6(const std::string&) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::writeLeases6() not implemented");
+}
+
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startLeaseStatsQuery4() {
     // Get a context

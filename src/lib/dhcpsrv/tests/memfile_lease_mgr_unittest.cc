@@ -2804,4 +2804,20 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
     EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
 }
 
+/// @brief Class derived from @c Memfile_LeaseMgr to test write to file.
+class WFMemfileLeaseMgr : public Memfile_LeaseMgr {
+public:
+
+    /// @brief Constructor.
+    WFMemfileLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+	: Memfile_LeaseMgr(parameters) {
+    }
+
+    using Memfile_LeaseMgr::lease_file4_;
+    using Memfile_LeaseMgr::lease_file6_;
+};
+
+//////// test plan:
+// bad file, basic, overwrite file, not-persistent x v4/v6
+
 }  // namespace

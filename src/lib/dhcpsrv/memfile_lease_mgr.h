@@ -1066,6 +1066,7 @@ private:
     /// @brief stores IPv6 leases
     Lease6Storage storage6_;
 
+protected:
     /// @brief Holds the pointer to the DHCPv4 lease file IO.
     boost::shared_ptr<CSVLeaseFile4> lease_file4_;
 
@@ -1356,6 +1357,29 @@ public:
     getLeases6ByLink(const asiolink::IOAddress& link_addr,
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
+
+    /// @brief Write V4 leases to a file.
+    ///
+    /// @param filename File name to write leases.
+    virtual void writeLeases4(const std::string& filename) override;
+
+    /// @brief Write V6 leases to a file.
+    ///
+    /// @param filename File name to write leases.
+    virtual void writeLeases6(const std::string& filename) override;
+
+private:
+    /// @brief Write V4 leases to a file.
+    ///
+    /// @param filename File name to write leases.
+    /// Must be called from a thread-safe context.
+    virtual void writeLeases4Internal(const std::string& filename);
+
+    /// @brief Write V6 leases to a file.
+    ///
+    /// @param filename File name to write leases.
+    /// Must be called from a thread-safe context.
+    virtual void writeLeases6Internal(const std::string& filename);
 };
 
 }  // namespace dhcp
