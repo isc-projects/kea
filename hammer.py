@@ -1799,6 +1799,13 @@ def prepare_system_local(features, check_times):
 
     # prepare freebsd
     elif system == 'freebsd':
+        # Packages are already upgraded by default when installing a package,
+        # so to avoid mismatching dependency versions, inaccurate dynamic
+        # version fetching and other troubles, clean up local cache and
+        # install an arbitrary package to fetch remote first.
+        execute('sudo pkg clean -a -y')
+        execute('sudo pkg install -y pkg')
+
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if 'docs' in features:
