@@ -993,6 +993,13 @@ class VagrantEnv(object):
                 self.execute("sudo subscription-manager repos --enable rhel-8-for-x86_64-baseos-beta-rpms")
                 self.execute("sudo dnf install -y python36")
 
+        # RPM-based distributions install libraries in /usr/local/lib64, but they
+        # tend to not look there at runtime without explicit mention in ld.so.conf.d.
+        if self.system in ['centos', 'fedora', 'rhel']:
+            self.execute('sudo echo /usr/local/lib64 > /etc/ld.so.conf.d/kea.conf')
+            # ldconfig only in case the change above was not there before system startup
+            self.execute('sudo ldconfig')
+
         # upload Hammer to Vagrant system
         hmr_py_path = os.path.join(self.repo_dir, 'hammer.py')
         self.upload(hmr_py_path)
