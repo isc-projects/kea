@@ -499,11 +499,9 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         log.info('all packages already installed')
         return
 
-    if system in ['centos', 'rhel'] and revision == '7':
-        # skip_missing_names_on_install used to detect case when one packet is not found and no error is returned
-        # but we want an error
-        cmd = 'sudo yum install -y --setopt=skip_missing_names_on_install=False'
-    elif system in ['centos', 'fedora', 'rhel']:
+    if system in ['centos', 'fedora', 'rhel']:
+        if system in ['centos', 'rhel'] and revision == '7':
+            execute('sudo yum install -y dnf')
         cmd = 'sudo dnf -y install'
     elif system in ['debian', 'ubuntu']:
         # prepare the command for ubuntu/debian
