@@ -11,6 +11,7 @@
 from __future__ import print_function
 
 import os
+import random
 import re
 import sys
 import glob
@@ -2660,6 +2661,8 @@ def parse_args():
     hlp = hlp % ", ".join(ALL_FEATURES)
     parent_parser2.add_argument('-x', '--without', metavar='FEATURE', nargs='+', default=set(),
                                 action=CollectCommaSeparatedArgsAction, help=hlp)
+    parent_parser2.add_argument('--with-randomly', metavar='FEATURE', nargs='+', default=set(),
+                                action=CollectCommaSeparatedArgsAction, help=hlp)
     parent_parser2.add_argument('-l', '--leave-system', action='store_true',
                                 help='At the end of the command do not destroy vagrant system. Default behavior is '
                                 'destroying the system.')
@@ -2776,6 +2779,12 @@ def destroy_system(path):
     execute('vagrant destroy', cwd=path, interactive=True)
 
 
+def _coin_toss():
+    if random.randint(0, 65535) % 2 == 0:
+        return True
+    return False
+
+
 def _get_features(args):
     features = set(vars(args)['with'])
 
@@ -2792,12 +2801,6 @@ def _get_features(args):
         # distcheck is not compatible with defaults so do not add defaults
         features = features.union(DEFAULT_FEATURES)
 
-    nofeatures = set(args.without)
-    features = features.difference(nofeatures)
-
-    if hasattr(args, 'ccache_dir') and args.ccache_dir:
-        features.add('ccache')
-
     # if we build native packages then some features are required and some not
     if 'native-pkg' in features:
         features.add('docs')
@@ -2811,6 +2814,20 @@ def _get_features(args):
         # be run as they are not built
         if args.command == 'build':
             features.discard('unittest')
+
+    nofeatures = set(args.without)
+    features = features.difference(nofeatures)
+
+    for i in args.with_randomly:
+        if _coin_toss():
+            features.add(i)
+            log.info(f'Feature enabled through coin toss: {i}')
+        else:
+            features.discard(i)
+            log.info(f'Feature disabled through coin toss: {i}')
+
+    if hasattr(args, 'ccache_dir') and args.ccache_dir:
+        features.add('ccache')
 
     return sorted(features)
 
