@@ -329,6 +329,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                              used for e.g. SSH
     :param int attempts: number of attempts to run the command if it fails
     :param int sleep_time_after_attempt: number of seconds to sleep before taking next attempt
+    :param bool super_quiet: if True, set quiet to True and don't log command
     """
     if super_quiet:
         quiet = True
@@ -364,7 +365,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                 if line:
                     line_decoded = line.decode(encoding='ascii', errors='ignore').rstrip() + '\r'
                     if not quiet:
-                        print(line_decoded)
+                        log.info(line_decoded)
                     if capture:
                         output += line_decoded
                     if log_file_path:
@@ -1051,20 +1052,27 @@ class VagrantEnv(object):
 def _install_gtest_sources():
     """Install gtest sources."""
     # download gtest sources only if it is not present as native package
-    if not os.path.exists('/usr/src/googletest-release-1.10.0/googletest'):
-        cmd = 'wget --no-verbose -O /tmp/gtest.tar.gz '
-        cmd += 'https://github.com/google/googletest/archive/release-1.10.0.tar.gz'
-        execute(cmd)
-        execute('sudo mkdir -p /usr/src')
-        execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
-        execute('sudo ln -sf /usr/src/googletest-release-1.10.0 /usr/src/googletest')
-        os.unlink('/tmp/gtest.tar.gz')
+    gtest_version = '1.10.0'
+    gtest_path = f'/usr/src/googletest-release-{gtest_version}/googletest'
+    if os.path.exists(gtest_path):
+            log.info(f'gtest is already installed in {gtest_path}.')
+            return
+
+    cmd = 'wget --no-verbose -O /tmp/gtest.tar.gz '
+    cmd += f'https://github.com/google/googletest/archive/release-{gtest_version}.tar.gz'
+    execute(cmd)
+    execute('sudo mkdir -p /usr/src')
+    execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
+    execute(f'sudo ln -sf /usr/src/googletest-release-{gtest_version} /usr/src/googletest')
+    os.unlink('/tmp/gtest.tar.gz')
 
 
 def _install_libyang_from_sources():
     """Install libyang from sources."""
     for prefix in ['/usr', '/usr/local']:
-        if os.path.exists('%s/include/libyang/libyang.h' % prefix):
+        libyang_path = f'{prefix}/include/libyang/libyang.h'
+        if os.path.exists(libyang_path):
+            log.info(f'libyang is already installed in {libyang_path}.')
             return
 
     execute('rm -rf /tmp/libyang')
@@ -1082,7 +1090,9 @@ def _install_libyang_from_sources():
 def _install_sysrepo_from_sources():
     """Install sysrepo from sources."""
     for prefix in ['/usr', '/usr/local']:
-        if os.path.exists('%s/include/sysrepo.h' % prefix):
+        sysrepo_path = f'{prefix}/include/sysrepo.h'
+        if os.path.exists(sysrepo_path):
+            log.info(f'sysrepo is already installed in {sysrepo_path}.')
             return
 
     # sysrepo is picky about the libyang version it uses. If the wrong version
@@ -1415,7 +1425,7 @@ def _apt_update(system, revision, env=None, check_times=False, attempts=1, sleep
 def _install_freeradius_client(system, revision, features, env, check_times):
     """Install FreeRADIUS-client with necessary patches from Francis Dupont."""
     # check if it is already installed
-    if (os.path.exists('/usr/local/lib/libfreeradius-client.so.2.0.0') and
+    if (os.path.exists('/usr/local/lib/libfreeradius-client.so') and
         os.path.exists('/usr/local/include/freeradius-client.h')):
         log.info('freeradius-client is already installed.')
         return
