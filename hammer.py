@@ -1833,6 +1833,9 @@ def prepare_system_local(features, check_times):
 
         if 'gssapi' in features:
             packages.extend(['krb5', 'krb5-devel'])
+            # FreeBSD comes with a Heimdal krb5-config by default. Make sure
+            # it's deleted so that Kea uses the MIT packages added just above.
+            execute('sudo rm -f /usr/bin/krb5-config')
 
         if 'ccache' in features:
             packages.extend(['ccache'])
