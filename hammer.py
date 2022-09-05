@@ -1956,7 +1956,7 @@ def prepare_system_local(features, check_times):
     if 'pgsql' in features:
         _configure_pgsql(system, features, revision)
 
-    if 'radius' in features and 'native-pkg' not in features:
+    if 'radius' in features:
         _install_freeradius_client(system, revision, features, env, check_times)
 
     #execute('sudo rm -rf /usr/share/doc')
@@ -2817,16 +2817,11 @@ def _get_features(args):
 
     # establish initial set of features
     if 'all' in features:
-        # special case 'all' but some of features needs to be removed
+        # special case 'all' but some features need to be removed
         # as they are not compatible with others
         features = set(ALL_FEATURES)
         features.discard('all')
-        features.discard('distcheck')
         features.discard('native-pkg')
-        features.discard('ccache')
-    elif 'distcheck' not in features:
-        # distcheck is not compatible with defaults so do not add defaults
-        features = features.union(DEFAULT_FEATURES)
 
     # if we build native packages then some features are required and some not
     if 'native-pkg' in features:
