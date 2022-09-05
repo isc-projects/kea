@@ -1489,7 +1489,7 @@ def prepare_system_local(features, check_times):
     # prepare fedora
     if system == 'fedora':
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
-                    'log4cplus-devel', 'boost-devel', 'libpcap-devel', 'python3-virtualenv']
+                    'log4cplus-devel', 'boost-devel', 'libpcap-devel']
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
@@ -1547,16 +1547,13 @@ def prepare_system_local(features, check_times):
                     'libtool', 'log4cplus-devel', 'make',
                     'openssl-devel']
 
-        if revision == '7':
+        if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
             # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
             packages.append('boost169-devel')
 
         if 'native-pkg' in features:
-            packages.extend(['bison', 'flex', 'rpm-build', 'python3-devel'])
-
-        if 'docs' in features:
-            packages.extend(['python3-pip'])
+            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server'])
@@ -1601,8 +1598,6 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, check_times=check_times)
 
         if 'docs' in features:
-            execute('pip install virtualenv',
-                    env=env, timeout=120, check_times=check_times)
             execute('python3 -m venv ~/venv',
                     env=env, timeout=60, check_times=check_times)
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
@@ -1620,10 +1615,7 @@ def prepare_system_local(features, check_times):
             packages.append('boost169-devel')
 
         if 'native-pkg' in features:
-            packages.extend(['python3-devel', 'rpm-build'])
-
-        if 'docs' in features and int(revision) < 9:
-            packages.extend(['python3-virtualenv'])
+            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server'])
@@ -1798,11 +1790,12 @@ def prepare_system_local(features, check_times):
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
-        if 'docs' in features and revision == '8':
-            execute('virtualenv -p /usr/bin/python3 ~/venv',
-                    env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
-                    env=env, timeout=120, check_times=check_times)
+        if 'docs' in features:
+            if revision == '8':
+                execute('python3 -m venv ~/venv',
+                        env=env, timeout=60, check_times=check_times)
+                execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+                        env=env, timeout=120, check_times=check_times)
 
     # prepare freebsd
     elif system == 'freebsd':
@@ -1873,10 +1866,10 @@ def prepare_system_local(features, check_times):
                 packages.extend(['py-sphinx', 'py-sphinx_rtd_theme'])
             elif revision == '3.11':
                 packages.extend(['py3-sphinx'])
-            elif revision == '3.16':
-                packages.extend(['py3-pip'])
-            else:
+            elif float(revision) < 3.16:
                 packages.extend(['py3-sphinx', 'py3-sphinx_rtd_theme'])
+            else:
+                packages.extend(['py3-pip'])
 
         if 'unittest' in features:
             _install_gtest_sources()
@@ -1911,8 +1904,9 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
         # work around outdated sphinx packages on alpine 3.16
-        if 'docs' in features and revision == '3.16':
-            execute('sudo pip3 install -U sphinx sphinx_rtd_theme')
+        if 'docs' in features:
+            if float(revision) >= 3.16:
+                execute('sudo pip3 install -U sphinx sphinx_rtd_theme')
 
         # check for existence of 'vagrant' user and 'abuild' group before adding him to the group
         try:
