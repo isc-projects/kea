@@ -18,8 +18,7 @@
 set -eu
 
 # Change directory to the YANG modules' directory.
-script_path=$(cd "$(dirname "${0}")" && pwd)
-cd "${script_path}/.."
+cd "@abs_top_srcdir@/src/share/yang/modules"
 
 amend=false
 if test "${1-}" = '-a' || test "${1-}" = '--amend'; then
@@ -27,24 +26,38 @@ if test "${1-}" = '-a' || test "${1-}" = '--amend'; then
 fi
 
 exit_code=0
-for m in *.yang
-do
-    hash1=$(yanglint -f yin "${m}" | openssl dgst -sha256 | sed 's/(stdin)= //' | sed 's/SHA2-256//')
+
+LIBYANG_PREFIX='@LIBYANG_PREFIX@'
+
+# Find yanglint.
+if test -f "${LIBYANG_PREFIX}/bin/yanglint"; then
+    yanglint="${LIBYANG_PREFIX}/bin/yanglint"
+    LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}:${LIBYANG_PREFIX}/lib:${LIBYANG_PREFIX}/lib64"
+    export LD_LIBRARY_PATH
+elif command -v yanglint; then
+    yanglint='yanglint'
+else
+    exit_code=$((exit_code | 2))
+    printf 'ERROR: cannot find yanglint.\n' >&2
+    exit "${exit_code}"
+fi
+
+for m in *.yang; do
+    hash1=$("${yanglint}" -f yin "${m}" | openssl dgst -sha256 | sed 's/(stdin)= //' | sed 's/SHA2-256//')
     h="hashes/$(basename "${m}" .yang).hash"
-    if test -f "${h}"
-    then
+    if test -f "${h}"; then
         hash2=$(cat "${h}")
         if test "$hash1" != "$hash2"
         then
-            exit_code=$((exit_code | 1))
-            printf 'hash mismatch on %s expected %s in %s\n' "${m}" "${hash1}" "${h}"
+            exit_code=$((exit_code | 4))
+            printf 'ERROR: hash mismatch on %s expected %s in %s\n' "${m}" "${hash1}" "${h}" >&2
             if "${amend}"; then
                 printf '%s\n' "${hash1}" > "${h}"
             fi
         fi
     else
-        exit_code=$((exit_code | 2))
-        printf 'missing hash file %s for %s\n' "${h}" "${m}"
+        exit_code=$((exit_code | 8))
+        printf 'ERROR: missing hash file %s for %s\n' "${h}" "${m}" >&2
         if "${amend}"; then
             printf '%s\n' "${hash1}" > "${h}"
         fi

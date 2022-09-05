@@ -1691,6 +1691,10 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
 AC_CONFIG_FILES([src/share/yang/Makefile])
 AC_CONFIG_FILES([src/share/yang/modules/Makefile])
 AC_CONFIG_FILES([src/share/yang/modules/utils/Makefile])
+AC_CONFIG_FILES([src/share/yang/modules/utils/check-hashes.sh],
+                [chmod +x src/share/yang/modules/utils/check-hashes.sh])
+AC_CONFIG_FILES([src/share/yang/modules/utils/check-revisions.sh],
+                [chmod +x src/share/yang/modules/utils/check-revisions.sh])
 AC_CONFIG_FILES([src/share/yang/modules/utils/reinstall.sh],
                 [chmod +x src/share/yang/modules/utils/reinstall.sh])
 AC_CONFIG_FILES([tools/Makefile])
