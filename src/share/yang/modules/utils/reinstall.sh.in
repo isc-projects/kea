@@ -59,8 +59,18 @@ while test ${#} -gt 0; do
   esac; shift
 done
 
+SYSREPO_PREFIX='@SYSREPO_PREFIX@'
+
 # Default arguments
-test -z "${sysrepo+x}" && sysrepo='/usr/local'
+if test -z "${sysrepo+x}"; then
+  if test -d "${SYSREPO_PREFIX}"; then
+    sysrepo="${SYSREPO_PREFIX}"
+    LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}:${SYSREPO_PREFIX}/lib:${SYSREPO_PREFIX}/lib64"
+    export LD_LIBRARY_PATH
+  else
+    sysrepo='/usr/local'
+  fi
+fi
 test -z "${uninstall_first+x}" && uninstall_first='false'
 
 #------------------------------------------------------------------------------#
