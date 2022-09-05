@@ -1276,9 +1276,14 @@ def _enable_postgresql(system, revision):
         execute('sudo rc-update add postgresql')
     elif system == 'freebsd':
         execute('sudo sysrc postgresql_enable="yes"')
-    elif system == 'rhel' and revision == '9':
-        execute('sudo systemctl enable postgresql-14.service')
     else:
+        # Disable all PostgreSQL services first to avoid conflicts.
+        # raise_error=False for when there are no matches
+        _, output = execute("systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
+                            capture=True, raise_error=False)
+        for service in output.split():
+            execute(f'sudo systemctl disable {service}')
+
         execute('sudo systemctl enable postgresql.service')
 
 
@@ -1289,10 +1294,25 @@ def _restart_postgresql(system, revision):
         execute('sudo service postgresql restart > /dev/null')
     elif system == 'alpine':
         execute('sudo /etc/init.d/postgresql restart')
-    elif system == 'rhel' and revision == '9':
-        execute('sudo systemctl restart postgresql-14.service')
     else:
-        execute('sudo systemctl restart postgresql.service')
+        # Stop all PostgreSQL services first to avoid conflicts.
+        # raise_error=False for when there are no matches
+        _, output = execute("systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
+                            capture=True, raise_error=False)
+        for service in output.split():
+            execute(f'sudo systemctl stop {service}')
+
+        exit_code = execute('sudo systemctl restart postgresql.service', raise_error=False)
+        if exit_code != 0:
+            log.error('Command "sudo systemctl restart postgresql.service" failed. Here is the journal:')
+            _, output = execute('sudo journalctl -xu postgresql.service', capture=True)
+            log.error(output)
+            log.error('And here are logs:')
+            _, output = execute("sudo -u postgres psql -A -t -c 'SELECT pg_current_logfile()'", capture=True)
+            logfile = os.path.basename(output.strip())
+            _, output = execute(f'sudo find /var -type f -name "{logfile}" -exec cat {{}} \;', capture=True, raise_error=False)
+            log.error(output)
+            sys.exit(exit_code)
 
 
 # Change authentication type for given connection type. Usual inputs for
@@ -1317,8 +1337,6 @@ def _configure_pgsql(system, features, revision):
         if exitcode != 0:
             if system == 'centos':
                 execute('sudo postgresql-setup initdb')
-            elif system == 'rhel' and revision == '9':
-                execute('sudo postgresql-14-setup initdb')
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
     elif system == 'freebsd':
@@ -1503,8 +1521,8 @@ def prepare_system_local(features, check_times):
         install_pkgs('epel-release', env=env, check_times=check_times)
 
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make', 'mariadb-devel',
-                    'openssl-devel', 'postgresql-devel']
+                    'libtool', 'log4cplus-devel', 'make',
+                    'openssl-devel']
 
         if revision == '7':
             # Install newer version of Boost in case users want to opt-in with:
@@ -1521,11 +1539,13 @@ def prepare_system_local(features, check_times):
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-server'])
-            if revision == '7':
-                packages.extend(['postgresql-devel'])
+            packages.extend(['postgresql', 'postgresql-server'])
+            if revision == '9':
+                packages.append('postgresql13-devel')
+                if not os.path.exists('/usr/bin/pg_config'):
+                    execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
             else:
-                packages.extend(['postgresql-server-devel'])
+                packages.append('postgresql-devel')
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -1583,7 +1603,9 @@ def prepare_system_local(features, check_times):
         if 'pgsql' in features:
             packages.extend(['postgresql', 'postgresql-server'])
             if revision == '9':
-                packages.append('postgresql-server-devel ')
+                packages.append('postgresql13-devel')
+                if not os.path.exists('/usr/bin/pg_config'):
+                    execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
             else:
                 packages.append('postgresql-devel')
 
