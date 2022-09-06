@@ -2273,11 +2273,27 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     if system == 'debian' and revision == '9':
         # debian 9 does not support apt-installing over https, so install proper transport
         install_pkgs('apt-transport-https', env=env, check_times=check_times)
+
+    # See if a .deb package had been previously uploaded.
+    _, output = execute("curl -o /dev/null -s -w '%{{http_code}}' {}/dists/kea/Release 2>/dev/null".format(repo_url), capture=True)
+    http_code = output.rstrip()
+    release_file_exists = (http_code == '200')
+    if release_file_exists:
+        log.info(f'{repo_url}/dists/kea/Release exists.')
+    else:
+        repo_name = 'kea-%s-%s-%s' % (pkg_version.rsplit('.', 1)[0], system, revision)
+        log.error(f'{repo_url}/dists/kea/Release does not exist. '
+             f'This is usually caused by no package existing in {repo_name}. '
+             'You can solve this by uploading the freeradius-client packages '
+             'which are also needed further to build packages. '
+             'Continuing, but the build will likely fail.')
+
     # install our freeradius-client but now from deb
     execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
     key_url = "%s/repository/repo-keys/repo-key.gpg" % repository_url
     execute('wget -qO- %s | sudo apt-key add -' % key_url,
             env=env, check_times=check_times)
+
     # try apt update for up to 10 times if there is an error
     for _ in range(10):
         _, out = _apt_update(system, revision, capture=True)
