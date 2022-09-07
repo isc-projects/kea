@@ -1,6 +1,15 @@
+2055.	[func]		andrei
+	When Kea starts with an erroneous file configuration, if the
+	logging is viable and is configured to log at least at ERROR
+	level, it will log the errors according to the configured
+	logging. Previously, it would log them in stderr which made
+	gathering of the errors more difficult. A final log message is
+	still logged at stderr just as before.
+	(Gitlab #1955)
+
 Kea 2.3.0 (development) released on August 31, 2022
 
-2054.	[build]         razvan
+2054.	[build]		razvan
 	The library version numbers have been bumped for the Kea 2.3.0
 	development release.
 	(Gitlab #2546)
