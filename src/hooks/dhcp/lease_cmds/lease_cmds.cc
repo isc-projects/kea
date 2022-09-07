@@ -327,6 +327,17 @@ public:
     /// @return 0 upon success, non-zero otherwise
     int lease6ResendDdnsHandler(CalloutHandle& handle);
 
+    /// @brief lease4-write handler, lease6-write handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::leaseWriteHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// write command JSON text in the "command" argument
+    ///
+    /// @return 0 upon success, non-zero otherwise
+    int
+    leaseWriteHandler(CalloutHandle& handle);
+
     /// @brief Extracts parameters required for reservation-get and reservation-del
     ///
     /// See @ref Parameters class for detailed description of what is expected
@@ -2291,6 +2302,48 @@ LeaseCmdsImpl::createFailedLeaseMap(const Lease::Type& lease_type,
 }
 
 int
+LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
+    bool v4 = true;
+    try {
+        extractCommand(handle);
+        v4 = (cmd_name_ == "lease4-write");
+
+        if (!cmd_args_) {
+            isc_throw(isc::BadValue, "no parameters specified for the command");
+        }
+
+        ConstElementPtr file = cmd_args_->get("filename");
+        if (!file) {
+            isc_throw(BadValue, "'filename' parameter not specified");
+        }
+        if (file->getType() != Element::string) {
+            isc_throw(BadValue, "'filename' parameter must be a string");
+        }
+        string filename = file->stringValue();
+        if (filename.empty()) {
+            isc_throw(BadValue, "'filename' parameter is empty");
+        }
+
+        if (v4) {
+            LeaseMgrFactory::instance().writeLeases4(filename);
+        } else {
+            LeaseMgrFactory::instance().writeLeases6(filename);
+        }
+        ostringstream s;
+        s << (v4 ? "IPv4" : "IPv6")
+          << " lease database into '"
+          << filename << "'.";
+        ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS, s.str());
+        setResponse(handle, response);
+    } catch (const std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (0);
+}
+
+int
 LeaseCmds::leaseAddHandler(CalloutHandle& handle) {
     return (impl_->leaseAddHandler(handle));
 }
@@ -2375,6 +2428,11 @@ LeaseCmds::lease4ResendDdnsHandler(CalloutHandle& handle) {
 int
 LeaseCmds::lease6ResendDdnsHandler(CalloutHandle& handle) {
     return (impl_->lease6ResendDdnsHandler(handle));
+}
+
+int
+LeaseCmds::leaseWriteHandler(CalloutHandle& handle) {
+    return (impl_->leaseWriteHandler(handle));
 }
 
 LeaseCmds::LeaseCmds()

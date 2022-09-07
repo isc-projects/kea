@@ -452,6 +452,9 @@ public:
 
     /// @brief Verify that v6 lease bulk update handles conflict as expected.
     void testLease6ConflictingBulkApplyAdd();
+
+    /// @brief Check that lease6-write works as expected.
+    void testLease6Write();
 };
 
 void Lease6CmdsTest::testLease6AddMissingParams() {
@@ -3727,6 +3730,43 @@ void Lease6CmdsTest::testLease6ConflictingBulkApplyAdd() {
                      "ResourceBusy: IP address:2001:db8:2::77 could not be updated.");
 }
 
+void Lease6CmdsTest::testLease6Write() {
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Parameter is missing.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-write\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'filename' parameter not specified";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must be a string.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": 0\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'filename' parameter must be a string";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must be not empty.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'filename' parameter is empty";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 TEST_F(Lease6CmdsTest, lease6AddMissingParams) {
     testLease6AddMissingParams();
 }
@@ -4466,6 +4506,15 @@ TEST_F(Lease6CmdsTest, lease6ConflictingUpdateMultiThreading) {
 
 TEST_F(Lease6CmdsTest, lease6ConflictingBulkApplyAddMultiThreading) {
     testLease6ConflictingBulkApplyAdd();
+}
+
+TEST_F(Lease6CmdsTest, lease6Write) {
+    testLease6Write();
+}
+
+TEST_F(Lease6CmdsTest, lease6WriteMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6Write();
 }
 
 } // end of anonymous namespace

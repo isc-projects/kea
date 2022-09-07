@@ -422,6 +422,9 @@ public:
 
     /// @brief Verify that v4 lease update handles conflict as expected.
     void testLease4ConflictingUpdate();
+
+    /// @brief Check that lease4-write works as expected.
+    void testLease4Write();
 };
 
 void Lease4CmdsTest::testLease4AddMissingParams() {
@@ -3135,6 +3138,43 @@ void Lease4CmdsTest::testLease4ConflictingUpdate() {
     EXPECT_EQ(original_lease, *lease);
 }
 
+void Lease4CmdsTest::testLease4Write() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Parameter is missing.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-write\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'filename' parameter not specified";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must be a string.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": 0\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'filename' parameter must be a string";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must be not empty.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'filename' parameter is empty";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 TEST_F(Lease4CmdsTest, lease4AddMissingParams) {
     testLease4AddMissingParams();
 }
@@ -3826,6 +3866,15 @@ TEST_F(Lease4CmdsTest, lease4ConflictingAddMultiThreading) {
 
 TEST_F(Lease4CmdsTest, lease4ConflictingUpdateMultiThreading) {
     testLease4ConflictingUpdate();
+}
+
+TEST_F(Lease4CmdsTest, lease4Write) {
+    testLease4Write();
+}
+
+TEST_F(Lease4CmdsTest, lease4WriteMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4Write();
 }
 
 } // end of anonymous namespace

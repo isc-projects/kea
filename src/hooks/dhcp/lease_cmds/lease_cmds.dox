@@ -67,6 +67,8 @@ For details see documentation and code of the following handlers:
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease6UpdateHandler (lease6-update)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease4WipeHandler (lease4-wipe)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease6WipeHandler (lease6-wipe)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease4WriteHandler (lease4-write)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease6WriteHandler (lease6-write)
 
 @section lease_cmdsDesigns Lease Commands Design choices
 

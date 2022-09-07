@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -520,7 +520,7 @@ public:
     ///
     /// Example command:
     /// {
-    ///     "command": "lease4-wipe",
+    ///     "command": "lease6-wipe",
     ///     "arguments": {
     ///         "subnet-id": 44
     ///     }
@@ -581,6 +581,29 @@ public:
     /// @return result of the operation
     int
     lease6ResendDdnsHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease4-write handler, lease6-write handler
+    ///
+    /// This commands attempts to write the lease database to a CSV file.
+    /// Currently it is supported only by the memfile database and
+    /// should be reserved to emergency situations.
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
+    ///
+    /// Example command:
+    /// {
+    ///     "command": "lease4-write",
+    ///     "arguments": {
+    ///         "filename": "leases.csv"
+    ///     }
+    /// }";
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// write command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    leaseWriteHandler(hooks::CalloutHandle& handle);
 
 private:
     /// Pointer to the actual implementation

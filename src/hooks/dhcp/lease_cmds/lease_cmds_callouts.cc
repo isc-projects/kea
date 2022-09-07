@@ -268,6 +268,28 @@ int lease6_resend_ddns(CalloutHandle& handle) {
     return(lease_cmds.lease6ResendDdnsHandler(handle));
 }
 
+/// @brief This is a command callout for 'lease4-write' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int lease4_write(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return(lease_cmds.leaseWriteHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease6-write' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int lease6_write(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return(lease_cmds.leaseWriteHandler(handle));
+}
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
@@ -314,6 +336,8 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease6-wipe", lease6_wipe);
     handle.registerCommandCallout("lease4-resend-ddns", lease4_resend_ddns);
     handle.registerCommandCallout("lease6-resend-ddns", lease6_resend_ddns);
+    handle.registerCommandCallout("lease4-write", lease4_write);
+    handle.registerCommandCallout("lease6-write", lease6_write);
 
     LOG_INFO(lease_cmds_logger, LEASE_CMDS_INIT_OK);
     return (0);
