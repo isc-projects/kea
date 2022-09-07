@@ -1,0 +1,21 @@
+{
+    "access": "write",
+    "avail": "2.3.1",
+    "brief": [
+        "This command writes the IPv4 memfile lease database into a CSV file."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease4-write\",",
+        "    \"arguments\": {",
+        "        \"filename\": \"a_file.csv\"",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp63\"/>",
+    "hook": "lease_cmds",
+    "name": "lease4-write",
+    "support": [
+        "kea-dhcp4"
+    ]
+}
