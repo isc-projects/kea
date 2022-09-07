@@ -38,8 +38,8 @@ src/share/api/ha-maintenance-notify.json
 src/share/api/ha-maintenance-start.json
 src/share/api/ha-reset.json
 src/share/api/ha-scopes.json
-src/share/api/ha-sync.json
 src/share/api/ha-sync-complete-notify.json
+src/share/api/ha-sync.json
 src/share/api/lease4-add.json
 src/share/api/lease4-del.json
 src/share/api/lease4-get-all.json
@@ -51,6 +51,7 @@ src/share/api/lease4-get.json
 src/share/api/lease4-resend-ddns.json
 src/share/api/lease4-update.json
 src/share/api/lease4-wipe.json
+src/share/api/lease4-write.json
 src/share/api/lease6-add.json
 src/share/api/lease6-bulk-apply.json
 src/share/api/lease6-del.json
@@ -62,6 +63,7 @@ src/share/api/lease6-get.json
 src/share/api/lease6-resend-ddns.json
 src/share/api/lease6-update.json
 src/share/api/lease6-wipe.json
+src/share/api/lease6-write.json
 src/share/api/leases-reclaim.json
 src/share/api/libreload.json
 src/share/api/list-commands.json
