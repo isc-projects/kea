@@ -2440,10 +2440,11 @@ Memfile_LeaseMgr::writeLeases4(const std::string& filename) {
 
 void
 Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
-    if (lease_file4_->getFilename() == filename) {
-        lease_file4_->close();
-    }
+    bool overwrite = (lease_file4_ && lease_file4_->getFilename() == filename);
     try {
+        if (overwrite) {
+            lease_file4_->close();
+        }
         std::ostringstream old;
         old << filename << ".bak" << getpid();
         ::rename(filename.c_str(), old.str().c_str());
@@ -2453,8 +2454,11 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
             backup.append(*lease);
         }
         backup.close();
+        if (overwrite) {
+            lease_file4_->open(true);
+        }
     } catch (const std::exception&) {
-        if (lease_file4_->getFilename() == filename) {
+        if (overwrite) {
             lease_file4_->open(true);
         }
         throw;
@@ -2473,10 +2477,11 @@ Memfile_LeaseMgr::writeLeases6(const std::string& filename) {
 
 void
 Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
-    if (lease_file6_->getFilename() == filename) {
-        lease_file6_->close();
-    }
+    bool overwrite = (lease_file6_ && lease_file6_->getFilename() == filename);
     try {
+        if (overwrite) {
+            lease_file6_->close();
+        }
         std::ostringstream old;
         old << filename << ".bak" << getpid();
         ::rename(filename.c_str(), old.str().c_str());
@@ -2486,8 +2491,11 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
             backup.append(*lease);
         }
         backup.close();
+        if (overwrite) {
+            lease_file6_->open(true);
+        }
     } catch (const std::exception&) {
-        if (lease_file6_->getFilename() == filename) {
+        if (overwrite) {
             lease_file6_->open(true);
         }
         throw;

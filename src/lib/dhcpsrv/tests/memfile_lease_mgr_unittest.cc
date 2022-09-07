@@ -111,7 +111,8 @@ public:
         io4_(getLeaseFilePath("leasefile4_0.csv")),
         io6_(getLeaseFilePath("leasefile6_0.csv")),
         io_service_(getIOService()),
-        timer_mgr_(TimerMgr::instance()) {
+        timer_mgr_(TimerMgr::instance()),
+        extra_files_() {
 
         timer_mgr_->setIOService(io_service_);
         LeaseMgr::setIOService(io_service_);
@@ -150,6 +151,8 @@ public:
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
         removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+        // Remove other files.
+        removeOtherFiles();
         // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -169,6 +172,14 @@ public:
             Memfile_LeaseMgr::LFCFileType type = static_cast<
                 Memfile_LeaseMgr::LFCFileType>(i);
             LeaseFileIO io(Memfile_LeaseMgr::appendSuffix(base_name, type));
+            io.removeFile();
+        }
+    }
+
+    /// @brief Remove other files.
+    void removeOtherFiles() const {
+        for (const auto& file : extra_files_) {
+            LeaseFileIO io(file);
             io.removeFile();
         }
     }
@@ -374,6 +385,9 @@ public:
 
     /// @brief Pointer to the instance of the @c TimerMgr.
     TimerMgrPtr timer_mgr_;
+
+    /// @brief List of names of other files to removed.
+    vector<string> extra_files_;
 };
 
 /// @brief This test checks if the LeaseMgr can be instantiated and that it
@@ -2810,14 +2824,705 @@ public:
 
     /// @brief Constructor.
     WFMemfileLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-	: Memfile_LeaseMgr(parameters) {
+        : Memfile_LeaseMgr(parameters) {
     }
 
     using Memfile_LeaseMgr::lease_file4_;
     using Memfile_LeaseMgr::lease_file6_;
 };
 
-//////// test plan:
-// bad file, basic, overwrite file, not-persistent x v4/v6
+/// @brief Check if writeLease fails on bad file name (v4).
+TEST_F(MemfileLeaseMgrTest, badWriteLease4) {
+    startBackend(V4);
+    string expected = "unable to open '/this/does/not/exist'";
+    EXPECT_THROW_MSG(lmptr_->writeLeases4("/this/does/not/exist"),
+                     CSVFileError, expected);
+}
+
+/// @brief Check if writeLease fails on bad file name (v4+MT).
+TEST_F(MemfileLeaseMgrTest, badWriteLease4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    string expected = "unable to open '/this/does/not/exist'";
+    EXPECT_THROW_MSG(lmptr_->writeLeases4("/this/does/not/exist"),
+                     CSVFileError, expected);
+}
+
+/// @brief Check if writeLease fails on bad file name (v6).
+TEST_F(MemfileLeaseMgrTest, badWriteLease6) {
+    startBackend(V6);
+    string expected = "unable to open '/this/does/not/exist'";
+    EXPECT_THROW_MSG(lmptr_->writeLeases6("/this/does/not/exist"),
+                     CSVFileError, expected);
+}
+
+/// @brief Check if writeLease fails on bad file name (v6+MT).
+TEST_F(MemfileLeaseMgrTest, badWriteLease6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    string expected = "unable to open '/this/does/not/exist'";
+    EXPECT_THROW_MSG(lmptr_->writeLeases6("/this/does/not/exist"),
+                     CSVFileError, expected);
+}
+
+/// @brief Check writeLease basic scenario (v4).
+TEST_F(MemfileLeaseMgrTest, basicWriteLease4) {
+    startBackend(V4);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    extra_files_.push_back(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+
+    // Try again.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check writeLease basic scenario (v4+MT).
+TEST_F(MemfileLeaseMgrTest, basicWriteLease4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    extra_files_.push_back(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+
+    // Try again.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check writeLease basic scenario (v6).
+TEST_F(MemfileLeaseMgrTest, basicWriteLease6) {
+    startBackend(V6);
+
+    // empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n";
+
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    extra_files_.push_back(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+
+    // Try again.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check writeLease basic scenario (v6+MT).
+TEST_F(MemfileLeaseMgrTest, basicWriteLease6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+
+    // empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n";
+
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    extra_files_.push_back(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+
+    // Try again.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check if writeLease can overwrite the lease file (v4).
+TEST_F(MemfileLeaseMgrTest, overWriteLease4) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "true";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+
+    ASSERT_TRUE(lease_mgr->lease_file4_);
+    string filename = lease_mgr->lease_file4_->getFilename();
+    LeaseFileIO file(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+
+    // Backup should have the previous database image.
+    ASSERT_TRUE(backup.exists());
+    EXPECT_EQ(content, backup.readFile());
+}
+
+/// @brief Check if writeLease can overwrite the lease file (v4+MT).
+TEST_F(MemfileLeaseMgrTest, overWriteLease4MultiThread) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "true";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+
+    ASSERT_TRUE(lease_mgr->lease_file4_);
+    string filename = lease_mgr->lease_file4_->getFilename();
+    LeaseFileIO file(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+
+    // Backup should have the previous database image.
+    ASSERT_TRUE(backup.exists());
+    EXPECT_EQ(content, backup.readFile());
+}
+
+/// @brief Check if writeLease can overwrite the lease file (v6).
+TEST_F(MemfileLeaseMgrTest, overWriteLease6) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "true";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    // Empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n";
+
+    ASSERT_TRUE(lease_mgr->lease_file6_);
+    string filename = lease_mgr->lease_file6_->getFilename();
+    LeaseFileIO file(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+
+    // Backup should have the previous database image.
+    ASSERT_TRUE(backup.exists());
+    EXPECT_EQ(content, backup.readFile());
+}
+
+/// @brief Check if writeLease can overwrite the lease file (v6+MT).
+TEST_F(MemfileLeaseMgrTest, overWriteLease6MultiThread) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "true";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n";
+
+    ASSERT_TRUE(lease_mgr->lease_file6_);
+    string filename = lease_mgr->lease_file6_->getFilename();
+    LeaseFileIO file(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+
+    // Backup should have the previous database image.
+    ASSERT_TRUE(backup.exists());
+    EXPECT_EQ(content, backup.readFile());
+}
+
+/// @brief Check if writeLease works without a lease file (v4).
+TEST_F(MemfileLeaseMgrTest, notPersistWriteLease4) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "false";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+
+    ASSERT_FALSE(lease_mgr->lease_file4_);
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check if writeLease works without a lease file (v4+MT).
+TEST_F(MemfileLeaseMgrTest, notPersistWriteLease4MultiThread) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "false";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+
+    ASSERT_FALSE(lease_mgr->lease_file4_);
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check if writeLease works without a lease file (v6).
+TEST_F(MemfileLeaseMgrTest, notPersistWriteLease6) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "false";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    // Empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n";
+
+    ASSERT_FALSE(lease_mgr->lease_file6_);
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check if writeLease works without a lease file (v6+MT).
+TEST_F(MemfileLeaseMgrTest, notPersistWriteLease6MultiThread) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "false";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n";
+
+    ASSERT_FALSE(lease_mgr->lease_file6_);
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
 
 }  // namespace
