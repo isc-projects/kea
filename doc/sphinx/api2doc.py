@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -181,7 +181,8 @@ API Reference
             rst += '- 0 - success\n'
             rst += '- 1 - error\n'
             rst += '- 2 - unsupported\n'
-            rst += '- 3 - empty (command was completed successfully, but no data was affected or returned)\n\n'
+            rst += '- 3 - empty (command was completed successfully, but no data was affected or returned)\n'
+            rst += '- 4 - conflict (command could not apply requested configuration changes because they were in conflict with the server state)\n\n'
 
     return rst
 

@@ -26,6 +26,9 @@
         "or",
         "{ \"result\": 1, \"text\": \"missing parameter 'ip-address' (<string>:3:19)\" }"
     ],
+    "resp-comment": [
+        "If the returned result is equal to 4, it indicates that the lease could not be created because it was in conflict with the server's state or its notion of the configuration. The High Availability hook library can handle such a result differently than a general error. A general error of 1 can indicate issues with processing the command, database availability etc."
+    ],
     "support": [
         "kea-dhcp6"
     ]

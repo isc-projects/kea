@@ -43,7 +43,7 @@
     "hook": "lease_cmds",
     "name": "lease6-bulk-apply",
     "resp-comment": [
-        "The \"failed-deleted-leases\" holds the list of leases which failed to delete; this includes leases which were not found in the database. The \"failed-leases\" includes the list of leases which failed to create or update. For each lease for which there was an error during processing, insertion into the database, etc., the result is set to 1. For each lease which was not deleted because the server did not find it in the database, the result of 3 is returned."
+        "The \"failed-deleted-leases\" holds the list of leases which failed to delete; this includes leases which were not found in the database. The \"failed-leases\" includes the list of leases which failed to create or update. For each lease for which there was an error during processing, insertion into the database, etc., the result is set to 1. If an error occurs due to a conflict between the lease and the server's configuration or state, the result of 4 is returned instead of 1. For each lease which was not deleted because the server did not find it in the database, the result of 3 is returned."
     ],
     "resp-syntax": [
         "{",
