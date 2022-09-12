@@ -1882,7 +1882,7 @@ Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     lease_file.reset(new LeaseFileType(filename));
     LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                            max_row_errors, false);
-    conversion_needed =  conversion_needed || lease_file->needsConversion();
+    conversion_needed = conversion_needed || lease_file->needsConversion();
 
     return (conversion_needed);
 }
@@ -2006,7 +2006,7 @@ Memfile_LeaseMgr::startLeaseStatsQuery4() {
         query->start();
     }
 
-    return(query);
+    return (query);
 }
 
 LeaseStatsQueryPtr
@@ -2019,7 +2019,7 @@ Memfile_LeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
         query->start();
     }
 
-    return(query);
+    return (query);
 }
 
 LeaseStatsQueryPtr
@@ -2034,7 +2034,7 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_
         query->start();
     }
 
-    return(query);
+    return (query);
 }
 
 LeaseStatsQueryPtr
@@ -2047,7 +2047,7 @@ Memfile_LeaseMgr::startLeaseStatsQuery6() {
         query->start();
     }
 
-    return(query);
+    return (query);
 }
 
 LeaseStatsQueryPtr
@@ -2060,7 +2060,7 @@ Memfile_LeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
         query->start();
     }
 
-    return(query);
+    return (query);
 }
 
 LeaseStatsQueryPtr
@@ -2075,7 +2075,7 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_
         query->start();
     }
 
-    return(query);
+    return (query);
 }
 
 size_t
@@ -2163,15 +2163,15 @@ Memfile_LeaseMgr::getClassLeaseCount(const ClientClass& client_class,
                                      const Lease::Type& ltype /* = Lease::TYPE_V4*/) const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
-        return(class_lease_counter_.getClassCount(client_class, ltype));
+        return (class_lease_counter_.getClassCount(client_class, ltype));
     } else {
-        return(class_lease_counter_.getClassCount(client_class, ltype));
+        return (class_lease_counter_.getClassCount(client_class, ltype));
     }
 }
 
 void
 Memfile_LeaseMgr::clearClassLeaseCounts() {
-    return(class_lease_counter_.clear());
+    return (class_lease_counter_.clear());
 }
 
 std::string

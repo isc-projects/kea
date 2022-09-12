@@ -96,7 +96,10 @@
                 "only-if-required": true,
 
                 // Class selection expression.
-                "test": "member('ALL')"
+                "test": "member('ALL')",
+
+                // Template class flag.
+                "template-class": false
             }
         ],
 

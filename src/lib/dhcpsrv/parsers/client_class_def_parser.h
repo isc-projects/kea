@@ -69,13 +69,14 @@ public:
     /// @param expression_cfg the configuration entry to be parsed.
     /// @param family the address family of the expression.
     /// @param check_defined a closure to check if a client class is defined.
+    /// @param parser_type the expected type of the evaluated expression.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
     void parse(ExpressionPtr& expression,
                isc::data::ConstElementPtr expression_cfg,
                uint16_t family,
-               isc::eval::EvalContext::CheckDefined check_defined =
-                   isc::eval::EvalContext::acceptAll);
+               isc::eval::EvalContext::CheckDefined check_defined = isc::eval::EvalContext::acceptAll,
+               isc::eval::EvalContext::ParserType parser_type = isc::eval::EvalContext::PARSER_BOOL);
 };
 
 /// @brief Parser for a single client class definition.

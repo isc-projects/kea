@@ -47,11 +47,13 @@ protected:
     /// evaluated.
     /// @param option_string String data to be placed in the hostname
     /// option, being placed in the packet used for evaluation.
+    /// @param parser_type the expected type of the evaluated expression.
     /// @tparam Type of the packet: @c Pkt4 or @c Pkt6.
     template<typename PktType>
     void testValidExpression(uint16_t family,
                              const std::string& expression,
-                             const std::string& option_string) {
+                             const std::string& option_string,
+                             EvalContext::ParserType parser_type = EvalContext::PARSER_BOOL) {
         ExpressionPtr parsed_expr;
         ExpressionParser parser;
 
@@ -59,7 +61,7 @@ protected:
         ElementPtr config_element = Element::fromJSON(expression);
 
         // Expression should parse.
-        ASSERT_NO_THROW(parser.parse(parsed_expr, config_element, family));
+        ASSERT_NO_THROW(parser.parse(parsed_expr, config_element, family, EvalContext::acceptAll, parser_type));
 
         // Parsed expression should exist.
         ASSERT_TRUE(parsed_expr);
@@ -72,7 +74,11 @@ protected:
             message_type = DHCPV6_SOLICIT;
         }
         boost::shared_ptr<PktType> pkt(new PktType(message_type, 123));
-        EXPECT_FALSE(evaluateBool(*parsed_expr, *pkt));
+        if (parser_type == EvalContext::PARSER_BOOL) {
+            EXPECT_FALSE(evaluateBool(*parsed_expr, *pkt));
+        } else {
+            EXPECT_TRUE(evaluateString(*parsed_expr, *pkt).empty());
+        }
 
         // Now add the option so it will pass. Use a standard option carrying a
         // single string value, i.e. hostname for DHCPv4 and bootfile url for
@@ -86,7 +92,11 @@ protected:
         }
         OptionPtr opt(new OptionString(universe, option_type, option_string));
         pkt->addOption(opt);
-        EXPECT_TRUE(evaluateBool(*parsed_expr, *pkt));
+        if (parser_type == EvalContext::PARSER_BOOL) {
+            EXPECT_TRUE(evaluateBool(*parsed_expr, *pkt));
+        } else {
+            EXPECT_EQ(evaluateString(*parsed_expr, *pkt), option_string);
+        }
     }
 };
 
@@ -184,11 +194,26 @@ TEST_F(ExpressionParserTest, validExpression4) {
                               "hundred4");
 }
 
+// Verifies that given a valid expression, the ExpressionParser
+// produces an Expression which can be evaluated against a v4 packet.
+TEST_F(ExpressionParserTest, templateValidExpression4) {
+    testValidExpression<Pkt4>(AF_INET,
+                              "\"option[12].text\"",
+                              "hundred4", EvalContext::PARSER_STRING);
+}
+
 // Verifies that the option name can be used in the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionName4) {
     testValidExpression<Pkt4>(AF_INET,
                               "\"option[host-name].text == 'hundred4'\"",
                               "hundred4");
+}
+
+// Verifies that the option name can be used in the evaluated expression.
+TEST_F(ExpressionParserTest, templateValidExpressionWithOptionName4) {
+    testValidExpression<Pkt4>(AF_INET,
+                              "\"option[host-name].text\"",
+                              "hundred4", EvalContext::PARSER_STRING);
 }
 
 // Verifies that given a valid expression using .hex operator for option, the
@@ -200,12 +225,29 @@ TEST_F(ExpressionParserTest, validExpressionWithHex4) {
                               "hundred4");
 }
 
+// Verifies that given a valid expression using .hex operator for option, the
+// ExpressionParser produces an Expression which can be evaluated against
+// a v4 packet.
+TEST_F(ExpressionParserTest, templateValidExpressionWithHex4) {
+    testValidExpression<Pkt4>(AF_INET,
+                              "\"option[12].hex\"",
+                              "hundred4", EvalContext::PARSER_STRING);
+}
+
 // Verifies that the option name can be used together with .hex operator in
 // the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex4) {
     testValidExpression<Pkt6>(AF_INET,
                               "\"option[host-name].text == 0x68756E6472656434\"",
                               "hundred4");
+}
+
+// Verifies that the option name can be used together with .hex operator in
+// the evaluated expression.
+TEST_F(ExpressionParserTest, templateValidExpressionWithOptionNameAndHex4) {
+    testValidExpression<Pkt6>(AF_INET,
+                              "\"option[host-name].text\"",
+                              "hundred4", EvalContext::PARSER_STRING);
 }
 
 // Verifies that given a valid expression, the ExpressionParser
@@ -216,11 +258,26 @@ TEST_F(ExpressionParserTest, validExpression6) {
                               "hundred6");
 }
 
+// Verifies that given a valid expression, the ExpressionParser
+// produces an Expression which can be evaluated against a v6 packet.
+TEST_F(ExpressionParserTest, templateValidExpression6) {
+    testValidExpression<Pkt6>(AF_INET6,
+                              "\"option[59].text\"",
+                              "hundred6", EvalContext::PARSER_STRING);
+}
+
 // Verifies that the option name can be used in the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionName6) {
     testValidExpression<Pkt6>(AF_INET6,
                               "\"option[bootfile-url].text == 'hundred6'\"",
                               "hundred6");
+}
+
+// Verifies that the option name can be used in the evaluated expression.
+TEST_F(ExpressionParserTest, templateValidExpressionWithOptionName6) {
+    testValidExpression<Pkt6>(AF_INET6,
+                              "\"option[bootfile-url].text\"",
+                              "hundred6", EvalContext::PARSER_STRING);
 }
 
 // Verifies that given a valid expression using .hex operator for option, the
@@ -232,12 +289,29 @@ TEST_F(ExpressionParserTest, validExpressionWithHex6) {
                               "hundred6");
 }
 
+// Verifies that given a valid expression using .hex operator for option, the
+// ExpressionParser produces an Expression which can be evaluated against
+// a v6 packet.
+TEST_F(ExpressionParserTest, templateValidExpressionWithHex6) {
+    testValidExpression<Pkt6>(AF_INET6,
+                              "\"option[59].hex\"",
+                              "hundred6", EvalContext::PARSER_STRING);
+}
+
 // Verifies that the option name can be used together with .hex operator in
 // the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex6) {
     testValidExpression<Pkt6>(AF_INET6,
                               "\"option[bootfile-url].text == 0x68756E6472656436\"",
                               "hundred6");
+}
+
+// Verifies that the option name can be used together with .hex operator in
+// the evaluated expression.
+TEST_F(ExpressionParserTest, templateValidExpressionWithOptionNameAndHex6) {
+    testValidExpression<Pkt6>(AF_INET6,
+                              "\"option[bootfile-url].text\"",
+                              "hundred6", EvalContext::PARSER_STRING);
 }
 
 // Verifies that an the ExpressionParser only accepts StringElements.
@@ -300,7 +374,11 @@ TEST_F(ClientClassDefParserTest, checkAllSupported4) {
         "    \"option-data\": [ ],\n"
         "    \"user-context\": { },\n"
         "    \"only-if-required\": false,\n"
+        "    \"valid-lifetime\": 1000,\n"
+        "    \"min-valid-lifetime\": 1000,\n"
+        "    \"max-valid-lifetime\": 1000,\n"
         "    \"next-server\": \"192.0.2.3\",\n"
+        "    \"template-class\": true,\n"
         "    \"server-hostname\": \"myhost\",\n"
         "    \"boot-file-name\": \"efi\""
         "}\n";
@@ -321,7 +399,11 @@ TEST_F(ClientClassDefParserTest, checkAllSupported6) {
         "    \"test\": \"member('ALL')\","
         "    \"option-data\": [ ],\n"
         "    \"user-context\": { },\n"
-        "    \"only-if-required\": false\n"
+        "    \"only-if-required\": false,\n"
+        "    \"template-class\": true,\n"
+        "    \"preferred-lifetime\": 800,\n"
+        "    \"min-preferred-lifetime\": 800,\n"
+        "    \"max-preferred-lifetime\": 800\n"
         "}\n";
 
     ElementPtr config_element = Element::fromJSON(cfg_text);
@@ -397,6 +479,58 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
     }
 }
 
+// Verifies that the function checking if specified client class parameters
+// are supported throws if DHCPv6 specific parameters are specified for the
+// DHCPv4 client class.
+TEST_F(ClientClassDefParserTest, checkParams6Unsupported4) {
+    std::string cfg_text;
+
+    {
+        SCOPED_TRACE("preferred-lifetime");
+        cfg_text =
+            "{\n"
+            "    \"name\": \"foo\","
+            "    \"test\": \"member('ALL')\","
+            "    \"preferred-lifetime\": 800,\n"
+            "    \"option-data\": [ ],\n"
+            "    \"user-context\": { },\n"
+            "    \"only-if-required\": false\n"
+            "}\n";
+
+        testClassParamsUnsupported(cfg_text, AF_INET);
+    }
+
+    {
+        SCOPED_TRACE("min-preferred-lifetime");
+        cfg_text =
+            "{\n"
+            "    \"name\": \"foo\","
+            "    \"test\": \"member('ALL')\","
+            "    \"min-preferred-lifetime\": 800,\n"
+            "    \"option-data\": [ ],\n"
+            "    \"user-context\": { },\n"
+            "    \"only-if-required\": false\n"
+            "}\n";
+
+        testClassParamsUnsupported(cfg_text, AF_INET);
+    }
+
+    {
+        SCOPED_TRACE("max-preferred-lifetime");
+        cfg_text =
+            "{\n"
+            "    \"name\": \"foo\","
+            "    \"test\": \"member('ALL')\","
+            "    \"max-preferred-lifetime\": 800,\n"
+            "    \"option-data\": [ ],\n"
+            "    \"user-context\": { },\n"
+            "    \"only-if-required\": false\n"
+            "}\n";
+
+        testClassParamsUnsupported(cfg_text, AF_INET);
+    }
+}
+
 // Verifies that the function checking if specified DHCPv4 client class
 // parameters are supported throws if one of the parameters is not recognized.
 TEST_F(ClientClassDefParserTest, checkParams4Unsupported) {
@@ -453,8 +587,7 @@ TEST_F(ClientClassDefParserTest, nameOnlyValid) {
 
 // Verifies you can create a class with a name, expression,
 // but no options.
-// @todo same with AF_INET6
-TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
+TEST_F(ClientClassDefParserTest, nameAndExpressionClass4) {
 
     std::string test = "option[100].text == 'works right'";
     std::string cfg_text =
@@ -497,10 +630,148 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
     EXPECT_TRUE(evaluateBool(*match_expr, *pkt4));
 }
 
+// Verifies you can create a class with a name, expression,
+// but no options.
+TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass4) {
+
+    std::string test = "option[100].text";
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"class_one\", \n"
+        "    \"template-class\": true, \n"
+        "    \"test\": \"" + test + "\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("class_one", cclass->getName());
+
+    // CfgOption should be a non-null pointer but there
+    // should be no options.  Currently there's no good
+    // way to test that there no options.
+    CfgOptionPtr cfg_option;
+    cfg_option = cclass->getCfgOption();
+    ASSERT_TRUE(cfg_option);
+    OptionContainerPtr oc;
+    ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP4_OPTION_SPACE));
+    EXPECT_EQ(0, oc->size());
+
+    // Verify we can retrieve the expression
+    ExpressionPtr match_expr = cclass->getMatchExpr();
+    ASSERT_TRUE(match_expr);
+
+    // Verify the original expression was saved.
+    EXPECT_EQ(test, cclass->getTest());
+
+    // Build a packet that will fail evaluation.
+    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 123));
+    EXPECT_TRUE(evaluateString(*match_expr, *pkt4).empty());
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V4, 100, "works right"));
+    pkt4->addOption(opt);
+    EXPECT_EQ(evaluateString(*match_expr, *pkt4), "works right");
+}
+
+// Verifies you can create a class with a name, expression,
+// but no options.
+TEST_F(ClientClassDefParserTest, nameAndExpressionClass6) {
+
+    std::string test = "option[59].text == 'works right'";
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"class_one\", \n"
+        "    \"test\": \"" + test + "\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("class_one", cclass->getName());
+
+    // CfgOption should be a non-null pointer but there
+    // should be no options.  Currently there's no good
+    // way to test that there no options.
+    CfgOptionPtr cfg_option;
+    cfg_option = cclass->getCfgOption();
+    ASSERT_TRUE(cfg_option);
+    OptionContainerPtr oc;
+    ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP6_OPTION_SPACE));
+    EXPECT_EQ(0, oc->size());
+
+    // Verify we can retrieve the expression
+    ExpressionPtr match_expr = cclass->getMatchExpr();
+    ASSERT_TRUE(match_expr);
+
+    // Verify the original expression was saved.
+    EXPECT_EQ(test, cclass->getTest());
+
+    // Build a packet that will fail evaluation.
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 123));
+    EXPECT_FALSE(evaluateBool(*match_expr, *pkt6));
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V6, 59, "works right"));
+    pkt6->addOption(opt);
+    EXPECT_TRUE(evaluateBool(*match_expr, *pkt6));
+}
+
+// Verifies you can create a class with a name, expression,
+// but no options.
+TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass6) {
+
+    std::string test = "option[59].text";
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"class_one\", \n"
+        "    \"template-class\": true, \n"
+        "    \"test\": \"" + test + "\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6));
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("class_one", cclass->getName());
+
+    // CfgOption should be a non-null pointer but there
+    // should be no options.  Currently there's no good
+    // way to test that there no options.
+    CfgOptionPtr cfg_option;
+    cfg_option = cclass->getCfgOption();
+    ASSERT_TRUE(cfg_option);
+    OptionContainerPtr oc;
+    ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP6_OPTION_SPACE));
+    EXPECT_EQ(0, oc->size());
+
+    // Verify we can retrieve the expression
+    ExpressionPtr match_expr = cclass->getMatchExpr();
+    ASSERT_TRUE(match_expr);
+
+    // Verify the original expression was saved.
+    EXPECT_EQ(test, cclass->getTest());
+
+    // Build a packet that will fail evaluation.
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 123));
+    EXPECT_TRUE(evaluateString(*match_expr, *pkt6).empty());
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V6, 59, "works right"));
+    pkt6->addOption(opt);
+    EXPECT_EQ(evaluateString(*match_expr, *pkt6), "works right");
+}
+
 // Verifies you can create a class with a name and options,
 // but no expression.
-// @todo same with AF_INET6
-TEST_F(ClientClassDefParserTest, nameAndOptionsClass) {
+TEST_F(ClientClassDefParserTest, nameAndOptionsClass4) {
 
     std::string cfg_text =
         "{ \n"
@@ -532,11 +803,43 @@ TEST_F(ClientClassDefParserTest, nameAndOptionsClass) {
     ASSERT_FALSE(cclass->getMatchExpr());
 }
 
+// Verifies you can create a class with a name and options,
+// but no expression.
+TEST_F(ClientClassDefParserTest, nameAndOptionsClass6) {
+
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"sip-server-addr\", \n"
+        "           \"code\": 22, \n"
+        "           \"space\": \"dhcp6\", \n"
+        "           \"csv-format\": true, \n"
+        "           \"data\": \"2003:db8::1, 2003:db8::2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("MICROSOFT", cclass->getName());
+
+    // Our one option should exist.
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP6_OPTION_SPACE, 22);
+    ASSERT_TRUE(od.option_);
+    EXPECT_EQ(22, od.option_->getType());
+
+    // Verify we have no expression
+    ASSERT_FALSE(cclass->getMatchExpr());
+}
 
 // Verifies you can create a class with a name, expression,
 // and options.
-// @todo same with AF_INET6
-TEST_F(ClientClassDefParserTest, basicValidClass) {
+TEST_F(ClientClassDefParserTest, basicValidClass4) {
 
     std::string test = "option[100].text == 'booya'";
     std::string cfg_text =
@@ -581,6 +884,157 @@ TEST_F(ClientClassDefParserTest, basicValidClass) {
     OptionPtr opt(new OptionString(Option::V4, 100, "booya"));
     pkt4->addOption(opt);
     EXPECT_TRUE(evaluateBool(*match_expr, *pkt4));
+}
+
+// Verifies you can create a class with a name, expression,
+// and options.
+TEST_F(ClientClassDefParserTest, templateBasicValidClass4) {
+
+    std::string test = "option[100].text";
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"test\": \"" + test + "\", \n"
+        "    \"template-class\": true, \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"code\": 6, \n"
+        "           \"space\": \"dhcp4\", \n"
+        "           \"csv-format\": true, \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("MICROSOFT", cclass->getName());
+
+    // Our one option should exist.
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP4_OPTION_SPACE, 6);
+    ASSERT_TRUE(od.option_);
+    EXPECT_EQ(6, od.option_->getType());
+
+    // Verify we can retrieve the expression
+    ExpressionPtr match_expr = cclass->getMatchExpr();
+    ASSERT_TRUE(match_expr);
+
+    // Verify the original expression was saved.
+    EXPECT_EQ(test, cclass->getTest());
+
+    // Build a packet that will fail evaluation.
+    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 123));
+    EXPECT_TRUE(evaluateString(*match_expr, *pkt4).empty());
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V4, 100, "booya"));
+    pkt4->addOption(opt);
+    EXPECT_EQ(evaluateString(*match_expr, *pkt4), "booya");
+}
+
+// Verifies you can create a class with a name, expression,
+// and options.
+TEST_F(ClientClassDefParserTest, basicValidClass6) {
+
+    std::string test = "option[59].text == 'booya'";
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"test\": \"" + test + "\", \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"sip-server-addr\", \n"
+        "           \"code\": 22, \n"
+        "           \"space\": \"dhcp6\", \n"
+        "           \"csv-format\": true, \n"
+        "           \"data\": \"2003:db8::1, 2003:db8::2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("MICROSOFT", cclass->getName());
+
+    // Our one option should exist.
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP6_OPTION_SPACE, 22);
+    ASSERT_TRUE(od.option_);
+    EXPECT_EQ(22, od.option_->getType());
+
+    // Verify we can retrieve the expression
+    ExpressionPtr match_expr = cclass->getMatchExpr();
+    ASSERT_TRUE(match_expr);
+
+    // Verify the original expression was saved.
+    EXPECT_EQ(test, cclass->getTest());
+
+    // Build a packet that will fail evaluation.
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 123));
+    EXPECT_FALSE(evaluateBool(*match_expr, *pkt6));
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V6, 59, "booya"));
+    pkt6->addOption(opt);
+    EXPECT_TRUE(evaluateBool(*match_expr, *pkt6));
+}
+
+// Verifies you can create a class with a name, expression,
+// and options.
+TEST_F(ClientClassDefParserTest, templateBasicValidClass6) {
+
+    std::string test = "option[59].text";
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"test\": \"" + test + "\", \n"
+        "    \"template-class\": true, \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"sip-server-addr\", \n"
+        "           \"code\": 22, \n"
+        "           \"space\": \"dhcp6\", \n"
+        "           \"csv-format\": true, \n"
+        "           \"data\": \"2003:db8::1, 2003:db8::2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6));
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("MICROSOFT", cclass->getName());
+
+    // Our one option should exist.
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP6_OPTION_SPACE, 22);
+    ASSERT_TRUE(od.option_);
+    EXPECT_EQ(22, od.option_->getType());
+
+    // Verify we can retrieve the expression
+    ExpressionPtr match_expr = cclass->getMatchExpr();
+    ASSERT_TRUE(match_expr);
+
+    // Verify the original expression was saved.
+    EXPECT_EQ(test, cclass->getTest());
+
+    // Build a packet that will fail evaluation.
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 123));
+    EXPECT_TRUE(evaluateString(*match_expr, *pkt6).empty());
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V6, 59, "booya"));
+    pkt6->addOption(opt);
+    EXPECT_EQ(evaluateString(*match_expr, *pkt6), "booya");
 }
 
 // Verifies that a class with no name, fails to parse.
@@ -641,6 +1095,20 @@ TEST_F(ClientClassDefParserTest, invalidExpression) {
                  DhcpConfigError);
 }
 
+// Verifies that a class with an invalid expression, fails to parse.
+TEST_F(ClientClassDefParserTest, templateInvalidExpression) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"one\", \n"
+        "    \"template-class\": true, \n"
+        "    \"test\": 777 \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6),
+                 DhcpConfigError);
+}
+
 // Verifies that a class with invalid option-def, fails to parse.
 TEST_F(ClientClassDefParserTest, invalidOptionDef) {
     std::string cfg_text =
@@ -670,7 +1138,6 @@ TEST_F(ClientClassDefParserTest, invalidOptionData) {
     ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
                  DhcpConfigError);
 }
-
 
 // Verifies that a valid list of client classes will parse.
 TEST_F(ClientClassDefListParserTest, simpleValidList) {
@@ -714,6 +1181,54 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
     EXPECT_FALSE(cclass);
 }
 
+// Verifies that a valid list of client classes will parse.
+TEST_F(ClientClassDefListParserTest, templateSimpleValidList) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"template-class\": true \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"two\", \n"
+        "       \"template-class\": true \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"three\", \n"
+        "       \"template-class\": true \n"
+        "   } \n"
+        "] \n";
+
+    // Parsing the list should succeed.
+    ClientClassDictionaryPtr dictionary;
+    ASSERT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6));
+    ASSERT_TRUE(dictionary);
+
+    // We should have three classes in the dictionary.
+    EXPECT_EQ(3, dictionary->getClasses()->size());
+
+    // Make sure we can find all three.
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = dictionary->findClass("one"));
+    ASSERT_TRUE(cclass);
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+    EXPECT_EQ("one", cclass->getName());
+
+    ASSERT_NO_THROW(cclass = dictionary->findClass("two"));
+    ASSERT_TRUE(cclass);
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+    EXPECT_EQ("two", cclass->getName());
+
+    ASSERT_NO_THROW(cclass = dictionary->findClass("three"));
+    ASSERT_TRUE(cclass);
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+    EXPECT_EQ("three", cclass->getName());
+
+    // For good measure, make sure we can't find a non-existent class.
+    ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
+    EXPECT_FALSE(cclass);
+}
+
 // Verifies that class list containing a duplicate class entries, fails
 // to parse.
 TEST_F(ClientClassDefListParserTest, duplicateClass) {
@@ -735,10 +1250,33 @@ TEST_F(ClientClassDefListParserTest, duplicateClass) {
                  DhcpConfigError);
 }
 
+// Verifies that class list containing a duplicate class entries, fails
+// to parse.
+TEST_F(ClientClassDefListParserTest, templateDuplicateClass) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"template-class\": true \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"two\", \n"
+        "       \"template-class\": true \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"two\", \n"
+        "       \"template-class\": true \n"
+        "   } \n"
+        "] \n";
+
+    ClientClassDictionaryPtr dictionary;
+    ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET),
+                 DhcpConfigError);
+}
+
 // Test verifies that without any class specified, the fixed fields have their
 // default, empty value.
-// @todo same with AF_INET6
-TEST_F(ClientClassDefParserTest, noFixedFields) {
+TEST_F(ClientClassDefParserTest, noFixedFields4) {
 
     std::string cfg_text =
         "{ \n"
@@ -765,6 +1303,37 @@ TEST_F(ClientClassDefParserTest, noFixedFields) {
     // Nor option definitions
     CfgOptionDefPtr cfg = cclass->getCfgOptionDef();
     ASSERT_TRUE(cfg->getAll(DHCP4_OPTION_SPACE)->empty());
+}
+
+// Test verifies that without any class specified, the fixed fields have their
+// default, empty value.
+TEST_F(ClientClassDefParserTest, noFixedFields6) {
+
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"sip-server-addr\", \n"
+        "           \"data\": \"2003:db8::1, 2003:db8::2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And it should not have any fixed fields set
+    EXPECT_EQ(0, cclass->getPreferred());
+    EXPECT_EQ(0, cclass->getPreferred().getMin());
+    EXPECT_EQ(0, cclass->getPreferred().getMax());
+
+    // Nor option definitions
+    CfgOptionDefPtr cfg = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg->getAll(DHCP6_OPTION_SPACE)->empty());
 }
 
 // Test verifies option-def for a bad option fails to parse.
@@ -866,7 +1435,6 @@ TEST_F(ClientClassDefParserTest, option43Def) {
     const uint8_t expected[4] = { 0xc0, 0x00, 0x02, 0x00 };
     EXPECT_EQ(0, std::memcmp(expected, &opt->getData()[0], 4));
 }
-
 
 // Test verifies that it is possible to define next-server field and it
 // is actually set in the class properly.
@@ -984,7 +1552,6 @@ TEST_F(ClientClassDefParserTest, serverNameInvalid) {
 
     EXPECT_THROW(parseClientClassDef(cfg_too_long, AF_INET), DhcpConfigError);
 }
-
 
 // Test verifies that it is possible to define boot-file-name field and it
 // is actually set in the class properly.
@@ -1443,12 +2010,12 @@ TEST_F(ClientClassDefParserTest, invalidUserContext) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"one\", \n"
-        "   \"user-context\": \"i am not a map\" \n"
+        "    \"user-context\": \"i am not a map\" \n"
         "} \n";
 
     ClientClassDefPtr cclass;
     ASSERT_THROW_MSG(cclass = parseClientClassDef(cfg_text, AF_INET),
-                 DhcpConfigError, "User context has to be a map (<string>:3:20)");
+                 DhcpConfigError, "User context has to be a map (<string>:3:21)");
 }
 
 } // end of anonymous namespace

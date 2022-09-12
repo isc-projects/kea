@@ -3712,13 +3712,13 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     // in the structure returned.
     OptionPtr option = range.first->option_;
     ASSERT_TRUE(option);
-    // Option object returned for here is expected to be Option6IA
+    // Option object returned for here is expected to be Option4AddrLst
     // which is derived from Option. This class is dedicated to
-    // represent standard option IA_NA.
+    // represent standard option DHO_NIS_SERVERS.
     boost::shared_ptr<Option4AddrLst> option_addrs =
         boost::dynamic_pointer_cast<Option4AddrLst>(option);
     // If cast is unsuccessful than option returned was of a
-    // different type than Option6IA. This is wrong.
+    // different type than Option4AddrLst. This is wrong.
     ASSERT_TRUE(option_addrs);
 
     // Get addresses from the option.
@@ -6093,6 +6093,64 @@ TEST_F(Dhcp4ParserTest, clientClassValidLifetime) {
     EXPECT_TRUE(class_def->getValid().unspecified());
 }
 
+// Verifies that simple list of valid template classes parses and
+// is staged for commit.
+TEST_F(Dhcp4ParserTest, templateClientClassValidLifetime) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"client-classes\" : [ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"min-valid-lifetime\": 1000, \n"
+        "       \"valid-lifetime\": 2000, \n"
+        "       \"max-valid-lifetime\": 3000, \n"
+        "       \"template-class\": true, \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"two\", \n"
+        "       \"template-class\": true \n"
+        "   } \n"
+        "], \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ], \n"
+        "    \"subnet\": \"192.0.2.0/24\"  \n"
+        " } ] \n"
+        "} \n";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW_LOG(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW_LOG(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // We check staging config because CfgMgr::commit hasn't been executed.
+    ClientClassDictionaryPtr dictionary;
+    dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dictionary);
+    EXPECT_EQ(2, dictionary->getClasses()->size());
+
+    // Execute the commit
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Verify that after commit, the current config has the correct dictionary
+    dictionary = CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dictionary);
+    EXPECT_EQ(2, dictionary->getClasses()->size());
+
+    ClientClassDefPtr class_def = dictionary->findClass("one");
+    ASSERT_TRUE(class_def);
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(class_def.get()));
+    EXPECT_EQ(class_def->getValid().getMin(), 1000);
+    EXPECT_EQ(class_def->getValid().get(), 2000);
+    EXPECT_EQ(class_def->getValid().getMax(), 3000);
+
+    class_def = dictionary->findClass("two");
+    ASSERT_TRUE(class_def);
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(class_def.get()));
+    EXPECT_TRUE(class_def->getValid().unspecified());
+}
 
 // Test verifies that regular configuration does not provide any user context
 // in the address pool.

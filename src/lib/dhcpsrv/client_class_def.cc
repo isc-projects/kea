@@ -7,8 +7,11 @@
 #include <config.h>
 
 #include <eval/dependency.h>
+#include <eval/evaluate.h>
+#include <eval/eval_log.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <boost/foreach.hpp>
 
@@ -137,6 +140,64 @@ ClientClassDef::setCfgOption(const CfgOptionPtr& cfg_option) {
     cfg_option_ = cfg_option;
 }
 
+void
+ClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
+    // Evaluate the expression which can return false (no match),
+    // true (match) or raise an exception (error)
+    try {
+        bool status = evaluateBool(*expr_ptr, *pkt);
+        if (status) {
+            LOG_INFO(dhcpsrv_logger, EVAL_RESULT)
+                .arg(getName())
+                .arg(status);
+            // Matching: add the class
+            pkt->addClass(getName());
+        } else {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, EVAL_RESULT)
+                .arg(getName())
+                .arg(status);
+        }
+    } catch (const Exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+            .arg(getName())
+            .arg(ex.what());
+    } catch (...) {
+        LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+            .arg(getName())
+            .arg("get exception?");
+    }
+}
+
+TemplateClientClassDef::TemplateClientClassDef(const std::string& name,
+                                               const ExpressionPtr& match_expr,
+                                               const CfgOptionPtr& options) :
+        ClientClassDef(name, match_expr, options) {
+}
+
+void
+TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
+    // Evaluate the expression which can return false (no match),
+    // true (match) or raise an exception (error)
+    try {
+        std::string subclass = evaluateString(*expr_ptr, *pkt);
+        if (!subclass.empty()) {
+            LOG_INFO(dhcpsrv_logger, EVAL_RESULT)
+                .arg(getName())
+                .arg(subclass);
+            // Matching: add the subclass
+            pkt->addSubClass(getName(), subclass);
+        }
+    } catch (const Exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+            .arg(getName())
+            .arg(ex.what());
+    } catch (...) {
+        LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+            .arg(getName())
+            .arg("get exception?");
+    }
+}
+
 bool
 ClientClassDef::dependOnClass(const std::string& name) const {
     return (isc::dhcp::dependOnClass(match_expr_, name));
@@ -162,7 +223,7 @@ ClientClassDef::equals(const ClientClassDef& other) const {
 }
 
 ElementPtr
-ClientClassDef:: toElement() const {
+ClientClassDef::toElement() const {
     uint16_t family = CfgMgr::instance().getFamily();
     ElementPtr result = Element::createMap();
     // Set user-context
@@ -230,6 +291,13 @@ ClientClassDef:: toElement() const {
     return (result);
 }
 
+ElementPtr
+TemplateClientClassDef::toElement() const {
+    auto const& result = ClientClassDef::toElement();
+    result->set("template-class", Element::create(true));
+    return (result);
+}
+
 std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {
     os << "ClientClassDef:" << x.getName();
     return (os);
@@ -265,8 +333,14 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const std::string& sname,
                                 const std::string& filename,
                                 const util::Triplet<uint32_t>& valid,
-                                const util::Triplet<uint32_t>& preferred) {
-    ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
+                                const util::Triplet<uint32_t>& preferred,
+                                bool is_template) {
+    ClientClassDefPtr cclass;
+    if (is_template) {
+        cclass.reset(new TemplateClientClassDef(name, match_expr, cfg_option));
+    } else {
+        cclass.reset(new ClientClassDef(name, match_expr, cfg_option));
+    }
     cclass->setTest(test);
     cclass->setRequired(required);
     cclass->setDependOnKnown(depend_on_known);
@@ -394,7 +468,12 @@ ClientClassDictionary::initMatchExpr(uint16_t family) {
         if (!c->getTest().empty()) {
             ExpressionPtr match_expr = boost::make_shared<Expression>();
             ExpressionParser parser;
-            parser.parse(match_expr, Element::create(c->getTest()), family);
+            EvalContext::ParserType parser_type = EvalContext::PARSER_BOOL;
+            if (dynamic_cast<TemplateClientClassDef*>(c.get())) {
+                parser_type = EvalContext::PARSER_STRING;
+            }
+            parser.parse(match_expr, Element::create(c->getTest()), family,
+                         EvalContext::acceptAll, parser_type);
             expressions.push(match_expr);
         }
     }

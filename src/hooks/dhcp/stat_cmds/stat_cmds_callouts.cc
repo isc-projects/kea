@@ -32,7 +32,7 @@ extern "C" {
 /// 1 otherwise.
 int stat_lease4_get(CalloutHandle& handle) {
     StatCmds stat_cmds;
-    return(stat_cmds.statLease4GetHandler(handle));
+    return (stat_cmds.statLease4GetHandler(handle));
 }
 
 /// @brief This is a command callout for 'stat-lease6-get' command.
@@ -43,7 +43,7 @@ int stat_lease4_get(CalloutHandle& handle) {
 /// 1 otherwise.
 int stat_lease6_get(CalloutHandle& handle) {
     StatCmds stat_cmds;
-    return(stat_cmds.statLease6GetHandler(handle));
+    return (stat_cmds.statLease6GetHandler(handle));
 }
 
 /// @brief This function is called when the library is loaded.

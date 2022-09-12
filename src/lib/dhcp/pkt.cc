@@ -76,12 +76,19 @@ Pkt::delOption(uint16_t type) {
 }
 
 bool
-Pkt::inClass(const std::string& client_class) {
-    return (classes_.contains(client_class));
+Pkt::inClass(const ClientClass& client_class) {
+    if (classes_.contains(client_class)) {
+        return (true);
+    }
+    auto const& idx = subclasses_.get<SubClassNameTag>();
+    if (idx.count(client_class)) {
+        return (true);
+    }
+    return (false);
 }
 
 void
-Pkt::addClass(const std::string& client_class, bool required) {
+Pkt::addClass(const ClientClass& client_class, bool required) {
     // Always have ALL first.
     if (classes_.empty()) {
         classes_.insert("ALL");
@@ -90,6 +97,15 @@ Pkt::addClass(const std::string& client_class, bool required) {
     if (!classes.contains(client_class)) {
         classes.insert(client_class);
     }
+}
+
+void
+Pkt::addSubClass(const ClientClass& template_class, const ClientClass& subclass) {
+    auto const& idx = subclasses_.get<SubClassNameTag>();
+    if (idx.count(subclass)) {
+        return;
+    }
+    subclasses_.push_back(SubClass(template_class, subclass));
 }
 
 void

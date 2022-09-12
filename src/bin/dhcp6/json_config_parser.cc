@@ -266,7 +266,7 @@ public:
     /// in the future.
     ///
     /// @param cfg - the parsed structure
-    /// @param global global Dhcp4 scope
+    /// @param global global Dhcp6 scope
     /// @throw DhcpConfigError in case of issues found
     void
     sanityChecks(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
@@ -416,7 +416,7 @@ void configureCommandChannel() {
         if (sock_cfg) {
             // This will create a control socket and install the external
             // socket in IfaceMgr. That socket will be monitored when
-            // Dhcp4Srv::receivePacket() calls IfaceMgr::receive4() and
+            // Dhcp6Srv::receivePacket() calls IfaceMgr::receive6() and
             // callback in CommandMgr will be called, if necessary.
             isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
         }

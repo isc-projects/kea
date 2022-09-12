@@ -50,7 +50,7 @@ PgSqlConfigBackendImpl::insertQuery(size_t index,
 uint64_t
 PgSqlConfigBackendImpl::updateDeleteQuery(size_t index,
                                           const PsqlBindArray& in_bindings) {
-    return(conn_.updateDeleteQuery(getStatement(index), in_bindings));
+    return (conn_.updateDeleteQuery(getStatement(index), in_bindings));
 }
 
 PgSqlConfigBackendImpl::ScopedAuditRevision::ScopedAuditRevision(

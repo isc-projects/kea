@@ -145,7 +145,7 @@ public:
             return (DdnsParamsPtr(new DdnsParams()));
         }
 
-        return(CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet_));
+        return (CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet_));
     }
 
     /// @brief Construct the DHCPv6 Client FQDN option using flags and

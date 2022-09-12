@@ -156,7 +156,7 @@ generateLease4() {
     Lease4Ptr lease4(new Lease4(IOAddress("192.168.0.1"), hwaddr, clientid,
                                 2, 3, 4, false, false, "test.hostname"));
 
-    return(lease4);
+    return (lease4);
 }
 
 /// @brief Generate a valid Lease6.

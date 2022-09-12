@@ -398,7 +398,7 @@ public:
             return (DdnsParamsPtr(new DdnsParams()));
         }
 
-        return(CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet_));
+        return (CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet_));
     }
 
     // Create a lease to be used by various tests.
@@ -457,8 +457,8 @@ public:
     /// @return An std::string contained the generated FQDN.
     std::string generatedNameFromAddress(const IOAddress& addr,
                                          const bool trailing_dot = true) {
-        return(CfgMgr::instance().getD2ClientMgr()
-               .generateFqdn(addr, *getDdnsParams(), trailing_dot));
+        return (CfgMgr::instance().getD2ClientMgr()
+                .generateFqdn(addr, *getDdnsParams(), trailing_dot));
     }
 
     // Get the Client FQDN Option from the given message.

@@ -11,12 +11,14 @@
 #include <dhcp/option_int.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
-#include <testutils/gtest_utils.h>
+#include <eval/eval_context.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_handle.h>
 #include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 
 #if defined HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
@@ -4632,6 +4634,155 @@ TEST_F(AllocEngine4Test, getValidLft4) {
             // Add client classes (if any)
             for (auto class_name : scenario.classes_) {
                 ctx.query_->addClass(class_name);
+            }
+
+            // Add client option (if one)
+            if (scenario.requested_lft_) {
+                OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
+                                                     scenario.requested_lft_));
+                ctx.query_->addOption(opt);
+            }
+
+            Lease4Ptr lease = engine.allocateLease4(ctx);
+            ASSERT_TRUE(lease);
+            EXPECT_EQ(lease->valid_lft_, scenario.exp_valid_);
+        }
+    }
+}
+
+// Verifies that AllocEngine::getValidLft(ctx4) returns the appropriate
+// lifetime value based on the context content.
+TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+
+    // Let's make three classes, two with valid-lifetime and one without,
+    // and add them to the dictionary.
+    ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ExpressionPtr match_expr;
+    ExpressionParser parser;
+
+    ElementPtr test_cfg = Element::create("'valid_one_value'");
+    parser.parse(match_expr, test_cfg, AF_INET, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    ClientClassDefPtr class_def(new TemplateClientClassDef("valid_one", match_expr));
+    Triplet<uint32_t> valid_one(50, 100, 150);
+    class_def->setValid(valid_one);
+    dictionary->addClass(class_def);
+
+    test_cfg = Element::create("'valid_two_value'");
+    parser.parse(match_expr, test_cfg, AF_INET, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    class_def.reset(new TemplateClientClassDef("valid_two", match_expr));
+    Triplet<uint32_t>valid_two(200, 250, 300);
+    class_def->setValid(valid_two);
+    dictionary->addClass(class_def);
+
+    test_cfg = Element::create("'valid_unspec_value'");
+    parser.parse(match_expr, test_cfg, AF_INET, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    class_def.reset(new TemplateClientClassDef("valid_unspec", match_expr));
+    dictionary->addClass(class_def);
+
+    // Commit our class changes.
+    CfgMgr::instance().commit();
+
+    // Update the subnet's triplet to something more useful.
+    subnet_->setValid(Triplet<uint32_t>(500, 1000, 1500));
+
+    // Describes a test scenario.
+    struct Scenario {
+        std::string desc_;                  // descriptive text for logging
+        std::vector<std::string> classes_;  // class list of assigned classes
+        uint32_t requested_lft_;            // use as option 51 is > 0
+        uint32_t exp_valid_;                // expected lifetime
+    };
+
+    // Scenarios to test.
+    std::vector<Scenario> scenarios = {
+        {
+            "BOOTP",
+            { "BOOTP" },
+            0,
+            Lease::INFINITY_LFT
+        },
+        {
+            "no classes, no option",
+            {},
+            0,
+            subnet_->getValid()
+        },
+        {
+            "no classes, option",
+            {},
+            subnet_->getValid().getMin() + 50,
+            subnet_->getValid().getMin() + 50
+        },
+        {
+            "no classes, option too small",
+            {},
+            subnet_->getValid().getMin() - 50,
+            subnet_->getValid().getMin()
+        },
+        {
+            "no classes, option too big",
+            {},
+            subnet_->getValid().getMax() + 50,
+            subnet_->getValid().getMax()
+        },
+        {
+            "class unspecified, no option",
+            { "valid_unspec" },
+            0,
+            subnet_->getValid()
+        },
+        {
+            "from last class, no option",
+            { "valid_unspec", "valid_one" },
+            0,
+            valid_one.get()
+        },
+        {
+            "from first class, no option",
+            { "valid_two", "valid_one" },
+            0,
+            valid_two.get()
+        },
+        {
+            "class plus option",
+            { "valid_one" },
+            valid_one.getMin() + 25,
+            valid_one.getMin() + 25
+        },
+        {
+            "class plus option too small",
+            { "valid_one" },
+            valid_one.getMin() - 25,
+            valid_one.getMin()
+        },
+        {
+            "class plus option too big",
+            { "valid_one" },
+            valid_one.getMax() + 25,
+            valid_one.getMax()
+        }
+    };
+
+    // Iterate over the scenarios and verify the correct outcome.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            // Create a context;
+            AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
+                                            IOAddress("0.0.0.0"), false, false,
+                                            "", false);
+            ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+            // Add client classes (if any)
+            for (auto class_name : scenario.classes_) {
+                if (class_name == "BOOTP") {
+                    ctx.query_->addClass(class_name);
+                } else {
+                    ctx.query_->addSubClass(class_name, class_name + "_value");
+                }
             }
 
             // Add client option (if one)

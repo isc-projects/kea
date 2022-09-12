@@ -4994,7 +4994,7 @@ PgSqlConfigBackendDHCPv6Impl::getStatement(size_t index) const {
                   << index << ", is invalid");
     }
 
-    return(tagged_statements[index]);
+    return (tagged_statements[index]);
 }
 
 PgSqlConfigBackendDHCPv6::PgSqlConfigBackendDHCPv6(const DatabaseConnection::ParameterMap& parameters)

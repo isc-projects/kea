@@ -250,7 +250,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // Perform second pass of classification.
     evaluateClasses(query, true);
 
-    const ClientClasses& classes = query_->getClasses();
+    const ClientClasses& classes = query_->getClassesAndSubClasses();
     if (!classes.empty()) {
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
             .arg(query_->getLabel())
@@ -595,30 +595,7 @@ void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
         if ((*it)->getDependOnKnown() != depend_on_known) {
             continue;
         }
-        // Evaluate the expression which can return false (no match),
-        // true (match) or raise an exception (error)
-        try {
-            bool status = evaluateBool(*expr_ptr, *pkt);
-            if (status) {
-                LOG_INFO(options4_logger, EVAL_RESULT)
-                    .arg((*it)->getName())
-                    .arg(status);
-                // Matching: add the class
-                pkt->addClass((*it)->getName());
-            } else {
-                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
-                    .arg((*it)->getName())
-                    .arg(status);
-            }
-        } catch (const Exception& ex) {
-            LOG_ERROR(options4_logger, EVAL_RESULT)
-                .arg((*it)->getName())
-                .arg(ex.what());
-        } catch (...) {
-            LOG_ERROR(options4_logger, EVAL_RESULT)
-                .arg((*it)->getName())
-                .arg("get exception?");
-        }
+        (*it)->test(pkt, expr_ptr);
     }
 }
 
@@ -820,7 +797,6 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
 isc::dhcp::Subnet4Ptr
 Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                            bool sanity_only) const {
-
     Subnet4Ptr subnet;
 
     SubnetSelector selector;
@@ -896,7 +872,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
         // be severely limited (i.e. only global options will be assigned)
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                      DHCP4_HOOK_SUBNET4_SELECT_SKIP)
+                      DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_SKIP)
                 .arg(query->getLabel());
             return (Subnet4Ptr());
         }
@@ -905,7 +881,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
         // skip case so no subnet will be selected.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                      DHCP4_HOOK_SUBNET4_SELECT_DROP)
+                      DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP)
                 .arg(query->getLabel());
             drop = true;
             return (Subnet4Ptr());
@@ -917,18 +893,20 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
 
     if (subnet) {
         // Log at higher debug level that subnet has been found.
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_SELECTED)
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA,
+                  DHCP4_DHCP4O6_SUBNET_SELECTED)
             .arg(query->getLabel())
             .arg(subnet->getID());
         // Log detailed information about the selected subnet at the
         // lower debug level.
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_DATA)
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
+                  DHCP4_DHCP4O6_SUBNET_DATA)
             .arg(query->getLabel())
             .arg(subnet->toText());
 
     } else {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL,
-                  DHCP4_SUBNET_SELECTION_FAILED)
+                  DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED)
             .arg(query->getLabel());
     }
 
@@ -1794,7 +1772,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
     }
 
     // Each class in the incoming packet
-    const ClientClasses& classes = ex.getQuery()->getClasses();
+    const ClientClasses& classes = ex.getQuery()->getClassesAndTemplates();
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
@@ -2511,6 +2489,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         Lease4Ptr lease;
 
+        auto const& classes = query->getClassesAndSubClasses();
+
         // We used to issue a separate query (two actually: one for client-id
         // and another one for hw-addr for) each subnet in the shared network.
         // That was horribly inefficient if the client didn't have any lease
@@ -2540,7 +2520,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                         break;
 
                     } else {
-                        s = s->getNextSubnet(original_subnet, query->getClasses());
+                        s = s->getNextSubnet(original_subnet, classes);
                     }
                 }
             }
@@ -2568,7 +2548,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                         break;
 
                     } else {
-                        s = s->getNextSubnet(original_subnet, query->getClasses());
+                        s = s->getNextSubnet(original_subnet, classes);
                     }
                 }
             }
@@ -3141,7 +3121,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 
     // Step 2: Try to set the values based on classes.
     // Any values defined in classes will override those from subnet level.
-    const ClientClasses classes = query->getClasses();
+    const ClientClasses classes = query->getClassesAndTemplates();
     if (!classes.empty()) {
 
         // Let's get class definitions
@@ -3926,7 +3906,7 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     }
 
     // Check if the server identifier is configured at client class level.
-    const ClientClasses& classes = query->getClasses();
+    const ClientClasses& classes = query->getClassesAndTemplates();
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
@@ -4006,7 +3986,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
 void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
     // First collect required classes
     Pkt4Ptr query = ex.getQuery();
-    ClientClasses classes = query->getClasses(true);
+    ClientClasses classes = query->getClassesAndTemplates(true);
     Subnet4Ptr subnet = ex.getContext()->subnet_;
 
     if (subnet) {
@@ -4100,7 +4080,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
     BOOST_FOREACH(const uint16_t& code, query->getDeferredOptions()) {
         OptionDefinitionPtr def;
         // Iterate on client classes
-        const ClientClasses& classes = query->getClasses();
+        const ClientClasses& classes = query->getClassesAndTemplates();
         for (ClientClasses::const_iterator cclass = classes.cbegin();
              cclass != classes.cend(); ++cclass) {
             // Get the client class definition for this class

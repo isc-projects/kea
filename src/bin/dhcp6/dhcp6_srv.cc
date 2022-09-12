@@ -569,6 +569,13 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     // Perform second pass of classification.
     evaluateClasses(pkt, true);
 
+    const ClientClasses& classes = pkt->getClassesAndSubClasses();
+    if (!classes.empty()) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
+            .arg(pkt->getLabel())
+            .arg(classes.toText());
+    }
+
     // Check the DROP special class.
     if (pkt->inClass("DROP")) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS2)
@@ -1430,7 +1437,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
     }
 
     // Each class in the incoming packet
-    const ClientClasses& classes = question->getClasses();
+    const ClientClasses& classes = question->getClassesAndTemplates();
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
@@ -4019,30 +4026,7 @@ void Dhcpv6Srv::evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known) {
         if ((*it)->getDependOnKnown() != depend_on_known) {
             continue;
         }
-        // Evaluate the expression which can return false (no match),
-        // true (match) or raise an exception (error)
-        try {
-            bool status = evaluateBool(*expr_ptr, *pkt);
-            if (status) {
-                LOG_INFO(dhcp6_logger, EVAL_RESULT)
-                    .arg((*it)->getName())
-                    .arg(status);
-                // Matching: add the class
-                pkt->addClass((*it)->getName());
-            } else {
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, EVAL_RESULT)
-                    .arg((*it)->getName())
-                    .arg(status);
-            }
-        } catch (const Exception& ex) {
-            LOG_ERROR(dhcp6_logger, EVAL_RESULT)
-                .arg((*it)->getName())
-                .arg(ex.what());
-        } catch (...) {
-            LOG_ERROR(dhcp6_logger, EVAL_RESULT)
-                .arg((*it)->getName())
-                .arg("get exception?");
-        }
+        (*it)->test(pkt, expr_ptr);
     }
 }
 
@@ -4072,7 +4056,7 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
         }
     }
 
-    const ClientClasses& classes = pkt->getClasses();
+    const ClientClasses& classes = pkt->getClassesAndSubClasses();
     if (!classes.empty()) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
@@ -4098,7 +4082,7 @@ Dhcpv6Srv::conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
 void
 Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
     // First collect required classes
-    ClientClasses classes = pkt->getClasses(true);
+    ClientClasses classes = pkt->getClassesAndTemplates(true);
     Subnet6Ptr subnet = ctx.subnet_;
 
     if (subnet) {

@@ -57,7 +57,6 @@ public:
     ClientClassDef(const std::string& name, const ExpressionPtr& match_expr,
                    const CfgOptionPtr& options = CfgOptionPtr());
 
-
     /// Copy constructor
     ClientClassDef(const ClientClassDef& rhs);
 
@@ -222,6 +221,13 @@ public:
         preferred_ = preferred;
     }
 
+    /// @brief Test method which checks if the packet belongs to the class
+    ///
+    /// If the packet belongs to the class, the class is added to the packet.
+    ///
+    /// @param pkt The packet checked if it belongs to the class.
+    virtual void test(PktPtr pkt, const ExpressionPtr& expr_ptr);
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -285,6 +291,29 @@ private:
     util::Triplet<uint32_t> preferred_;
 };
 
+class TemplateClientClassDef : public ClientClassDef {
+public:
+    /// @brief Constructor
+    ///
+    /// @param name Name to assign to this class
+    /// @param match_expr Expression the class will use to determine membership
+    /// @param options Collection of options members should be given
+    TemplateClientClassDef(const std::string& name, const ExpressionPtr& match_expr,
+                           const CfgOptionPtr& options = CfgOptionPtr());
+
+    /// @brief Test method which checks if the packet belongs to the class
+    ///
+    /// If the packet belongs to the class, the class is added to the packet.
+    ///
+    /// @param pkt The packet checked if it belongs to the class.
+    virtual void test(PktPtr pkt, const ExpressionPtr& expr_ptr) override;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
+};
+
 /// @brief a pointer to an ClientClassDef
 typedef boost::shared_ptr<ClientClassDef> ClientClassDefPtr;
 
@@ -340,7 +369,8 @@ public:
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string(),
                   const util::Triplet<uint32_t>&valid = util::Triplet<uint32_t>(),
-                  const util::Triplet<uint32_t>&preferred = util::Triplet<uint32_t>());
+                  const util::Triplet<uint32_t>&preferred = util::Triplet<uint32_t>(),
+                  bool is_template = false);
 
     /// @brief Adds a new class to the list
     ///

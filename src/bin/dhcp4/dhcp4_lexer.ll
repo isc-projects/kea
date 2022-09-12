@@ -1279,6 +1279,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"template-class\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_TEMPLATE_CLASS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("template-class", driver.loc_);
+    }
+}
+
 \"only-if-required\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:

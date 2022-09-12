@@ -210,6 +210,6 @@ TEST_F(SimpleParser4Test, optionDefDefaults4) {
     checkBoolValue(def, "array", false);
 }
 
-};
-};
-};
+}
+}
+}

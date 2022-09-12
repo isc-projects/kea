@@ -425,16 +425,16 @@ inAllowedPool(AllocEngine::ClientContext6& ctx, const Lease::Type& lease_type,
     // If the subnet belongs to a shared network we will be iterating
     // over the subnets that belong to this shared network.
     Subnet6Ptr current_subnet = ctx.subnet_;
-    while (current_subnet) {
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
 
-        if (current_subnet->clientSupported(ctx.query_->getClasses())) {
+    while (current_subnet) {
+        if (current_subnet->clientSupported(classes)) {
             if (check_subnet) {
                 if (current_subnet->inPool(lease_type, address)) {
                     return (true);
                 }
             } else {
-                if (current_subnet->inPool(lease_type, address,
-                                           ctx.query_->getClasses())) {
+                if (current_subnet->inPool(lease_type, address, classes)) {
                     return (true);
                 }
             }
@@ -658,13 +658,14 @@ AllocEngine::findReservation(ClientContext6& ctx) {
         }
     }
 
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
+
     // We can only search for the reservation if a subnet has been selected.
     while (subnet) {
 
         // Only makes sense to get reservations if the client has access
         // to the class and host reservations are enabled for this subnet.
-        if (subnet->clientSupported(ctx.query_->getClasses()) &&
-            subnet->getReservationsInSubnet()) {
+        if (subnet->clientSupported(classes) && subnet->getReservationsInSubnet()) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
             if (use_single_query) {
@@ -690,7 +691,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
         // We need to get to the next subnet if this is a shared network. If it
         // is not (a plain subnet), getNextSubnet will return NULL and we're
         // done here.
-        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+        subnet = subnet->getNextSubnet(ctx.subnet_, classes);
     }
 }
 
@@ -918,9 +919,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
-    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
 
-        if (!subnet->clientSupported(ctx.query_->getClasses())) {
+    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
+        if (!subnet->clientSupported(classes)) {
             continue;
         }
 
@@ -929,11 +931,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // check if the hint is in pool and is available
         // This is equivalent of subnet->inPool(hint), but returns the pool
         pool = boost::dynamic_pointer_cast<Pool6>
-            (subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(),
-                             hint));
+            (subnet->getPool(ctx.currentIA().type_, classes, hint));
 
         // check if the pool is allowed
-        if (!pool || !pool->clientSupported(ctx.query_->getClasses())) {
+        if (!pool || !pool->clientSupported(classes)) {
             continue;
         }
 
@@ -1066,8 +1067,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     uint64_t subnets_with_unavail_pools = 0;
 
     for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
-
-        if (!subnet->clientSupported(ctx.query_->getClasses())) {
+        if (!subnet->clientSupported(classes)) {
             continue;
         }
 
@@ -1078,8 +1078,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // - we find an address for which the lease has expired
         // - we exhaust number of tries
         uint64_t possible_attempts =
-            subnet->getPoolCapacity(ctx.currentIA().type_,
-                                    ctx.query_->getClasses());
+            subnet->getPoolCapacity(ctx.currentIA().type_, classes);
 
         // If the number of tries specified in the allocation engine constructor
         // is set to 0 (unlimited) or the pools capacity is lower than that number,
@@ -1114,7 +1113,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             ++total_attempts;
 
             IOAddress candidate = allocator->pickAddress(subnet,
-                                                         ctx.query_->getClasses(),
+                                                         classes,
                                                          ctx.duid_,
                                                          hint);
             // The first step is to find out prefix length. It is 128 for
@@ -1123,7 +1122,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             if (ctx.currentIA().type_ == Lease::TYPE_PD) {
                 pool = boost::dynamic_pointer_cast<Pool6>(
                         subnet->getPool(ctx.currentIA().type_,
-                                        ctx.query_->getClasses(),
+                                        classes,
                                         candidate));
                 if (pool) {
                     prefix_len = pool->getLength();
@@ -1273,7 +1272,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                                    static_cast<int64_t>(1));
     }
 
-    const ClientClasses& classes = ctx.query_->getClasses();
     if (!classes.empty()) {
         LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL_CLASSES)
             .arg(ctx.query_->getLabel())
@@ -1362,14 +1360,14 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     // There is no lease for a reservation in this IA. So, let's now iterate
     // over reservations specified and try to allocate one of them for the IA.
 
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
     for (Subnet6Ptr subnet = ctx.subnet_; subnet;
          subnet = subnet->getNextSubnet(ctx.subnet_)) {
 
         SubnetID subnet_id = subnet->getID();
 
         // No hosts for this subnet or the subnet not supported.
-        if (!subnet->clientSupported(ctx.query_->getClasses()) ||
-            ctx.hosts_.count(subnet_id) == 0) {
+        if (!subnet->clientSupported(classes) || ctx.hosts_.count(subnet_id) == 0) {
             continue;
         }
 
@@ -1966,13 +1964,13 @@ AllocEngine::getLifetimes6(ClientContext6& ctx, uint32_t& preferred, uint32_t& v
     // We use the first one we find for each lifetime.
     Triplet<uint32_t> candidate_preferred;
     Triplet<uint32_t> candidate_valid;
-    const ClientClasses classes = ctx.query_->getClasses();
+    const ClientClasses classes = ctx.query_->getClassesAndTemplates();
     if (!classes.empty()) {
         // Let's get class definitions
         const ClientClassDictionaryPtr& dict =
             CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
 
-        // Iterate over the assigned class defintions.
+        // Iterate over the assigned class definitions.
         int have_both = 0;
         for (auto name = classes.cbegin();
              name != classes.cend() && have_both < 2; ++name) {
@@ -2261,7 +2259,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     // is not permitted by subnet client classification, delete it.
     if (!(ctx.hasGlobalReservation(makeIPv6Resrv(*lease))) &&
         (((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) ||
-        !ctx.subnet_->clientSupported(ctx.query_->getClasses()))) {
+        !ctx.subnet_->clientSupported(ctx.query_->getClassesAndSubClasses()))) {
         // Oh dear, the lease is no longer valid. We need to get rid of it.
 
         // Remove this lease from LeaseMgr
@@ -3292,7 +3290,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 
         // No address reservation found here, so let's try another subnet
         // within the same shared network.
-        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClassesAndSubClasses());
     }
 
     return (false);
@@ -3318,11 +3316,12 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
 
     Subnet4Ptr original_subnet = ctx.subnet_;
 
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
+
     // Client identifier is optional. First check if we can try to lookup
     // by client-id.
     bool try_clientid_lookup = (ctx.clientid_ &&
-        SharedNetwork4::subnetsIncludeMatchClientId(original_subnet,
-                                                    ctx.query_->getClasses()));
+        SharedNetwork4::subnetsIncludeMatchClientId(original_subnet, classes));
 
     // If it is possible to use client identifier to try to find client's lease.
     if (try_clientid_lookup) {
@@ -3334,8 +3333,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
         // Iterate over the subnets within the shared network to see if any client's
         // lease belongs to them.
         for (Subnet4Ptr subnet = original_subnet; subnet;
-             subnet = subnet->getNextSubnet(original_subnet,
-                                            ctx.query_->getClasses())) {
+             subnet = subnet->getNextSubnet(original_subnet, classes)) {
 
             // If client identifier has been supplied and the server wasn't
             // explicitly configured to ignore client identifiers for this subnet
@@ -3361,8 +3359,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
         Lease4Collection leases_hw_address = lease_mgr.getLease4(*ctx.hwaddr_);
 
         for (Subnet4Ptr subnet = original_subnet; subnet;
-             subnet = subnet->getNextSubnet(original_subnet,
-                                            ctx.query_->getClasses())) {
+             subnet = subnet->getNextSubnet(original_subnet, classes)) {
             ClientIdPtr client_id;
             if (subnet->getMatchClientId()) {
                 client_id = ctx.clientid_;
@@ -3404,10 +3401,10 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
     // If the subnet belongs to a shared network we will be iterating
     // over the subnets that belong to this shared network.
     Subnet4Ptr current_subnet = ctx.subnet_;
-    while (current_subnet) {
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
 
-        if (current_subnet->inPool(Lease::TYPE_V4, address,
-                                   ctx.query_->getClasses())) {
+    while (current_subnet) {
+        if (current_subnet->inPool(Lease::TYPE_V4, address, classes)) {
             // We found a subnet that this address belongs to, so it
             // seems that this subnet is the good candidate for allocation.
             // Let's update the selected subnet.
@@ -3415,8 +3412,7 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
             return (true);
         }
 
-        current_subnet = current_subnet->getNextSubnet(ctx.subnet_,
-                                                       ctx.query_->getClasses());
+        current_subnet = current_subnet->getNextSubnet(ctx.subnet_, classes);
     }
 
     return (false);
@@ -3517,8 +3513,9 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
     // subnets allowed for this client within the shared network, we
     // can't allocate a lease.
     Subnet4Ptr subnet = ctx.subnet_;
-    if (subnet && !subnet->clientSupported(ctx.query_->getClasses())) {
-        ctx.subnet_ = subnet->getNextSubnet(subnet, ctx.query_->getClasses());
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    if (subnet && !subnet->clientSupported(classes)) {
+        ctx.subnet_ = subnet->getNextSubnet(subnet, classes);
     }
 
     try {
@@ -3607,13 +3604,13 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         }
     }
 
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
     // We can only search for the reservation if a subnet has been selected.
     while (subnet) {
 
         // Only makes sense to get reservations if the client has access
         // to the class and host reservations are enabled for this subnet.
-        if (subnet->clientSupported(ctx.query_->getClasses()) &&
-            subnet->getReservationsInSubnet()) {
+        if (subnet->clientSupported(classes) && subnet->getReservationsInSubnet()) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
             if (use_single_query) {
@@ -3639,7 +3636,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         // We need to get to the next subnet if this is a shared network. If it
         // is not (a plain subnet), getNextSubnet will return NULL and we're
         // done here.
-        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+        subnet = subnet->getNextSubnet(ctx.subnet_, classes);
     }
 }
 
@@ -3985,13 +3982,13 @@ AllocEngine::getValidLft(const ClientContext4& ctx) {
     // If the triplet is specified in one of our classes use it.
     // We use the first one we find.
     Triplet<uint32_t> candidate_lft;
-    const ClientClasses classes = ctx.query_->getClasses();
+    const ClientClasses classes = ctx.query_->getClassesAndTemplates();
     if (!classes.empty()) {
         // Let's get class definitions
         const ClientClassDictionaryPtr& dict =
             CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
 
-        // Iterate over the assigned class defintions.
+        // Iterate over the assigned class definitions.
         for (ClientClasses::const_iterator name = classes.cbegin();
              name != classes.cend(); ++name) {
             ClientClassDefPtr cl = dict->findClass(*name);
@@ -4414,6 +4411,8 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     // no matching pools for the client.
     uint64_t subnets_with_unavail_pools = 0;
 
+    auto const& classes = ctx.query_->getClassesAndSubClasses();
+
     while (subnet) {
         ClientIdPtr client_id;
         if (subnet->getMatchClientId()) {
@@ -4421,8 +4420,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         }
 
         uint64_t possible_attempts =
-            subnet->getPoolCapacity(Lease::TYPE_V4,
-                                    ctx.query_->getClasses());
+            subnet->getPoolCapacity(Lease::TYPE_V4, classes);
 
         // If the number of tries specified in the allocation engine constructor
         // is set to 0 (unlimited) or the pools capacity is lower than that number,
@@ -4448,7 +4446,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             ++total_attempts;
 
             IOAddress candidate = allocator->pickAddress(subnet,
-                                                         ctx.query_->getClasses(),
+                                                         classes,
                                                          client_id,
                                                          ctx.requested_address_);
             // First check for reservation when it is the choice.
@@ -4497,7 +4495,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
         // This pointer may be set to NULL if hooks set SKIP status.
         if (subnet) {
-            subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses());
+            subnet = subnet->getNextSubnet(original_subnet, classes);
 
             if (subnet) {
                 ctx.subnet_ = subnet;
@@ -4567,7 +4565,6 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                                    static_cast<int64_t>(1));
     }
 
-    const ClientClasses& classes = ctx.query_->getClasses();
     if (!classes.empty()) {
         LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES)
             .arg(ctx.query_->getLabel())

@@ -10,6 +10,7 @@
 #include <cc/data.h>
 
 #include <boost/multi_index_container.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -35,7 +36,6 @@
 /// though they reside in the dhcp directory.
 
 namespace isc {
-
 namespace dhcp {
 
     /// @brief Defines a single class name.
@@ -63,6 +63,42 @@ namespace dhcp {
         >
     > ClientClassContainer;
 
+    /// @brief Defines a single subclass (template class instantiation).
+    struct SubClass {
+        /// @brief Constructor.
+        SubClass(const ClientClass& template_class, const ClientClass& subclass) :
+              template_class_(template_class), subclass_(subclass) {
+        }
+
+        /// @brief The template class name.
+        ClientClass template_class_;
+
+        /// @brief The subclass name.
+        ClientClass subclass_;
+    };
+
+    /// @brief Tag for the sequence index.
+    struct SubClassSequenceTag { };
+
+    /// @brief Tag for the name index.
+    struct SubClassNameTag { };
+
+    /// @brief the subclass multi-index.
+    typedef boost::multi_index_container<
+        SubClass,
+        boost::multi_index::indexed_by<
+            // First index is the sequence one.
+            boost::multi_index::sequenced<
+                boost::multi_index::tag<SubClassSequenceTag>
+            >,
+            // Second index is the name hash one.
+            boost::multi_index::ordered_unique<
+                boost::multi_index::tag<SubClassNameTag>,
+                boost::multi_index::member<SubClass, ClientClass, &SubClass::subclass_>
+            >
+        >
+    > SubClassContainer;
+
     /// @brief Container for storing client class names
     ///
     /// Both a list to iterate on it in insert order and unordered
@@ -82,7 +118,7 @@ namespace dhcp {
         ///
         /// @param class_names A string containing a client classes separated
         /// with commas. The class names are trimmed before insertion to the set.
-        ClientClasses(const ClientClass& class_names);
+        ClientClasses(const std::string& class_names);
 
         /// @brief Insert an element.
         ///
@@ -165,7 +201,6 @@ namespace dhcp {
         ClientClassContainer container_;
     };
 }
-
 }
 
 #endif /* CLASSIFY_H */

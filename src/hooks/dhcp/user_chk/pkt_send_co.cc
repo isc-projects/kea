@@ -402,7 +402,7 @@ void generate_output_record(const std::string& id_type_str,
 std::string getV6AddrStr(Pkt6Ptr response) {
     OptionPtr tmp = response->getOption(D6O_IA_NA);
     if (tmp) {
-        return(getAddrStrIA_NA(tmp));
+        return (getAddrStrIA_NA(tmp));
     }
 
     // IA_NA not there so try IA_PD
@@ -411,7 +411,7 @@ std::string getV6AddrStr(Pkt6Ptr response) {
         isc_throw (isc::BadValue, "Response has neither IA_NA nor IA_PD");
     }
 
-    return(getAddrStrIA_PD(tmp));
+    return (getAddrStrIA_PD(tmp));
 }
 
 /// @brief Stringify the lease address in an D6O_IA_NA option set

@@ -721,7 +721,7 @@ TEST_F(JSONFileBackendTest, configBroken) {
     string config_empty = "";
 
     // This config does not have mandatory Dhcp4 element
-    string config_v4 = "{ \"Dhcp6\": { \"interfaces\": [ \"*\" ],"
+    string config_v6 = "{ \"Dhcp6\": { \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -747,7 +747,7 @@ TEST_F(JSONFileBackendTest, configBroken) {
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 
     // Now try to load a config that does not have Dhcp4 component.
-    writeFile(TEST_FILE, config_v4);
+    writeFile(TEST_FILE, config_v6);
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 
     // Now try to load a config with Dhcp4 full of nonsense.

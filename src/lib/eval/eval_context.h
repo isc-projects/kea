@@ -225,7 +225,7 @@ public:
     /// @return true if the client class is defined, false if not
     bool isClientClassDefined(const ClientClass& client_class);
 
- private:
+private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 

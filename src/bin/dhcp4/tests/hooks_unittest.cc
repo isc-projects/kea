@@ -112,7 +112,7 @@ public:
             cerr << "(fixture ctor) unloadLibraries failed" << endl;
         }
 
-        // Allocate new DHCPv6 Server
+        // Allocate new DHCPv4 Server
         srv_ = new NakedDhcpv4Srv(0);
 
         // clear static buffers
@@ -981,7 +981,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
     srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
-    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered buffer4_receive callback.
     srv_->run();
@@ -1025,7 +1025,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
     srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
-    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered pkt4_receive callback.
     srv_->run();
@@ -1054,7 +1054,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveDrop) {
     srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
-    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered pkt4_receive callback.
     srv_->run();

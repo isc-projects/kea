@@ -638,7 +638,7 @@ public:
     /// This method is used only in tests.
     /// @return type of the field.
     FieldType getType() {
-        return(type_);
+        return (type_);
     }
 
 private:
