@@ -46,6 +46,8 @@ public:
     /// @return A pointer to Lease4
     /// @throw BadValue if any of the parameters is invalid
     /// @throw DhcpConfigError if mandatory parameter is missing
+    /// @throw LeaseCmdsConflict when specified subnet-id does not match the lease
+    /// or the lease address does not match the subnet range.
     virtual isc::dhcp::Lease4Ptr parse(isc::dhcp::ConstSrvConfigPtr& cfg,
                                        const isc::data::ConstElementPtr& lease_info,
                                        bool& force_create);
@@ -86,6 +88,8 @@ public:
     /// @return A pointer to Lease4
     /// @throw BadValue if any of the parameters is invalid
     /// @throw DhcpConfigError if mandatory parameter is missing
+    /// @throw LeaseCmdsConflict when specified subnet-id does not match the lease
+    /// or the lease address does not match the subnet range.
     virtual isc::dhcp::Lease6Ptr parse(isc::dhcp::ConstSrvConfigPtr& cfg,
                                        const isc::data::ConstElementPtr& lease_info,
                                        bool& force_create);

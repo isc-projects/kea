@@ -548,7 +548,7 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv6 subnet with subnet-id=123 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // This time the IP address does not belong to the subnet.
     txt =
@@ -562,7 +562,7 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "    }\n"
         "}";
     exp_rsp = "The address 3000::3 does not belong to subnet 2001:db8:1::/48, subnet-id=66";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // v4? You're a time traveler from early 80s or what?
     txt =
@@ -777,7 +777,7 @@ void Lease6CmdsTest::testLease6AddExisting() {
         "    }\n"
         "}";
     string exp_rsp = "IPv6 lease already exists.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease6Stats(66, 2, 0, 0);
 
@@ -867,7 +867,7 @@ void Lease6CmdsTest::testLease6AddSubnetIdMissingBadAddr() {
         "}";
     string exp_rsp = "subnet-id not specified and failed to find a subnet for "
                      "address 2001:ffff::1";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
 
@@ -1966,7 +1966,7 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv6 subnet with subnet-id=123 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // This time the new IP address does not belong to the subnet.
     txt =
@@ -1979,7 +1979,7 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "    }\n"
         "}";
     exp_rsp = "The address 3000::1 does not belong to subnet 2001:db8:1::/48, subnet-id=66";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Nope, can't do v4 address in v6 lease.
     txt =
@@ -2272,7 +2272,7 @@ void Lease6CmdsTest::testLease6UpdateNoLease() {
     string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
         "either because the lease has been deleted or it has changed in the "
         "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
 
@@ -2385,7 +2385,7 @@ void Lease6CmdsTest::testLease6UpdateDoNotForceCreate() {
     string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
         "either because the lease has been deleted or it has changed in the "
         "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
 
@@ -2858,7 +2858,7 @@ void Lease6CmdsTest::testLease6BrokenUpdate() {
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv6 subnet with "
                      "subnet-id=444 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 }
 
 void Lease6CmdsTest::testLease6BulkApply() {
@@ -3290,7 +3290,7 @@ void Lease6CmdsTest::testLease6ResendDdnsDisabled() {
         "}";
 
     string exp_rsp = "DDNS updating is not enabled";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
     // With D2 disabled there is no queue, size should come back as -1.
     EXPECT_EQ(ncrQueueSize(), -1);
 }
@@ -3334,7 +3334,7 @@ void Lease6CmdsTest::testLease6ResendNoHostname() {
         "}";
 
     string exp_rsp = "Lease for: 2001:db8:1::1, has no hostname, nothing to update";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // There should not any NCRs queued.
     EXPECT_EQ(ncrQueueSize(), 0);
@@ -3364,7 +3364,7 @@ void Lease6CmdsTest::testLease6ResendNoDirectionsEnabled() {
         "}";
 
     string exp_rsp = "Neither forward nor reverse updates enabled for lease for: 2001:db8:1::1";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // There should not any NCRs queued.
     EXPECT_EQ(ncrQueueSize(), 0);
@@ -3607,7 +3607,7 @@ void Lease6CmdsTest::testLease6ConflictingAdd() {
         "}";
 
     string exp_rsp = "ResourceBusy: IP address:2001:db8:1::1 could not be added.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Lease should not have been added.
     lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
@@ -3651,7 +3651,7 @@ void Lease6CmdsTest::testLease6ConflictingUpdate() {
         "}";
 
     string exp_rsp = "ResourceBusy: IP address:2001:db8:1::1 could not be updated.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Fetch the lease again.
     lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
@@ -3723,7 +3723,7 @@ void Lease6CmdsTest::testLease6ConflictingBulkApplyAdd() {
     ASSERT_EQ(Element::list, failed_leases->getType());
     ASSERT_EQ(1, failed_leases->size());
     checkFailedLease(failed_leases, "IA_NA", locked_addr.toText(),
-                     CONTROL_RESULT_ERROR,
+                     CONTROL_RESULT_CONFLICT,
                      "ResourceBusy: IP address:2001:db8:2::77 could not be updated.");
 }
 

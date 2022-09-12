@@ -491,7 +491,7 @@ void Lease4CmdsTest::testLease4AddBadParams() {
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv4 subnet with subnet-id=123 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // This time the IP address does not belong to the subnet.
     txt =
@@ -504,7 +504,7 @@ void Lease4CmdsTest::testLease4AddBadParams() {
         "    }\n"
         "}";
     exp_rsp = "The address 10.0.0.1 does not belong to subnet 192.0.2.0/24, subnet-id=44";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // We don't use any of that bleeding edge nonsense in this museum. v4 only.
     txt =
@@ -675,7 +675,7 @@ void Lease4CmdsTest::testLease4AddExisting() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease already exists.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease4Stats(44, 2, 0);
 
@@ -765,7 +765,7 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissingBadAddr() {
         "}";
     string exp_rsp = "subnet-id not specified and failed to find a subnet for "
                      "address 192.0.55.1";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
 
@@ -1861,7 +1861,7 @@ void Lease4CmdsTest::testLease4UpdateBadParams() {
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv4 subnet with subnet-id=123 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // This time the new IP address does not belong to the subnet.
     txt =
@@ -1874,7 +1874,7 @@ void Lease4CmdsTest::testLease4UpdateBadParams() {
         "    }\n"
         "}";
     exp_rsp = "The address 10.0.0.1 does not belong to subnet 192.0.2.0/24, subnet-id=44";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // We don't use any of that bleeding edge nonsense in this museum. v4 only.
     txt =
@@ -1938,7 +1938,7 @@ void Lease4CmdsTest::testLease4UpdateNoLease() {
     string exp_rsp = "failed to update the lease with address 192.0.2.1 "
         "either because the lease has been deleted or it has changed in the "
         "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 }
 
 void Lease4CmdsTest::testLease4Update() {
@@ -2188,7 +2188,7 @@ void Lease4CmdsTest::testLease4UpdateDoNotForceCreate() {
     string exp_rsp = "failed to update the lease with address 192.0.2.1 "
         "either because the lease has been deleted or it has changed in the "
         "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
 
@@ -2706,7 +2706,7 @@ void Lease4CmdsTest::testLease4BrokenUpdate() {
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv4 subnet with "
                      "subnet-id=444 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 }
 
 void Lease4CmdsTest::testLease4ResendDdnsBadParam() {
@@ -2765,7 +2765,7 @@ void Lease4CmdsTest::testLease4ResendDdnsDisabled() {
         "}";
 
     string exp_rsp = "DDNS updating is not enabled";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
     // With D2 disabled there is no queue, size should come back as -1.
     EXPECT_EQ(ncrQueueSize(), -1);
 }
@@ -2809,7 +2809,7 @@ void Lease4CmdsTest::testLease4ResendNoHostname() {
         "}";
 
     string exp_rsp = "Lease for: 192.0.2.1, has no hostname, nothing to update";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // There should not any NCRs queued.
     EXPECT_EQ(ncrQueueSize(), 0);
@@ -2839,7 +2839,7 @@ void Lease4CmdsTest::testLease4ResendNoDirectionsEnabled() {
         "}";
 
     string exp_rsp = "Neither forward nor reverse updates enabled for lease for: 192.0.2.1";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // There should not any NCRs queued.
     EXPECT_EQ(ncrQueueSize(), 0);
@@ -3082,7 +3082,7 @@ void Lease4CmdsTest::testLease4ConflictingAdd() {
         "}";
 
     string exp_rsp = "ResourceBusy: IP address:192.0.2.1 could not be added.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Lease should not have been added.
     lease = lmptr_->getLease4(addr);
@@ -3125,7 +3125,7 @@ void Lease4CmdsTest::testLease4ConflictingUpdate() {
         "}";
 
     string exp_rsp = "ResourceBusy: IP address:192.0.2.1 could not be updated.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Fetch the lease again.
     lease = lmptr_->getLease4(addr);

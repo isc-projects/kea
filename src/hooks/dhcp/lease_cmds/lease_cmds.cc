@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,6 +23,7 @@
 #include <hooks/hooks.h>
 #include <exceptions/exceptions.h>
 #include <lease_cmds.h>
+#include <lease_cmds_exceptions.h>
 #include <lease_parser.h>
 #include <lease_cmds_log.h>
 #include <stats/stats_mgr.h>
@@ -647,7 +648,7 @@ LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
     if (force_create && !existing) {
         // lease does not exist
         if (!LeaseMgrFactory::instance().addLease(lease)) {
-            isc_throw(db::DuplicateEntry,
+            isc_throw(LeaseCmdsConflict,
                       "lost race between calls to get and add");
         }
         LeaseCmdsImpl::updateStatsOnAdd(lease);
@@ -662,7 +663,7 @@ LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
     try {
         LeaseMgrFactory::instance().updateLease4(lease);
     } catch (const NoSuchLease&) {
-        isc_throw(InvalidOperation, "failed to update the lease with address "
+        isc_throw(LeaseCmdsConflict, "failed to update the lease with address "
                   << lease->addr_ << " either because the lease has been "
                   "deleted or it has changed in the database, in both cases a "
                   "retry might succeed");
@@ -679,7 +680,7 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
     if (force_create && !existing) {
         // lease does not exist
         if (!LeaseMgrFactory::instance().addLease(lease)) {
-            isc_throw(db::DuplicateEntry,
+            isc_throw(LeaseCmdsConflict,
                       "lost race between calls to get and add");
         }
         LeaseCmdsImpl::updateStatsOnAdd(lease);
@@ -694,7 +695,7 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
     try {
         LeaseMgrFactory::instance().updateLease6(lease);
     } catch (const NoSuchLease&) {
-        isc_throw(InvalidOperation, "failed to update the lease with address "
+        isc_throw(LeaseCmdsConflict, "failed to update the lease with address "
                   << lease->addr_ << " either because the lease has been "
                   "deleted or it has changed in the database, in both cases a "
                   "retry might succeed");
@@ -743,14 +744,14 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
                     if (resource_handler.tryLock4(lease4->addr_)) {
                         success = LeaseMgrFactory::instance().addLease(lease4);
                     } else {
-                        isc_throw(ResourceBusy,
+                        isc_throw(LeaseCmdsConflict,
                                   "ResourceBusy: IP address:" << lease4->addr_
                                   << " could not be added.");
                     }
                 }
 
                 if (!success) {
-                    isc_throw(db::DuplicateEntry, "IPv4 lease already exists.");
+                    isc_throw(LeaseCmdsConflict, "IPv4 lease already exists.");
                 }
 
                 LeaseCmdsImpl::updateStatsOnAdd(lease4);
@@ -771,14 +772,14 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
                     if (resource_handler.tryLock(lease6->type_, lease6->addr_)) {
                         success = LeaseMgrFactory::instance().addLease(lease6);
                     } else {
-                        isc_throw(ResourceBusy,
+                        isc_throw(LeaseCmdsConflict,
                                   "ResourceBusy: IP address:" << lease6->addr_
                                   << " could not be added.");
                     }
                 }
 
                 if (!success) {
-                    isc_throw(db::DuplicateEntry, "IPv6 lease already exists.");
+                    isc_throw(LeaseCmdsConflict, "IPv6 lease already exists.");
                 }
 
                 LeaseCmdsImpl::updateStatsOnAdd(lease6);
@@ -792,6 +793,12 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
                 }
             }
         }
+    } catch (const LeaseCmdsConflict& ex) {
+        LOG_WARN(lease_cmds_logger, v4 ? LEASE_CMDS_ADD4_CONFLICT : LEASE_CMDS_ADD6_CONFLICT)
+            .arg(txt)
+            .arg(ex.what());
+        setErrorResponse(handle, ex.what(), CONTROL_RESULT_CONFLICT);
+        return (0);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, v4 ? LEASE_CMDS_ADD4_FAILED : LEASE_CMDS_ADD6_FAILED)
@@ -931,11 +938,13 @@ LeaseCmdsImpl::leaseGetHandler(CalloutHandle& handle) {
     Lease4Ptr lease4;
     Lease6Ptr lease6;
     bool v4;
+    string txt = "malformed command";
     try {
         extractCommand(handle);
         v4 = (cmd_name_ == "lease4-get");
-
+        txt = "(missing parameters)";
         p = getParameters(!v4, cmd_args_);
+        txt = cmd_args_->str();
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
             // Query by address
@@ -992,6 +1001,9 @@ LeaseCmdsImpl::leaseGetHandler(CalloutHandle& handle) {
         }
         }
     } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, v4 ? LEASE_CMDS_GET4_FAILED : LEASE_CMDS_GET6_FAILED)
+            .arg(txt)
+            .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
@@ -1441,9 +1453,13 @@ int
 LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
     Parameters p;
     Lease4Ptr lease4;
+    string txt = "malformed command";
     try {
         extractCommand(handle);
+        txt = "(missing parameters)";
         p = getParameters(false, cmd_args_);
+
+        txt = cmd_args_->str();
 
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
@@ -1506,22 +1522,29 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
         }
 
     } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_DEL4_FAILED)
+            .arg(txt)
+            .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
-
+    LOG_INFO(lease_cmds_logger, LEASE_CMDS_DEL4).arg(txt);
     return (0);
 }
 
 int
 LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
+    string txt = "malformed command";
     try {
         extractCommand(handle);
+        txt = "(missing parameters)";
 
         // Arguments are mandatory.
         if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
             isc_throw(BadValue, "Command arguments missing or a not a map.");
         }
+
+        txt = cmd_args_->str();
 
         // At least one of the 'deleted-leases' or 'leases' must be present.
         auto deleted_leases = cmd_args_->get("deleted-leases");
@@ -1640,6 +1663,8 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             // Iterate over all leases.
             for (auto lease : parsed_leases_list) {
 
+                auto result = CONTROL_RESULT_SUCCESS;
+                std::ostringstream text;
                 try {
                     if (!MultiThreadingMgr::instance().getMode()) {
                         // Not multi-threading.
@@ -1650,23 +1675,32 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                         if (resource_handler.tryLock(lease->type_, lease->addr_)) {
                             addOrUpdate6(lease, true);
                         } else {
-                            isc_throw(ResourceBusy,
+                            isc_throw(LeaseCmdsConflict,
                                       "ResourceBusy: IP address:" << lease->addr_
                                       << " could not be updated.");
                         }
                     }
 
                     ++success_count;
+                } catch (const LeaseCmdsConflict& ex) {
+                    result = CONTROL_RESULT_CONFLICT;
+                    text << ex.what();
+
                 } catch (const std::exception& ex) {
+                    result = CONTROL_RESULT_ERROR;
+                    text << ex.what();
+                }
+                // Handle an error.
+                if (result != CONTROL_RESULT_SUCCESS) {
                     // Lazy creation of the list of leases which failed to add/update.
                     if (!failed_leases_list) {
-                         failed_leases_list = Element::createList();
+                        failed_leases_list = Element::createList();
                     }
                     failed_leases_list->add(createFailedLeaseMap(lease->type_,
                                                                  lease->addr_,
                                                                  lease->duid_,
-                                                                 CONTROL_RESULT_ERROR,
-                                                                 ex.what()));
+                                                                 result,
+                                                                 text.str()));
                 }
             }
         }
@@ -1698,6 +1732,9 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
 
     } catch (const std::exception& ex) {
         // Unable to parse the command and similar issues.
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_BULK_APPLY6_FAILED)
+            .arg(txt)
+            .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (CONTROL_RESULT_ERROR);
     }
@@ -1710,9 +1747,12 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
     Parameters p;
     Lease6Ptr lease6;
     IOAddress addr(IOAddress::IPV6_ZERO_ADDRESS());
+    string txt = "malformed command";
     try {
         extractCommand(handle);
+        txt = "(missing parameters)";
         p = getParameters(true, cmd_args_);
+        txt = cmd_args_->str();
 
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
@@ -1764,22 +1804,31 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
         }
 
     } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_DEL6_FAILED)
+            .arg(txt)
+            .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
+    LOG_INFO(lease_cmds_logger, LEASE_CMDS_DEL6).arg(txt);
     return (0);
 }
 
 int
 LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
+    string txt = "malformed command";
     try {
         extractCommand(handle);
+
+        txt = "(missing parameters)";
 
         // We need the lease to be specified.
         if (!cmd_args_) {
             isc_throw(isc::BadValue, "no parameters specified for lease4-update command");
         }
+
+        txt = cmd_args_->str();
 
         // Get the parameters specified by the user first.
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
@@ -1800,7 +1849,7 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
             if (resource_handler.tryLock4(lease4->addr_)) {
                 added = addOrUpdate4(lease4, force_create);
             } else {
-                isc_throw(ResourceBusy,
+                isc_throw(LeaseCmdsConflict,
                           "ResourceBusy: IP address:" << lease4->addr_
                           << " could not be updated.");
             }
@@ -1811,7 +1860,19 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
         } else {
             setSuccessResponse(handle, "IPv4 lease updated.");
         }
+        LOG_INFO(lease_cmds_logger, LEASE_CMDS_UPDATE4).arg(txt);
+
+    } catch (const LeaseCmdsConflict& ex) {
+        LOG_WARN(lease_cmds_logger, LEASE_CMDS_UPDATE4_CONFLICT)
+            .arg(txt)
+            .arg(ex.what());
+        setErrorResponse(handle, ex.what(), CONTROL_RESULT_CONFLICT);
+        return (0);
+
     } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_UPDATE4_FAILED)
+            .arg(txt)
+            .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
@@ -1821,13 +1882,18 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
 
 int
 LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
+    string txt = "malformed command";
     try {
         extractCommand(handle);
+
+        txt = "(missing parameters)";
 
         // We need the lease to be specified.
         if (!cmd_args_) {
             isc_throw(isc::BadValue, "no parameters specified for lease6-update command");
         }
+
+        txt = cmd_args_->str();
 
         // Get the parameters specified by the user first.
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
@@ -1848,7 +1914,7 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
             if (resource_handler.tryLock(lease6->type_, lease6->addr_)) {
                 added = addOrUpdate6(lease6, force_create);
             } else {
-                isc_throw(ResourceBusy,
+                isc_throw(LeaseCmdsConflict,
                           "ResourceBusy: IP address:" << lease6->addr_
                           << " could not be updated.");
             }
@@ -1859,7 +1925,19 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
         } else {
             setSuccessResponse(handle, "IPv6 lease updated.");
         }
+        LOG_INFO(lease_cmds_logger, LEASE_CMDS_UPDATE6).arg(txt);
+
+    } catch (const LeaseCmdsConflict& ex) {
+        LOG_WARN(lease_cmds_logger, LEASE_CMDS_UPDATE6_CONFLICT)
+            .arg(txt)
+            .arg(ex.what());
+        setErrorResponse(handle, ex.what(), CONTROL_RESULT_CONFLICT);
+        return (0);
+
     } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_UPDATE6_FAILED)
+            .arg(txt)
+            .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
@@ -1869,8 +1947,11 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
 
 int
 LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
+    string txt = "malformed command";
     try {
         extractCommand(handle);
+
+        txt = "(missing parameters)";
 
         SimpleParser parser;
         SubnetID id = 0;
@@ -1881,6 +1962,7 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
         // The subnet-id parameter is now optional.
         if (cmd_args_ && cmd_args_->contains("subnet-id")) {
             id = parser.getUint32(cmd_args_, "subnet-id");
+            txt = cmd_args_->str();
         }
 
         if (id) {
@@ -1934,17 +2016,24 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
     } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_WIPE4_FAILED)
+            .arg(txt)
+            .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
+    LOG_INFO(lease_cmds_logger, LEASE_CMDS_WIPE4).arg(txt);
     return (0);
 }
 
 int
 LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
+    string txt = "malformed command";
     try {
         extractCommand(handle);
+
+        txt = "(missing parameters)";
 
         SimpleParser parser;
         SubnetID id = 0;
@@ -1961,6 +2050,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
         // The subnet-id parameter is now optional.
         if (cmd_args_ && cmd_args_->contains("subnet-id")) {
             id = parser.getUint32(cmd_args_, "subnet-id");
+            txt = cmd_args_->str();
         }
 
         if (id) {
@@ -2022,10 +2112,14 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
     } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_WIPE6_FAILED)
+            .arg(txt)
+            .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
+    LOG_INFO(lease_cmds_logger, LEASE_CMDS_WIPE6).arg(txt);
     return (0);
 }
 
@@ -2113,6 +2207,7 @@ LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
 
         if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
             ss << "DDNS updating is not enabled";
+            resp_code = CONTROL_RESULT_CONFLICT;
         } else {
             // Find the lease.
             Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
@@ -2122,9 +2217,11 @@ LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
             } else if (lease->hostname_.empty()) {
                 ss << "Lease for: " << addr.toText()
                    << ", has no hostname, nothing to update";
+                resp_code = CONTROL_RESULT_CONFLICT;
             } else if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
                 ss << "Neither forward nor reverse updates enabled for lease for: "
                    << addr.toText();
+                resp_code = CONTROL_RESULT_CONFLICT;
             } else {
                 // We have a lease with a hostname and updates in at least
                 // one direction enabled.  Queue an NCR for it.
@@ -2142,7 +2239,7 @@ LeaseCmdsImpl::lease4ResendDdnsHandler(CalloutHandle& handle) {
 
     LOG_ERROR(lease_cmds_logger, LEASE_CMDS_RESEND_DDNS4_FAILED).arg(ss.str());
     setErrorResponse(handle, ss.str(), resp_code);
-    return (resp_code == CONTROL_RESULT_EMPTY ? 0 : 1);
+    return (resp_code == CONTROL_RESULT_EMPTY || resp_code == CONTROL_RESULT_CONFLICT ? 0 : 1);
 }
 
 int
@@ -2158,6 +2255,7 @@ LeaseCmdsImpl::lease6ResendDdnsHandler(CalloutHandle& handle) {
 
         if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
             ss << "DDNS updating is not enabled";
+            resp_code = CONTROL_RESULT_CONFLICT;
         } else {
             // Find the lease.
             Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
@@ -2167,9 +2265,11 @@ LeaseCmdsImpl::lease6ResendDdnsHandler(CalloutHandle& handle) {
             } else if (lease->hostname_.empty()) {
                 ss << "Lease for: " << addr.toText()
                    << ", has no hostname, nothing to update";
+                resp_code = CONTROL_RESULT_CONFLICT;
             } else if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
                 ss << "Neither forward nor reverse updates enabled for lease for: "
                    << addr.toText();
+                resp_code = CONTROL_RESULT_CONFLICT;
             } else {
                 // We have a lease with a hostname and updates in at least
                 // one direction enabled.  Queue an NCR for it.

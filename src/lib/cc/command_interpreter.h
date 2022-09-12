@@ -52,6 +52,12 @@ const int CONTROL_RESULT_COMMAND_UNSUPPORTED = 2;
 ///        completed the search, but couldn't find the object it was looking for.
 const int CONTROL_RESULT_EMPTY = 3;
 
+/// @brief Status code indicating that the command was unsuccessful due to a
+/// conflict between the command arguments and the server state. For example,
+/// a lease4-add fails when the subnet identifier in the command does not
+/// match the subnet identifier in the server configuration.
+const int CONTROL_RESULT_CONFLICT = 4;
+
 /// @brief A standard control channel exception that is thrown if a function
 /// is there is a problem with one of the messages
 class CtrlChannelError : public isc::Exception {

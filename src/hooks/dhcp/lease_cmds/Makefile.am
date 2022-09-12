@@ -16,6 +16,7 @@ noinst_LTLIBRARIES = liblease_cmds.la
 
 liblease_cmds_la_SOURCES  = lease_cmds.cc lease_cmds.h
 liblease_cmds_la_SOURCES += lease_cmds_callouts.cc
+liblease_cmds_la_SOURCES += lease_cmds_exceptions.h
 liblease_cmds_la_SOURCES += lease_parser.h lease_parser.cc
 liblease_cmds_la_SOURCES += lease_cmds_log.cc lease_cmds_log.h
 liblease_cmds_la_SOURCES += lease_cmds_messages.cc lease_cmds_messages.h

@@ -10,6 +10,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_consistency.h>
+#include <lease_cmds_exceptions.h>
 #include <lease_parser.h>
 
 #include <config.h>
@@ -52,12 +53,12 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
         // If subnet-id is specified, it has to match.
         subnet = cfg->getCfgSubnets4()->getBySubnetId(subnet_id);
         if (!subnet) {
-            isc_throw(BadValue, "Invalid subnet-id: No IPv4 subnet with subnet-id="
+            isc_throw(LeaseCmdsConflict, "Invalid subnet-id: No IPv4 subnet with subnet-id="
                       << subnet_id << " currently configured.");
         }
 
         if (!subnet->inRange(addr)) {
-            isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
+            isc_throw(LeaseCmdsConflict, "The address " << addr.toText() << " does not belong "
                       "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
         }
 
@@ -65,7 +66,7 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
         // Subnet-id was not specified. Let's try to figure it out on our own.
         subnet = cfg->getCfgSubnets4()->selectSubnet(addr);
         if (!subnet) {
-            isc_throw(BadValue, "subnet-id not specified and failed to find a"
+            isc_throw(LeaseCmdsConflict, "subnet-id not specified and failed to find a"
                       << " subnet for address " << addr);
         }
         subnet_id = subnet->getID();
@@ -229,13 +230,13 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
         // If subnet-id is specified, it has to match.
         subnet = cfg->getCfgSubnets6()->getBySubnetId(subnet_id);
         if (!subnet) {
-            isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
+            isc_throw(LeaseCmdsConflict, "Invalid subnet-id: No IPv6 subnet with subnet-id="
                       << subnet_id << " currently configured.");
         }
 
         // Check if the address specified really belongs to the subnet.
         if ((type == Lease::TYPE_NA) && !subnet->inRange(addr)) {
-            isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
+            isc_throw(LeaseCmdsConflict, "The address " << addr.toText() << " does not belong "
                       "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
         }
 
@@ -246,7 +247,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
         }
         subnet = cfg->getCfgSubnets6()->selectSubnet(addr);
         if (!subnet) {
-            isc_throw(BadValue, "subnet-id not specified and failed to find a "
+            isc_throw(LeaseCmdsConflict, "subnet-id not specified and failed to find a "
                       "subnet for address " << addr);
         }
         subnet_id = subnet->getID();
