@@ -250,3 +250,6 @@ We have received the following contributions:
             hook library to be able to configure the timestamp format for log
             file. Also adds the '%Q' extra format which adds the microseconds
             subunits.
+
+ - rski
+   2022-09: Improved build compatibility in Kea between g++ and Boost libraries.

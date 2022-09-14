@@ -1,3 +1,12 @@
+2056.	[build]		andrei
+	Improved build compatiblity in Kea between g++ and Boost
+	libraries. The compilation error that was fixed was reported to
+	occur with g++ 8 and boost 1.75. The fix consists of passing
+	callbacks directly to boost::asio::io_service::post and not
+	indirectly through a functor. Thanks to rski for reporting the
+	error and suggesting the fix!
+	(Gitlab #2519)
+
 2055.	[func]		andrei
 	When Kea starts with an erroneous file configuration, if the
 	logging is viable and is configured to log at least at ERROR
@@ -144,7 +153,7 @@ Kea 2.2.0 (stable) released on July 27, 2022
 
 Kea 2.1.7 (development) released on June 29, 2022
 
-2032.	[build]         razvan
+2032.	[build]		razvan
 	The library version numbers have been bumped for the Kea 2.1.7
 	development release.
 	(Gitlab #2455)
