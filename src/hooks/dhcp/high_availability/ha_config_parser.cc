@@ -31,6 +31,7 @@ const SimpleDefaults HA_CONFIG_DEFAULTS = {
     { "max-ack-delay",           Element::integer, "10000" },
     { "max-response-delay",      Element::integer, "60000" },
     { "max-unacked-clients",     Element::integer, "10" },
+    { "max-rejected-clients",    Element::integer, "10" },
     { "require-client-certs",    Element::boolean, "true" },
     { "restrict-commands",       Element::boolean, "false" },
     { "send-lease-updates",      Element::boolean, "true" },
@@ -182,6 +183,10 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // Get 'max-unacked-clients'.
     uint32_t max_unacked_clients = getAndValidateInteger<uint32_t>(c, "max-unacked-clients");
     config_storage->setMaxUnackedClients(max_unacked_clients);
+
+    // Get 'max-rejected-clients'.
+    uint32_t max_rejected_clients = getAndValidateInteger<uint32_t>(c, "max-rejected-clients");
+    config_storage->setMaxRejectedClients(max_rejected_clients);
 
     // Get 'wait-backup-ack'.
     config_storage->setWaitBackupAck(getBoolean(c, "wait-backup-ack"));

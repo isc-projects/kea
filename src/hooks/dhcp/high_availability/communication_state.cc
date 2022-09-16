@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -538,7 +538,8 @@ CommunicationState::setPartnerUnsentUpdateCountInternal(uint64_t unsent_update_c
 
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), connecting_clients_() {
+    : CommunicationState(io_service, config), connecting_clients_(),
+      rejected_clients_() {
 }
 
 void
@@ -674,9 +675,41 @@ CommunicationState4::clearConnectingClients() {
     connecting_clients_.clear();
 }
 
+size_t
+CommunicationState4::getRejectedLeasesCount() const {
+    return (rejected_clients_.size());
+}
+
+bool
+CommunicationState4::reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message) {
+    Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
+    if (!msg) {
+        isc_throw(BadValue, "DHCP message for which the lease update was rejected is not a DHCPv4 message");
+    }
+    std::vector<uint8_t> client_id;
+    OptionPtr opt_client_id = msg->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (opt_client_id) {
+        client_id = opt_client_id->getData();
+    }
+    auto& idx = rejected_clients_.get<0>();
+    auto existing_client = idx.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
+    if (existing_client == idx.end()) {
+        RejectedClient4 new_client{ msg->getHWAddr()->hwaddr_, client_id };
+        idx.insert(new_client);
+        return (true);
+    }
+    return (false);
+}
+
+void
+CommunicationState4::clearRejectedLeases() {
+    rejected_clients_.clear();
+}
+
 CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), connecting_clients_() {
+    : CommunicationState(io_service, config), connecting_clients_(),
+      rejected_clients_() {
 }
 
 void
@@ -799,6 +832,37 @@ void
 CommunicationState6::clearConnectingClients() {
     connecting_clients_.clear();
 }
+
+size_t
+CommunicationState6::getRejectedLeasesCount() const {
+    return (rejected_clients_.size());
+}
+
+bool
+CommunicationState6::reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message) {
+    Pkt6Ptr msg = boost::dynamic_pointer_cast<Pkt6>(message);
+    if (!msg) {
+        isc_throw(BadValue, "DHCP message for which the lease update was rejected is not a DHCPv6 message");
+    }
+    OptionPtr duid = msg->getOption(D6O_CLIENTID);
+    if (!duid) {
+        return (false);
+    }
+    auto& idx = rejected_clients_.get<0>();
+    auto existing_client = idx.find(duid->getData());
+    if (existing_client == idx.end()) {
+        RejectedClient6 new_client{ duid->getData() };
+        idx.insert(new_client);
+        return (true);
+    }
+    return (false);
+}
+
+void
+CommunicationState6::clearRejectedLeases() {
+    rejected_clients_.clear();
+}
+
 
 } // end of namespace isc::ha
 } // end of namespace isc

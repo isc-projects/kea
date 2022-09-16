@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,6 +110,20 @@ public:
     /// @brief Tests that unsent updates count from partner can be set and
     /// a difference from previous value detected.
     void hasPartnerNewUnsentUpdatesTest();
+
+    /// @brief Test that gathering rejected leases works fine in DHCPv4 case.
+    void reportRejectedLeasesV4Test();
+
+    /// @brief Test checking that invalid values not accepted when reporting
+    /// rejected leases.
+    void reportRejectedLeasesV4InvalidValuesTest();
+
+    /// @brief Test that gathering rejected leases works fine in DHCPv4 case.
+    void reportRejectedLeasesV6Test();
+
+    /// @brief Test checking that invalid values not accepted when reporting
+    /// rejected leases.
+    void reportRejectedLeasesV6InvalidValuesTest();
 
     /// @brief Returns test heartbeat implementation.
     ///
@@ -686,6 +700,64 @@ CommunicationStateTest::hasPartnerNewUnsentUpdatesTest() {
     EXPECT_FALSE(state_.hasPartnerNewUnsentUpdates());
 }
 
+void
+CommunicationStateTest::reportRejectedLeasesV4Test() {
+    EXPECT_EQ(0, state_.getRejectedLeasesCount());
+    auto msg = createMessage4(DHCPREQUEST, 1, 0, 0);
+    state_.reportRejectedLease(msg);
+    EXPECT_EQ(1, state_.getRejectedLeasesCount());
+
+    msg = createMessage4(DHCPREQUEST, 2, 0, 0);
+    state_.reportRejectedLease(msg);
+    EXPECT_EQ(2, state_.getRejectedLeasesCount());
+
+    msg = createMessage4(DHCPREQUEST, 2, 0, 0);
+    state_.reportRejectedLease(msg);
+    EXPECT_EQ(2, state_.getRejectedLeasesCount());
+
+    state_.clearRejectedLeases();
+    EXPECT_EQ(0, state_.getRejectedLeasesCount());
+}
+
+void
+CommunicationStateTest::reportRejectedLeasesV4InvalidValuesTest() {
+    // Using DHCPv6 message in the DHCPv4 context is a programming
+    // error and deserves an exception.
+    auto msg = createMessage6(DHCPV6_REQUEST, 1, 0);
+    EXPECT_THROW(state_.reportRejectedLease(msg), BadValue);
+}
+
+void
+CommunicationStateTest::reportRejectedLeasesV6Test() {
+    EXPECT_EQ(0, state6_.getRejectedLeasesCount());
+    auto msg = createMessage6(DHCPV6_SOLICIT, 1, 0);
+    state6_.reportRejectedLease(msg);
+    EXPECT_EQ(1, state6_.getRejectedLeasesCount());
+
+    msg = createMessage6(DHCPV6_SOLICIT, 2, 0);
+    state6_.reportRejectedLease(msg);
+    EXPECT_EQ(2, state6_.getRejectedLeasesCount());
+
+    msg = createMessage6(DHCPV6_SOLICIT, 2, 0);
+    state6_.reportRejectedLease(msg);
+    EXPECT_EQ(2, state6_.getRejectedLeasesCount());
+
+    state6_.clearRejectedLeases();
+    EXPECT_EQ(0, state6_.getRejectedLeasesCount());
+}
+
+void
+CommunicationStateTest::reportRejectedLeasesV6InvalidValuesTest() {
+    // Using DHCPv4 message in the DHCPv6 context is a programming
+    // error and deserves an exception.
+    auto msg0 = createMessage4(DHCPREQUEST, 1, 1, 0);
+    EXPECT_THROW(state6_.reportRejectedLease(msg0), BadValue);
+
+    auto msg1 = createMessage6(DHCPV6_SOLICIT, 1, 0);
+    msg1->delOption(D6O_CLIENTID);
+    EXPECT_FALSE(state6_.reportRejectedLease(msg1));
+}
+
 TEST_F(CommunicationStateTest, partnerStateTest) {
     partnerStateTest();
 }
@@ -828,6 +900,42 @@ TEST_F(CommunicationStateTest, hasPartnerNewUnsentUpdatesTest) {
 TEST_F(CommunicationStateTest, hasPartnerNewUnsentUpdatesTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     hasPartnerNewUnsentUpdatesTest();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV4Test) {
+    reportRejectedLeasesV4Test();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV4TestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportRejectedLeasesV4Test();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV4InvalidValuesTest) {
+    reportRejectedLeasesV4InvalidValuesTest();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV4InvalidValuesTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportRejectedLeasesV4InvalidValuesTest();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV6Test) {
+    reportRejectedLeasesV6Test();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV6TestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportRejectedLeasesV6Test();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV6InvalidValuesTest) {
+    reportRejectedLeasesV6InvalidValuesTest();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV6InvalidValuesTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportRejectedLeasesV6InvalidValuesTest();
 }
 
 }

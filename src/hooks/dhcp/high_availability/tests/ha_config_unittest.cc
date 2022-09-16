@@ -77,6 +77,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "        \"max-response-delay\": 11,"
         "        \"max-ack-delay\": 5,"
         "        \"max-unacked-clients\": 20,"
+        "        \"max-rejected-clients\": 9,"
         "        \"wait-backup-ack\": false,"
         "        \"peers\": ["
         "            {"
@@ -134,6 +135,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(11, impl->getConfig()->getMaxResponseDelay());
     EXPECT_EQ(5, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(20, impl->getConfig()->getMaxUnackedClients());
+    EXPECT_EQ(9, impl->getConfig()->getMaxRejectedClients());
     EXPECT_FALSE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
@@ -258,6 +260,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ(10000, impl->getConfig()->getHeartbeatDelay());
     EXPECT_EQ(10000, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(10, impl->getConfig()->getMaxUnackedClients());
+    EXPECT_EQ(10, impl->getConfig()->getMaxRejectedClients());
     EXPECT_FALSE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();

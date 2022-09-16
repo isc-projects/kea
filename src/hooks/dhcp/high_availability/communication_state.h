@@ -286,6 +286,29 @@ protected:
 
 public:
 
+    /// @brief Returns the number of distinct leases sent to and rejected
+    /// by the partner.
+    ///
+    /// Each rejected lease is counted only once if it failed multiple times
+    ///
+    /// @return Current rejected client leases number count.
+    virtual size_t getRejectedLeasesCount() const = 0;
+
+    /// @brief Marks that the lease update failed due to a conflict for the
+    /// specified DHCP message.
+    ///
+    /// If the conflict has been already reported for the given client, the
+    /// rejected lease count remains unchanged.
+    ///
+    /// @param message DHCP message for which a lease update failed due to
+    ///  a conflict.
+    /// @return true if the lease was rejected for the first time, false
+    /// otherwise.
+    virtual bool reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message) = 0;
+
+    /// @brief Clears rejected client leases.
+    virtual void clearRejectedLeases() = 0;
+
     /// @brief Issues a warning about high clock skew between the active
     /// servers if one is warranted.
     ///
@@ -647,6 +670,29 @@ public:
     /// @return Number of unacked clients.
     virtual size_t getUnackedClientsCount() const;
 
+    /// @brief Returns the number of distinct leases sent to and rejected
+    /// by the partner.
+    ///
+    /// Each rejected lease is counted only once if it failed multiple times
+    ///
+    /// @return Current rejected client leases number count.
+    virtual size_t getRejectedLeasesCount() const;
+
+    /// @brief Marks that the lease update failed due to a conflict for the
+    /// specified DHCP message.
+    ///
+    /// If the conflict has been already reported for the given client, the
+    /// rejected lease count remains unchanged.
+    ///
+    /// @param message DHCP message for which a lease update failed due to
+    ///  a conflict.
+    /// @return true if the lease was rejected for the first time, false
+    /// otherwise.
+    virtual bool reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message);
+
+    /// @brief Clears rejected client leases.
+    virtual void clearRejectedLeases();
+
 protected:
 
     /// @brief Checks if the DHCPv4 message appears to be unanswered.
@@ -683,6 +729,21 @@ protected:
     /// See @c CommunicationState::analyzeMessage for details.
     virtual void clearConnectingClients();
 
+    /// @brief Hashed index used in the multi index containers to find
+    /// clients by HW address and client identifier.
+    ///
+    /// @tparam ClientData Type of a structure holding client information.
+    template<typename ClientData>
+    using ClientIdent4 = boost::multi_index::hashed_unique<
+        boost::multi_index::composite_key<
+            ClientData,
+            boost::multi_index::member<ClientData, std::vector<uint8_t>,
+                                       &ClientData::hwaddr_>,
+            boost::multi_index::member<ClientData, std::vector<uint8_t>,
+                                       &ClientData::clientid_>
+            >
+        >;
+
     /// @brief Structure holding information about the client which has
     /// send the packet being analyzed.
     struct ConnectingClient4 {
@@ -698,15 +759,7 @@ protected:
         boost::multi_index::indexed_by<
             // First index is a composite index which allows to find a client
             // by the HW address/client identifier tuple.
-            boost::multi_index::hashed_unique<
-                boost::multi_index::composite_key<
-                    ConnectingClient4,
-                    boost::multi_index::member<ConnectingClient4, std::vector<uint8_t>,
-                                               &ConnectingClient4::hwaddr_>,
-                    boost::multi_index::member<ConnectingClient4, std::vector<uint8_t>,
-                                               &ConnectingClient4::clientid_>
-                >
-            >,
+            ClientIdent4<ConnectingClient4>,
             // Second index allows for counting all clients which are
             // considered unacked.
             boost::multi_index::ordered_non_unique<
@@ -719,6 +772,26 @@ protected:
     /// the partner server while the servers are in communications
     /// interrupted state.
     ConnectingClients4 connecting_clients_;
+
+    /// @brief Structure holding information about the client who has a
+    /// rejected lease update.
+    struct RejectedClient4 {
+        std::vector<uint8_t> hwaddr_;
+        std::vector<uint8_t> clientid_;
+    };
+
+    /// @brief Multi index container holding information about the clients
+    /// who have rejected leases.
+    typedef boost::multi_index_container<
+        RejectedClient4,
+        boost::multi_index::indexed_by<
+            ClientIdent4<RejectedClient4>
+        >
+    > RejectedClients4;
+
+    /// @brief Holds information about the clients for whom lease updates
+    /// have been rejected by the partner.
+    RejectedClients4 rejected_clients_;
 };
 
 /// @brief Pointer to the @c CommunicationState4 object.
@@ -776,6 +849,29 @@ public:
     /// @return Number of unacked clients.
     virtual size_t getUnackedClientsCount() const;
 
+    /// @brief Returns the number of distinct leases sent to and rejected
+    /// by the partner.
+    ///
+    /// Each rejected lease is counted only once if it failed multiple times
+    ///
+    /// @return Current rejected client leases number count.
+    virtual size_t getRejectedLeasesCount() const;
+
+    /// @brief Marks that the lease update failed due to a conflict for the
+    /// specified DHCP message.
+    ///
+    /// If the conflict has been already reported for the given client, the
+    /// rejected lease count remains unchanged.
+    ///
+    /// @param message DHCP message for which a lease update failed due to
+    ///  a conflict.
+    /// @return true if the lease was rejected for the first time, false
+    /// otherwise.
+    virtual bool reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message);
+
+    /// @brief Clears rejected client leases.
+    virtual void clearRejectedLeases();
+
 protected:
 
     /// @brief Checks if the DHCPv6 message appears to be unanswered.
@@ -806,6 +902,16 @@ protected:
     /// See @c CommunicationState::analyzeMessage for details.
     virtual void clearConnectingClients();
 
+    /// @brief Hashed index used in the multi index containers to find
+    /// clients by DUID.
+    ///
+    /// @tparam ClientData Type of a structure holding client information.
+    template<typename ClientData>
+    using ClientIdent6 = boost::multi_index::hashed_unique<
+        boost::multi_index::member<ClientData, std::vector<uint8_t>,
+                                   &ClientData::duid_>
+        >;
+
     /// @brief Structure holding information about a client which
     /// sent a packet being analyzed.
     struct ConnectingClient6 {
@@ -819,10 +925,7 @@ protected:
         ConnectingClient6,
         boost::multi_index::indexed_by<
             // First index is for accessing connecting clients by DUID.
-            boost::multi_index::hashed_unique<
-                boost::multi_index::member<ConnectingClient6, std::vector<uint8_t>,
-                                           &ConnectingClient6::duid_>
-            >,
+            ClientIdent6<ConnectingClient6>,
             // Second index allows for counting all clients which are
             // considered unacked.
             boost::multi_index::ordered_non_unique<
@@ -835,6 +938,25 @@ protected:
     /// the partner server while the servers are in communications
     /// interrupted state.
     ConnectingClients6 connecting_clients_;
+
+    /// @brief Structure holding information about the client who has a
+    /// rejected lease update.
+    struct RejectedClient6 {
+        std::vector<uint8_t> duid_;
+    };
+
+    /// @brief Multi index container holding information about the clients
+    /// who have rejected leases.
+    typedef boost::multi_index_container<
+        RejectedClient6,
+        boost::multi_index::indexed_by<
+            ClientIdent6<RejectedClient6>
+        >
+    > RejectedClients6;
+
+    /// @brief Holds information about the clients for whom lease updates
+    /// have been rejected by the partner.
+    RejectedClients6 rejected_clients_;
 };
 
 /// @brief Pointer to the @c CommunicationState6 object.

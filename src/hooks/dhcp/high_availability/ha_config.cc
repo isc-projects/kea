@@ -163,9 +163,9 @@ HAConfig::HAConfig()
     : this_server_name_(), ha_mode_(HOT_STANDBY), send_lease_updates_(true),
       sync_leases_(true), sync_timeout_(60000), sync_page_limit_(10000),
       delayed_updates_limit_(0), heartbeat_delay_(10000), max_response_delay_(60000),
-      max_ack_delay_(10000), max_unacked_clients_(10), wait_backup_ack_(false),
-      enable_multi_threading_(false), http_dedicated_listener_(false),
-      http_listener_threads_(0), http_client_threads_(0),
+      max_ack_delay_(10000), max_unacked_clients_(10), max_rejected_clients_(10),
+      wait_backup_ack_(false), enable_multi_threading_(false),
+      http_dedicated_listener_(false), http_listener_threads_(0), http_client_threads_(0),
       trust_anchor_(), cert_file_(), key_file_(), require_client_certs_(true),
       restrict_commands_(false), peers_(),
       state_machine_(new StateMachineConfig()) {
