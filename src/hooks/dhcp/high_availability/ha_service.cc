@@ -49,6 +49,13 @@ public:
         CtrlChannelError(file, line, what) {}
 };
 
+/// @brief Exception thrown when conflict status code has been returned.
+class ConflictError : public CtrlChannelError {
+public:
+    ConflictError(const char* file, size_t line, const char* what) :
+        CtrlChannelError(file, line, what) {}
+};
+
 }
 
 namespace isc {
@@ -474,6 +481,7 @@ HAService::partnerDownStateHandler() {
             query_filter_.serveDefaultScopes();
         }
         adjustNetworkState();
+        communication_state_->clearRejectedLeases();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -608,6 +616,7 @@ HAService::readyStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        communication_state_->clearRejectedLeases();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -687,6 +696,7 @@ HAService::syncingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        communication_state_->clearRejectedLeases();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -776,6 +786,7 @@ HAService::terminatedStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveDefaultScopes();
         adjustNetworkState();
+        communication_state_->clearRejectedLeases();
 
         // In the terminated state we don't send heartbeat.
         communication_state_->stopHeartbeat();
@@ -797,6 +808,7 @@ HAService::waitingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        communication_state_->clearRejectedLeases();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -1101,6 +1113,11 @@ HAService::shouldTerminate() const {
     // If not issue a warning if it's getting large.
     if (!should_terminate) {
         communication_state_->clockSkewShouldWarn();
+        // Check if we should terminate because the number of rejected leases
+        // has been exceeded.
+        should_terminate =
+            config_->getMaxRejectedClients() &&
+            (config_->getMaxRejectedClients() <= communication_state_->getRejectedLeasesCount());
     }
 
     return (should_terminate);
@@ -1363,13 +1380,16 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                           " HA peer. This is programmatic error");
             }
 
-            // There are three possible groups of errors during the lease update.
+            // There are four possible groups of errors during the lease update.
             // One is the IO error causing issues in communication with the peer.
-            // Another one is an HTTP parsing error. The last type of error is
-            // when non-success error code is returned in the response carried
-            // in the HTTP message or if the JSON response is otherwise broken.
+            // Another one is an HTTP parsing error. The third type occurs when
+            // the partner receives the command but it is invalid or there is
+            // an internal processing error. Finally, the forth type is when the
+            // conflict status code is returned in the response indicating that
+            // the lease update does not match the partner's configuration.
 
             bool lease_update_success = true;
+            bool lease_update_conflict = false;
 
             // Handle first two groups of errors.
             if (ec || !error_str.empty()) {
@@ -1384,7 +1404,6 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
             } else {
 
-                // Handle third group of errors.
                 try {
                     int rcode = 0;
                     auto args = verifyAsyncResponse(response, rcode);
@@ -1392,7 +1411,19 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                     // updates and we should log them.
                     logFailedLeaseUpdates(query, args);
 
+                } catch (const ConflictError& ex) {
+                    // Handle forth group of errors.
+                    lease_update_conflict = true;
+                    lease_update_success = false;
+                    communication_state_->reportRejectedLease(query);
+
+                    LOG_WARN(ha_logger, HA_LEASE_UPDATE_CONFLICT)
+                        .arg(query->getLabel())
+                        .arg(config->getLogLabel())
+                        .arg(ex.what());
+
                 } catch (const std::exception& ex) {
+                    // Handle third group of errors.
                     LOG_WARN(ha_logger, HA_LEASE_UPDATE_FAILED)
                         .arg(query->getLabel())
                         .arg(config->getLogLabel())
@@ -1405,7 +1436,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
             // We don't care about the result of the lease update to the backup server.
             // It is a best effort update.
-            if ((config->getRole() != HAConfig::PeerConfig::BACKUP) && !lease_update_success) {
+            if ((config->getRole() != HAConfig::PeerConfig::BACKUP) && !lease_update_conflict && !lease_update_success) {
                 // If we were unable to communicate with the partner we set partner's
                 // state as unavailable.
                 communication_state_->setPartnerState("unavailable");
@@ -2956,9 +2987,12 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
         // Include an error code.
         s << "error code " << rcode;
 
-        if (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED) {
+        switch (rcode) {
+        case CONTROL_RESULT_COMMAND_UNSUPPORTED:
             isc_throw(CommandUnsupportedError, s.str());
-        } else {
+        case CONTROL_RESULT_CONFLICT:
+            isc_throw(ConflictError, s.str());
+        default:
             isc_throw(CtrlChannelError, s.str());
         }
     }

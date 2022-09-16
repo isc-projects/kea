@@ -68,6 +68,7 @@ extern const isc::log::MessageID HA_LEASE_SYNC_STALE_LEASE6_SKIP;
 extern const isc::log::MessageID HA_LEASE_UPDATES_DISABLED;
 extern const isc::log::MessageID HA_LEASE_UPDATES_ENABLED;
 extern const isc::log::MessageID HA_LEASE_UPDATE_COMMUNICATIONS_FAILED;
+extern const isc::log::MessageID HA_LEASE_UPDATE_CONFLICT;
 extern const isc::log::MessageID HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER;
 extern const isc::log::MessageID HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER;
 extern const isc::log::MessageID HA_LEASE_UPDATE_FAILED;

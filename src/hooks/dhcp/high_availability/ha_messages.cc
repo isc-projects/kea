@@ -67,6 +67,7 @@ extern const isc::log::MessageID HA_LEASE_SYNC_STALE_LEASE6_SKIP = "HA_LEASE_SYN
 extern const isc::log::MessageID HA_LEASE_UPDATES_DISABLED = "HA_LEASE_UPDATES_DISABLED";
 extern const isc::log::MessageID HA_LEASE_UPDATES_ENABLED = "HA_LEASE_UPDATES_ENABLED";
 extern const isc::log::MessageID HA_LEASE_UPDATE_COMMUNICATIONS_FAILED = "HA_LEASE_UPDATE_COMMUNICATIONS_FAILED";
+extern const isc::log::MessageID HA_LEASE_UPDATE_CONFLICT = "HA_LEASE_UPDATE_CONFLICT";
 extern const isc::log::MessageID HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER = "HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER";
 extern const isc::log::MessageID HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER = "HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER";
 extern const isc::log::MessageID HA_LEASE_UPDATE_FAILED = "HA_LEASE_UPDATE_FAILED";
@@ -173,6 +174,7 @@ const char* values[] = {
     "HA_LEASE_UPDATES_DISABLED", "lease updates will not be sent to the partner while in %1 state",
     "HA_LEASE_UPDATES_ENABLED", "lease updates will be sent to the partner while in %1 state",
     "HA_LEASE_UPDATE_COMMUNICATIONS_FAILED", "%1: failed to communicate with %2: %3",
+    "HA_LEASE_UPDATE_CONFLICT", "%1: lease update to %2 returned conflict status code: %3",
     "HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER", "%1: failed to create or update the lease having type %2 for address %3, reason: %4",
     "HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER", "%1: failed to delete the lease having type %2 for address %3, reason: %4",
     "HA_LEASE_UPDATE_FAILED", "%1: lease update to %2 failed: %3",
