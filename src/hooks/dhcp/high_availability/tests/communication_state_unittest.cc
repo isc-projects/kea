@@ -702,21 +702,21 @@ CommunicationStateTest::hasPartnerNewUnsentUpdatesTest() {
 
 void
 CommunicationStateTest::reportRejectedLeasesV4Test() {
-    EXPECT_EQ(0, state_.getRejectedLeasesCount());
+    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
     auto msg = createMessage4(DHCPREQUEST, 1, 0, 0);
-    state_.reportRejectedLease(msg);
-    EXPECT_EQ(1, state_.getRejectedLeasesCount());
+    state_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
 
     msg = createMessage4(DHCPREQUEST, 2, 0, 0);
-    state_.reportRejectedLease(msg);
-    EXPECT_EQ(2, state_.getRejectedLeasesCount());
+    state_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
 
     msg = createMessage4(DHCPREQUEST, 2, 0, 0);
-    state_.reportRejectedLease(msg);
-    EXPECT_EQ(2, state_.getRejectedLeasesCount());
+    state_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
 
-    state_.clearRejectedLeases();
-    EXPECT_EQ(0, state_.getRejectedLeasesCount());
+    state_.clearRejectedLeaseUpdates();
+    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
 }
 
 void
@@ -724,26 +724,26 @@ CommunicationStateTest::reportRejectedLeasesV4InvalidValuesTest() {
     // Using DHCPv6 message in the DHCPv4 context is a programming
     // error and deserves an exception.
     auto msg = createMessage6(DHCPV6_REQUEST, 1, 0);
-    EXPECT_THROW(state_.reportRejectedLease(msg), BadValue);
+    EXPECT_THROW(state_.reportRejectedLeaseUpdate(msg), BadValue);
 }
 
 void
 CommunicationStateTest::reportRejectedLeasesV6Test() {
-    EXPECT_EQ(0, state6_.getRejectedLeasesCount());
+    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
     auto msg = createMessage6(DHCPV6_SOLICIT, 1, 0);
-    state6_.reportRejectedLease(msg);
-    EXPECT_EQ(1, state6_.getRejectedLeasesCount());
+    state6_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
 
     msg = createMessage6(DHCPV6_SOLICIT, 2, 0);
-    state6_.reportRejectedLease(msg);
-    EXPECT_EQ(2, state6_.getRejectedLeasesCount());
+    state6_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
 
     msg = createMessage6(DHCPV6_SOLICIT, 2, 0);
-    state6_.reportRejectedLease(msg);
-    EXPECT_EQ(2, state6_.getRejectedLeasesCount());
+    state6_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
 
-    state6_.clearRejectedLeases();
-    EXPECT_EQ(0, state6_.getRejectedLeasesCount());
+    state6_.clearRejectedLeaseUpdates();
+    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
 }
 
 void
@@ -751,11 +751,11 @@ CommunicationStateTest::reportRejectedLeasesV6InvalidValuesTest() {
     // Using DHCPv4 message in the DHCPv6 context is a programming
     // error and deserves an exception.
     auto msg0 = createMessage4(DHCPREQUEST, 1, 1, 0);
-    EXPECT_THROW(state6_.reportRejectedLease(msg0), BadValue);
+    EXPECT_THROW(state6_.reportRejectedLeaseUpdate(msg0), BadValue);
 
     auto msg1 = createMessage6(DHCPV6_SOLICIT, 1, 0);
     msg1->delOption(D6O_CLIENTID);
-    EXPECT_FALSE(state6_.reportRejectedLease(msg1));
+    EXPECT_FALSE(state6_.reportRejectedLeaseUpdate(msg1));
 }
 
 TEST_F(CommunicationStateTest, partnerStateTest) {

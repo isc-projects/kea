@@ -286,13 +286,13 @@ protected:
 
 public:
 
-    /// @brief Returns the number of distinct leases sent to and rejected
-    /// by the partner.
+    /// @brief Returns the number of lease updates rejected by the partner.
     ///
-    /// Each rejected lease is counted only once if it failed multiple times
+    /// Each rejected lease update is counted only once if it failed
+    /// multiple times
     ///
-    /// @return Current rejected client leases number count.
-    virtual size_t getRejectedLeasesCount() const = 0;
+    /// @return Current rejected lease update number count.
+    virtual size_t getRejectedLeaseUpdatesCount() const = 0;
 
     /// @brief Marks that the lease update failed due to a conflict for the
     /// specified DHCP message.
@@ -302,12 +302,12 @@ public:
     ///
     /// @param message DHCP message for which a lease update failed due to
     ///  a conflict.
-    /// @return true if the lease was rejected for the first time, false
+    /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message) = 0;
+    virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) = 0;
 
     /// @brief Clears rejected client leases.
-    virtual void clearRejectedLeases() = 0;
+    virtual void clearRejectedLeaseUpdates() = 0;
 
     /// @brief Issues a warning about high clock skew between the active
     /// servers if one is warranted.
@@ -670,13 +670,13 @@ public:
     /// @return Number of unacked clients.
     virtual size_t getUnackedClientsCount() const;
 
-    /// @brief Returns the number of distinct leases sent to and rejected
-    /// by the partner.
+    /// @brief Returns the number of lease updates rejected by the partner.
     ///
-    /// Each rejected lease is counted only once if it failed multiple times
+    /// Each rejected lease update is counted only once if it failed
+    /// multiple times
     ///
-    /// @return Current rejected client leases number count.
-    virtual size_t getRejectedLeasesCount() const;
+    /// @return Current rejected lease update number count.
+    virtual size_t getRejectedLeaseUpdatesCount() const;
 
     /// @brief Marks that the lease update failed due to a conflict for the
     /// specified DHCP message.
@@ -686,12 +686,12 @@ public:
     ///
     /// @param message DHCP message for which a lease update failed due to
     ///  a conflict.
-    /// @return true if the lease was rejected for the first time, false
+    /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message);
+    virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
 
     /// @brief Clears rejected client leases.
-    virtual void clearRejectedLeases();
+    virtual void clearRejectedLeaseUpdates();
 
 protected:
 
@@ -849,13 +849,13 @@ public:
     /// @return Number of unacked clients.
     virtual size_t getUnackedClientsCount() const;
 
-    /// @brief Returns the number of distinct leases sent to and rejected
-    /// by the partner.
+    /// @brief Returns the number of lease updates rejected by the partner.
     ///
-    /// Each rejected lease is counted only once if it failed multiple times
+    /// Each rejected lease update is counted only once if it failed
+    /// multiple times
     ///
-    /// @return Current rejected client leases number count.
-    virtual size_t getRejectedLeasesCount() const;
+    /// @return Current rejected lease update number count.
+    virtual size_t getRejectedLeaseUpdatesCount() const;
 
     /// @brief Marks that the lease update failed due to a conflict for the
     /// specified DHCP message.
@@ -865,12 +865,12 @@ public:
     ///
     /// @param message DHCP message for which a lease update failed due to
     ///  a conflict.
-    /// @return true if the lease was rejected for the first time, false
+    /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message);
+    virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
 
     /// @brief Clears rejected client leases.
-    virtual void clearRejectedLeases();
+    virtual void clearRejectedLeaseUpdates();
 
 protected:
 

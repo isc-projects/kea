@@ -676,12 +676,12 @@ CommunicationState4::clearConnectingClients() {
 }
 
 size_t
-CommunicationState4::getRejectedLeasesCount() const {
+CommunicationState4::getRejectedLeaseUpdatesCount() const {
     return (rejected_clients_.size());
 }
 
 bool
-CommunicationState4::reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message) {
+CommunicationState4::reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) {
     Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
     if (!msg) {
         isc_throw(BadValue, "DHCP message for which the lease update was rejected is not a DHCPv4 message");
@@ -702,7 +702,7 @@ CommunicationState4::reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& mes
 }
 
 void
-CommunicationState4::clearRejectedLeases() {
+CommunicationState4::clearRejectedLeaseUpdates() {
     rejected_clients_.clear();
 }
 
@@ -834,12 +834,12 @@ CommunicationState6::clearConnectingClients() {
 }
 
 size_t
-CommunicationState6::getRejectedLeasesCount() const {
+CommunicationState6::getRejectedLeaseUpdatesCount() const {
     return (rejected_clients_.size());
 }
 
 bool
-CommunicationState6::reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& message) {
+CommunicationState6::reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) {
     Pkt6Ptr msg = boost::dynamic_pointer_cast<Pkt6>(message);
     if (!msg) {
         isc_throw(BadValue, "DHCP message for which the lease update was rejected is not a DHCPv6 message");
@@ -859,7 +859,7 @@ CommunicationState6::reportRejectedLease(const boost::shared_ptr<dhcp::Pkt>& mes
 }
 
 void
-CommunicationState6::clearRejectedLeases() {
+CommunicationState6::clearRejectedLeaseUpdates() {
     rejected_clients_.clear();
 }
 

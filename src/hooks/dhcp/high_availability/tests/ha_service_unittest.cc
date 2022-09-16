@@ -1472,7 +1472,7 @@ public:
 
         // Ensure that the server has recorded a lease update conflict. The conflict
         // reported by the backup server should not count.
-        EXPECT_EQ(1, service_->communication_state_->getRejectedLeasesCount());
+        EXPECT_EQ(1, service_->communication_state_->getRejectedLeaseUpdatesCount());
     }
 
     /// @brief Tests scenarios when all lease updates are sent successfully.
@@ -5160,7 +5160,7 @@ public:
         for (auto i = 0; i < leases_num; ++i) {
             // Create query with random HW address.
             Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
-            static_cast<void>(state_->reportRejectedLease(query4));
+            static_cast<void>(state_->reportRejectedLeaseUpdate(query4));
         }
         // The state machine needs to react to the rejected leases.
         service_->runModel(HAService::NOP_EVT);
@@ -5427,7 +5427,7 @@ public:
         simulateRejectedLeaseUpdates(1);
         service_->verboseTransition(my_state.state_);
         service_->runModel(TestHAService::NOP_EVT);
-        return (state_->getRejectedLeasesCount() == 0);
+        return (state_->getRejectedLeaseUpdatesCount() == 0);
     }
 
     /// @brief Pointer to the communication state used in the tests.

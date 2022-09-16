@@ -481,7 +481,7 @@ HAService::partnerDownStateHandler() {
             query_filter_.serveDefaultScopes();
         }
         adjustNetworkState();
-        communication_state_->clearRejectedLeases();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -616,7 +616,7 @@ HAService::readyStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
-        communication_state_->clearRejectedLeases();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -696,7 +696,7 @@ HAService::syncingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
-        communication_state_->clearRejectedLeases();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -786,7 +786,7 @@ HAService::terminatedStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveDefaultScopes();
         adjustNetworkState();
-        communication_state_->clearRejectedLeases();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // In the terminated state we don't send heartbeat.
         communication_state_->stopHeartbeat();
@@ -808,7 +808,7 @@ HAService::waitingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
-        communication_state_->clearRejectedLeases();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -1117,7 +1117,7 @@ HAService::shouldTerminate() const {
         // has been exceeded.
         should_terminate =
             config_->getMaxRejectedClients() &&
-            (config_->getMaxRejectedClients() <= communication_state_->getRejectedLeasesCount());
+            (config_->getMaxRejectedClients() <= communication_state_->getRejectedLeaseUpdatesCount());
     }
 
     return (should_terminate);
@@ -1415,7 +1415,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                     // Handle forth group of errors.
                     lease_update_conflict = true;
                     lease_update_success = false;
-                    communication_state_->reportRejectedLease(query);
+                    communication_state_->reportRejectedLeaseUpdate(query);
 
                     LOG_WARN(ha_logger, HA_LEASE_UPDATE_CONFLICT)
                         .arg(query->getLabel())
