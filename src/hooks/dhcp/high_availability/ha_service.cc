@@ -1436,10 +1436,22 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
             // We don't care about the result of the lease update to the backup server.
             // It is a best effort update.
-            if ((config->getRole() != HAConfig::PeerConfig::BACKUP) && !lease_update_conflict && !lease_update_success) {
-                // If we were unable to communicate with the partner we set partner's
+            if (config->getRole() != HAConfig::PeerConfig::BACKUP) {
+                // If the lease update was unsuccessful we may need to set the partner
                 // state as unavailable.
-                communication_state_->setPartnerState("unavailable");
+                if (!lease_update_success) {
+                    // Do not set it as unavailable if it was a conflict because the
+                    // partner actually responded.
+                    if (!lease_update_conflict) {
+                        // If we were unable to communicate with the partner we set partner's
+                        // state as unavailable.
+                        communication_state_->setPartnerState("unavailable");
+                    }
+                } else if (communication_state_->getRejectedLeaseUpdatesCount() > 0) {
+                    // Lease update successful and we may need to clear some previously
+                    // rejected lease updates.
+                    communication_state_->reportSuccessfulLeaseUpdate(query);
+                }
             }
 
             // It is possible to configure the server to not wait for a response from

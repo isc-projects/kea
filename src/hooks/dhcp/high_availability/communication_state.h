@@ -306,6 +306,17 @@ public:
     /// otherwise.
     virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) = 0;
 
+    /// @brief Marks the lease update successful.
+    ///
+    /// If the lease update was previously marked "in conflict", it is
+    /// now cleared, effectively lowering the number of conflicted leases.
+    ///
+    /// @param message DHCP message for which the lease update was
+    /// successful.
+    /// @return true when the lease was marked "in conflict" and it is
+    /// now cleared.
+    virtual bool reportSuccessfulLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) = 0;
+
     /// @brief Clears rejected client leases.
     virtual void clearRejectedLeaseUpdates() = 0;
 
@@ -690,6 +701,17 @@ public:
     /// otherwise.
     virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
 
+    /// @brief Marks the lease update successful.
+    ///
+    /// If the lease update was previously marked "in conflict", it is
+    /// now cleared, effectively lowering the number of conflicted leases.
+    ///
+    /// @param message DHCP message for which the lease update was
+    /// successful.
+    /// @return true when the lease was marked "in conflict" and it is
+    /// now cleared.
+    virtual bool reportSuccessfulLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
+
     /// @brief Clears rejected client leases.
     virtual void clearRejectedLeaseUpdates();
 
@@ -868,6 +890,17 @@ public:
     /// @return true if the update was rejected for the first time, false
     /// otherwise.
     virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
+
+    /// @brief Marks the lease update successful.
+    ///
+    /// If the lease update was previously marked "in conflict", it is
+    /// now cleared, effectively lowering the number of conflicted leases.
+    ///
+    /// @param message DHCP message for which the lease update was
+    /// successful.
+    /// @return true when the lease was marked "in conflict" and it is
+    /// now cleared.
+    virtual bool reportSuccessfulLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
 
     /// @brief Clears rejected client leases.
     virtual void clearRejectedLeaseUpdates();

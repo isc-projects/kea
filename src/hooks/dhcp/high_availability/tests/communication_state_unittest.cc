@@ -114,12 +114,20 @@ public:
     /// @brief Test that gathering rejected leases works fine in DHCPv4 case.
     void reportRejectedLeasesV4Test();
 
+    /// @brief Test that rejected leases are cleared after reporting respective
+    /// successful leases.
+    void reportSuccessfulLeasesV4Test();
+
     /// @brief Test checking that invalid values not accepted when reporting
     /// rejected leases.
     void reportRejectedLeasesV4InvalidValuesTest();
 
     /// @brief Test that gathering rejected leases works fine in DHCPv4 case.
     void reportRejectedLeasesV6Test();
+
+    /// @brief Test that rejected leases are cleared after reporting respective
+    /// successful leases.
+    void reportSuccessfulLeasesV6Test();
 
     /// @brief Test checking that invalid values not accepted when reporting
     /// rejected leases.
@@ -711,11 +719,33 @@ CommunicationStateTest::reportRejectedLeasesV4Test() {
     state_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
 
-    msg = createMessage4(DHCPREQUEST, 2, 0, 0);
+    msg = createMessage4(DHCPREQUEST, 2, 1, 0);
     state_.reportRejectedLeaseUpdate(msg);
-    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(3, state_.getRejectedLeaseUpdatesCount());
 
     state_.clearRejectedLeaseUpdates();
+    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+}
+
+void
+CommunicationStateTest::reportSuccessfulLeasesV4Test() {
+    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+    auto msg0 = createMessage4(DHCPREQUEST, 1, 0, 0);
+    state_.reportRejectedLeaseUpdate(msg0);
+    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+
+    auto msg1 = createMessage4(DHCPREQUEST, 2, 0, 0);
+    state_.reportRejectedLeaseUpdate(msg1);
+    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+
+    EXPECT_TRUE(state_.reportSuccessfulLeaseUpdate(msg0));
+    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+
+    auto msg2 = createMessage4(DHCPREQUEST, 1, 1, 0);
+    EXPECT_FALSE(state_.reportSuccessfulLeaseUpdate(msg2));
+    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+
+    EXPECT_TRUE(state_.reportSuccessfulLeaseUpdate(msg1));
     EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
 }
 
@@ -725,6 +755,7 @@ CommunicationStateTest::reportRejectedLeasesV4InvalidValuesTest() {
     // error and deserves an exception.
     auto msg = createMessage6(DHCPV6_REQUEST, 1, 0);
     EXPECT_THROW(state_.reportRejectedLeaseUpdate(msg), BadValue);
+    EXPECT_THROW(state_.reportSuccessfulLeaseUpdate(msg), BadValue);
 }
 
 void
@@ -747,15 +778,39 @@ CommunicationStateTest::reportRejectedLeasesV6Test() {
 }
 
 void
+CommunicationStateTest::reportSuccessfulLeasesV6Test() {
+    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+    auto msg0 = createMessage6(DHCPV6_SOLICIT, 1, 0);
+    EXPECT_TRUE(state6_.reportRejectedLeaseUpdate(msg0));
+    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+
+    auto msg1 = createMessage6(DHCPV6_SOLICIT, 2, 0);
+    EXPECT_TRUE(state6_.reportRejectedLeaseUpdate(msg1));
+    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+
+    EXPECT_TRUE(state6_.reportSuccessfulLeaseUpdate(msg0));
+    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+
+    auto msg2 = createMessage6(DHCPV6_SOLICIT, 3, 0);
+    EXPECT_FALSE(state6_.reportSuccessfulLeaseUpdate(msg2));
+    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+
+    EXPECT_TRUE(state6_.reportSuccessfulLeaseUpdate(msg1));
+    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+}
+
+void
 CommunicationStateTest::reportRejectedLeasesV6InvalidValuesTest() {
     // Using DHCPv4 message in the DHCPv6 context is a programming
     // error and deserves an exception.
     auto msg0 = createMessage4(DHCPREQUEST, 1, 1, 0);
     EXPECT_THROW(state6_.reportRejectedLeaseUpdate(msg0), BadValue);
+    EXPECT_THROW(state6_.reportSuccessfulLeaseUpdate(msg0), BadValue);
 
     auto msg1 = createMessage6(DHCPV6_SOLICIT, 1, 0);
     msg1->delOption(D6O_CLIENTID);
     EXPECT_FALSE(state6_.reportRejectedLeaseUpdate(msg1));
+    EXPECT_FALSE(state6_.reportSuccessfulLeaseUpdate(msg1));
 }
 
 TEST_F(CommunicationStateTest, partnerStateTest) {
@@ -911,6 +966,15 @@ TEST_F(CommunicationStateTest, reportRejectedLeasesV4TestMultiThreading) {
     reportRejectedLeasesV4Test();
 }
 
+TEST_F(CommunicationStateTest, reportSuccessfulLeasesV4Test) {
+    reportSuccessfulLeasesV4Test();
+}
+
+TEST_F(CommunicationStateTest, reportSuccessfulLeasesV4TestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportSuccessfulLeasesV4Test();
+}
+
 TEST_F(CommunicationStateTest, reportRejectedLeasesV4InvalidValuesTest) {
     reportRejectedLeasesV4InvalidValuesTest();
 }
@@ -927,6 +991,15 @@ TEST_F(CommunicationStateTest, reportRejectedLeasesV6Test) {
 TEST_F(CommunicationStateTest, reportRejectedLeasesV6TestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     reportRejectedLeasesV6Test();
+}
+
+TEST_F(CommunicationStateTest, reportSuccessfulLeasesV6Test) {
+    reportSuccessfulLeasesV6Test();
+}
+
+TEST_F(CommunicationStateTest, reportSuccessfulLeasesV6TestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportSuccessfulLeasesV6Test();
 }
 
 TEST_F(CommunicationStateTest, reportRejectedLeasesV6InvalidValuesTest) {
