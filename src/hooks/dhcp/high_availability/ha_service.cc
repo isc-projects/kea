@@ -1116,8 +1116,8 @@ HAService::shouldTerminate() const {
         // Check if we should terminate because the number of rejected leases
         // has been exceeded.
         should_terminate =
-            config_->getMaxRejectedClients() &&
-            (config_->getMaxRejectedClients() <= communication_state_->getRejectedLeaseUpdatesCount());
+            config_->getMaxRejectedLeaseUpdates() &&
+            (config_->getMaxRejectedLeaseUpdates() <= communication_state_->getRejectedLeaseUpdatesCount());
     }
 
     return (should_terminate);

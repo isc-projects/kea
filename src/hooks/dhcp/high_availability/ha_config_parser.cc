@@ -26,19 +26,19 @@ const SimpleDefaults HA_CONFIG_LB_DEFAULTS = {
 
 /// @brief Default values for HA configuration.
 const SimpleDefaults HA_CONFIG_DEFAULTS = {
-    { "delayed-updates-limit",   Element::integer, "0" },
-    { "heartbeat-delay",         Element::integer, "10000" },
-    { "max-ack-delay",           Element::integer, "10000" },
-    { "max-response-delay",      Element::integer, "60000" },
-    { "max-unacked-clients",     Element::integer, "10" },
-    { "max-rejected-clients",    Element::integer, "10" },
-    { "require-client-certs",    Element::boolean, "true" },
-    { "restrict-commands",       Element::boolean, "false" },
-    { "send-lease-updates",      Element::boolean, "true" },
-    { "sync-leases",             Element::boolean, "true" },
-    { "sync-timeout",            Element::integer, "60000" },
-    { "sync-page-limit",         Element::integer, "10000" },
-    { "wait-backup-ack",         Element::boolean, "false" }
+    { "delayed-updates-limit",      Element::integer, "0" },
+    { "heartbeat-delay",            Element::integer, "10000" },
+    { "max-ack-delay",              Element::integer, "10000" },
+    { "max-response-delay",         Element::integer, "60000" },
+    { "max-unacked-clients",        Element::integer, "10" },
+    { "max-rejected-lease-updates", Element::integer, "10" },
+    { "require-client-certs",       Element::boolean, "true" },
+    { "restrict-commands",          Element::boolean, "false" },
+    { "send-lease-updates",         Element::boolean, "true" },
+    { "sync-leases",                Element::boolean, "true" },
+    { "sync-timeout",               Element::integer, "60000" },
+    { "sync-page-limit",            Element::integer, "10000" },
+    { "wait-backup-ack",            Element::boolean, "false" }
 };
 
 /// @brief Default values for HA multi-threading configuration.
@@ -184,9 +184,9 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     uint32_t max_unacked_clients = getAndValidateInteger<uint32_t>(c, "max-unacked-clients");
     config_storage->setMaxUnackedClients(max_unacked_clients);
 
-    // Get 'max-rejected-clients'.
-    uint32_t max_rejected_clients = getAndValidateInteger<uint32_t>(c, "max-rejected-clients");
-    config_storage->setMaxRejectedClients(max_rejected_clients);
+    // Get 'max-rejected-lease-updates'.
+    uint32_t max_rejected_lease_updates = getAndValidateInteger<uint32_t>(c, "max-rejected-lease-updates");
+    config_storage->setMaxRejectedLeaseUpdates(max_rejected_lease_updates);
 
     // Get 'wait-backup-ack'.
     config_storage->setWaitBackupAck(getBoolean(c, "wait-backup-ack"));
