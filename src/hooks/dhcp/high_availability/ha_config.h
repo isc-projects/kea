@@ -550,7 +550,7 @@ public:
         max_unacked_clients_ = max_unacked_clients;
     }
 
-    /// @brief Returns a maximum number of clients for which lease updates failed
+    /// @brief Returns a maximum number of clients for whom lease updates failed
     /// due to other than general error.
     ///
     /// A lease update may fail due to a conflict with the partner's configuration.

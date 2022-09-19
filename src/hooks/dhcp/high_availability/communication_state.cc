@@ -308,6 +308,17 @@ CommunicationState::isCommunicationInterrupted() const {
     return (getDurationInMillisecs() > config_->getMaxResponseDelay());
 }
 
+std::vector<uint8_t>
+CommunicationState::getClientId(const PktPtr& message,
+                                const uint16_t option_type) {
+    std::vector<uint8_t> client_id;
+    OptionPtr opt_client_id = message->getOption(option_type);
+    if (opt_client_id) {
+        client_id = opt_client_id->getData();
+    }
+    return (client_id);
+}
+
 size_t
 CommunicationState::getAnalyzedMessagesCount() const {
     return (analyzed_messages_count_);
@@ -553,7 +564,7 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
 }
 
 void
-CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& message) {
+CommunicationState4::analyzeMessageInternal(const PktPtr& message) {
     // The DHCP message must successfully cast to a Pkt4 object.
     Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
     if (!msg) {
@@ -581,12 +592,7 @@ CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
 
     // Client identifier will be stored together with the hardware address. It
     // may remain empty if the client hasn't specified it.
-    std::vector<uint8_t> client_id;
-    OptionPtr opt_client_id = msg->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (opt_client_id) {
-        client_id = opt_client_id->getData();
-    }
-
+    auto client_id = getClientId(message, DHO_DHCP_CLIENT_IDENTIFIER);
     bool log_unacked = false;
 
     // Check if the given client was already recorded.
@@ -681,41 +687,31 @@ CommunicationState4::getRejectedLeaseUpdatesCount() const {
 }
 
 bool
-CommunicationState4::reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) {
+CommunicationState4::reportRejectedLeaseUpdate(const PktPtr& message) {
     Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
     if (!msg) {
         isc_throw(BadValue, "DHCP message for which the lease update was rejected is not a DHCPv4 message");
     }
-    std::vector<uint8_t> client_id;
-    OptionPtr opt_client_id = msg->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (opt_client_id) {
-        client_id = opt_client_id->getData();
-    }
-    auto& idx = rejected_clients_.get<0>();
-    auto existing_client = idx.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
-    if (existing_client == idx.end()) {
+    auto client_id = getClientId(message, DHO_DHCP_CLIENT_IDENTIFIER);
+    auto existing_client = rejected_clients_.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
+    if (existing_client == rejected_clients_.end()) {
         RejectedClient4 new_client{ msg->getHWAddr()->hwaddr_, client_id };
-        idx.insert(new_client);
+        rejected_clients_.insert(new_client);
         return (true);
     }
     return (false);
 }
 
 bool
-CommunicationState4::reportSuccessfulLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) {
+CommunicationState4::reportSuccessfulLeaseUpdate(const PktPtr& message) {
     Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
     if (!msg) {
         isc_throw(BadValue, "DHCP message for which the lease update was successful is not a DHCPv4 message");
     }
-    std::vector<uint8_t> client_id;
-    OptionPtr opt_client_id = msg->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (opt_client_id) {
-        client_id = opt_client_id->getData();
-    }
-    auto& idx = rejected_clients_.get<0>();
-    auto existing_client = idx.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
-    if (existing_client != idx.end()) {
-        idx.erase(existing_client);
+    auto client_id = getClientId(msg, DHO_DHCP_CLIENT_IDENTIFIER);
+    auto existing_client = rejected_clients_.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
+    if (existing_client != rejected_clients_.end()) {
+        rejected_clients_.erase(existing_client);
         return (true);
     }
     return (false);
@@ -760,8 +756,8 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
     auto unacked = (elapsed_time && elapsed_time->getValue() * 10 > config_->getMaxAckDelay());
 
     // Get the DUID of the client to see if it hasn't been recorded already.
-    OptionPtr duid = msg->getOption(D6O_CLIENTID);
-    if (!duid) {
+    auto duid = getClientId(msg, D6O_CLIENTID);
+    if (duid.empty()) {
         return;
     }
 
@@ -769,14 +765,14 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
 
     // Check if the given client was already recorded.
     auto& idx = connecting_clients_.get<0>();
-    auto existing_request = idx.find(duid->getData());
+    auto existing_request = idx.find(duid);
     if (existing_request != idx.end()) {
         // If the client was recorded and was not considered unacked
         // but it should be considered unacked as a result of processing
         // this packet, let's update the recorded request to mark the
         // client unacked.
         if (!existing_request->unacked_ && unacked) {
-            ConnectingClient6 connecting_client{ duid->getData(), unacked };
+            ConnectingClient6 connecting_client{ duid, unacked };
             idx.replace(existing_request, connecting_client);
             log_unacked = true;
         }
@@ -784,7 +780,7 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
     } else {
         // This is the first time we see the packet from this client. Let's
         // record it.
-        ConnectingClient6 connecting_client{ duid->getData(), unacked };
+        ConnectingClient6 connecting_client{ duid, unacked };
         idx.insert(connecting_client);
         log_unacked = unacked;
 
@@ -859,39 +855,37 @@ CommunicationState6::getRejectedLeaseUpdatesCount() const {
 }
 
 bool
-CommunicationState6::reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) {
+CommunicationState6::reportRejectedLeaseUpdate(const PktPtr& message) {
     Pkt6Ptr msg = boost::dynamic_pointer_cast<Pkt6>(message);
     if (!msg) {
         isc_throw(BadValue, "DHCP message for which the lease update was rejected is not a DHCPv6 message");
     }
-    OptionPtr duid = msg->getOption(D6O_CLIENTID);
-    if (!duid) {
+    auto duid = getClientId(msg, D6O_CLIENTID);
+    if (duid.empty()) {
         return (false);
     }
-    auto& idx = rejected_clients_.get<0>();
-    auto existing_client = idx.find(duid->getData());
-    if (existing_client == idx.end()) {
-        RejectedClient6 new_client{ duid->getData() };
-        idx.insert(new_client);
+    auto existing_client = rejected_clients_.find(duid);
+    if (existing_client == rejected_clients_.end()) {
+        RejectedClient6 new_client{ duid };
+        rejected_clients_.insert(new_client);
         return (true);
     }
     return (false);
 }
 
 bool
-CommunicationState6::reportSuccessfulLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) {
+CommunicationState6::reportSuccessfulLeaseUpdate(const PktPtr& message) {
     Pkt6Ptr msg = boost::dynamic_pointer_cast<Pkt6>(message);
     if (!msg) {
         isc_throw(BadValue, "DHCP message for which the lease update was successful is not a DHCPv6 message");
     }
-    OptionPtr duid = msg->getOption(D6O_CLIENTID);
-    if (!duid) {
+    auto duid = getClientId(msg, D6O_CLIENTID);
+    if (duid.empty()) {
         return (false);
     }
-    auto& idx = rejected_clients_.get<0>();
-    auto existing_client = idx.find(duid->getData());
-    if (existing_client != idx.end()) {
-        idx.erase(existing_client);
+    auto existing_client = rejected_clients_.find(duid);
+    if (existing_client != rejected_clients_.end()) {
+        rejected_clients_.erase(existing_client);
         return (true);
     }
     return (false);

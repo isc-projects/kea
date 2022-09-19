@@ -1494,9 +1494,11 @@ public:
         // reported by the backup server should not count.
         EXPECT_EQ(1, service_->communication_state_->getRejectedLeaseUpdatesCount());
 
+        // Change the partner's response to success.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
-        factory3_->getResponseCreator()->setControlResult(CONTROL_RESULT_CONFLICT);
 
+        // Try sending the lease updates again. The previously rejected lease should
+        // now be accepted and the counter should be 0.
         bool unpark_called = false;
         testSendLeaseUpdates([&unpark_called] {
             unpark_called = true;
@@ -1944,7 +1946,7 @@ public:
                 "the packet is dropped";
         }, false, 1);
 
-        // Ensure that the server has recorded a lease update conflict. The conflict
+        // Ensure that the server has recorded the lease update conflict. The conflict
         // reported by the backup server should not count.
         EXPECT_EQ(1, service_->communication_state_->getRejectedLeaseUpdatesCount());
 
@@ -2693,7 +2695,7 @@ TEST_F(HAServiceTest, sendUpdatesControlResultConflict6ErrorPrecedence) {
     testSendUpdatesControlResultConflict6ErrorPrecedence();
 }
 
-// Test the scenario when the server receiving a lease update returns
+    // Test the scenario when the server receiving a lease update returns
 // both the conflict and error status code. The latter should take precedence.
 TEST_F(HAServiceTest, sendUpdatesControlResultConflict6ErrorPrecedenceMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);

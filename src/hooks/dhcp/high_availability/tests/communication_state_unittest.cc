@@ -118,18 +118,18 @@ public:
     /// successful leases.
     void reportSuccessfulLeasesV4Test();
 
-    /// @brief Test checking that invalid values not accepted when reporting
+    /// @brief Test that invalid values are not accepted when reporting
     /// rejected leases.
     void reportRejectedLeasesV4InvalidValuesTest();
 
-    /// @brief Test that gathering rejected leases works fine in DHCPv4 case.
+    /// @brief Test that gathering rejected leases works fine in the DHCPv6 case.
     void reportRejectedLeasesV6Test();
 
     /// @brief Test that rejected leases are cleared after reporting respective
     /// successful leases.
     void reportSuccessfulLeasesV6Test();
 
-    /// @brief Test checking that invalid values not accepted when reporting
+    /// @brief Test that invalid values are not accepted when reporting
     /// rejected leases.
     void reportRejectedLeasesV6InvalidValuesTest();
 
@@ -710,41 +710,52 @@ CommunicationStateTest::hasPartnerNewUnsentUpdatesTest() {
 
 void
 CommunicationStateTest::reportRejectedLeasesV4Test() {
+    // Initially, there should be no rejected leases.
     EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+    // Reject lease update.
     auto msg = createMessage4(DHCPREQUEST, 1, 0, 0);
     state_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
-
+    // Reject another lease update.
     msg = createMessage4(DHCPREQUEST, 2, 0, 0);
     state_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
 
+    // Reject lease update for a client using the same MAC
+    // address but different client identifier. It should
+    // be treated as a different lease.
     msg = createMessage4(DHCPREQUEST, 2, 1, 0);
     state_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(3, state_.getRejectedLeaseUpdatesCount());
 
+    // Clear rejected leases and make sure the counter
+    // is now 0.
     state_.clearRejectedLeaseUpdates();
     EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
 }
 
 void
 CommunicationStateTest::reportSuccessfulLeasesV4Test() {
+    // Initially, there should be no rejected leases.
     EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
     auto msg0 = createMessage4(DHCPREQUEST, 1, 0, 0);
+    // Reject lease update.
     state_.reportRejectedLeaseUpdate(msg0);
     EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
-
+    // Reject another lease update.
     auto msg1 = createMessage4(DHCPREQUEST, 2, 0, 0);
     state_.reportRejectedLeaseUpdate(msg1);
     EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
-
+    // Report successful lease for the first message.
+    // It should reduce the number of rejected lease
+    // updates.
     EXPECT_TRUE(state_.reportSuccessfulLeaseUpdate(msg0));
     EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
-
+    // Report successful lease update for another message.
     auto msg2 = createMessage4(DHCPREQUEST, 1, 1, 0);
     EXPECT_FALSE(state_.reportSuccessfulLeaseUpdate(msg2));
     EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
-
+    // There should be no rejected lease updates.
     EXPECT_TRUE(state_.reportSuccessfulLeaseUpdate(msg1));
     EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
 }
@@ -760,41 +771,50 @@ CommunicationStateTest::reportRejectedLeasesV4InvalidValuesTest() {
 
 void
 CommunicationStateTest::reportRejectedLeasesV6Test() {
+    // Initially, there should be no rejected leases.
     EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+    // Reject lease update.
     auto msg = createMessage6(DHCPV6_SOLICIT, 1, 0);
     state6_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
-
+    // Reject another lease update.
     msg = createMessage6(DHCPV6_SOLICIT, 2, 0);
     state6_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
-
+    // Reject it again. It should not affect the counter.
     msg = createMessage6(DHCPV6_SOLICIT, 2, 0);
     state6_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
-
+    // Clear rejected lease updates and make sure they
+    // are now 0.
     state6_.clearRejectedLeaseUpdates();
     EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
 }
 
 void
 CommunicationStateTest::reportSuccessfulLeasesV6Test() {
+    // Initially, there should be no rejected leases.
     EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+    // Reject lease update.
     auto msg0 = createMessage6(DHCPV6_SOLICIT, 1, 0);
     EXPECT_TRUE(state6_.reportRejectedLeaseUpdate(msg0));
     EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
-
+    // Reject another lease update.
     auto msg1 = createMessage6(DHCPV6_SOLICIT, 2, 0);
     EXPECT_TRUE(state6_.reportRejectedLeaseUpdate(msg1));
     EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
-
+    // Report successful lease for the first message.
+    // It should reduce the number of rejected lease
+    // updates.
     EXPECT_TRUE(state6_.reportSuccessfulLeaseUpdate(msg0));
     EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
-
+    // Report successful lease update for a lease that wasn't
+    // rejected. It should not affect the counter.
     auto msg2 = createMessage6(DHCPV6_SOLICIT, 3, 0);
     EXPECT_FALSE(state6_.reportSuccessfulLeaseUpdate(msg2));
     EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
-
+    // Report successful lease update for the last lease.
+    // The counter should now be 0.
     EXPECT_TRUE(state6_.reportSuccessfulLeaseUpdate(msg1));
     EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
 }

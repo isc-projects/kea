@@ -192,6 +192,19 @@ public:
     /// @return true if communication is interrupted, false otherwise.
     bool isCommunicationInterrupted() const;
 
+protected:
+
+    /// @brief Convenience function attempting to retrieve client
+    /// identifier from the DHCP message.
+    ///
+    /// @param message DHCPv4 or DHCPv6 message.
+    /// @param option_type code of the option holding the client id.
+    /// @return vector containing the client identifier or an empty
+    /// vector if it does not exist.
+    static std::vector<uint8_t> getClientId(const dhcp::PktPtr& message,
+                                            const uint16_t option_type);
+public:
+
     /// @brief Checks if the DHCP message appears to be unanswered.
     ///
     /// This method is used to provide the communication state with a
@@ -304,7 +317,7 @@ public:
     ///  a conflict.
     /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) = 0;
+    virtual bool reportRejectedLeaseUpdate(const dhcp::PktPtr& message) = 0;
 
     /// @brief Marks the lease update successful.
     ///
@@ -315,7 +328,7 @@ public:
     /// successful.
     /// @return true when the lease was marked "in conflict" and it is
     /// now cleared.
-    virtual bool reportSuccessfulLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message) = 0;
+    virtual bool reportSuccessfulLeaseUpdate(const dhcp::PktPtr& message) = 0;
 
     /// @brief Clears rejected client leases.
     virtual void clearRejectedLeaseUpdates() = 0;
@@ -699,7 +712,7 @@ public:
     ///  a conflict.
     /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
+    virtual bool reportRejectedLeaseUpdate(const dhcp::PktPtr& message);
 
     /// @brief Marks the lease update successful.
     ///
@@ -710,7 +723,7 @@ public:
     /// successful.
     /// @return true when the lease was marked "in conflict" and it is
     /// now cleared.
-    virtual bool reportSuccessfulLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
+    virtual bool reportSuccessfulLeaseUpdate(const dhcp::PktPtr& message);
 
     /// @brief Clears rejected client leases.
     virtual void clearRejectedLeaseUpdates();
@@ -767,7 +780,7 @@ protected:
         >;
 
     /// @brief Structure holding information about the client which has
-    /// send the packet being analyzed.
+    /// sent the packet being analyzed.
     struct ConnectingClient4 {
         std::vector<uint8_t> hwaddr_;
         std::vector<uint8_t> clientid_;
@@ -889,7 +902,7 @@ public:
     ///  a conflict.
     /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
+    virtual bool reportRejectedLeaseUpdate(const dhcp::PktPtr& message);
 
     /// @brief Marks the lease update successful.
     ///
@@ -900,7 +913,7 @@ public:
     /// successful.
     /// @return true when the lease was marked "in conflict" and it is
     /// now cleared.
-    virtual bool reportSuccessfulLeaseUpdate(const boost::shared_ptr<dhcp::Pkt>& message);
+    virtual bool reportSuccessfulLeaseUpdate(const dhcp::PktPtr& message);
 
     /// @brief Clears rejected client leases.
     virtual void clearRejectedLeaseUpdates();
