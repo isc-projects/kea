@@ -89,6 +89,7 @@ extern const isc::log::MessageID HA_MAINTENANCE_START_HANDLER_FAILED;
 extern const isc::log::MessageID HA_MISSING_CONFIGURATION;
 extern const isc::log::MessageID HA_PAUSE_CLIENT_LISTENER_FAILED;
 extern const isc::log::MessageID HA_PAUSE_CLIENT_LISTENER_ILLEGAL;
+extern const isc::log::MessageID HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION;
 extern const isc::log::MessageID HA_RESET_COMMUNICATIONS_FAILED;
 extern const isc::log::MessageID HA_RESET_FAILED;
 extern const isc::log::MessageID HA_RESET_HANDLER_FAILED;

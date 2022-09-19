@@ -1115,9 +1115,7 @@ HAService::shouldTerminate() const {
         communication_state_->clockSkewShouldWarn();
         // Check if we should terminate because the number of rejected leases
         // has been exceeded.
-        should_terminate =
-            config_->getMaxRejectedLeaseUpdates() &&
-            (config_->getMaxRejectedLeaseUpdates() <= communication_state_->getRejectedLeaseUpdatesCount());
+        should_terminate = communication_state_->rejectedLeaseUpdatesShouldTerminate();
     }
 
     return (should_terminate);

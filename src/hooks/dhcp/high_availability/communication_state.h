@@ -430,6 +430,28 @@ private:
 
 public:
 
+    /// @brief Indicates whether the HA service should enter "terminated"
+    /// state due to excessive number of rejected lease updates.
+    ///
+    /// @return true if the number of rejected lease updates is equal or
+    /// exceeds the value of max-rejected-lease-updates, false when the
+    /// max-rejected-lease-updates is 0 or is greater than the current
+    /// number of rejected lease updates.
+    bool rejectedLeaseUpdatesShouldTerminate() const;
+
+private:
+
+    /// @brief Indicates whether the HA service should enter "terminated"
+    /// state due to excessive number of rejected lease updates.
+    ///
+    /// @return true if the number of rejected lease updates is equal or
+    /// exceeds the value of max-rejected-lease-updates, false when the
+    /// max-rejected-lease-updates is 0 or is greater than the current
+    /// number of rejected lease updates.
+    bool rejectedLeaseUpdatesShouldTerminateInternal() const;
+
+public:
+
     /// @brief Provide partner's notion of time so the new clock skew can be
     /// calculated.
     ///

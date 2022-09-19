@@ -381,7 +381,26 @@ CommunicationState::clockSkewShouldTerminateInternal() const {
                   .arg(logFormatClockSkewInternal());
         return (true);
     }
+    return (false);
+}
 
+bool
+CommunicationState::rejectedLeaseUpdatesShouldTerminate() const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (rejectedLeaseUpdatesShouldTerminateInternal());
+    } else {
+        return (rejectedLeaseUpdatesShouldTerminateInternal());
+    }
+}
+
+bool
+CommunicationState::rejectedLeaseUpdatesShouldTerminateInternal() const {
+    if (config_->getMaxRejectedLeaseUpdates() &&
+        (config_->getMaxRejectedLeaseUpdates() <= getRejectedLeaseUpdatesCount())) {
+        LOG_ERROR(ha_logger, HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION);
+        return (true);
+    }
     return (false);
 }
 

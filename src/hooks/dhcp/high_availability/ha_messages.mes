@@ -504,6 +504,12 @@ listener thread pools from a worker thread. This error indicates that a command
 run on the listener threads is trying to use a critical section which would
 result in a dead-lock.
 
+% HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION too many rejected lease updates cause the HA service to terminate
+This error message is issued when the HA service terminates because the
+number of lease updates for which a conflict status code was returned
+by the partner exceeds the limit set with max-rejected-lease-updates
+configuration parameter.
+
 % HA_RESET_COMMUNICATIONS_FAILED failed to send ha-reset command to %1: %2
 This warning message indicates a problem with communication with a HA peer
 while sending the ha-reset command. The first argument specifies a remote

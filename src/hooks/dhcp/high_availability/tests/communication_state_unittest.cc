@@ -98,6 +98,10 @@ public:
     /// for logging.
     void logFormatClockSkewTest();
 
+    /// @brief This test verifies that too many rejected lease updates cause
+    /// the service termination.
+    void rejectedLeaseUpdatesTerminateTest();
+
     /// @brief Tests that the communication state report is correct.
     void getReportTest();
 
@@ -607,6 +611,19 @@ CommunicationStateTest::logFormatClockSkewTest() {
     EXPECT_EQ(expected, log);
 }
 
+void
+CommunicationStateTest::rejectedLeaseUpdatesTerminateTest() {
+    EXPECT_FALSE(state_.rejectedLeaseUpdatesShouldTerminate());
+    // Reject several lease updates but do not exceed the limit.
+    for (auto i = 0; i < 9; ++i) {
+        ASSERT_NO_THROW(state_.reportRejectedLeaseUpdate(createMessage4(DHCPDISCOVER, i, i, 0)));
+    }
+    EXPECT_FALSE(state_.rejectedLeaseUpdatesShouldTerminate());
+    // Add one more. It should exceed the limit.
+    ASSERT_NO_THROW(state_.reportRejectedLeaseUpdate(createMessage4(DHCPDISCOVER, 9, 9, 0)));
+    EXPECT_TRUE(state_.rejectedLeaseUpdatesShouldTerminate());
+}
+
 // Tests that the communication state report is correct.
 void
 CommunicationStateTest::getReportTest() {
@@ -930,6 +947,15 @@ TEST_F(CommunicationStateTest, clockSkewTest) {
 TEST_F(CommunicationStateTest, clockSkewTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     clockSkewTest();
+}
+
+TEST_F(CommunicationStateTest, rejectedLeaseUpdatesTerminateTest) {
+    rejectedLeaseUpdatesTerminateTest();
+}
+
+TEST_F(CommunicationStateTest, rejectedLeaseUpdatesTerminateTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    rejectedLeaseUpdatesTerminateTest();
 }
 
 TEST_F(CommunicationStateTest, logFormatClockSkewTest) {

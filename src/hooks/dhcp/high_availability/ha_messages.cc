@@ -88,6 +88,7 @@ extern const isc::log::MessageID HA_MAINTENANCE_START_HANDLER_FAILED = "HA_MAINT
 extern const isc::log::MessageID HA_MISSING_CONFIGURATION = "HA_MISSING_CONFIGURATION";
 extern const isc::log::MessageID HA_PAUSE_CLIENT_LISTENER_FAILED = "HA_PAUSE_CLIENT_LISTENER_FAILED";
 extern const isc::log::MessageID HA_PAUSE_CLIENT_LISTENER_ILLEGAL = "HA_PAUSE_CLIENT_LISTENER_ILLEGAL";
+extern const isc::log::MessageID HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION = "HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION";
 extern const isc::log::MessageID HA_RESET_COMMUNICATIONS_FAILED = "HA_RESET_COMMUNICATIONS_FAILED";
 extern const isc::log::MessageID HA_RESET_FAILED = "HA_RESET_FAILED";
 extern const isc::log::MessageID HA_RESET_HANDLER_FAILED = "HA_RESET_HANDLER_FAILED";
@@ -195,6 +196,7 @@ const char* values[] = {
     "HA_MISSING_CONFIGURATION", "high-availability parameter not specified for High Availability hooks library",
     "HA_PAUSE_CLIENT_LISTENER_FAILED", "Pausing multi-threaded HTTP processing failed: %1",
     "HA_PAUSE_CLIENT_LISTENER_ILLEGAL", "Pausing multi-threaded HTTP processing failed: %1",
+    "HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION", "too many rejected lease updates cause the HA service to terminate",
     "HA_RESET_COMMUNICATIONS_FAILED", "failed to send ha-reset command to %1: %2",
     "HA_RESET_FAILED", "failed to reset HA state machine of %1: %2",
     "HA_RESET_HANDLER_FAILED", "ha-reset command failed: %1",
