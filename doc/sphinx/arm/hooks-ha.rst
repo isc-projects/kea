@@ -665,6 +665,7 @@ only difference that ``this-server-name`` should be set to "server2" and
                    "max-response-delay": 60000,
                    "max-ack-delay": 5000,
                    "max-unacked-clients": 5,
+                   "max-rejected-lease-updates": 10,
                    "delayed-updates-limit": 100,
                    "peers": [{
                        "name": "server1",
@@ -762,6 +763,21 @@ respect to HA:
    the ``partner-down`` state immediately. The default value of this parameter
    is 10.
 
+-  ``max-rejected-lease-updates`` - specifies how many lease updates for distinct
+   clients can fail due to a conflict between the lease and the partner configuration
+   or state before the server transitions to the ``terminated`` state. Conflict
+   can be a sign of a misconfiguration. Usually, one or several conflicted
+   leases are acceptable because they affect only a few devices. However, if
+   the conflicts occur for many devices (e.g., entire subnet), the HA service
+   becomes unreliable, should be terminated, and the problem should be manually
+   corrected by an administrator. It is up to the administrator to select
+   the highest acceptable value of ``max-rejected-lease-updates``. The default
+   value is 10. The special value of 0 configures the server to never terminate
+   the HA service due to the lease conflicts. If the value is 1, the server
+   transitions to the ``terminated`` state when the first conflict occurs.
+   This parameter does not pertain to the conflicting lease updates sent to
+   the backup servers.
+
 -  ``delayed-updates-limit`` - specifies the maximum number of lease updates
    which can be queued while the server is in the ``communication-recovery``
    state. This parameter was introduced in Kea 1.9.4. The special value of 0
@@ -769,6 +785,18 @@ respect to HA:
    state and the server behaves as in earlier Kea versions, i.e. if the server
    cannot reach its partner, it goes straight into the ``partner-down`` state.
    The default value of this parameter is 100.
+
+.. note::
+
+   The ``max-rejected-lease-updates`` parameter has been introduced in Kea 2.3.1
+   release. Earlier, the server did not differentiate between a lease update
+   failure due to a dead partner and conflicts (e.g., configuration issues).
+   As a result, the server could sometimes transition to the ``partner-down``
+   state even though the partner was operating normally, but only some leases
+   had issues. Conflicts should no longer cause such a transition. However,
+   depending on the ``max-rejected-lease-updates`` setting, too many conflicts
+   can lead to the High Availability service termination. In that case, both
+   servers continue to respond to DHCP queries but no longer send lease updates.
 
 The values of ``max-ack-delay`` and ``max-unacked-clients`` must be selected
 carefully, taking into account the specifics of the network in which the DHCP
@@ -1031,6 +1059,7 @@ The following is an example configuration of the primary server in a
                    "max-response-delay": 60000,
                    "max-ack-delay": 5000,
                    "max-unacked-clients": 5,
+                   "max-rejected-lease-updates": 10,
                    "peers": [{
                        "name": "server1",
                        "url": "http://192.168.56.33:8000/",
@@ -1150,8 +1179,8 @@ the backup servers.
 Many of the parameters present in the ``load-balancing`` and ``hot-standby``
 configuration examples are not relevant in the ``passive-backup`` mode, thus
 they are not specified here. For example: ``heartbeat-delay``,
-``max-unacked-clients``, and others related to the automatic failover mechanism
-should not be specified in the ``passive-backup`` mode.
+``max-unacked-clients``, ``max-rejected-lease-updates`` and others related to
+the failover mechanism should not be specified in the ``passive-backup`` mode.
 
 The ``wait-backup-ack`` is a boolean parameter not present in previous examples.
 It defaults to ``false`` and must not be modified in the ``load-balancing`` and
