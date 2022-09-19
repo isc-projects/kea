@@ -2989,26 +2989,83 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
     // Check if the status code of the first response. We don't support multiple
     // at this time, because we always send a request to a single location.
     ConstElementPtr args = parseAnswer(rcode, body->get(0));
-    if ((rcode != CONTROL_RESULT_SUCCESS) &&
-        (rcode != CONTROL_RESULT_EMPTY)) {
-        std::ostringstream s;
+    if (rcode == CONTROL_RESULT_SUCCESS) {
+        return (args);
+    }
+
+    std::ostringstream s;
+
+    // The empty status can occur for the lease6-bulk-apply command. In that
+    // case, the response may contain conflicted or erred leases within the
+    // arguments, rather than globally. For other error cases let's construct
+    // the error message from tyhe global values.
+    if (rcode != CONTROL_RESULT_EMPTY) {
         // Include an error text if available.
         if (args && args->getType() == Element::string) {
             s << args->stringValue() << ", ";
         }
         // Include an error code.
         s << "error code " << rcode;
-
-        switch (rcode) {
-        case CONTROL_RESULT_COMMAND_UNSUPPORTED:
-            isc_throw(CommandUnsupportedError, s.str());
-        case CONTROL_RESULT_CONFLICT:
-            isc_throw(ConflictError, s.str());
-        default:
-            isc_throw(CtrlChannelError, s.str());
-        }
     }
 
+    switch (rcode) {
+    case CONTROL_RESULT_COMMAND_UNSUPPORTED:
+        isc_throw(CommandUnsupportedError, s.str());
+
+    case CONTROL_RESULT_CONFLICT:
+        isc_throw(ConflictError, s.str());
+
+    case CONTROL_RESULT_EMPTY:
+        // Handle the lease6-bulk-apply error cases.
+        if (args && (args->getType() == Element::map)) {
+            auto failed_leases = args->get("failed-leases");
+            if (!failed_leases || (failed_leases->getType() != Element::list)) {
+                // If there are no failed leases there is nothing to do.
+                break;
+            }
+            auto conflict = false;
+            ConstElementPtr conflict_error_message;
+            for (auto i = 0; i < failed_leases->size(); ++i) {
+                auto lease = failed_leases->get(i);
+                if (!lease || lease->getType() != Element::map) {
+                    continue;
+                }
+                auto result = lease->get("result");
+                if (!result || result->getType() != Element::integer) {
+                    continue;
+                }
+                auto error_message = lease->get("error-message");
+                // Error status code take precedence over the conflict.
+                if (result->intValue() == CONTROL_RESULT_ERROR) {
+                    if (error_message && error_message->getType()) {
+                        s << error_message->stringValue() << ", ";
+                    }
+                    s << "error code " << result->intValue();
+                    isc_throw(CtrlChannelError, s.str());
+                }
+                if (result->intValue() == CONTROL_RESULT_CONFLICT) {
+                    // Let's record the conflict but there may still be some
+                    // leases with an error status code, so do not throw the
+                    // conflict exception yet.
+                    conflict = true;
+                    conflict_error_message = error_message;
+                }
+            }
+            if (conflict) {
+                // There are no errors. There are only conflicts. Throw
+                // appropriate exception.
+                if (conflict_error_message &&
+                    (conflict_error_message->getType() == Element::string)) {
+                    s << conflict_error_message->stringValue() << ", ";
+                }
+                s << "error code " << CONTROL_RESULT_CONFLICT;
+                isc_throw(ConflictError, s.str());
+            }
+        }
+        break;
+    default:
+        isc_throw(CtrlChannelError, s.str());
+    }
     return (args);
 }
 

@@ -927,12 +927,18 @@ public:
         ParkingLotPtr parking_lot(new ParkingLot());
         ParkingLotHandlePtr parking_lot_handle(new ParkingLotHandle(parking_lot));
 
+        DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
+
         // Create query.
         Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+        OptionPtr opt_client_id(new Option(Option::V6,
+                                           D6O_CLIENTID,
+                                           duid->getDuid().begin(),
+                                           duid->getDuid().end()));
+        query->addOption(opt_client_id);
 
         // Create leases collection and put the lease there.
         Lease6CollectionPtr leases6(new Lease6Collection());
-        DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
         Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"), duid,
                                     1234, 50, 60, 1));
         leases6->push_back(lease6);
@@ -1892,6 +1898,131 @@ public:
         EXPECT_TRUE(update_request2);
     }
 
+    /// @brief Test the scenario when the servers receiving a lease update
+    /// return the conflict status code.
+    void testSendUpdatesControlResultConflict6() {
+        // Crate a dummy lease for which a conflict status code is returned.
+        auto failed_lease = Element::createMap();
+        failed_lease->set("type",
+                          Element::create("IA_PD"));
+        failed_lease->set("ip-address",
+                          Element::create("2001:db8:1::"));
+        failed_lease->set("subnet-id",
+                          Element::create(2));
+        failed_lease->set("result",
+                          Element::create(CONTROL_RESULT_CONFLICT));
+        failed_lease->set("error-message",
+                          Element::create("failed to create lease"));
+
+        // Create the "failed-leases" list.
+        auto failed_leases = Element::createList();
+        failed_leases->add(failed_lease);
+
+        // Add the list to the arguments.
+        ElementPtr arguments = Element::createMap();
+        arguments->set("failed-leases", failed_leases);
+
+        // Active server returns an empty status code to indicate that no lease
+        // has been created. It should cause the HA service to look into the
+        // status codes for individual leases.
+        factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_EMPTY);
+        factory3_->getResponseCreator()->setControlResult(CONTROL_RESULT_CONFLICT);
+
+        // Configure the server to return our response.
+        factory2_->getResponseCreator()->setArguments("lease6-bulk-apply",
+                                                      arguments);
+
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        testSendLeaseUpdates6([] {
+            ADD_FAILURE() << "unpark function called but expected that "
+                "the packet is dropped";
+        }, false, 1);
+
+        // Ensure that the server has recorded a lease update conflict. The conflict
+        // reported by the backup server should not count.
+        EXPECT_EQ(1, service_->communication_state_->getRejectedLeaseUpdatesCount());
+
+        // Change the active server's response to success. The initially rejected
+        // lease update should no longer be tracked.
+        factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
+
+        bool unpark_called = false;
+        testSendLeaseUpdates6([&unpark_called] {
+            unpark_called = true;
+        }, false, 1, MyState(HA_LOAD_BALANCING_ST), true, false);
+        EXPECT_TRUE(unpark_called);
+        EXPECT_EQ(0, service_->communication_state_->getRejectedLeaseUpdatesCount());
+    }
+
+    /// @brief Test the scenario when the server receiving a lease update returns
+    /// both the conflict and error status code. The latter should take precedence.
+    void testSendUpdatesControlResultConflict6ErrorPrecedence() {
+        // Create the "failed-leases" list.
+        auto failed_leases = Element::createList();
+
+        // Crate a dummy lease for which a conflict status code is returned.
+        auto failed_lease = Element::createMap();
+        failed_lease->set("type",
+                          Element::create("IA_NA"));
+        failed_lease->set("ip-address",
+                          Element::create("2001:db8:1::"));
+        failed_lease->set("subnet-id",
+                          Element::create(2));
+        failed_lease->set("result",
+                          Element::create(CONTROL_RESULT_CONFLICT));
+        failed_lease->set("error-message",
+                          Element::create("failed to create lease"));
+        failed_leases->add(failed_lease);
+
+        // Create another lease with an error status code.
+        failed_lease = Element::createMap();
+        failed_lease->set("type",
+                          Element::create("IA_NA"));
+        failed_lease->set("ip-address",
+                          Element::create("2001:db8:1::2"));
+        failed_lease->set("subnet-id",
+                          Element::create(2));
+        failed_lease->set("result",
+                          Element::create(CONTROL_RESULT_ERROR));
+        failed_lease->set("error-message",
+                          Element::create("failed to create lease"));
+        failed_leases->add(failed_lease);
+
+        // Add the list to the arguments.
+        ElementPtr arguments = Element::createMap();
+        arguments->set("failed-leases", failed_leases);
+
+        // Active server returns an empty status code to indicate that no lease
+        // has been created. It should cause the HA service to look into the
+        // status codes for individual leases.
+        factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_EMPTY);
+
+        // Configure the server to return our response.
+        factory2_->getResponseCreator()->setArguments("lease6-bulk-apply",
+                                                      arguments);
+
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+        });
+
+        testSendLeaseUpdates6([] {
+            ADD_FAILURE() << "unpark function called but expected that "
+                "the packet is dropped";
+        }, false, 1);
+
+        // The conflict should not be recorded because the error status code
+        // takes precedence.
+        EXPECT_EQ(0, service_->communication_state_->getRejectedLeaseUpdatesCount());
+    }
+
     /// @brief Runs HAService::processSynchronize for the DHCPv4 server and
     /// returns a response.
     ///
@@ -2541,6 +2672,32 @@ TEST_F(HAServiceTest, sendUpdatesFailedLeases6) {
 TEST_F(HAServiceTest, sendUpdatesFailedLeases6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testSendUpdatesFailedLeases6();
+}
+
+// Test scenario when one of the servers to which a lease update is sent
+// returns a conflict status code.
+TEST_F(HAServiceTest, sendUpdatesControlResultConflict6) {
+    testSendUpdatesControlResultConflict6();
+}
+
+// Test scenario when one of the servers to which a lease update is sent
+// returns a conflict status code.
+TEST_F(HAServiceTest, sendUpdatesControlResultConflict6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesControlResultConflict6();
+}
+
+// Test the scenario when the server receiving a lease update returns
+// both the conflict and error status code. The latter should take precedence.
+TEST_F(HAServiceTest, sendUpdatesControlResultConflict6ErrorPrecedence) {
+    testSendUpdatesControlResultConflict6ErrorPrecedence();
+}
+
+// Test the scenario when the server receiving a lease update returns
+// both the conflict and error status code. The latter should take precedence.
+TEST_F(HAServiceTest, sendUpdatesControlResultConflict6ErrorPrecedenceMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesControlResultConflict6ErrorPrecedence();
 }
 
 // This test verifies that the heartbeat command is processed successfully.

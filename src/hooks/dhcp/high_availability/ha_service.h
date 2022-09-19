@@ -1099,6 +1099,10 @@ protected:
     /// @return Pointer to the response arguments.
     /// @throw CtrlChannelError if response is invalid or contains an error.
     /// @throw CommandUnsupportedError if sent command is unsupported.
+    /// @throw ConflictError if the response comprises the conflict status
+    /// code or it contains an empty status code in response to the
+    /// lease6-bulk-apply and there are leases with the conflict status
+    /// codes listed in the response.
     data::ConstElementPtr verifyAsyncResponse(const http::HttpResponsePtr& response,
                                               int& rcode);
 
