@@ -1,3 +1,15 @@
+2059.	[func]         marcin
+	The lease_cmds hook library returns a new "conflict" status
+	code indicating an issue with a lease update due to a mismatch
+	between the received lease and the server's configuration or
+	state. The HA hook library differentiates between this new
+	status and a general error and avoids transitioning to the
+	partner-down state when conflicts occur. The new
+	"max-rejected-lease-updates" parameter sets a limit for the
+	maximum number of conflicts before the server terminates the
+	HA service.
+	(Gitlab #2408)
+
 2058.	[build]		fdupont
 	kea-lfc is now built just after libraries.
 	(Gitlab #2526)
