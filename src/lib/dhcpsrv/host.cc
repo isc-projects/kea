@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -208,6 +208,20 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
     }
 }
 
+size_t
+Host::getIdentifierMaxLength(const IdentifierType& type) {
+    switch (type) {
+    case IDENT_HWADDR:
+        return (HWAddr::MAX_HWADDR_LEN);
+    case IDENT_DUID:
+        return (DUID::MAX_DUID_LEN);
+    default:
+        // In fact it is backend dependent but for compatibility we take
+        // the lowest value.
+        return (128);
+    }
+}
+
 const std::vector<uint8_t>&
 Host::getIdentifier() const {
     return (identifier_value_);
@@ -319,6 +333,10 @@ Host::setIdentifier(const uint8_t* identifier, const size_t len,
                     const IdentifierType& type) {
     if (len < 1) {
         isc_throw(BadValue, "invalid client identifier length 0");
+    } else if (len > getIdentifierMaxLength(type)) {
+        isc_throw(BadValue, "too long client identifier type "
+                  << getIdentifierName(type)
+                  << " length " << len);
     }
 
     identifier_type_ = type;
@@ -348,6 +366,13 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
         if (binary.empty()) {
             util::str::decodeFormattedHexString(identifier, binary);
         }
+
+        size_t len = binary.size();
+        if (len > getIdentifierMaxLength(identifier_type_)) {
+            // Message does not matter as it will be replaced below...
+            isc_throw(BadValue, "too long client identifier");
+        }
+
         // Successfully decoded the identifier, so let's use it.
         identifier_value_.swap(binary);
 
@@ -357,6 +382,11 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
         isc_throw(isc::BadValue, "invalid host identifier value '"
                       << identifier << "'");
     }
+}
+
+void
+Host::setIdentifierType(const IdentifierType& type) {
+    identifier_type_ = type;
 }
 
 void

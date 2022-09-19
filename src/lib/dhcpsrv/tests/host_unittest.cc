@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <dhcpsrv/host.h>
 #include <dhcp/option_space.h>
+#include <testutils/gtest_utils.h>
 #include <util/encode/hex.h>
 #include <util/range_utilities.h>
 #include <boost/scoped_ptr.hpp>
@@ -21,6 +22,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace std;
 
 namespace {
 
@@ -59,23 +61,32 @@ TEST(IPv6ResrvTest, toText) {
 // This test verifies that invalid prefix is rejected.
 TEST(IPv6ResrvTest, constructorInvalidPrefix) {
     // IPv4 address is invalid for IPv6 reservation.
-    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("10.0.0.1"), 128),
-                 isc::BadValue);
+    string expected = "invalid prefix '10.0.0.1' for new IPv6 reservation";
+    EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("10.0.0.1"), 128),
+                     isc::BadValue, expected);
     // Multicast address is invalid for IPv6 reservation.
-    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("ff02:1::2"), 128),
-                 isc::BadValue);
+    expected = "invalid prefix 'ff02:1::2' for new IPv6 reservation";
+    EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("ff02:1::2"), 128),
+                     isc::BadValue, expected);
 }
 
 // This test verifies that invalid prefix length is rejected.
 TEST(IPv6ResrvTest, constructiorInvalidPrefixLength) {
     ASSERT_NO_THROW(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"),
                               128));
-    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 129),
-                 isc::BadValue);
-    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 244),
-                 isc::BadValue);
-    EXPECT_THROW(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::"), 64),
-                 isc::BadValue);
+    string expected = "invalid prefix length '129' for new IPv6 reservation";
+    EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                               IOAddress("2001:db8:1::"), 129),
+                     isc::BadValue, expected);
+    expected = "invalid prefix length '244' for new IPv6 reservation";
+    EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                           IOAddress("2001:db8:1::"), 244),
+                     isc::BadValue, expected);
+    expected = "invalid prefix length '64' for reserved IPv6 address, ";
+    expected += "expected 128";
+    EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                               IOAddress("2001:db8:1::"), 64),
+                     isc::BadValue, expected);
 }
 
 // This test verifies that it is possible to modify prefix and its
@@ -94,14 +105,18 @@ TEST(IPv6ResrvTest, setPrefix) {
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
 
     // IPv4 address is invalid for IPv6 reservation.
-    EXPECT_THROW(resrv.set(IPv6Resrv::TYPE_NA, IOAddress("10.0.0.1"), 128),
-                 isc::BadValue);
+    string expected = "invalid prefix '10.0.0.1' for new IPv6 reservation";
+    EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_NA, IOAddress("10.0.0.1"), 128),
+                     isc::BadValue, expected);
     // IPv6 multicast address is invalid for IPv6 reservation.
-    EXPECT_THROW(resrv.set(IPv6Resrv::TYPE_NA, IOAddress("ff02::1:2"), 128),
-                 isc::BadValue);
+    expected = "invalid prefix 'ff02::1:2' for new IPv6 reservation";
+    EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_NA, IOAddress("ff02::1:2"), 128),
+                     isc::BadValue, expected);
     // Prefix length greater than 128 is invalid.
-    EXPECT_THROW(resrv.set(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 129),
-                 isc::BadValue);
+    expected = "invalid prefix length '129' for new IPv6 reservation";
+    EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_PD,
+                               IOAddress("2001:db8:1::"), 129),
+                     isc::BadValue, expected);
 }
 
 // This test checks that the equality operators work fine.
@@ -176,6 +191,15 @@ public:
     }
 };
 
+// This test verifies that expected identifier max length is returned.
+TEST_F(HostTest, getIdentifierMaxLength) {
+    EXPECT_EQ(20, Host::getIdentifierMaxLength(Host::IDENT_HWADDR));
+    EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_DUID));
+    EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_CIRCUIT_ID));
+    EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_CLIENT_ID));
+    EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_FLEX));
+}
+
 // This test verifies that correct identifier name is returned for
 // a given identifier name and that an error is reported for an
 // unsupported identifier name.
@@ -186,7 +210,9 @@ TEST_F(HostTest, getIdentifier) {
     EXPECT_EQ(Host::IDENT_CLIENT_ID, Host::getIdentifierType("client-id"));
     EXPECT_EQ(Host::IDENT_FLEX, Host::getIdentifierType("flex-id"));
 
-    EXPECT_THROW(Host::getIdentifierType("unsupported"), isc::BadValue);
+    string expected = "invalid client identifier type 'unsupported'";
+    EXPECT_THROW_MSG(Host::getIdentifierType("unsupported"),
+                     isc::BadValue, expected);
 }
 
 // This test verifies that it is possible to create a Host object
@@ -197,7 +223,7 @@ TEST_F(HostTest, createFromHWAddrString) {
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
                                         "somehost.example.org",
-                                        std::string(), std::string(),
+                                        string(), string(),
                                         IOAddress("192.0.0.2"),
                                         "server-hostname.example.org",
                                         "bootfile.efi", AuthKey("12345678"))));
@@ -220,14 +246,26 @@ TEST_F(HostTest, createFromHWAddrString) {
     EXPECT_FALSE(host->getContext());
 
     // Use invalid identifier name
-    EXPECT_THROW(Host("01:02:03:04:05:06", "bogus", SubnetID(1), SubnetID(2),
-                      IOAddress("192.0.2.3"), "somehost.example.org"),
-                 isc::BadValue);
+    string expected = "invalid client identifier type 'bogus'";
+    EXPECT_THROW_MSG(Host("01:02:03:04:05:06", "bogus",
+                          SubnetID(1), SubnetID(2),
+                          IOAddress("192.0.2.3"), "somehost.example.org"),
+                     isc::BadValue, expected);
 
     // Use invalid HW address.
-    EXPECT_THROW(Host("01:0203040506", "hw-address", SubnetID(1), SubnetID(2),
-                      IOAddress("192.0.2.3"), "somehost.example.org"),
-                 isc::BadValue);
+    expected = "invalid host identifier value '01:0203040506'";
+    EXPECT_THROW_MSG(Host("01:0203040506", "hw-address",
+                          SubnetID(1), SubnetID(2),
+                          IOAddress("192.0.2.3"), "somehost.example.org"),
+                     isc::BadValue, expected);
+
+    // Use too long HW address.
+    string too_long = "00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f";
+    too_long += ":10:11:12:13:14";
+    expected = "invalid host identifier value '" + too_long + "'";
+    EXPECT_THROW_MSG(Host(too_long, "hw-address", SubnetID(1), SubnetID(2),
+                          IOAddress("192.0.2.3"), "somehost.example.org"),
+                     isc::BadValue, expected);
 }
 
 // This test verifies that it is possible to create Host object using
@@ -255,14 +293,38 @@ TEST_F(HostTest, createFromDUIDString) {
     EXPECT_FALSE(host->getContext());
 
     // Use invalid DUID.
-    EXPECT_THROW(Host("bogus", "duid", SubnetID(1), SubnetID(2),
-                      IOAddress("192.0.2.3"), "somehost.example.org"),
-                 isc::BadValue);
+    string expected = "invalid host identifier value 'bogus'";
+    EXPECT_THROW_MSG(Host("bogus", "duid", SubnetID(1), SubnetID(2),
+                          IOAddress("192.0.2.3"), "somehost.example.org"),
+                     isc::BadValue, expected);
 
-    // Empty DUID is also not allowed.
-    EXPECT_THROW(Host("", "duid", SubnetID(1), SubnetID(2),
-                      IOAddress("192.0.2.3"), "somehost.example.org"),
-                 isc::BadValue);
+    // Empty DUID (and identifiers in general) is also not allowed.
+    expected = "empty host identifier used";
+    EXPECT_THROW_MSG(Host("", "duid", SubnetID(1), SubnetID(2),
+                          IOAddress("192.0.2.3"), "somehost.example.org"),
+                     isc::BadValue, expected);
+    EXPECT_THROW_MSG(Host("", "flex-id", SubnetID(1), SubnetID(2),
+                          IOAddress("192.0.2.3"), "somehost.example.org"),
+                     isc::BadValue, expected);
+
+    // Too long DUID (and identifiers in general, hardware addresses are
+    // shorter) is not allowed too.
+    string too_long = "00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f";
+    too_long += ":10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f";
+    too_long += ":20:21:22:23:24:25:26:27:28:29:2a:2b:2c:2d:2e:2f";
+    too_long += ":30:31:32:33:34:35:36:37:38:39:3a:3b:3c:3d:3e:3f";
+    too_long += ":40:41:42:43:44:45:46:47:48:49:4a:4b:4c:4d:4e:4f";
+    too_long += ":50:51:52:53:54:55:56:57:58:59:5a:5b:5c:5d:5e:5f";
+    too_long += ":60:61:62:63:64:65:66:67:68:69:6a:6b:6c:6d:6e:6f";
+    too_long += ":70:71:72:73:74:75:76:77:78:79:7a:7b:7c:7d:7e:7f";
+    too_long += ":ff";
+    expected = "invalid host identifier value '" + too_long + "'";
+    EXPECT_THROW_MSG(Host(too_long, "duid", SubnetID(1), SubnetID(2),
+                          IOAddress("192.0.2.3"), "somehost.example.org"),
+                     isc::BadValue, expected);
+    EXPECT_THROW_MSG(Host(too_long, "circuit-id", SubnetID(1), SubnetID(2),
+                          IOAddress("192.0.2.3"), "somehost.example.org"),
+                     isc::BadValue, expected);
 }
 
 // This test verifies that it is possible to create Host object using
@@ -279,7 +341,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
                                         "somehost.example.org",
-                                        std::string(), std::string(),
+                                        string(), string(),
                                         IOAddress("192.0.0.2"),
                                         "server-hostname.example.org",
                                         "bootfile.efi", AuthKey("0abc1234"))));
@@ -301,6 +363,21 @@ TEST_F(HostTest, createFromHWAddrBinary) {
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
     EXPECT_EQ("0ABC1234", host->getKey().toText());
     EXPECT_FALSE(host->getContext());
+
+    uint8_t too_long[21];
+    for (uint8_t i = 0; i < 21; ++i) {
+        too_long[i] = i;
+    }
+    string expected = "too long client identifier type hw-address length 21";
+    EXPECT_THROW_MSG(host.reset(new Host(too_long,
+                                         sizeof(too_long),
+                                         Host::IDENT_HWADDR,
+                                         SubnetID(1), SubnetID(2),
+                                         IOAddress("192.0.2.3"),
+                                         "somehost.example.org",
+                                         string(), string(),
+                                         IOAddress("192.0.0.2"))),
+                     isc::BadValue, expected);
 }
 
 // This test verifies that it is possible to create a Host object using
@@ -330,6 +407,19 @@ TEST_F(HostTest, createFromDuidBinary) {
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
     EXPECT_EQ("me.example.org", host->getHostname());
     EXPECT_FALSE(host->getContext());
+
+    uint8_t too_long[129];
+    for (uint8_t i = 0; i < 129; ++i) {
+        too_long[i] = i;
+    }
+    string expected = "too long client identifier type duid length 129";
+    EXPECT_THROW_MSG(host.reset(new Host(too_long,
+                                         sizeof(too_long),
+                                         Host::IDENT_DUID,
+                                         SubnetID(10), SubnetID(20),
+                                         IOAddress("192.0.2.5"),
+                                         "me.example.org")),
+                     isc::BadValue, expected);
 }
 
 // This test verifies that it is possible create Host instance using all
@@ -340,7 +430,7 @@ TEST_F(HostTest, createFromIdentifierBinary) {
     for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
         const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
         // Create identifier of variable length and fill with random values.
-        std::vector<uint8_t> identifier(random() % 14 + 6);
+        vector<uint8_t> identifier(random() % 14 + 6);
         util::fillRandom(identifier.begin(), identifier.end());
 
         // Try to create a Host instance using this identifier.
@@ -350,7 +440,7 @@ TEST_F(HostTest, createFromIdentifierBinary) {
                                             "me.example.org")));
 
         // Retrieve identifier from Host instance and check if it is correct.
-        const std::vector<uint8_t>& identifier_returned = host->getIdentifier();
+        const vector<uint8_t>& identifier_returned = host->getIdentifier();
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
@@ -370,7 +460,7 @@ TEST_F(HostTest, createFromIdentifierHex) {
     for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
         const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
         // Create identifier of a variable length.
-        std::vector<uint8_t> identifier(random() % 14 + 6);
+        vector<uint8_t> identifier(random() % 14 + 6);
         util::fillRandom(identifier.begin(), identifier.end());
 
         // HW address is a special case, because it must contain colons
@@ -381,10 +471,10 @@ TEST_F(HostTest, createFromIdentifierHex) {
         }
 
         // Convert identifier to hexadecimal representation.
-        const std::string identifier_hex = (hwaddr ?
+        const string identifier_hex = (hwaddr ?
                                             hwaddr->toText(false) :
                                             util::encode::encodeHex(identifier));
-        const std::string identifier_name = Host::getIdentifierName(type);
+        const string identifier_name = Host::getIdentifierName(type);
 
         // Try to create Host instance.
         ASSERT_NO_THROW(host.reset(new Host(identifier_hex, identifier_name,
@@ -396,7 +486,7 @@ TEST_F(HostTest, createFromIdentifierHex) {
 
         // Retrieve the identifier from the Host instance and verify if it
         // is correct.
-        const std::vector<uint8_t>& identifier_returned = host->getIdentifier();
+        const vector<uint8_t>& identifier_returned = host->getIdentifier();
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
@@ -415,17 +505,17 @@ TEST_F(HostTest, createFromIdentifierString) {
     // It is not allowed to specify HW address or DUID as a string in quotes.
     for (unsigned int i = 2; i < identifierTypeUpperBound(); ++i) {
         const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
-        const std::string identifier_name = Host::getIdentifierName(type);
+        const string identifier_name = Host::getIdentifierName(type);
 
         // Construct unique identifier for a host. This is a string
         // consisting of a word "identifier", hyphen and the name of
         // the identifier, e.g. "identifier-hw-address".
-        std::ostringstream identifier_without_quotes;
+        ostringstream identifier_without_quotes;
         identifier_without_quotes << "identifier-" << identifier_name;
 
         // Insert quotes to the identifier to indicate to the Host
         // constructor that it is encoded as a text.
-        std::ostringstream identifier;
+        ostringstream identifier;
         identifier << "'" << identifier_without_quotes.str() << "'";
 
         ASSERT_NO_THROW(host.reset(new Host(identifier.str(), identifier_name,
@@ -438,8 +528,8 @@ TEST_F(HostTest, createFromIdentifierString) {
         // Get the identifier from the Host and convert it back to the string
         // format, so as it can be compared with the identifier used during
         // Host object construction.
-        const std::vector<uint8_t>& identifier_returned = host->getIdentifier();
-        const std::string identifier_returned_str(identifier_returned.begin(),
+        const vector<uint8_t>& identifier_returned = host->getIdentifier();
+        const string identifier_returned_str(identifier_returned.begin(),
                                                   identifier_returned.end());
         // Exclude quotes in comparison. Quotes should have been removed.
         EXPECT_EQ(identifier_without_quotes.str(), identifier_returned_str);
@@ -470,7 +560,7 @@ TEST_F(HostTest, setIdentifierHex) {
 
         Host::IdentifierType type = static_cast<Host::IdentifierType>(j);
         // Create identifier of a variable length.
-        std::vector<uint8_t> identifier(random() % 14 + 6);
+        vector<uint8_t> identifier(random() % 14 + 6);
         util::fillRandom(identifier.begin(), identifier.end());
 
         // HW address is a special case, because it must contain colons
@@ -481,10 +571,10 @@ TEST_F(HostTest, setIdentifierHex) {
         }
 
         // Convert identifier to hexadecimal representation.
-        std::string identifier_hex = (hwaddr ?
+        string identifier_hex = (hwaddr ?
                                       hwaddr->toText(false) :
                                       util::encode::encodeHex(identifier));
-        std::string identifier_name = Host::getIdentifierName(type);
+        string identifier_name = Host::getIdentifierName(type);
 
         // Try to create Host instance.
         ASSERT_NO_THROW(host.reset(new Host(identifier_hex, identifier_name,
@@ -496,7 +586,7 @@ TEST_F(HostTest, setIdentifierHex) {
 
         // Retrieve the identifier from the Host instance and verify if it
         // is correct.
-        std::vector<uint8_t> identifier_returned = host->getIdentifier();
+        vector<uint8_t> identifier_returned = host->getIdentifier();
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
@@ -558,7 +648,7 @@ TEST_F(HostTest, setIdentifierBinary) {
 
         Host::IdentifierType type = static_cast<Host::IdentifierType>(j);
         // Create identifier of variable length and fill with random values.
-        std::vector<uint8_t> identifier(random() % 14 + 6);
+        vector<uint8_t> identifier(random() % 14 + 6);
         util::fillRandom(identifier.begin(), identifier.end());
 
         // Try to create a Host instance using this identifier.
@@ -568,7 +658,7 @@ TEST_F(HostTest, setIdentifierBinary) {
                                             "me.example.org")));
 
         // Retrieve identifier from Host instance and check if it is correct.
-        std::vector<uint8_t> identifier_returned = host->getIdentifier();
+        vector<uint8_t> identifier_returned = host->getIdentifier();
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
@@ -682,9 +772,9 @@ TEST_F(HostTest, setValues) {
     host->setNextServer(IOAddress("192.0.2.2"));
     host->setServerHostname("server-hostname.example.org");
     host->setBootFileName("bootfile.efi");
-    const std::vector<uint8_t>& random_value(AuthKey::getRandomKeyString());
+    const vector<uint8_t>& random_value(AuthKey::getRandomKeyString());
     host->setKey(AuthKey(random_value));
-    std::string user_context = "{ \"foo\": \"bar\" }";
+    string user_context = "{ \"foo\": \"bar\" }";
     host->setContext(Element::fromJSON(user_context));
     host->setNegative(true);
 
@@ -706,21 +796,26 @@ TEST_F(HostTest, setValues) {
     EXPECT_EQ(IOAddress::IPV4_ZERO_ADDRESS(), host->getIPv4Reservation());
 
     // An IPv6 address can't be used for IPv4 reservations.
-    EXPECT_THROW(host->setIPv4Reservation(IOAddress("2001:db8:1::1")),
-                 isc::BadValue);
+    string expected = "address '2001:db8:1::1' is not a valid IPv4 address";
+    EXPECT_THROW_MSG(host->setIPv4Reservation(IOAddress("2001:db8:1::1")),
+                     isc::BadValue, expected);
     // Zero address can't be set, the removeIPv4Reservation should be
     // used instead.
-    EXPECT_THROW(host->setIPv4Reservation(IOAddress::IPV4_ZERO_ADDRESS()),
-                 isc::BadValue);
+    expected = "must not make reservation for the '0.0.0.0' address";
+    EXPECT_THROW_MSG(host->setIPv4Reservation(IOAddress::IPV4_ZERO_ADDRESS()),
+                     isc::BadValue, expected);
     // Broadcast address can't be set.
-    EXPECT_THROW(host->setIPv4Reservation(IOAddress::IPV4_BCAST_ADDRESS()),
-                 isc::BadValue);
+    expected = "must not make reservation for the '255.255.255.255' address";
+    EXPECT_THROW_MSG(host->setIPv4Reservation(IOAddress::IPV4_BCAST_ADDRESS()),
+                     isc::BadValue, expected);
 
     // Broadcast and IPv6 are invalid addresses for next server.
-    EXPECT_THROW(host->setNextServer(asiolink::IOAddress::IPV4_BCAST_ADDRESS()),
-                                     isc::BadValue);
-    EXPECT_THROW(host->setNextServer(IOAddress("2001:db8:1::1")),
-                                     isc::BadValue);
+    expected = "invalid next server address '255.255.255.255'";
+    EXPECT_THROW_MSG(host->setNextServer(asiolink::IOAddress::IPV4_BCAST_ADDRESS()),
+                     isc::BadValue, expected);
+    expected = "next server address '2001:db8:1::1' is not a valid IPv4 address";
+    EXPECT_THROW_MSG(host->setNextServer(IOAddress("2001:db8:1::1")),
+                     isc::BadValue, expected);
 }
 
 // Test that Host constructors initialize client classes from string.
@@ -972,7 +1067,7 @@ TEST_F(HostTest, toText) {
     );
 
     // Add invisible user context
-    std::string user_context = "{ \"foo\": \"bar\" }";
+    string user_context = "{ \"foo\": \"bar\" }";
     host->setContext(Element::fromJSON(user_context));
 
     // Make sure that the output is correct,
@@ -1086,7 +1181,7 @@ TEST_F(HostTest, unparse) {
     );
 
     // Add user context
-    std::string user_context = "{ \"comment\": \"a host reservation\" }";
+    string user_context = "{ \"comment\": \"a host reservation\" }";
     host->setContext(Element::fromJSON(user_context));
 
     // Make sure that the output is correct,
@@ -1249,7 +1344,7 @@ TEST_F(HostTest, keys) {
     EXPECT_EQ("", host->getKey().toText());
 
     // now set to random value
-    const std::vector<uint8_t>& random_key(AuthKey::getRandomKeyString());
+    const vector<uint8_t>& random_key(AuthKey::getRandomKeyString());
     host->setKey(AuthKey(random_key));
     EXPECT_EQ(random_key, host->getKey().getAuthKey());
 }
@@ -1257,8 +1352,8 @@ TEST_F(HostTest, keys) {
 // Test verifies if getRandomKeyString can generate 1000 keys which are random
 TEST_F(HostTest, randomKeys) {
     // use hashtable and set size to 1000
-    std::unordered_set<std::vector<uint8_t>,
-                       boost::hash<std::vector<uint8_t>>> keys;
+    std::unordered_set<vector<uint8_t>,
+                       boost::hash<vector<uint8_t>>> keys;
 
     int dup_element = 0;
     const uint16_t max_iter = 1000;
@@ -1268,7 +1363,7 @@ TEST_F(HostTest, randomKeys) {
     keys.reserve(max_hash_size);
 
     for (iter_num = 0; iter_num < max_iter; iter_num++) {
-        std::vector<uint8_t> key = AuthKey::getRandomKeyString();
+        vector<uint8_t> key = AuthKey::getRandomKeyString();
         if (keys.count(key)) {
             dup_element++;
             break;
@@ -1291,11 +1386,11 @@ TEST(AuthKeyTest, basicTest) {
     ASSERT_EQ(16, longKey.getAuthKey().size());
 
     // Check the setters for valid and invalid string
-    std::string key16ByteStr = "000102030405060708090A0B0C0D0E0F";
-    std::vector<uint8_t> key16ByteBin = {
+    string key16ByteStr = "000102030405060708090A0B0C0D0E0F";
+    vector<uint8_t> key16ByteBin = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf
     };
-    std::string key18ByteStr = "0123456789abcdefgh";
+    string key18ByteStr = "0123456789abcdefgh";
 
     AuthKey defaultTestKey;
 
@@ -1304,7 +1399,9 @@ TEST(AuthKeyTest, basicTest) {
     ASSERT_EQ(key16ByteStr, defaultTestKey.toText());
     ASSERT_EQ(key16ByteBin, defaultTestKey.getAuthKey());
 
-    ASSERT_THROW(defaultTestKey.setAuthKey(key18ByteStr), BadValue);
+    string expected = "bad auth key: attempt to decode a value not in base16 char set";
+    ASSERT_THROW_MSG(defaultTestKey.setAuthKey(key18ByteStr),
+                     BadValue, expected);
 }
 
 } // end of anonymous namespace
