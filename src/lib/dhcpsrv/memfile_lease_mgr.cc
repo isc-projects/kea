@@ -1990,14 +1990,26 @@ Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startLeaseStatsQuery4() {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_, subnet_id));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
@@ -2006,21 +2018,39 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_
                                                    const SubnetID& last_subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_, first_subnet_id,
                                                          last_subnet_id));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startLeaseStatsQuery6() {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_, subnet_id));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
@@ -2029,7 +2059,13 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_
                                                    const SubnetID& last_subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_, first_subnet_id,
                                                          last_subnet_id));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 

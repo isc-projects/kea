@@ -718,7 +718,6 @@ int
 StatCmds::statLease4GetHandler(CalloutHandle& handle) {
     try {
         LeaseStatCmdsImpl impl;
-        MultiThreadingCriticalSection cs;
         return (impl.statLease4GetHandler(handle));
     } catch (const std::exception& ex) {
 
@@ -732,7 +731,6 @@ int
 StatCmds::statLease6GetHandler(CalloutHandle& handle) {
     try {
         LeaseStatCmdsImpl impl;
-        MultiThreadingCriticalSection cs;
         return (impl.statLease6GetHandler(handle));
     } catch (const std::exception& ex) {
 
