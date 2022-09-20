@@ -1,3 +1,8 @@
+2061.	[bug*]		fdupont
+	Enforce length limits on host identifier (20 for hardware
+	address, 128 for DUID and other types).
+	(Gitlab #2557)
+
 2060.	[build]		andrei
 	Two scripts that are used for checking YANG modules now
 	automatically detect the location of the yanglint tool and its
