@@ -383,8 +383,8 @@ AdaptorConfig::sanitizeRequireClassesPools(ConstElementPtr pools) {
 
     for (size_t i = 0; i < pools->size(); ++i) {
         ElementPtr pool = pools->getNonConst(i);
-        ConstElementPtr requires = pool->get("require-client-classes");
-        if (requires && requires->empty()) {
+        ConstElementPtr require = pool->get("require-client-classes");
+        if (require && require->empty()) {
             pool->remove("require-client-classes");
         }
     }
@@ -401,8 +401,8 @@ AdaptorConfig::sanitizeRequireClassesSubnets(ConstElementPtr subnets) {
         ElementPtr subnet = subnets->getNonConst(i);
         sanitizeRequireClassesPools(subnet->get("pools"));
         sanitizeRequireClassesPools(subnet->get("pd-pools"));
-        ConstElementPtr requires = subnet->get("require-client-classes");
-        if (requires && requires->empty()) {
+        ConstElementPtr require = subnet->get("require-client-classes");
+        if (require && require->empty()) {
             subnet->remove("require-client-classes");
         }
     }
@@ -419,8 +419,8 @@ AdaptorConfig::requireClassesSharedNetworks(ConstElementPtr networks,
     for (size_t i = 0; i < networks->size(); ++i) {
         ElementPtr network = networks->getNonConst(i);
         sanitizeRequireClassesSubnets(network->get(subsel));
-        ConstElementPtr requires = network->get("require-client-classes");
-        if (requires && requires->empty()) {
+        ConstElementPtr require = network->get("require-client-classes");
+        if (require && require->empty()) {
             network->remove("require-client-classes");
         }
     }
