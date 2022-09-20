@@ -355,5 +355,49 @@ LeaseMgr::getDBVersion() {
     isc_throw(NotImplemented, "LeaseMgr::getDBVersion() called");
 }
 
+
+Lease4Collection
+LeaseMgr::getLeases4ByRelayId(const OptionBuffer& /* relay_id */,
+                              const IOAddress& /* link_addr */,
+                              const IOAddress& /* lower_bound_address */,
+                              const LeasePageSize& /* page_size */,
+                              const time_t& /* qry_start_time = 0 */,
+                              const time_t& /* qry_end_time = 0 */) {
+    isc_throw(NotImplemented, __FILE__ << ":" << __LINE__ << " - " << __FUNCTION__);
+}
+
+Lease4Collection
+LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
+                               const IOAddress& /* link_addr */,
+                               const IOAddress& /* lower_bound_address */,
+                               const LeasePageSize& /* page_size */,
+                               const time_t& /* qry_start_time = 0 */,
+                               const time_t& /* qry_end_time = 0 */) {
+    isc_throw(NotImplemented, __FILE__ << ":" << __LINE__ << " - " << __FUNCTION__);
+}
+
+Lease6Collection
+LeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
+                              const IOAddress& /* link_addr */,
+                              const IOAddress& /* lower_bound_address */,
+                              const LeasePageSize& /* page_size */) {
+    isc_throw(NotImplemented, __FILE__ << ":" << __LINE__ << " - " << __FUNCTION__);
+}
+
+Lease6Collection
+LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
+                               const IOAddress& /* link_addr */,
+                               const IOAddress& /* lower_bound_address */,
+                               const LeasePageSize& /* page_size*/) {
+    isc_throw(NotImplemented, __FILE__ << ":" << __LINE__ << " - " << __FUNCTION__);
+}
+
+Lease6Collection
+LeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
+                           const IOAddress& /* lower_bound_address */,
+                           const LeasePageSize& /* page_size */) {
+    isc_throw(NotImplemented, __FILE__ << ":" << __LINE__ << " - " << __FUNCTION__);
+}
+
 } // namespace isc::dhcp
 } // namespace isc

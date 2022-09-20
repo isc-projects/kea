@@ -813,6 +813,91 @@ public:
     /// @brief Clears the class-lease count map.
     virtual void clearClassLeaseCounts() = 0;
 
+    /// The following queries are used to fulfill Bulk LeaseQuery queries. They rely
+    /// on relay data contained in lease's user-context when the extended-store-info flag
+    /// is enabled.
+
+    /// @brief Returns existing IPv4 leases with a given relay-id
+    ///
+    /// @param relay_id DUID for relay_id of interest
+    /// @param link_addr limit results to leases on this link when not ::
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    /// @param qry_start_time when not zero, only leases whose CLTT is greater than
+    /// or equal to this value will be included
+    /// @param qry_stop_time when not zero, only leases whose CLTT is less than
+    /// or equal to this value will be included
+    ///
+    /// @return collection of IPv4 leases
+    virtual Lease4Collection getLeases4ByRelayId(const OptionBuffer& relay_id,
+                                                 const asiolink::IOAddress& link_addr,
+                                                 const asiolink::IOAddress& lower_bound_address,
+                                                 const LeasePageSize& page_size,
+                                                 const time_t& qry_start_time = 0,
+                                                 const time_t& qry_end_time = 0);
+
+    /// @brief Returns existing IPv4 leases with a given remote-id
+    ///
+    /// @param remote_id remote-id option data of interest
+    /// @param link_addr limit results to leases on this link when not ::
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    /// @param qry_start_time when not zero, only leases whose CLTT is greater than
+    /// or equal to this value will be included. Defaults to zero.
+    /// @param qry_stop_time when not zero, only leases whose CLTT is less than
+    /// or equal to this value will be included. Defaults to zero.
+    ///
+    /// @return collection of IPv4 leases
+    virtual Lease4Collection getLeases4ByRemoteId(const OptionBuffer& remote_id,
+                                                  const asiolink::IOAddress& link_addr,
+                                                  const asiolink::IOAddress& lower_bound_address,
+                                                  const LeasePageSize& page_size,
+                                                  const time_t& qry_start_time = 0,
+                                                  const time_t& qry_end_time = 0);
+
+    /// @brief Returns existing IPv6 leases with a given relay-id
+    ///
+    /// @param relay_id DUID for relay_id of interest
+    /// @param link_addr limit results to leases on this link when not ::
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return collection of IPv6 leases
+    virtual Lease6Collection getLeases6ByRelayId(const DUID& relay_id,
+                                                 const asiolink::IOAddress& link_addr,
+                                                 const asiolink::IOAddress& lower_bound_address,
+                                                 const LeasePageSize& page_size);
+
+    /// @brief Returns existing IPv6 leases with a given remote-id
+    ///
+    /// @param remote_id remote-id option data of interest
+    /// @param link_addr limit results to leases on this link when not ::
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return collection of IPv6 leases
+    virtual Lease6Collection getLeases6ByRemoteId(const OptionBuffer& remote_id,
+                                                  const asiolink::IOAddress& link_addr,
+                                                  const asiolink::IOAddress& lower_bound_address,
+                                                  const LeasePageSize& page_size);
+
+    /// @brief Returns existing IPv6 leases with on a given link
+    ///
+    /// @param remote_id remote-id option data of interest
+    /// @param link_addr limit results to leases on this link when not ::
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return collection of IPv6 leases
+    virtual Lease6Collection getLeases6ByLink(const asiolink::IOAddress& link_addr,
+                                              const asiolink::IOAddress& lower_bound_address,
+                                              const LeasePageSize& page_size);
+
 private:
     /// The IOService object, used for all ASIO operations.
     static isc::asiolink::IOServicePtr io_service_;
