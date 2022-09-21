@@ -1445,7 +1445,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                         // state as unavailable.
                         communication_state_->setPartnerState("unavailable");
                     }
-                } else if (communication_state_->getRejectedLeaseUpdatesCount() > 0) {
+                } else {
                     // Lease update successful and we may need to clear some previously
                     // rejected lease updates.
                     communication_state_->reportSuccessfulLeaseUpdate(query);
@@ -3000,10 +3000,10 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
     if (rcode != CONTROL_RESULT_EMPTY) {
         // Include an error text if available.
         if (args && args->getType() == Element::string) {
-            s << args->stringValue() << ", ";
+            s << args->stringValue() << " (";
         }
         // Include an error code.
-        s << "error code " << rcode;
+        s << "error code " << rcode << ")";
     }
 
     switch (rcode) {
@@ -3033,12 +3033,12 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
                     continue;
                 }
                 auto error_message = lease->get("error-message");
-                // Error status code take precedence over the conflict.
+                // Error status code takes precedence over the conflict.
                 if (result->intValue() == CONTROL_RESULT_ERROR) {
                     if (error_message && error_message->getType()) {
-                        s << error_message->stringValue() << ", ";
+                        s << error_message->stringValue() << " (";
                     }
-                    s << "error code " << result->intValue();
+                    s << "error code " << result->intValue() << ")";
                     isc_throw(CtrlChannelError, s.str());
                 }
                 if (result->intValue() == CONTROL_RESULT_CONFLICT) {
@@ -3054,9 +3054,9 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
                 // appropriate exception.
                 if (conflict_error_message &&
                     (conflict_error_message->getType() == Element::string)) {
-                    s << conflict_error_message->stringValue() << ", ";
+                    s << conflict_error_message->stringValue() << " (";
                 }
-                s << "error code " << CONTROL_RESULT_CONFLICT;
+                s << "error code " << CONTROL_RESULT_CONFLICT << ")";
                 isc_throw(ConflictError, s.str());
             }
         }

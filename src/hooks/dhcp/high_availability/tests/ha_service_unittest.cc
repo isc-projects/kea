@@ -4773,8 +4773,8 @@ TEST_F(HAServiceTest, processMaintenanceStartNotAllowed) {
     checkAnswer(rsp, CONTROL_RESULT_ERROR,
                 "Unable to transition to the partner-in-maintenance state."
                 " The partner server responded with the following message"
-                " to the ha-maintenance-notify command: response returned,"
-                " error code 1001.");
+                " to the ha-maintenance-notify command: response returned"
+                " (error code 1001).");
 
     // The partner's state precludes entering the in-maintenance state. Thus, this
     // server must not change its state either.
@@ -4912,7 +4912,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerError) {
     checkAnswer(rsp, CONTROL_RESULT_ERROR,
                 "Unable to cancel maintenance. The partner server responded"
                 " with the following message to the ha-maintenance-notify"
-                " command: response returned, error code 1.");
+                " command: response returned (error code 1).");
 
     // The state of this server should not change.
     EXPECT_EQ(HA_PARTNER_IN_MAINTENANCE_ST, service.getCurrState());
@@ -4958,7 +4958,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerUnauthorized) {
     checkAnswer(rsp, CONTROL_RESULT_ERROR,
                 "Unable to cancel maintenance. The partner server responded"
                 " with the following message to the ha-maintenance-notify"
-                " command: Unauthorized, error code 1.");
+                " command: Unauthorized (error code 1).");
 
     // The state of this server should not change.
     EXPECT_EQ(HA_PARTNER_IN_MAINTENANCE_ST, service.getCurrState());
@@ -5343,7 +5343,7 @@ public:
         for (auto i = 0; i < leases_num; ++i) {
             // Create query with random HW address.
             Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
-            static_cast<void>(state_->reportRejectedLeaseUpdate(query4));
+            static_cast<void>(state_->reportRejectedLeaseUpdate(query4, 100));
         }
         // The state machine needs to react to the rejected leases.
         service_->runModel(HAService::NOP_EVT);
