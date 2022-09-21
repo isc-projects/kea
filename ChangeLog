@@ -1,5 +1,10 @@
+2057.	[doc]		marcin
+	Fixed broken example and documentation for long DHCPv4 options
+	in the ARM.
+	(Gitlab #2545)
+
 2056.	[build]		andrei
-	Improved build compatiblity in Kea between g++ and Boost
+	Improved build compatibility in Kea between g++ and Boost
 	libraries. The compilation error that was fixed was reported to
 	occur with g++ 8 and boost 1.75. The fix consists of passing
 	callbacks directly to boost::asio::io_service::post and not
