@@ -1,4 +1,4 @@
-2061.	[bug*]		fdupont
+2061.	[bug]*		fdupont
 	Enforce length limits on host identifier (20 bytes for
 	hardware address, 128 bytes for DUID and other types).
 	(Gitlab #2557)
