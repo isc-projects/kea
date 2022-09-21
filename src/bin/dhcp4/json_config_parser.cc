@@ -598,6 +598,10 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                     CfgMgr::instance().getStagingCfg()->setLenientOptionParsing(
                         kv.second->boolValue());
                 }
+                if (kv.first == "ignore-rai-link-selection") {
+                    CfgMgr::instance().getStagingCfg()->setIgnoreRAILinkSelection(
+                        kv.second->boolValue());
+                }
             }
         }
 

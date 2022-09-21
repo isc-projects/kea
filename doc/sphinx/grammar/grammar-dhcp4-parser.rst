@@ -990,8 +990,10 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | compatibility_params "," compatibility_param
                          | compatibility_params ","
 
-     compatibility_param ::= lenient_option_parsing
+     compatibility_param ::= lenient_option_parsing | ignore-rai-link-selection |
                         | unknown_map_entry
 
      lenient_option_parsing ::= "lenient-option-parsing" ":" BOOLEAN
+
+     ignore-rai-link-selection ::= "ignore-rai-link-selection" ":" BOOLEAN
 

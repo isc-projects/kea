@@ -984,6 +984,21 @@ public:
         return lenient_option_parsing_;
     }
 
+    /// @brief Set ignore RAI Link Selection compatibility flag.
+    ///
+    /// @param value the boolean value to be set when configuring RAI Link
+    /// Selection usage preferences
+    void setIgnoreRAILinkSelection(bool const value) {
+        ignore_rai_link_selection_ = value;
+    }
+
+    /// @brief Get ignore RAI Link Selection compatibility flag.
+    ///
+    /// @return the configured value for RAI Link Selection usage preferences
+    bool getIgnoreRAILinkSelection() const {
+        return ignore_rai_link_selection_;
+    }
+
     /// @brief Convenience method to propagate configuration parameters through
     /// inversion of control.
     ///
@@ -1148,6 +1163,7 @@ private:
     /// @brief Compatibility flags
     /// @{
     bool lenient_option_parsing_;
+    bool ignore_rai_link_selection_;
     /// @}
 
     /// @brief Flag which indicates if the server should do host reservations

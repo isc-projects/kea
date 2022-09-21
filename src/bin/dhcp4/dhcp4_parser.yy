@@ -2847,6 +2847,7 @@ compatibility_params: compatibility_param
                     ;
 
 compatibility_param: lenient_option_parsing
+                   | ignore-rai-link-selection
                    | unknown_map_entry
                    ;
 
@@ -2855,6 +2856,12 @@ lenient_option_parsing: LENIENT_OPTION_PARSING COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("lenient-option-parsing", b);
 };
+
+ignore-rai-link-selection: IGNORE_RAI_LINK_SEL COLON BOOLEAN {
+    ctx.unique("ignore-rai-link-selection", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("lenient-option-parsing", b);
+}
 
 %%
 

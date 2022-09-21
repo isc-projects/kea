@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option_custom.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -224,14 +225,19 @@ CfgSubnets4::initSelector(const Pkt4Ptr& query) {
         OptionCustomPtr rai_custom =
             boost::dynamic_pointer_cast<OptionCustom>(rai);
         if (rai_custom) {
-            OptionPtr link_select =
-                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
-            if (link_select) {
-                OptionBuffer link_select_buf = link_select->getData();
-                if (link_select_buf.size() == sizeof(uint32_t)) {
-                    selector.option_select_ =
-                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
-                    return (selector);
+            // If Relay Agent Information Link Selection is ignored in the configuration, skip
+            // returning the related subnet selector here, and move on to normal subnet selection.
+            bool ignore_link_sel = CfgMgr::instance().getCurrentCfg()->getIgnoreRAILinkSelection();
+            if (!ignore_link_sel) {
+                OptionPtr link_select =
+                    rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
+                if (link_select) {
+                    OptionBuffer link_select_buf = link_select->getData();
+                    if (link_select_buf.size() == sizeof(uint32_t)) {
+                        selector.option_select_ =
+                            IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
+                        return (selector);
+                    }
                 }
             }
         }
