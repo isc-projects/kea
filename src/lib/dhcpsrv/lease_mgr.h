@@ -825,7 +825,7 @@ public:
     /// @param page_size maximum size of the page returned.
     /// @param qry_start_time when not zero, only leases whose CLTT is greater than
     /// or equal to this value will be included
-    /// @param qry_stop_time when not zero, only leases whose CLTT is less than
+    /// @param qry_end_time when not zero, only leases whose CLTT is less than
     /// or equal to this value will be included
     ///
     /// @return collection of IPv4 leases
@@ -843,7 +843,7 @@ public:
     /// @param page_size maximum size of the page returned.
     /// @param qry_start_time when not zero, only leases whose CLTT is greater than
     /// or equal to this value will be included. Defaults to zero.
-    /// @param qry_stop_time when not zero, only leases whose CLTT is less than
+    /// @param qry_end_time when not zero, only leases whose CLTT is less than
     /// or equal to this value will be included. Defaults to zero.
     ///
     /// @return collection of IPv4 leases
@@ -883,7 +883,6 @@ public:
 
     /// @brief Returns existing IPv6 leases with on a given link
     ///
-    /// @param remote_id remote-id option data of interest
     /// @param link_addr limit results to leases on this link when not ::
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
