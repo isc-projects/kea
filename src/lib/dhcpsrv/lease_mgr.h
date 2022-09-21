@@ -819,8 +819,7 @@ public:
 
     /// @brief Returns existing IPv4 leases with a given relay-id
     ///
-    /// @param relay_id DUID for relay_id of interest
-    /// @param link_addr limit results to leases on this link when not ::
+    /// @param relay_id  RAI Relay-ID sub-option value for relay_id of interest
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -831,7 +830,6 @@ public:
     ///
     /// @return collection of IPv4 leases
     virtual Lease4Collection getLeases4ByRelayId(const OptionBuffer& relay_id,
-                                                 const asiolink::IOAddress& link_addr,
                                                  const asiolink::IOAddress& lower_bound_address,
                                                  const LeasePageSize& page_size,
                                                  const time_t& qry_start_time = 0,
@@ -839,8 +837,7 @@ public:
 
     /// @brief Returns existing IPv4 leases with a given remote-id
     ///
-    /// @param remote_id remote-id option data of interest
-    /// @param link_addr limit results to leases on this link when not ::
+    /// @param remote_id  RAI Remote-ID sub-option value for remote-id of interest
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -851,7 +848,6 @@ public:
     ///
     /// @return collection of IPv4 leases
     virtual Lease4Collection getLeases4ByRemoteId(const OptionBuffer& remote_id,
-                                                  const asiolink::IOAddress& link_addr,
                                                   const asiolink::IOAddress& lower_bound_address,
                                                   const LeasePageSize& page_size,
                                                   const time_t& qry_start_time = 0,
