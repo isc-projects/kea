@@ -2692,7 +2692,7 @@ options and suboptions, using the respective option code.
    "option-def": [
        {
            "array": false,
-           "code\": 240,
+           "code": 240,
            "encapsulate": "",
            "name": "my-option",
            "space": "dhcp4",
@@ -2726,12 +2726,12 @@ options and suboptions, using the respective option code.
 
 .. note::
 
-   For this example, the data has been split on several lines, but Kea does not
-   support this in the configuration file.
+   In the example above, the data has been wrapped into several lines for clarity,
+   but Kea does not support it in the configuration file.
 
-This example illustrates configuring a custom long option in a reservation.
-The server, when sending a response, will split this option into several options
-with the same code (11 options with option code 240).
+This example illustrates configuring a custom long option (exceeding 255 octets)
+in a reservation. When sending a response, the server will split this option
+into two options, each with the code 240.
 
 .. note::
 
