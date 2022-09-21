@@ -361,6 +361,7 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
     // If the identifier lacks opening and closing quote, this will return
     // an empty value, in which case we'll try to decode it as a string of
     // hexadecimal digits.
+    bool too_long = false;
     try {
         std::vector<uint8_t> binary = util::str::quotedStringToBinary(identifier);
         if (binary.empty()) {
@@ -370,7 +371,9 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
         size_t len = binary.size();
         if (len > getIdentifierMaxLength(identifier_type_)) {
             // Message does not matter as it will be replaced below...
-            isc_throw(BadValue, "too long client identifier");
+            too_long = true;
+            isc_throw(BadValue, "too long client identifier type " << name
+                      << " length " << len);
         }
 
         // Successfully decoded the identifier, so let's use it.
@@ -379,8 +382,11 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
     } catch (...) {
         // The string doesn't match any known pattern, so we have to
         // report an error at this point.
+        if (too_long) {
+            throw;
+        }
         isc_throw(isc::BadValue, "invalid host identifier value '"
-                      << identifier << "'");
+                  << identifier << "'");
     }
 }
 

@@ -262,7 +262,7 @@ TEST_F(HostTest, createFromHWAddrString) {
     // Use too long HW address.
     string too_long = "00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f";
     too_long += ":10:11:12:13:14";
-    expected = "invalid host identifier value '" + too_long + "'";
+    expected = "too long client identifier type hw-address length 21";
     EXPECT_THROW_MSG(Host(too_long, "hw-address", SubnetID(1), SubnetID(2),
                           IOAddress("192.0.2.3"), "somehost.example.org"),
                      isc::BadValue, expected);
@@ -318,10 +318,11 @@ TEST_F(HostTest, createFromDUIDString) {
     too_long += ":60:61:62:63:64:65:66:67:68:69:6a:6b:6c:6d:6e:6f";
     too_long += ":70:71:72:73:74:75:76:77:78:79:7a:7b:7c:7d:7e:7f";
     too_long += ":ff";
-    expected = "invalid host identifier value '" + too_long + "'";
+    expected = "too long client identifier type duid length 129";
     EXPECT_THROW_MSG(Host(too_long, "duid", SubnetID(1), SubnetID(2),
                           IOAddress("192.0.2.3"), "somehost.example.org"),
                      isc::BadValue, expected);
+    expected = "too long client identifier type circuit-id length 129";
     EXPECT_THROW_MSG(Host(too_long, "circuit-id", SubnetID(1), SubnetID(2),
                           IOAddress("192.0.2.3"), "somehost.example.org"),
                      isc::BadValue, expected);
