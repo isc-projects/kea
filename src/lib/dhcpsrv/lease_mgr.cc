@@ -355,6 +355,5 @@ LeaseMgr::getDBVersion() {
     isc_throw(NotImplemented, "LeaseMgr::getDBVersion() called");
 }
 
-
 } // namespace isc::dhcp
 } // namespace isc
