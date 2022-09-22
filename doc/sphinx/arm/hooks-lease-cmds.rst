@@ -1023,9 +1023,11 @@ backend and write the lease database into a CSV file. They take the path
 of the file as the ``filename`` argument. If the specified output file
 is the same as the configured memfile one the backend close and reopen
 the file in an attempt to synchronize both file and in memory images
-of the lease database.
+of the lease database. The previous file is renamed by appending ``.bak``
+to its name.
 
 .. note::
 
    These commands do not replace the LFC mechanism: they should be used
-   only in exceptional circumstances.
+   only in exceptional circumstances, such as when recovering after
+   running out of disk space.

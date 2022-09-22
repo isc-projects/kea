@@ -3139,6 +3139,9 @@ void Lease4CmdsTest::testLease4ConflictingUpdate() {
 }
 
 void Lease4CmdsTest::testLease4Write() {
+    // lease4-write negative tests. Positive tests are in the
+    // memfile_lease_mgr_unittest.cc file.
+
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
