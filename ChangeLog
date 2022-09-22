@@ -1,5 +1,5 @@
 2058.	[build]		fdupont
-	Lfc is now built just after libraries.
+	kea-lfc is now built just after libraries.
 	(Gitlab #2526)
 
 2057.	[doc]		marcin
