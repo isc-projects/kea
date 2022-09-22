@@ -2387,7 +2387,46 @@ Memfile_LeaseMgr::getLeaseLimit(ConstElementPtr parent, Lease::Type ltype, size_
     return (false);
 }
 
+Lease4Collection
+Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& /* relay_id */,
+                                      const IOAddress& /* lower_bound_address */,
+                                      const LeasePageSize& /* page_size */,
+                                      const time_t& /* qry_start_time = 0 */,
+                                      const time_t& /* qry_end_time = 0 */) {
+    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases4ByRelayId not implemented");
+}
 
+Lease4Collection
+Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
+                                       const IOAddress& /* lower_bound_address */,
+                                       const LeasePageSize& /* page_size */,
+                                       const time_t& /* qry_start_time = 0 */,
+                                       const time_t& /* qry_end_time = 0 */) {
+    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases4ByRemoteId not implemented");
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
+                                      const IOAddress& /* link_addr */,
+                                      const IOAddress& /* lower_bound_address */,
+                                      const LeasePageSize& /* page_size */) {
+    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases6ByRelayId not implemented");
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
+                                       const IOAddress& /* link_addr */,
+                                       const IOAddress& /* lower_bound_address */,
+                                       const LeasePageSize& /* page_size*/) {
+    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases6ByRemoteId not implemented");
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
+                                   const IOAddress& /* lower_bound_address */,
+                                   const LeasePageSize& /* page_size */) {
+    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases6ByLink not implemented");
+}
 
 }  // namespace dhcp
 }  // namespace isc

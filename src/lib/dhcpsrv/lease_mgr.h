@@ -833,7 +833,7 @@ public:
                                                  const asiolink::IOAddress& lower_bound_address,
                                                  const LeasePageSize& page_size,
                                                  const time_t& qry_start_time = 0,
-                                                 const time_t& qry_end_time = 0);
+                                                 const time_t& qry_end_time = 0) = 0;
 
     /// @brief Returns existing IPv4 leases with a given remote-id.
     ///
@@ -851,7 +851,7 @@ public:
                                                   const asiolink::IOAddress& lower_bound_address,
                                                   const LeasePageSize& page_size,
                                                   const time_t& qry_start_time = 0,
-                                                  const time_t& qry_end_time = 0);
+                                                  const time_t& qry_end_time = 0) = 0;
 
     /// @brief Returns existing IPv6 leases with a given relay-id.
     ///
@@ -865,7 +865,7 @@ public:
     virtual Lease6Collection getLeases6ByRelayId(const DUID& relay_id,
                                                  const asiolink::IOAddress& link_addr,
                                                  const asiolink::IOAddress& lower_bound_address,
-                                                 const LeasePageSize& page_size);
+                                                 const LeasePageSize& page_size) = 0;
 
     /// @brief Returns existing IPv6 leases with a given remote-id.
     ///
@@ -879,7 +879,7 @@ public:
     virtual Lease6Collection getLeases6ByRemoteId(const OptionBuffer& remote_id,
                                                   const asiolink::IOAddress& link_addr,
                                                   const asiolink::IOAddress& lower_bound_address,
-                                                  const LeasePageSize& page_size);
+                                                  const LeasePageSize& page_size) = 0;
 
     /// @brief Returns existing IPv6 leases with on a given link.
     ///
@@ -891,7 +891,7 @@ public:
     /// @return collection of IPv6 leases
     virtual Lease6Collection getLeases6ByLink(const asiolink::IOAddress& link_addr,
                                               const asiolink::IOAddress& lower_bound_address,
-                                              const LeasePageSize& page_size);
+                                              const LeasePageSize& page_size) = 0;
 
 private:
     /// The IOService object, used for all ASIO operations.

@@ -2546,5 +2546,46 @@ PgSqlLeaseMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ROLLBACK);
 }
 
+Lease4Collection
+PgSqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& /* relay_id */,
+                                   const IOAddress& /* lower_bound_address */,
+                                   const LeasePageSize& /* page_size */,
+                                   const time_t& /* qry_start_time = 0 */,
+                                   const time_t& /* qry_end_time = 0 */) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases4ByRelayId not implemented");
+}
+
+Lease4Collection
+PgSqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
+                                    const IOAddress& /* lower_bound_address */,
+                                    const LeasePageSize& /* page_size */,
+                                    const time_t& /* qry_start_time = 0 */,
+                                    const time_t& /* qry_end_time = 0 */) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases4ByRemoteId not implemented");
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
+                                   const IOAddress& /* link_addr */,
+                                   const IOAddress& /* lower_bound_address */,
+                                   const LeasePageSize& /* page_size */) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByRelayId not implemented");
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
+                                    const IOAddress& /* link_addr */,
+                                    const IOAddress& /* lower_bound_address */,
+                                    const LeasePageSize& /* page_size*/) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByRemoteId not implemented");
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
+                                const IOAddress& /* lower_bound_address */,
+                                const LeasePageSize& /* page_size */) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByLink not implemented");
+}
+
 }  // namespace dhcp
 }  // namespace isc
