@@ -1,3 +1,11 @@
+2062.	[func]		fdupont
+	The lease_cmds hook library supports two new commands
+	"lease4-write" and "lease6-write" which should help
+	to recover emergency situations e.g. full disk space
+	by writing the memory lease database into a CSV file.
+	They are supported only by the memfile backend.
+	(Gitlab #1654)
+
 2061.	[bug]*		fdupont
 	Enforce length limits on host identifier (20 bytes for
 	hardware address, 128 bytes for DUID and other types).
