@@ -817,9 +817,9 @@ public:
     /// on relay data contained in lease's user-context when the extended-store-info flag
     /// is enabled.
 
-    /// @brief Returns existing IPv4 leases with a given relay-id
+    /// @brief Returns existing IPv4 leases with a given relay-id.
     ///
-    /// @param relay_id  RAI Relay-ID sub-option value for relay_id of interest
+    /// @param relay_id RAI Relay-ID sub-option value for relay_id of interest
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -835,9 +835,9 @@ public:
                                                  const time_t& qry_start_time = 0,
                                                  const time_t& qry_end_time = 0);
 
-    /// @brief Returns existing IPv4 leases with a given remote-id
+    /// @brief Returns existing IPv4 leases with a given remote-id.
     ///
-    /// @param remote_id  RAI Remote-ID sub-option value for remote-id of interest
+    /// @param remote_id RAI Remote-ID sub-option value for remote-id of interest
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -853,7 +853,7 @@ public:
                                                   const time_t& qry_start_time = 0,
                                                   const time_t& qry_end_time = 0);
 
-    /// @brief Returns existing IPv6 leases with a given relay-id
+    /// @brief Returns existing IPv6 leases with a given relay-id.
     ///
     /// @param relay_id DUID for relay_id of interest
     /// @param link_addr limit results to leases on this link when not ::
@@ -867,7 +867,7 @@ public:
                                                  const asiolink::IOAddress& lower_bound_address,
                                                  const LeasePageSize& page_size);
 
-    /// @brief Returns existing IPv6 leases with a given remote-id
+    /// @brief Returns existing IPv6 leases with a given remote-id.
     ///
     /// @param remote_id remote-id option data of interest
     /// @param link_addr limit results to leases on this link when not ::
@@ -881,7 +881,7 @@ public:
                                                   const asiolink::IOAddress& lower_bound_address,
                                                   const LeasePageSize& page_size);
 
-    /// @brief Returns existing IPv6 leases with on a given link
+    /// @brief Returns existing IPv6 leases with on a given link.
     ///
     /// @param link_addr limit results to leases on this link when not ::
     /// @param lower_bound_address IPv4 address used as lower bound for the
