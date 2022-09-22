@@ -44,7 +44,7 @@ extern const isc::log::MessageID HA_HEARTBEAT_COMMUNICATIONS_FAILED = "HA_HEARTB
 extern const isc::log::MessageID HA_HEARTBEAT_FAILED = "HA_HEARTBEAT_FAILED";
 extern const isc::log::MessageID HA_HEARTBEAT_HANDLER_FAILED = "HA_HEARTBEAT_HANDLER_FAILED";
 extern const isc::log::MessageID HA_HIGH_CLOCK_SKEW = "HA_HIGH_CLOCK_SKEW";
-extern const isc::log::MessageID HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION = "HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION";
+extern const isc::log::MessageID HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION = "HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION";
 extern const isc::log::MessageID HA_INIT_OK = "HA_INIT_OK";
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY = "HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY";
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_HOT_STANDBY = "HA_INVALID_PARTNER_STATE_HOT_STANDBY";
@@ -71,6 +71,7 @@ extern const isc::log::MessageID HA_LEASE_UPDATE_CONFLICT = "HA_LEASE_UPDATE_CON
 extern const isc::log::MessageID HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER = "HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER";
 extern const isc::log::MessageID HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER = "HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER";
 extern const isc::log::MessageID HA_LEASE_UPDATE_FAILED = "HA_LEASE_UPDATE_FAILED";
+extern const isc::log::MessageID HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION = "HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION";
 extern const isc::log::MessageID HA_LOAD_BALANCING_DUID_MISSING = "HA_LOAD_BALANCING_DUID_MISSING";
 extern const isc::log::MessageID HA_LOAD_BALANCING_IDENTIFIER_MISSING = "HA_LOAD_BALANCING_IDENTIFIER_MISSING";
 extern const isc::log::MessageID HA_LOCAL_DHCP_DISABLE = "HA_LOCAL_DHCP_DISABLE";
@@ -88,7 +89,6 @@ extern const isc::log::MessageID HA_MAINTENANCE_START_HANDLER_FAILED = "HA_MAINT
 extern const isc::log::MessageID HA_MISSING_CONFIGURATION = "HA_MISSING_CONFIGURATION";
 extern const isc::log::MessageID HA_PAUSE_CLIENT_LISTENER_FAILED = "HA_PAUSE_CLIENT_LISTENER_FAILED";
 extern const isc::log::MessageID HA_PAUSE_CLIENT_LISTENER_ILLEGAL = "HA_PAUSE_CLIENT_LISTENER_ILLEGAL";
-extern const isc::log::MessageID HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION = "HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION";
 extern const isc::log::MessageID HA_RESET_COMMUNICATIONS_FAILED = "HA_RESET_COMMUNICATIONS_FAILED";
 extern const isc::log::MessageID HA_RESET_FAILED = "HA_RESET_FAILED";
 extern const isc::log::MessageID HA_RESET_HANDLER_FAILED = "HA_RESET_HANDLER_FAILED";
@@ -152,7 +152,7 @@ const char* values[] = {
     "HA_HEARTBEAT_FAILED", "heartbeat to %1 failed: %2",
     "HA_HEARTBEAT_HANDLER_FAILED", "heartbeat command failed: %1",
     "HA_HIGH_CLOCK_SKEW", "%1, please synchronize clocks!",
-    "HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION", "%1, causing HA service to terminate",
+    "HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION", "%1, causing HA service to terminate",
     "HA_INIT_OK", "loading High Availability hooks library successful",
     "HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY", "partner is in the communication-recovery state unexpectedly",
     "HA_INVALID_PARTNER_STATE_HOT_STANDBY", "partner is in the hot-standby state unexpectedly",
@@ -179,6 +179,7 @@ const char* values[] = {
     "HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER", "%1: failed to create or update the lease having type %2 for address %3, reason: %4",
     "HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER", "%1: failed to delete the lease having type %2 for address %3, reason: %4",
     "HA_LEASE_UPDATE_FAILED", "%1: lease update to %2 failed: %3",
+    "HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION", "too many rejected lease updates cause the HA service to terminate",
     "HA_LOAD_BALANCING_DUID_MISSING", "load balancing failed for the DHCPv6 message (transaction id: %1) because DUID is missing",
     "HA_LOAD_BALANCING_IDENTIFIER_MISSING", "load balancing failed for the DHCPv4 message (transaction id: %1) because HW address and client identifier are missing",
     "HA_LOCAL_DHCP_DISABLE", "local DHCP service is disabled while the %1 is in the %2 state",
@@ -196,7 +197,6 @@ const char* values[] = {
     "HA_MISSING_CONFIGURATION", "high-availability parameter not specified for High Availability hooks library",
     "HA_PAUSE_CLIENT_LISTENER_FAILED", "Pausing multi-threaded HTTP processing failed: %1",
     "HA_PAUSE_CLIENT_LISTENER_ILLEGAL", "Pausing multi-threaded HTTP processing failed: %1",
-    "HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION", "too many rejected lease updates cause the HA service to terminate",
     "HA_RESET_COMMUNICATIONS_FAILED", "failed to send ha-reset command to %1: %2",
     "HA_RESET_FAILED", "failed to reset HA state machine of %1: %2",
     "HA_RESET_HANDLER_FAILED", "ha-reset command failed: %1",

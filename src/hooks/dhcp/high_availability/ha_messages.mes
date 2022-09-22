@@ -233,7 +233,7 @@ properly, especially for low lease lifetimes. The administrator should
 should synchronize the clocks, e.g. using NTP. If the clock skew exceeds
 60 seconds, the HA service will terminate.
 
-% HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION %1, causing HA service to terminate
+% HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION %1, causing HA service to terminate
 This warning message is issued when the clock skew between the active servers
 exceeds 60 seconds. The HA service stops. The servers will continue to respond
 to the DHCP queries but won't exchange lease updates or send heartbeats.
@@ -375,7 +375,7 @@ HA peer while processing a DHCP client query and sending lease update. The
 client's DHCP message will be dropped.
 
 % HA_LEASE_UPDATE_CONFLICT %1: lease update to %2 returned conflict status code: %3
-This warning message indicates that partner returned a conflict status code
+This warning message indicates that the partner returned a conflict status code
 in response to a lease update. The client's DHCP message will be dropped.
 If the server is configured to track conflicting lease updates, it may
 eventually transition to the terminated state when the configured threshold
@@ -395,6 +395,12 @@ the lease fails to delete when it doesn't exist in the peer's database.
 % HA_LEASE_UPDATE_FAILED %1: lease update to %2 failed: %3
 This warning message indicates that a peer returned an error status code
 in response to a lease update. The client's DHCP message will be dropped.
+
+% HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION too many rejected lease updates cause the HA service to terminate
+This error message is issued when the HA service terminates because the
+number of lease updates for which a conflict status code was returned
+by the partner exceeds the limit set with max-rejected-lease-updates
+configuration parameter.
 
 % HA_LOAD_BALANCING_DUID_MISSING load balancing failed for the DHCPv6 message (transaction id: %1) because DUID is missing
 This debug message is issued when the HA hook library was unable to load
@@ -503,12 +509,6 @@ This error message is emitted when attempting to pause HA's HTTP client or
 listener thread pools from a worker thread. This error indicates that a command
 run on the listener threads is trying to use a critical section which would
 result in a dead-lock.
-
-% HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION too many rejected lease updates cause the HA service to terminate
-This error message is issued when the HA service terminates because the
-number of lease updates for which a conflict status code was returned
-by the partner exceeds the limit set with max-rejected-lease-updates
-configuration parameter.
 
 % HA_RESET_COMMUNICATIONS_FAILED failed to send ha-reset command to %1: %2
 This warning message indicates a problem with communication with a HA peer

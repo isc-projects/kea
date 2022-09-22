@@ -766,7 +766,7 @@ respect to HA:
 -  ``max-rejected-lease-updates`` - specifies how many lease updates for distinct
    clients can fail due to a conflict between the lease and the partner configuration
    or state before the server transitions to the ``terminated`` state. Conflict
-   can be a sign of a misconfiguration. Usually, one or several conflicted
+   can be a sign of a misconfiguration. Usually, a small number of conflicted
    leases are acceptable because they affect only a few devices. However, if
    the conflicts occur for many devices (e.g., entire subnet), the HA service
    becomes unreliable, should be terminated, and the problem should be manually

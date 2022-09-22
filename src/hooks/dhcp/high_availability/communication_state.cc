@@ -419,7 +419,7 @@ CommunicationState::clockSkewShouldTerminate() {
 bool
 CommunicationState::clockSkewShouldTerminateInternal() {
     if (isClockSkewGreater(TERM_CLOCK_SKEW)) {
-        LOG_ERROR(ha_logger, HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION)
+        LOG_ERROR(ha_logger, HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION)
                   .arg(logFormatClockSkewInternal());
         return (true);
     }
@@ -440,7 +440,7 @@ bool
 CommunicationState::rejectedLeaseUpdatesShouldTerminateInternal() {
     if (config_->getMaxRejectedLeaseUpdates() &&
         (config_->getMaxRejectedLeaseUpdates() <= getRejectedLeaseUpdatesCountInternal())) {
-        LOG_ERROR(ha_logger, HA_REJECTED_LEASE_UPDATES_CAUSE_TERMINATION);
+        LOG_ERROR(ha_logger, HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION);
         return (true);
     }
     return (false);

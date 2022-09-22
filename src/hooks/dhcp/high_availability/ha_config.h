@@ -556,7 +556,7 @@ public:
     /// A lease update may fail due to a conflict with the partner's configuration.
     /// The server distinguishes such errors from general errors (e.g., related to
     /// communication issues) to avoid transitioning to the partner-down state
-    /// when there is in fact a problem with a lease or the configuration. On the
+    /// when there is in fact a problem with a lease or the configuration. On the other
     /// hand, if such problematic leases accumulate, the server can no longer provide
     /// the HA service and should transition to the terminated state. Consequently,
     /// an administrator must fix the configuration problem. This function returns
