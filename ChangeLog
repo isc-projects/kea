@@ -1,3 +1,7 @@
+2058.	[build]		fdupont
+	Lfc is now built just after libraries.
+	(Gitlab #2526)
+
 2057.	[doc]		marcin
 	Fixed broken example and documentation for long DHCPv4 options
 	in the ARM.
