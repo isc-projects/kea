@@ -987,11 +987,12 @@ private:
     /// or equal to this value will be included
     ///
     /// @return collection of IPv4 leases
-    virtual Lease4Collection getLeases4ByRelayId(const OptionBuffer& relay_id,
-                                                 const asiolink::IOAddress& lower_bound_address,
-                                                 const LeasePageSize& page_size,
-                                                 const time_t& qry_start_time = 0,
-                                                 const time_t& qry_end_time = 0);
+    virtual Lease4Collection
+    getLeases4ByRelayId(const OptionBuffer& relay_id,
+                        const asiolink::IOAddress& lower_bound_address,
+                        const LeasePageSize& page_size,
+                        const time_t& qry_start_time = 0,
+                        const time_t& qry_end_time = 0) override;
 
     /// @brief Returns existing IPv4 leases with a given remote-id.
     ///
@@ -1005,11 +1006,12 @@ private:
     /// or equal to this value will be included. Defaults to zero.
     ///
     /// @return collection of IPv4 leases
-    virtual Lease4Collection getLeases4ByRemoteId(const OptionBuffer& remote_id,
-                                                  const asiolink::IOAddress& lower_bound_address,
-                                                  const LeasePageSize& page_size,
-                                                  const time_t& qry_start_time = 0,
-                                                  const time_t& qry_end_time = 0);
+    virtual Lease4Collection
+    getLeases4ByRemoteId(const OptionBuffer& remote_id,
+                         const asiolink::IOAddress& lower_bound_address,
+                         const LeasePageSize& page_size,
+                         const time_t& qry_start_time = 0,
+                         const time_t& qry_end_time = 0) override;
 
     /// @brief Returns existing IPv6 leases with a given relay-id.
     ///
@@ -1020,10 +1022,11 @@ private:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return collection of IPv6 leases
-    virtual Lease6Collection getLeases6ByRelayId(const DUID& relay_id,
-                                                 const asiolink::IOAddress& link_addr,
-                                                 const asiolink::IOAddress& lower_bound_address,
-                                                 const LeasePageSize& page_size);
+    virtual Lease6Collection
+    getLeases6ByRelayId(const DUID& relay_id,
+                        const asiolink::IOAddress& link_addr,
+                        const asiolink::IOAddress& lower_bound_address,
+                        const LeasePageSize& page_size) override;
 
     /// @brief Returns existing IPv6 leases with a given remote-id.
     ///
@@ -1034,10 +1037,11 @@ private:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return collection of IPv6 leases
-    virtual Lease6Collection getLeases6ByRemoteId(const OptionBuffer& remote_id,
-                                                  const asiolink::IOAddress& link_addr,
-                                                  const asiolink::IOAddress& lower_bound_address,
-                                                  const LeasePageSize& page_size);
+    virtual Lease6Collection
+    getLeases6ByRemoteId(const OptionBuffer& remote_id,
+                         const asiolink::IOAddress& link_addr,
+                         const asiolink::IOAddress& lower_bound_address,
+                         const LeasePageSize& page_size) override;
 
     /// @brief Returns existing IPv6 leases with on a given link.
     ///
@@ -1047,9 +1051,10 @@ private:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return collection of IPv6 leases
-    virtual Lease6Collection getLeases6ByLink(const asiolink::IOAddress& link_addr,
-                                              const asiolink::IOAddress& lower_bound_address,
-                                              const LeasePageSize& page_size);
+    virtual Lease6Collection
+    getLeases6ByLink(const asiolink::IOAddress& link_addr,
+                     const asiolink::IOAddress& lower_bound_address,
+                     const LeasePageSize& page_size) override;
 
     /// @brief Context RAII Allocator.
     class PgSqlLeaseContextAlloc {
