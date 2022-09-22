@@ -713,6 +713,7 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
     string txt = "malformed command";
 
     stringstream resp;
+    string lease_address = "unknown";
     try {
         extractCommand(handle);
         v4 = (cmd_name_ == "lease4-add");
@@ -726,14 +727,15 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
 
-        Lease4Ptr lease4;
-        Lease6Ptr lease6;
         // This parameter is ignored for the commands adding the lease.
         bool force_create = false;
+        Lease4Ptr lease4;
+        Lease6Ptr lease6;
         if (v4) {
             Lease4Parser parser;
             lease4 = parser.parse(config, cmd_args_, force_create);
             if (lease4) {
+                lease_address = lease4->addr_.toText();
                 bool success;
                 if (!MultiThreadingMgr::instance().getMode()) {
                     // Not multi-threading.
@@ -762,6 +764,7 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
             Lease6Parser parser;
             lease6 = parser.parse(config, cmd_args_, force_create);
             if (lease6) {
+                lease_address = lease6->addr_.toText();
                 bool success;
                 if (!MultiThreadingMgr::instance().getMode()) {
                     // Not multi-threading.
@@ -808,8 +811,9 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
         return (1);
     }
 
-    LOG_INFO(lease_cmds_logger,
-             v4 ? LEASE_CMDS_ADD4 : LEASE_CMDS_ADD6).arg(txt);
+    LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA,
+              v4 ? LEASE_CMDS_ADD4 : LEASE_CMDS_ADD6)
+        .arg(lease_address);
     setSuccessResponse(handle, resp.str());
     return (0);
 }
@@ -1528,7 +1532,8 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
         setErrorResponse(handle, ex.what());
         return (1);
     }
-    LOG_INFO(lease_cmds_logger, LEASE_CMDS_DEL4).arg(txt);
+    LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA, LEASE_CMDS_DEL4)
+        .arg(lease4->addr_.toText());
     return (0);
 }
 
@@ -1730,6 +1735,10 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                                    CONTROL_RESULT_EMPTY, resp_text.str(), args);
         setResponse(handle, answer);
 
+        LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA,
+                  LEASE_CMDS_BULK_APPLY6)
+            .arg(success_count);
+
     } catch (const std::exception& ex) {
         // Unable to parse the command and similar issues.
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_BULK_APPLY6_FAILED)
@@ -1739,7 +1748,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
         return (CONTROL_RESULT_ERROR);
     }
 
-    return (CONTROL_RESULT_SUCCESS);
+    return (0);
 }
 
 int
@@ -1811,7 +1820,8 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
         return (1);
     }
 
-    LOG_INFO(lease_cmds_logger, LEASE_CMDS_DEL6).arg(txt);
+    LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA, LEASE_CMDS_DEL6)
+        .arg(lease6->addr_.toText());
     return (0);
 }
 
@@ -1860,7 +1870,9 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
         } else {
             setSuccessResponse(handle, "IPv4 lease updated.");
         }
-        LOG_INFO(lease_cmds_logger, LEASE_CMDS_UPDATE4).arg(txt);
+        LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA,
+                  LEASE_CMDS_UPDATE4)
+            .arg(lease4->addr_.toText());
 
     } catch (const LeaseCmdsConflict& ex) {
         LOG_WARN(lease_cmds_logger, LEASE_CMDS_UPDATE4_CONFLICT)
@@ -1925,7 +1937,9 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
         } else {
             setSuccessResponse(handle, "IPv6 lease updated.");
         }
-        LOG_INFO(lease_cmds_logger, LEASE_CMDS_UPDATE6).arg(txt);
+        LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA,
+                  LEASE_CMDS_UPDATE6)
+            .arg(lease6->addr_.toText());
 
     } catch (const LeaseCmdsConflict& ex) {
         LOG_WARN(lease_cmds_logger, LEASE_CMDS_UPDATE6_CONFLICT)

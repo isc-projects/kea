@@ -11,6 +11,8 @@
 namespace isc {
 namespace lease_cmds {
 
+extern const int LEASE_CMDS_DBG_COMMAND_DATA = isc::log::DBGLVL_COMMAND_DATA;
+
 isc::log::Logger lease_cmds_logger("lease-cmds-hooks");
 
 }

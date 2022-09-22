@@ -14,6 +14,9 @@
 namespace isc {
 namespace lease_cmds {
 
+/// @brief Logging level used to log successful commands.
+extern const int LEASE_CMDS_DBG_COMMAND_DATA;
+
 extern isc::log::Logger lease_cmds_logger;
 
 } // end of isc::lease_cmds

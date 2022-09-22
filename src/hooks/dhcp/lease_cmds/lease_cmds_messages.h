@@ -11,6 +11,7 @@ extern const isc::log::MessageID LEASE_CMDS_ADD4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_ADD6;
 extern const isc::log::MessageID LEASE_CMDS_ADD6_CONFLICT;
 extern const isc::log::MessageID LEASE_CMDS_ADD6_FAILED;
+extern const isc::log::MessageID LEASE_CMDS_BULK_APPLY6;
 extern const isc::log::MessageID LEASE_CMDS_BULK_APPLY6_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_DEINIT_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_DEINIT_OK;
