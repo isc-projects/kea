@@ -396,6 +396,48 @@ public:
         isc_throw(NotImplemented, "ConcreteLeaseMgr::clearClassLeaseCounts() not implemented");
     }
 
+
+    /// @brief Stub implementation.
+    Lease4Collection getLeases4ByRelayId(const OptionBuffer& /* relay_id */,
+                                         const IOAddress& /* lower_bound_address */,
+                                         const LeasePageSize& /* page_size */,
+                                         const time_t& /* qry_start_time = 0 */,
+                                         const time_t& /* qry_end_time = 0 */) override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases4ByRelayId not implemented");
+    }
+
+    /// @brief Stub implementation.
+    Lease4Collection getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
+                                          const IOAddress& /* lower_bound_address */,
+                                          const LeasePageSize& /* page_size */,
+                                          const time_t& /* qry_start_time = 0 */,
+                                          const time_t& /* qry_end_time = 0 */) {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases4ByRemoteId not implemented");
+    }
+
+    /// @brief Stub implementation.
+    Lease6Collection getLeases6ByRelayId(const DUID& /* relay_id */,
+                                         const IOAddress& /* link_addr */,
+                                         const IOAddress& /* lower_bound_address */,
+                                         const LeasePageSize& /* page_size */) {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByRelayId not implemented");
+    }
+
+    /// @brief Stub implementation.
+    Lease6Collection getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
+                                          const IOAddress& /* link_addr */,
+                                          const IOAddress& /* lower_bound_address */,
+                                          const LeasePageSize& /* page_size*/) {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByRemoteId not implemented");
+    }
+
+    /// @brief Stub implementation.
+    Lease6Collection getLeases6ByLink(const IOAddress& /* link_addr */,
+                                      const IOAddress& /* lower_bound_address */,
+                                      const LeasePageSize& /* page_size */) {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByLink not implemented");
+    }
+
     /// @brief Returns backend type.
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
