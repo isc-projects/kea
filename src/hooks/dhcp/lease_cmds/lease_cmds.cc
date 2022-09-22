@@ -710,20 +710,14 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
     // Arbitrary defaulting to DHCPv4 or with other words extractCommand
     // below is not expected to throw...
     bool v4 = true;
-    string txt = "malformed command";
-
     stringstream resp;
     string lease_address = "unknown";
     try {
         extractCommand(handle);
         v4 = (cmd_name_ == "lease4-add");
-
-        txt = "(missing parameters)";
         if (!cmd_args_) {
             isc_throw(isc::BadValue, "no parameters specified for the command");
         }
-
-        txt = cmd_args_->str();
 
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
 
@@ -798,14 +792,14 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
         }
     } catch (const LeaseCmdsConflict& ex) {
         LOG_WARN(lease_cmds_logger, v4 ? LEASE_CMDS_ADD4_CONFLICT : LEASE_CMDS_ADD6_CONFLICT)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what(), CONTROL_RESULT_CONFLICT);
         return (0);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, v4 ? LEASE_CMDS_ADD4_FAILED : LEASE_CMDS_ADD6_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
@@ -941,14 +935,11 @@ LeaseCmdsImpl::leaseGetHandler(CalloutHandle& handle) {
     Parameters p;
     Lease4Ptr lease4;
     Lease6Ptr lease6;
-    bool v4;
-    string txt = "malformed command";
+    bool v4 = true;
     try {
         extractCommand(handle);
         v4 = (cmd_name_ == "lease4-get");
-        txt = "(missing parameters)";
         p = getParameters(!v4, cmd_args_);
-        txt = cmd_args_->str();
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
             // Query by address
@@ -1006,7 +997,7 @@ LeaseCmdsImpl::leaseGetHandler(CalloutHandle& handle) {
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, v4 ? LEASE_CMDS_GET4_FAILED : LEASE_CMDS_GET6_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
@@ -1385,7 +1376,7 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
 
 int
 LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
-    bool v4;
+    bool v4 = true;
     try {
         extractCommand(handle);
         v4 = (cmd_name_ == "lease4-get-by-hostname");
@@ -1457,14 +1448,9 @@ int
 LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
     Parameters p;
     Lease4Ptr lease4;
-    string txt = "malformed command";
     try {
         extractCommand(handle);
-        txt = "(missing parameters)";
         p = getParameters(false, cmd_args_);
-
-        txt = cmd_args_->str();
-
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
             // If address was specified explicitly, let's use it as is.
@@ -1527,7 +1513,7 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
 
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_DEL4_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
@@ -1539,17 +1525,13 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
 
 int
 LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
-    string txt = "malformed command";
     try {
         extractCommand(handle);
-        txt = "(missing parameters)";
 
         // Arguments are mandatory.
         if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
             isc_throw(BadValue, "Command arguments missing or a not a map.");
         }
-
-        txt = cmd_args_->str();
 
         // At least one of the 'deleted-leases' or 'leases' must be present.
         auto deleted_leases = cmd_args_->get("deleted-leases");
@@ -1742,7 +1724,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
     } catch (const std::exception& ex) {
         // Unable to parse the command and similar issues.
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_BULK_APPLY6_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (CONTROL_RESULT_ERROR);
@@ -1756,12 +1738,9 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
     Parameters p;
     Lease6Ptr lease6;
     IOAddress addr(IOAddress::IPV6_ZERO_ADDRESS());
-    string txt = "malformed command";
     try {
         extractCommand(handle);
-        txt = "(missing parameters)";
         p = getParameters(true, cmd_args_);
-        txt = cmd_args_->str();
 
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
@@ -1814,7 +1793,7 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
 
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_DEL6_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
@@ -1827,18 +1806,13 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
 
 int
 LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
-    string txt = "malformed command";
     try {
         extractCommand(handle);
-
-        txt = "(missing parameters)";
 
         // We need the lease to be specified.
         if (!cmd_args_) {
             isc_throw(isc::BadValue, "no parameters specified for lease4-update command");
         }
-
-        txt = cmd_args_->str();
 
         // Get the parameters specified by the user first.
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
@@ -1876,14 +1850,14 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
 
     } catch (const LeaseCmdsConflict& ex) {
         LOG_WARN(lease_cmds_logger, LEASE_CMDS_UPDATE4_CONFLICT)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what(), CONTROL_RESULT_CONFLICT);
         return (0);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_UPDATE4_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
@@ -1894,18 +1868,13 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
 
 int
 LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
-    string txt = "malformed command";
     try {
         extractCommand(handle);
-
-        txt = "(missing parameters)";
 
         // We need the lease to be specified.
         if (!cmd_args_) {
             isc_throw(isc::BadValue, "no parameters specified for lease6-update command");
         }
-
-        txt = cmd_args_->str();
 
         // Get the parameters specified by the user first.
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
@@ -1943,14 +1912,14 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
 
     } catch (const LeaseCmdsConflict& ex) {
         LOG_WARN(lease_cmds_logger, LEASE_CMDS_UPDATE6_CONFLICT)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what(), CONTROL_RESULT_CONFLICT);
         return (0);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_UPDATE6_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
@@ -1961,11 +1930,8 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
 
 int
 LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
-    string txt = "malformed command";
     try {
         extractCommand(handle);
-
-        txt = "(missing parameters)";
 
         SimpleParser parser;
         SubnetID id = 0;
@@ -1976,7 +1942,6 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
         // The subnet-id parameter is now optional.
         if (cmd_args_ && cmd_args_->contains("subnet-id")) {
             id = parser.getUint32(cmd_args_, "subnet-id");
-            txt = cmd_args_->str();
         }
 
         if (id) {
@@ -2031,23 +1996,21 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
         setResponse(handle, response);
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_WIPE4_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
-    LOG_INFO(lease_cmds_logger, LEASE_CMDS_WIPE4).arg(txt);
+    LOG_INFO(lease_cmds_logger, LEASE_CMDS_WIPE4)
+        .arg(cmd_args_ ? cmd_args_->str() : "<no args>");
     return (0);
 }
 
 int
 LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
-    string txt = "malformed command";
     try {
         extractCommand(handle);
-
-        txt = "(missing parameters)";
 
         SimpleParser parser;
         SubnetID id = 0;
@@ -2064,7 +2027,6 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
         // The subnet-id parameter is now optional.
         if (cmd_args_ && cmd_args_->contains("subnet-id")) {
             id = parser.getUint32(cmd_args_, "subnet-id");
-            txt = cmd_args_->str();
         }
 
         if (id) {
@@ -2127,13 +2089,14 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
         setResponse(handle, response);
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_WIPE6_FAILED)
-            .arg(txt)
+            .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
-    LOG_INFO(lease_cmds_logger, LEASE_CMDS_WIPE6).arg(txt);
+    LOG_INFO(lease_cmds_logger, LEASE_CMDS_WIPE6)
+        .arg(cmd_args_ ? cmd_args_->str() : "<no args>");
     return (0);
 }
 
