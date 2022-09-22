@@ -299,13 +299,65 @@ protected:
 
 public:
 
+    /// @brief Returns the number of lease updates rejected by the partner (MT safe).
+    ///
+    /// Each rejected lease update is counted only once if it failed
+    /// multiple times. Before returning the counter, it discards expired
+    /// rejected lease updates.
+    ///
+    /// @return Current rejected lease update number count.
+    size_t getRejectedLeaseUpdatesCount();
+
+protected:
+
     /// @brief Returns the number of lease updates rejected by the partner.
     ///
     /// Each rejected lease update is counted only once if it failed
-    /// multiple times
+    /// multiple times. Before returning the counter, it discards expired
+    /// rejected lease updates.
     ///
     /// @return Current rejected lease update number count.
-    virtual size_t getRejectedLeaseUpdatesCount() const = 0;
+    virtual size_t getRejectedLeaseUpdatesCountInternal() = 0;
+
+    /// @brief Extracts the number of lease updates rejected by the partner
+    /// from the specified container.
+    ///
+    /// @param rejected_clients container holding rejected clients (v4 or v6).
+    /// @tparam RejectedClientsType type of the container holding rejected
+    /// clients.
+    /// @return Current rejected lease update number count.
+    template<typename RejectedClientsType>
+    static size_t getRejectedLeaseUpdatesCountFromContainer(RejectedClientsType& rejected_clients) {
+        if (rejected_clients.empty()) {
+            return (0);
+        }
+        auto& idx = rejected_clients.template get<1>();
+        auto upper_limit = idx.upper_bound(time(NULL));
+        if (upper_limit != idx.end()) {
+            auto lower_limit = idx.cbegin();
+            idx.erase(lower_limit, upper_limit);
+        }
+        return (rejected_clients.size());
+    }
+
+public:
+
+    /// @brief Marks that the lease update failed due to a conflict for the
+    /// specified DHCP message (MT safe).
+    ///
+    /// If the conflict has been already reported for the given client, the
+    /// rejected lease count remains unchanged.
+    ///
+    /// @param message DHCP message for which a lease update failed due to
+    ///  a conflict.
+    /// @param lifetime a time in seconds after which the rejected lease
+    /// update entry should be discarded.
+    /// @return true if the update was rejected for the first time, false
+    /// otherwise.
+    bool reportRejectedLeaseUpdate(const dhcp::PktPtr& message,
+                                   const uint32_t lifetime = 86400);
+
+protected:
 
     /// @brief Marks that the lease update failed due to a conflict for the
     /// specified DHCP message.
@@ -315,9 +367,26 @@ public:
     ///
     /// @param message DHCP message for which a lease update failed due to
     ///  a conflict.
+    /// @param lifetime a time in seconds after which the rejected lease
+    /// update entry should be discarded.
     /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLeaseUpdate(const dhcp::PktPtr& message) = 0;
+    virtual bool reportRejectedLeaseUpdateInternal(const dhcp::PktPtr& message,
+                                                   const uint32_t lifetime) = 0;
+public:
+
+    /// @brief Marks the lease update successful (MT safe).
+    ///
+    /// If the lease update was previously marked "in conflict", it is
+    /// now cleared, effectively lowering the number of conflicted leases.
+    ///
+    /// @param message DHCP message for which the lease update was
+    /// successful.
+    /// @return true when the lease was marked "in conflict" and it is
+    /// now cleared.
+    bool reportSuccessfulLeaseUpdate(const dhcp::PktPtr& message);
+
+protected:
 
     /// @brief Marks the lease update successful.
     ///
@@ -328,10 +397,19 @@ public:
     /// successful.
     /// @return true when the lease was marked "in conflict" and it is
     /// now cleared.
-    virtual bool reportSuccessfulLeaseUpdate(const dhcp::PktPtr& message) = 0;
+    virtual bool reportSuccessfulLeaseUpdateInternal(const dhcp::PktPtr& message) = 0;
+
+public:
+
+    /// @brief Clears rejected client leases (MT safe).
+    void clearRejectedLeaseUpdates();
+
+protected:
 
     /// @brief Clears rejected client leases.
-    virtual void clearRejectedLeaseUpdates() = 0;
+    virtual void clearRejectedLeaseUpdatesInternal() = 0;
+
+public:
 
     /// @brief Issues a warning about high clock skew between the active
     /// servers if one is warranted.
@@ -399,7 +477,7 @@ public:
     /// 60 seconds.  In the future it may become configurable.
     ///
     /// @return true if the HA service should enter "terminated" state.
-    bool clockSkewShouldTerminate() const;
+    bool clockSkewShouldTerminate();
 
 private:
     /// @brief Indicates whether the HA service should enter "terminated"
@@ -418,7 +496,7 @@ private:
     /// 60 seconds.  In the future it may become configurable.
     ///
     /// @return true if the HA service should enter "terminated" state.
-    bool clockSkewShouldTerminateInternal() const;
+    bool clockSkewShouldTerminateInternal();
 
     /// @brief Checks if the clock skew is greater than the specified number
     /// of seconds.
@@ -437,7 +515,7 @@ public:
     /// exceeds the value of max-rejected-lease-updates, false when the
     /// max-rejected-lease-updates is 0 or is greater than the current
     /// number of rejected lease updates.
-    bool rejectedLeaseUpdatesShouldTerminate() const;
+    bool rejectedLeaseUpdatesShouldTerminate();
 
 private:
 
@@ -448,7 +526,7 @@ private:
     /// exceeds the value of max-rejected-lease-updates, false when the
     /// max-rejected-lease-updates is 0 or is greater than the current
     /// number of rejected lease updates.
-    bool rejectedLeaseUpdatesShouldTerminateInternal() const;
+    bool rejectedLeaseUpdatesShouldTerminateInternal();
 
 public:
 
@@ -716,13 +794,16 @@ public:
     /// @return Number of unacked clients.
     virtual size_t getUnackedClientsCount() const;
 
+protected:
+
     /// @brief Returns the number of lease updates rejected by the partner.
     ///
     /// Each rejected lease update is counted only once if it failed
-    /// multiple times
+    /// multiple times. Before returning the counter, it discards expired
+    /// rejected lease updates.
     ///
     /// @return Current rejected lease update number count.
-    virtual size_t getRejectedLeaseUpdatesCount() const;
+    virtual size_t getRejectedLeaseUpdatesCountInternal();
 
     /// @brief Marks that the lease update failed due to a conflict for the
     /// specified DHCP message.
@@ -732,9 +813,12 @@ public:
     ///
     /// @param message DHCP message for which a lease update failed due to
     ///  a conflict.
+    /// @param lifetime a time in seconds after which the rejected lease
+    /// update entry should be discarded.
     /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLeaseUpdate(const dhcp::PktPtr& message);
+    virtual bool reportRejectedLeaseUpdateInternal(const dhcp::PktPtr& message,
+                                                   const uint32_t lifetime);
 
     /// @brief Marks the lease update successful.
     ///
@@ -745,12 +829,10 @@ public:
     /// successful.
     /// @return true when the lease was marked "in conflict" and it is
     /// now cleared.
-    virtual bool reportSuccessfulLeaseUpdate(const dhcp::PktPtr& message);
+    virtual bool reportSuccessfulLeaseUpdateInternal(const dhcp::PktPtr& message);
 
     /// @brief Clears rejected client leases.
-    virtual void clearRejectedLeaseUpdates();
-
-protected:
+    virtual void clearRejectedLeaseUpdatesInternal();
 
     /// @brief Checks if the DHCPv4 message appears to be unanswered.
     ///
@@ -835,6 +917,7 @@ protected:
     struct RejectedClient4 {
         std::vector<uint8_t> hwaddr_;
         std::vector<uint8_t> clientid_;
+        int64_t expire_;
     };
 
     /// @brief Multi index container holding information about the clients
@@ -842,7 +925,11 @@ protected:
     typedef boost::multi_index_container<
         RejectedClient4,
         boost::multi_index::indexed_by<
-            ClientIdent4<RejectedClient4>
+            ClientIdent4<RejectedClient4>,
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::member<RejectedClient4, int64_t,
+                                           &RejectedClient4::expire_>
+            >
         >
     > RejectedClients4;
 
@@ -906,13 +993,16 @@ public:
     /// @return Number of unacked clients.
     virtual size_t getUnackedClientsCount() const;
 
+protected:
+
     /// @brief Returns the number of lease updates rejected by the partner.
     ///
     /// Each rejected lease update is counted only once if it failed
-    /// multiple times
+    /// multiple times. Before returning the counter, it discards expired
+    /// rejected lease updates.
     ///
     /// @return Current rejected lease update number count.
-    virtual size_t getRejectedLeaseUpdatesCount() const;
+    virtual size_t getRejectedLeaseUpdatesCountInternal();
 
     /// @brief Marks that the lease update failed due to a conflict for the
     /// specified DHCP message.
@@ -922,9 +1012,12 @@ public:
     ///
     /// @param message DHCP message for which a lease update failed due to
     ///  a conflict.
+    /// @param lifetime a time in seconds after which the rejected lease
+    /// update entry should be discarded.
     /// @return true if the update was rejected for the first time, false
     /// otherwise.
-    virtual bool reportRejectedLeaseUpdate(const dhcp::PktPtr& message);
+    virtual bool reportRejectedLeaseUpdateInternal(const dhcp::PktPtr& message,
+                                                   const uint32_t lifetime = 86400);
 
     /// @brief Marks the lease update successful.
     ///
@@ -935,10 +1028,10 @@ public:
     /// successful.
     /// @return true when the lease was marked "in conflict" and it is
     /// now cleared.
-    virtual bool reportSuccessfulLeaseUpdate(const dhcp::PktPtr& message);
+    virtual bool reportSuccessfulLeaseUpdateInternal(const dhcp::PktPtr& message);
 
     /// @brief Clears rejected client leases.
-    virtual void clearRejectedLeaseUpdates();
+    virtual void clearRejectedLeaseUpdatesInternal();
 
 protected:
 
@@ -1011,6 +1104,7 @@ protected:
     /// rejected lease update.
     struct RejectedClient6 {
         std::vector<uint8_t> duid_;
+        int64_t expire_;
     };
 
     /// @brief Multi index container holding information about the clients
@@ -1018,7 +1112,11 @@ protected:
     typedef boost::multi_index_container<
         RejectedClient6,
         boost::multi_index::indexed_by<
-            ClientIdent6<RejectedClient6>
+            ClientIdent6<RejectedClient6>,
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::member<RejectedClient6, int64_t,
+                                           &RejectedClient6::expire_>
+            >
         >
     > RejectedClients6;
 

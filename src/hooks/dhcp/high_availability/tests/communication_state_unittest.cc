@@ -137,6 +137,10 @@ public:
     /// rejected leases.
     void reportRejectedLeasesV6InvalidValuesTest();
 
+    /// @brief Test that old rejected lease updates are discarded while
+    /// getting the rejected lease updates count.
+    void getRejectedLeaseUpdatesCountFromContainerTest();
+
     /// @brief Returns test heartbeat implementation.
     ///
     /// @return Pointer to heartbeat implementation function under test.
@@ -729,13 +733,22 @@ void
 CommunicationStateTest::reportRejectedLeasesV4Test() {
     // Initially, there should be no rejected leases.
     EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+
     // Reject lease update.
     auto msg = createMessage4(DHCPREQUEST, 1, 0, 0);
     state_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+
     // Reject another lease update.
     msg = createMessage4(DHCPREQUEST, 2, 0, 0);
     state_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+
+    // Reject a lease with a short (zero) lease lifetime.
+    // This lease should be discarded when we call the
+    // getRejectedLeaseUpdatesCount().
+    msg = createMessage4(DHCPREQUEST, 3, 0, 0);
+    state_.reportRejectedLeaseUpdate(msg, 0);
     EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
 
     // Reject lease update for a client using the same MAC
@@ -779,6 +792,9 @@ CommunicationStateTest::reportSuccessfulLeasesV4Test() {
 
 void
 CommunicationStateTest::reportRejectedLeasesV4InvalidValuesTest() {
+    // Populate one valid update. Without it our functions under test
+    // would return early.
+    state_.reportRejectedLeaseUpdate(createMessage4(DHCPREQUEST, 1, 0, 0));
     // Using DHCPv6 message in the DHCPv4 context is a programming
     // error and deserves an exception.
     auto msg = createMessage6(DHCPV6_REQUEST, 1, 0);
@@ -790,18 +806,29 @@ void
 CommunicationStateTest::reportRejectedLeasesV6Test() {
     // Initially, there should be no rejected leases.
     EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+
     // Reject lease update.
-    auto msg = createMessage6(DHCPV6_SOLICIT, 1, 0);
+    auto msg = createMessage6(DHCPV6_REQUEST, 1, 0);
     state6_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+
     // Reject another lease update.
-    msg = createMessage6(DHCPV6_SOLICIT, 2, 0);
+    msg = createMessage6(DHCPV6_REQUEST, 2, 0);
     state6_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+
+    // Reject a lease with a short (zero) lease lifetime.
+    // This lease should be discarded when we call the
+    // getRejectedLeaseUpdatesCount().
+    msg = createMessage6(DHCPV6_REQUEST, 3, 0);
+    state6_.reportRejectedLeaseUpdate(msg, 0);
+    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+
     // Reject it again. It should not affect the counter.
-    msg = createMessage6(DHCPV6_SOLICIT, 2, 0);
+    msg = createMessage6(DHCPV6_REQUEST, 2, 0);
     state6_.reportRejectedLeaseUpdate(msg);
     EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+
     // Clear rejected lease updates and make sure they
     // are now 0.
     state6_.clearRejectedLeaseUpdates();
@@ -838,6 +865,9 @@ CommunicationStateTest::reportSuccessfulLeasesV6Test() {
 
 void
 CommunicationStateTest::reportRejectedLeasesV6InvalidValuesTest() {
+    // Populate one valid update. Without it our functions under test
+    // would return early.
+    state6_.reportRejectedLeaseUpdate(createMessage6(DHCPV6_REQUEST, 1, 0));
     // Using DHCPv4 message in the DHCPv6 context is a programming
     // error and deserves an exception.
     auto msg0 = createMessage4(DHCPREQUEST, 1, 1, 0);
@@ -848,6 +878,49 @@ CommunicationStateTest::reportRejectedLeasesV6InvalidValuesTest() {
     msg1->delOption(D6O_CLIENTID);
     EXPECT_FALSE(state6_.reportRejectedLeaseUpdate(msg1));
     EXPECT_FALSE(state6_.reportSuccessfulLeaseUpdate(msg1));
+}
+
+void
+CommunicationStateTest::getRejectedLeaseUpdatesCountFromContainerTest() {
+    // Create a simple multi index container with two indexes. The
+    // first index is on the ordinal number to distinguish between
+    // different entries. The second index is on the expire_ field
+    // that is identical to the expire_ field in the RejectedClients4
+    // and RejectedClients6 containers.
+    struct Entry {
+        int64_t ordinal_;
+        int64_t expire_;
+    };
+    typedef boost::multi_index_container<
+        Entry,
+        boost::multi_index::indexed_by<
+            boost::multi_index::ordered_unique<
+                boost::multi_index::member<Entry, int64_t,
+                                           &Entry::ordinal_>
+            >,
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::member<Entry, int64_t,
+                                           &Entry::expire_>
+            >
+        >
+    > Entries;
+    // Add many entries to the container. Odd entries have lifetime
+    // expiring in the future. Even entries have lifetimes expiring in
+    // the past.
+    Entries entries;
+    for (auto i = 0; i < 1000; i++) {
+        entries.insert({i, time(NULL) + (i % 2 ? 100 + i : -1 - i)});
+    }
+    // Get the count of valid entries. It should remove the expiring
+    // entries.
+    auto valid_entries_count = state_.getRejectedLeaseUpdatesCountFromContainer(entries);
+    EXPECT_EQ(500, valid_entries_count);
+    EXPECT_EQ(500, entries.size());
+
+    // Validate that we removed expired entries, not the valid ones.
+    for (auto entry : entries) {
+        EXPECT_EQ(1, entry.ordinal_ % 2);
+    }
 }
 
 TEST_F(CommunicationStateTest, partnerStateTest) {
@@ -1055,6 +1128,10 @@ TEST_F(CommunicationStateTest, reportRejectedLeasesV6InvalidValuesTest) {
 TEST_F(CommunicationStateTest, reportRejectedLeasesV6InvalidValuesTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     reportRejectedLeasesV6InvalidValuesTest();
+}
+
+TEST_F(CommunicationStateTest, getRejectedLeaseUpdatesCountFromContainerTest) {
+    getRejectedLeaseUpdatesCountFromContainerTest();
 }
 
 }
