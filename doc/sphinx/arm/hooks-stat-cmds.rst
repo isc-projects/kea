@@ -113,14 +113,14 @@ The following command fetches lease statistics for subnet ID 10 from a
 The following command fetches lease statistics for all subnets with IDs
 in the range 10 through 50 from a ``kea-dhcp4`` server:
 
-::
+.. code-block:: json
 
    {
      "command": "stat-lease4-get",
      "arguments": {
        "subnet-range" {
          "first-subnet-id": 10,
-         "last-subnet-id": 50,
+         "last-subnet-id": 50
        }
      }
    }

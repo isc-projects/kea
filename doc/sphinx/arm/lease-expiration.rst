@@ -133,18 +133,16 @@ processed in a single reclamation cycle, and the maximum amount of time
 a single reclamation cycle is allowed to run before being interrupted.
 The following examples demonstrate how these parameters can be used:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
-       ...
-
+   {
+     "Dhcp4": {
        "expired-leases-processing": {
            "reclaim-timer-wait-time": 5,
            "max-reclaim-leases": 0,
-           "max-reclaim-time": 0,
-       },
-
-       ...
+           "max-reclaim-time": 0
+       }
+     }
    }
 
 The first parameter is expressed in seconds and specifies an interval
@@ -182,19 +180,17 @@ apply restrictions to the maximum duration of a reclamation cycle or the
 maximum number of leases reclaimed in a cycle. The following
 configuration demonstrates how this can be done:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
-       ...
-
+   {
+     "Dhcp4": {
        "expired-leases-processing": {
            "reclaim-timer-wait-time": 3,
            "max-reclaim-leases": 100,
            "max-reclaim-time": 50,
-           "unwarned-reclaim-cycles": 10,
-       },
-
-       ...
+           "unwarned-reclaim-cycles": 10
+       }
+     }
    }
 
 In this example, the ``max-reclaim-leases`` parameter limits the number of leases

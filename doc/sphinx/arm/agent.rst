@@ -44,7 +44,7 @@ Configuration
 
 The following example demonstrates the basic CA configuration.
 
-::
+.. code-block:: json
 
    {
        "Control-agent": {
@@ -78,7 +78,7 @@ The following example demonstrates the basic CA configuration.
                "d2": {
                    "socket-type": "unix",
                    "socket-name": "/path/to/the/unix/socket-d2"
-               },
+               }
            },
 
            "hooks-libraries": [

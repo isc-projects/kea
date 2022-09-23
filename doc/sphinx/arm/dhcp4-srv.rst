@@ -2599,9 +2599,10 @@ sub-options.
 
 Finally, we can set values for the new options:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
+   {
+     "Dhcp4": {
        "option-data": [
            {
                "name": "subopt1",
@@ -2609,7 +2610,7 @@ Finally, we can set values for the new options:
                "space": "isc",
                "data": "192.0.2.3"
            },
-           }
+           {
                "name": "subopt2",
                "code": 2,
                "space": "isc",
@@ -2620,8 +2621,8 @@ Finally, we can set values for the new options:
                "code": 222,
                "space": "dhcp4"
            }
-       ],
-       ...
+       ]
+     }
    }
 
 It is possible to create an option which carries some data in
@@ -3752,12 +3753,11 @@ enables client identification using ``chaddr`` only. This instructs the
 server to ignore the client identifier during lease lookups and allocations
 for a particular subnet. Consider the following simplified server configuration:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
-       ...
+   {
+     "Dhcp4": {
        "match-client-id": true,
-       ...
        "subnet4": [
        {
            "subnet": "192.0.10.0/24",
@@ -3766,9 +3766,10 @@ for a particular subnet. Consider the following simplified server configuration:
        },
        {
            "subnet": "10.0.0.0/8",
-           "pools": [ { "pool": "10.0.0.23-10.0.2.99" } ],
+           "pools": [ { "pool": "10.0.0.23-10.0.2.99" } ]
        }
        ]
+     }
    }
 
 The ``match-client-id`` is a boolean value which controls this behavior.
@@ -4429,7 +4430,7 @@ The server qualifies the reserved hostname with the value of the
 ``ddns-qualifying-suffix`` parameter. For example, the following subnet
 configuration:
 
-::
+.. code-block:: json
 
        {
            "subnet4": [ {
@@ -4444,7 +4445,7 @@ configuration:
                ]
             }],
            "dhcp-ddns": {
-               "enable-updates": true,
+               "enable-updates": true
            }
        }
 
@@ -4456,7 +4457,7 @@ treated as a fully qualified name. Thus, by leaving the
 ``ddns-qualifying-suffix`` empty it is possible to qualify hostnames for
 different clients with different domain names:
 
-::
+.. code-block:: json
 
        {
            "subnet4": [ {
@@ -4475,7 +4476,7 @@ different clients with different domain names:
                ]
             }],
            "dhcp-ddns": {
-               "enable-updates": true,
+               "enable-updates": true
            }
        }
 
@@ -5476,13 +5477,13 @@ introduced:
                "subnet4": [
                    {
                        "subnet": "10.0.0.0/8",
-                       "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ],
+                       "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ]
                    },
                    {
                        "subnet": "192.0.2.0/24",
                        "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
                    }
-               ],
+               ]
            } ], # end of shared-networks
 
        # It is likely that in the network there will be a mix of regular,
@@ -5635,7 +5636,7 @@ shown in the example below.
            "subnet4": [
                {
                    "subnet": "10.0.0.0/8",
-                   "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ],
+                   "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ]
                },
                {
                     "subnet": "192.0.2.0/24",
@@ -5758,7 +5759,7 @@ following example:
                "subnet4": [
                    {
                        "subnet": "192.0.2.0/26",
-                       "pools": [ { "pool": "192.0.2.1 - 192.0.2.63" } ],
+                       "pools": [ { "pool": "192.0.2.1 - 192.0.2.63" } ]
                    },
                    {
                        "subnet": "10.0.0.0/24",
@@ -6013,18 +6014,20 @@ server is able to select this subnet for any incoming packets that come
 from a relay that has an address in the 192.0.2.0/24 subnet. It also
 selects that subnet for a relay with address 10.0.0.1.
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
+   {
+     "Dhcp4": {
        "subnet4": [
            {
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
                "relay": {
                    "ip-addresses": [ "10.0.0.1" ]
-               },
+               }
            }
-       ],
+       ]
+     }
    }
 
 If ``relay`` is specified, the ``ip-addresses`` parameter within it is
@@ -7033,9 +7036,10 @@ Enabling the Configuration Backend
 Consider the following configuration snippet, which uses a MySQL configuration
 database:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
+   {
+     "Dhcp4": {
        "server-tag": "my DHCPv4 server",
        "config-control": {
            "config-databases": [{
@@ -7052,7 +7056,8 @@ database:
            "library": "/usr/local/lib/kea/hooks/libdhcp_mysql_cb.so"
        }, {
            "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
-       }],
+       }]
+     }
    }
 
 The ``config-control`` command contains two parameters. ``config-databases``
@@ -7068,9 +7073,10 @@ merged into the configuration read from the configuration file.
 
 The following snippet illustrates the use of a PostgreSQL database:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
+   {
+     "Dhcp4": {
        "server-tag": "my DHCPv4 server",
        "config-control": {
            "config-databases": [{
@@ -7087,7 +7093,8 @@ The following snippet illustrates the use of a PostgreSQL database:
            "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql_cb.so"
        }, {
            "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
-       }],
+       }]
+     }
    }
 
 .. note::

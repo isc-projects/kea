@@ -305,14 +305,14 @@ The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example
     "subnet4": [{
         "subnet": "192.0.2.0/24",
         "pools": [{
-            "pool": "192.0.2.10 - 192.0.2.20",
+            "pool": "192.0.2.10 - 192.0.2.20"
         } ],
         "user-context": {
             "ddns-tuning": {
                 "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
                                           +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
                                           +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 3,4))",
+                                          +Int8ToText(substring(pkt4.yiaddr, 3,4))"
             },
             "last-modified": "2017-09-04 13:32",
             "phones": [ "x1234", "x2345" ],

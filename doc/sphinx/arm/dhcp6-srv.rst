@@ -1787,12 +1787,12 @@ The S46 BR option is used to convey the IPv6 address of the Border
 Relay. This option is mandatory in the MAP-E Container option and is not
 permitted in the MAP-T and S46 Lightweight 4over6 Container options.
 
-::
+.. code-block:: json
 
    {
        "space": "s46-cont-mape-options",
        "name": "s46-br",
-       "data": "2001:db8:cafe::1",
+       "data": "2001:db8:cafe::1"
    }
 
 Another possible ``space`` value is ``s46-cont-lw-options``.
@@ -1804,12 +1804,12 @@ The S46 DMR option is used to convey values for the Default Mapping Rule
 (DMR). This option is mandatory in the MAP-T container option and is not
 permitted in the MAP-E and S46 Lightweight 4over6 Container options.
 
-::
+.. code-block:: json
 
    {
        "space": "s46-cont-mapt-options",
        "name": "s46-dmr",
-       "data": "2001:db8:cafe::/64",
+       "data": "2001:db8:cafe::/64"
    }
 
 This option must not be included in other containers.
@@ -1838,12 +1838,12 @@ S46 Port Parameters
 The S46 Port Parameters option specifies optional port-set information
 that may be provided to CEs.
 
-::
+.. code-block:: json
 
    {
        "space": "s46-rule-options",
        "name": "s46-portparams",
-       "data": "2, 3/4",
+       "data": "2, 3/4"
    }
 
 Another possible ``space`` value is ``s46-v4v6bind``, to include this option
@@ -2200,9 +2200,10 @@ sub-options.
 
 Finally, we can set values for the new options:
 
-::
+.. code-block:: json
 
-   "Dhcp6": {
+   {
+     "Dhcp6": {
        "option-data": [
            {
                "name": "subopt1",
@@ -2210,7 +2211,7 @@ Finally, we can set values for the new options:
                "space": "isc",
                "data": "2001:db8::abcd"
            },
-           }
+           {
                "name": "subopt2",
                "code": 2,
                "space": "isc",
@@ -2221,8 +2222,8 @@ Finally, we can set values for the new options:
                "code": 102,
                "space": "dhcp6"
            }
-       ],
-       ...
+       ]
+     }
    }
 
 It is possible to create an option which carries some data in
@@ -2414,9 +2415,10 @@ DHCPv6 server. However, support is disabled by default. It can be
 enabled on a per-subnet basis using the ``rapid-commit`` parameter as
 shown below:
 
-::
+.. code-block:: json
 
-   "Dhcp6": {
+   {
+     "Dhcp6": {
        "subnet6": [
            {
                "subnet": "2001:db8:beef::/48",
@@ -2425,10 +2427,10 @@ shown below:
                     {
                         "pool": "2001:db8:beef::1-2001:db8:beef::10"
                     }
-                ],
+                ]
            }
-       ],
-       ...
+       ]
+     }
    }
 
 This setting only affects the subnet for which ``rapid-commit`` is
@@ -3893,9 +3895,10 @@ treated as a fully qualified name. Thus, by leaving the
 ``ddns-qualifying-suffix`` empty it is possible to qualify hostnames for
 different clients with different domain names:
 
-::
+.. code-block:: json
 
-   "subnet6": [
+   {
+     "subnet6": [
        {
            "subnet": "2001:db8:1::/48",
            "pools": [ { "pool": "2001:db8:1::/80" } ],
@@ -3907,9 +3910,10 @@ different clients with different domain names:
                }
            ]
        }
-   ],
-   "dhcp-ddns": {
-       "enable-updates": true,
+     ],
+     "dhcp-ddns": {
+         "enable-updates": true
+     }
    }
 
 The above example results in the assignment of the
@@ -4950,7 +4954,7 @@ then override its value in the subnet scope. For example:
                         "data": "2001:db8:cafe::1"
                     } ]
                }
-           ],
+           ]
        } ]
 
 In this example, there is a ``dns-servers`` option defined that is available
@@ -5024,7 +5028,7 @@ of what **NOT** to do:
                     # name in the other subnet should be "eth1".
                     # "interface": "eth1"
                }
-           ],
+           ]
        } ]
 
 To minimize the chance of configuration errors, it is often more convenient
@@ -5044,13 +5048,13 @@ shown in the example below.
            "subnet6": [
                {
                    "subnet": "2001:db8::/64",
-                   "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ],
+                   "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
                },
                {
                     "subnet": "3ffe:abcd::/64",
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ]
                }
-           ],
+           ]
        } ]
 
 
@@ -5151,7 +5155,7 @@ subnet. A common mistake is to assume that the subnet that includes a client
 class is preferred over subnets without client classes. Consider the
 following example:
 
-::
+.. code-block:: json
 
    {
        "client-classes": [
@@ -5169,7 +5173,7 @@ following example:
                "subnet6": [
                    {
                        "subnet": "2001:db8:1::/64",
-                       "pools": [ { "pool": "2001:db8:1::20 - 2001:db8:1::ff" } ],
+                       "pools": [ { "pool": "2001:db8:1::20 - 2001:db8:1::ff" } ]
                    },
                    {
                        "subnet": "2001:db8:3::/64",

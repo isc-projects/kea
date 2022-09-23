@@ -463,12 +463,12 @@ The response will contain a list of hosts with updated ``source-index``
 and ``from`` fields. Continue calling the command until the last
 page is received. Its response will look like this:
 
-::
+.. code-block:: json
 
    {
        "arguments": {
            "count": 0,
-           "hosts": [ ],
+           "hosts": [ ]
        },
        "result": 3,
        "0 IPv4 host(s) found."

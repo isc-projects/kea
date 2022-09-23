@@ -228,9 +228,11 @@ The following is an example of an HA server pair and Control Agent configuration
 for ``hot-standby`` with TLS.
 
 Server 1:
-::
 
-   "Dhcp4": {
+.. code-block:: json
+
+   {
+     "Dhcp4": {
        "hooks-libraries": [{
            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
            "parameters": { }
@@ -239,9 +241,9 @@ Server 1:
            "parameters": {
                "high-availability": [{
                    "this-server-name": "server1",
-                   "trust-anchor": /usr/lib/kea/CA.pem,
-                   "cert-file": /usr/lib/kea/server1_cert.pem,
-                   "key-file": /usr/lib/kea/server1_key.pem
+                   "trust-anchor": "/usr/lib/kea/CA.pem",
+                   "cert-file": "/usr/lib/kea/server1_cert.pem",
+                   "key-file": "/usr/lib/kea/server1_key.pem",
                    "mode": "hot-standby",
                    "heartbeat-delay": 10000,
                    "max-response-delay": 60000,
@@ -265,15 +267,18 @@ Server 1:
        "subnet4": [{
            "subnet": "192.0.3.0/24",
            "pools": [{
-               "pool": "192.0.3.100 - 192.0.3.250",
+               "pool": "192.0.3.100 - 192.0.3.250"
                }]
        }]
+     }
    }
 
 Server 2:
-::
 
-   "Dhcp4": {
+.. code-block:: json
+
+   {
+     "Dhcp4": {
        "hooks-libraries": [{
            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
            "parameters": { }
@@ -282,9 +287,9 @@ Server 2:
            "parameters": {
                "high-availability": [{
                    "this-server-name": "server2",
-                   "trust-anchor": /usr/lib/kea/CA.pem,
-                   "cert-file": /usr/lib/kea/server2_cert.pem,
-                   "key-file": /usr/lib/kea/server2_key.pem
+                   "trust-anchor": "/usr/lib/kea/CA.pem",
+                   "cert-file": "/usr/lib/kea/server2_cert.pem",
+                   "key-file": "/usr/lib/kea/server2_key.pem",
                    "mode": "hot-standby",
                    "heartbeat-delay": 10000,
                    "max-response-delay": 60000,
@@ -308,9 +313,10 @@ Server 2:
        "subnet4": [{
            "subnet": "192.0.3.0/24",
            "pools": [{
-               "pool": "192.0.3.100 - 192.0.3.250",
+               "pool": "192.0.3.100 - 192.0.3.250"
                }]
        }]
+     }
    }
 
 Control Agent on Server 1:
@@ -962,12 +968,13 @@ The corresponding server configuration, using advanced classification (and the
 ``member`` expression), is provided below. For brevity's sake, the HA hook
 library configuration has been removed from this example.
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
+   {
+     "Dhcp4": {
        "client-classes": [{
            "name": "phones",
-           "test": "substring(option[60].hex,0,6) == 'Aastra'",
+           "test": "substring(option[60].hex,0,6) == 'Aastra'"
        }, {
            "name": "laptops",
            "test": "not member('phones')"
@@ -992,7 +999,6 @@ library configuration has been removed from this example.
            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
            "parameters": {
                "high-availability": [{
-                  ...
                }]
            }
        }],
@@ -1019,7 +1025,8 @@ library configuration has been removed from this example.
            }],
 
            "relay": { "ip-address": "10.1.2.3" }
-       }],
+       }]
+     }
    }
 
 The configuration provided above splits the address range into four pools: two
@@ -1126,9 +1133,10 @@ Passive-Backup Configuration
 The following is an example configuration file for the primary server in a
 ``passive-backup`` configuration:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
+   {
+     "Dhcp4": {
        "hooks-libraries": [{
            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
            "parameters": { }
@@ -1161,7 +1169,7 @@ The following is an example configuration file for the primary server in a
        "subnet4": [{
            "subnet": "192.0.3.0/24",
            "pools": [{
-               "pool": "192.0.3.100 - 192.0.3.250",
+               "pool": "192.0.3.100 - 192.0.3.250"
            }],
 
            "option-data": [{
@@ -1171,6 +1179,7 @@ The following is an example configuration file for the primary server in a
 
            "relay": { "ip-address": "10.1.2.3" }
        }]
+     }
    }
 
 The configurations of three peers are included: one for the primary and two for

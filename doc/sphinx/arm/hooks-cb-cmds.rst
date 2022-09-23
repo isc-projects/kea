@@ -864,7 +864,7 @@ database:
                    "option-data": [ {
                        "name": "sntp-servers",
                        "data": "2001:db8:1::1"
-                   } ],
+                   } ]
                }
            ],
            "remote": {

@@ -841,7 +841,7 @@ and "delegated-len" parameters, the options are identified by the 'name' or
 'code' and 'space' parameters. The 'space' parameter can be omitted if the
 option belongs to the default 'dhcp6' space.
 
-::
+.. code-block:: json
 
    {
        "command": "subnet6-delta-del",
@@ -865,7 +865,7 @@ option belongs to the default 'dhcp6' space.
                    {
                        "prefix": "2001:db8:4::",
                        "prefix-len": 48,
-                       "delegated-len": 64,
+                       "delegated-len": 64
                    }
                ],
                "pools": [
