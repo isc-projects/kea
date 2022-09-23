@@ -4484,7 +4484,7 @@ following can be used:
 
 ::
 
-   "Dhcp6:" {
+   "Dhcp6": {
        # This specifies global reservations.
        # They will apply to all subnets that
        # have global reservations enabled.

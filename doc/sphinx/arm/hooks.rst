@@ -308,7 +308,7 @@ The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example
             "pool": "192.0.2.10 - 192.0.2.20",
         } ],
         "user-context": {
-            "ddns-tuning:" {
+            "ddns-tuning": {
                 "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
                                           +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
                                           +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \

@@ -5088,7 +5088,7 @@ following can be used:
 
 ::
 
-   "Dhcp4:" {
+   "Dhcp4": {
        # This specifies global reservations.
        # They will apply to all subnets that
        # have global reservations enabled.
