@@ -440,6 +440,7 @@ public:
                      const IOAddress& /* lower_bound_address */,
                      const LeasePageSize& /* page_size */) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByLink not implemented");
+    }
 
     ///  @brief Pretends to write V4 leases to a file.
     virtual void writeLeases4(const std::string&) override {
