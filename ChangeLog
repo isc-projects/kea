@@ -1,4 +1,13 @@
-2059.	[func]         marcin
+2060.	[build]		andrei
+	Two scripts that are used for checking YANG modules now
+	automatically detect the location of the yanglint tool and its
+	libraries based on the values passed to the configure script.
+	"make check" should now pass uninterrupted on some delicate
+	systems like Alpine and RPM-based. Also, reinstall.sh, used to
+	install YANG modules, now detects sysrepoctl automatically.
+	(Gitlab #2558)
+
+2059.	[func]		marcin
 	The lease_cmds hook library returns a new "conflict" status
 	code indicating an issue with a lease update due to a mismatch
 	between the received lease and the server's configuration or
