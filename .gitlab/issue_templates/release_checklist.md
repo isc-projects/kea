@@ -39,17 +39,22 @@ For new stable releases or maintenance releases, please don't use `kea-dev` buil
 The following steps may involve changing files in the repository.
 
 1. [ ] Run [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) <br>
-   Example command: `GITLAB_KEA_TOKEN='...' GITLAB_KEA_PREMIUM_TOKEN='...' ./update-code-for-release.py 1.9.7 'Apr 28, 2021' ~/isc/repos/kea/` <br>
-   The script:
-   - creates Gitlab issue and MR for release changes
-   - adds release entries to ChangeLogs
-   - regenerates BNF grammar
-   - regenerates documentation
-   - regenerates messages
-   - reorders messages in alphabetical order
-   - regenerates parsers
-   - updates copyright dates
-   - pushes the changes to MR
+   Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py 1.9.7 'Apr 28, 2021' ~/isc/repos/kea/` <br>
+   Help: `GITLAB_TOKEN="..." update-code-for-release.py --help`<br>
+   This script makes the following changes and actions:
+   1. run prepare_kea_release.sh that does:
+   1.1. add release entries in ChangeLogs
+   1.2. update Kea version in configure.ac
+   1.3. update copyright years in files that were changed in current year
+   1.4. sort message files
+   1.5. regenerate message files headers
+   2. regenerate parsers using Bison from Docker<br>
+   using with --upload:
+   3. create an issue in GitLab for release changes in kea repo
+   4. create branches and merge requests for kea and kea-premium
+   5. commit the changes in both repos
+   6. checkout created branches in both repos
+   7. commit and push the changes to GitLab server
 1. Check manually User's Guide sections:
    1. Chapter 1. Introduction
       1. [ ] On what platforms we are running tests using Jenkins? Update Supported Platforms in platforms.rst file.
