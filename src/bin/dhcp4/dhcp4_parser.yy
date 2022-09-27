@@ -250,6 +250,7 @@ using namespace std;
 
   COMPATIBILITY "compatibility"
   LENIENT_OPTION_PARSING "lenient-option-parsing"
+  IGNORE_RAI_LINK_SEL "ignore-rai-link-selection"
 
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.

@@ -2004,6 +2004,16 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"ignore-rai-link-selection\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::COMPATIBILITY:
+        return isc::dhcp::Dhcp4Parser::make_IGNORE_RAI_LINK_SEL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ignore-rai-link-selection", driver.loc_);
+    }
+}
+
+
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
