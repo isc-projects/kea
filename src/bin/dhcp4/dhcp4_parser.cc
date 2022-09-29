@@ -4555,7 +4555,7 @@ namespace isc { namespace dhcp {
                                                              {
     ctx.unique("ignore-rai-link-selection", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("lenient-option-parsing", b);
+    ctx.stack_.back()->set("ignore-rai-link-selection", b);
 }
 #line 4561 "dhcp4_parser.cc"
     break;

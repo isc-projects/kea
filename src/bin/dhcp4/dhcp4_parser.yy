@@ -2861,7 +2861,7 @@ lenient_option_parsing: LENIENT_OPTION_PARSING COLON BOOLEAN {
 ignore-rai-link-selection: IGNORE_RAI_LINK_SEL COLON BOOLEAN {
     ctx.unique("ignore-rai-link-selection", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("lenient-option-parsing", b);
+    ctx.stack_.back()->set("ignore-rai-link-selection", b);
 }
 
 %%
