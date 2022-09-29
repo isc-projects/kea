@@ -1988,13 +1988,15 @@ to be configured with those options.
    +--------------------+------+----------------------------------------------------------------------+
    | remote-id          | 2    | Can be used with flex-id to identify hosts.                          |
    +--------------------+------+----------------------------------------------------------------------+
-   | link selection     | 5    | If present, is used to select the appropriate subnet.                |
+   | link-selection     | 5    | If present, is used to select the appropriate subnet.                |
    +--------------------+------+----------------------------------------------------------------------+
    | subscriber-id      | 6    | Can be used with flex-id to identify hosts.                          |
    +--------------------+------+----------------------------------------------------------------------+
    | server-id-override | 11   | If sent by the relay, Kea accepts it as the `server-id`.             |
    +--------------------+------+----------------------------------------------------------------------+
-   | relay-source-port  | 19   | If sent by the relay, Kea sends back its responses to this port.     |
+   | relay-id           | 12   | Identifies the relay                                                 |
+   +--------------------+------+----------------------------------------------------------------------+
+   | relay-port         | 19   | If sent by the relay, Kea sends back its responses to this port.     |
    +--------------------+------+----------------------------------------------------------------------+
 
 All other RAI sub-options can be used in client classification to classify incoming packets to specific classes
