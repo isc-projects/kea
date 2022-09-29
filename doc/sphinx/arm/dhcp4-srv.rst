@@ -7189,3 +7189,21 @@ or in terms of the log message above, the tuple length ``y`` becomes ``x``.
         }
       }
     }
+
+Ignore RAI Link Selection
+----------------------
+
+With ``"ignore-rai-link-selection": true``, Relay Agent Information Link
+Selection suboption data will not be used for subnet selection. This will use
+normal subnet selection logic instead of attempting to use the subnet specified
+by the suboption.
+
+.. code-block:: json
+
+    {
+      "Dhcp4": {
+        "compatibility": {
+          "ignore-rai-link-selection": true
+        }
+      }
+    }
