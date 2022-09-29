@@ -7191,7 +7191,7 @@ or in terms of the log message above, the tuple length ``y`` becomes ``x``.
     }
 
 Ignore RAI Link Selection
-----------------------
+-------------------------
 
 With ``"ignore-rai-link-selection": true``, Relay Agent Information Link
 Selection suboption data will not be used for subnet selection. This will use
