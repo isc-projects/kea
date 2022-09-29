@@ -1276,22 +1276,25 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     // space called "dhcp4" and other option spaces. These sub-options do not
     // belong to standard option space and should be parsed using different
     // option definitions.
-    // @todo Currently, definitions for option space "dhcp-agent-options-space"
-    // are not defined. Therefore all suboptions will be represented here by
-    // the generic Option class.
 
     // Check that Circuit ID option is among parsed options.
     OptionPtr rai_option = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
     ASSERT_TRUE(rai_option);
-    EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
-    ASSERT_EQ(6, rai_option->len());
-    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 46, 4));
+    boost::shared_ptr<OptionString> circuit_id =
+        boost::dynamic_pointer_cast<OptionString>(rai_option);
+    ASSERT_TRUE(circuit_id);
+    EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, circuit_id->getType());
+    ASSERT_EQ(6, circuit_id->len());
+    EXPECT_EQ(0, memcmp(&circuit_id->getData()[0], v4_opts + 46, 4));
 
     // Check that Remote ID option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_REMOTE_ID);
     ASSERT_TRUE(rai_option);
-    EXPECT_EQ(RAI_OPTION_REMOTE_ID, rai_option->getType());
-    ASSERT_EQ(8, rai_option->len());
+    boost::shared_ptr<OptionString> remote_id =
+        boost::dynamic_pointer_cast<OptionString>(rai_option);
+    ASSERT_TRUE(remote_id);
+    EXPECT_EQ(RAI_OPTION_REMOTE_ID, remote_id->getType());
+    ASSERT_EQ(8, remote_id->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 52, 6));
 
     // Check that Vendor Specific Information option is among parsed options.

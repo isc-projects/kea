@@ -377,6 +377,56 @@ const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
     sizeof(STANDARD_V4_OPTION_DEFINITIONS) /
     sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
 
+/// Definitions of DHCPv4 agent options.
+const OptionDefParams DHCP_AGENT_OPTION_DEFINITIONS[] = {
+    { "circuit-id", RAI_OPTION_AGENT_CIRCUIT_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "remote-id", RAI_OPTION_REMOTE_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "docsis-device-class", RAI_OPTION_DOCSIS_DEVICE_CLASS,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "link-selection", RAI_OPTION_LINK_SELECTION,
+      DHCP_AGENT_OPTION_SPACE, OPT_IPV4_ADDRESS_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "subscriber-id", RAI_OPTION_SUBSCRIBER_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "radius", RAI_OPTION_RADIUS,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "auth", RAI_OPTION_AUTH,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "vendor-specific-info", RAI_OPTION_VSI,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "relay-flags", RAI_OPTION_RELAY_FLAGS,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
+    { "server-id-override", RAI_OPTION_SERVER_ID_OVERRIDE,
+      DHCP_AGENT_OPTION_SPACE, OPT_IPV4_ADDRESS_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "relay-id", RAI_OPTION_RELAY_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "access-techno-type", RAI_OPTION_ACCESS_TECHNO_TYPE,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
+    { "access-network-name", RAI_OPTION_ACCESS_NETWORK_NAME,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "access-point-name", RAI_OPTION_ACCESS_POINT_NAME,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "access-point-bssid", RAI_OPTION_ACCESS_POINT_BSSID,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "operator-id", RAI_OPTION_OPERATOR_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "operator-realm", RAI_OPTION_OPERATOR_REALM,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "relay-port", RAI_OPTION_RELAY_PORT,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
+    { "virtual-subnet-select", RAI_OPTION_VIRTUAL_SUBNET_SELECT,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "virtual-subnet-select-ctrl", RAI_OPTION_VIRTUAL_SUBNET_SELECT_CTRL,
+      DHCP_AGENT_OPTION_SPACE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "" }
+};
+
+const int DHCP_AGENT_OPTION_DEFINITIONS_SIZE =
+    sizeof(DHCP_AGENT_OPTION_DEFINITIONS) /
+    sizeof(DHCP_AGENT_OPTION_DEFINITIONS[0]);
+
 /// Last resort definitions (only option 43 for now, these definitions
 /// are applied in deferred unpacking when none is found).
 const OptionDefParams LAST_RESORT_V4_OPTION_DEFINITIONS[] = {
