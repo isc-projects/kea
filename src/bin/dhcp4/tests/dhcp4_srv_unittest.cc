@@ -4375,6 +4375,140 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     EXPECT_FALSE(drop);
 }
 
+// Checks if a RAI link selection compatibility preferences work as expected
+TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
+
+    // We have 3 subnets defined.
+    string config = "{ \"interfaces-config\": {"
+                    "    \"interfaces\": [ \"*\" ]"
+                    "},"
+                    "\"rebind-timer\": 2000, "
+                    "\"renew-timer\": 1000, "
+                    "\"compatibility\": { \"ignore-rai-link-selection\": true },"
+                    "\"subnet4\": [ "
+                    "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
+                    "    \"relay\": { "
+                    "        \"ip-address\": \"192.0.5.1\""
+                    "    },"
+                    "    \"subnet\": \"192.0.2.0/24\" }, "
+                    "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+                    "    \"subnet\": \"192.0.3.0/24\" }, "
+                    "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
+                    "    \"client-class\": \"foo\", "
+                    "    \"subnet\": \"192.0.4.0/24\" } "
+                    "],"
+                    "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ASSERT_NO_THROW(configure(config, true, false));
+
+    // Let's get the subnet configuration objects
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(3, subnets->size());
+
+    // Let's get them for easy reference
+    auto subnet_it = subnets->begin();
+    Subnet4Ptr subnet1 = *subnet_it;
+    ++subnet_it;
+    Subnet4Ptr subnet2 = *subnet_it;
+    ++subnet_it;
+    Subnet4Ptr subnet3 = *subnet_it;
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet3);
+
+    // Let's create a packet.
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
+    dis->setHops(1);
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Let's create a Relay Agent Information option
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_def);
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    ASSERT_TRUE(rai);
+    IOAddress addr("192.0.3.2");
+    OptionPtr ols(new Option(Option::V4,
+                             RAI_OPTION_LINK_SELECTION,
+                             addr.toBytes()));
+    ASSERT_TRUE(ols);
+    rai->addOption(ols);
+
+    // This is just a sanity check, we're using regular method: ciaddr 192.0.3.1
+    // belongs to the second subnet, so it is selected
+    dis->setGiaddr(IOAddress("192.0.3.1"));
+    bool drop = false;
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Setup a relay override for the first subnet as it has a high precedence
+    dis->setGiaddr(IOAddress("192.0.5.1"));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Put a RAI to select back the second subnet as it has
+    // the highest precedence, but it should be ignored due
+    // to the ignore-rai-link-selection compatibility config
+    dis->addOption(rai);
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Subnet select option has a lower precedence, but will succeed
+    // because RAI link selection suboptions are being ignored
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                           DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(sbnsel_def);
+    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    ASSERT_TRUE(sbnsel);
+    sbnsel->writeAddress(IOAddress("192.0.2.3"));
+    dis->addOption(sbnsel);
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // But, when RAI exists without the link selection option, we should
+    // fall back to the subnet selection option.
+    rai->delOption(RAI_OPTION_LINK_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    dis->addOption(rai);
+    dis->setGiaddr(IOAddress("192.0.4.1"));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Check client-classification still applies
+    IOAddress addr_foo("192.0.4.2");
+    ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
+                         addr_foo.toBytes()));
+    dis->delOption(DHO_SUBNET_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    rai->addOption(ols);
+    dis->addOption(rai);
+
+    // Note it shall fail (vs. try the next criterion).
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+    // Add the packet to the class and check again: now it shall succeed
+    dis->addClass("foo");
+    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Check it succeeds even with a bad address in the sub-option
+    IOAddress addr_bad("10.0.0.1");
+    ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
+                         addr_bad.toBytes()));
+    rai->delOption(RAI_OPTION_LINK_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    rai->addOption(ols);
+    dis->addOption(rai);
+    EXPECT_TRUE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+}
+
 // Checks if a subnet selection option works as expected
 TEST_F(Dhcpv4SrvTest, subnetSelect) {
 
