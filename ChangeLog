@@ -1,5 +1,13 @@
 Kea 2.3.1 (development) released on September 28, 2022
 
+2065.	[func]		djt
+	A compatibility config option called ignore-rai-link-selection
+	has been added to the DHCPv4 config allow operators to ignore
+	Link Selection suboption data in Relay Agent information options.
+	When this configuration value is set to true, Kea will no longer
+	use data provided in the suboption for subnet selection.
+	(Gitlab #2543)
+
 2064.	[build]		mgodzina
 	The library version numbers have been bumped for the Kea 2.3.1
 	development release.
