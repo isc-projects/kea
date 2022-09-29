@@ -35,6 +35,7 @@ run_unittests_SOURCES += udp_endpoint_unittest.cc
 run_unittests_SOURCES += udp_socket_unittest.cc
 run_unittests_SOURCES += io_service_unittest.cc
 run_unittests_SOURCES += io_service_signal_unittests.cc
+run_unittests_SOURCES += io_service_thread_pool_unittests.cc
 run_unittests_SOURCES += dummy_io_callback_unittest.cc
 run_unittests_SOURCES += tcp_acceptor_unittest.cc
 run_unittests_SOURCES += unix_domain_socket_unittest.cc
