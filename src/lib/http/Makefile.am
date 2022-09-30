@@ -43,7 +43,6 @@ libkea_http_la_SOURCES += auth_log.cc auth_log.h
 libkea_http_la_SOURCES += auth_messages.cc auth_messages.h
 libkea_http_la_SOURCES += basic_auth_config.cc basic_auth_config.h
 libkea_http_la_SOURCES += basic_auth.cc basic_auth.h
-libkea_http_la_SOURCES += http_thread_pool.cc http_thread_pool.h
 
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -115,7 +114,6 @@ libkea_http_include_HEADERS = \
 	http_message.h \
 	http_message_parser_base.h \
 	http_messages.h \
-	http_thread_pool.h \
 	http_types.h \
 	listener.h \
 	listener_impl.h \

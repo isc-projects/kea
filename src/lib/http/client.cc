@@ -8,6 +8,7 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
+#include <asiolink/io_service_thread_pool.h>
 #include <asiolink/tls_socket.h>
 #include <http/client.h>
 #include <http/http_log.h>
@@ -1790,8 +1791,8 @@ public:
             thread_io_service_.reset(new IOService());
 
             // Create the thread pool.
-            thread_pool_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_,
-                                                  defer_thread_start));
+            thread_pool_.reset(new IoServiceThreadPool(thread_io_service_, thread_pool_size_,
+                                                       defer_thread_start));
 
             // Create the connection pool. Note that we use the thread_pool_size
             // as the maximum connections per URL value.
@@ -1943,7 +1944,7 @@ private:
 
     /// @brief Pool of threads used to service connections in multi-threaded
     /// mode.
-    HttpThreadPoolPtr thread_pool_;
+    IoServiceThreadPoolPtr thread_pool_;
 };
 
 HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size,

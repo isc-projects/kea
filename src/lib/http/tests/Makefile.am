@@ -55,7 +55,6 @@ endif
 libhttp_unittests_SOURCES += url_unittests.cc
 libhttp_unittests_SOURCES += test_http_client.h
 libhttp_unittests_SOURCES += client_mt_unittests.cc
-libhttp_unittests_SOURCES += http_thread_pool_unittests.cc
 
 libhttp_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libhttp_unittests_CXXFLAGS = $(AM_CXXFLAGS)

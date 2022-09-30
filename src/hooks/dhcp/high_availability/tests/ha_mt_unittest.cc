@@ -11,7 +11,6 @@
 #include <ha_test.h>
 #include <ha_config.h>
 #include <ha_service.h>
-#include <http/http_thread_pool.h>
 
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>

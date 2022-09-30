@@ -13,7 +13,6 @@
 #include <http/url.h>
 #include <http/request.h>
 #include <http/response.h>
-#include <http/http_thread_pool.h>
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <string>
