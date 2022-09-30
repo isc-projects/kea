@@ -1772,7 +1772,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
     }
 
     // Each class in the incoming packet
-    const ClientClasses& classes = ex.getQuery()->getClassesAndTemplates();
+    const ClientClasses& classes = ex.getQuery()->getClasses();
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
@@ -3121,7 +3121,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 
     // Step 2: Try to set the values based on classes.
     // Any values defined in classes will override those from subnet level.
-    const ClientClasses classes = query->getClassesAndTemplates();
+    const ClientClasses classes = query->getClasses();
     if (!classes.empty()) {
 
         // Let's get class definitions
@@ -3906,7 +3906,7 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     }
 
     // Check if the server identifier is configured at client class level.
-    const ClientClasses& classes = query->getClassesAndTemplates();
+    const ClientClasses& classes = query->getClasses();
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
@@ -3986,7 +3986,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
 void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
     // First collect required classes
     Pkt4Ptr query = ex.getQuery();
-    ClientClasses classes = query->getClassesAndTemplates(true);
+    ClientClasses classes = query->getClasses(true);
     Subnet4Ptr subnet = ex.getContext()->subnet_;
 
     if (subnet) {
@@ -4080,7 +4080,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
     BOOST_FOREACH(const uint16_t& code, query->getDeferredOptions()) {
         OptionDefinitionPtr def;
         // Iterate on client classes
-        const ClientClasses& classes = query->getClassesAndTemplates();
+        const ClientClasses& classes = query->getClasses();
         for (ClientClasses::const_iterator cclass = classes.cbegin();
              cclass != classes.cend(); ++cclass) {
             // Get the client class definition for this class

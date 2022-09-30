@@ -327,28 +327,11 @@ public:
         return (!required ? classes_ : required_classes_);
     }
 
-    /// @brief Returns the subclass set
+    /// @brief Returns true if the subclass set is not empty
     ///
-    /// @note This should be used only to iterate over the subclass set.
-    const SubClassContainer& getSubClasses() const {
-        return (subclasses_);
-    }
-
-    /// @brief Returns the class set including template classes associated with
-    /// subclasses
-    ///
-    /// @note This should be used only to iterate over the class set.
-    /// @note Template classes are always last.
-    /// @param required return classes or required to be evaluated classes.
-    /// @return if required is false (the default) the classes the
-    /// packet belongs to else the classes which are required to be
-    /// evaluated.
-    const ClientClasses getClassesAndTemplates(bool required = false) const {
-        ClientClasses result = getClasses(required);
-        for (auto const& sclass : subclasses_) {
-            result.insert(sclass.template_class_);
-        }
-        return (result);
+    /// @return true if there is at least one subclass associated with the packet.
+    bool hasSubClasses() const {
+        return (!subclasses_.empty());
     }
 
     /// @brief Returns the class set including template classes associated with
@@ -360,12 +343,11 @@ public:
     /// @return if required is false (the default) the classes the
     /// packet belongs to else the classes which are required to be
     /// evaluated.
-    const ClientClasses getClassesAndSubClasses(bool required = false) const {
-        ClientClasses result = getClasses(required);
-        for (auto const& sclass : subclasses_) {
-            result.insert(sclass.subclass_);
+    const ClientClasses getClassesAndSubClasses() const {
+        if (subclasses_.empty()) {
+            return (classes_);
         }
-        return (result);
+        return (subclasses_);
     }
 
     /// @brief Unparsed data (in received packets).
@@ -680,7 +662,7 @@ public:
     /// iterate over existing classes. Having it public also solves the problem
     /// of returned reference lifetime. It is preferred to use @ref inClass and
     /// @ref addSubClass to operate on this field.
-    SubClassContainer subclasses_;
+    ClientClasses subclasses_;
 
     /// @brief Collection of options present in this message.
     ///

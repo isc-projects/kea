@@ -80,11 +80,7 @@ Pkt::inClass(const ClientClass& client_class) {
     if (classes_.contains(client_class)) {
         return (true);
     }
-    auto const& idx = subclasses_.get<SubClassNameTag>();
-    if (idx.count(client_class)) {
-        return (true);
-    }
-    return (false);
+    return (subclasses_.contains(client_class));
 }
 
 void
@@ -96,16 +92,25 @@ Pkt::addClass(const ClientClass& client_class, bool required) {
     ClientClasses& classes = !required ? classes_ : required_classes_;
     if (!classes.contains(client_class)) {
         classes.insert(client_class);
+        if (!subclasses_.empty()) {
+            subclasses_.insert(client_class);
+        }
     }
 }
 
 void
 Pkt::addSubClass(const ClientClass& template_class, const ClientClass& subclass) {
-    auto const& idx = subclasses_.get<SubClassNameTag>();
-    if (idx.count(subclass)) {
-        return;
+    // Always have ALL first.
+    if (classes_.empty()) {
+        classes_.insert("ALL");
     }
-    subclasses_.push_back(SubClass(template_class, subclass));
+    if (!classes_.contains(template_class)) {
+        if (subclasses_.empty()) {
+            subclasses_ = classes_;
+        }
+        classes_.insert(template_class);
+        subclasses_.insert(subclass);
+    }
 }
 
 void

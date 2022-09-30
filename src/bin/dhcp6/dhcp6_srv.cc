@@ -1437,7 +1437,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
     }
 
     // Each class in the incoming packet
-    const ClientClasses& classes = question->getClassesAndTemplates();
+    const ClientClasses& classes = question->getClasses();
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
@@ -4082,7 +4082,7 @@ Dhcpv6Srv::conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
 void
 Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
     // First collect required classes
-    ClientClasses classes = pkt->getClassesAndTemplates(true);
+    ClientClasses classes = pkt->getClasses(true);
     Subnet6Ptr subnet = ctx.subnet_;
 
     if (subnet) {

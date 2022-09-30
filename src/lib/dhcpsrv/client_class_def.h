@@ -311,7 +311,7 @@ public:
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
-    virtual isc::data::ElementPtr toElement() const;
+    virtual isc::data::ElementPtr toElement() const override;
 };
 
 /// @brief a pointer to an ClientClassDef

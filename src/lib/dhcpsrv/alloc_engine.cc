@@ -1964,7 +1964,7 @@ AllocEngine::getLifetimes6(ClientContext6& ctx, uint32_t& preferred, uint32_t& v
     // We use the first one we find for each lifetime.
     Triplet<uint32_t> candidate_preferred;
     Triplet<uint32_t> candidate_valid;
-    const ClientClasses classes = ctx.query_->getClassesAndTemplates();
+    const ClientClasses classes = ctx.query_->getClasses();
     if (!classes.empty()) {
         // Let's get class definitions
         const ClientClassDictionaryPtr& dict =
@@ -3982,7 +3982,7 @@ AllocEngine::getValidLft(const ClientContext4& ctx) {
     // If the triplet is specified in one of our classes use it.
     // We use the first one we find.
     Triplet<uint32_t> candidate_lft;
-    const ClientClasses classes = ctx.query_->getClassesAndTemplates();
+    const ClientClasses classes = ctx.query_->getClasses();
     if (!classes.empty()) {
         // Let's get class definitions
         const ClientClassDictionaryPtr& dict =

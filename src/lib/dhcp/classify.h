@@ -77,28 +77,6 @@ namespace dhcp {
         ClientClass subclass_;
     };
 
-    /// @brief Tag for the sequence index.
-    struct SubClassSequenceTag { };
-
-    /// @brief Tag for the name index.
-    struct SubClassNameTag { };
-
-    /// @brief the subclass multi-index.
-    typedef boost::multi_index_container<
-        SubClass,
-        boost::multi_index::indexed_by<
-            // First index is the sequence one.
-            boost::multi_index::sequenced<
-                boost::multi_index::tag<SubClassSequenceTag>
-            >,
-            // Second index is the name hash one.
-            boost::multi_index::ordered_unique<
-                boost::multi_index::tag<SubClassNameTag>,
-                boost::multi_index::member<SubClass, ClientClass, &SubClass::subclass_>
-            >
-        >
-    > SubClassContainer;
-
     /// @brief Container for storing client class names
     ///
     /// Both a list to iterate on it in insert order and unordered
