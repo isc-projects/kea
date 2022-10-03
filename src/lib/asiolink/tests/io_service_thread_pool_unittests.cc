@@ -45,8 +45,8 @@ TEST_F(IoServiceThreadPoolTest, invalidConstruction) {
     IoServiceThreadPoolPtr pool;
 
     // Constructing with pool size of 0 should fail.
-    ASSERT_THROW_MSG(pool.reset(new IoServiceThreadPool(io_service_, 0)), BadValue,
-                     "pool_size must be non 0");
+    ASSERT_THROW_MSG(pool.reset(new IoServiceThreadPool(io_service_, 0)),
+                     BadValue, "pool_size must be non 0");
 }
 
 // Verifies that a pool can be created without starting it.

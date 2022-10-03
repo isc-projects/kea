@@ -28,7 +28,7 @@ using namespace isc::asiolink;
 using namespace isc::util;
 
 IoServiceThreadPool::IoServiceThreadPool(IOServicePtr io_service, size_t pool_size,
-                               bool defer_start /* = false */)
+                                         bool defer_start /* = false */)
     : pool_size_(pool_size), io_service_(io_service),
       run_state_(State::STOPPED), mutex_(), thread_cv_(),
       main_cv_(), paused_(0), running_(0), exited_(0)  {
