@@ -2869,7 +2869,7 @@ def _get_features(args):
     if hasattr(args, 'ccache_dir') and args.ccache_dir:
         features.add('ccache')
 
-    return sorted(features)
+    return features
 
 
 def _print_summary(results, features):
