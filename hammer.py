@@ -1566,8 +1566,10 @@ def prepare_system_local(features, check_times):
             packages.extend(['postgresql', 'postgresql-server'])
             if revision == '9':
                 packages.append('postgresql13-devel')
-                if not os.path.exists('/usr/bin/pg_config'):
-                    execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
+                def link_pg_config():
+                    if not os.path.exists('/usr/bin/pg_config'):
+                        execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
+                deferred_functions.append(link_pg_config)
             else:
                 packages.append('postgresql-devel')
 
@@ -1628,8 +1630,10 @@ def prepare_system_local(features, check_times):
             packages.extend(['postgresql', 'postgresql-server'])
             if revision == '9':
                 packages.append('postgresql13-devel')
-                if not os.path.exists('/usr/bin/pg_config'):
-                    execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
+                def link_pg_config():
+                    if not os.path.exists('/usr/bin/pg_config'):
+                        execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
+                deferred_functions.append(link_pg_config)
             else:
                 packages.append('postgresql-devel')
 
@@ -2021,8 +2025,6 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --with-mysql'
     if 'pgsql' in features:
         cmd += ' --with-pgsql'
-        if system == 'rhel' and revision == '9':
-            cmd += '=/usr/pgsql-14/bin/pg_config'
     if 'unittest' in features:
         # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
         if system in ['centos', 'fedora', 'rhel', 'freebsd', 'alpine']:
