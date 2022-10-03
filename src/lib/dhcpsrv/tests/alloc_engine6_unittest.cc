@@ -4051,10 +4051,12 @@ class AllocEngine6ExtendedInfoTest : public AllocEngine6Test {
 public:
     /// @brief Constructor
     AllocEngine6ExtendedInfoTest()
-        : engine_(AllocEngine::ALLOC_ITERATIVE, 100, true), duid1_(), duid2_(),
-          relay1_(), relay2_(), duid1_addr_("::"), duid2_addr_("::") {
+        : engine_(AllocEngine::ALLOC_ITERATIVE, 100, true),
+          duid1_(), duid2_(), duid3_(), relay1_(), relay2_(), relay3_(),
+          duid1_addr_("::"), duid2_addr_("::") {
         duid1_.reset(new DUID(std::vector<uint8_t>(8, 0x84)));
         duid2_.reset(new DUID(std::vector<uint8_t>(8, 0x74)));
+        duid3_.reset(new DUID(std::vector<uint8_t>(8, 0x64)));
 
         relay1_.msg_type_ = DHCPV6_RELAY_FORW;
         relay1_.hop_count_ = 33;
@@ -4075,6 +4077,19 @@ public:
         relay2_.peeraddr_ = IOAddress("2001:db8::4");
         relay2_.relay_msg_len_ = 0;
 
+        relay3_.msg_type_ = DHCPV6_RELAY_FORW;
+        relay3_.hop_count_ = 100;
+        relay3_.linkaddr_ = IOAddress("2001:db8::5");
+        relay3_.peeraddr_ = IOAddress("2001:db8::6");
+        relay1_.relay_msg_len_ = 0;
+
+        vector<uint8_t> remote_id_data({1, 2, 3, 4, 5, 6});
+        OptionPtr remote_id(new Option(Option::V6, D6O_REMOTE_ID, remote_id_data));
+        relay3_.options_.insert(make_pair(remote_id->getType(), remote_id));
+
+        OptionPtr relay_id(new Option(Option::V6, D6O_RELAY_ID, duid3_->getDuid()));
+        relay3_.options_.insert(make_pair(relay_id->getType(), relay_id));
+
         duid1_addr_ = IOAddress("2001:db8:1::10");
         duid2_addr_ = IOAddress("2001:db8:1::11");
 
@@ -4087,8 +4102,10 @@ public:
     NakedAllocEngine engine_;
     DuidPtr duid1_;
     DuidPtr duid2_;
+    DuidPtr duid3_;
     Pkt6::RelayInfo relay1_;
     Pkt6::RelayInfo relay2_;
+    Pkt6::RelayInfo relay3_;
     IOAddress duid1_addr_;
     IOAddress duid2_addr_;
 };
@@ -4130,6 +4147,17 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         true
     },
     {
+        "no original context, one relay with remote and relay ids",
+        "",
+        { relay3_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\","
+        " \"peer\": \"2001:db8::6\" } ] } }",
+        true
+    },
+    {
         "some original context, one relay",
         "{\"foo\": 123}",
         { relay1_ },
@@ -4139,12 +4167,36 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         true
     },
     {
+        "some original context, one relay with remote and relay ids",
+        "{\"foo\": 123}",
+        { relay3_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\","
+        " \"peer\": \"2001:db8::6\" } ] }, \"foo\": 123 }",
+        true
+    },
+    {
         "no original context, two relays",
         "",
         { relay1_, relay2_ },
         "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
         " {\"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }",
+        true
+    },
+    {
+        "no original context, two relays, second with remote and relay ids",
+        "",
+        { relay1_, relay3_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
+        " { \"hop\": 100, \"link\": \"2001:db8::5\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\","
+        " \"peer\": \"2001:db8::6\" } ] } }",
         true
     },
     {
@@ -4164,7 +4216,20 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         "{ \"ISC\": { \"relays\": [ { \"hop\": 77, \"link\": \"2001:db8::3\","
         " \"peer\": \"2001:db8::4\" } ] } }",
         true
-    }};
+    },
+    {
+        "original relay context, different relay with remote and relay ids",
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
+        { relay3_ },
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\","
+        " \"peer\": \"2001:db8::6\" } ] } }",
+        true
+    }
+};
 
     // Allocate a lease.
     Lease6Ptr lease;
@@ -5351,7 +5416,7 @@ TEST_F(AllocEngine6Test, getValidLifetime) {
 
     // Let's make three classes, two with valid-lifetime and one without,
     // and add them to the dictionary.
-    ClientClassDictionaryPtr dictionary = 
+    ClientClassDictionaryPtr dictionary =
         CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
 
     ClientClassDefPtr class_def(new ClientClassDef("valid_one", ExpressionPtr()));

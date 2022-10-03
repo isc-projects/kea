@@ -4656,6 +4656,24 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
     ElementPtr extended_info = Element::createMap();
     extended_info->set("relay-agent-info", relay_agent);
 
+    OptionPtr remote_id = rai->getOption(RAI_OPTION_REMOTE_ID);
+    if (remote_id) {
+        std::vector<uint8_t> bytes = remote_id->toBinary(false);
+        if (bytes.size() > 0) {
+            extended_info->set("remote-id",
+                               Element::create(encode::encodeHex(bytes)));
+        }
+    }
+
+    OptionPtr relay_id = rai->getOption(RAI_OPTION_RELAY_ID);
+    if (relay_id) {
+        std::vector<uint8_t> bytes = relay_id->toBinary(false);
+        if (bytes.size() > 0) {
+            extended_info->set("relay-id",
+                               Element::create(encode::encodeHex(bytes)));
+        }
+    }
+
     // Get a writable copy of the lease's current user context.
     ElementPtr user_context;
     if (lease->getContext()) {
@@ -4709,6 +4727,9 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
         relay_elem->set("link", ElementPtr(new StringElement(relay.linkaddr_.toText())));
         relay_elem->set("peer", ElementPtr(new StringElement(relay.peeraddr_.toText())));
 
+        OptionPtr remote_id;
+        OptionPtr relay_id;
+
         // If there are relay options, we'll pack them into a buffer and then
         // convert that into a hex string.  If there are no options, we omit
         // then entry.
@@ -4718,12 +4739,38 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
 
             if (buf.getLength() > 0) {
                 const uint8_t* cp = static_cast<const uint8_t*>(buf.getData());
-                std::vector<uint8_t>bytes;
+                std::vector<uint8_t> bytes;
                 std::stringstream ss;
 
                 bytes.assign(cp, cp + buf.getLength());
                 ss << "0x" << encode::encodeHex(bytes);
                 relay_elem->set("options", ElementPtr(new StringElement(ss.str())));
+            }
+
+            auto remote_id_it = relay.options_.find(D6O_REMOTE_ID);
+            if (remote_id_it != relay.options_.end()) {
+                remote_id = remote_id_it->second;
+            }
+
+            auto relay_id_it = relay.options_.find(D6O_RELAY_ID);
+            if (relay_id_it != relay.options_.end()) {
+                relay_id = relay_id_it->second;
+            }
+        }
+
+        if (remote_id) {
+            std::vector<uint8_t> bytes = remote_id->toBinary(false);
+            if (bytes.size() > 0) {
+                relay_elem->set("remote-id",
+                                Element::create(encode::encodeHex(bytes)));
+            }
+        }
+
+        if (relay_id) {
+            std::vector<uint8_t> bytes = relay_id->toBinary(false);
+            if (bytes.size() > 0) {
+                relay_elem->set("relay-id",
+                                Element::create(encode::encodeHex(bytes)));
             }
         }
 
