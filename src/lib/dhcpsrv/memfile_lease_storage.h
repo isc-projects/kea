@@ -240,7 +240,7 @@ typedef boost::multi_index_container<
 
         // Specification of the sixth index starts here.
         // This index is used to retrieve leases for matching hostname.
-        boost::multi_index::hashed_non_unique<
+        boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<HostnameIndexTag>,
             boost::multi_index::member<Lease, std::string, &Lease::hostname_>
         >,
