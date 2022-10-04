@@ -49,6 +49,12 @@ struct DuidIndexTag { };
 /// @brief Tag for index using hostname.
 struct HostnameIndexTag { };
 
+/// @brief Tag for index using remote-id.
+struct RemoteIdIndexTag { };
+
+/// @brief Tag for index using relay-id.
+struct RelayIdIndexTag { };
+
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
 //@{
@@ -60,6 +66,8 @@ struct HostnameIndexTag { };
 /// - using a composite index: DUID, IAID and lease type.
 /// - using a composite index: boolean flag indicating if the state is
 ///   "expired-reclaimed" and expiration time.
+/// - using subnet ID.
+/// - using hostname.
 ///
 /// Indexes can be accessed using the index number (from 0 to 5) or a
 /// name tag. It is recommended to use the tags to access indexes as
@@ -141,11 +149,15 @@ typedef boost::multi_index_container<
 /// @brief A multi index container holding DHCPv4 leases.
 ///
 /// The leases in the container may be accessed using different indexes:
-/// - IPv6 address,
-/// - composite index: HW address and subnet id,
+/// - IPv4 address,
+/// - composite index: hardware address and subnet id,
 /// - composite index: client id and subnet id,
 /// - using a composite index: boolean flag indicating if the state is
 ///   "expired-reclaimed" and expiration time.
+/// - using subnet id.
+/// - using hostname.
+/// - using remote id.
+/// - using a composite index:
 ///
 /// Indexes can be accessed using the index number (from 0 to 5) or a
 /// name tag. It is recommended to use the tags to access indexes as
@@ -227,11 +239,39 @@ typedef boost::multi_index_container<
             boost::multi_index::member<Lease, isc::dhcp::SubnetID, &Lease::subnet_id_>
         >,
 
-        // Specification of the seventh index starts here
+        // Specification of the sixth index starts here.
         // This index is used to retrieve leases for matching hostname.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<HostnameIndexTag>,
             boost::multi_index::member<Lease, std::string, &Lease::hostname_>
+        >,
+
+        // Specification of the seventh index starts here.
+        // This index is used to retrieve leases for matching remote id
+        // for Bulk Lease Query.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<RemoteIdIndexTag>,
+            boost::multi_index::member<Lease4,
+                                       std::vector<uint8_t>,
+                                       &Lease4::remote_id_>
+        >,
+
+        // Specification of the eighth index starts here.
+        // This index is used to retrieve leases for matching relay id
+        // for Bulk Lease Query.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<RelayIdIndexTag>,
+            boost::multi_index::composite_key<
+                Lease4,
+                // Relay id.
+                boost::multi_index::member<Lease4,
+                                           std::vector<uint8_t>,
+                                           &Lease4::relay_id_>,
+                // Address.
+                boost::multi_index::member<Lease,
+                                           isc::asiolink::IOAddress,
+                                           &Lease::addr_>
+            >
         >
     >
 > Lease4Storage; // Specify the type name for this container.
@@ -279,6 +319,12 @@ typedef Lease4Storage::index<SubnetIdIndexTag>::type Lease4StorageSubnetIdIndex;
 
 /// @brief DHCPv4 lease storage index by hostname.
 typedef Lease4Storage::index<HostnameIndexTag>::type Lease4StorageHostnameIndex;
+
+/// @brief DHCPv4 lease storage index by remote identifier.
+typedef Lease4Storage::index<RemoteIdIndexTag>::type Lease4StorageRemoteIdInde;
+
+/// @brief DHCPv4 lease storage index by relay identifier.
+typedef Lease4Storage::index<RelayIdIndexTag>::type Lease4StorageRelayIdIndex;
 
 //@}
 

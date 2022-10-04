@@ -334,7 +334,7 @@ Lease4::Lease4(const isc::asiolink::IOAddress& address,
 
     : Lease(address, valid_lifetime, subnet_id, cltt, fqdn_fwd,
             fqdn_rev, hostname, hw_address),
-      client_id_(client_id) {
+      client_id_(client_id), remote_id_(), relay_id_() {
 }
 
 std::string

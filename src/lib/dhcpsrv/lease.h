@@ -502,6 +502,12 @@ struct Lease4 : public Lease {
     static Lease4Ptr fromElement(const data::ConstElementPtr& element);
 
     /// @todo: Add DHCPv4 failover related fields here
+
+    /// @brief Remote identifier for Bulk Lease Query
+    std::vector<uint8_t> remote_id_;
+
+    /// @brief Relay identifier for Bulk Lease Query
+    std::vector<uint8_t> relay_id_;
 };
 
 /// @brief A collection of IPv4 leases.
