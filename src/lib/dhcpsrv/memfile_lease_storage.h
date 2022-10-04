@@ -288,6 +288,26 @@ typedef Lease4Storage::index<HostnameIndexTag>::type Lease4StorageHostnameIndex;
 /// @brief Lease6 extended informations for Bulk Lease Query.
 class Lease6ExtendedInfo {
 public:
+    /// @brief Constructor.
+    ///
+    /// @param lease_addr Lease address.
+    /// @param link_addr Link address.
+    /// @param id Identifier.
+    Lease6ExtendedInfo(const isc::asiolink::IOAddress& lease_addr,
+                       const isc::asiolink::IOAddress& link_addr,
+                       const std::vector<uint8_t>& id)
+        : lease_addr_(lease_addr), link_addr_(link_addr), id_(id) {
+    }
+
+    /// @brief Constructor without id (for the by-link-addr table).
+    ///
+    /// @param lease_addr Lease address.
+    /// @param link_addr Link address.
+    Lease6ExtendedInfo(const isc::asiolink::IOAddress& lease_addr,
+                       const isc::asiolink::IOAddress& link_addr)
+        : lease_addr_(lease_addr), link_addr_(link_addr), id_() {
+    }
+
     /// @brief Lease address.
     isc::asiolink::IOAddress lease_addr_;
 
