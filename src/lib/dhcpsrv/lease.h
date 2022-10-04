@@ -492,6 +492,12 @@ struct Lease4 : public Lease {
     static Lease4Ptr fromElement(const data::ConstElementPtr& element);
 
     /// @todo: Add DHCPv4 failover related fields here
+
+    /// @brief Remote identifier for Bulk Lease Query
+    std::vector<uint8_t> remote_id_;
+
+    /// @brief Relay identifier for Bulk Lease Query
+    std::vector<uint8_t> relay_id_;
 };
 
 /// @brief A collection of IPv4 leases.
@@ -659,7 +665,6 @@ typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 
 /// @brief A collection of IPv6 leases.
 typedef std::vector<Lease6Ptr> Lease6Collection;
-
 
 /// @brief A shared pointer to the collection of IPv6 leases.
 typedef boost::shared_ptr<Lease6Collection> Lease6CollectionPtr;

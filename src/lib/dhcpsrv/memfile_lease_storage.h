@@ -14,6 +14,7 @@
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/composite_key.hpp>
@@ -47,6 +48,12 @@ struct DuidIndexTag { };
 /// @brief Tag for index using hostname.
 struct HostnameIndexTag { };
 
+/// @brief Tag for index using remote-id.
+struct RemoteIdIndexTag { };
+
+/// @brief Tag for index using relay-id.
+struct RelayIdIndexTag { };
+
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
 //@{
@@ -58,6 +65,8 @@ struct HostnameIndexTag { };
 /// - using a composite index: DUID, IAID and lease type.
 /// - using a composite index: boolean flag indicating if the state is
 ///   "expired-reclaimed" and expiration time.
+/// - using subnet ID.
+/// - using hostname.
 ///
 /// Indexes can be accessed using the index number (from 0 to 5) or a
 /// name tag. It is recommended to use the tags to access indexes as
@@ -139,11 +148,15 @@ typedef boost::multi_index_container<
 /// @brief A multi index container holding DHCPv4 leases.
 ///
 /// The leases in the container may be accessed using different indexes:
-/// - IPv6 address,
-/// - composite index: HW address and subnet id,
+/// - IPv4 address,
+/// - composite index: hardware address and subnet id,
 /// - composite index: client id and subnet id,
 /// - using a composite index: boolean flag indicating if the state is
 ///   "expired-reclaimed" and expiration time.
+/// - using subnet id.
+/// - using hostname.
+/// - using remote id.
+/// - using a composite index:
 ///
 /// Indexes can be accessed using the index number (from 0 to 5) or a
 /// name tag. It is recommended to use the tags to access indexes as
@@ -225,11 +238,39 @@ typedef boost::multi_index_container<
             boost::multi_index::member<Lease, isc::dhcp::SubnetID, &Lease::subnet_id_>
         >,
 
-        // Specification of the seventh index starts here
+        // Specification of the sixth index starts here.
         // This index is used to retrieve leases for matching hostname.
-        boost::multi_index::ordered_non_unique<
+        boost::multi_index::hashed_non_unique<
             boost::multi_index::tag<HostnameIndexTag>,
             boost::multi_index::member<Lease, std::string, &Lease::hostname_>
+        >,
+
+        // Specification of the seventh index starts here.
+        // This index is used to retrieve leases for matching remote id
+        // for Bulk Lease Query.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<RemoteIdIndexTag>,
+            boost::multi_index::member<Lease4,
+                                       std::vector<uint8_t>,
+                                       &Lease4::remote_id_>
+        >,
+
+        // Specification of the eighth index starts here.
+        // This index is used to retrieve leases for matching relay id
+        // for Bulk Lease Query.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<RelayIdIndexTag>,
+            boost::multi_index::composite_key<
+                Lease4,
+                // Relay id.
+                boost::multi_index::member<Lease4,
+                                           std::vector<uint8_t>,
+                                           &Lease4::relay_id_>,
+                // Address.
+                boost::multi_index::member<Lease,
+                                           isc::asiolink::IOAddress,
+                                           &Lease::addr_>
+            >
         >
     >
 > Lease4Storage; // Specify the type name for this container.
@@ -278,7 +319,188 @@ typedef Lease4Storage::index<SubnetIdIndexTag>::type Lease4StorageSubnetIdIndex;
 /// @brief DHCPv4 lease storage index by hostname.
 typedef Lease4Storage::index<HostnameIndexTag>::type Lease4StorageHostnameIndex;
 
+/// @brief DHCPv4 lease storage index by remote identifier.
+typedef Lease4Storage::index<RemoteIdIndexTag>::type Lease4StorageRemoteIdIndex;
+
+/// @brief DHCPv4 lease storage index by relay identifier.
+typedef Lease4Storage::index<RelayIdIndexTag>::type Lease4StorageRelayIdIndex;
+
 //@}
+
+/// @name Multi index containers holding DHCPv6 lease extended informations
+/// for Bulk Lease Query.
+//@{
+
+/// @brief Lease6 extended informations for Bulk Lease Query.
+class Lease6ExtendedInfo {
+public:
+    /// @brief Lease address.
+    isc::asiolink::IOAddress lease_addr_;
+
+    /// @brief Link address.
+    isc::asiolink::IOAddress link_addr_;
+
+    /// @brief Remote or relay opaque identifier.
+    std::vector<uint8_t> id_;
+};
+
+/// @brief Pointer to a Lease6ExtendedInfo object.
+typedef boost::shared_ptr<Lease6ExtendedInfo> Lease6ExtendedInfoPtr;
+
+/// @brief Tag for indexes by lease address.
+struct LeaseAddressIndexTag { };
+
+/// @brief Tag for indexes by relay id and link address.
+struct RelayIdLinkAddressIndexTag { };
+
+/// @brief Tag for indexes by remote id and link address.
+struct RemoteIdLinkAddressIndexTag { };
+
+/// @brief Tag for indexes by link address.
+struct LinkAddressIndexTag { };
+
+/// @brief A multi index container holding lease6 extended info for by relay id.
+///
+/// The lease6 extended info may be accessed using different indexes:
+/// - using a composite index: relay id and link address.
+/// - using relay id.
+/// - using lease address.
+///
+/// The choice of binary trees was governed by the fact a large number of
+/// clients can be behind a relay.
+///
+/// Indexes can be accessed using the index number (from 0 to 5) or a
+/// name tag. It is recommended to use the tags to access indexes as
+/// they do not depend on the order of indexes in the container.
+typedef boost::multi_index_container<
+    // It holds pointers to lease6 extended info.
+    Lease6ExtendedInfoPtr,
+    boost::multi_index::indexed_by<
+        // First index is by relay id and link address.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<RelayIdLinkAddressIndexTag>,
+            boost::multi_index::composite_key<
+                Lease6ExtendedInfo,
+                boost::multi_index::member<Lease6ExtendedInfo,
+                                           std::vector<uint8_t>,
+                                           &Lease6ExtendedInfo::id_>,
+                boost::multi_index::member<Lease6ExtendedInfo,
+                                           isc::asiolink::IOAddress,
+                                           &Lease6ExtendedInfo::link_addr_>
+            >
+        >,
+
+        // Second index is by relay id.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<RelayIdIndexTag>,
+            boost::multi_index::member<Lease6ExtendedInfo,
+                                       std::vector<uint8_t>,
+                                       &Lease6ExtendedInfo::id_>
+        >,
+
+        // Last index is by lease address.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<LeaseAddressIndexTag>,
+            boost::multi_index::member<Lease6ExtendedInfo,
+                                       isc::asiolink::IOAddress,
+                                       &Lease6ExtendedInfo::lease_addr_>
+        >
+    >
+> Lease6ExtendedInfoRelayIdTable;
+
+/// @brief A multi index container holding lease6 extended info for by remote id.
+///
+/// The lease6 extended info may be accessed using different indexes:
+/// - using a composite index: remote id and link address.
+/// - using remote id.
+/// - using lease address.
+///
+/// The internal layout of remote id is not used. The choice of hash tables
+/// was governed by the fact a small number of clients should share the same
+/// remote id.
+///
+/// Indexes can be accessed using the index number (from 0 to 5) or a
+/// name tag. It is recommended to use the tags to access indexes as
+/// they do not depend on the order of indexes in the container.
+typedef boost::multi_index_container<
+    // It holds pointers to lease6 extended info.
+    Lease6ExtendedInfoPtr,
+    boost::multi_index::indexed_by<
+        // First index is by remote id and link address.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<RemoteIdLinkAddressIndexTag>,
+            boost::multi_index::composite_key<
+                Lease6ExtendedInfo,
+                boost::multi_index::member<Lease6ExtendedInfo,
+                                           std::vector<uint8_t>,
+                                           &Lease6ExtendedInfo::id_>,
+                boost::multi_index::member<Lease6ExtendedInfo,
+                                           isc::asiolink::IOAddress,
+                                           &Lease6ExtendedInfo::link_addr_>
+            >
+        >,
+
+        // Second index is by remote id.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<RemoteIdIndexTag>,
+            boost::multi_index::member<Lease6ExtendedInfo,
+                                       std::vector<uint8_t>,
+                                       &Lease6ExtendedInfo::id_>
+        >,
+
+        // Last index is by lease address.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<LeaseAddressIndexTag>,
+            boost::multi_index::member<Lease6ExtendedInfo,
+                                       isc::asiolink::IOAddress,
+                                       &Lease6ExtendedInfo::lease_addr_>
+        >
+    >
+> Lease6ExtendedInfoRemoteIdTable;
+
+/// @brief A multi index container holding lease6 extended info
+/// for by link address.
+///
+/// The lease6 extended info may be accessed using different indexes:
+/// - using a composite index: link and lease addresses.
+/// - using lease address.
+///
+/// The choice of a binary tree was governed by the fact no hypothesis can
+/// be done on the number of clients.
+///
+/// Indexes can be accessed using the index number (from 0 to 5) or a
+/// name tag. It is recommended to use the tags to access indexes as
+/// they do not depend on the order of indexes in the container.
+typedef boost::multi_index_container<
+    // It holds pointers to lease6 extended info.
+    Lease6ExtendedInfoPtr,
+    boost::multi_index::indexed_by<
+        // First index is by link and lease addresses.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<LinkAddressIndexTag>,
+            boost::multi_index::composite_key<
+                Lease6ExtendedInfo,
+                boost::multi_index::member<Lease6ExtendedInfo,
+                                           isc::asiolink::IOAddress,
+                                           &Lease6ExtendedInfo::link_addr_>,
+                boost::multi_index::member<Lease6ExtendedInfo,
+                                           isc::asiolink::IOAddress,
+                                           &Lease6ExtendedInfo::lease_addr_>
+            >
+        >,
+
+        // Last index is by lease address.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<LeaseAddressIndexTag>,
+            boost::multi_index::member<Lease6ExtendedInfo,
+                                       isc::asiolink::IOAddress,
+                                       &Lease6ExtendedInfo::lease_addr_>
+        >
+    >
+> Lease6ExtendedInfoLinkAddrTable;
+
+//@}
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
 

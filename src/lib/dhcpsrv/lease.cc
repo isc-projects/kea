@@ -333,7 +333,7 @@ Lease4::Lease4(const isc::asiolink::IOAddress& address,
 
     : Lease(address, valid_lifetime, subnet_id, cltt, fqdn_fwd,
             fqdn_rev, hostname, hw_address),
-      client_id_(client_id) {
+      client_id_(client_id), remote_id_(), relay_id_() {
 }
 
 std::string
@@ -343,7 +343,7 @@ Lease4::statesToText(const uint32_t state) {
 
 const std::vector<uint8_t>&
 Lease4::getClientIdVector() const {
-    if(!client_id_) {
+    if (!client_id_) {
         static std::vector<uint8_t> empty_vec;
         return (empty_vec);
     }
