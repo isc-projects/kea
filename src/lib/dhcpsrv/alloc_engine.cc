@@ -4727,9 +4727,6 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
         relay_elem->set("link", ElementPtr(new StringElement(relay.linkaddr_.toText())));
         relay_elem->set("peer", ElementPtr(new StringElement(relay.peeraddr_.toText())));
 
-        OptionPtr remote_id;
-        OptionPtr relay_id;
-
         // If there are relay options, we'll pack them into a buffer and then
         // convert that into a hex string.  If there are no options, we omit
         // then entry.
@@ -4749,28 +4746,26 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
 
             auto remote_id_it = relay.options_.find(D6O_REMOTE_ID);
             if (remote_id_it != relay.options_.end()) {
-                remote_id = remote_id_it->second;
+                OptionPtr remote_id = remote_id_it->second;
+                if (remote_id) {
+                    std::vector<uint8_t> bytes = remote_id->toBinary(false);
+                    if (bytes.size() > 0) {
+                        relay_elem->set("remote-id",
+                                        Element::create(encode::encodeHex(bytes)));
+                    }
+                }
             }
 
             auto relay_id_it = relay.options_.find(D6O_RELAY_ID);
             if (relay_id_it != relay.options_.end()) {
-                relay_id = relay_id_it->second;
-            }
-        }
-
-        if (remote_id) {
-            std::vector<uint8_t> bytes = remote_id->toBinary(false);
-            if (bytes.size() > 0) {
-                relay_elem->set("remote-id",
-                                Element::create(encode::encodeHex(bytes)));
-            }
-        }
-
-        if (relay_id) {
-            std::vector<uint8_t> bytes = relay_id->toBinary(false);
-            if (bytes.size() > 0) {
-                relay_elem->set("relay-id",
-                                Element::create(encode::encodeHex(bytes)));
+                OptionPtr relay_id = relay_id_it->second;
+                if (relay_id) {
+                    std::vector<uint8_t> bytes = relay_id->toBinary(false);
+                    if (bytes.size() > 0) {
+                        relay_elem->set("relay-id",
+                                        Element::create(encode::encodeHex(bytes)));
+                    }
+                }
             }
         }
 
