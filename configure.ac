@@ -1583,6 +1583,8 @@ AC_CONFIG_FILES([src/lib/process/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/stats/Makefile])
 AC_CONFIG_FILES([src/lib/stats/tests/Makefile])
 AC_CONFIG_FILES([src/lib/stats/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/tcp/Makefile])
+AC_CONFIG_FILES([src/lib/tcp/tests/Makefile])
 AC_CONFIG_FILES([src/lib/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/testutils/dhcp_test_lib.sh],
                 [chmod +x src/lib/testutils/dhcp_test_lib.sh])

@@ -9,7 +9,7 @@ if HAVE_PGSQL
 SUBDIRS += pgsql
 endif
 
-SUBDIRS += config_backend hooks dhcp http config stats
+SUBDIRS += config_backend hooks dhcp tcp http config stats
 
 if HAVE_NETCONF
 SUBDIRS += yang
