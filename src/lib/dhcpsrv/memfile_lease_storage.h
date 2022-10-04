@@ -307,8 +307,14 @@ struct LeaseAddressIndexTag { };
 /// @brief Tag for indexes by relay id and link address.
 struct RelayIdLinkAddressIndexTag { };
 
+/// @brief Tag for index using relay id.
+struct RelayIdIndexTag { };
+
 /// @brief Tag for indexes by remote id and link address.
 struct RemoteIdLinkAddressIndexTag { };
+
+/// @brief Tag for index using remote id.
+struct RemoteIdIndexTag { };
 
 /// @brief Tag for indexes by link address.
 struct LinkAddressIndexTag { };
