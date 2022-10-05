@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,17 +62,17 @@ public:
     /// Close subscriptions and sysrepo.
     void clear();
 
-    /// @brief SR_EV_CHANGE callback.
+    /// @brief Event::Change callback.
     ///
     /// Validate YANG datastore changes using Kea configuration test.
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
-    static sr_error_t
-    change(sysrepo::S_Session sess, const CfgServersMapPair& service_pair);
+    static sysrepo::ErrorCode
+    change(sysrepo::Session sess, const CfgServersMapPair& service_pair);
 
-    /// @brief SR_EV_DONE callback.
+    /// @brief Event::Done callback.
     ///
     /// Get notified that a Kea configuration has been written to the YANG
     /// datastore.
@@ -80,8 +80,8 @@ public:
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
-    static sr_error_t
-    done(sysrepo::S_Session sess, const CfgServersMapPair& service_pair);
+    static sysrepo::ErrorCode
+    done(sysrepo::Session sess, const CfgServersMapPair& service_pair);
 
     /// @brief Log changes.
     ///
@@ -91,7 +91,7 @@ public:
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param model The model name.
-    static void logChanges(sysrepo::S_Session sess, const std::string& model);
+    static void logChanges(sysrepo::Session sess, std::string_view const& model);
 
 protected:
     /// @brief Get and display Kea server configuration.
@@ -161,20 +161,17 @@ protected:
     /// @brief Check the shutdown flag of the process.
     bool shouldShutdown() const;
 
-    /// @brief Sysrepo connection.
-    sysrepo::S_Connection conn_;
-
     /// @brief Sysrepo startup datastore session.
-    sysrepo::S_Session startup_sess_;
+    std::optional<sysrepo::Session> startup_sess_;
 
     /// @brief Sysrepo running datastore session.
-    sysrepo::S_Session running_sess_;
+    std::optional<sysrepo::Session> running_sess_;
 
     /// @brief Available modules and revisions in Sysrepo.
     std::map<const std::string, const std::string> modules_;
 
     /// @brief Subscription map.
-    std::map<const std::string, sysrepo::S_Subscribe> subscriptions_;
+    std::map<const std::string, sysrepo::Subscription> subscriptions_;
 };
 
 } // namespace netconf

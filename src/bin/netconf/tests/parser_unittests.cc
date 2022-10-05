@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -403,18 +403,9 @@ void testError(const std::string& txt,
                const std::string& msg) {
     SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
 
-    try {
-        ParserContext ctx;
-        ConstElementPtr parsed = ctx.parseString(txt, parser_type);
-        FAIL() << "Expected ParseError but nothing was raised (expected: "
-               << msg << ")";
-    }
-    catch (const ParseError& ex) {
-        EXPECT_EQ(msg, ex.what());
-    }
-    catch (...) {
-        FAIL() << "Expected ParseError but something else was raised";
-    }
+
+    ParserContext ctx;
+    EXPECT_THROW_MSG(ctx.parseString(txt, parser_type), ParseError, msg);
 }
 
 // Verify that error conditions are handled correctly.
