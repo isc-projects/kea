@@ -22,8 +22,26 @@
 namespace isc {
 namespace tcp {
 
-/// @todo  TKM these are place holders while I think output how it should  work
-typedef util::InputBuffer TcpRequest;
+class TcpRequest {
+public:
+    /// @brief Constructor.
+    TcpRequest(){};
+
+    /// @brief Returns pointer to the first byte of the input buffer.
+    char* getInputBufData() {
+        return (input_buf_.data());
+    }
+
+    /// @brief Returns input buffer size (i.e. capacity).
+    size_t getInputBufSize() const {
+        return (input_buf_.size());
+    }
+
+private:
+    /// @brief Buffer for received data.
+    std::array<char, 32768> input_buf_;
+};
+
 typedef boost::shared_ptr<TcpRequest> TcpRequestPtr;
 
 typedef util::OutputBuffer TcpResponse;
@@ -107,6 +125,7 @@ public:
                    const asiolink::TlsContextPtr& tls_context,
                    TcpConnectionPool& connection_pool,
                    const TcpConnectionAcceptorCallback& callback,
+                   const long request_timeout,
                    const long idle_timeout);
 
     /// @brief Destructor.

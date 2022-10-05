@@ -64,9 +64,10 @@ public:
                     const IOAddress& server_address,
                     const unsigned short server_port,
                     const TlsContextPtr& tls_context,
+                    const RequestTimeout& request_timeout,
                     const IdleTimeout& idle_timeout)
         : TcpListener(io_service, server_address, server_port,
-                      tls_context, idle_timeout) {
+                      tls_context, request_timeout, idle_timeout) {
     }
 
 protected:
@@ -82,7 +83,7 @@ protected:
         TcpConnectionPtr
             conn(new TcpConnection(io_service_, acceptor_,
                                    tls_context_, connections_,
-                                   callback, idle_timeout_));
+                                   callback, request_timeout_, idle_timeout_));
         return (conn);
     }
 };
@@ -246,16 +247,14 @@ public:
     std::list<TcpTestClientPtr> clients_;
 };
 
-// This test verifies that HTTP connection can be established and used to
-// transmit HTTP request and receive a response.
-TEST_F(TcpListenerTest, listen) {
-    const std::string request = "POST /foo/bar HTTP/1.1\r\n"
-        "Content-Type: application/json\r\n"
-        "Content-Length: 3\r\n\r\n"
-        "{ }";
+// This test verifies that A TCP connection can be established and used to
+// transmit a streamed request and receive a streamed response.
+TEST_F(TcpListenerTest, DISABLED_listen) {
+    const std::string request = "inbound message request";
 
-    TcpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                             TlsContextPtr(), TcpListener::RequestTimeout(REQUEST_TIMEOUT),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT));
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());

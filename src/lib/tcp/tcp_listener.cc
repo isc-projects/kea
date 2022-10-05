@@ -18,9 +18,11 @@ TcpListener::TcpListener(IOService& io_service,
                          const IOAddress& server_address,
                          const unsigned short server_port,
                          const TlsContextPtr& tls_context,
+                         const RequestTimeout& request_timeout,
                          const IdleTimeout& idle_timeout)
     : io_service_(io_service), tls_context_(tls_context), acceptor_(),
-      endpoint_(), connections_(), idle_timeout_(idle_timeout.value_) {
+      endpoint_(), connections_(), request_timeout_(request_timeout.value_),
+      idle_timeout_(idle_timeout.value_) {
 
     // Create the TCP or TLS acceptor.
     if (!tls_context) {
@@ -35,6 +37,12 @@ TcpListener::TcpListener(IOService& io_service,
     } catch (...) {
         isc_throw(TcpListenerError, "unable to create TCP endpoint for "
                   << server_address << ":" << server_port);
+    }
+
+    // Request timeout is signed and must be greater than 0.
+    if (request_timeout_ <= 0) {
+        isc_throw(TcpListenerError, "Invalid desired TCP request timeout "
+                  << request_timeout_);
     }
 
     // Idle persistent connection timeout is signed and must be greater than 0.
@@ -99,8 +107,8 @@ TcpListener::createConnection(const TcpConnectionAcceptorCallback& /* callback *
 /// @todo TKM - I think what we want is to define TcpConnectionFactory
 /// instead of a response creator.  Let TcpListener accept a factory
 /// for that, which is used here to create for BLQ an LeaseQueryConnection
-    return (connection_factory_(io_service_, acceptor_, tls_context_,
-                               connections_, callback, idle_timeout_));
+    return (connectionFactory(io_service_, acceptor_, tls_context_,
+                              connections_, callback, request_timeout_, idle_timeout_));
 #endif
 }
 

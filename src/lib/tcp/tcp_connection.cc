@@ -43,8 +43,10 @@ TcpConnection::TcpConnection(asiolink::IOService& io_service,
                                const TlsContextPtr& tls_context,
                                TcpConnectionPool& connection_pool,
                                const TcpConnectionAcceptorCallback& callback,
+                               const long request_timeout,
                                const long idle_timeout)
     : request_timer_(io_service),
+      request_timeout_(request_timeout),
       tls_context_(tls_context),
       idle_timeout_(idle_timeout),
       tcp_socket_(),
@@ -211,16 +213,15 @@ TcpConnection::doHandshake() {
 }
 
 void
-TcpConnection::doRead(TcpRequestPtr /* request */) {
-#if 0
+TcpConnection::doRead(TcpRequestPtr request) {
     try {
         TCPEndpoint endpoint;
 
-        // Transaction hasn't been created if we are starting to read the
+        // Request hasn't been created if we are starting to read the
         // new request.
-        if (!transaction) {
-            transaction = Transaction::create(response_creator_);
-            recordParameters(transaction->getRequest());
+        if (!request) {
+            request.reset(new TcpRequest());
+           // recordParameters(transaction->getRequest());
         }
 
         // Create instance of the callback. It is safe to pass the local instance
@@ -228,27 +229,25 @@ TcpConnection::doRead(TcpRequestPtr /* request */) {
         // as needed.
         SocketCallback cb(std::bind(&TcpConnection::socketReadCallback,
                                     shared_from_this(),
-                                    transaction,
+                                    request,
                                     ph::_1,   // error
-                                    ph::_2)); //bytes_transferred
+                                    ph::_2)); // bytes_transferred
         if (tcp_socket_) {
-            tcp_socket_->asyncReceive(static_cast<void*>(transaction->getInputBufData()),
-                                      transaction->getInputBufSize(),
+            tcp_socket_->asyncReceive(static_cast<void*>(request->getInputBufData()),
+                                      request->getInputBufSize(),
                                       0, &endpoint, cb);
             return;
         }
+
         if (tls_socket_) {
-            tls_socket_->asyncReceive(static_cast<void*>(transaction->getInputBufData()),
-                                      transaction->getInputBufSize(),
+            tls_socket_->asyncReceive(static_cast<void*>(request->getInputBufData()),
+                                      request->getInputBufSize(),
                                       0, &endpoint, cb);
             return;
         }
     } catch (...) {
         stopThisConnection();
     }
-#else
-    isc_throw(NotImplemented, "TcpConnection::doRead()");
-#endif
 }
 
 void
