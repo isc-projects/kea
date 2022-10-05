@@ -85,9 +85,9 @@ TranslatorHost::getHostKea(const string& xpath) {
         if (next) {
             result->set("next-server", next);
         }
-        ConstElementPtr hostname = getItem(xpath + "/server-hostname");
-        if (hostname) {
-            result->set("server-hostname", hostname);
+        ConstElementPtr server_hostname = getItem(xpath + "/server-hostname");
+        if (server_hostname) {
+            result->set("server-hostname", server_hostname);
         }
         ConstElementPtr boot = getItem(xpath + "/boot-file-name");
         if (boot) {
@@ -161,9 +161,9 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
         if (next) {
             setItem(xpath + "/next-server", next, SR_STRING_T);
         }
-        ConstElementPtr hostname = elem->get("server-hostname");
-        if (hostname) {
-            setItem(xpath + "/server-hostname", hostname, SR_STRING_T);
+        ConstElementPtr server_hostname = elem->get("server-hostname");
+        if (server_hostname) {
+            setItem(xpath + "/server-hostname", server_hostname, SR_STRING_T);
         }
         ConstElementPtr boot = elem->get("boot-file-name");
         if (boot) {

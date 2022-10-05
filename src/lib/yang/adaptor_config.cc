@@ -311,10 +311,10 @@ AdaptorConfig::sanitizeOptionSubnets(ConstElementPtr subnets,
 
         // If this is v6, also sanitize pd-pools.
         if (space == DHCP6_SPACE) {
-            ConstElementPtr pools = subnet->get("pd-pools");
-            if (pools) {
-                if (!pools->empty()) {
-                    sanitizeOptionPools(pools, space, codes);
+            ConstElementPtr pd_pools = subnet->get("pd-pools");
+            if (pd_pools) {
+                if (!pd_pools->empty()) {
+                    sanitizeOptionPools(pd_pools, space, codes);
                 } else {
                     subnet->remove("pd-pools");
                 }
