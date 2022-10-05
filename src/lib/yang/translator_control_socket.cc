@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,12 +13,13 @@
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorControlSocket::TranslatorControlSocket(S_Session session,
+TranslatorControlSocket::TranslatorControlSocket(Session session,
                                                  const string& model)
     : TranslatorBasic(session, model) {
 }
@@ -35,7 +36,7 @@ TranslatorControlSocket::getControlSocket(const string& xpath) {
             (model_ == KEA_CTRL_AGENT)) {
             return (getControlSocketKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting control socket at '" << xpath
                   << "': " << ex.what());
@@ -76,7 +77,7 @@ TranslatorControlSocket::setControlSocket(const string& xpath,
                     "setControlSocket not implemented for the model: "
                     << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting control socket '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -98,12 +99,12 @@ TranslatorControlSocket::setControlSocketKea(const string& xpath,
     if (!type) {
         isc_throw(BadValue, "setControlSocket missing socket type");
     }
-    setItem(xpath + "/socket-name", name, SR_STRING_T);
-    setItem(xpath + "/socket-type", type, SR_ENUM_T);
+    setItem(xpath + "/socket-name", name, LeafBaseType::String);
+    setItem(xpath + "/socket-type", type, LeafBaseType::Enum);
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+                LeafBaseType::String);
     }
 }
 

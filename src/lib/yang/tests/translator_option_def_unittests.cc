@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,12 +73,13 @@ TEST_F(TranslatorOptionDefListTestKeaV6, get) {
     const string& xname = xdef + "/name";
     const string& xtype = xdef + "/type";
     const string& xarray = xdef + "/array";
-    S_Val s_name(new Val("foo"));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xname.c_str(), s_name));
-    S_Val s_type(new Val("string"));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xtype.c_str(), s_type));
-    S_Val s_array(new Val(false));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xarray.c_str(), s_array));
+    string const s_name("foo");
+    ASSERT_NO_THROW_LOG(sess_->setItem(xname, s_name));
+    string const s_type("string");
+    ASSERT_NO_THROW_LOG(sess_->setItem(xtype, s_type));
+    string const s_array("false");
+    ASSERT_NO_THROW_LOG(sess_->setItem(xarray, s_array));
+    sess_->applyChanges();
 
     // Get the option def.
     ConstElementPtr def;
@@ -136,9 +137,6 @@ TEST_F(TranslatorOptionDefListTestKeaV6, set) {
     ASSERT_TRUE(got);
     ASSERT_EQ(1, got->size());
     EXPECT_TRUE(def->equals(*got->get(0)));
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 }; // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,559 +17,610 @@ namespace test {
 /// @brief The test module from sysrepo tests.
 const std::string testModel = "keatest-module";
 const YRTree testTree = YangRepr::buildTreeFromVector({
-    { "/keatest-module:container", "", SR_CONTAINER_T, false },
-    { "/keatest-module:main", "", SR_CONTAINER_T, false },
-    { "/keatest-module:main/string", "str", SR_STRING_T, true },
-    { "/keatest-module:main/boolean", "true", SR_BOOL_T, true },
-    { "/keatest-module:main/ui8", "8", SR_UINT8_T, true },
-    { "/keatest-module:main/ui16", "16", SR_UINT16_T, true },
-    { "/keatest-module:main/ui32", "32", SR_UINT32_T, true },
-    { "/keatest-module:main/i8", "8", SR_INT8_T, true },
-    { "/keatest-module:main/i16", "16", SR_INT16_T, true },
-    { "/keatest-module:main/i32", "32", SR_INT32_T, true },
-    { "/keatest-module:main/id_ref", "keatest-module:id_1",
-      SR_IDENTITYREF_T, true },
-    { "/keatest-module:main/enum", "maybe", SR_ENUM_T, true },
-    { "/keatest-module:main/raw", "Zm9vYmFy", SR_BINARY_T, true },
-    { "/keatest-module:kernel-modules", "", SR_CONTAINER_T, false }
+    { "/keatest-module:container",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
+    { "/keatest-module:main",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
+    { "/keatest-module:main/string",
+      "str", libyang::LeafBaseType::String, true },
+    { "/keatest-module:main/boolean",
+      "true", libyang::LeafBaseType::Bool, true },
+    { "/keatest-module:main/ui8",
+      "8", libyang::LeafBaseType::Uint8, true },
+    { "/keatest-module:main/ui16",
+      "16", libyang::LeafBaseType::Uint16, true },
+    { "/keatest-module:main/ui32",
+      "32", libyang::LeafBaseType::Uint32, true },
+    { "/keatest-module:main/i8",
+      "8", libyang::LeafBaseType::Int8, true },
+    { "/keatest-module:main/i16",
+      "16", libyang::LeafBaseType::Int16, true },
+    { "/keatest-module:main/i32",
+      "32", libyang::LeafBaseType::Int32, true },
+    { "/keatest-module:main/id_ref",
+      "keatest-module:id_1", libyang::LeafBaseType::IdentityRef, true },
+    { "/keatest-module:main/enum",
+      "maybe", libyang::LeafBaseType::Enum, true },
+    { "/keatest-module:main/raw",
+      "Zm9vYmFy", libyang::LeafBaseType::Binary, true },
+    { "/keatest-module:kernel-modules",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 /// @brief A subnet with two pools with ietf-dhcpv6-server model.
 const std::string subnetTwoPoolsModelIetf6 = IETF_DHCPV6_SERVER;
 const YRTree subnetTwoPoolsTreeIetf6 = YangRepr::buildTreeFromVector({
-    { "/ietf-dhcpv6-server:server", "", SR_CONTAINER_PRESENCE_T, false },
-    { "/ietf-dhcpv6-server:server/server-config", "", SR_CONTAINER_T, false },
+    { "/ietf-dhcpv6-server:server",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
+    { "/ietf-dhcpv6-server:server/server-config",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
-      "network-range[network-range-id='111']", "", SR_LIST_T, false },
+      "network-range[network-range-id='111']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/network-range-id",
-      "111", SR_UINT32_T, false },
+      "111", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/network-prefix",
-      "2001:db8::/48", SR_STRING_T, true },
+      "2001:db8::/48", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='0']", "", SR_LIST_T, false },
+      "address-pool[pool-id='0']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='0']/pool-id", "0", SR_UINT32_T, false },
+      "address-pool[pool-id='0']/pool-id",
+      "0", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='0']/pool-prefix",
-      "2001:db8::1:0/112", SR_STRING_T, true },
+      "2001:db8::1:0/112", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='0']/start-address",
-      "2001:db8::1:0", SR_STRING_T, true },
+      "2001:db8::1:0", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='0']/end-address",
-      "2001:db8::1:ffff", SR_STRING_T, true },
+      "2001:db8::1:ffff", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='0']/max-address-count",
-      "disabled", SR_ENUM_T, true },
+      "disabled", libyang::LeafBaseType::Enum, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='1']", "", SR_LIST_T, false },
+      "address-pool[pool-id='1']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='1']/pool-id", "1", SR_UINT32_T, false },
+      "address-pool[pool-id='1']/pool-id",
+      "1", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='1']/pool-prefix",
-      "2001:db8::2:0/112", SR_STRING_T, true },
+      "2001:db8::2:0/112", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='1']/start-address",
-      "2001:db8::2:0", SR_STRING_T, true },
+      "2001:db8::2:0", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='1']/end-address",
-      "2001:db8::2:ffff", SR_STRING_T, true },
+      "2001:db8::2:ffff", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='1']/max-address-count",
-      "disabled", SR_ENUM_T, true },
+      "disabled", libyang::LeafBaseType::Enum, true },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/duid/type-code",
-      "65535", SR_UINT16_T, false },
+      "65535", libyang::LeafBaseType::Uint16, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/host-reservations",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/duid",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/lease-storage",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/vendor-info",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/option-sets",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/relay-opaque-paras",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/rsoo-enabled-options",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 /// @brief A subnet with timers with ietf-dhcpv6-server model.
 const std::string subnetTimersModel = IETF_DHCPV6_SERVER;
 const YRTree subnetTimersIetf6 = YangRepr::buildTreeFromVector({
-    { "/ietf-dhcpv6-server:server", "", SR_CONTAINER_PRESENCE_T, false },
-    { "/ietf-dhcpv6-server:server/server-config", "", SR_CONTAINER_T, false },
+    { "/ietf-dhcpv6-server:server",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
+    { "/ietf-dhcpv6-server:server/server-config",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
-      "network-range[network-range-id='111']", "", SR_LIST_T, false },
+      "network-range[network-range-id='111']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/network-range-id",
-      "111", SR_UINT32_T, false },
+      "111", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/network-prefix",
-      "2001:db8::/48", SR_STRING_T, true },
+      "2001:db8::/48", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='0']", "", SR_LIST_T, false },
+      "address-pool[pool-id='0']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='0']/pool-id", "0", SR_UINT32_T, false },
+      "address-pool[pool-id='0']/pool-id",
+      "0", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='0']/pool-prefix",
-      "2001:db8::1:0/112", SR_STRING_T, true },
+      "2001:db8::1:0/112", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='0']/start-address",
-      "2001:db8::1:0", SR_STRING_T, true },
+      "2001:db8::1:0", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='0']/end-address",
-      "2001:db8::1:ffff", SR_STRING_T, true },
+      "2001:db8::1:ffff", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='0']/renew-time", "1000", SR_UINT32_T, true },
+      "address-pool[pool-id='0']/renew-time",
+      "1000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='0']/rebind-time", "2000", SR_UINT32_T, true },
+      "address-pool[pool-id='0']/rebind-time",
+      "2000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='0']/max-address-count",
-      "disabled", SR_ENUM_T, true },
+      "disabled", libyang::LeafBaseType::Enum, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='1']", "", SR_LIST_T, false },
+      "address-pool[pool-id='1']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='1']/pool-id", "1", SR_UINT32_T, false },
+      "address-pool[pool-id='1']/pool-id",
+      "1", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='1']/pool-prefix",
-      "2001:db8::2:0/112", SR_STRING_T, true },
+      "2001:db8::2:0/112", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='1']/start-address",
-      "2001:db8::2:0", SR_STRING_T, true },
+      "2001:db8::2:0", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='1']/end-address",
-      "2001:db8::2:ffff", SR_STRING_T, true },
+      "2001:db8::2:ffff", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='1']/renew-time", "1000", SR_UINT32_T, true },
+      "address-pool[pool-id='1']/renew-time",
+      "1000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
-      "address-pool[pool-id='1']/rebind-time", "2000", SR_UINT32_T, true },
+      "address-pool[pool-id='1']/rebind-time",
+      "2000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools/"
       "address-pool[pool-id='1']/max-address-count",
-      "disabled", SR_ENUM_T, true },
+      "disabled", libyang::LeafBaseType::Enum, true },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/duid/type-code",
-      "65535", SR_UINT16_T, false },
+      "65535", libyang::LeafBaseType::Uint16, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/host-reservations",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/duid",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/lease-storage",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/vendor-info",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/option-sets",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/relay-opaque-paras",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/rsoo-enabled-options",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 /// @brief A subnet with two pools with ietf-dhcpv6-server model
 /// which validates.
 const std::string validModelIetf6 = IETF_DHCPV6_SERVER;
 const YRTree validTreeIetf6 = YangRepr::buildTreeFromVector({
-    { "/ietf-dhcpv6-server:server", "", SR_CONTAINER_PRESENCE_T, false },
-    { "/ietf-dhcpv6-server:server/server-config", "", SR_CONTAINER_T, false },
+    { "/ietf-dhcpv6-server:server",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
+    { "/ietf-dhcpv6-server:server/server-config",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/vendor-info",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes"
-      "/vendor-info/ent-num", "2495", SR_UINT32_T, true },
+      "/vendor-info/ent-num",
+      "2495", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/option-sets",
-      "", SR_CONTAINER_T, false },
-    { "/ietf-dhcpv6-server:server/server-config/option-sets"
-      "/option-set[option-set-id='0']", "", SR_LIST_T, false },
-    { "/ietf-dhcpv6-server:server/server-config/option-sets"
-      "/option-set[option-set-id='0']/option-set-id",
-      "0", SR_UINT32_T, true },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
-      "network-range[network-range-id='111']", "", SR_LIST_T, false },
+      "network-range[network-range-id='111']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/network-range-id",
-      "111", SR_UINT32_T, false },
+      "111", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/network-description",
-      "Subnet#111", SR_STRING_T, true },
+      "Subnet#111", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/network-prefix",
-      "2001:db8::/48", SR_STRING_T, true },
+      "2001:db8::/48", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='0']", "", SR_LIST_T, false },
+      "pd-pool[pool-id='0']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='0']/pool-id", "0", SR_UINT32_T, false },
+      "pd-pool[pool-id='0']/pool-id",
+      "0", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
       "pd-pool[pool-id='0']/prefix",
-      "2001:db8:1::/48", SR_STRING_T, true },
+      "2001:db8:1::/48", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='0']/prefix-length", "48", SR_UINT8_T, true },
+      "pd-pool[pool-id='0']/prefix-length",
+      "48", libyang::LeafBaseType::Uint8, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='0']/valid-lifetime", "4000", SR_UINT32_T, true },
+      "pd-pool[pool-id='0']/valid-lifetime",
+      "4000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
       "pd-pool[pool-id='0']/preferred-lifetime",
-      "3000", SR_UINT32_T, true },
+      "3000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='0']/renew-time", "1000", SR_UINT32_T, true },
+      "pd-pool[pool-id='0']/renew-time",
+      "1000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='0']/rebind-time", "2000", SR_UINT32_T, true },
+      "pd-pool[pool-id='0']/rebind-time",
+      "2000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='0']/rapid-commit", "false", SR_BOOL_T, true },
+      "pd-pool[pool-id='0']/rapid-commit",
+      "false", libyang::LeafBaseType::Bool, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='0']/option-set-id", "0", SR_UINT32_T, true },
+      "pd-pool[pool-id='0']/option-set-id",
+      "0", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
       "pd-pool[pool-id='0']/max-pd-space-utilization",
-      "disabled", SR_ENUM_T, true },
+      "disabled", libyang::LeafBaseType::Enum, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='1']", "", SR_LIST_T, false },
+      "pd-pool[pool-id='1']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='1']/pool-id", "1", SR_UINT32_T, false },
+      "pd-pool[pool-id='1']/pool-id",
+      "1", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
       "pd-pool[pool-id='1']/prefix",
-      "2001:db8:2::/48", SR_STRING_T, true },
+      "2001:db8:2::/48", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='1']/prefix-length", "48", SR_UINT8_T, true },
+      "pd-pool[pool-id='1']/prefix-length",
+      "48", libyang::LeafBaseType::Uint8, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='1']/valid-lifetime", "4000", SR_UINT32_T, true },
+      "pd-pool[pool-id='1']/valid-lifetime",
+      "4000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
       "pd-pool[pool-id='1']/preferred-lifetime",
-      "3000", SR_UINT32_T, true },
+      "3000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='1']/renew-time", "1000", SR_UINT32_T, true },
+      "pd-pool[pool-id='1']/renew-time",
+      "1000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='1']/rebind-time", "2000", SR_UINT32_T, true },
+      "pd-pool[pool-id='1']/rebind-time",
+      "2000", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='1']/rapid-commit", "false", SR_BOOL_T, true },
+      "pd-pool[pool-id='1']/rapid-commit",
+      "false", libyang::LeafBaseType::Bool, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
-      "pd-pool[pool-id='1']/option-set-id", "0", SR_UINT32_T, true },
+      "pd-pool[pool-id='1']/option-set-id",
+      "0", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools/"
       "pd-pool[pool-id='1']/max-pd-space-utilization",
-      "disabled", SR_ENUM_T, true },
+      "disabled", libyang::LeafBaseType::Enum, true },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/duid/type-code",
-      "65535", SR_UINT16_T, false },
+      "65535", libyang::LeafBaseType::Uint16, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/address-pools",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/pd-pools",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='111']/host-reservations",
-      "", SR_CONTAINER_T, false },
-    { "/ietf-dhcpv6-server:server/server-config/serv-attributes",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/duid",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/lease-storage",
-      "", SR_CONTAINER_T, false },
-    { "/ietf-dhcpv6-server:server/server-config/serv-attributes/vendor-info",
-      "", SR_CONTAINER_T, false },
-    { "/ietf-dhcpv6-server:server/server-config/option-sets",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/relay-opaque-paras",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/rsoo-enabled-options",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 /// @brief A subnet with a pool and option data lists with
 /// kea-dhcp4-server:config model.
 const std::string subnetOptionsModelKeaDhcp4 = KEA_DHCP4_SERVER;
 const YRTree subnetOptionsTreeKeaDhcp4 = YangRepr::buildTreeFromVector({
-    { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-    { "/kea-dhcp4-server:config/subnet4[id='111']", "",
-      SR_LIST_T, false },
+    { "/kea-dhcp4-server:config",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
+    { "/kea-dhcp4-server:config/subnet4[id='111']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/id",
-      "111", SR_UINT32_T, false },
+      "111", libyang::LeafBaseType::Uint32, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "option-data[code='100'][space='dns']", "", SR_LIST_T, false },
+      "option-data[code='100'][space='dns']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/code",
-      "100", SR_UINT8_T, false },
+      "100", libyang::LeafBaseType::Uint8, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/space",
-      "dns", SR_STRING_T, false },
+      "dns", libyang::LeafBaseType::String, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/data",
-      "12121212", SR_STRING_T, true },
+      "12121212", libyang::LeafBaseType::String, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/csv-format",
-      "false", SR_BOOL_T, true },
+      "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/always-send",
-      "false", SR_BOOL_T, true },
+      "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']",
-      "", SR_LIST_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/start-address",
-      "10.0.1.0", SR_STRING_T, false },
+      "10.0.1.0", libyang::LeafBaseType::String, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/end-address",
-      "10.0.1.255", SR_STRING_T, false },
+      "10.0.1.255", libyang::LeafBaseType::String, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/prefix",
-      "10.0.1.0/24", SR_STRING_T, true },
+      "10.0.1.0/24", libyang::LeafBaseType::String, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/subnet",
-      "10.0.0.0/8", SR_STRING_T, true },
+      "10.0.0.0/8", libyang::LeafBaseType::String, true },
     { "/kea-dhcp4-server:config/expired-leases-processing",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/dhcp-ddns",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/config-control",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/sanity-checks",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/interfaces-config",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/relay",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/compatibility",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/multi-threading",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 /// @brief A subnet with a pool and option data lists with
 /// kea-dhcp6-server:config model.
 const std::string subnetOptionsModelKeaDhcp6 = KEA_DHCP6_SERVER;
 const YRTree subnetOptionsTreeKeaDhcp6 = YangRepr::buildTreeFromVector({
-    { "/kea-dhcp6-server:config", "", SR_CONTAINER_T, false },
-    { "/kea-dhcp6-server:config/subnet6[id='111']", "",
-      SR_LIST_T, false },
+    { "/kea-dhcp6-server:config",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
+    { "/kea-dhcp6-server:config/subnet6[id='111']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/id",
-      "111", SR_UINT32_T, false },
+      "111", libyang::LeafBaseType::Uint32, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']",
-      "", SR_LIST_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "start-address", "2001:db8::1:0", SR_STRING_T, false },
+      "start-address",
+      "2001:db8::1:0", libyang::LeafBaseType::String, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "end-address", "2001:db8::1:ffff", SR_STRING_T, false },
+      "end-address",
+      "2001:db8::1:ffff", libyang::LeafBaseType::String, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "prefix", "2001:db8::1:0/112", SR_STRING_T, true },
+      "prefix",
+      "2001:db8::1:0/112", libyang::LeafBaseType::String, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']",
-      "", SR_LIST_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/code",
-      "100", SR_UINT16_T, false },
+      "100", libyang::LeafBaseType::Uint16, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/space",
-      "dns", SR_STRING_T, false },
+      "dns", libyang::LeafBaseType::String, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/data",
-      "12121212", SR_STRING_T, true },
+      "12121212", libyang::LeafBaseType::String, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/csv-format",
-      "false", SR_BOOL_T, true },
+      "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/always-send",
-      "false", SR_BOOL_T, true },
+      "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/subnet",
-      "2001:db8::/48", SR_STRING_T, true },
+      "2001:db8::/48", libyang::LeafBaseType::String, true },
     { "/kea-dhcp6-server:config/expired-leases-processing",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/dhcp-ddns",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/config-control",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/sanity-checks",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/interfaces-config",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/relay",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/compatibility",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/multi-threading",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 /// @brief Example from the design document.
 const std::string designExampleModel = IETF_DHCPV6_SERVER;
 const YRTree designExampleTree = YangRepr::buildTreeFromVector({
-    { "/ietf-dhcpv6-server:server", "", SR_CONTAINER_PRESENCE_T, false },
-    { "/ietf-dhcpv6-server:server/server-config", "", SR_CONTAINER_T, false },
+    { "/ietf-dhcpv6-server:server",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
+    { "/ietf-dhcpv6-server:server/server-config",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
-      "network-range[network-range-id='1']", "", SR_LIST_T, false },
+      "network-range[network-range-id='1']",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/network-range-id",
-      "1", SR_UINT32_T, false },
+      "1", libyang::LeafBaseType::Uint32, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/network-description",
-      "example", SR_STRING_T, true },
+      "example", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/pd-pools",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/pd-pools/pd-pool[pool-id='0']",
-      "", SR_LIST_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/pd-pools/pd-pool[pool-id='0']"
       "/pool-id",
-      "0", SR_UINT32_T, true },
+      "0", libyang::LeafBaseType::Uint32, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/pd-pools/pd-pool[pool-id='0']"
       "/prefix",
-      "2001:db8:20:b00::/57", SR_STRING_T, true },
+      "2001:db8:20:b00::/57", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/pd-pools/pd-pool[pool-id='0']"
       "/prefix-length",
-      "57", SR_UINT8_T, true },
+      "57", libyang::LeafBaseType::Uint8, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/pd-pools/"
       "pd-pool[pool-id='0']/max-pd-space-utilization",
-      "disabled", SR_ENUM_T, true },
+      "disabled", libyang::LeafBaseType::Enum, true },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/network-prefix",
-      "2001:db8:20:b00::/56", SR_STRING_T, true },
+      "2001:db8:20:b00::/56", libyang::LeafBaseType::String, true },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/duid/type-code",
-      "65535", SR_UINT16_T, false },
+      "65535", libyang::LeafBaseType::Uint16, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/host-reservations",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/duid",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/lease-storage",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/serv-attributes/vendor-info",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/option-sets",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/relay-opaque-paras",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/rsoo-enabled-options",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/ietf-dhcpv6-server:server/server-config/network-ranges/"
       "network-range[network-range-id='1']/address-pools",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 const YRTree emptyTreeKeaDhcp4 = YangRepr::buildTreeFromVector({
-    { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+    { "/kea-dhcp4-server:config",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/expired-leases-processing",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/dhcp-ddns",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/config-control",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/sanity-checks",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/interfaces-config",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/compatibility",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/multi-threading",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 const YRTree emptyTreeKeaDhcp6 = YangRepr::buildTreeFromVector({
-    { "/kea-dhcp6-server:config", "", SR_CONTAINER_T, false },
+    { "/kea-dhcp6-server:config",
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/expired-leases-processing",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/dhcp-ddns",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/config-control",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/sanity-checks",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/interfaces-config",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/compatibility",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/multi-threading",
-      "", SR_CONTAINER_T, false },
+      std::nullopt, libyang::LeafBaseType::Unknown, false },
 });
 
 /// @brief Set of example configurations.

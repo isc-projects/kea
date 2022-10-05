@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace {
@@ -63,17 +64,19 @@ TEST_F(TranslatorHostsTestv6, get) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
 
     // Create the host reservation for 2001:db8::1.
     ostringstream shost;
     shost << xpath + "/host[identifier-type='hw-address']"
           << "[identifier='00:01:02:03:04:05']";
     const string& xaddr = shost.str() + "/ip-addresses";
-    S_Val s_addr(new Val("2001:db8::1"));
-    EXPECT_NO_THROW(sess_->set_item(xaddr.c_str(), s_addr));
+    string const s_addr("2001:db8::1");
+    EXPECT_NO_THROW(sess_->setItem(xaddr, s_addr));
+    sess_->applyChanges();
 
     // Get the host.
     ConstElementPtr host;
@@ -102,9 +105,10 @@ TEST_F(TranslatorHostsTestv6, setEmpty) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
 
     // Set empty list.
     ConstElementPtr hosts = Element::createList();
@@ -122,9 +126,10 @@ TEST_F(TranslatorHostsTestv4, set) {
     // Create the subnet 10.0.0.0/14 #111.
     const string& xpath =
         "/kea-dhcp4-server:config/subnet4[id='111']";
-    S_Val v_subnet(new Val("10.0.0.0/24", SR_STRING_T));
+    string const v_subnet("10.0.0.0/24");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
 
     // Set one host.
     ElementPtr hosts = Element::createList();
@@ -142,9 +147,6 @@ TEST_F(TranslatorHostsTestv4, set) {
     ASSERT_EQ(Element::list, hosts->getType());
     ASSERT_EQ(1, hosts->size());
     EXPECT_TRUE(host->equals(*hosts->get(0)));
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 // This test verifies that several host reservations can be properly
@@ -153,25 +155,28 @@ TEST_F(TranslatorHostsTestv6, getMany) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
 
     // Create the host reservation for 2001:db8::1.
     ostringstream shost;
     shost << xpath + "/host[identifier-type='hw-address']"
           << "[identifier='00:01:02:03:04:05']";
     const string& xaddr = shost.str() + "/ip-addresses";
-    S_Val s_addr(new Val("2001:db8::1"));
-    EXPECT_NO_THROW(sess_->set_item(xaddr.c_str(), s_addr));
+    string const s_addr("2001:db8::1");
+    EXPECT_NO_THROW(sess_->setItem(xaddr, s_addr));
+    sess_->applyChanges();
 
     // Create another reservation for 2001:db8::2
     ostringstream shost2;
     shost2 << xpath + "/host[identifier-type='hw-address']"
            << "[identifier='00:01:0a:0b:0c:0d']";
     const string xaddr2 = shost2.str() + "/ip-addresses";
-    S_Val s_addr2(new Val("2001:db8::2"));
-    EXPECT_NO_THROW(sess_->set_item(xaddr2.c_str(), s_addr2));
+    string const s_addr2("2001:db8::2");
+    EXPECT_NO_THROW(sess_->setItem(xaddr2, s_addr2));
+    sess_->applyChanges();
 
     // Get the host.
     ConstElementPtr hosts;

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,11 +62,12 @@ TEST_F(TranslatorDatabaseTestv4, get) {
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     const string& xtype = xpath + "/database-type";
     const string& xinterval = xpath + "/lfc-interval";
-    S_Val s_type(new Val("memfile"));
-    EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
+    string const s_type("memfile");
+    EXPECT_NO_THROW(sess_->setItem(xtype, s_type));
     uint32_t li = 3600;
-    S_Val s_interval(new Val(li));
-    EXPECT_NO_THROW(sess_->set_item(xinterval.c_str(), s_interval));
+    string const s_interval(to_string(li));
+    EXPECT_NO_THROW(sess_->setItem(xinterval, s_interval));
+    sess_->applyChanges();
 
     // Get empty.
     ConstElementPtr database;
@@ -116,12 +117,12 @@ TEST_F(TranslatorDatabaseTestv4, setEmpty) {
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     const string& xtype = xpath + "/database-type";
     const string& xinterval = xpath + "/lfc-interval";
-    S_Val s_type(new Val("memfile"));
-    EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
+    string const s_type("memfile");
+    EXPECT_NO_THROW(sess_->setItem(xtype, s_type));
     uint32_t li = 3600;
-    S_Val s_interval(new Val(li));
-    EXPECT_NO_THROW(sess_->set_item(xinterval.c_str(), s_interval));
-    sess_->apply_changes();
+    string const s_interval(to_string(li));
+    EXPECT_NO_THROW(sess_->setItem(xinterval, s_interval));
+    sess_->applyChanges();
 
     // Reset to empty.
     ASSERT_NO_THROW_LOG(t_obj_->setDatabase(xpath, ConstElementPtr()));
@@ -177,17 +178,18 @@ TEST_F(TranslatorDatabasesTestv4, get) {
     const string& xpassword = xdatabase + "/password";
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
-    S_Val s_name(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
-    S_Val s_user(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xuser.c_str(), s_user));
-    S_Val s_password(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xpassword.c_str(), s_password));
-    S_Val s_host(new Val("localhost"));
-    EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
+    string const s_name("kea");
+    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    string const s_user("kea");
+    EXPECT_NO_THROW(sess_->setItem(xuser, s_user));
+    string const s_password("kea");
+    EXPECT_NO_THROW(sess_->setItem(xpassword, s_password));
+    string const s_host("localhost");
+    EXPECT_NO_THROW(sess_->setItem(xhost, s_host));
     uint16_t mport = 3306;
-    S_Val s_port(new Val(mport));
-    EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
+    string const s_port(to_string(mport));
+    EXPECT_NO_THROW(sess_->setItem(xport, s_port));
+    sess_->applyChanges();
 
     // Get empty.
     ConstElementPtr databases;
@@ -253,9 +255,6 @@ TEST_F(TranslatorDatabasesTestv6, set) {
     ASSERT_TRUE(interval);
     ASSERT_EQ(Element::integer, interval->getType());
     EXPECT_EQ(3600, interval->intValue());
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 // This test verifies that an emptied database list can be properly
@@ -269,18 +268,18 @@ TEST_F(TranslatorDatabasesTestv4, setEmpty) {
     const string& xpassword = xdatabase + "/password";
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
-    S_Val s_name(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
-    S_Val s_user(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xuser.c_str(), s_user));
-    S_Val s_password(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xpassword.c_str(), s_password));
-    S_Val s_host(new Val("localhost"));
-    EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
+    string const s_name("kea");
+    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    string const s_user("kea");
+    EXPECT_NO_THROW(sess_->setItem(xuser, s_user));
+    string const s_password("kea");
+    EXPECT_NO_THROW(sess_->setItem(xpassword, s_password));
+    string const s_host("localhost");
+    EXPECT_NO_THROW(sess_->setItem(xhost, s_host));
     uint16_t mport = 3306;
-    S_Val s_port(new Val(mport));
-    EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
-    sess_->apply_changes();
+    string const s_port(to_string(mport));
+    EXPECT_NO_THROW(sess_->setItem(xport, s_port));
+    sess_->applyChanges();
 
     // Reset to empty.
     EXPECT_NO_THROW(t_obj_->setDatabase(xdatabase, ConstElementPtr()));
@@ -302,18 +301,18 @@ TEST_F(TranslatorDatabasesTestv4, setEmpties) {
     const string& xpassword = xdatabase + "/password";
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
-    S_Val s_name(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
-    S_Val s_user(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xuser.c_str(), s_user));
-    S_Val s_password(new Val("kea"));
-    EXPECT_NO_THROW(sess_->set_item(xpassword.c_str(), s_password));
-    S_Val s_host(new Val("localhost"));
-    EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
+    string const s_name("kea");
+    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    string const s_user("kea");
+    EXPECT_NO_THROW(sess_->setItem(xuser, s_user));
+    string const s_password("kea");
+    EXPECT_NO_THROW(sess_->setItem(xpassword, s_password));
+    string const s_host("localhost");
+    EXPECT_NO_THROW(sess_->setItem(xhost, s_host));
     uint16_t mport = 3306;
-    S_Val s_port(new Val(mport));
-    EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
-    sess_->apply_changes();
+    string const s_port(to_string(mport));
+    EXPECT_NO_THROW(sess_->setItem(xport, s_port));
+    sess_->applyChanges();
 
     // Reset to empty.
     EXPECT_NO_THROW(t_obj_->setDatabases(xdatabase, ConstElementPtr()));

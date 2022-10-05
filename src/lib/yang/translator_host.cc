@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,12 +13,13 @@
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorHost::TranslatorHost(S_Session session, const string& model)
+TranslatorHost::TranslatorHost(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model) {
@@ -34,7 +35,7 @@ ElementPtr
             (model_ == KEA_DHCP6_SERVER)) {
             return (getHostKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting host reservation at '" << xpath
                   << "': " << ex.what());
@@ -111,7 +112,7 @@ TranslatorHost::setHost(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setHost not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting host reservation '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -123,24 +124,24 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     ConstElementPtr hostname = elem->get("hostname");
     // Skip identifier and identifier type as they are keys.
     if (hostname) {
-        setItem(xpath + "/hostname", hostname, SR_STRING_T);
+        setItem(xpath + "/hostname", hostname, LeafBaseType::String);
     }
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr address = elem->get("ip-address");
         if (address) {
-            setItem(xpath + "/ip-address", address, SR_STRING_T);
+            setItem(xpath + "/ip-address", address, LeafBaseType::String);
         }
     } else {
         ConstElementPtr addresses = elem->get("ip-addresses");
         if (addresses && (addresses->size() > 0)) {
             for (ConstElementPtr address : addresses->listValue()) {
-                setItem(xpath + "/ip-addresses", address, SR_STRING_T);
+                setItem(xpath + "/ip-addresses", address, LeafBaseType::String);
             }
         }
         ConstElementPtr prefixes = elem->get("prefixes");
         if (prefixes && (prefixes->size() > 0)) {
             for (ConstElementPtr prefix : prefixes->listValue()) {
-                setItem(xpath + "/prefixes", prefix, SR_STRING_T);
+                setItem(xpath + "/prefixes", prefix, LeafBaseType::String);
             }
         }
     }
@@ -151,7 +152,7 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     ConstElementPtr classes = elem->get("client-classes");
     if (classes && (classes->size() > 0)) {
         for (ConstElementPtr cclass : classes->listValue()) {
-            setItem(xpath + "/client-classes", cclass, SR_STRING_T);
+            setItem(xpath + "/client-classes", cclass, LeafBaseType::String);
         }
     }
 
@@ -159,15 +160,15 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr next = elem->get("next-server");
         if (next) {
-            setItem(xpath + "/next-server", next, SR_STRING_T);
+            setItem(xpath + "/next-server", next, LeafBaseType::String);
         }
         ConstElementPtr server_hostname = elem->get("server-hostname");
         if (server_hostname) {
-            setItem(xpath + "/server-hostname", server_hostname, SR_STRING_T);
+            setItem(xpath + "/server-hostname", server_hostname, LeafBaseType::String);
         }
         ConstElementPtr boot = elem->get("boot-file-name");
         if (boot) {
-            setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
+            setItem(xpath + "/boot-file-name", boot, LeafBaseType::String);
         }
     }
 
@@ -175,11 +176,11 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+                LeafBaseType::String);
     }
 }
 
-TranslatorHosts::TranslatorHosts(S_Session session, const string& model)
+TranslatorHosts::TranslatorHosts(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -205,7 +206,7 @@ TranslatorHosts::setHosts(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setHosts not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting host reservations '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

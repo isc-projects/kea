@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,11 +65,12 @@ TEST_F(TranslatorOptionDataListTestv6, get) {
     const string& xformat = xoption + "/csv-format";
     const string& xdata = xoption + "/data";
     const string& xsend = xoption + "/always-send";
-    S_Val s_false(new Val(false));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xformat.c_str(), s_false));
-    S_Val s_data(new Val("12121212"));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xdata.c_str(), s_data));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xsend.c_str(), s_false));
+    string const s_false("false");
+    ASSERT_NO_THROW_LOG(sess_->setItem(xformat, s_false));
+    string const s_data("12121212");
+    ASSERT_NO_THROW_LOG(sess_->setItem(xdata, s_data));
+    ASSERT_NO_THROW_LOG(sess_->setItem(xsend, s_false));
+    sess_->applyChanges();
 
     // Get the option data.
     ConstElementPtr option;
@@ -128,9 +129,6 @@ TEST_F(TranslatorOptionDataListTestv6, set) {
     ASSERT_TRUE(got);
     ASSERT_EQ(1, got->size());
     EXPECT_TRUE(option->equals(*got->get(0)));
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 }  // namespace

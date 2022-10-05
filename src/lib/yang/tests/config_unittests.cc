@@ -55,12 +55,12 @@ std::string generateDiff(std::string, std::string) {
 /// @brief Test Fixture class for Yang <-> JSON configs.
 class ConfigTest : public ::testing::Test {
 public:
+    ConfigTest() : session_(Connection{}.sessionStart()) {
+        session_.switchDatastore(Datastore::Candidate);
+    }
     virtual ~ConfigTest() = default;
 
     void SetUp() override {
-        SysrepoSetup::cleanSharedMemory();
-        connection_ = std::make_shared<Connection>();
-        session_.reset(new Session(connection_, SR_DS_CANDIDATE));
         translator_.reset(new TranslatorBasic(session_, model_));
         cleanModelData();
     }
@@ -68,8 +68,6 @@ public:
     void TearDown() override {
         cleanModelData();
         translator_.reset();
-        session_.reset();
-        connection_.reset();
         SysrepoSetup::cleanSharedMemory();
     }
 
@@ -176,23 +174,11 @@ public:
         return (verify(expected));
     }
 
-    /// @brief Validate.
-    ///
-    /// @note A tree must be loaded first.
-    ///
-    bool validate() {
-        YangRepr repr(model_);
-        return (repr.validate(session_, cerr));
-    }
-
     /// @brief The model.
     string model_;
 
-    /// @brief The sysrepo connection.
-    S_Connection connection_;
-
     /// @brief The sysrepo session.
-    S_Session session_;
+    Session session_;
 
     std::unique_ptr<TranslatorBasic> translator_;
 };
@@ -264,8 +250,6 @@ TEST_F(ConfigTestIetfV6, subnetTwoPoolsIetf6) {
 
     ASSERT_NO_THROW_LOG(load(subnetTwoPoolsJson6));
     EXPECT_TRUE(verify(subnetTwoPoolsTreeIetf6));
-
-    EXPECT_FALSE(validate());
 }
 
 // Check subnet with a pool and option data lists with
@@ -278,8 +262,6 @@ TEST_F(ConfigTestKeaV4, subnetOptionsKeaDhcp4) {
 
     ASSERT_NO_THROW_LOG(load(subnetOptionsJson4));
     EXPECT_TRUE(verify(subnetOptionsTreeKeaDhcp4));
-
-    EXPECT_TRUE(validate());
 }
 
 // Check subnet with a pool and option data lists with
@@ -292,8 +274,6 @@ TEST_F(ConfigTestKeaV6, subnetOptionsKeaDhcp6) {
 
     ASSERT_NO_THROW_LOG(load(subnetOptionsJson6));
     EXPECT_TRUE(verify(subnetOptionsTreeKeaDhcp6));
-
-    EXPECT_TRUE(validate());
 }
 
 // Check with timers.
@@ -311,14 +291,6 @@ TEST_F(ConfigTestIetfV6, subnetTimersIetf6) {
 TEST_F(ConfigTestIetfV6, validateIetf6) {
     ASSERT_NO_THROW_LOG(load(validTreeIetf6));
     EXPECT_TRUE(verify(validTreeIetf6));
-
-    // If this validation fails, make sure you have the model *and its
-    // dependencies* are installed. Note when you install ietf-dhcpv6-server
-    // module, its dependencies are semi-installed, which is not sufficient.
-    // This can be detected in output of sysrepoctl -l.
-    // Note the ietf-interfaces module. The conformance status must be
-    // "installed". "implemented" (installed as dependency) is not enough.
-    EXPECT_TRUE(validate());
 }
 
 // Check Kea4 example files.
@@ -358,7 +330,6 @@ TEST_F(ConfigTestKeaV4, examples4) {
         ASSERT_NO_THROW_LOG(json = loadFile(path));
         json = isc::test::moveComments(json);
         EXPECT_TRUE(verify(json));
-        EXPECT_TRUE(validate());
     }
 }
 
@@ -401,7 +372,6 @@ TEST_F(ConfigTestKeaV6, examples6) {
         ASSERT_NO_THROW_LOG(json = loadFile(path));
         json = isc::test::moveComments(json);
         EXPECT_TRUE(verify(json));
-        EXPECT_TRUE(validate());
     }
 }
 

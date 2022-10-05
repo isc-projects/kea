@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -81,9 +81,10 @@ TEST_F(TranslatorSubnetsTestIetfV6, getIetf) {
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
     const string& xsub = xpath + "/network-range[network-range-id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& xsubnet = xsub + "/network-prefix";
-    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    sess_->applyChanges();
 
     // Get the subnet.
     ConstElementPtr subnet;
@@ -109,9 +110,10 @@ TEST_F(TranslatorSubnetsTestKeaV6, getKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath = "/kea-dhcp6-server:config";
     const string& xsub = xpath + "/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& xsubnet = xsub + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    sess_->applyChanges();
 
     // Get the subnet.
     ConstElementPtr subnet;
@@ -138,20 +140,23 @@ TEST_F(TranslatorSubnetsTestIetfV6, getPoolsIetf) {
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
     const string& xsub = xpath + "/network-range[network-range-id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& xsubnet = xsub + "/network-prefix";
-    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    sess_->applyChanges();
 
     // Create the pool 2001:db8::1:0/112 #1.
     const string& xpool = xsub + "/address-pools";
     const string& prefix1 = xpool + "/address-pool[pool-id='1']/pool-prefix";
-    S_Val s_pool1(new Val("2001:db8::1:0/112"));
-    EXPECT_NO_THROW(sess_->set_item(prefix1.c_str(), s_pool1));
+    string const s_pool1("2001:db8::1:0/112");
+    EXPECT_NO_THROW(sess_->setItem(prefix1, s_pool1));
+    sess_->applyChanges();
 
     // Create the pool 2001:db8::2:0/112 #2.
     const string& prefix2 = xpool + "/address-pool[pool-id='2']/pool-prefix";
-    S_Val s_pool2(new Val("2001:db8::2:0/112"));
-    EXPECT_NO_THROW(sess_->set_item(prefix2.c_str(), s_pool2));
+    string const s_pool2("2001:db8::2:0/112");
+    EXPECT_NO_THROW(sess_->setItem(prefix2, s_pool2));
+    sess_->applyChanges();
 
     // Get the subnet.
     ConstElementPtr subnet;
@@ -187,21 +192,23 @@ TEST_F(TranslatorSubnetsTestKeaV6, getPoolsKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath = "/kea-dhcp6-server:config";
     const string& xsub = xpath + "/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& xsubnet = xsub + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    sess_->applyChanges();
 
     // Create the pool 2001:db8::1:0/112.
     const string& prefix1 = xsub + "/pool[start-address='2001:db8::1:0']" +
         "[end-address='2001:db8::1:ffff']/prefix";
-    S_Val s_pool1(new Val("2001:db8::1:0/112", SR_STRING_T));
-    EXPECT_NO_THROW(sess_->set_item(prefix1.c_str(), s_pool1));
+    string const s_pool1("2001:db8::1:0/112");
+    EXPECT_NO_THROW(sess_->setItem(prefix1, s_pool1));
+    sess_->applyChanges();
 
     // Create the pool 2001:db8::2:0/112.
     const string& prefix2 = xsub + "/pool[start-address='2001:db8::2:0']" +
         "[end-address='2001:db8::2:ffff']";
-    S_Val s_pool2;
-    EXPECT_NO_THROW(sess_->set_item(prefix2.c_str(), s_pool2));
+    EXPECT_NO_THROW(sess_->setItem(prefix2, nullopt));
+    sess_->applyChanges();
 
     // Get the subnet.
     ConstElementPtr subnet;
@@ -301,9 +308,6 @@ TEST_F(TranslatorSubnetsTestKeaV4, setKea) {
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 // This test verifies that one subnet with two pools can be properly
@@ -371,9 +375,6 @@ TEST_F(TranslatorSubnetsTestKeaV4, setTwoKea) {
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 }  // namespace

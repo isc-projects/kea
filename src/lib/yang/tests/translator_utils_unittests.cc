@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,16 +18,17 @@ using namespace std;
 using namespace isc;
 using namespace isc::yang;
 using namespace isc::yang::test;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace {
 
-// Test sr_type_t print.
+// Test LeafBaseType print.
 TEST(YangReprTest, type) {
     ostringstream os;
 
     // Verify that string is "string" (vs a number).
-    sr_type_t t = SR_STRING_T;
+    LeafBaseType t(LeafBaseType::String);
     os << t;
     EXPECT_EQ("string", os.str());
     os.str("");
@@ -38,18 +39,22 @@ TEST(YangReprTest, type) {
 // Test YangReprItem basic stuff.
 TEST(YangReprTest, item) {
     // An item.
-    YRItem item1("/foo", "bar", SR_STRING_T, true);
+    YRItem item1("/foo", "bar", LeafBaseType::String, true);
     EXPECT_EQ("/foo", item1.xpath_);
     EXPECT_EQ("bar", item1.value_);
-    EXPECT_EQ(SR_STRING_T, item1.type_);
     EXPECT_TRUE(item1.settable_);
 
+    // EXPECT_EQ doesn't work. Tries to << into a stringstream.
+    EXPECT_TRUE(LeafBaseType::String == item1.type_);
+
     // Another one.
-    YRItem item2("/foo", "bar", SR_STRING_T, false);
+    YRItem item2("/foo", "bar", LeafBaseType::String, false);
     EXPECT_EQ("/foo", item2.xpath_);
     EXPECT_EQ("bar", item2.value_);
-    EXPECT_EQ(SR_STRING_T, item2.type_);
     EXPECT_FALSE(item2.settable_);
+
+    // EXPECT_EQ doesn't work. Tries to << into a stringstream.
+    EXPECT_TRUE(LeafBaseType::String == item2.type_);
 
     // Equality.
     EXPECT_TRUE(item1 == item2);
@@ -65,80 +70,80 @@ TEST(YangReprTest, getTest) {
     SysrepoSetup::cleanSharedMemory();
 
     // Get a translator object to play with.
-    S_Connection conn(std::make_shared<Connection>());
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+    Session sess(Connection{}.sessionStart());
+    sess.switchDatastore(sysrepo::Datastore::Candidate);
 
     // Cleanup.
-    EXPECT_NO_THROW(sess->delete_item("/keatest-module:container"));
-    EXPECT_NO_THROW(sess->apply_changes());
-    EXPECT_NO_THROW(sess->delete_item("/keatest-module:main"));
-    EXPECT_NO_THROW(sess->apply_changes());
+    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:container"));
+    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:main"));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     // Fill the test module.
     string xpath;
-    S_Val s_val;
+    string s_val;
 
     xpath = "/keatest-module:main/string";
-    s_val.reset(new Val("str", SR_STRING_T));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = "str";
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/boolean";
-    s_val.reset(new Val(true, SR_BOOL_T));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = "true";
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
-    s_val.reset(new Val(u8));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = to_string(u8);
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
-    s_val.reset(new Val(u16));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = to_string(u16);
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
-    s_val.reset(new Val(u32));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = to_string(u32);
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
-    s_val.reset(new Val(s8));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = to_string(s8);
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/i16";
     int16_t s16(16);
-    s_val.reset(new Val(s16));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = to_string(s16);
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
-    s_val.reset(new Val(s32));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = to_string(s32);
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/id_ref";
-    s_val.reset(new Val("keatest-module:id_1", SR_IDENTITYREF_T));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = "keatest-module:id_1";
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/enum";
-    s_val.reset(new Val("maybe", SR_ENUM_T));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = "maybe";
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     // Binary.
     xpath = "/keatest-module:main/raw";
-    s_val.reset(new Val("Zm9vYmFy", SR_BINARY_T));
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(sess->apply_changes());
+    s_val = "Zm9vYmFy";
+    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     // Get it.
     YangRepr repr(testModel);
@@ -154,14 +159,14 @@ TEST(YangReprTrest, getTestErrors) {
     SysrepoSetup::cleanSharedMemory();
 
     // Get a translator object to play with.
-    S_Connection conn(std::make_shared<Connection>());
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+    Session sess(Connection{}.sessionStart());
+    sess.switchDatastore(sysrepo::Datastore::Candidate);
 
     // Cleanup.
-    EXPECT_NO_THROW(sess->delete_item("/keatest-module:container"));
-    EXPECT_NO_THROW(sess->apply_changes());
-    EXPECT_NO_THROW(sess->delete_item("/keatest-module:main"));
-    EXPECT_NO_THROW(sess->apply_changes());
+    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:container"));
+    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:main"));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     // Get it.
     YangRepr repr(testModel);
@@ -186,17 +191,11 @@ TEST(YangReprTrest, getTestErrors) {
     badvalue.at(xpath).value_ = "Str";
     EXPECT_FALSE(repr.verify(badvalue, sess, cerr));
 
-    // Change a type from SR_INT32_T to SR_UINT32_T.
+    // Change a type from LeafBaseType::Int32 to LeafBaseType::Uint32.
     YRTree badtype = testTree;
     xpath = "/keatest-module:main/i32";
-    badtype.at(xpath).type_ = SR_UINT32_T;
+    badtype.at(xpath).type_ = LeafBaseType::Uint32;
     EXPECT_FALSE(repr.verify(badtype, sess, cerr));
-
-    // Add a record at the end.
-    YRTree badmissing = testTree;
-    xpath = "/keatest-module:presence-container";
-    badmissing.emplace(xpath, YRItem(xpath, "", SR_CONTAINER_PRESENCE_T, false));
-    EXPECT_FALSE(repr.verify(badmissing, sess, cerr));
 
     // Delete last record.
     YRTree badextra = testTree;
@@ -209,14 +208,14 @@ TEST(YangReprTest, setTest) {
     SysrepoSetup::cleanSharedMemory();
 
     // Get a translator object to play with.
-    S_Connection conn(std::make_shared<Connection>());
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+    Session sess(Connection{}.sessionStart());
+    sess.switchDatastore(sysrepo::Datastore::Candidate);
 
     // Cleanup.
-    EXPECT_NO_THROW(sess->delete_item("/keatest-module:container"));
-    EXPECT_NO_THROW(sess->apply_changes());
-    EXPECT_NO_THROW(sess->delete_item("/keatest-module:main"));
-    EXPECT_NO_THROW(sess->apply_changes());
+    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:container"));
+    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:main"));
+    EXPECT_NO_THROW(sess.applyChanges());
 
     // Set the module content.
     YangRepr repr(testModel);
@@ -236,16 +235,24 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
     SysrepoSetup::cleanSharedMemory();
 
     // Get a translator object to play with.
-    S_Connection conn(std::make_shared<Connection>());
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+    Session sess(Connection{}.sessionStart());
+    sess.switchDatastore(sysrepo::Datastore::Candidate);
 
     // Cleanup.
     TranslatorBasic translator(sess, model);
-    std::string toplevel_node("config");
-    if (model == IETF_DHCPV6_SERVER) {
-        toplevel_node = "server";
+    if (model == "keatest-module") {
+        translator.delItem("/keatest-module:container");
+        translator.delItem("/keatest-module:kernel-modules");
+        translator.delItem("/keatest-module:list");
+        translator.delItem("/keatest-module:main");
+        translator.delItem("/keatest-module:presence-container");
+    } else {
+        std::string toplevel_node("config");
+        if (model == IETF_DHCPV6_SERVER) {
+            toplevel_node = "server";
+        }
+        EXPECT_NO_THROW(translator.delItem("/" + model + ":" + toplevel_node));
     }
-    translator.delItem("/" + model + ":" + toplevel_node);
 
     // Get it.
     YangRepr repr(model);

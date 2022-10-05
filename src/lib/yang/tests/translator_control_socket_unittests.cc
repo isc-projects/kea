@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace {
@@ -77,12 +78,13 @@ TEST_F(TranslatorControlSocketTestv6, get) {
     const string& xname = xpath + "/socket-name";
     const string& xtype = xpath + "/socket-type";
     const string& xcontext = xpath + "/user-context";
-    S_Val s_name(new Val("/tmp/kea.sock"));
-    EXPECT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
-    S_Val s_type(new Val("unix", SR_ENUM_T));
-    EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
-    S_Val s_context(new Val("{ \"foo\": 1 }"));
-    EXPECT_NO_THROW(sess_->set_item(xcontext.c_str(), s_context));
+    string const s_name("/tmp/kea.sock");
+    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    string const s_type("unix");
+    EXPECT_NO_THROW(sess_->setItem(xtype, s_type));
+    string const s_context("{ \"foo\": 1 }");
+    EXPECT_NO_THROW(sess_->setItem(xcontext, s_context));
+    sess_->applyChanges();
 
     // Get it.
     ConstElementPtr sock;
@@ -137,9 +139,6 @@ TEST_F(TranslatorControlSocketTestCtrlAgent, set) {
     ConstElementPtr context = got->get("user-context");
     ASSERT_TRUE(context);
     EXPECT_EQ("{ \"comment\": \"a comment\" }", context->str());
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 // This test verifies that an empty control socket can be properly
@@ -150,13 +149,13 @@ TEST_F(TranslatorControlSocketTestv4, setEmpty) {
     const string& xname = xpath + "/socket-name";
     const string& xtype = xpath + "/socket-type";
     const string& xcontext = xpath + "/user-context";
-    S_Val s_name(new Val("/tmp/kea.sock"));
-    EXPECT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
-    S_Val s_type(new Val("unix", SR_ENUM_T));
-    EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
-    S_Val s_context(new Val("{ \"foo\": 1 }"));
-    EXPECT_NO_THROW(sess_->set_item(xcontext.c_str(), s_context));
-    sess_->apply_changes();
+    string const s_name("/tmp/kea.sock");
+    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    string const s_type("unix");
+    EXPECT_NO_THROW(sess_->setItem(xtype, s_type));
+    string const s_context("{ \"foo\": 1 }");
+    EXPECT_NO_THROW(sess_->setItem(xcontext, s_context));
+    sess_->applyChanges();
 
     // Get it back.
     ConstElementPtr sock;

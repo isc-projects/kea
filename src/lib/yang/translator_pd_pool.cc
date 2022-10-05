@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,12 +14,13 @@
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorPdPool::TranslatorPdPool(S_Session session, const string& model)
+TranslatorPdPool::TranslatorPdPool(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model) {
@@ -36,7 +37,7 @@ TranslatorPdPool::getPdPool(const string& xpath) {
         } else if (model_ == KEA_DHCP6_SERVER) {
             return (getPdPoolKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting pd-pool at '" << xpath
                   << "': " << ex.what());
@@ -188,7 +189,7 @@ TranslatorPdPool::setPdPool(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setPdPool not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting pd-pool '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -206,44 +207,45 @@ TranslatorPdPool::setPdPoolIetf6(const string& xpath, ConstElementPtr elem) {
     }
     ostringstream prefix;
     prefix << base->stringValue() << "/" << length->intValue();
-    setItem(xpath + "/prefix", Element::create(prefix.str()), SR_STRING_T);
-    setItem(xpath + "/prefix-length", length, SR_UINT8_T);
+    setItem(xpath + "/prefix", Element::create(prefix.str()), LeafBaseType::String);
+    setItem(xpath + "/prefix-length", length, LeafBaseType::Uint8);
     ConstElementPtr valid_lifetime = elem->get("valid-lifetime");
     if (valid_lifetime) {
-        setItem(xpath + "/valid-lifetime", valid_lifetime, SR_UINT32_T);
+        setItem(xpath + "/valid-lifetime", valid_lifetime, LeafBaseType::Uint32);
     }
     ConstElementPtr preferred_lifetime = elem->get("preferred-lifetime");
     if (preferred_lifetime) {
         setItem(xpath + "/preferred-lifetime",
-                preferred_lifetime, SR_UINT32_T);
+                preferred_lifetime, LeafBaseType::Uint32);
     }
     ConstElementPtr renew_timer = elem->get("renew-timer");
     if (renew_timer) {
-        setItem(xpath + "/renew-time", renew_timer, SR_UINT32_T);
+        setItem(xpath + "/renew-time", renew_timer, LeafBaseType::Uint32);
     }
     ConstElementPtr rebind_timer = elem->get("rebind-timer");
     if (rebind_timer) {
-        setItem(xpath + "/rebind-time", rebind_timer, SR_UINT32_T);
+        setItem(xpath + "/rebind-time", rebind_timer, LeafBaseType::Uint32);
     }
     // Skip rapid-commit.
     ConstElementPtr guard = elem->get("client-class");
     if (guard) {
-        setItem(xpath + "/client-class", guard, SR_STRING_T);
+        setItem(xpath + "/client-class", guard, LeafBaseType::String);
     }
     // Set max pd space utilization to disabled.
     setItem(xpath + "/max-pd-space-utilization",
             Element::create(string("disabled")),
-            SR_ENUM_T);
+            LeafBaseType::Enum);
     // @todo option-data.
 }
 
 void
 TranslatorPdPool::setPdPoolKea(const string& xpath, ConstElementPtr elem) {
-    // Skip prefix as it is the key.
-    bool created = false;
+    // Keys are set by setting the list itself.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
     ConstElementPtr delegated = elem->get("delegated-len");
     if (delegated) {
-        setItem(xpath + "/delegated-len", delegated, SR_UINT8_T);
+        setItem(xpath + "/delegated-len", delegated, LeafBaseType::Uint8);
     }
     ConstElementPtr xprefix = elem->get("excluded-prefix");
     ConstElementPtr xlen = elem->get("excluded-prefix-len");
@@ -251,40 +253,30 @@ TranslatorPdPool::setPdPoolKea(const string& xpath, ConstElementPtr elem) {
         ostringstream xpref;
         xpref << xprefix->stringValue() << "/" << xlen->intValue();
         setItem(xpath + "/excluded-prefix", Element::create(xpref.str()),
-                SR_STRING_T);
-        created = true;
+                LeafBaseType::String);
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
         setOptionDataList(xpath, options);
-        created = true;
     }
     ConstElementPtr guard = elem->get("client-class");
     if (guard) {
-        setItem(xpath + "/client-class", guard, SR_STRING_T);
-        created = true;
+        setItem(xpath + "/client-class", guard, LeafBaseType::String);
     }
     ConstElementPtr required = elem->get("require-client-classes");
     if (required && (required->size() > 0)) {
         for (ConstElementPtr rclass : required->listValue()) {
-            setItem(xpath + "/require-client-classes", rclass, SR_STRING_T);
-            created = true;
+            setItem(xpath + "/require-client-classes", rclass, LeafBaseType::String);
         }
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
-        created = true;
-    }
-    // There is no mandatory fields outside the keys so force creation.
-    if (!created) {
-        ConstElementPtr list = Element::createList();
-        setItem(xpath, list, SR_LIST_T);
+                LeafBaseType::String);
     }
 }
 
-TranslatorPdPools::TranslatorPdPools(S_Session session, const string& model)
+TranslatorPdPools::TranslatorPdPools(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -301,7 +293,7 @@ TranslatorPdPools::getPdPools(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getPdPoolsCommon(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting pd-pools at '" << xpath
                   << "': " << ex.what());
@@ -327,7 +319,7 @@ TranslatorPdPools::setPdPools(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setPdPools not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting pools '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

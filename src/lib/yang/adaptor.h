@@ -78,7 +78,7 @@ public:
 
     /// @brief Modify a configuration in its JSON element format.
     ///
-    /// Smart merging tool, e.g. completing a from yang configuration.
+    /// Smart merging tool, e.g. completing an ElementPtr received from YANG.
     ///
     /// A modification is a path and actions:
     ///  - path item can be:

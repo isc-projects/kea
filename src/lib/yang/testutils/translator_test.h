@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,8 +37,8 @@ public:
         /// @param value The textual value.
         /// @param type The type of the value.
         /// @param settable The settable flag.
-        YangReprItem(std::string xpath, std::string value,
-                     sr_type_t type, bool settable)
+        YangReprItem(std::string xpath, std::optional<std::string> value,
+                     libyang::LeafBaseType type, bool settable)
             : xpath_(xpath), value_(value), type_(type), settable_(settable) {
         }
 
@@ -48,16 +48,16 @@ public:
         /// @param session Sysrepo session.
         /// @return YangReprItem instance representing configuration parameter.
         static YangReprItem get(const std::string& xpath,
-                                sysrepo::S_Session session);
+                                sysrepo::Session session);
 
         /// @brief The xpath.
         std::string xpath_;
 
         /// @brief The textual value.
-        std::string value_;
+        std::optional<std::string> value_;
 
         /// @brief The type of the value.
-        sr_type_t type_;
+        libyang::LeafBaseType type_;
 
         /// @brief The settable flag.
         bool settable_;
@@ -79,7 +79,15 @@ public:
         bool operator!=(const YangReprItem& other) const {
             return (!(*this == other));
         }
-    };
+
+    private:
+        /// @brief Gets the underlying type behind a union node.
+        ///
+        /// @param value the value obtained from the union node with ->asTerm().value()
+        ///
+        /// @return the underylying type
+        static libyang::LeafBaseType getUnionType(libyang::Value const& value);
+    };  // YangReprItem
 
     /// @brief Tree type.
     ///
@@ -92,7 +100,7 @@ public:
     /// @brief Get tree from session.
     ///
     /// @param session Sysrepo session.
-    Tree get(sysrepo::S_Session session) const;
+    Tree get(sysrepo::Session session) const;
 
     /// @brief Verifies a tree.
     ///
@@ -101,7 +109,7 @@ public:
     /// @param errs Error stream.
     /// @return true if verification succeeds, false with errors displayed.
     /// on errs if it fails.
-    bool verify(const Tree& expected, sysrepo::S_Session session,
+    bool verify(const Tree& expected, sysrepo::Session session,
                 std::ostream& errs) const;
 
     /// @brief Sets specified tree in a sysrepo.
@@ -110,15 +118,7 @@ public:
     ///
     /// @param tree The tree to install.
     /// @param session Sysrepo session.
-    void set(const Tree& tree, sysrepo::S_Session session) const;
-
-    /// @brief Validate.
-    ///
-    /// @param session Sysrepo session.
-    /// @param errs Error stream.
-    /// @return True if validation succeeds, false with errors displayed
-    /// on errs if it fails.
-    bool validate(sysrepo::S_Session session, std::ostream& errs) const;
+    void set(const Tree& tree, sysrepo::Session session) const;
 
     /// @brief Convenience function that indexes a collection of items by xpath.
     ///
@@ -128,11 +128,15 @@ public:
     static Tree buildTreeFromVector(std::vector<YangReprItem> const& v) {
         Tree tree;
         for (YangReprItem const& item : v) {
+            if (tree.contains(item.xpath_)) {
+                isc_throw(BadValue, "YangRepr::buildTreeFromVector(): duplicate " << item.xpath_);
+            }
             tree.emplace(item.xpath_, item);
         }
         return tree;
     }
 
+private:
     /// @brief The model name.
     std::string model_;
 };
@@ -143,8 +147,8 @@ typedef YangRepr::YangReprItem YRItem;
 /// @brief Alias for Trees.
 typedef YangRepr::Tree YRTree;
 
-/// @brief Overrides standard output operator for sr_type_t.
-std::ostream& operator<<(std::ostream& os, sr_type_t type);
+/// @brief Overrides standard output operator for LeafBaseType.
+std::ostream& operator<<(std::ostream& os, libyang::LeafBaseType type);
 
 /// @brief Overrides standard output operator for @c YangReprItem object.
 std::ostream& operator<<(std::ostream& os, const YRItem& item);

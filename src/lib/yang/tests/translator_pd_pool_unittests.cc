@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,19 +74,21 @@ TEST_F(TranslatorPdPoolsTestIetfV6, getIetf) {
     const string& subnet =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
         "/network-range[network-range-id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet_subnet = subnet + "/network-prefix";
-    EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet_subnet, v_subnet));
+    sess_->applyChanges();
 
     // Create the pd-pool 2001:db8:0:1000::/64 #222.
     const string& xpath = subnet + "/pd-pools/pd-pool[pool-id='222']";
     const string& prefix = xpath + "/prefix";
-    S_Val s_prefix(new Val("2001:db8:0:1000::/56"));
-    EXPECT_NO_THROW(sess_->set_item(prefix.c_str(), s_prefix));
+    string const s_prefix("2001:db8:0:1000::/56");
+    EXPECT_NO_THROW(sess_->setItem(prefix, s_prefix));
     const string& length = xpath + "/prefix-length";
     uint8_t len = 56;
-    S_Val s_length(new Val(len));
-    EXPECT_NO_THROW(sess_->set_item(length.c_str(), s_length));
+    string const s_length(to_string(len));
+    EXPECT_NO_THROW(sess_->setItem(length, s_length));
+    sess_->applyChanges();
 
     // Get the pool.
     ConstElementPtr pool;
@@ -112,9 +114,10 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
 
     // Create the pd-pool 2001:db8:0:1000::/64.
     const string& prefix = "2001:db8:0:1000::/56";
@@ -122,8 +125,9 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getKea) {
     spool << xpath + "/pd-pool[prefix='" << prefix << "']";
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
-    S_Val s_delegated(new Val(dl));
-    EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
+    string const s_delegated(to_string(dl));
+    EXPECT_NO_THROW(sess_->setItem(x_delegated, s_delegated));
+    sess_->applyChanges();
 
     // Get the pool.
     ConstElementPtr pool;
@@ -151,9 +155,10 @@ TEST_F(TranslatorPdPoolsTestIetfV6, setEmptyIetf) {
     const string& subnet =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
         "/network-range[network-range-id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet_subnet = subnet + "/network-prefix";
-    EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet_subnet, v_subnet));
+    sess_->applyChanges();
 
     // Set empty list.
     const string& xpath = subnet + "/pd-pools";
@@ -172,9 +177,10 @@ TEST_F(TranslatorPdPoolsTestKeaV6, setEmptyKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
 
     // Set empty list.
     ConstElementPtr pools = Element::createList();
@@ -193,9 +199,10 @@ TEST_F(TranslatorPdPoolsTestIetfV6, setIetf) {
     const string& subnet =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
         "/network-range[network-range-id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet_subnet = subnet + "/network-prefix";
-    EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet_subnet, v_subnet));
+    sess_->applyChanges();
 
     // Set one pool.
     const string& xpath = subnet + "/pd-pools";
@@ -221,9 +228,10 @@ TEST_F(TranslatorPdPoolsTestKeaV6, setKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
 
     // Set one pool.
     ElementPtr pools = Element::createList();
@@ -241,9 +249,6 @@ TEST_F(TranslatorPdPoolsTestKeaV6, setKea) {
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 // This test verifies that a non-empty list of pd pools can be properly
@@ -252,9 +257,10 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getListKea) {
     // Create the subnet 2001:db8::/48 #111.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
-    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
+    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
 
     // Create the first pd-pool 2001:db8:0:1000::/56.
     const string& prefix = "2001:db8:0:1000::/56";
@@ -262,8 +268,9 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getListKea) {
     spool << xpath + "/pd-pool[prefix='" << prefix << "']";
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
-    S_Val s_delegated(new Val(dl));
-    EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
+    string const s_delegated(to_string(dl));
+    EXPECT_NO_THROW(sess_->setItem(x_delegated, s_delegated));
+    sess_->applyChanges();
 
     // Create the second pd-pool 2001:db8:0:2000::/56
     const string& prefix2 = "2001:db8:0:2000::/56";
@@ -271,9 +278,9 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getListKea) {
     spool2 << xpath + "/pd-pool[prefix='" << prefix2 << "']";
     const string& x_delegated2 = spool2.str() + "/delegated-len";
     uint8_t dl2 = 60;
-    S_Val s_delegated2(new Val(dl2));
-    EXPECT_NO_THROW(sess_->set_item(x_delegated2.c_str(), s_delegated2));
-
+    string const s_delegated2(to_string(dl2));
+    EXPECT_NO_THROW(sess_->setItem(x_delegated2, s_delegated2));
+    sess_->applyChanges();
 
     // Get the pools list.
     ConstElementPtr pools;

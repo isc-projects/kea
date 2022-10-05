@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,11 +63,12 @@ TEST_F(TranslatorLoggersTestv6, get) {
     const string& xseverity = xlogger + "/severity";
     const string& xoption = xlogger + "/output-option[output='/bar']";
     const string& xmaxver = xoption + "/maxver";
-    S_Val s_severity(new Val("WARN", SR_ENUM_T));
-    EXPECT_NO_THROW(sess_->set_item(xseverity.c_str(), s_severity));
+    string const s_severity("WARN");
+    EXPECT_NO_THROW(sess_->setItem(xseverity, s_severity));
     uint32_t max_ver = 10;
-    S_Val s_maxver(new Val(max_ver));
-    EXPECT_NO_THROW(sess_->set_item(xmaxver.c_str(), s_maxver));
+    string const s_maxver(to_string(max_ver));
+    EXPECT_NO_THROW(sess_->setItem(xmaxver, s_maxver));
+    sess_->applyChanges();
 
     // Get empty.
     ConstElementPtr loggers;
@@ -149,9 +150,6 @@ TEST_F(TranslatorLoggersTestv4, set) {
     ASSERT_TRUE(maxver);
     ASSERT_EQ(Element::integer, maxver->getType());
     EXPECT_EQ(10, maxver->intValue());
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 /// @todo: Implement a test that will cover multiple loggers.

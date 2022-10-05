@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,12 +17,13 @@
 using namespace std;
 using namespace isc::data;
 using namespace isc::asiolink;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorPool::TranslatorPool(S_Session session, const string& model)
+TranslatorPool::TranslatorPool(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model) {
@@ -40,7 +41,7 @@ TranslatorPool::getPool(const string& xpath) {
                    (model_ == KEA_DHCP6_SERVER)) {
             return (getPoolKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting pool at '" << xpath
                   << "': " << ex.what());
@@ -139,7 +140,7 @@ TranslatorPool::setPool(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setPool not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting pool '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -158,45 +159,45 @@ TranslatorPool::setPoolIetf6(const string& xpath, ConstElementPtr elem) {
                   "setPoolIetf only supports pools in prefix (vs range) "
                   "format and was called with '" << prefix << "'");
     }
-    setItem(xpath + "/pool-prefix", pool, SR_STRING_T);
+    setItem(xpath + "/pool-prefix", pool, LeafBaseType::String);
     string addr = prefix.substr(0, prefix.find_first_of(" /"));
     uint8_t plen = boost::lexical_cast<unsigned>
         (prefix.substr(prefix.find_last_of(" /") + 1, string::npos));
     const IOAddress& base(addr);
     setItem(xpath + "/start-address",
             Element::create(firstAddrInPrefix(base, plen).toText()),
-            SR_STRING_T);
+            LeafBaseType::String);
     setItem(xpath + "/end-address",
             Element::create(lastAddrInPrefix(base, plen).toText()),
-            SR_STRING_T);
+            LeafBaseType::String);
     ConstElementPtr valid_lifetime = elem->get("valid-lifetime");
     if (valid_lifetime) {
-        setItem(xpath + "/valid-lifetime", valid_lifetime, SR_UINT32_T);
+        setItem(xpath + "/valid-lifetime", valid_lifetime, LeafBaseType::Uint32);
     }
     ConstElementPtr preferred_lifetime = elem->get("preferred-lifetime");
     if (preferred_lifetime) {
         setItem(xpath + "/preferred-lifetime",
-                preferred_lifetime, SR_UINT32_T);
+                preferred_lifetime, LeafBaseType::Uint32);
     }
     ConstElementPtr renew_timer = elem->get("renew-timer");
     if (renew_timer) {
-        setItem(xpath + "/renew-time", renew_timer, SR_UINT32_T);
+        setItem(xpath + "/renew-time", renew_timer, LeafBaseType::Uint32);
     }
     ConstElementPtr rebind_timer = elem->get("rebind-timer");
     if (rebind_timer) {
-        setItem(xpath + "/rebind-time", rebind_timer, SR_UINT32_T);
+        setItem(xpath + "/rebind-time", rebind_timer, LeafBaseType::Uint32);
     }
     // skip rapid-commit
     ConstElementPtr guard = elem->get("client-class");
     if (guard) {
-        setItem(xpath + "/client-class", guard, SR_STRING_T);
+        setItem(xpath + "/client-class", guard, LeafBaseType::String);
     }
     // skip max-addr-count
     // @todo option-data
     // Set max address count to disabled.
     setItem(xpath + "/max-address-count",
             Element::create(string("disabled")),
-            SR_ENUM_T);
+            LeafBaseType::Enum);
 }
 
 void
@@ -205,43 +206,36 @@ TranslatorPool::setPoolKea(const string& xpath, ConstElementPtr elem) {
     if (!pool) {
         isc_throw(BadValue, "setPoolKea requires pool: " << elem->str());
     }
-    bool created = false;
+
+    // Keys are set by setting the list itself.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
     string prefix = pool->stringValue();
     string start_addr;
     string end_addr;
     getAddresses(prefix, start_addr, end_addr);
     if (prefix.find("/") != string::npos) {
-        setItem(xpath + "/prefix", pool, SR_STRING_T);
-        created = true;
+        setItem(xpath + "/prefix", pool, LeafBaseType::String);
     }
     // Skip start-address and end-address as are the keys.
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
         setOptionDataList(xpath, options);
-        created = true;
     }
     ConstElementPtr guard = elem->get("client-class");
     if (guard) {
-        setItem(xpath + "/client-class", guard, SR_STRING_T);
-        created = true;
+        setItem(xpath + "/client-class", guard, LeafBaseType::String);
     }
     ConstElementPtr required = elem->get("require-client-classes");
     if (required && (required->size() > 0)) {
         for (ConstElementPtr rclass : required->listValue()) {
-            setItem(xpath + "/require-client-classes", rclass, SR_STRING_T);
-            created = true;
+            setItem(xpath + "/require-client-classes", rclass, LeafBaseType::String);
         }
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
-        created = true;
-    }
-    // There is no mandatory fields outside the keys so force creation.
-    if (!created) {
-        ConstElementPtr list = Element::createList();
-        setItem(xpath, list, SR_LIST_T);
+                LeafBaseType::String);
     }
 }
 
@@ -266,7 +260,7 @@ TranslatorPool::getAddresses(const string& prefix,
     end_address = prefix.substr(prefix.find_last_of(" -") + 1, string::npos);
 }
 
-TranslatorPools::TranslatorPools(S_Session session, const string& model)
+TranslatorPools::TranslatorPools(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -285,7 +279,7 @@ TranslatorPools::getPools(const string& xpath) {
                    (model_ == KEA_DHCP6_SERVER)) {
             return (getPoolsKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting pools at '" << xpath
                   << "': " << ex.what());
@@ -318,7 +312,7 @@ TranslatorPools::setPools(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setPools not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting pools '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

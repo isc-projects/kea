@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,12 +13,13 @@
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorClass::TranslatorClass(S_Session session, const string& model)
+TranslatorClass::TranslatorClass(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -36,7 +37,7 @@ TranslatorClass::getClass(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getClassKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting client class at '" << xpath
                   << "': " << ex.what());
@@ -108,7 +109,7 @@ TranslatorClass::setClass(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setClass not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting client class '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -117,66 +118,54 @@ TranslatorClass::setClass(const string& xpath, ConstElementPtr elem) {
 
 void
 TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
-    bool created = false;
-    // Skip key name.
+    // Keys are set by setting the list itself.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
     ConstElementPtr test = elem->get("test");
     if (test) {
-        setItem(xpath + "/test", test, SR_STRING_T);
-        created = true;
+        setItem(xpath + "/test", test, LeafBaseType::String);
     }
     ConstElementPtr required = elem->get("only-if-required");
     if (required) {
-        setItem(xpath + "/only-if-required", required, SR_BOOL_T);
-        created = true;
+        setItem(xpath + "/only-if-required", required, LeafBaseType::Bool);
     }
     ConstElementPtr options = elem->get("option-data");
     if (options) {
         setOptionDataList(xpath, options);
-        created = true;
     }
-    checkAndSetLeaf(elem, xpath, "valid-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", LeafBaseType::Uint32);
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr defs = elem->get("option-def");
         if (defs) {
             setOptionDefList(xpath, defs);
-            created = true;
         }
         ConstElementPtr next = elem->get("next-server");
         if (next) {
-            setItem(xpath + "/next-server", next, SR_STRING_T);
-            created = true;
+            setItem(xpath + "/next-server", next, LeafBaseType::String);
         }
         ConstElementPtr hostname = elem->get("server-hostname");
         if (hostname) {
-            setItem(xpath + "/server-hostname", hostname, SR_STRING_T);
-            created = true;
+            setItem(xpath + "/server-hostname", hostname, LeafBaseType::String);
         }
         ConstElementPtr boot = elem->get("boot-file-name");
         if (boot) {
-            setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
-            created = true;
+            setItem(xpath + "/boot-file-name", boot, LeafBaseType::String);
         }
     } else if (model_ == KEA_DHCP6_SERVER) {
-        checkAndSetLeaf(elem, xpath, "preferred-lifetime", SR_UINT32_T);
-        checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", SR_UINT32_T);
-        checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", SR_UINT32_T);
+        checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", LeafBaseType::Uint32);
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
-        created = true;
-    }
-    // There is no mandatory fields outside the key so force creation.
-    if (!created) {
-        ConstElementPtr list = Element::createList();
-        setItem(xpath, list, SR_LIST_T);
+                LeafBaseType::String);
     }
 }
 
-TranslatorClasses::TranslatorClasses(S_Session session, const string& model)
+TranslatorClasses::TranslatorClasses(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -195,7 +184,7 @@ TranslatorClasses::getClasses(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getClassesKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting client classes at '" << xpath
                   << "': " << ex.what());
@@ -220,7 +209,7 @@ TranslatorClasses::setClasses(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setClasses not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting client classes '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

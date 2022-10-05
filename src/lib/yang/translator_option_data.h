@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorOptionData(sysrepo::S_Session session, const std::string& model);
+    TranslatorOptionData(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorOptionData();
@@ -127,7 +127,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorOptionDataList(sysrepo::S_Session session,
+    TranslatorOptionDataList(sysrepo::Session session,
                              const std::string& model);
 
     /// @brief Destructor.

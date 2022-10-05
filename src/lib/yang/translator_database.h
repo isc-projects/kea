@@ -108,7 +108,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorDatabase(sysrepo::S_Session session, const std::string& model);
+    TranslatorDatabase(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorDatabase();
@@ -161,7 +161,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorDatabases(sysrepo::S_Session session, const std::string& model);
+    TranslatorDatabases(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorDatabases();
@@ -186,7 +186,7 @@ protected:
     /// @brief getDatabases JSON for kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of databases including the list name.
-    /// @return JSON representation of  databases.
+    /// @return JSON representation of databases.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getDatabasesKea(const std::string& xpath);
 

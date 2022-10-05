@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,8 +62,9 @@ TEST_F(TranslatorClassesTestv6, get) {
     const string& xpath = "/kea-dhcp6-server:config";
     const string& xclass = xpath + "/client-class[name='foo']";
     const string& xtest = xclass + "/test";
-    S_Val v_test(new Val("not member('ALL')", SR_STRING_T));
-    EXPECT_NO_THROW(sess_->set_item(xtest.c_str(), v_test));
+    string const v_test("not member('ALL')");
+    EXPECT_NO_THROW(sess_->setItem(xtest, v_test));
+    sess_->applyChanges();
 
     // Get the client class.
     ConstElementPtr cclass;
@@ -117,9 +118,6 @@ TEST_F(TranslatorClassesTestv6, set) {
     ASSERT_EQ(Element::list, got->getType());
     ASSERT_EQ(1, got->size());
     EXPECT_TRUE(cclass->equals(*got->get(0)));
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
 }  // namespace

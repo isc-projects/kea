@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,12 +13,13 @@
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorOptionData::TranslatorOptionData(S_Session session,
+TranslatorOptionData::TranslatorOptionData(Session session,
                                            const string& model)
     : TranslatorBasic(session, model) {
 }
@@ -33,7 +34,7 @@ TranslatorOptionData::getOptionData(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getOptionDataKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting option data at '" << xpath
                   << "': " << ex.what());
@@ -89,7 +90,7 @@ TranslatorOptionData::setOptionData(const string& xpath,
                       "setOptionData not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting option data '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -102,28 +103,28 @@ TranslatorOptionData::setOptionDataKea(const string& xpath,
     // Skip keys code and space.
     ConstElementPtr name = elem->get("name");
     if (name) {
-        setItem(xpath + "/name", name, SR_STRING_T);
+        setItem(xpath + "/name", name, LeafBaseType::String);
     }
     ConstElementPtr data = elem->get("data");
     if (data) {
-        setItem(xpath + "/data", data, SR_STRING_T);
+        setItem(xpath + "/data", data, LeafBaseType::String);
     }
     ConstElementPtr format = elem->get("csv-format");
     if (format) {
-        setItem(xpath + "/csv-format", format, SR_BOOL_T);
+        setItem(xpath + "/csv-format", format, LeafBaseType::Bool);
     }
     ConstElementPtr send = elem->get("always-send");
     if (send) {
-        setItem(xpath + "/always-send", send, SR_BOOL_T);
+        setItem(xpath + "/always-send", send, LeafBaseType::Bool);
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+                LeafBaseType::String);
     }
 }
 
-TranslatorOptionDataList::TranslatorOptionDataList(S_Session session,
+TranslatorOptionDataList::TranslatorOptionDataList(Session session,
                                                    const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model) {
@@ -139,7 +140,7 @@ TranslatorOptionDataList::getOptionDataList(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getOptionDataListKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting option data list at '" << xpath
                   << "': " << ex.what());
@@ -166,7 +167,7 @@ TranslatorOptionDataList::setOptionDataList(const string& xpath,
                       "setOptionDataList not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting option data list '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

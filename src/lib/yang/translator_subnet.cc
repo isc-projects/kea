@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,12 +14,13 @@
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorSubnet::TranslatorSubnet(S_Session session, const string& model)
+TranslatorSubnet::TranslatorSubnet(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -43,7 +44,7 @@ TranslatorSubnet::getSubnet(const string& xpath) {
                    (model_ == KEA_DHCP6_SERVER)) {
             return (getSubnetKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting subnet at '" << xpath
                   << "': " << ex.what());
@@ -273,7 +274,7 @@ TranslatorSubnet::setSubnet(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setSubnet not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting subnet '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -288,14 +289,14 @@ TranslatorSubnet::setSubnetIetf6(const string& xpath, ConstElementPtr elem) {
     if (context && context->contains("description")) {
         ConstElementPtr description = context->get("description");
         if (description->getType() == Element::string) {
-            setItem(xpath + "/network-description", description, SR_STRING_T);
+            setItem(xpath + "/network-description", description, LeafBaseType::String);
         }
     }
     ConstElementPtr subnet = elem->get("subnet");
     if (!subnet) {
         isc_throw(BadValue, "setSubnetIetf6 requires subnet: " << elem->str());
     }
-    setItem(xpath + "/network-prefix", subnet, SR_STRING_T);
+    setItem(xpath + "/network-prefix", subnet, LeafBaseType::String);
     /// @todo option-data
     ConstElementPtr pools = elem->get("pools");
     if (pools && (pools->size() > 0)) {
@@ -314,48 +315,48 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
     if (model_ == KEA_DHCP6_SERVER) {
         ConstElementPtr preferred = elem->get("preferred-lifetime");
         if (preferred) {
-            setItem(xpath + "/preferred-lifetime", preferred, SR_UINT32_T);
+            setItem(xpath + "/preferred-lifetime", preferred, LeafBaseType::Uint32);
         }
         ConstElementPtr min_pref = elem->get("min-preferred-lifetime");
         if (min_pref) {
-            setItem(xpath + "/min-preferred-lifetime", min_pref, SR_UINT32_T);
+            setItem(xpath + "/min-preferred-lifetime", min_pref, LeafBaseType::Uint32);
         }
         ConstElementPtr max_pref = elem->get("max-preferred-lifetime");
         if (max_pref) {
-            setItem(xpath + "/max-preferred-lifetime", max_pref, SR_UINT32_T);
+            setItem(xpath + "/max-preferred-lifetime", max_pref, LeafBaseType::Uint32);
         }
     }
     ConstElementPtr valid = elem->get("valid-lifetime");
     if (valid) {
-        setItem(xpath + "/valid-lifetime", valid, SR_UINT32_T);
+        setItem(xpath + "/valid-lifetime", valid, LeafBaseType::Uint32);
     }
     ConstElementPtr min_valid = elem->get("min-valid-lifetime");
     if (min_valid) {
-        setItem(xpath + "/min-valid-lifetime", min_valid, SR_UINT32_T);
+        setItem(xpath + "/min-valid-lifetime", min_valid, LeafBaseType::Uint32);
     }
     ConstElementPtr max_valid = elem->get("max-valid-lifetime");
     if (max_valid) {
-        setItem(xpath + "/max-valid-lifetime", max_valid, SR_UINT32_T);
+        setItem(xpath + "/max-valid-lifetime", max_valid, LeafBaseType::Uint32);
     }
     ConstElementPtr renew = elem->get("renew-timer");
     if (renew) {
-        setItem(xpath + "/renew-timer", renew, SR_UINT32_T);
+        setItem(xpath + "/renew-timer", renew, LeafBaseType::Uint32);
     }
     ConstElementPtr rebind = elem->get("rebind-timer");
     if (rebind) {
-        setItem(xpath + "/rebind-timer", rebind, SR_UINT32_T);
+        setItem(xpath + "/rebind-timer", rebind, LeafBaseType::Uint32);
     }
     ConstElementPtr calculate = elem->get("calculate-tee-times");
     if (calculate) {
-        setItem(xpath + "/calculate-tee-times", calculate, SR_BOOL_T);
+        setItem(xpath + "/calculate-tee-times", calculate, LeafBaseType::Bool);
     }
     ConstElementPtr t1_percent =  elem->get("t1-percent");
     if (t1_percent) {
-        setItem(xpath + "/t1-percent", t1_percent, SR_DECIMAL64_T);
+        setItem(xpath + "/t1-percent", t1_percent, LeafBaseType::Dec64);
     }
     ConstElementPtr t2_percent =  elem->get("t2-percent");
     if (t2_percent) {
-        setItem(xpath + "/t2-percent", t2_percent, SR_DECIMAL64_T);
+        setItem(xpath + "/t2-percent", t2_percent, LeafBaseType::Dec64);
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
@@ -375,31 +376,31 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
     if (!subnet) {
         isc_throw(BadValue, "setSubnetKea requires subnet: " << elem->str());
     }
-    setItem(xpath + "/subnet", subnet, SR_STRING_T);
+    setItem(xpath + "/subnet", subnet, LeafBaseType::String);
     ConstElementPtr interface = elem->get("interface");
     if (interface) {
-        setItem(xpath + "/interface", interface, SR_STRING_T);
+        setItem(xpath + "/interface", interface, LeafBaseType::String);
     }
     if (model_ == KEA_DHCP6_SERVER) {
         ConstElementPtr interface_id = elem->get("interface-id");
         if (interface_id) {
-            setItem(xpath + "/interface-id", interface_id, SR_STRING_T);
+            setItem(xpath + "/interface-id", interface_id, LeafBaseType::String);
         }
     }
     if (model_ == KEA_DHCP6_SERVER) {
         ConstElementPtr rapid_commit = elem->get("rapid-commit");
         if (rapid_commit) {
-            setItem(xpath + "/rapid-commit", rapid_commit, SR_BOOL_T);
+            setItem(xpath + "/rapid-commit", rapid_commit, LeafBaseType::Bool);
         }
     }
     ConstElementPtr guard = elem->get("client-class");
     if (guard) {
-        setItem(xpath + "/client-class", guard, SR_STRING_T);
+        setItem(xpath + "/client-class", guard, LeafBaseType::String);
     }
     ConstElementPtr required = elem->get("require-client-classes");
     if (required && (required->size() > 0)) {
         for (ConstElementPtr rclass : required->listValue()) {
-            setItem(xpath + "/require-client-classes", rclass, SR_STRING_T);
+            setItem(xpath + "/require-client-classes", rclass, LeafBaseType::String);
         }
     }
     ConstElementPtr hosts = elem->get("reservations");
@@ -408,78 +409,78 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr mode = elem->get("reservation-mode");
     if (mode) {
-        setItem(xpath + "/reservation-mode", mode, SR_ENUM_T);
+        setItem(xpath + "/reservation-mode", mode, LeafBaseType::Enum);
     }
     ConstElementPtr relay = elem->get("relay");
     if (relay) {
         ConstElementPtr address = relay->get("ip-address");
         ConstElementPtr addresses = relay->get("ip-addresses");
         if (address) {
-            setItem(xpath + "/relay/ip-addresses", address, SR_STRING_T);
+            setItem(xpath + "/relay/ip-addresses", address, LeafBaseType::String);
         } else if (addresses && (addresses->size() > 0)) {
             for (ConstElementPtr addr : addresses->listValue()) {
-                setItem(xpath + "/relay/ip-addresses", addr, SR_STRING_T);
+                setItem(xpath + "/relay/ip-addresses", addr, LeafBaseType::String);
             }
         }
     }
-    checkAndSetLeaf(elem, xpath, "cache-max-age", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "cache-threshold", SR_DECIMAL64_T);
-    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-send-updates", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "hostname-char-set", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "reservations-global", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "reservations-in-subnet", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "cache-threshold", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-send-updates", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "reservations-global", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "reservations-in-subnet", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "store-extended-info", LeafBaseType::Bool);
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr match = elem->get("match-client-id");
         if (match) {
-            setItem(xpath + "/match-client-id", match, SR_BOOL_T);
+            setItem(xpath + "/match-client-id", match, LeafBaseType::Bool);
         }
         ConstElementPtr auth = elem->get("authoritative");
         if (auth) {
-            setItem(xpath + "/authoritative", auth, SR_BOOL_T);
+            setItem(xpath + "/authoritative", auth, LeafBaseType::Bool);
         }
         ConstElementPtr next = elem->get("next-server");
         if (next) {
-            setItem(xpath + "/next-server", next, SR_STRING_T);
+            setItem(xpath + "/next-server", next, LeafBaseType::String);
         }
         ConstElementPtr hostname = elem->get("server-hostname");
         if (hostname) {
-            setItem(xpath + "/server-hostname", hostname, SR_STRING_T);
+            setItem(xpath + "/server-hostname", hostname, LeafBaseType::String);
         }
         ConstElementPtr boot = elem->get("boot-file-name");
         if (boot) {
-            setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
+            setItem(xpath + "/boot-file-name", boot, LeafBaseType::String);
         }
         ConstElementPtr s4o6_if = elem->get("4o6-interface");
         if (s4o6_if) {
-            setItem(xpath + "/subnet-4o6-interface", s4o6_if, SR_STRING_T);
+            setItem(xpath + "/subnet-4o6-interface", s4o6_if, LeafBaseType::String);
         }
         ConstElementPtr s4o6_id = elem->get("4o6-interface-id");
         if (s4o6_id) {
-            setItem(xpath + "/subnet-4o6-interface-id", s4o6_id, SR_STRING_T);
+            setItem(xpath + "/subnet-4o6-interface-id", s4o6_id, LeafBaseType::String);
         }
         ConstElementPtr s4o6_subnet = elem->get("4o6-subnet");
         if (s4o6_subnet) {
-            setItem(xpath + "/subnet-4o6-subnet", s4o6_subnet, SR_STRING_T);
+            setItem(xpath + "/subnet-4o6-subnet", s4o6_subnet, LeafBaseType::String);
         }
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         ConstElementPtr repr = Element::create(context->str());
-        setItem(xpath + "/user-context", repr, SR_STRING_T);
+        setItem(xpath + "/user-context", repr, LeafBaseType::String);
     }
 }
 
-TranslatorSubnets::TranslatorSubnets(S_Session session, const string& model)
+TranslatorSubnets::TranslatorSubnets(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -505,7 +506,7 @@ TranslatorSubnets::getSubnets(const string& xpath) {
         } else if (model_ == KEA_DHCP6_SERVER) {
             return (getSubnetsCommon(xpath, "subnet6"));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting subnets at '" << xpath
                   << "': " << ex.what());
@@ -534,7 +535,7 @@ TranslatorSubnets::setSubnets(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setSubnets not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting subnets '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -552,7 +553,7 @@ TranslatorSubnets::setSubnetsIetf6(const string& xpath, ConstElementPtr elem) {
             isc_throw(BadValue, "subnet without id: " << elem->str());
         }
         range << id->intValue() << "']";
-        setSubnet(range.str().c_str(), subnet);
+        setSubnet(range.str(), subnet);
     }
 }
 

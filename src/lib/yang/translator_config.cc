@@ -13,12 +13,13 @@
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorConfig::TranslatorConfig(S_Session session, const string& model)
+TranslatorConfig::TranslatorConfig(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorControlSocket(session, model),
       TranslatorDatabase(session, model),
@@ -56,7 +57,7 @@ TranslatorConfig::getConfig() {
         } else if (model_ == KEA_DHCP6_SERVER) {
             return (getConfigKea6());
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError, "sysrepo error getting config: " << ex.what());
     }
     isc_throw(NotImplemented,
@@ -443,7 +444,7 @@ TranslatorConfig::setConfig(ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setConfig not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting config '" << elem->str()
                   << "': " << ex.what());
@@ -493,15 +494,15 @@ TranslatorConfig::setConfigKea6(ConstElementPtr elem) {
 void
 TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
                                          ConstElementPtr elem) {
-    checkAndSetLeaf(elem, xpath, "valid-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "renew-timer", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "rebind-timer", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "calculate-tee-times", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "t1-percent", SR_DECIMAL64_T);
-    checkAndSetLeaf(elem, xpath, "t2-percent", SR_DECIMAL64_T);
-    checkAndSetLeaf(elem, xpath, "decline-probation-period", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "renew-timer", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "rebind-timer", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "calculate-tee-times", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "t1-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "t2-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "decline-probation-period", LeafBaseType::Uint32);
     ConstElementPtr networks = elem->get("shared-networks");
     if (networks) {
         setSharedNetworks(xpath, networks);
@@ -529,7 +530,7 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     ConstElementPtr host_ids = elem->get("host-reservation-identifiers");
     if (host_ids) {
         for (ConstElementPtr id : host_ids->listValue()) {
-            setItem(xpath + "/host-reservation-identifiers", id, SR_ENUM_T);
+            setItem(xpath + "/host-reservation-identifiers", id, LeafBaseType::Enum);
         }
     }
     ConstElementPtr defs = elem->get("option-def");
@@ -550,121 +551,119 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
             ostringstream hook_lib;
             hook_lib << xpath << "/hook-library[library='"
                      << name->stringValue() << "']";
+            setItem(hook_lib.str(), ElementPtr(), LeafBaseType::Unknown);
             ConstElementPtr params = lib->get("parameters");
             if (params) {
                 hook_lib << "/parameters";
                 setItem(hook_lib.str(), Element::create(params->str()),
-                        SR_STRING_T);
-            } else {
-                ConstElementPtr list = Element::createList();
-                setItem(hook_lib.str(), list, SR_LIST_T);
+                        LeafBaseType::String);
             }
         }
     }
     ConstElementPtr expired = elem->get("expired-leases-processing");
     if (expired) {
         string expired_xpath = xpath + "/expired-leases-processing";
-        checkAndSetLeaf(expired, expired_xpath, "reclaim-timer-wait-time", SR_UINT32_T);
-        checkAndSetLeaf(expired, expired_xpath, "flush-reclaimed-timer-wait-time", SR_UINT32_T);
-        checkAndSetLeaf(expired, expired_xpath, "hold-reclaimed-time", SR_UINT32_T);
-        checkAndSetLeaf(expired, expired_xpath, "max-reclaim-leases", SR_UINT32_T);
-        checkAndSetLeaf(expired, expired_xpath, "max-reclaim-time", SR_UINT32_T);
-        checkAndSetLeaf(expired, expired_xpath, "unwarned-reclaim-cycles", SR_UINT32_T);
+        checkAndSetLeaf(expired, expired_xpath, "reclaim-timer-wait-time", LeafBaseType::Uint32);
+        checkAndSetLeaf(expired, expired_xpath, "flush-reclaimed-timer-wait-time", LeafBaseType::Uint32);
+        checkAndSetLeaf(expired, expired_xpath, "hold-reclaimed-time", LeafBaseType::Uint32);
+        checkAndSetLeaf(expired, expired_xpath, "max-reclaim-leases", LeafBaseType::Uint32);
+        checkAndSetLeaf(expired, expired_xpath, "max-reclaim-time", LeafBaseType::Uint32);
+        checkAndSetLeaf(expired, expired_xpath, "unwarned-reclaim-cycles", LeafBaseType::Uint32);
     }
-    checkAndSetLeaf(elem, xpath, "dhcp4o6-port", SR_UINT16_T);
+    checkAndSetLeaf(elem, xpath, "dhcp4o6-port", LeafBaseType::Uint16);
     ConstElementPtr socket = elem->get("control-socket");
     if (socket) {
         setControlSocket(xpath + "/control-socket", socket);
     }
-    checkAndSetLeaf(elem, xpath, "hostname-char-set", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
     ConstElementPtr ddns = elem->get("dhcp-ddns");
     if (ddns) {
         string ddns_xpath = xpath + "/dhcp-ddns";
-        checkAndSetLeaf(ddns, ddns_xpath, "enable-updates", SR_BOOL_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "qualifying-suffix", SR_STRING_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "server-ip", SR_STRING_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "server-port", SR_UINT16_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "sender-ip", SR_STRING_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "sender-port", SR_UINT16_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "max-queue-size", SR_UINT32_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "ncr-protocol", SR_ENUM_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "ncr-format", SR_ENUM_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "override-no-update", SR_BOOL_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "override-client-update", SR_BOOL_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "replace-client-name", SR_ENUM_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "generated-prefix", SR_STRING_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "hostname-char-set", SR_STRING_T);
-        checkAndSetLeaf(ddns, ddns_xpath, "hostname-char-replacement", SR_STRING_T);
+        checkAndSetLeaf(ddns, ddns_xpath, "enable-updates", LeafBaseType::Bool);
+        checkAndSetLeaf(ddns, ddns_xpath, "qualifying-suffix", LeafBaseType::String);
+        checkAndSetLeaf(ddns, ddns_xpath, "server-ip", LeafBaseType::String);
+        checkAndSetLeaf(ddns, ddns_xpath, "server-port", LeafBaseType::Uint16);
+        checkAndSetLeaf(ddns, ddns_xpath, "sender-ip", LeafBaseType::String);
+        checkAndSetLeaf(ddns, ddns_xpath, "sender-port", LeafBaseType::Uint16);
+        checkAndSetLeaf(ddns, ddns_xpath, "max-queue-size", LeafBaseType::Uint32);
+        checkAndSetLeaf(ddns, ddns_xpath, "ncr-protocol", LeafBaseType::Enum);
+        checkAndSetLeaf(ddns, ddns_xpath, "ncr-format", LeafBaseType::Enum);
+        checkAndSetLeaf(ddns, ddns_xpath, "override-no-update", LeafBaseType::Bool);
+        checkAndSetLeaf(ddns, ddns_xpath, "override-client-update", LeafBaseType::Bool);
+        checkAndSetLeaf(ddns, ddns_xpath, "replace-client-name", LeafBaseType::Enum);
+        checkAndSetLeaf(ddns, ddns_xpath, "generated-prefix", LeafBaseType::String);
+        checkAndSetLeaf(ddns, ddns_xpath, "hostname-char-set", LeafBaseType::String);
+        checkAndSetLeaf(ddns, ddns_xpath, "hostname-char-replacement", LeafBaseType::String);
         ConstElementPtr context = Adaptor::getContext(ddns);
         if (context) {
             ConstElementPtr repr = Element::create(context->str());
-            setItem(xpath + "/dhcp-ddns/user-context", repr, SR_STRING_T);
+            setItem(xpath + "/dhcp-ddns/user-context", repr, LeafBaseType::String);
         }
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         ConstElementPtr repr = Element::create(context->str());
-        setItem(xpath + "/user-context", repr, SR_STRING_T);
+        setItem(xpath + "/user-context", repr, LeafBaseType::String);
     }
     ConstElementPtr sanity = elem->get("sanity-checks");
     if (sanity) {
-        checkAndSetLeaf(sanity, xpath + "/sanity-checks", "lease-checks", SR_ENUM_T);
+        checkAndSetLeaf(sanity, xpath + "/sanity-checks", "lease-checks", LeafBaseType::Enum);
     }
-    checkAndSetLeaf(elem, xpath, "reservation-mode", SR_ENUM_T);
+    checkAndSetLeaf(elem, xpath, "reservation-mode", LeafBaseType::Enum);
     ConstElementPtr hosts = elem->get("reservations");
     if (hosts && !hosts->empty()) {
         setHosts(xpath, hosts);
     }
     ConstElementPtr config_ctrl = elem->get("config-control");
     if (config_ctrl && !config_ctrl->empty()) {
-        checkAndSetLeaf(config_ctrl, xpath + "/config-control", "config-fetch-wait-time", SR_UINT32_T);
+        checkAndSetLeaf(config_ctrl, xpath + "/config-control", "config-fetch-wait-time", LeafBaseType::Uint32);
         databases = config_ctrl->get("config-databases");
         if (databases && !databases->empty()) {
             setDatabases(xpath + "/config-control/config-database", databases);
         }
     }
-    checkAndSetLeaf(elem, xpath, "server-tag", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "server-tag", LeafBaseType::String);
     ConstElementPtr queue_ctrl = elem->get("dhcp-queue-control");
     if (queue_ctrl) {
         ConstElementPtr repr = Element::create(queue_ctrl->str());
-        setItem(xpath + "/dhcp-queue-control", repr, SR_STRING_T);
+        setItem(xpath + "/dhcp-queue-control", repr, LeafBaseType::String);
     }
     ConstElementPtr loggers = elem->get("loggers");
     if (loggers) {
         setLoggers(xpath, loggers);
     }
-    checkAndSetLeaf(elem, xpath, "cache-max-age", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "cache-threshold", SR_DECIMAL64_T);
+    checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "cache-threshold", LeafBaseType::Dec64);
     ConstElementPtr compatibility(elem->get("compatibility"));
     if (compatibility) {
-        checkAndSetLeaf(compatibility, xpath + "/compatibility", "lenient-option-parsing", SR_BOOL_T);
+        checkAndSetLeaf(compatibility, xpath + "/compatibility", "lenient-option-parsing", LeafBaseType::Bool);
     }
-    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-send-updates", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ip-reservations-unique", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "early-global-reservations-lookup", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "reservations-lookup-first", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-send-updates", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ip-reservations-unique", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "early-global-reservations-lookup", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "reservations-lookup-first", LeafBaseType::Bool);
     ConstElementPtr multi_threading(elem->get("multi-threading"));
     if (multi_threading) {
         string mt_xpath = xpath + "/multi-threading";
-        checkAndSetLeaf(multi_threading, mt_xpath, "enable-multi-threading", SR_BOOL_T);
-        checkAndSetLeaf(multi_threading, mt_xpath, "packet-queue-size", SR_UINT32_T);
-        checkAndSetLeaf(multi_threading, mt_xpath, "thread-pool-size", SR_UINT32_T);
+        checkAndSetLeaf(multi_threading, mt_xpath, "enable-multi-threading", LeafBaseType::Bool);
+        checkAndSetLeaf(multi_threading, mt_xpath, "packet-queue-size", LeafBaseType::Uint32);
+        checkAndSetLeaf(multi_threading, mt_xpath, "thread-pool-size", LeafBaseType::Uint32);
     }
-    checkAndSetLeaf(elem, xpath, "parked-packet-limit", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "reservations-global", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "reservations-in-subnet", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "statistic-default-sample-age", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "statistic-default-sample-count", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "parked-packet-limit", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "reservations-global", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "reservations-in-subnet", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "statistic-default-sample-age", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "statistic-default-sample-count", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "store-extended-info", LeafBaseType::Bool);
 }
 
 void
@@ -681,38 +680,38 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
         if (ifs && !ifs->empty()) {
             for (ConstElementPtr intf : ifs->listValue()) {
                 setItem(xpath + "/interfaces-config/interfaces",
-                        intf, SR_STRING_T);
+                        intf, LeafBaseType::String);
             }
         }
         string if_cfg_xpath = xpath + "/interfaces-config";
-        checkAndSetLeaf(if_config, if_cfg_xpath, "dhcp-socket-type", SR_ENUM_T);
-        checkAndSetLeaf(if_config, if_cfg_xpath, "outbound-interface", SR_ENUM_T);
-        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-require-all", SR_BOOL_T);
-        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-max-retries", SR_UINT32_T);
-        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-retry-wait-time", SR_UINT32_T);
-        checkAndSetLeaf(if_config, if_cfg_xpath, "re-detect", SR_BOOL_T);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "dhcp-socket-type", LeafBaseType::Enum);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "outbound-interface", LeafBaseType::Enum);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-require-all", LeafBaseType::Bool);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-max-retries", LeafBaseType::Uint32);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-retry-wait-time", LeafBaseType::Uint32);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "re-detect", LeafBaseType::Bool);
         ConstElementPtr context = Adaptor::getContext(if_config);
         if (context) {
             setItem(xpath + "/interfaces-config/user-context",
-                    Element::create(context->str()), SR_STRING_T);
+                    Element::create(context->str()), LeafBaseType::String);
         }
     }
-    checkAndSetLeaf(elem, xpath, "echo-client-id", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "match-client-id", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "next-server", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "server-hostname", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "boot-file-name", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "authoritative", SR_BOOL_T);
+    checkAndSetLeaf(elem, xpath, "echo-client-id", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "match-client-id", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "boot-file-name", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "authoritative", LeafBaseType::Bool);
 }
 
 void
 TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
     string xpath = "/kea-dhcp6-server:config";
     setServerKeaDhcpCommon(xpath, elem);
-    checkAndSetLeaf(elem, xpath, "data-directory", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "preferred-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "data-directory", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", LeafBaseType::Uint32);
     ConstElementPtr subnets = elem->get("subnet6");
     if (subnets) {
         setSubnets(xpath, subnets);
@@ -723,45 +722,45 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
         if (ifs && !ifs->empty()) {
             for (ConstElementPtr intf : ifs->listValue()) {
                 setItem(xpath + "/interfaces-config/interfaces",
-                        intf, SR_STRING_T);
+                        intf, LeafBaseType::String);
             }
         }
         string if_cfg_xpath = xpath + "/interfaces-config";
-        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-require-all", SR_BOOL_T);
-        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-max-retries", SR_UINT32_T);
-        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-retry-wait-time", SR_UINT32_T);
-        checkAndSetLeaf(if_config, if_cfg_xpath, "re-detect", SR_BOOL_T);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-require-all", LeafBaseType::Bool);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-max-retries", LeafBaseType::Uint32);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "service-sockets-retry-wait-time", LeafBaseType::Uint32);
+        checkAndSetLeaf(if_config, if_cfg_xpath, "re-detect", LeafBaseType::Bool);
         ConstElementPtr context = Adaptor::getContext(if_config);
         if (context) {
             setItem(xpath + "/interfaces-config/user-context",
-                    Element::create(context->str()), SR_STRING_T);
+                    Element::create(context->str()), LeafBaseType::String);
         }
     }
     ConstElementPtr relay = elem->get("relay-supplied-options");
     if (relay) {
         for (ConstElementPtr addr : relay->listValue()) {
-            setItem(xpath + "/relay-supplied-options", addr, SR_STRING_T);
+            setItem(xpath + "/relay-supplied-options", addr, LeafBaseType::String);
         }
     }
     ConstElementPtr macs = elem->get("mac-sources");
     if (macs) {
         for (ConstElementPtr source : macs->listValue()) {
-            setItem(xpath + "/mac-sources", source, SR_STRING_T);
+            setItem(xpath + "/mac-sources", source, LeafBaseType::String);
         }
     }
     ConstElementPtr server_id = elem->get("server-id");
     if (server_id) {
         string srv_id_xpath = xpath + "/server-id";
-        checkAndSetLeaf(server_id, srv_id_xpath, "type", SR_ENUM_T);
-        checkAndSetLeaf(server_id, srv_id_xpath, "identifier", SR_STRING_T);
-        checkAndSetLeaf(server_id, srv_id_xpath, "time", SR_UINT32_T);
-        checkAndSetLeaf(server_id, srv_id_xpath, "htype", SR_UINT16_T);
-        checkAndSetLeaf(server_id, srv_id_xpath, "enterprise-id", SR_UINT32_T);
-        checkAndSetLeaf(server_id, srv_id_xpath, "persist", SR_BOOL_T);
+        checkAndSetLeaf(server_id, srv_id_xpath, "type", LeafBaseType::Enum);
+        checkAndSetLeaf(server_id, srv_id_xpath, "identifier", LeafBaseType::String);
+        checkAndSetLeaf(server_id, srv_id_xpath, "time", LeafBaseType::Uint32);
+        checkAndSetLeaf(server_id, srv_id_xpath, "htype", LeafBaseType::Uint16);
+        checkAndSetLeaf(server_id, srv_id_xpath, "enterprise-id", LeafBaseType::Uint32);
+        checkAndSetLeaf(server_id, srv_id_xpath, "persist", LeafBaseType::Bool);
         ConstElementPtr context = Adaptor::getContext(server_id);
         if (context) {
             ConstElementPtr repr = Element::create(context->str());
-            setItem(xpath + "/server-id/user-context", repr, SR_STRING_T);
+            setItem(xpath + "/server-id/user-context", repr, LeafBaseType::String);
         }
     }
 }

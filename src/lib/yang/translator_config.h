@@ -413,7 +413,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorConfig(sysrepo::S_Session session, const std::string& model);
+    TranslatorConfig(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorConfig();
