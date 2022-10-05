@@ -9,7 +9,7 @@
 
 The libkea-yang library was developed to handle base YANG operations,
 such as retrieving YANG schema and configuration and translating
-data between YANG data and JSON that is understandable by Kea.
+data between YANG and JSON that is understandable by Kea.
 
 @section yangTranslator Translator between YANG and JSON
 
@@ -26,12 +26,13 @@ Note that although the initial focus is on translation from YANG to JSON (so
 Kea can retrieve its configuration), the opposite translation direction -
 from JSON to YANG - is also very useful, for at least three reasons. First,
 in many cases we can use it in tests to check that conversion back and forth
-doesn't lose anything: yang = toYang(toJson(yang)). Second, YANG modules
+doesn't lose anything: yang = toYang(toJson(yang)). Secondly, YANG modules
 cover two major types of data: configuration and run-time state. While
 we're initially focusing on getting the configuration, the run-time state
 is something that Kea is expected to provide. Kea uses JSON internally in many
 places and that data will have to be exported in YANG format. Thirdly, the
-SR_EV_UPDATE callback allows mid-flight configuration changes before data is
+Event::Update (SR_EV_UPDATE prior to sysrepo v2) callback allows mid-flight
+configuration changes before data is
 committed to the sysrepo datastore. If it ever will be used in the future,
 changes applied during this step will most likely come from Kea's current JSON
 configuration. As such, JSON to YANG translation will be necessary. One
@@ -43,12 +44,30 @@ is responsible for maintaining a connection) in constructors and derive from
 the basic / base class and recursively from translators for embedded parts.
 
 @c isc::yang::TranslatorBasic provides some methods:
- - getItem() retrieves and translates basic value from YANG to JSON
- - getItems() retrieves and translates a leaf-list from YANG to JSON
- - getList() retrieves and translates a list from YANG to JSON
- - setItem() translates and sets a basic value from JSON to YANG
- - delItem() deletes a value
- - forAll() iterates over the top node and its descendants and calls a function
+  - @c isc::yang::TranslatorBasic::checkAndGetLeaf() is a convenience wrapper
+    over @c isc::yang::TranslatorBasic::getItem().
+  - @c isc::yang::TranslatorBasic::checkAndSetLeaf() is a convenience wrapper
+    over @c isc::yang::TranslatorBasic::setItem().
+  - @c isc::yang::TranslatorBasic::delItem() deletes the data node found at
+    given xpth.
+  - @c isc::yang::TranslatorBasic::forAll() iterates over the node found at
+    given xpath and all its descendants and calls the given function.
+  - @c isc::yang::TranslatorBasic::getItem() retrieves and translates a leaf
+    from YANG to JSON.
+  - @c isc::yang::TranslatorBasic::getItems() retrieves and translates a
+    leaf-list from YANG to JSON.
+    - TODO: starting with sysrepo v2, this function already defers to
+      @c isc::yang::TranslatorBasic::getItem().
+      Remove @c isc::yang::TranslatorBasic::getItems() and replace all calls
+      with @c isc::yang::TranslatorBasic::getItem().
+  - @c isc::yang::TranslatorBasic::getList() retrieves a list from Sysrepo and
+    translates it form YANG to JSON.
+  - @c isc::yang::TranslatorBasic::setItem() translates a leaf from JSON to
+    YANG and sets it in Sysrepo.
+  - @c isc::yang::TranslatorBasic::value(ConstElementPtr, LeafBaseType)
+    translates a JSON leaf to a string.
+  - @c isc::yang::TranslatorBasic::value(optional<DataNode>) translates a YANG
+    leaf to a JSON node.
 
 @section yangTranslatorPool Pool translator
 
@@ -68,7 +87,7 @@ Note pools show two shortcomings in IETF modules:
 All structure translators depend on @c isc::yang::TranslatorBasic and
 some of them depend on other structures, for instance
 @c isc::yang::TranslatorPool depends on
-@c isc::yang::TranslatorOptionDataList which itself as all list translators
+@c isc::yang::TranslatorOptionDataList which itself, as all list translators,
 depends on the corresponding list item translator
 @c isc::yang::TranslatorOptionData. This multiple inheritance forms
 a graph with the basic and the configuration translators at the two ends.
@@ -83,7 +102,7 @@ to pools and back.
 
 @section yangAdaptor Adapting JSON configuration
 
-Adaptors are tools which adapts JSON complete or partial configuration
+Adaptors are tools which adapt JSON complete or partial configuration
 before translation to YANG to ease this translation or after translation
 from YANG to follow the Kea syntax, for instance by adding static
 components which are not in the module.
@@ -111,7 +130,7 @@ category of adaptors are divided into:
 To run YANG/NETCONF/Sysrepo tests you need to compile Kea with Sysrepo support:
 
 @verbatim
-./configure --with-sysrepo
+./configure --with-libyang --with-sysrepo --with-libyang-cpp --with-sysrepo-cpp
 @endverbatim
 
 For details, see Section "YANG/NETCONF support" in the Kea Administrator
@@ -119,16 +138,25 @@ Reference Manual: https://kea.readthedocs.io/en/latest/arm/integrations.html#yan
 
 You also need to install YANG modules, so the unit tests are able to
 retrieve, add, update and generally interact with the sysrepo information.
-There are several Kea modules (*.yang in src/share/yang/modules/), mostly usable in
-production, but one called keatest-module is only used in unit tests. To be able
-to run unit tests as a non-root user, which is the recommended way, make sure
-the sysrepo repository and /dev/shm/sr* are owned by said user. One way to
-prevent sporadic chown-ing is to install sysrepo and the Kea modules as non-root.
+There are several Kea modules (*.yang in src/share/yang/modules/), mostly usable
+in production, but one called keatest-module is only used in unit tests. To be
+able to run unit tests as a non-root user, which is the recommended way, make
+sure the sysrepo repository and /dev/shm/sr* are owned by said user. One way to
+prevent sporadic chown-ing is to install sysrepo and the Kea modules as
+non-root.
 
 To install all the modules, run the following script:
 
 @verbatim
 ./src/share/yang/modules/utils/reinstall.sh
+@endverbatim
+
+If the YANG modules are already installed, they will be upgraded.
+To avoid any upgrade hastle, the -u flag may be passed to uninstall the modules
+before installing again.
+
+@verbatim
+./src/share/yang/modules/utils/reinstall.sh -u
 @endverbatim
 
 Alternatively to install each module, issue the following command:
@@ -145,7 +173,7 @@ sysrepoctl -l
 Make sure that keatest-module and other necessary modules are on the list.
 
 As DHCP modules are still being developed, if the revision has been bumped,
-reinstalling it will update the module automatically . Otherwise, it can be
+reinstalling it will update the module automatically. Otherwise, it can be
 useful to uninstall them before reinstalling a more recent version:
 
 @verbatim
@@ -197,8 +225,8 @@ them.
 
 @section yangMTConsiderations Multi-Threading Consideration for YANG Utilities
 
-The YANG utilities are not thread safe. Note as they are used only in a
-configuration context it is not a problem, and the yang / sysrepo libraries
-are multi-threaded so their APIs are thread safe.
+The YANG utilities are not thread-safe. Note as they are used only in a
+configuration context it is not a problem, and the YANG / Sysrepo libraries
+are multi-threaded so their APIs are thread-safe.
 
 */
