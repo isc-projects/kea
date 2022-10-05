@@ -27,7 +27,7 @@ set -eu
 VERSION="@PACKAGE_VERSION@"
 
 # Set the have_netconf flag to know if netconf is available.
-if test -z '@HAVE_SYSREPO_TRUE@'; then
+if test '@HAVE_NETCONF@' = 'yes'; then
     have_netconf=true
 else
     have_netconf=false

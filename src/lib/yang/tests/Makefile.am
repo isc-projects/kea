@@ -1,7 +1,13 @@
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(LIBYANG_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANG_INCLUDEDIR)
+AM_CPPFLAGS += $(LIBYANGCPP_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANGCPP_INCLUDEDIR)
 AM_CPPFLAGS += $(SYSREPO_CPPFLAGS)
 AM_CPPFLAGS += $(SYSREPO_INCLUDEDIR)
+AM_CPPFLAGS += $(SYSREPOCPP_CPPFLAGS)
+AM_CPPFLAGS += $(SYSREPOCPP_INCLUDEDIR)
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples\"
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -51,8 +57,11 @@ run_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-run_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
-run_unittests_LDADD += $(SYSREPO_LIBS) $(GTEST_LDADD)
+run_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)
+run_unittests_LDADD += $(LIBYANG_LIBS)
+run_unittests_LDADD += $(LIBYANGCPP_LIBS)
+run_unittests_LDADD += $(SYSREPO_LIBS)
+run_unittests_LDADD += $(SYSREPOCPP_LIBS)
 
 endif
 

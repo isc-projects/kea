@@ -8,7 +8,7 @@ KEA_CONFIGFILES += kea-dhcp6.conf
 KEA_CONFIGFILES += kea-dhcp-ddns.conf
 KEA_CONFIGFILES += kea-ctrl-agent.conf
 
-if HAVE_SYSREPO
+if HAVE_NETCONF
 KEA_CONFIGFILES += kea-netconf.conf
 endif
 

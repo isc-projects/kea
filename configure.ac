@@ -1864,38 +1864,85 @@ PostgreSQL:
 END
 fi
 
-if "${HAVE_SYSREPO}"; then
+cat >> config.report << END
+
+NETCONF:
+  ${HAVE_NETCONF-no}
+END
+
+if test -n "${LIBYANG_VERSION}"; then
   cat >> config.report << END
 
-Sysrepo:
-  LIBYANG_VERSION:       ${LIBYANG_VERSION}
-  LIBYANG_SOVERSION:     ${LIBYANG_SOVERSION}
-  LIBYANG_INCLUDEDIR:    ${LIBYANG_INCLUDEDIR}
-  LIBYANG_CPPFLAGS:      ${LIBYANG_CPPFLAGS}
-  LIBYANG_LIBS           ${LIBYANG_LIBS}
-
-  LIBYANGCPP_VERSION:    ${LIBYANGCPP_VERSION}
-  LIBYANGCPP_INCLUDEDIR: ${LIBYANGCPP_INCLUDEDIR}
-  LIBYANGCPP_CPPFLAGS:   ${LIBYANGCPP_CPPFLAGS}
-  LIBYANGCPP_LIBS        ${LIBYANGCPP_LIBS}
-
-  SYSREPO_VERSION:       ${SYSREPO_VERSION}
-  SYSREPO_CPPFLAGS:      ${SYSREPO_CPPFLAGS}
-  SYSREPO_INCLUDEDIR:    ${SYSREPO_INCLUDEDIR}
-  SYSREPO_LIBS:          ${SYSREPO_LIBS}
-  SR_REPO_PATH:          ${SR_REPO_PATH}
-  SRPD_PLUGINS_PATH:     ${SRPD_PLUGINS_PATH}
-
-  SYSREPOCPP_VERSION:    ${SYSREPOCPP_VERSION}
-  SYSREPOCPP_CPPFLAGS:   ${SYSREPOCPP_CPPFLAGS}
-  SYSREPOCPP_INCLUDEDIR: ${SYSREPOCPP_INCLUDEDIR}
-  SYSREPOCPP_LIBS:       ${SYSREPOCPP_LIBS}
+  libyang:
+    LIBYANG_CPPFLAGS:      ${LIBYANG_CPPFLAGS}
+    LIBYANG_INCLUDEDIR:    ${LIBYANG_INCLUDEDIR}
+    LIBYANG_LIBS:          ${LIBYANG_LIBS}
+    LIBYANG_PREFIX:        ${LIBYANG_PREFIX}
+    LIBYANG_VERSION:       ${LIBYANG_VERSION}
 END
 else
   cat >> config.report << END
 
-Sysrepo:
-  no
+  libyang:
+    no
+END
+fi
+
+if test -n "${LIBYANGCPP_VERSION}"; then
+  cat >> config.report << END
+
+  libyang-cpp:
+    LIBYANGCPP_CPPFLAGS:   ${LIBYANGCPP_CPPFLAGS}
+    LIBYANGCPP_INCLUDEDIR: ${LIBYANGCPP_INCLUDEDIR}
+    LIBYANGCPP_LIBS:       ${LIBYANGCPP_LIBS}
+    LIBYANGCPP_PREFIX:     ${LIBYANGCPP_PREFIX}
+    LIBYANGCPP_VERSION:    ${LIBYANGCPP_VERSION}
+END
+else
+  cat >> config.report << END
+
+  libyang-cpp:
+    no
+END
+fi
+
+if test -n "${SYSREPO_VERSION}"; then
+  cat >> config.report << END
+
+  sysrepo:
+    SYSREPO_CPPFLAGS:      ${SYSREPO_CPPFLAGS}
+    SYSREPO_INCLUDEDIR:    ${SYSREPO_INCLUDEDIR}
+    SYSREPO_LIBS:          ${SYSREPO_LIBS}
+    SYSREPO_PREFIX:        ${SYSREPO_PREFIX}
+    SYSREPO_VERSION:       ${SYSREPO_VERSION}
+
+    SR_REPO_PATH:          ${SR_REPO_PATH}
+    SR_PLUGINS_PATH:       ${SR_PLUGINS_PATH}
+    SRPD_PLUGINS_PATH:     ${SRPD_PLUGINS_PATH}
+END
+else
+  cat >> config.report << END
+
+  sysrepo:
+    no
+END
+fi
+
+if test -n "${SYSREPOCPP_VERSION}"; then
+  cat >> config.report << END
+
+  sysrepo-cpp:
+    SYSREPOCPP_CPPFLAGS:   ${SYSREPOCPP_CPPFLAGS}
+    SYSREPOCPP_INCLUDEDIR: ${SYSREPOCPP_INCLUDEDIR}
+    SYSREPOCPP_LIBS:       ${SYSREPOCPP_LIBS}
+    SYSREPOCPP_PREFIX :    ${SYSREPOCPP_PREFIX}
+    SYSREPOCPP_VERSION:    ${SYSREPOCPP_VERSION}
+END
+else
+  cat >> config.report << END
+
+  sysrepo-cpp:
+    no
 END
 fi
 
@@ -1964,5 +2011,4 @@ cat <<EOF
   When running "make install" do not use any form of parallel or job
   server options (such as GNU make's -j option). Doing so may cause
   errors.
-
 EOF

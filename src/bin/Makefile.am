@@ -9,7 +9,7 @@ if KEA_SHELL
 SUBDIRS += shell
 endif
 
-if HAVE_SYSREPO
+if HAVE_NETCONF
 SUBDIRS += netconf
 endif
 

@@ -8,7 +8,7 @@ yang_list += check-revisions.sh
 
 EXTRA_DIST = ${yang_list}
 
-if HAVE_SYSREPO
+if HAVE_NETCONF
 
 yang_SCRIPTS = reinstall.sh
 

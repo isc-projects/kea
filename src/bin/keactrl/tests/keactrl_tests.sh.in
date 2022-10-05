@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +27,7 @@ set -eu
 keactrl="@abs_top_builddir@/src/bin/keactrl/keactrl"
 
 # Set the have_netconf flag to know if netconf is available.
-if test -z '@HAVE_SYSREPO_TRUE@'; then
+if test '@HAVE_NETCONF@' = 'yes'; then
     have_netconf=true
 else
     have_netconf=false

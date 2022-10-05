@@ -2,8 +2,14 @@ SUBDIRS = . testutils pretests tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(LIBYANG_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANG_INCLUDEDIR)
+AM_CPPFLAGS += $(LIBYANGCPP_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANGCPP_INCLUDEDIR)
 AM_CPPFLAGS += $(SYSREPO_CPPFLAGS)
 AM_CPPFLAGS += $(SYSREPO_INCLUDEDIR)
+AM_CPPFLAGS += $(SYSREPOCPP_CPPFLAGS)
+AM_CPPFLAGS += $(SYSREPOCPP_INCLUDEDIR)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-yang.la
@@ -38,7 +44,11 @@ libkea_yang_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_yang_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(SYSREPO_LIBS)
+libkea_yang_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
+libkea_yang_la_LIBADD += $(LIBYANG_LIBS)
+libkea_yang_la_LIBADD += $(LIBYANGCPP_LIBS)
+libkea_yang_la_LIBADD += $(SYSREPO_LIBS)
+libkea_yang_la_LIBADD += $(SYSREPOCPP_LIBS)
 
 libkea_yang_la_LDFLAGS = -no-undefined -version-info 39:0:0
 

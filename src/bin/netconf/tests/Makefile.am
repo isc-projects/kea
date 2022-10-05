@@ -10,8 +10,14 @@ AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/netconf\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/netconf/tests\"
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../netconf_parser.yy\"
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+AM_CPPFLAGS += $(LIBYANG_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANG_INCLUDEDIR)
+AM_CPPFLAGS += $(LIBYANGCPP_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANGCPP_INCLUDEDIR)
 AM_CPPFLAGS += $(SYSREPO_CPPFLAGS)
 AM_CPPFLAGS += $(SYSREPO_INCLUDEDIR)
+AM_CPPFLAGS += $(SYSREPOCPP_CPPFLAGS)
+AM_CPPFLAGS += $(SYSREPOCPP_INCLUDEDIR)
 
 CLEANFILES = *.json *.log
 
@@ -71,7 +77,11 @@ netconf_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unitte
 netconf_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 netconf_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
-netconf_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD) $(SYSREPO_LIBS)
+netconf_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
+netconf_unittests_LDADD += $(LIBYANG_LIBS)
+netconf_unittests_LDADD += $(LIBYANGCPP_LIBS)
+netconf_unittests_LDADD += $(SYSREPO_LIBS)
+netconf_unittests_LDADD += $(SYSREPOCPP_LIBS)
 
 # The basic callout library - contains standard callouts
 libbasic_la_SOURCES  = basic_library.cc

@@ -21,6 +21,6 @@ yangmodules_list += keatest-module@2018-11-20.yang
 
 EXTRA_DIST = hashes ${yangmodules_list}
 
-if HAVE_SYSREPO
+if HAVE_NETCONF
 yangmodules_DATA = ${yangmodules_list}
 endif

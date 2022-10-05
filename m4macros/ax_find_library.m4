@@ -166,8 +166,8 @@ AC_DEFUN([AX_DISPLAY_LIBRARY_WARNINGS], [
 # input:
 #   * value of --with-library
 #   * list of variables to retrieve with pkg-config
-#   * additional paths to pass to pkg-config, for when a .pc file has
-#       a dependency
+#   * additional colon-separated paths to pass to pkg-config,
+#       for when a .pc file has a dependency
 # output:
 #   * LIBRARY_FOUND
 #   * LIBRARY_CPPFLAGS

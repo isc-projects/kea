@@ -11,7 +11,7 @@ endif
 
 SUBDIRS += config_backend hooks dhcp http config stats
 
-if HAVE_SYSREPO
+if HAVE_NETCONF
 SUBDIRS += yang
 endif
 
