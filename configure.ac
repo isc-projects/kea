@@ -161,6 +161,9 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 # Check for C++11 features support
 AX_ISC_CPP11
 
+# Check for C++20 compiler support.
+AX_ISC_CPP20
+
 # Check for std::is_base_of support
 AC_MSG_CHECKING([for std::is_base_of])
 AC_COMPILE_IFELSE(

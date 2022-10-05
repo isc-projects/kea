@@ -88,6 +88,11 @@ $(cat conftest.err)])]
       LIBYANGCPP_PREFIX="${LIBRARY_PREFIX}"
       LIBYANGCPP_VERSION="${LIBRARY_VERSION}"
 
+      if ! "${CPP20_SUPPORTED}"; then
+          AC_MSG_RESULT([no])
+          AC_MSG_ERROR([You need a compiler with C++20 support to enable libyang-cpp.])
+      fi
+
       # Save flags.
       CPPFLAGS_SAVED="${CPPFLAGS}"
       LIBS_SAVED="${LIBS}"
@@ -198,6 +203,11 @@ $(cat conftest.err)])]
       SYSREPOCPP_LIBS="${LIBRARY_LIBS}"
       SYSREPOCPP_PREFIX="${LIBRARY_PREFIX}"
       SYSREPOCPP_VERSION="${LIBRARY_VERSION}"
+
+      if ! "${CPP20_SUPPORTED}"; then
+          AC_MSG_RESULT([no])
+          AC_MSG_ERROR([You need a compiler with C++20 support to enable sysrepo-cpp.])
+      fi
 
       # Save flags.
       CPPFLAGS_SAVED="${CPPFLAGS}"
