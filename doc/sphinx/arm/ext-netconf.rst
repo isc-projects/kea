@@ -19,41 +19,153 @@ support for a YANG/NETCONF interface with the ``kea-netconf`` agent.
 Installing NETCONF
 ------------------
 
-To get its NETCONF capabilities, Kea uses libyang v1.0.240 and Sysrepo v1.4.140.
+To get its NETCONF capabilities, Kea roughly requires the v2 versions of
+libyang and sysrepo. This can span several versions. The versions that were
+thoroughly tested with Kea are:
+
+* libyang v2.0.256 (56d4e07ef1cdeab3eb2e6700247f83ec9148edcc)
+* sysrepo v2.1.84
+* libyang-cpp v1.1.0 (7824d9a862f2dc1d8ad4f6a90ab6cee9200f7c81)
+* sysrepo-cpp v1.1.0 (e66b2f0c53a428eeb743d355cf86fb30e8e491f1)
+
+.. note::
+
+    kea-netconf may be compatible with later versions, but if it is
+    not hereby documented, it is not guaranteed.
+
 Use packages if they are provided by the system. If not, users can
-build from sources, which should work on all popular OSes:
+build from sources, which should work on all popular operating systems.
 
 .. _libyang-install-sources:
 
-Installing libyang From Sources
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing ``libyang`` From Sources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: console
 
     $ git clone https://github.com/CESNET/libyang.git
     $ cd libyang
-    $ git checkout v1.0.240
+    $ git checkout 56d4e07ef1cdeab3eb2e6700247f83ec9148edcc
     $ mkdir build
     $ cd build
-    $ cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF
+    $ cmake ..
     $ make
-    $ make install  # without sudo if you're doing development and want to run unit tests
+    $ make install
 
 .. _sysrepo-install-sources:
 
-Installing Sysrepo From Sources
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing ``sysrepo`` From Sources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: console
 
     $ git clone https://github.com/sysrepo/sysrepo.git
     $ cd sysrepo
-    $ git checkout v1.4.140
+    $ git checkout v2.1.84
     $ mkdir build
     $ cd build
-    $ cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF
+    $ cmake -DREPO_PATH=/etc/sysrepo ..
     $ make
     $ make install  # without sudo if you're doing development and want to run unit tests
+
+.. _libyang-cpp-install-sources:
+
+Installing ``libyang-cpp`` From Sources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ git clone https://github.com/CESNET/libyang-cpp.git
+    $ cd libyang-cpp
+    $ git checkout 7824d9a862f2dc1d8ad4f6a90ab6cee9200f7c81
+    $ mkdir build
+    $ cd build
+    $ cmake -DBUILD_TESTING=OFF ..
+    $ make
+    $ make install
+
+.. _sysrepo-cpp-install-sources:
+
+Installing ``sysrepo-cpp`` From Sources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ git clone https://github.com/sysrepo/sysrepo-cpp.git
+    $ cd sysrepo-cpp
+    $ git checkout e66b2f0c53a428eeb743d355cf86fb30e8e491f1
+    $ mkdir build
+    $ cd build
+    $ cmake -DBUILD_TESTING=OFF ..
+    $ make
+    $ make install
+
+.. _compiling-with-netconf:
+
+Compiling With NETCONF
+----------------------
+
+1.  Obtain the Kea sources.
+
+.. code-block:: console
+
+    $ git clone gitlab.isc.org/isc-projects/kea.git
+    $ cd kea
+
+2. Configure the build.
+
+.. code-block:: console
+
+    $ autoreconf -f -i
+    $ ./configure --with-libyang --with-libyang-cpp --with-sysrepo --with-sysrepo-cpp
+
+.. note::
+
+    If any of the libraries are installed in a custom location, the
+    ``--with`` flags accept the installations paths as values.
+
+3. Check ``config.report`` for NETCONF support.
+
+::
+
+    NETCONF:
+      yes
+
+      libyang:
+        LIBYANG_CPPFLAGS:
+        LIBYANG_INCLUDEDIR:    -I/usr/local/include
+        LIBYANG_LIBS:          -L/usr/local/lib64 -lyang -Wl,-R/usr/local/lib64 -lyang
+        LIBYANG_PREFIX:        /usr/local
+        LIBYANG_VERSION:       2.0.256
+
+      libyang-cpp:
+        LIBYANGCPP_CPPFLAGS:
+        LIBYANGCPP_INCLUDEDIR: -I/usr/local/include
+        LIBYANGCPP_LIBS:       -L/usr/local/lib64 -lyang-cpp -Wl,-R/usr/local/lib64 -lyang-cpp
+        LIBYANGCPP_PREFIX:     /usr/local
+        LIBYANGCPP_VERSION:    1.1.0
+
+      sysrepo:
+        SYSREPO_CPPFLAGS:
+        SYSREPO_INCLUDEDIR:    -I/usr/local/include
+        SYSREPO_LIBS:          -L/usr/local/lib64 -lsysrepo -Wl,-R/usr/local/lib64 -lsysrepo
+        SYSREPO_PREFIX:        /usr/local
+        SYSREPO_VERSION:       2.1.84
+
+        SR_REPO_PATH:          /etc/sysrepo
+        SR_PLUGINS_PATH:       /usr/local/lib64/sysrepo/plugins
+        SRPD_PLUGINS_PATH:     /usr/local/lib64/sysrepo-plugind/plugins
+
+      sysrepo-cpp:
+        SYSREPOCPP_CPPFLAGS:
+        SYSREPOCPP_INCLUDEDIR: -I/usr/local/include
+        SYSREPOCPP_LIBS:       -L/usr/local/lib64 -lsysrepo-cpp -Wl,-R/usr/local/lib64 -lsysrepo-cpp
+        SYSREPOCPP_PREFIX :    /usr/local
+        SYSREPOCPP_VERSION:    1.1.0
+
+4. Build as you normally would.
+
+    $ make
 
 .. _sysrepo-overview:
 
@@ -61,13 +173,13 @@ Quick Sysrepo Overview
 ----------------------
 
 This section offers a brief overview of a subset of available
-functions in Sysrepo. For more complete information, see the `Sysrepo
-homepage <https://www.sysrepo.org>`__.
+functions in Sysrepo. For more complete information, see the
+`Sysrepo homepage <https://www.sysrepo.org>`__.
 
-In YANG, configurations and state data are described in the YANG syntax
-in module files named: ``"module-name"``\``[@"revision"]``.yang
+In YANG, configurations and state data are described in YANG syntax
+in module files named: ``<module-name>[@<revision>].yang``
 
-The revision part is optional and has YYYY-MM-DD format. An alternate
+The revision part is optional and has ``YYYY-MM-DD`` format. An alternate
 XML syntax YIN is defined but less user-friendly. Top-level modules are
 named in Kea models (a short version of schema models).
 
@@ -77,17 +189,28 @@ IETF to develop a DHCPv6 YANG model, a similar initiative in the past for DHCPv4
 failed. Therefore, Kea uses its own dedicated models for DHCPv4 and DHCPv6 but
 partially supports the IETF model for DHCPv6.
 
-All of the models have extra modules as dependencies. The dependency modules are
-also provided in ``src/share/yang/modules`` in sources and in
-``share/kea/yang/modules`` in the installation directory.
+All of the models have extra modules as dependencies. The dependency modules are also provided.
+All of the modules can be found in ``src/share/yang/modules`` in sources and in
+``share/kea/yang/modules`` in the installation directory. This directory will be
+referred to as `${share_directory}` in the commands below.
 
-To install modules from sources, do the following to install all modules:
+To install modules from sources, or upgrade them if you have older revisions
+installed, run the following command. In the case of a revision upgrade, YANG
+data will be migrated automatically to the new module schema.
 
 .. code-block:: console
 
-    $ ./src/share/yang/modules/utils/reinstall.sh
+    $ ${share_directory}/yang/modules/utils/reinstall.sh
 
-If Sysrepo is installed in a custom path, use:
+However, if there is resistance in the upgrade process, and data can be recreated from a NETCONF
+client or through other means, Kea modules can be easily uninstalled before installing again with:
+
+.. code-block:: console
+
+    $ ${share_directory}/yang/modules/utils/reinstall.sh -u
+
+The script should be able to pick up on the Sysrepo installation.
+If not, there is a flag that was historically used to point to it:
 
 .. code-block:: console
 
@@ -108,151 +231,95 @@ The installation should look similar to the following:
 .. code-block:: console
 
     $ ./src/share/yang/modules/utils/reinstall.sh
-    [INF]: Libyang internal module "yang" was installed.
-    [INF]: File "ietf-datastores@2018-02-14.yang" was installed.
-    [INF]: Sysrepo internal dependency module "ietf-datastores" was installed.
-    [INF]: File "ietf-yang-library@2019-01-04.yang" was installed.
-    [INF]: Sysrepo internal module "ietf-yang-library" was installed.
-    [INF]: File "sysrepo-monitoring@2021-01-15.yang" was installed.
-    [INF]: Sysrepo internal module "sysrepo-monitoring" was installed.
-    [INF]: File "sysrepo-plugind@2020-12-10.yang" was installed.
-    [INF]: Sysrepo internal module "sysrepo-plugind" was installed.
-    [INF]: File "ietf-netconf@2011-06-01.yang" was installed.
-    [INF]: Sysrepo internal dependency module "ietf-netconf" was installed.
-    [INF]: File "ietf-netconf-with-defaults@2011-06-01.yang" was installed.
-    [INF]: Sysrepo internal module "ietf-netconf-with-defaults" was installed.
-    [INF]: File "ietf-netconf-notifications@2012-02-06.yang" was installed.
-    [INF]: Sysrepo internal module "ietf-netconf-notifications" was installed.
-    [INF]: File "ietf-origin@2018-02-14.yang" was installed.
-    [INF]: Sysrepo internal module "ietf-origin" was installed.
-    [INF]: Connection 20 created.
-    [INF]: Module "keatest-module" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "keatest-module@2018-11-20.yang" was installed.
-    [INF]: Module "keatest-module" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 21 created.
-    [INF]: Module "ietf-interfaces" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "ietf-interfaces@2018-02-20.yang" was installed.
-    [INF]: Module "ietf-interfaces" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 22 created.
-    [INF]: Module "ietf-dhcpv6-client" scheduled for installation.
-    [INF]: File "ietf-dhcpv6-options@2018-09-04.yang" was installed.
-    [INF]: File "ietf-dhcpv6-types@2018-09-04.yang" was installed.
-    [INF]: Applying scheduled changes.
-    [INF]: File "ietf-dhcpv6-client@2018-09-04.yang" was installed.
-    [INF]: Module "ietf-dhcpv6-client" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 23 created.
-    [INF]: Module "ietf-dhcpv6-relay" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "ietf-dhcpv6-relay@2018-09-04.yang" was installed.
-    [INF]: Module "ietf-dhcpv6-relay" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 24 created.
-    [INF]: Module "ietf-dhcpv6-server" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "ietf-dhcpv6-server@2018-09-04.yang" was installed.
-    [INF]: Module "ietf-dhcpv6-server" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 25 created.
-    [INF]: Module "ietf-yang-types" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: Module "ietf-yang-types" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 26 created.
-    [INF]: Module "ietf-dhcpv6-options" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: Module "ietf-dhcpv6-options" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 27 created.
-    [INF]: Module "ietf-dhcpv6-types" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: Module "ietf-dhcpv6-types" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 28 created.
-    [INF]: Module "ietf-inet-types" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: Module "ietf-inet-types" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 29 created.
-    [INF]: Module "kea-types" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "kea-types@2019-08-12.yang" was installed.
-    [INF]: Module "kea-types" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 30 created.
-    [INF]: Module "kea-dhcp-types" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "kea-dhcp-types@2019-08-12.yang" was installed.
-    [INF]: Module "kea-dhcp-types" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 31 created.
-    [INF]: Module "kea-dhcp-ddns" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "kea-dhcp-ddns@2019-08-12.yang" was installed.
-    [INF]: Module "kea-dhcp-ddns" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 32 created.
-    [INF]: Module "kea-ctrl-agent" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "kea-ctrl-agent@2019-08-12.yang" was installed.
-    [INF]: Module "kea-ctrl-agent" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 33 created.
-    [INF]: Module "kea-dhcp4-server" scheduled for installation.
-    [INF]: Applying scheduled changes.
-    [INF]: File "kea-dhcp4-server@2019-08-12.yang" was installed.
-    [INF]: Module "kea-dhcp4-server" was installed.
-    [INF]: Scheduled changes applied.
-    [INF]: Connection 34 created.
-    [INF]: Module "kea-dhcp6-server" scheduled for installation.
+    [INF] Connection 2 created.
+    [INF] Module "keatest-module" was installed.
+    [INF] File "keatest-module@2018-11-20.yang" was installed.
+    [INF] No datastore changes to apply.
+    [INF] Connection 4 created.
+    [ERR] Module "ietf-interfaces@2018-02-20" already installed.
+    [INF] No datastore changes to apply.
+    [INF] Connection 7 created.
+    [ERR] Module "ietf-dhcpv6-client" is already in sysrepo.
+    [INF] No datastore changes to apply.
+    [INF] Connection 9 created.
+    [ERR] Module "ietf-dhcpv6-relay" is already in sysrepo.
+    [INF] No datastore changes to apply.
+    [INF] Connection 11 created.
+    [ERR] Module "ietf-dhcpv6-server" is already in sysrepo.
+    [INF] No datastore changes to apply.
+    [INF] Connection 13 created.
+    [ERR] Write permission "ietf-yang-types" check failed.
+    [INF] No datastore changes to apply.
+    [INF] Connection 15 created.
+    [ERR] Module "ietf-dhcpv6-options" is already in sysrepo.
+    [INF] No datastore changes to apply.
+    [INF] Connection 17 created.
+    [ERR] Module "ietf-dhcpv6-types" is already in sysrepo.
+    [INF] No datastore changes to apply.
+    [INF] Connection 21 created.
+    [INF] Module "kea-types" was installed.
+    [INF] File "kea-types@2019-08-12.yang" was installed.
+    [INF] No datastore changes to apply.
+    [INF] Connection 23 created.
+    [INF] Module "kea-dhcp-types" was installed.
+    [INF] File "kea-dhcp-types@2022-07-27.yang" was installed.
+    [INF] No datastore changes to apply.
+    [INF] Connection 25 created.
+    [INF] Module "kea-dhcp-ddns" was installed.
+    [INF] File "kea-dhcp-ddns@2022-07-27.yang" was installed.
+    [INF] No datastore changes to apply.
+    [INF] Connection 27 created.
+    [INF] Module "kea-ctrl-agent" was installed.
+    [INF] File "kea-ctrl-agent@2019-08-12.yang" was installed.
+    [INF] No datastore changes to apply.
+    [INF] Connection 29 created.
+    [INF] Module "kea-dhcp4-server" was installed.
+    [INF] File "kea-dhcp4-server@2022-07-27.yang" was installed.
+    [INF] No datastore changes to apply.
+    [INF] Connection 31 created.
+    [INF] Module "kea-dhcp6-server" was installed.
+    [INF] File "kea-dhcp6-server@2022-07-27.yang" was installed.
+    [INF] No datastore changes to apply.
 
-It is possible to confirm whether the models are imported correctly.
-To list the currently installed YANG modules:
+It is possible to confirm whether the modules are imported correctly.
+The list of currently installed YANG modules should be similar to this:
 
 .. code-block:: console
 
-     $ sysrepoctl -l
-
-After installation the result should be similar to this:
-
-::
-
+    $ sysrepoctl -l
     Sysrepo repository: /etc/sysrepo
 
-    Module Name                | Revision   | Flags | Owner         | Permissions | Submodules | Features
-    -----------------------------------------------------------------------------------------------------
-    ietf-datastores            | 2018-02-14 | I     | user:user     | 664         |            |
-    ietf-dhcpv6-client         | 2018-09-04 | I     | user:user     | 600         |            |
-    ietf-dhcpv6-options        | 2018-09-04 | I     | user:user     | 600         |            |
-    ietf-dhcpv6-relay          | 2018-09-04 | I     | user:user     | 600         |            |
-    ietf-dhcpv6-server         | 2018-09-04 | I     | user:user     | 600         |            |
-    ietf-dhcpv6-types          | 2018-09-04 | I     | user:user     | 600         |            |
-    ietf-inet-types            | 2013-07-15 | I     | user:user     | 664         |            |
-    ietf-interfaces            | 2018-02-20 | I     | user:user     | 600         |            |
-    ietf-netconf               | 2011-06-01 | I     | user:user     | 664         |            |
-    ietf-netconf-notifications | 2012-02-06 | I     | user:user     | 664         |            |
-    ietf-netconf-with-defaults | 2011-06-01 | I     | user:user     | 664         |            |
-    ietf-origin                | 2018-02-14 | I     | user:user     | 664         |            |
-    ietf-yang-library          | 2019-01-04 | I     | user:user     | 664         |            |
-    ietf-yang-metadata         | 2016-08-05 | i     |               |             |            |
-    ietf-yang-types            | 2013-07-15 | I     | user:user     | 664         |            |
-    kea-ctrl-agent             | 2019-08-12 | I     | user:user     | 600         |            |
-    kea-dhcp-ddns              | 2019-08-12 | I     | user:user     | 600         |            |
-    kea-dhcp-types             | 2019-08-12 | I     | user:user     | 600         |            |
-    kea-dhcp4-server           | 2019-08-12 | I     | user:user     | 600         |            |
-    kea-dhcp6-server           | 2019-08-12 | I     | user:user     | 600         |            |
-    kea-types                  | 2019-08-12 | I     | user:user     | 600         |            |
-    keatest-module             | 2018-11-20 | I     | user:user     | 600         |            |
-    sysrepo-monitoring         | 2021-01-15 | I     | user:user     | 600         |            |
-    sysrepo-plugind            | 2020-12-10 | I     | user:user     | 664         |            |
-    yang                       | 2017-02-20 | I     | user:user     | 664         |            |
+    Module Name                | Revision   | Flags | Owner     | Startup Perms | Submodules | Features
+    ---------------------------------------------------------------------------------------------------
+    ietf-datastores            | 2018-02-14 | I     | user:user | 444           |            |
+    ietf-dhcpv6-client         | 2018-09-04 | I     | user:user | 600           |            |
+    ietf-dhcpv6-options        | 2018-09-04 | I     | user:user | 600           |            |
+    ietf-dhcpv6-relay          | 2018-09-04 | I     | user:user | 600           |            |
+    ietf-dhcpv6-server         | 2018-09-04 | I     | user:user | 600           |            |
+    ietf-dhcpv6-types          | 2018-09-04 | I     | user:user | 600           |            |
+    ietf-inet-types            | 2013-07-15 | I     | user:user | 444           |            |
+    ietf-interfaces            | 2018-02-20 | I     | user:user | 600           |            |
+    ietf-netconf               | 2013-09-29 | I     | user:user | 644           |            |
+    ietf-netconf-acm           | 2018-02-14 | I     | user:user | 600           |            |
+    ietf-netconf-notifications | 2012-02-06 | I     | user:user | 644           |            |
+    ietf-netconf-with-defaults | 2011-06-01 | I     | user:user | 444           |            |
+    ietf-origin                | 2018-02-14 | I     | user:user | 444           |            |
+    ietf-yang-library          | 2019-01-04 | I     | user:user | 644           |            |
+    ietf-yang-metadata         | 2016-08-05 | i     |           |               |            |
+    ietf-yang-schema-mount     | 2019-01-14 | I     | user:user | 644           |            |
+    ietf-yang-types            | 2013-07-15 | I     | user:user | 444           |            |
+    kea-ctrl-agent             | 2019-08-12 | I     | user:user | 600           |            |
+    kea-dhcp-ddns              | 2022-07-27 | I     | user:user | 600           |            |
+    kea-dhcp-types             | 2022-07-27 | I     | user:user | 600           |            |
+    kea-dhcp4-server           | 2022-07-27 | I     | user:user | 600           |            |
+    kea-dhcp6-server           | 2022-07-27 | I     | user:user | 600           |            |
+    kea-types                  | 2019-08-12 | I     | user:user | 600           |            |
+    keatest-module             | 2018-11-20 | I     | user:user | 600           |            |
+    sysrepo-monitoring         | 2022-04-08 | I     | user:user | 600           |            |
+    sysrepo-plugind            | 2022-03-10 | I     | user:user | 644           |            |
+    yang                       | 2022-06-16 | I     | user:user | 444           |            |
 
-    Flags meaning: I - Installed/i - Imported; R - Replay support; N - New/X - Removed/U - Updated; F - Feature changes
-    Features: ! - Means that the feature is effectively disabled because of its false if-feature(s)
+    Flags meaning: I - Installed/i - Imported; R - Replay support
 
 To reinstall a module, if the revision YANG entry was bumped, simply installing
 it will update it automatically. Otherwise, it must first be uninstalled:
@@ -1007,8 +1074,8 @@ The corresponding Kea configuration in JSON is:
            "severity": "DEBUG",
            "debuglevel": 99
          }
-      ]
-    }
+       ]
+     }
    }
 
 Finally, any of the previous examples can be replayed by using
@@ -1021,38 +1088,36 @@ Finally, any of the previous examples can be replayed by using
 or by using a NETCONF client like ``netopeer2-cli`` from the
 `Netopeer2 <https://github.com/CESNET/Netopeer2>`__ NETCONF Toolset.
 
-.. _migrating-yang-v0-to-v1:
+.. _migrating-yang-data:
 
-Migrating YANG Data from Sysrepo v0.x to v1.x
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Migrating YANG Data from a prior Sysrepo version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Start the migration after turning off ``kea-netconf`` to make sure that backups
-for both datastores are done at the same configuration state and no change
-happens between exporting them.
+1. Shut down ``kea-netconf``. This makes sure that backups for both datastores
+are done at the same configuration state and no change happens between exporting them.
 
-Unfortunately, Sysrepo v0.x does not support import/export of all YANG modules.
-This was added in Sysrepo v1.x, so users of earlier versions will need to do per-module backup.
-This has the added benefit of isolating potential failures and preventing them from
-affecting all modules.
-
-With Sysrepo v0.x:
+2. Make data backups for all YANG modules, one XML for each datastore.
 
 .. code-block:: console
 
-    $ sysrepocfg --datastore running --export=save.xml --format=xml kea-dhcp6-server
-    $ sysrepocfg --datastore startup --export=save.xml --format=xml kea-dhcp6-server
+    $ sysrepocfg --datastore running --export=save.xml --format=xml
+    $ sysrepocfg --datastore startup --export=save.xml --format=xml
 
-Install Sysrepo v1.x and then:
+.. note::
+
+    Sysrepo v0 does not support import/export of all YANG modules. This capability was added in
+    Sysrepo v1. Users that are migrating from Sysreo v0 will need to do per-module backups. This has
+    the added benefit of isolating potential failures and preventing them from affecting all
+    modules. The command is the same except it has the module name added to it at the end.
+
+    .. code-block:: console
+
+        $ sysrepocfg --datastore running --export=save.xml --format=xml kea-dhcp6-server
+        $ sysrepocfg --datastore startup --export=save.xml --format=xml kea-dhcp6-server
+
+3. Upgrade Sysrepo to the newer version and then:
 
 .. code-block:: console
 
     $ sysrepocfg --datastore running --edit=save.xml
     $ sysrepocfg --datastore startup --edit=save.xml
-
-Module name and format are optional for v1.x; they are detected automatically.
-If necessary, they can be provided with the ``--format xml`` and
-``--module kea-dhcp6-server`` flags.
-
-If upgrading from a very old version of Sysrepo, there may also be changes to the YANG
-modules themselves. In that case, the backups will need some minor massaging, as would
-be required with normal periodic maintenance.
