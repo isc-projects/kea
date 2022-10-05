@@ -26,6 +26,27 @@ public:
 /// @brief ementation of the @ref TcpListener.
 class TcpListener {
 public:
+    /// @brief TCP request timeout value.
+    struct RequestTimeout {
+        /// @brief Constructor.
+        ///
+        /// @param value Request timeout value in milliseconds.
+        explicit RequestTimeout(long value)
+            : value_(value) {
+        }
+        long value_; ///< Request timeout value specified.
+    };
+
+    /// @brief Idle connection timeout.
+    struct IdleTimeout {
+        /// @brief Constructor.
+        ///
+        /// @param value Connection idle timeout value in milliseconds.
+        explicit IdleTimeout(long value)
+            : value_(value) {
+        }
+        long value_; ///< Connection idle timeout value specified.
+    };
 
     /// @brief Constructor.
     ///
@@ -48,7 +69,7 @@ public:
                 const asiolink::IOAddress& server_address,
                 const unsigned short server_port,
                 const asiolink::TlsContextPtr& tls_context,
-                const long idle_timeout);
+                const IdleTimeout& idle_timeout);
 
     /// @brief Virtual destructor.
     virtual ~TcpListener() {
@@ -70,6 +91,12 @@ public:
 
     /// @brief Stops all active connections and shuts down the service.
     void stop();
+
+    /// @brief Returns local address on which server is listening.
+    asiolink::IOAddress getLocalAddress() const;
+
+    /// @brief Returns local port on which server is listening.
+    uint16_t getLocalPort() const;
 
 protected:
 

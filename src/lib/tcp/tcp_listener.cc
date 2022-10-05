@@ -18,12 +18,11 @@ TcpListener::TcpListener(IOService& io_service,
                          const IOAddress& server_address,
                          const unsigned short server_port,
                          const TlsContextPtr& tls_context,
-                         const long idle_timeout)
+                         const IdleTimeout& idle_timeout)
     : io_service_(io_service), tls_context_(tls_context), acceptor_(),
-      endpoint_(), connections_(), idle_timeout_(idle_timeout) {
+      endpoint_(), connections_(), idle_timeout_(idle_timeout.value_) {
 
     // Create the TCP or TLS acceptor.
-    // @todo TKM - hmmm....  need to understand this better..
     if (!tls_context) {
         acceptor_.reset(new TcpConnectionAcceptor(io_service));
     } else {
@@ -33,7 +32,6 @@ TcpListener::TcpListener(IOService& io_service,
     // Try creating an endpoint. This may cause exceptions.
     try {
         endpoint_.reset(new TCPEndpoint(server_address, server_port));
-
     } catch (...) {
         isc_throw(TcpListenerError, "unable to create TCP endpoint for "
                   << server_address << ":" << server_port);
@@ -104,6 +102,16 @@ TcpListener::createConnection(const TcpConnectionAcceptorCallback& /* callback *
     return (connection_factory_(io_service_, acceptor_, tls_context_,
                                connections_, callback, idle_timeout_));
 #endif
+}
+
+IOAddress
+TcpListener::getLocalAddress() const {
+    return (getEndpoint().getAddress());
+}
+
+uint16_t
+TcpListener::getLocalPort() const {
+    return (getEndpoint().getPort());
 }
 
 } // end of namespace isc::tcp

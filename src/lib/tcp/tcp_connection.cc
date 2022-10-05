@@ -4,7 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#if 0
 #include <config.h>
 
 #include <asiolink/asio_wrapper.h>
@@ -28,7 +27,7 @@ constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
 }
 
 namespace isc {
-namespace http {
+namespace tcp {
 
 void
 TcpConnection::
@@ -40,22 +39,18 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
 }
 
 TcpConnection::TcpConnection(asiolink::IOService& io_service,
-                               const TcpAcceptorPtr& acceptor,
+                               const TcpConnectionAcceptorPtr& acceptor,
                                const TlsContextPtr& tls_context,
                                TcpConnectionPool& connection_pool,
-                               const TcpResponseCreatorPtr& response_creator,
-                               const TcpAcceptorCallback& callback,
-                               const long request_timeout,
+                               const TcpConnectionAcceptorCallback& callback,
                                const long idle_timeout)
     : request_timer_(io_service),
-      request_timeout_(request_timeout),
       tls_context_(tls_context),
       idle_timeout_(idle_timeout),
       tcp_socket_(),
       tls_socket_(),
       acceptor_(acceptor),
       connection_pool_(connection_pool),
-      response_creator_(response_creator),
       acceptor_callback_(callback) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
@@ -69,6 +64,7 @@ TcpConnection::~TcpConnection() {
     close();
 }
 
+#if 0
 void
 TcpConnection::recordParameters(const TcpRequestPtr& request) const {
     if (!request) {
@@ -99,6 +95,7 @@ TcpConnection::recordParameters(const TcpRequestPtr& request) const {
         request->setIssuer(tls_socket_->getTlsStream().getIssuer());
     }
 }
+#endif
 
 void
 TcpConnection::shutdownCallback(const boost::system::error_code&) {
@@ -142,24 +139,24 @@ TcpConnection::close() {
 void
 TcpConnection::shutdownConnection() {
     try {
-        LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_BASIC,
+        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
                   TCP_CONNECTION_SHUTDOWN)
             .arg(getRemoteEndpointAddressAsText());
         connection_pool_.shutdown(shared_from_this());
     } catch (...) {
-        LOG_ERROR(asiolink_logger, TCP_CONNECTION_SHUTDOWN_FAILED);
+        LOG_ERROR(tcp_logger, TCP_CONNECTION_SHUTDOWN_FAILED);
     }
 }
 
 void
 TcpConnection::stopThisConnection() {
     try {
-        LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_BASIC,
+        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
                   TCP_CONNECTION_STOP)
             .arg(getRemoteEndpointAddressAsText());
         connection_pool_.stop(shared_from_this());
     } catch (...) {
-        LOG_ERROR(asiolink_logger, TCP_CONNECTION_STOP_FAILED);
+        LOG_ERROR(tcp_logger, TCP_CONNECTION_STOP_FAILED);
     }
 }
 
@@ -168,12 +165,11 @@ TcpConnection::asyncAccept() {
     // Create instance of the callback. It is safe to pass the local instance
     // of the callback, because the underlying boost functions make copies
     // as needed.
-    TcpAcceptorCallback cb = std::bind(&TcpConnection::acceptorCallback,
-                                        shared_from_this(),
-                                        ph::_1); // error
+    TcpConnectionAcceptorCallback cb = std::bind(&TcpConnection::acceptorCallback,
+                                                 shared_from_this(), ph::_1); // error
     try {
-        TcpsAcceptorPtr tls_acceptor =
-            boost::dynamic_pointer_cast<TcpsAcceptor>(acceptor_);
+        TlsConnectionAcceptorPtr tls_acceptor =
+            boost::dynamic_pointer_cast<TlsConnectionAcceptor>(acceptor_);
         if (!tls_acceptor) {
             if (!tcp_socket_) {
                 isc_throw(Unexpected, "internal error: TCP socket is null");
@@ -215,7 +211,8 @@ TcpConnection::doHandshake() {
 }
 
 void
-TcpConnection::doRead(TransactionPtr transaction) {
+TcpConnection::doRead(TcpRequestPtr /* request */) {
+#if 0
     try {
         TCPEndpoint endpoint;
 
@@ -249,10 +246,14 @@ TcpConnection::doRead(TransactionPtr transaction) {
     } catch (...) {
         stopThisConnection();
     }
+#else
+    isc_throw(NotImplemented, "TcpConnection::doRead()");
+#endif
 }
 
 void
-TcpConnection::doWrite(TcpConnection::TransactionPtr transaction) {
+TcpConnection::doWrite(TcpResponsePtr /* response */) {
+#if 0
     try {
         if (transaction->outputDataAvail()) {
             // Create instance of the callback. It is safe to pass the local instance
@@ -295,13 +296,14 @@ TcpConnection::doWrite(TcpConnection::TransactionPtr transaction) {
     } catch (...) {
         stopThisConnection();
     }
+#else
+    isc_throw(NotImplemented, "TcpConnection::doWrite()");
+#endif
 }
 
 void
-TcpConnection::asyncSendResponse(const ConstTcpResponsePtr& response,
-                                  TransactionPtr transaction) {
-    transaction->setOutputBuf(response->toString());
-    doWrite(transaction);
+TcpConnection::asyncSendResponse(TcpResponsePtr response) {
+    doWrite(response);
 }
 
 
@@ -319,18 +321,20 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
 
     if (!ec) {
         if (!tls_context_) {
-            LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_DETAIL,
+            LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       TCP_REQUEST_RECEIVE_START)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(static_cast<unsigned>(request_timeout_/1000));
         } else {
-            LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_DETAIL,
+            LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       TCP_CONNECTION_HANDSHAKE_START)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(static_cast<unsigned>(request_timeout_/1000));
         }
 
+#if 0
         setupRequestTimer();
+#endif
         doHandshake();
     }
 }
@@ -338,13 +342,13 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
 void
 TcpConnection::handshakeCallback(const boost::system::error_code& ec) {
     if (ec) {
-        LOG_INFO(asiolink_logger, TCP_CONNECTION_HANDSHAKE_FAILED)
+        LOG_INFO(tcp_logger, TCP_CONNECTION_HANDSHAKE_FAILED)
             .arg(getRemoteEndpointAddressAsText())
             .arg(ec.message());
         stopThisConnection();
     } else {
-        LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                  HTTPS_REQUEST_RECEIVE_START)
+        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                  TCP_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText());
 
         doRead();
@@ -352,8 +356,9 @@ TcpConnection::handshakeCallback(const boost::system::error_code& ec) {
 }
 
 void
-TcpConnection::socketReadCallback(TcpConnection::TransactionPtr transaction,
-                                   boost::system::error_code ec, size_t length) {
+TcpConnection::socketReadCallback(TcpRequestPtr /* request */,
+                                  boost::system::error_code /* ec */, size_t /* length */) {
+#if 0
     if (ec) {
         // IO service has been stopped and the connection is probably
         // going to be shutting down.
@@ -379,7 +384,7 @@ TcpConnection::socketReadCallback(TcpConnection::TransactionPtr transaction,
     setupRequestTimer(transaction);
 
     if (length != 0) {
-        LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
                   TCP_DATA_RECEIVED)
             .arg(length)
             .arg(getRemoteEndpointAddressAsText());
@@ -399,22 +404,22 @@ TcpConnection::socketReadCallback(TcpConnection::TransactionPtr transaction,
             // The whole message has been received, so let's finalize it.
             transaction->getRequest()->finalize();
 
-            LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_BASIC,
+            LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
                       TCP_CLIENT_REQUEST_RECEIVED)
                 .arg(getRemoteEndpointAddressAsText());
 
-            LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+            LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       TCP_CLIENT_REQUEST_RECEIVED_DETAILS)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(transaction->getParser()->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
 
         } catch (const std::exception& ex) {
-            LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_BASIC,
+            LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
                       TCP_BAD_CLIENT_REQUEST_RECEIVED)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(ex.what());
 
-            LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+            LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(transaction->getParser()->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
@@ -426,12 +431,12 @@ TcpConnection::socketReadCallback(TcpConnection::TransactionPtr transaction,
         // Create the response from the received request using the custom
         // response creator.
         TcpResponsePtr response = response_creator_->createTcpResponse(transaction->getRequest());
-        LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_BASIC,
+        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
                   TCP_SERVER_RESPONSE_SEND)
             .arg(response->toBriefString())
             .arg(getRemoteEndpointAddressAsText());
 
-        LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                   TCP_SERVER_RESPONSE_SEND_DETAILS)
             .arg(getRemoteEndpointAddressAsText())
             .arg(TcpMessageParserBase::logFormatTcpMessage(response->toString(),
@@ -443,11 +448,15 @@ TcpConnection::socketReadCallback(TcpConnection::TransactionPtr transaction,
         // Start sending the response.
         asyncSendResponse(response, transaction);
     }
+#else
+    isc_throw(NotImplemented, "TcpConnection::socketWriteCallback:");
+#endif
 }
 
 void
-TcpConnection::socketWriteCallback(TcpConnection::TransactionPtr transaction,
-                                    boost::system::error_code ec, size_t length) {
+TcpConnection::socketWriteCallback(TcpResponsePtr /* response */,
+                                    boost::system::error_code /*ec*/, size_t /*length */) {
+#if 0
     if (ec) {
         // IO service has been stopped and the connection is probably
         // going to be shutting down.
@@ -489,8 +498,12 @@ TcpConnection::socketWriteCallback(TcpConnection::TransactionPtr transaction,
 
     // Schedule the write of the unsent data.
     doWrite(transaction);
+#else
+    isc_throw(NotImplemented, "TcpConnection::socketWriteCallback:");
+#endif
 }
 
+#if 0
 void
 TcpConnection::setupRequestTimer(TransactionPtr transaction) {
     // Pass raw pointer rather than shared_ptr to this object,
@@ -501,6 +514,7 @@ TcpConnection::setupRequestTimer(TransactionPtr transaction) {
                                    this, transaction),
                          request_timeout_, IntervalTimer::ONE_SHOT);
 }
+#endif
 
 void
 TcpConnection::setupIdleTimer() {
@@ -509,9 +523,10 @@ TcpConnection::setupIdleTimer() {
                          idle_timeout_, IntervalTimer::ONE_SHOT);
 }
 
+#if 0
 void
 TcpConnection::requestTimeoutCallback(TransactionPtr transaction) {
-    LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_DETAIL,
+    LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
               TCP_CLIENT_REQUEST_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
 
@@ -544,10 +559,11 @@ TcpConnection::requestTimeoutCallback(TransactionPtr transaction) {
     // Send the HTTP 408 status.
     asyncSendResponse(response, spawned_transaction);
 }
+#endif
 
 void
 TcpConnection::idleTimeoutCallback() {
-    LOG_DEBUG(asiolink_logger, isc::log::DBGLVL_TRACE_DETAIL,
+    LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
               TCP_IDLE_CONNECTION_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
     // In theory we should shutdown first and stop/close after but
@@ -573,6 +589,5 @@ TcpConnection::getRemoteEndpointAddressAsText() const {
     return ("(unknown address)");
 }
 
-} // end of namespace isc::http
+} // end of namespace isc::tcp
 } // end of namespace isc
-#endif

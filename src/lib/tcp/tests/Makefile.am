@@ -21,7 +21,8 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
-#run_unittests_SOURCES += tcp_listner_unittest.cc
+run_unittests_SOURCES += tcp_listener_unittests.cc
+run_unittests_SOURCES += tcp_test_client.h
 
 #if HAVE_OPENSSL
 #run_unittests_SOURCES += tls_unittest.cc

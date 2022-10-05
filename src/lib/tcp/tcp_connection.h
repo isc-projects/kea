@@ -144,7 +144,7 @@ public:
     /// @param request Pointer to the request for which the read
     /// operation should be performed. It defaults to null pointer which
     /// indicates that this function should create new request.
-    void doRead();
+    void doRead(TcpRequestPtr request = TcpRequestPtr());
 
 protected:
 
@@ -156,7 +156,7 @@ protected:
     ///
     /// @param request Pointer to the request for which the write
     /// operation should be performed.
-    void doWrite();
+    void doWrite(TcpResponsePtr response);
 
     /// @brief Sends TCP response asynchronously.
     ///
@@ -164,7 +164,7 @@ protected:
     ///
     /// @param response Pointer to the TCP response to be sent.
     /// @param request Pointer to the request.
-    void asyncSendResponse(const TcpResponsePtr& response);
+    void asyncSendResponse(TcpResponsePtr response);
 
     /// @brief Local callback invoked when new connection is accepted.
     ///
@@ -204,7 +204,7 @@ protected:
     /// is invoked.
     /// @param ec Error code.
     /// @param length Length of the data sent.
-    virtual void socketWriteCallback(TcpRequestPtr request,
+    virtual void socketWriteCallback(TcpResponsePtr request,
                                      boost::system::error_code ec,
                                      size_t length);
 
@@ -217,14 +217,17 @@ protected:
     /// @param ec Error code (ignored).
     void shutdownCallback(const boost::system::error_code& ec);
 
+#if 0
     /// @brief Reset timer for detecting request timeouts.
-    ///
+    //
     /// @param request Pointer to the request to be guarded by the timeout.
     void setupRequestTimer(TcpRequestPtr request = TcpRequestPtr());
+#endif
 
     /// @brief Reset timer for detecting idle timeout in persistent connections.
     void setupIdleTimer();
 
+#if 0
     /// @brief Callback invoked when the TCP Request Timeout occurs.
     ///
     /// This callback creates TCP response with Request Timeout error code
@@ -232,6 +235,7 @@ protected:
     ///
     /// @param request Pointer to the request for which timeout occurs.
     void requestTimeoutCallback(TcpRequestPtr request);
+#endif
 
     void idleTimeoutCallback();
 
