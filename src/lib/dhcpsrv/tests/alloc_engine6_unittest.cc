@@ -4142,7 +4142,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         "no original context, one relay",
         "",
         { relay1_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
         true
     },
@@ -4150,7 +4150,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         "no original context, one relay with remote and relay ids",
         "",
         { relay3_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
         " \"options\": \"0x00250006010203040506003500086464646464646464\","
         " \"remote-id\": \"010203040506\","
         " \"relay-id\": \"6464646464646464\","
@@ -4159,9 +4159,26 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
     },
     {
         "some original context, one relay",
-        "{\"foo\": 123}",
+        "{\"foo\": 123, \"ISC\": {\"bar\": 456}}",
         { relay1_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ],"
+        "\"bar\": 456 }, \"foo\": 123 }",
+        true
+    },
+    {
+        "bad original context, one relay",
+        "[\"foo\"]",
+        { relay1_ },
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
+        true
+    },
+    {
+        "some original context, one relay",
+        "{\"foo\": 123, \"ISC\":[\"bar\"]}",
+        { relay1_ },
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] },"
         " \"foo\": 123 }",
         true
@@ -4170,7 +4187,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         "some original context, one relay with remote and relay ids",
         "{\"foo\": 123}",
         { relay3_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
         " \"options\": \"0x00250006010203040506003500086464646464646464\","
         " \"remote-id\": \"010203040506\","
         " \"relay-id\": \"6464646464646464\","
@@ -4178,19 +4195,19 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         true
     },
     {
-        "no original context, two relays",
+        "no original context, two relay-info",
         "",
         { relay1_, relay2_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
         " {\"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }",
         true
     },
     {
-        "no original context, two relays, second with remote and relay ids",
+        "no original context, two relay-info, second with remote and relay ids",
         "",
         { relay1_, relay3_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
         " { \"hop\": 100, \"link\": \"2001:db8::5\","
         " \"options\": \"0x00250006010203040506003500086464646464646464\","
@@ -4201,28 +4218,28 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
     },
     {
         "original relay context, no relay",
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
         {},
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
         false
     },
     {
         "original relay context, different relay",
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
         { relay2_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 77, \"link\": \"2001:db8::3\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 77, \"link\": \"2001:db8::3\","
         " \"peer\": \"2001:db8::4\" } ] } }",
         true
     },
     {
         "original relay context, different relay with remote and relay ids",
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }",
         { relay3_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100, \"link\": \"2001:db8::5\","
         " \"options\": \"0x00250006010203040506003500086464646464646464\","
         " \"remote-id\": \"010203040506\","
         " \"relay-id\": \"6464646464646464\","
@@ -4329,7 +4346,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, storeExtendedInfoEnabled6) {
         "create client two with relays",
         duid2_,
         { relay1_, relay2_ },
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
         " { \"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }",
         duid2_addr_
@@ -4338,7 +4355,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, storeExtendedInfoEnabled6) {
         "renew client two without rai",
         DuidPtr(),
         {},
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" },"
         " { \"hop\": 77, \"link\": \"2001:db8::3\", \"peer\": \"2001:db8::4\" } ] } }",
         duid2_addr_
@@ -4510,7 +4527,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, reuseExpiredLease6) {
     // Now let's verify that the extended info is in the user-context.
     ASSERT_TRUE(lease->getContext());
     std::string exp_content_json =
-        "{ \"ISC\": { \"relays\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33, \"link\": \"2001:db8::1\","
         " \"options\": \"0x00C800080102030405060708\", \"peer\": \"2001:db8::2\" } ] } }";
     ConstElementPtr exp_context;
     ASSERT_NO_THROW(exp_context = Element::fromJSON(exp_content_json))

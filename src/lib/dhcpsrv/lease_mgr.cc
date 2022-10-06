@@ -6,11 +6,14 @@
 
 #include <config.h>
 
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option_custom.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
+#include <util/encode/hex.h>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -25,7 +28,10 @@
 #include <time.h>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::db;
+using namespace isc::dhcp;
+using namespace isc::util;
 using namespace std;
 
 namespace isc {
@@ -353,6 +359,196 @@ LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& /* first_subnet_id */
 std::string
 LeaseMgr::getDBVersion() {
     isc_throw(NotImplemented, "LeaseMgr::getDBVersion() called");
+}
+
+bool
+LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease) {
+    static OptionDefinitionPtr rai_def;
+
+    bool changed = false;
+    if (!lease) {
+        return (changed);
+    }
+
+    ConstElementPtr user_context = lease->getContext();
+    if (!user_context || (user_context->getType() != Element::map)) {
+        return (changed);
+    }
+
+    ConstElementPtr isc = user_context->get("ISC");
+    if (!isc || (isc->getType() != Element::map)) {
+        return (changed);
+    }
+
+    ConstElementPtr extended_info = isc->get("relay-agent-info");
+    if (!extended_info || (extended_info->getType() != Element::string)) {
+        return (changed);
+    }
+
+    if (!rai_def) {
+        rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                        DHO_DHCP_AGENT_OPTIONS);
+    }
+
+    if (!rai_def) {
+        // Should never be used...
+        rai_def.reset(new OptionDefinition("dhcp-agent-options",
+                                           DHO_DHCP_AGENT_OPTIONS,
+                                           DHCP4_OPTION_SPACE,
+                                           OPT_EMPTY_TYPE,
+                                           DHCP_AGENT_OPTION_SPACE));
+    }
+
+    changed = true;
+    ElementPtr mutable_isc = boost::const_pointer_cast<Element>(isc);
+    if (!mutable_isc) {
+        // Should not happen...
+        mutable_isc = Element::createMap();
+        ElementPtr mutable_user_context =
+            boost::const_pointer_cast<Element>(user_context);
+        if (!mutable_user_context) {
+            // Should not happen...
+            mutable_user_context = Element::createMap();
+            lease->setContext(mutable_user_context);
+        }
+        mutable_user_context->set("ISC", mutable_isc);
+    }
+    ElementPtr upgraded = Element::createMap();
+    upgraded->set("sub-options", extended_info);
+    mutable_isc->set("relay-agent-info", upgraded);
+
+    // Try to decode sub-options.
+    string rai_hex = extended_info->stringValue();
+    if ((rai_hex.size() < 3) || (rai_hex[0] != '0') || (rai_hex[1] != 'x')) {
+        return (changed);
+    }
+    try {
+        vector<uint8_t> rai_data;
+        encode::decodeHex(rai_hex.substr(2), rai_data);
+        OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4, rai_data));
+        if (!rai) {
+            return (changed);
+        }
+
+        OptionPtr remote_id = rai->getOption(RAI_OPTION_REMOTE_ID);
+        if (remote_id) {
+            vector<uint8_t> bytes = remote_id->toBinary(false);
+            if (bytes.size() > 0) {
+                upgraded->set("remote-id",
+                              Element::create(encode::encodeHex(bytes)));
+            }
+        }
+
+        OptionPtr relay_id = rai->getOption(RAI_OPTION_RELAY_ID);
+        if (relay_id) {
+            vector<uint8_t> bytes = relay_id->toBinary(false);
+            if (bytes.size() > 0) {
+                upgraded->set("relay-id",
+                              Element::create(encode::encodeHex(bytes)));
+            }
+        }
+
+        return (changed);
+    } catch (...) {
+        return (changed);
+    }
+}
+
+bool
+LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease) {
+    bool changed = false;
+    if (!lease) {
+        return (changed);
+    }
+
+    ConstElementPtr user_context = lease->getContext();
+    if (!user_context || (user_context->getType() != Element::map)) {
+        return (changed);
+    }
+
+    ConstElementPtr isc = user_context->get("ISC");
+    if (!isc || (isc->getType() != Element::map)) {
+        return (changed);
+    }
+
+    ConstElementPtr extended_info = isc->get("relays");
+    if (!extended_info || (extended_info->getType() != Element::list)) {
+        return (changed);
+    }
+
+    changed = true;
+    ElementPtr mutable_isc = boost::const_pointer_cast<Element>(isc);
+    if (!mutable_isc) {
+        // Should not happen...
+        mutable_isc = Element::createMap();
+        ElementPtr mutable_user_context =
+            boost::const_pointer_cast<Element>(user_context);
+        if (!mutable_user_context) {
+            // Should not happen...
+            mutable_user_context = Element::createMap();
+            lease->setContext(mutable_user_context);
+        }
+        mutable_user_context->set("ISC", mutable_isc);
+    }
+    ElementPtr upgraded = copy(extended_info, 0);
+    mutable_isc->set("relay-info", upgraded);
+    mutable_isc->remove("relays");
+
+    for (int i = 0; i < upgraded->size(); ++i) {
+        ElementPtr relay = upgraded->getNonConst(i);
+        if (!relay || (relay->getType() != Element::map)) {
+            // Junk entry so just return instead continue...
+            return (changed);
+        }
+
+        // Try to decode options.
+        ConstElementPtr options = relay->get("options");
+        if (!options) {
+            continue;
+        }
+        if (options->getType() != Element::string) {
+            return (changed);
+        }
+        string options_hex = options->stringValue();
+        if ((options_hex.size() < 3) || (options_hex[0] != '0') ||
+            (options_hex[1] != 'x')) {
+            return (changed);
+        }
+        try {
+            vector<uint8_t> options_data;
+            encode::decodeHex(options_hex.substr(2), options_data);
+            OptionCollection opts;
+            LibDHCP::unpackOptions6(options_data, DHCP6_OPTION_SPACE, opts);
+
+            auto remote_id_it = opts.find(D6O_REMOTE_ID);
+            if (remote_id_it != opts.end()) {
+                OptionPtr remote_id = remote_id_it->second;
+                if (remote_id) {
+                    vector<uint8_t> bytes = remote_id->toBinary(false);
+                    if (bytes.size() > 0) {
+                        relay->set("remote-id",
+                                   Element::create(encode::encodeHex(bytes)));
+                    }
+                }
+            }
+
+            auto relay_id_it = opts.find(D6O_RELAY_ID);
+            if (relay_id_it != opts.end()) {
+                OptionPtr relay_id = relay_id_it->second;
+                if (relay_id) {
+                    vector<uint8_t> bytes = relay_id->toBinary(false);
+                    if (bytes.size() > 0) {
+                        relay->set("relay-id",
+                                   Element::create(encode::encodeHex(bytes)));
+                    }
+                }
+            }
+        } catch (...) {
+            return (changed);
+        }
+    }
+
+    return (changed);
 }
 
 } // namespace isc::dhcp

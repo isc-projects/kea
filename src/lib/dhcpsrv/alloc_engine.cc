@@ -4655,7 +4655,7 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
 
     // Now we wrap the agent info in a map.  This allows for future expansion.
     ElementPtr extended_info = Element::createMap();
-    extended_info->set("relay-agent-info", relay_agent);
+    extended_info->set("sub-options", relay_agent);
 
     OptionPtr remote_id = rai->getOption(RAI_OPTION_REMOTE_ID);
     if (remote_id) {
@@ -4675,23 +4675,34 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
         }
     }
 
-    // Get a writable copy of the lease's current user context.
-    ElementPtr user_context;
-    if (lease->getContext()) {
-        user_context = UserContext::toElement(lease->getContext());
+    // Get a mutable copy of the lease's current user context.
+    ConstElementPtr user_context = lease->getContext();
+    ElementPtr mutable_user_context;
+    if (user_context && (user_context->getType() == Element::map)) {
+        mutable_user_context = copy(user_context, 0);
     } else {
-        user_context = Element::createMap();
+        mutable_user_context = Element::createMap();
+    }
+
+    // Get a mutable copy of the ISC entry.
+    ConstElementPtr isc = mutable_user_context->get("ISC");
+    ElementPtr mutable_isc;
+    if (isc && (isc->getType() == Element::map)) {
+        mutable_isc = copy(isc, 0);
+    } else {
+        mutable_isc = Element::createMap();
     }
 
     // Add/replace the extended info entry.
-    ConstElementPtr old_extended_info = user_context->get("ISC");
+    ConstElementPtr old_extended_info = mutable_isc->get("relay-agent-info");
     if (!old_extended_info || (*old_extended_info != *extended_info)) {
         changed = true;
-        user_context->set("ISC", extended_info);
+        mutable_isc->set("relay-agent-info", extended_info);
+        mutable_user_context->set("ISC", mutable_isc);
     }
 
     // Update the lease's user_context.
-    lease->setContext(user_context);
+    lease->setContext(mutable_user_context);
 
     return (changed);
 }
@@ -4721,7 +4732,7 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
     //       "options": "0x..."
     //   },..]
     //
-    ElementPtr relay_list = Element::createList();
+    ElementPtr extended_info = Element::createList();
     for (auto relay : ctx.query_->relay_info_) {
         ElementPtr relay_elem = Element::createMap();
         relay_elem->set("hop", ElementPtr(new IntElement(relay.hop_count_)));
@@ -4770,30 +4781,37 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
             }
         }
 
-        relay_list->add(relay_elem);
+        extended_info->add(relay_elem);
     }
 
-    // Now we wrap the list of relays in a map.  This allows for future expansion.
-    ElementPtr extended_info = Element::createMap();
-    extended_info->set("relays", relay_list);
-
-    // Get a writable copy of the lease's current user context.
-    ElementPtr user_context;
-    if (lease->getContext()) {
-        user_context = UserContext::toElement(lease->getContext());
+    // Get a mutable copy of the lease's current user context.
+    ConstElementPtr user_context = lease->getContext();
+    ElementPtr mutable_user_context;
+    if (user_context && (user_context->getType() == Element::map)) {
+        mutable_user_context = copy(user_context, 0);
     } else {
-        user_context = Element::createMap();
+        mutable_user_context = Element::createMap();
+    }
+
+    // Get a mutable copy of the ISC entry.
+    ConstElementPtr isc = mutable_user_context->get("ISC");
+    ElementPtr mutable_isc;
+    if (isc && (isc->getType() == Element::map)) {
+        mutable_isc = copy(isc, 0);
+    } else {
+        mutable_isc = Element::createMap();
     }
 
     // Add/replace the extended info entry.
-    ConstElementPtr old_extended_info = user_context->get("ISC");
+    ConstElementPtr old_extended_info = mutable_isc->get("relay-info");
     if (!old_extended_info || (*old_extended_info != *extended_info)) {
         changed = true;
-        user_context->set("ISC", extended_info);
+        mutable_isc->set("relay-info", extended_info);
+        mutable_user_context->set("ISC", mutable_isc);
     }
 
-    // Update the lease's user_context.
-    lease->setContext(user_context);
+    // Update the lease's user context.
+    lease->setContext(mutable_user_context);
 
     return (changed);
 }

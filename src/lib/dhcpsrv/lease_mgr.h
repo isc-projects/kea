@@ -817,6 +817,18 @@ public:
     /// on relay data contained in lease's user-context when the extended-store-info flag
     /// is enabled.
 
+    /// @brief Upgrade a V4 lease user context to the new extended info entry.
+    ///
+    /// @param lease Pointer to the lease to be updated.
+    /// @return True if the lease user context was updated, false otherwise.
+    static bool upgradeLease4ExtendedInfo(const Lease4Ptr& lease);
+
+    /// @brief Upgrade a V6 lease user context to the new extended info entry.
+    ///
+    /// @param lease Pointer to the lease to be updated.
+    /// @return True if the lease user context was updated, false otherwise.
+    static bool upgradeLease6ExtendedInfo(const Lease6Ptr& lease);
+
     /// @brief Returns existing IPv4 leases with a given relay-id.
     ///
     /// @param relay_id RAI Relay-ID sub-option value for relay_id of interest

@@ -22,6 +22,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
@@ -592,6 +593,380 @@ TEST (LeaseStatsQueryTest, subnetRangeCtor) {
     ASSERT_EQ(1, qry->getFirstSubnetID());
     ASSERT_EQ(2, qry->getLastSubnetID());
     ASSERT_EQ(LeaseStatsQuery::SUBNET_RANGE, qry->getSelectMode());
+}
+
+// Verify Lease4 user context upgrade basic operations.
+TEST(Lease4ExtendedInfoTest, basic) {
+    Lease4Ptr lease;
+
+    // No Lease.
+    ASSERT_FALSE(lease);
+    EXPECT_FALSE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+
+    // No user context.
+    lease.reset(new Lease4());
+    ASSERT_TRUE(lease);
+    ASSERT_FALSE(lease->getContext());
+    EXPECT_FALSE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+
+    // Not map user context.
+    ElementPtr user_context = Element::createList();
+    lease->setContext(user_context);
+    EXPECT_FALSE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+
+    // No ISC.
+    user_context = Element::createMap();
+    lease->setContext(user_context);
+    EXPECT_FALSE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+
+    // Not map user context.
+    ElementPtr isc = Element::create(string("..."));
+    user_context->set("ISC", isc);
+    EXPECT_FALSE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+
+    // No relay agent info.
+    isc = Element::createMap();
+    user_context->set("ISC", isc);
+    EXPECT_FALSE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+
+    // Not string relay agent info.
+    ElementPtr rai = Element::createMap();
+    isc->set("relay-agent-info", rai);
+    EXPECT_FALSE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+
+    // Positive case.
+    rai = Element::create(string("foo"));
+    isc->set("relay-agent-info", rai);
+    EXPECT_TRUE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+
+    ConstElementPtr new_user_context = lease->getContext();
+    ASSERT_TRUE(new_user_context);
+    ConstElementPtr new_isc = new_user_context->get("ISC");
+    ASSERT_TRUE(new_isc);
+    ConstElementPtr new_rai = new_isc->get("relay-agent-info");
+    ASSERT_TRUE(new_rai);
+    ASSERT_EQ(Element::map, new_rai->getType());
+    ASSERT_EQ("{ \"sub-options\": \"foo\" }", new_rai->str());
+}
+
+// Verify Lease4 user context upgrade complex operations.
+TEST(Lease4ExtendedInfoTest, upgradeLease4ExtendedInfo) {
+    // Structure that defines a test scenario.
+    struct Scenario {
+        string description_;  // test description.
+        string orig_;         // original user context.
+        string expected_;     // expected user context.
+        bool exp_ret_;        // expected returned value.
+    };
+
+    // Test scenarios.
+    vector<Scenario> scenarios {
+        {
+            "no context",
+            "",
+            "",
+            false
+        },
+        {
+            "context is not a map",
+            "[ ]",
+            "[ ]",
+            false
+        },
+        {
+            "no ISC entry",
+            "{ }",
+            "{ }",
+            false
+        },
+        {
+            "ISC entry is not a map",
+            "{ \"ISC\": true }",
+            "{ \"ISC\": true }",
+            false
+        },
+        {
+            "no relay agent info",
+            "{ \"ISC\": { } }",
+            "{ \"ISC\": { } }",
+            false
+        },
+        {
+            "relay agent info is not a string",
+            "{ \"ISC\": { \"relay-agent-info\": { } } }",
+            "{ \"ISC\": { \"relay-agent-info\": { } } }",
+            false
+        },
+        {
+            "relay agent info has a junk value",
+            "{ \"ISC\": { \"relay-agent-info\": \"foobar\" } }",
+            "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+            " \"foobar\" } } }",
+            true
+        },
+        {
+            "relay agent info has a rai without ids",
+            "{ \"ISC\": { \"relay-agent-info\": \"0x0104AABBCCDD\" } }",
+            "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+            " \"0x0104AABBCCDD\" } } }",
+            true
+        },
+        {
+            "relay agent info with other entries",
+            "{ \"foo\": 123, \"ISC\": { \"bar\": 456,"
+            " \"relay-agent-info\": \"0x0104AABBCCDD\" } }",
+            "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+            " \"0x0104AABBCCDD\" }, \"bar\": 456 }, \"foo\": 123 }",
+            true
+        },
+        {
+            "relay agent info has a rai with ids",
+            "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\" } }",
+            "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+            " \"0x02030102030C03AABBCC\", \"remote-id\": \"010203\","
+            " \"relay-id\": \"AABBCC\" } } }",
+            true
+        }
+    };
+
+    Lease4Ptr lease(new Lease4());
+    ElementPtr orig_context;
+    ElementPtr exp_context;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Create the original user context from JSON.
+        if (scenario.orig_.empty()) {
+            orig_context.reset();
+        } else {
+            ASSERT_NO_THROW(orig_context = Element::fromJSON(scenario.orig_))
+                << "invalid original context, test is broken";
+        }
+
+        // Create the expected user context from JSON.
+        if (scenario.expected_.empty()) {
+            exp_context.reset();
+        } else {
+            ASSERT_NO_THROW(exp_context = Element::fromJSON(scenario.expected_))
+                << "invalid expected context, test is broken";
+        }
+
+        // Perform the test.
+        lease->setContext(orig_context);
+        bool ret = LeaseMgr::upgradeLease4ExtendedInfo(lease);
+        EXPECT_EQ(scenario.exp_ret_, ret);
+        if (!exp_context) {
+            EXPECT_FALSE(lease->getContext());
+        } else {
+            ConstElementPtr context = lease->getContext();
+            ASSERT_TRUE(context);
+            EXPECT_TRUE(exp_context->equals(*context))
+                << "expected: " << *exp_context << std::endl
+                << "actual: " << *context << std::endl;
+        }
+    }
+}
+
+// Verify Lease6 user context upgrade basic operations.
+TEST(Lease6ExtendedInfoTest, basic) {
+    Lease6Ptr lease;
+
+    // No Lease.
+    ASSERT_FALSE(lease);
+    EXPECT_FALSE(LeaseMgr::upgradeLease6ExtendedInfo(lease));
+
+    // No user context.
+    lease.reset(new Lease6());
+    ASSERT_TRUE(lease);
+    ASSERT_FALSE(lease->getContext());
+    EXPECT_FALSE(LeaseMgr::upgradeLease6ExtendedInfo(lease));
+
+    // Not map user context.
+    ElementPtr user_context = Element::createList();
+    lease->setContext(user_context);
+    EXPECT_FALSE(LeaseMgr::upgradeLease6ExtendedInfo(lease));
+
+    // No ISC.
+    user_context = Element::createMap();
+    lease->setContext(user_context);
+    EXPECT_FALSE(LeaseMgr::upgradeLease6ExtendedInfo(lease));
+
+    // Not map user context.
+    ElementPtr isc = Element::create(string("..."));
+    user_context->set("ISC", isc);
+    EXPECT_FALSE(LeaseMgr::upgradeLease6ExtendedInfo(lease));
+
+    // No relays.
+    isc = Element::createMap();
+    user_context->set("ISC", isc);
+    EXPECT_FALSE(LeaseMgr::upgradeLease6ExtendedInfo(lease));
+
+    // Not list relays.
+    ElementPtr relays = Element::create(string("foo"));
+    isc->set("relays", relays);
+    EXPECT_FALSE(LeaseMgr::upgradeLease6ExtendedInfo(lease));
+
+    // Positive case.
+    relays = Element::createList();
+    isc->set("relays", relays);
+    relays->add(Element::create(string("foo")));
+    EXPECT_TRUE(LeaseMgr::upgradeLease6ExtendedInfo(lease));
+
+    ConstElementPtr new_user_context = lease->getContext();
+    ASSERT_TRUE(new_user_context);
+    ASSERT_EQ(Element::map, new_user_context->getType());
+    ConstElementPtr new_isc = new_user_context->get("ISC");
+    ASSERT_TRUE(new_isc);
+    ASSERT_EQ(Element::map, new_isc->getType());
+    ConstElementPtr relay_info = new_isc->get("relay-info");
+    ASSERT_TRUE(relay_info);
+    ASSERT_EQ(Element::list, relay_info->getType());
+    ASSERT_EQ("[ \"foo\" ]", relay_info->str());
+}
+
+// Verify Lease6 user context upgrade complex operations.
+TEST(Lease6ExtendedInfoTest, upgradeLease6ExtendedInfo) {
+    // Structure that defines a test scenario.
+    struct Scenario {
+        string description_;  // test description.
+        string orig_;         // original user context.
+        string expected_;     // expected user context.
+        bool exp_ret_;        // expected returned value.
+    };
+
+    // Test scenarios.
+    vector<Scenario> scenarios {
+        {
+            "no context",
+            "",
+            "",
+            false
+        },
+        {
+            "context is not a map",
+            "[ ]",
+            "[ ]",
+            false
+        },
+        {
+            "no ISC entry",
+            "{ }",
+            "{ }",
+            false
+        },
+        {
+            "ISC entry is not a map",
+            "{ \"ISC\": true }",
+            "{ \"ISC\": true }",
+            false
+        },
+        {
+            "no relays",
+            "{ \"ISC\": { } }",
+            "{ \"ISC\": { } }",
+            false
+        },
+        {
+            "relays is not a list",
+            "{ \"ISC\": { \"relays\": { } } }",
+            "{ \"ISC\": { \"relays\": { } } }",
+            false
+        },
+        {
+            "relays is empty",
+            "{ \"ISC\": { \"relays\": [ ] } }",
+            "{ \"ISC\": { \"relay-info\": [ ] } }",
+            true
+        },
+        {
+            "relays with other entries",
+            "{ \"foo\": 123, \"ISC\": { \"relays\": [ ], \"bar\": 456 } }",
+            "{ \"foo\": 123, \"ISC\": { \"relay-info\": [ ],"
+            " \"bar\": 456 } }",
+            true
+        },
+        {
+            "relays has a junk value",
+            "{ \"ISC\": { \"relays\": [ \"foobar\" ] } }",
+            "{ \"ISC\": { \"relay-info\": [ \"foobar\" ] } }",
+            true
+        },
+        {
+            "one relay with no ids",
+            "{ \"ISC\": { \"relays\": [ { \"hop\": 33,"
+            " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+            " \"options\": \"0x00C800080102030405060708\" } ] } }",
+            "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+            " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+            " \"options\": \"0x00C800080102030405060708\" } ] } }",
+            true
+        },
+        {
+            "one relay with remote and relay ids",
+            "{ \"ISC\": { \"relays\": [ { \"hop\": 100,"
+            " \"options\": \"0x00250006010203040506003500086464646464646464\","
+            " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\" } ] } }",
+            "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100,"
+            " \"options\": \"0x00250006010203040506003500086464646464646464\","
+            " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\","
+            " \"remote-id\": \"010203040506\","
+            " \"relay-id\": \"6464646464646464\" } ] } }",
+            true
+        },
+        {
+            "two relays",
+            "{ \"ISC\": { \"relays\": [ { \"hop\": 33,"
+            " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+            " \"options\": \"0x00C800080102030405060708\" }, { \"hop\": 100,"
+            " \"options\": \"0x00250006010203040506003500086464646464646464\","
+            " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\" } ] } }",
+            "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+            " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+            " \"options\": \"0x00C800080102030405060708\" }, { \"hop\": 100,"
+            " \"options\": \"0x00250006010203040506003500086464646464646464\","
+            " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\","
+            " \"remote-id\": \"010203040506\","
+            " \"relay-id\": \"6464646464646464\" } ] } }",
+            true
+        }
+    };
+
+    Lease6Ptr lease(new Lease6());
+    ElementPtr orig_context;
+    ElementPtr exp_context;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Create the original user context from JSON.
+        if (scenario.orig_.empty()) {
+            orig_context.reset();
+        } else {
+            ASSERT_NO_THROW(orig_context = Element::fromJSON(scenario.orig_))
+                << "invalid original context, test is broken";
+        }
+
+        // Create the expected user context from JSON.
+        if (scenario.expected_.empty()) {
+            exp_context.reset();
+        } else {
+            ASSERT_NO_THROW(exp_context = Element::fromJSON(scenario.expected_))
+                << "invalid expected context, test is broken";
+        }
+
+        // Perform the test.
+        lease->setContext(orig_context);
+        bool ret = LeaseMgr::upgradeLease6ExtendedInfo(lease);
+        EXPECT_EQ(scenario.exp_ret_, ret);
+        if (!exp_context) {
+            EXPECT_FALSE(lease->getContext());
+        } else {
+            ConstElementPtr context = lease->getContext();
+            ASSERT_TRUE(context);
+            EXPECT_TRUE(exp_context->equals(*context))
+                << "expected: " << *exp_context << std::endl
+                << "actual: " << *context << std::endl;
+        }
+    }
 }
 
 // There's no point in calling any other methods in LeaseMgr, as they

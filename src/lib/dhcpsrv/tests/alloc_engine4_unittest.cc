@@ -3701,52 +3701,78 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
         "no original context, rai",
         "",
         "0x52060104aabbccdd",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x0104AABBCCDD\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104AABBCCDD\" } } }",
         true
     },
     {
         "no original context, rai, remote and relay ids",
         "",
         "0x520a02030102030c03aabbcc",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\","
-        " \"remote-id\": \"010203\", \"relay-id\": \"AABBCC\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x02030102030C03AABBCC\", \"remote-id\": \"010203\","
+        " \"relay-id\": \"AABBCC\" } } }",
         true
     },
     {
         "some original context, rai",
-        "{\"foo\": 123}",
+        "{\"foo\": 123, \"ISC\":{\"bar\": 456}}",
         "0x52060104aabbccdd",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x0104AABBCCDD\" }, \"foo\": 123 }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104AABBCCDD\" }, \"bar\": 456 }, \"foo\": 123 }",
+        true
+    },
+    {
+        "bad original context, rai",
+        "[\"foo\"]",
+        "0x52060104aabbccdd",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104AABBCCDD\" } } }",
+        true
+    },
+    {
+        "some original context with bad isc entry, rai",
+        "{\"foo\": 123, \"ISC\":[\"bar\"]}",
+        "0x52060104aabbccdd",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104AABBCCDD\" } }, \"foo\": 123 }",
         true
     },
     {
         "some original context, rai, remote and relay ids",
-        "{\"foo\": 123}",
+        "{\"foo\": 123, \"ISC\":{ \"bar\": 456}}",
         "0x520a02030102030c03aabbcc",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\","
-        " \"remote-id\": \"010203\", \"relay-id\": \"AABBCC\" }, \"foo\": 123 }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x02030102030C03AABBCC\", \"remote-id\": \"010203\","
+        " \"relay-id\": \"AABBCC\" }, \"bar\": 456 }, \"foo\": 123 }",
         true
     },
     {
         "original rai context, no rai",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x0104AABBCCDD\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104AABBCCDD\" } } }",
         "",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x0104AABBCCDD\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104AABBCCDD\" } } }",
         false
     },
     {
         "original rai context, different rai",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x0104AABBCCDD\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104AABBCCDD\" } } }",
         "0x52060104ddeeffaa",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x0104DDEEFFAA\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104DDEEFFAA\" } } }",
         true
     },
     {
         "original rai context, different rai, remote and relay ids",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x0104AABBCCDD\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x0104AABBCCDD\" } } }",
         "0x520a02030102030c03aabbcc",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\","
-        " \"remote-id\": \"010203\", \"relay-id\": \"AABBCC\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x02030102030C03AABBCC\", \"remote-id\": \"010203\","
+        " \"relay-id\": \"AABBCC\" } } }",
         true
     }};
 
@@ -3879,14 +3905,16 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
         "create client two with rai",
         mac2,
         "0x52050104a1b1c1d1",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104A1B1C1D1\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x52050104A1B1C1D1\" } } }",
         mac2_addr
     },
     {
         "renew client two without rai",
         {},
         "",
-        "{ \"ISC\": { \"relay-agent-info\": \"0x52050104A1B1C1D1\" } }",
+        "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+        " \"0x52050104A1B1C1D1\" } } }",
         mac2_addr
     }};
 
