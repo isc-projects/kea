@@ -46,26 +46,22 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     elif test -d "${with_library}"; then
       # User has pointed --with-library to a directory.
       # Let's try to find a library.pc first inside that directory.
-      library_pc="${with_library}/lib/pkgconfig/${library}.pc"
-
-      if test -f "${library_pc}"; then
-        if test -n "${PKG_CONFIG}"; then
-          AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
+      for l in lib lib64; do
+        library_pc="${with_library}/${l}/pkgconfig/${library}.pc"
+        if test -f "${library_pc}"; then
+          if test -n "${PKG_CONFIG}"; then
+            AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
+          else
+            AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file found at ${library_pc}, but pkg-config is not available])
+          fi
         else
-          AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file found at ${library_pc}, but pkg-config is not available])
+          AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file not found at ${library_pc}])
         fi
-      else
-        AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file not found at ${library_pc}])
-      fi
+      done
     else
       AC_MSG_RESULT(["no"])
       AX_DISPLAY_LIBRARY_WARNINGS()
-      # TODO: It can also point to a .pc file, but the current sysrepo
-      # implementation does not allow it because there are more .pc files than
-      # --with flags. After migration to sysrepo v2 has been done there will be
-      # four flags and four .pc files so change the error message to say that it
-      # can also point to a .pc file.
-      AC_MSG_ERROR(["${with_library}" needs to point to the installation directory])
+      AC_MSG_ERROR(["${with_library}" needs to point to the installation directory or to a .pc file])
     fi
 
   else
