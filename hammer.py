@@ -1072,60 +1072,48 @@ def _install_gtest_sources():
     os.unlink('/tmp/gtest.tar.gz')
 
 
-def _install_libyang_from_sources():
+def _install_libyang_from_sources(ignore_errors = False):
     """Install libyang from sources."""
     for prefix in ['/usr', '/usr/local']:
-        libyang_path = f'{prefix}/include/libyang/libyang.h'
-        if os.path.exists(libyang_path):
-            log.info(f'libyang is already installed in {libyang_path}.')
+        libyang_so = f'{prefix}/lib/libyang.so'
+        libyang_header = f'{prefix}/include/libyang/version.h'
+        if (os.path.exists(libyang_so) and os.path.exists(libyang_header) and
+            execute(f"grep -F '#define LY_VERSION_MAJOR 2' '{libyang_header}'", raise_error=False) == 0):
+            log.info(f'libyang is already installed at {libyang_so}.')
             return
+
+    version='56d4e07ef1cdeab3eb2e6700247f83ec9148edcc'
 
     execute('rm -rf /tmp/libyang')
     try:
         execute('git clone https://github.com/CESNET/libyang.git /tmp/libyang')
-        execute('git checkout v1.0.240', cwd='/tmp/libyang')
+        execute(f'git checkout {version}', cwd='/tmp/libyang')
         execute('mkdir /tmp/libyang/build')
-        execute('cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF', cwd='/tmp/libyang/build')
+        execute('cmake  ..', cwd='/tmp/libyang/build')
         execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/libyang/build')
         execute('sudo make install', cwd='/tmp/libyang/build')
+        system, revision = get_system_revision()
+        if system != 'alpine':
+            execute('sudo ldconfig')
+    except Exception as e:
+        log.exception(str(e))
+        if not ignore_errors:
+            raise e
     finally:
         execute('rm -rf /tmp/libyang')
 
 
-def _install_sysrepo_from_sources():
+def _install_sysrepo_from_sources(ignore_errors = False):
     """Install sysrepo from sources."""
     for prefix in ['/usr', '/usr/local']:
-        sysrepo_path = f'{prefix}/include/sysrepo.h'
-        if os.path.exists(sysrepo_path):
-            log.info(f'sysrepo is already installed in {sysrepo_path}.')
+        sysrepo_so = f'{prefix}/lib/libsysreo.so.h'
+        sysrepo_header = f'{prefix}/include/sysreo/version.h'
+        if (os.path.exists(sysrepo_so) and os.path.exists(sysrepo_header) and
+            execute(f"grep -F '#define SR_VERSION_MAJOR 7' '{sysrepo_header}'", raise_error=False) == 0):
+            log.info(f'sysrepo is already installed at {sysrepo_so}.')
             return
 
-    # sysrepo is picky about the libyang version it uses. If the wrong version
-    # is used, you'll get an error like this:
-    # Could NOT find LibYANG: Found unsuitable version "1.10.7", but required is
-    # at least "1.10.29" (found /usr/lib/libyang.so)
-    # Let's adjust the sysrepo version based on what libyang version we
-    # have available. This is a dictionary of sysrepo versions indexed by
-    # libyang versions:
-    versions = {
-        '1.10.17': '1.4.122',   # fedora 34
-        '1.10.29': '1.4.140',
-        '1.10.240': '1.4.140',
-    }
-
-    # Retrieve libyang version and find the respective sysrepo version.
-    for prefix in ['/usr', '/usr/local']:
-        _, libyang_version = execute(
-            ''' cat %s/include/libyang/libyang.h 2>/dev/null | grep '#define LY_VERSION ' | cut -d ' ' -f 3 | sed 's/"//g' ''' % prefix,
-            capture=True,
-        )
-        if len(libyang_version) > 0:
-            libyang_version = libyang_version.rstrip()
-            break
-
-    # If missing, try the latest v1.x version. But if it complains further down,
-    # please add the right version pair to the {versions} dictionary.
-    sysrepo_version = versions.get(libyang_version, '1.4.140')
+    version='v2.1.84'
 
     # Create repository for YANG modules and change ownership to current user.
     execute('sudo mkdir -p /etc/sysrepo')
@@ -1134,13 +1122,89 @@ def _install_sysrepo_from_sources():
     execute('rm -rf /tmp/sysrepo')
     try:
         execute('git clone https://github.com/sysrepo/sysrepo.git /tmp/sysrepo')
-        execute('git checkout v%s' % sysrepo_version, cwd='/tmp/sysrepo')
+        execute(f'git checkout {version}', cwd='/tmp/sysrepo')
         execute('mkdir /tmp/sysrepo/build')
-        execute('cmake .. -DGEN_CPP_BINDINGS=ON -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=OFF -DREPO_PATH=/etc/sysrepo', cwd='/tmp/sysrepo/build')
+        execute('cmake -DREPO_PATH=/etc/sysrepo ..', cwd='/tmp/sysrepo/build')
         execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/sysrepo/build')
         execute('sudo make install', cwd='/tmp/sysrepo/build')
+        system, revision = get_system_revision()
+        if system != 'alpine':
+            execute('sudo ldconfig')
+    except Exception as e:
+        log.exception(str(e))
+        if not ignore_errors:
+            raise e
     finally:
         execute('rm -rf /tmp/sysrepo')
+
+
+def _install_libyang_cpp_from_sources(ignore_errors = False):
+    """Install libyang-cpp from sources."""
+    for prefix in ['/usr', '/usr/local']:
+        libyang_cpp_so = f'{prefix}/lib/libyang-cpp.so'
+        libyang_cpp_pc = f'{prefix}/lib/pkgconfig/libyang-cpp.pc'
+        if (os.path.exists(libyang_cpp_so) and os.path.exists(libyang_cpp_pc) and
+            execute(f"grep -F 'Version: 1.1.0' '{libyang_cpp_pc}'", raise_error=False) == 0):
+            log.info(f'libyang-cpp is already installed at {libyang_cpp_so}.')
+            return
+
+    version='7824d9a862f2dc1d8ad4f6a90ab6cee9200f7c81'
+
+    execute('rm -rf /tmp/libyang')
+    try:
+        execute('git clone https://github.com/CESNET/libyang-cpp.git /tmp/libyang-cpp')
+        execute(f'git checkout {version}', cwd='/tmp/libyang-cpp')
+        execute('mkdir /tmp/libyang-cpp/build')
+        execute('cmake -DBUILD_TESTING=OFF .. ', cwd='/tmp/libyang-cpp/build')
+        execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/libyang-cpp/build')
+        execute('sudo make install', cwd='/tmp/libyang-cpp/build')
+        system, revision = get_system_revision()
+        if system != 'alpine':
+            execute('sudo ldconfig')
+    except Exception as e:
+        log.exception(str(e))
+        if not ignore_errors:
+            raise e
+    finally:
+        execute('rm -rf /tmp/libyang-cpp')
+
+
+def _install_sysrepo_cpp_from_sources(ignore_errors = False):
+    """Install sysrepo-cpp from sources."""
+    for prefix in ['/usr', '/usr/local']:
+        sysrepo_cpp_so = f'{prefix}/lib/libsysrepo-cpp.so'
+        sysrepo_cpp_pc = f'{prefix}/lib/pkgconfig/sysrepo-cpp.pc'
+        if (os.path.exists(sysrepo_cpp_so) and os.path.exists(sysrepo_cpp_pc) and
+            execute(f"grep -F 'Version: 1.1.0' '{sysrepo_cpp_pc}'", raise_error=False) == 0):
+            log.info(f'sysrepo-cpp is already installed at {sysrepo_cpp_so}.')
+            return
+
+    version='e66b2f0c53a428eeb743d355cf86fb30e8e491f1'
+
+    execute('rm -rf /tmp/libyang')
+    try:
+        execute('git clone https://github.com/sysrepo/sysrepo-cpp.git /tmp/sysrepo-cpp')
+        execute(f'git checkout {version}', cwd='/tmp/sysrepo-cpp')
+        execute('mkdir /tmp/sysrepo-cpp/build')
+        execute('cmake -DBUILD_TESTING=OFF .. ', cwd='/tmp/sysrepo-cpp/build')
+        execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/sysrepo-cpp/build')
+        execute('sudo make install', cwd='/tmp/sysrepo-cpp/build')
+        system, revision = get_system_revision()
+        if system != 'alpine':
+            execute('sudo ldconfig')
+    except Exception as e:
+        log.exception(str(e))
+        if not ignore_errors:
+            raise e
+    finally:
+        execute('rm -rf /tmp/sysrepo-cpp')
+
+
+def _install_netconf_libraries_from_sources(ignore_errors = False):
+    _install_libyang_from_sources(ignore_errors)
+    _install_sysrepo_from_sources(ignore_errors)
+    _install_libyang_cpp_from_sources(ignore_errors)
+    _install_sysrepo_cpp_from_sources(ignore_errors)
 
 
 def _get_local_timezone():
@@ -1476,7 +1540,45 @@ def _install_freeradius_client(system, revision, features, env, check_times):
     log.info('freeradius-client successfully installed.')
 
 
-def prepare_system_local(features, check_times):
+def _get_package_version(package: str):
+    """
+    Returns the version available in the package manager's repository for the requested package.
+    :param package: the name of the package whose version is retrieved
+    """
+    system, revision = get_system_revision()
+    if system == 'alpine':
+        cmd = "apk search --exact {0} | sed 's/{0}-//g'"
+    elif system in ['debian', 'ubuntu']:
+        cmd = "apt-cache show {} | grep -F 'Version:' | cut -d ' ' -f 2"
+    elif system in ['centos', 'fedora', 'rhel']:
+        cmd = "dnf list {} | tr -s ' ' | cut -d ' ' -f 2 | tail -n 1"
+    elif system == 'freebsd':
+        cmd = "pkg search {0} | grep -Eo '^{0}-[0-9_,\.]+' | sed 's/{0}-//g'"
+    elif system == 'arch':
+        cmd = "pacman -Qi {} | tr -s ' ' | grep -F 'Version :' | cut -d ' ' -f 3"
+    else:
+        raise NotImplementedError(f'_get_package_version not implemented for {system}')
+
+    cmd = cmd.format(package)
+    _, output = execute(cmd, capture=True)
+    return output.strip()
+
+
+def require_minimum_package_version(package: str, minimum: str):
+    """
+    Returns true if a given package is available to be installed with
+    the given minimum version or greater.
+    :param package: the name of the package that is checked
+    :param minimum: the semantic version that the package is checked against
+    """
+    version = _get_package_version(package)
+    if version < minimum:
+        message = f"ERROR: {package} has version {version}, but must be >= {minimum}"
+        log.error(message)
+        raise Exception(message)
+
+
+def prepare_system_local(features, check_times, ignore_errors_for):
     """Prepare local system for Kea development based on requested features."""
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
@@ -1487,6 +1589,9 @@ def prepare_system_local(features, check_times):
     system, revision = get_system_revision()
     log.info('Preparing deps for %s %s', system, revision)
 
+    # Check if package versions cannot be met.
+    if 'netconf' in features and 'netconf' not in ignore_errors_for:
+        require_minimum_package_version('cmake', '3.19')
 
     # prepare fedora
     if system == 'fedora':
@@ -1522,17 +1627,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            if int(revision) <= 33 or int(revision) >= 35:
-                packages.extend(['cmake', 'pcre-devel'])
-                deferred_functions.extend([
-                    _install_libyang_from_sources,
-                    _install_sysrepo_from_sources,
-                ])
-            else:
-                packages.extend(['cmake', 'libyang', 'libyang-devel', 'libyang-cpp', 'libyang-cpp-devel'])
-                deferred_functions.append(_install_sysrepo_from_sources)
-
-
+            packages.extend(['cmake', 'pcre2-devel'])
 
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
@@ -1585,15 +1680,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            # CentOS 8+ systems have the libyang package, but they are missing
-            # libyang-cpp which results in this error when building sysrepo:
-            # "Required libyang C++ bindings not found!"
-            # So until it is added, install libyang from sources.
-            packages.extend(['cmake', 'pcre-devel'])
-            deferred_functions.extend([
-                _install_libyang_from_sources,
-                _install_sysrepo_from_sources,
-            ])
+            packages.extend(['cmake', 'pcre2-devel'])
 
         if 'unittest' in features:
             packages.append('wget')
@@ -1649,15 +1736,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            # RHEL 8+ systems have the libyang package, but they are missing
-            # libyang-cpp which results in this error when building sysrepo:
-            # "Required libyang C++ bindings not found!"
-            # So until it is added, install libyang from sources.
-            packages.extend(['cmake', 'pcre-devel'])
-            deferred_functions.extend([
-                _install_libyang_from_sources,
-                _install_sysrepo_from_sources,
-            ])
+            packages.extend(['cmake', 'pcre2-devel'])
 
         if 'unittest' in features:
             packages.append('wget')
@@ -1717,16 +1796,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            if float(revision) <= 21.04 or revision == '22.04':
-                # at the moment of adding 22.04 there are no libsysrepo-cpp-dev packages
-                packages.extend(['cmake', 'libpcre3-dev'])
-                deferred_functions.extend([
-                    _install_libyang_from_sources,
-                    _install_sysrepo_from_sources,
-                ])
-            else:
-                packages.extend(['libyang-dev', 'libyang-cpp-dev',
-                                 'libsysrepo-dev', 'libsysrepo-cpp-dev'])
+            packages.extend(['cmake', 'libpcre2-dev'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
@@ -1745,14 +1815,7 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'netconf' in features:
-            if int(revision) <= 11:
-                packages.extend(['cmake', 'libpcre3-dev'])
-                deferred_functions.extend([
-                    _install_libyang_from_sources,
-                    _install_sysrepo_from_sources,
-                ])
-            else:
-                packages.extend(['libyang-dev', 'libyang-cpp-dev', 'libsysrepo-dev', 'libsysrepo-cpp-dev'])
+            packages.extend(['cmake', 'libpcre2-dev'])
 
         if 'docs' in features:
             if revision == '8':
@@ -1816,9 +1879,8 @@ def prepare_system_local(features, check_times):
 
         if 'docs' in features:
             # Get the python version from the remote repositories.
-            _, output = execute("pkg search python | grep -Eo '^python-[0-9]+\.[0-9]+' | cut -d '-' -f 2 | tr -d '.'",
-                                capture=True)
-            pyv = output.strip()
+            pyv = _get_package_version('python')
+            pyv = pyv.split('_')[0].replace('.', '')
             log.info(">>>>> Detected Sphinx packages version: py%s-sphinx", pyv)
             packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme'])
 
@@ -1847,15 +1909,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            # FreeBSD systems have the libyang package, but they are missing
-            # libyang-cpp which results in this error when building sysrepo:
-            # "Required libyang C++ bindings not found!"
-            # So until it is added, install libyang from sources.
-            packages.extend(['cmake', 'pcre'])
-            deferred_functions.extend([
-                _install_libyang_from_sources,
-                _install_sysrepo_from_sources,
-            ])
+            packages.extend(['cmake', 'pcre2'])
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
@@ -1891,15 +1945,7 @@ def prepare_system_local(features, check_times):
             _install_gtest_sources()
 
         if 'netconf' in features:
-            # Alpine systems have the libyang-dev package, but they are missing
-            # libyang-cpp-dev which results in this error when building sysrepo:
-            # "Required libyang C++ bindings not found!"
-            # So until it is added, install libyang from sources.
-            packages.extend(['cmake', 'pcre-dev'])
-            deferred_functions.extend([
-                _install_libyang_from_sources,
-                _install_sysrepo_from_sources,
-            ])
+            packages.extend(['cmake', 'pcre2-dev'])
 
         if 'mysql' in features:
             packages.extend(['mariadb-dev', 'mariadb', 'mariadb-client'])
@@ -1942,15 +1988,11 @@ def prepare_system_local(features, check_times):
         else:
             execute('sudo adduser %s abuild' % current_user)
 
-    elif system == 'arch':
-        if 'netconf' in features:
-            deferred_functions.extend([
-                _install_libyang_from_sources,
-                _install_sysrepo_from_sources,
-            ])
-
     else:
         raise NotImplementedError('no implementation for %s' % system)
+
+    if 'netconf' in features:
+        _install_netconf_libraries_from_sources('netconf' in ignore_errors_for)
 
     # Packages required by these functions have been installed. Now call them.
     for f in deferred_functions:
@@ -2057,20 +2099,12 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'perfdhcp' in features:
         cmd += ' --enable-perfdhcp'
     if 'netconf' in features:
-        cmd += ' --with-libyang --with-sysrepo'
+        cmd += ' --with-libyang --with-sysrepo --with-libyang-cpp --with-sysrepo-cpp'
 
     # do ./configure
     execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times, dry_run=dry_run)
 
     if 'netconf' in features:
-        # Make sure sysrepoctl can find its libraries. Some systems don't look
-        # in /usr/local.
-        if 'LD_LIBRARY_PATH' not in env:
-            env['LD_LIBRARY_PATH'] = ''
-        if len(env['LD_LIBRARY_PATH']):
-            env['LD_LIBRARY_PATH'] += ':'
-        env['LD_LIBRARY_PATH'] += '/usr/local/lib:/usr/local/lib64'
-
         # ./configure has created reinstall.sh from reinstall.sh.in. Call it.
         execute('./src/share/yang/modules/utils/reinstall.sh', cwd=src_path, env=env)
 
@@ -2712,6 +2746,8 @@ def parse_args():
                                 action=CollectCommaSeparatedArgsAction, help=hlp)
     parent_parser2.add_argument('--with-randomly', metavar='FEATURE', nargs='+', default=set(),
                                 action=CollectCommaSeparatedArgsAction, help=hlp)
+    parent_parser2.add_argument('--ignore-errors-for', metavar='FEATURE', nargs='+', default=set(),
+                                action=CollectCommaSeparatedArgsAction, help=hlp)
     parent_parser2.add_argument('-l', '--leave-system', action='store_true',
                                 help='At the end of the command do not destroy vagrant system. Default behavior is '
                                 'destroying the system.')
@@ -2950,7 +2986,7 @@ def prepare_system_cmd(args):
     log.info('Enabled features: %s', ' '.join(features))
 
     if args.provider == 'local':
-        prepare_system_local(features, args.check_times)
+        prepare_system_local(features, args.check_times, args.ignore_errors_for)
         return
 
     ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
