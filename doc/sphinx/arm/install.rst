@@ -18,6 +18,46 @@ go to https://cloudsmith.io/~isc/repos, choose the repository of
 interest, and then click the ``Set Me Up`` button for detailed
 instructions.
 
+Installation From Cloudsmith Packages
+-------------------------------------
+ISC provides Kea packages for Alpine, CentOS, Debian, Fedora, RHEL, and Ubuntu.
+The recommended method for installing Kea on any of these systems from the
+Cloudsmith repository for Kea release 2.3.2 is to install the ``isc-kea``
+metapackage. This metapackage is included on all supported distros and will
+install all of the services offered by the Kea software suite.
+
+If you would only like to install specific components offered by Kea, this
+can be accomplished by installing any of the following packages:
+
+- ``isc-kea-dhcp4`` — Kea DHCPv4 server package
+
+- ``isc-kea-dhcp6`` — Kea DHCPv6 server package
+
+- ``isc-kea-dhcp-ddns`` — Kea DHCP DDNS server
+
+- ``isc-kea-ctrl-agent`` — Kea Control Agent for remote configuration
+
+- ``isc-kea-admin`` — Kea Database administration tools
+
+- ``isc-kea-hooks`` — Kea open-source DHCP hooks
+
+Kea Premium hook packages are not included in the ``isc-kea-hooks`` package.
+If you have access to the premium hooks, the packages will have the
+``isc-kea-premium-`` prefix.
+
+Once installed, the services can be managed through your distribution's
+service manager. The services will be named: ``kea-dhcp4``, ``kea-dhcp6``,
+``kea-dhcp-ddns``, and ``kea-ctrl-agent``.
+
+.. note::
+   The real service names on Debian and Ubuntu follow the names of the older
+   packages in order to maintain compatibility in pre-existing scripts. A
+   systemd service alias is used to allow users to refer to them with shorter
+   names. In order to call ``systemctl enable`` on these services, you must
+   use the real service names, which are: ``isc-kea-dhcp4-server``,
+   ``isc-kea-dhcp6-server``, ``isc-kea-dhcp-ddns-server``, and
+   ``isc-kea-ctrl-agent``.
+
 .. _install-hierarchy:
 
 Installation Hierarchy

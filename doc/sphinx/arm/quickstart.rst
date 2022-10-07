@@ -79,7 +79,7 @@ easier to install Kea using native packages.
 
     .. code-block:: console
 
-        $ sudo apt-get install isc-kea-dhcp6-server
+        $ sudo apt-get install isc-kea-dhcp6
 
    or all packages:
 
@@ -103,7 +103,7 @@ easier to install Kea using native packages.
 
     .. code-block:: console
 
-       # systemctl restart isc-kea-dhcp6-server
+       # systemctl restart kea-dhcp6
 
    ``keactrl`` is not available in packages as similar functionality is provided
    by the native systemctl scripts.

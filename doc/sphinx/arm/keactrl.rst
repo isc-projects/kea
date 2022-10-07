@@ -348,10 +348,10 @@ Briefly, here are example commands to check status, start, stop, and restart var
 
 .. code-block:: console
 
-   # systemctl status isc-kea-ctrl-agent
-   # systemctl start isc-kea-dhcp4-server
-   # systemctl stop isc-kea-dhcp6-server
-   # systemctl restart isc-kea-dhcp-ddns-server
+   # systemctl status kea-ctrl-agent
+   # systemctl start kea-dhcp4
+   # systemctl stop kea-dhcp6
+   # systemctl restart kea-dhcp-ddns
 
 Note that the service names may be slightly different between Linux distributions; in general,
 we have followed the naming conventions in third-party packages. In particular,
