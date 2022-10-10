@@ -2020,8 +2020,26 @@ TEST_F(Dhcpv6SrvTest, pdRenewCache) {
 // - lease is actually removed from LeaseMgr
 // - assigned-nas stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
+
     testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
                      IOAddress("2001:db8:1:1::cafe:babe"));
+}
+
+// This test verifies that incoming (positive) RELEASE with address can be
+// handled properly, that a REPLY is generated, that the response has status
+// code and that the lease is expired and not removed from the database.
+//
+// expected:
+// - returned REPLY message has copy of client-id
+// - returned REPLY message has server-id
+// - returned REPLY message has IA_NA that does not include an IAADDR
+// - lease is actually expired instead of being removed from LeaseMgr
+// - assigned-nas stats counter is unchanged
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDelete) {
+    testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                     IOAddress("2001:db8:1:1::cafe:babe"), false);
 }
 
 // This test verifies that incoming (positive) RELEASE with prefix can be
@@ -2035,8 +2053,26 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
 // - lease is actually removed from LeaseMgr
 // - assigned-pds stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
+
     testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
                      IOAddress("2001:db8:1:2::"));
+}
+
+// This test verifies that incoming (positive) RELEASE with prefix can be
+// handled properly, that a REPLY is generated, that the response has
+// status code and that the lease is expired and not removed from the database.
+//
+// expected:
+// - returned REPLY message has copy of client-id
+// - returned REPLY message has server-id
+// - returned REPLY message has IA_PD that does not include an IAPREFIX
+// - lease is actually expired instead of being removed from LeaseMgr
+// - assigned-pds stats counter is unchanged
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDelete) {
+    testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                     IOAddress("2001:db8:1:2::"), false);
 }
 
 // This test verifies that incoming (invalid) RELEASE with an address

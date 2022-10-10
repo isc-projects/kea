@@ -261,7 +261,6 @@ public:
         pkt->addOption(opt_ia);
     }
 
-
     /// @brief Adds IA option to the message.
     ///
     /// Added option holds status code.
@@ -484,7 +483,6 @@ public:
         }
     }
 
-
     /// @brief Tests that the client's message holding an FQDN is processed
     /// and that lease is acquired.
     ///
@@ -523,18 +521,18 @@ public:
 
         ASSERT_FALSE(drop);
         if (msg_type == DHCPV6_SOLICIT) {
-          ASSERT_NO_THROW(reply = srv_->processSolicit(ctx));
+            ASSERT_NO_THROW(reply = srv_->processSolicit(ctx));
 
         } else if (msg_type == DHCPV6_REQUEST) {
-          ASSERT_NO_THROW(reply = srv_->processRequest(ctx));
+            ASSERT_NO_THROW(reply = srv_->processRequest(ctx));
 
         } else if (msg_type == DHCPV6_RENEW) {
-          ASSERT_NO_THROW(reply = srv_->processRenew(ctx));
+            ASSERT_NO_THROW(reply = srv_->processRenew(ctx));
 
         } else if (msg_type == DHCPV6_RELEASE) {
             // For Release no lease will be acquired so we have to leave
             // function here.
-          ASSERT_NO_THROW(reply = srv_->processRelease(ctx));
+            ASSERT_NO_THROW(reply = srv_->processRelease(ctx));
             return;
         } else {
             // We are not interested in testing other message types.
@@ -944,7 +942,6 @@ TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 }
 
-
 // Test creation of the NameChangeRequest to remove reverse mapping for the
 // given lease.
 TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
@@ -1038,7 +1035,6 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
 
-
     // Client may send another request message with a new domain-name. In this
     // case the same lease will be returned. The existing DNS entry needs to
     // be replaced with a new one. Server should determine that the different
@@ -1085,7 +1081,6 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsSameFqdn) {
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
 
-
     // Client may send another request message with a same domain-name. In this
     // case the same lease will be returned. The existing DNS entry should be
     // left alone, so we expect no NameChangeRequests queued..
@@ -1122,7 +1117,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
 }
-
 
 // Test that client may send Request followed by the Renew, both holding
 // FQDN options, but each option holding different domain-name. The Renew
@@ -1236,7 +1230,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
     // Queue should be empty.
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
-
     // Renew with both N and S flags = 0. This tells the server to update
     // both directions, which should change forward flag to true. This should
     // generate a reverse only remove and a dual add.
@@ -1276,8 +1269,10 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
                             lease_->cltt_, lease_->valid_lft_);
 }
 
-
 TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
+
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the
     // creation of a new lease and the appropriate NameChangeRequest
@@ -1309,6 +1304,33 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             lease_->cltt_, lease_->valid_lft_);
+}
+
+TEST_F(FqdnDhcpv6SrvTest, processRequestReleaseNoDelete) {
+    // Create a Request message with FQDN option and generate server's
+    // response using processRequest function. This will result in the
+    // creation of a new lease and the appropriate NameChangeRequest
+    // to add both reverse and forward mapping to DNS.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "myhost.example.com.");
+
+    // The lease should have been recorded in the database.
+    lease_ = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                   IOAddress("2001:db8:1:1::dead:beef"));
+    ASSERT_TRUE(lease_);
+
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, lease_->valid_lft_);
+
+    // Client may send Release message. In this case the lease should be
+    // expired and no NameChangeRequest to remove DNS entries is generated.
+    testProcessMessage(DHCPV6_RELEASE, "otherhost.example.com",
+                       "otherhost.example.com.");
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 // Checks that the server include DHCPv6 Client FQDN option in its
@@ -1606,7 +1628,6 @@ TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
     testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 }
-
 
 // Verifies that setting hostname-char-set sanitizes FQDN option
 // values received from clients.

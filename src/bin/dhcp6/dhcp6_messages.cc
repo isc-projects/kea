@@ -136,10 +136,14 @@ extern const isc::log::MessageID DHCP6_QUERY_DATA = "DHCP6_QUERY_DATA";
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT = "DHCP6_RAPID_COMMIT";
 extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_NA = "DHCP6_RELEASE_NA";
+extern const isc::log::MessageID DHCP6_RELEASE_NA_DELETED = "DHCP6_RELEASE_NA_DELETED";
+extern const isc::log::MessageID DHCP6_RELEASE_NA_EXPIRED = "DHCP6_RELEASE_NA_EXPIRED";
 extern const isc::log::MessageID DHCP6_RELEASE_NA_FAIL = "DHCP6_RELEASE_NA_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_NA_FAIL_WRONG_DUID = "DHCP6_RELEASE_NA_FAIL_WRONG_DUID";
 extern const isc::log::MessageID DHCP6_RELEASE_NA_FAIL_WRONG_IAID = "DHCP6_RELEASE_NA_FAIL_WRONG_IAID";
 extern const isc::log::MessageID DHCP6_RELEASE_PD = "DHCP6_RELEASE_PD";
+extern const isc::log::MessageID DHCP6_RELEASE_PD_DELETED = "DHCP6_RELEASE_PD_DELETED";
+extern const isc::log::MessageID DHCP6_RELEASE_PD_EXPIRED = "DHCP6_RELEASE_PD_EXPIRED";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL = "DHCP6_RELEASE_PD_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_DUID = "DHCP6_RELEASE_PD_FAIL_WRONG_DUID";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID = "DHCP6_RELEASE_PD_FAIL_WRONG_IAID";
@@ -299,10 +303,14 @@ const char* values[] = {
     "DHCP6_RAPID_COMMIT", "%1: Rapid Commit option received, following 2-way exchange",
     "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
     "DHCP6_RELEASE_NA", "%1: binding for address %2 and iaid=%3 was released properly",
+    "DHCP6_RELEASE_NA_DELETED", "%1: binding for address %2 and iaid=%3 was properly deleted on release",
+    "DHCP6_RELEASE_NA_EXPIRED", "%1: binding for address %2 and iaid=%3 was properly expired on release",
     "DHCP6_RELEASE_NA_FAIL", "%1: failed to remove address lease for address %2 and iaid=%3",
     "DHCP6_RELEASE_NA_FAIL_WRONG_DUID", "%1: client tried to release address %2, but it belongs to another client using duid=%3",
     "DHCP6_RELEASE_NA_FAIL_WRONG_IAID", "%1: client tried to release address %2, but it used wrong IAID (expected %3, but got %4)",
     "DHCP6_RELEASE_PD", "%1: prefix %2/%3 for iaid=%4 was released properly",
+    "DHCP6_RELEASE_PD_DELETED", "%1: prefix %2/%3 for iaid=%4 was properly deleted on release",
+    "DHCP6_RELEASE_PD_EXPIRED", "%1: prefix %2/%3 for iaid=%4 was properly expired on release",
     "DHCP6_RELEASE_PD_FAIL", "%1: failed to release prefix %2/%3 for iaid=%4",
     "DHCP6_RELEASE_PD_FAIL_WRONG_DUID", "%1: client tried to release prefix %2/%3, but it belongs to another client (duid=%4)",
     "DHCP6_RELEASE_PD_FAIL_WRONG_IAID", "%1: client tried to release prefix %2/%3, but it used wrong IAID (expected %4, but got %5)",

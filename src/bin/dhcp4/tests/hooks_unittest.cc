@@ -6,76 +6,94 @@
 
 #include <config.h>
 
-#include <dhcp4/tests/dhcp4_test_utils.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
-#include <dhcp4/json_config_parser.h>
+#include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/option.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
+#include <dhcp4/tests/dhcp4_client.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/marker_file.h>
+#include <dhcp4/tests/test_libraries.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_manager.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp/option.h>
-#include <asiolink/io_address.h>
-#include <dhcp4/tests/dhcp4_client.h>
-#include <dhcp4/tests/marker_file.h>
-#include <dhcp4/tests/test_libraries.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 
 #include <vector>
 
-using namespace std;
-using namespace isc::asiolink;
-using namespace isc::data;
-using namespace isc::hooks;
-using namespace isc::config;
-using namespace isc::dhcp::test;
-using namespace isc::dhcp;
-using namespace isc::util;
-using namespace isc::stats;
 
-// Checks if hooks are registered properly.
+using namespace isc::asiolink;
+using namespace isc::config;
+using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::dhcp::test;
+using namespace isc::hooks;
+using namespace isc::stats;
+using namespace isc::util;
+
+using namespace std;
+
+// namespace has to be named, because friends are defined in Dhcpv6Srv class
+// Maybe it should be isc::test?
+namespace {
+
+// Checks if hooks are implemented properly.
 TEST_F(Dhcpv4SrvTest, Hooks) {
     NakedDhcpv4Srv srv(0);
 
     // check if appropriate hooks are registered
-    int hook_index_buffer4_receive   = -1;
-    int hook_index_pkt4_receive      = -1;
-    int hook_index_select_subnet     = -1;
+    int hook_index_dhcp4_srv_configured = -1;
+    int hook_index_buffer4_receive = -1;
+    int hook_index_buffer4_send = -1;
+    int hook_index_lease4_renew = -1;
+    int hook_index_lease4_release = -1;
+    int hook_index_lease4_decline = -1;
+    int hook_index_pkt4_receive = -1;
+    int hook_index_pkt4_send = -1;
+    int hook_index_select_subnet = -1;
     int hook_index_leases4_committed = -1;
-    int hook_index_lease4_release    = -1;
-    int hook_index_pkt4_send         = -1;
-    int hook_index_buffer4_send      = -1;
-    int hook_index_host4_identifier  = -1;
+    int hook_index_host4_identifier = -1;
 
     // check if appropriate indexes are set
+    EXPECT_NO_THROW(hook_index_dhcp4_srv_configured = ServerHooks::getServerHooks()
+                    .getIndex("dhcp4_srv_configured"));
     EXPECT_NO_THROW(hook_index_buffer4_receive = ServerHooks::getServerHooks()
                     .getIndex("buffer4_receive"));
+    EXPECT_NO_THROW(hook_index_buffer4_send = ServerHooks::getServerHooks()
+                    .getIndex("buffer4_send"));
+    EXPECT_NO_THROW(hook_index_lease4_renew = ServerHooks::getServerHooks()
+                    .getIndex("lease4_renew"));
+    EXPECT_NO_THROW(hook_index_lease4_release = ServerHooks::getServerHooks()
+                    .getIndex("lease4_release"));
+    EXPECT_NO_THROW(hook_index_lease4_decline = ServerHooks::getServerHooks()
+                    .getIndex("lease4_decline"));
     EXPECT_NO_THROW(hook_index_pkt4_receive = ServerHooks::getServerHooks()
                     .getIndex("pkt4_receive"));
+    EXPECT_NO_THROW(hook_index_pkt4_send = ServerHooks::getServerHooks()
+                    .getIndex("pkt4_send"));
     EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
                     .getIndex("subnet4_select"));
     EXPECT_NO_THROW(hook_index_leases4_committed = ServerHooks::getServerHooks()
                     .getIndex("leases4_committed"));
-    EXPECT_NO_THROW(hook_index_lease4_release = ServerHooks::getServerHooks()
-                    .getIndex("lease4_release"));
-    EXPECT_NO_THROW(hook_index_pkt4_send = ServerHooks::getServerHooks()
-                    .getIndex("pkt4_send"));
-    EXPECT_NO_THROW(hook_index_buffer4_send = ServerHooks::getServerHooks()
-                    .getIndex("buffer4_send"));
     EXPECT_NO_THROW(hook_index_host4_identifier = ServerHooks::getServerHooks()
                     .getIndex("host4_identifier"));
 
+    EXPECT_TRUE(hook_index_dhcp4_srv_configured > 0);
     EXPECT_TRUE(hook_index_buffer4_receive > 0);
+    EXPECT_TRUE(hook_index_buffer4_send > 0);
+    EXPECT_TRUE(hook_index_lease4_renew > 0);
+    EXPECT_TRUE(hook_index_lease4_release > 0);
+    EXPECT_TRUE(hook_index_lease4_decline > 0);
     EXPECT_TRUE(hook_index_pkt4_receive > 0);
+    EXPECT_TRUE(hook_index_pkt4_send > 0);
     EXPECT_TRUE(hook_index_select_subnet > 0);
     EXPECT_TRUE(hook_index_leases4_committed > 0);
-    EXPECT_TRUE(hook_index_lease4_release > 0);
-    EXPECT_TRUE(hook_index_pkt4_send > 0);
-    EXPECT_TRUE(hook_index_buffer4_send > 0);
     EXPECT_TRUE(hook_index_host4_identifier > 0);
 }
 
@@ -113,12 +131,15 @@ public:
         }
 
         // Allocate new DHCPv4 Server
-        srv_ = new NakedDhcpv4Srv(0);
+        srv_.reset(new NakedDhcpv4Srv(0));
 
-        // clear static buffers
+        // Clear static buffers
         resetCalloutBuffers();
 
         io_service_ = boost::make_shared<IOService>();
+
+        // Reset the hook system in its original state
+        HooksManager::unloadLibraries();
 
         // Clear statistics.
         StatsMgr::instance().removeAll();
@@ -126,7 +147,7 @@ public:
 
     /// @brief destructor (deletes Dhcpv4Srv)
     virtual ~HooksDhcpv4SrvTest() {
-        // clear static buffers
+        // Clear static buffers
         resetCalloutBuffers();
 
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("dhcp4_srv_configured");
@@ -135,12 +156,12 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_receive");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_send");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("subnet4_select");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("leases4_committed");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_renew");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host4_identifier");
 
-        delete srv_;
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
         if (!status) {
@@ -161,7 +182,7 @@ public:
     /// @return pointer to create option object
     static OptionPtr createOption(uint16_t option_code) {
 
-        char payload[] = {
+        uint8_t payload[] = {
             0xa, 0xb, 0xc, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14
         };
 
@@ -257,6 +278,7 @@ public:
         if (callback_qry_pkt4_) {
             callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
         }
+
         return (0);
     }
 
@@ -280,18 +302,6 @@ public:
         return buffer4_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
-    /// @param callout_handle handle passed by the hooks framework
-    /// @return always 0
-    static int
-    buffer4_receive_drop(CalloutHandle& callout_handle) {
-
-        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
-
-        // Carry on as usual
-        return buffer4_receive_callout(callout_handle);
-    }
-
     /// Test callback that sets skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -304,7 +314,19 @@ public:
         return buffer4_receive_callout(callout_handle);
     }
 
-    /// test callback that stores received callout name and pkt4 value
+    /// Test callback that sets drop flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_drop(CalloutHandle& callout_handle) {
+
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+        // Carry on as usual
+        return buffer4_receive_callout(callout_handle);
+    }
+
+    /// Test callback that stores received callout name and pkt4 value
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -322,7 +344,7 @@ public:
         return (0);
     }
 
-    /// test callback that changes client-id value
+    /// Test callback that changes client-id value
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -331,17 +353,17 @@ public:
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
 
-        // get rid of the old client-id
+        // Get rid of the old client-id
         pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
 
-        // add a new option
+        // Add a new option
         pkt->addOption(createOption(DHO_DHCP_CLIENT_IDENTIFIER));
 
-        // carry on as usual
+        // Carry on as usual
         return pkt4_receive_callout(callout_handle);
     }
 
-    /// test callback that deletes client-id
+    /// Test callback that deletes client-id
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -350,31 +372,16 @@ public:
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
 
-        // get rid of the old client-id (and no HWADDR)
+        // Get rid of the old client-id (and no HWADDR)
         vector<uint8_t> mac;
         pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
         pkt->setHWAddr(1, 0, mac); // HWtype 1, hardware len = 0
 
-        // carry on as usual
+        // Carry on as usual
         return pkt4_receive_callout(callout_handle);
     }
 
-    /// test callback that sets drop flag
-    /// @param callout_handle handle passed by the hooks framework
-    /// @return always 0
-    static int
-    pkt4_receive_drop(CalloutHandle& callout_handle) {
-
-        Pkt4Ptr pkt;
-        callout_handle.getArgument("query4", pkt);
-
-        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
-
-        // carry on as usual
-        return pkt4_receive_callout(callout_handle);
-    }
-
-    /// test callback that sets skip flag
+    /// Test callback that sets skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -385,7 +392,22 @@ public:
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
-        // carry on as usual
+        // Carry on as usual
+        return pkt4_receive_callout(callout_handle);
+    }
+
+    /// Test callback that sets drop flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_drop(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+        // Carry on as usual
         return pkt4_receive_callout(callout_handle);
     }
 
@@ -422,17 +444,17 @@ public:
         Pkt4Ptr pkt;
         callout_handle.getArgument("response4", pkt);
 
-        // get rid of the old server-id
+        // Get rid of the old server-id
         pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER);
 
-        // add a new option
+        // Add a new option
         pkt->addOption(createOption(DHO_DHCP_SERVER_IDENTIFIER));
 
-        // carry on as usual
+        // Carry on as usual
         return pkt4_send_callout(callout_handle);
     }
 
-    /// test callback that deletes server-id
+    /// Test callback that deletes server-id
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -441,10 +463,10 @@ public:
         Pkt4Ptr pkt;
         callout_handle.getArgument("response4", pkt);
 
-        // get rid of the old client-id
+        // Get rid of the old client-id
         pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER);
 
-        // carry on as usual
+        // Carry on as usual
         return pkt4_send_callout(callout_handle);
     }
 
@@ -478,8 +500,8 @@ public:
         return pkt4_send_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and pkt4 value
-    /// @param callout_handle handle passed by the hooks framework
+    /// Test callback that stores response packet.
+    /// @param callout_handle handle passed by the hooks framework.
     /// @return always 0
     static int
     buffer4_send_callout(CalloutHandle& callout_handle) {
@@ -512,26 +534,28 @@ public:
         return (0);
     }
 
-    /// Test callback that stores received callout name and pkt4 value
+    /// Test callback that sets skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    skip_callout(CalloutHandle& callout_handle) {
+    buffer4_send_skip(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
-        return (0);
+        // Carry on as usual
+        return buffer4_send_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and pkt4 value
+    /// Test callback that sets drop flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    drop_callout(CalloutHandle& callout_handle) {
+    buffer4_send_drop(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
-        return (0);
+        // carry on as usual
+        return buffer4_send_callout(callout_handle);
     }
 
     /// Test callback that stores received callout name and subnet4 values
@@ -558,7 +582,7 @@ public:
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    subnet4_select_different_subnet_callout(CalloutHandle& callout_handle) {
+    subnet4_select_different_subnet(CalloutHandle& callout_handle) {
 
         // Call the basic callout to record all passed values
         subnet4_select_callout(callout_handle);
@@ -577,14 +601,62 @@ public:
         return (0);
     }
 
-    /// Test callback that sets drop flag
+    /// Test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
-    subnet4_select_drop_callout(CalloutHandle& callout_handle) {
+    subnet4_select_skip(CalloutHandle& callout_handle) {
+
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        // Carry on as usual
+        return subnet4_select_callout(callout_handle);
+    }
+
+    /// Test callback that sets drop flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    subnet4_select_drop(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
         // Carry on as usual
         return subnet4_select_callout(callout_handle);
+    }
+
+    /// Test callback that stores received callout name and subnet4 values
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_renew_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_renew");
+
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
+        callout_handle.getArgument("subnet4", callback_subnet4_);
+        callout_handle.getArgument("lease4", callback_lease4_);
+        callout_handle.getArgument("hwaddr", callback_hwaddr_);
+        callout_handle.getArgument("clientid", callback_clientid_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
+    /// Test callback that sets the skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_renew_skip_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_renew");
+
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (0);
     }
 
     /// Test callback that stores received callout name passed parameters
@@ -606,24 +678,26 @@ public:
         return (0);
     }
 
-    /// Test callback that stores received callout name and subnet4 values
+    /// Test callback that sets the skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease4_renew_callout(CalloutHandle& callout_handle) {
-        callback_name_ = string("lease4_renew");
+    lease4_release_skip(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_release");
 
-        callout_handle.getArgument("query4", callback_qry_pkt4_);
-        callout_handle.getArgument("subnet4", callback_subnet4_);
-        callout_handle.getArgument("lease4", callback_lease4_);
-        callout_handle.getArgument("hwaddr", callback_hwaddr_);
-        callout_handle.getArgument("clientid", callback_clientid_);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
-        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
 
-        if (callback_qry_pkt4_) {
-            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
-        }
+    /// Test callback that sets the drop flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_release_drop(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_release");
+
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
         return (0);
     }
@@ -650,7 +724,7 @@ public:
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease4_decline_skip_callout(CalloutHandle& callout_handle) {
+    lease4_decline_skip(CalloutHandle& callout_handle) {
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (lease4_decline_callout(callout_handle));
@@ -661,7 +735,7 @@ public:
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease4_decline_drop_callout(CalloutHandle& callout_handle) {
+    lease4_decline_drop(CalloutHandle& callout_handle) {
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
         return (lease4_decline_callout(callout_handle));
@@ -671,6 +745,7 @@ public:
     static int
     leases4_committed_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("leases4_committed");
+
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
         Lease4CollectionPtr leases4;
@@ -736,7 +811,7 @@ public:
         return (0);
     }
 
-    /// @brief Test host4_identifier callout by setting identifier to "foo"
+    /// @brief Test host4_identifier callback by setting identifier to "foo"
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -755,6 +830,7 @@ public:
         std::vector<uint8_t> id_test;
         handle.getArgument("id_value", id_test);
 
+        // Ok, now set the identifier.
         std::vector<uint8_t> id = { 0x66, 0x6f, 0x6f };  // foo
         handle.setArgument("id_value", id);
         handle.setArgument("id_type", Host::IDENT_FLEX);
@@ -791,17 +867,16 @@ public:
         return (0);
     }
 
-
-    /// resets buffers used to store data received by callouts
+    /// Resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
         callback_qry_pkt4_.reset();
-        callback_qry_pkt4_.reset();
+        callback_resp_pkt4_.reset();
+        callback_subnet4_.reset();
         callback_lease4_.reset();
         callback_deleted_lease4_.reset();
         callback_hwaddr_.reset();
         callback_clientid_.reset();
-        callback_subnet4_.reset();
         callback_subnet4collection_ = NULL;
         callback_argument_names_.clear();
         callback_qry_options_copy_ = false;
@@ -821,8 +896,8 @@ public:
         return (stat->getInteger().first);
     }
 
-    /// pointer to Dhcpv4Srv that is used in tests
-    NakedDhcpv4Srv* srv_;
+    /// Pointer to Dhcpv4Srv that is used in tests
+    boost::shared_ptr<NakedDhcpv4Srv> srv_;
 
     /// Pointer to the IO service used in the tests.
     static IOServicePtr io_service_;
@@ -832,16 +907,16 @@ public:
     /// String name of the received callout
     static string callback_name_;
 
-    /// Client/query Pkt4 structure returned in the callout
+    /// Client's query Pkt4 structure returned in the callout
     static Pkt4Ptr callback_qry_pkt4_;
 
-    /// Server/response Pkt4 structure returned in the callout
+    /// Server's response Pkt4 structure returned in the callout
     static Pkt4Ptr callback_resp_pkt4_;
 
-    /// Lease4 structure returned in the leases4_committed callout
+    /// Pointer to lease4 structure returned in the leases4_committed callout
     static Lease4Ptr callback_lease4_;
 
-    /// Lease4 structure returned in the leases4_committed callout
+    /// Pointer to lease4 structure returned in the leases4_committed callout
     static Lease4Ptr callback_deleted_lease4_;
 
     /// Hardware address returned in the callout
@@ -866,7 +941,6 @@ public:
     /// Flag indicating if copying retrieved options was enabled for
     /// a response during callout execution.
     static bool callback_resp_options_copy_;
-
 };
 
 // The following fields are used in testing pkt4_receive_callout.
@@ -876,11 +950,11 @@ string HooksDhcpv4SrvTest::callback_name_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_qry_pkt4_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_resp_pkt4_;
 Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
+const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 HWAddrPtr HooksDhcpv4SrvTest::callback_hwaddr_;
 ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_lease4_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_deleted_lease4_;
-const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 bool HooksDhcpv4SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv4SrvTest::callback_resp_options_copy_;
@@ -909,35 +983,35 @@ public:
     /// that no libraries are loaded and that any marker files are deleted.
     void reset() {
         // Unload any previously-loaded libraries.
-        HooksManager::unloadLibraries();
+        EXPECT_TRUE(HooksManager::unloadLibraries());
 
         // Get rid of any marker files.
         static_cast<void>(remove(LOAD_MARKER_FILE));
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
         static_cast<void>(remove(SRV_CONFIG_MARKER_FILE));
+
         CfgMgr::instance().clear();
     }
 };
 
-
-// Checks if callouts installed on pkt4_receive are indeed called and the
+// Checks if callouts installed on buffer4_receive are indeed called and the
 // all necessary parameters are passed.
 //
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "buffer4_receive".
-TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
+TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSimple) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install buffer4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_callout));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr dis = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(dis);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -949,7 +1023,7 @@ TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
     EXPECT_EQ("buffer4_receive", callback_name_);
 
     // Check that pkt4 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_qry_pkt4_.get() == dis.get());
+    EXPECT_TRUE(callback_qry_pkt4_.get() == discover.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -961,7 +1035,7 @@ TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
     EXPECT_TRUE(callback_qry_options_copy_);
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(dis);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on buffer4_receive is able to change
@@ -1007,14 +1081,12 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
 }
 
 // Checks if callouts installed on buffer4_receive is able to set skip flag that
-// will cause the server to not parse the packet. Even though the packet is valid,
-// the server should eventually drop it, because there won't be mandatory options
-// (or rather option objects) in it.
+// will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install buffer4_receive_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_skip));
 
@@ -1027,7 +1099,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered buffer4_receive callback.
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
@@ -1038,12 +1110,12 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
 }
 
 // Checks if callouts installed on buffer4_receive is able to set drop flag that
-// will cause the server to drop the packet.
+// will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install buffer4_receive_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_drop));
 
@@ -1056,7 +1128,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveDrop) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered buffer4_receive callback.
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
@@ -1080,10 +1152,10 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
                         "pkt4_receive", pkt4_receive_callout));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -1091,11 +1163,11 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
     // In particular, it should call registered pkt4_receive callback.
     srv_->run();
 
-    // check that the callback called is indeed the one we installed
+    // Check that the callback called is indeed the one we installed
     EXPECT_EQ("pkt4_receive", callback_name_);
 
-    // check that pkt4 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_qry_pkt4_.get() == sol.get());
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_qry_pkt4_.get() == discover.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -1107,12 +1179,12 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
     EXPECT_TRUE(callback_qry_options_copy_);
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_received is able to change
 // the values and the parameters are indeed used by the server.
-TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
+TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveValueChange) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -1121,10 +1193,10 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
                         "pkt4_receive", pkt4_receive_change_clientid));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -1132,7 +1204,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
     // In particular, it should call registered pkt4_receive callback.
     srv_->run();
 
-    // check that the server did send a response
+    // Check that the server did send a response
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -1147,7 +1219,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
     EXPECT_TRUE(clientid->equals(expected));
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_received is able to delete
@@ -1157,15 +1229,15 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install pkt4_receive_delete_clientid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_receive", pkt4_receive_delete_clientid));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -1177,7 +1249,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
     ASSERT_EQ(0, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_received is able to set skip flag that
@@ -1186,15 +1258,15 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install pkt4_receive_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_receive", pkt4_receive_skip));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -1202,11 +1274,11 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
     // In particular, it should call registered pkt4_receive callback.
     srv_->run();
 
-    // check that the server dropped the packet and did not produce any response
+    // Check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_received is able to set drop flag that
@@ -1215,15 +1287,15 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install pkt4_receive_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_receive", pkt4_receive_drop));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -1231,13 +1303,12 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDrop) {
     // In particular, it should call registered pkt4_receive callback.
     srv_->run();
 
-    // check that the server dropped the packet and did not produce any response
+    // Check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
-
 
 // Checks if callouts installed on pkt4_send are indeed called and the
 // all necessary parameters are passed.
@@ -1245,20 +1316,20 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install pkt4_send_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_callout));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered pkt4_send callback.
     srv_->run();
 
     // Check that the callback called is indeed the one we installed
@@ -1268,18 +1339,17 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     ASSERT_EQ(1, srv_->fake_sent_.size());
     Pkt4Ptr adv = srv_->fake_sent_.front();
 
-    // Check that pkt4 argument passing was successful and returned proper value
+    // Check that pkt4 argument passing was successful and returned proper
+    // values
+    ASSERT_TRUE(callback_qry_pkt4_);
+    EXPECT_TRUE(callback_qry_pkt4_.get() == discover.get());
     ASSERT_TRUE(callback_resp_pkt4_);
     EXPECT_TRUE(callback_resp_pkt4_.get() == adv.get());
 
-    // That that the query4 argument was correctly set to the Discover we sent.
-    ASSERT_TRUE(callback_qry_pkt4_);
-    EXPECT_TRUE(callback_qry_pkt4_.get() == sol.get());
-
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
-    expected_argument_names.push_back(string("response4"));
     expected_argument_names.push_back(string("query4"));
+    expected_argument_names.push_back(string("response4"));
     sort(callback_argument_names_.begin(), callback_argument_names_.end());
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
@@ -1289,7 +1359,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     EXPECT_TRUE(callback_resp_options_copy_);
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_send is able to change
@@ -1298,23 +1368,23 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install pkt4_send_change_serverid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_change_serverid));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered pkt4_send callback.
     srv_->run();
 
-    // check that the server did send a response
+    // Check that the server did send a response
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -1329,7 +1399,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
     EXPECT_TRUE(clientid->equals(expected));
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_send is able to delete
@@ -1340,20 +1410,20 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install pkt4_send_delete_serverid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_delete_serverid));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered pkt4_send callback.
     srv_->run();
 
     // Check that the server indeed sent a malformed ADVERTISE
@@ -1367,24 +1437,24 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
     EXPECT_FALSE(adv->getOption(DHO_DHCP_SERVER_IDENTIFIER));
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_skip is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
-TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
+TEST_F(HooksDhcpv4SrvTest, pkt4SendSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install pkt4_send_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_skip));
 
     // Let's create a simple REQUEST
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -1392,33 +1462,35 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
     // In particular, it should call registered pkt4_send callback.
     srv_->run();
 
-    // Check that the server sent the message
+    // Check that the server send the packet
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Get the first packet and check that it has zero length (i.e. the server
     // did not do packing on its own)
     Pkt4Ptr sent = srv_->fake_sent_.front();
+
+    // The actual size of sent packet should be 0
     EXPECT_EQ(0, sent->getBuffer().getLength());
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_drop is able to set drop flag that
 // will cause the server to not process the packet (drop), even though it is valid.
-TEST_F(HooksDhcpv4SrvTest, drop_pkt4_send) {
+TEST_F(HooksDhcpv4SrvTest, pkt4SendDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install pkt4_send_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_drop));
 
     // Let's create a simple REQUEST
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -1426,11 +1498,11 @@ TEST_F(HooksDhcpv4SrvTest, drop_pkt4_send) {
     // In particular, it should call registered pkt4_send callback.
     srv_->run();
 
-    // Check that the server did not the message
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    // Check that the server does not send the packet
+    EXPECT_EQ(0, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on buffer4_send are indeed called and the
@@ -1439,7 +1511,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install buffer4_send_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_send", buffer4_send_callout));
 
@@ -1452,7 +1524,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered buffer4_send callback.
     srv_->run();
 
     // Check that the callback called is indeed the one we installed
@@ -1479,11 +1551,11 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
 
 // Checks if callouts installed on buffer4_send are indeed called and that
 // the output buffer can be changed.
-TEST_F(HooksDhcpv4SrvTest, buffer4Send) {
+TEST_F(HooksDhcpv4SrvTest, buffer4SendChange) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install buffer4_send_change_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_send", buffer4_send_change_callout));
 
@@ -1496,7 +1568,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4Send) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered buffer4_send callback.
     srv_->run();
 
     // Check that there is one packet sent
@@ -1517,9 +1589,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install buffer4_send_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer4_send", skip_callout));
+                        "buffer4_send", buffer4_send_skip));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1530,8 +1602,11 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered buffer4_send callback.
     srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("buffer4_send", callback_name_);
 
     // Check that there is no packet sent.
     ASSERT_EQ(0, srv_->fake_sent_.size());
@@ -1546,9 +1621,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_callout
+    // Install buffer4_send_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer4_send", drop_callout));
+                        "buffer4_send", buffer4_send_drop));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1559,16 +1634,18 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendDrop) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered buffer4_send callback.
     srv_->run();
 
-    // Check that there is no packet sent.
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("buffer4_send", callback_name_);
+
+    // Check that there is no packet sent
+    EXPECT_EQ(0, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
 }
-
 
 // This test checks if subnet4_select callout is triggered and reports
 // valid parameters
@@ -1606,29 +1683,29 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     // Commit the config
     CfgMgr::instance().commit();
 
-    // Install pkt4_receive_callout
+    // Install subnet4_select_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "subnet4_select", subnet4_select_callout));
 
     // Prepare discover packet. Server should select first subnet for it
-    Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
-    sol->setRemoteAddr(IOAddress("192.0.2.1"));
-    sol->setIface("eth1");
-    sol->setIndex(ETH1_INDEX);
+    Pkt4Ptr discover = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    discover->setRemoteAddr(IOAddress("192.0.2.1"));
+    discover->setIface("eth1");
+    discover->setIndex(ETH1_INDEX);
     OptionPtr clientid = generateClientId();
-    sol->addOption(clientid);
+    discover->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt4Ptr adv = srv_->processDiscover(sol);
+    Pkt4Ptr adv = srv_->processDiscover(discover);
 
-    // check if we get response at all
+    // Check if we get response at all
     ASSERT_TRUE(adv);
 
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("subnet4_select", callback_name_);
 
     // Check that pkt4 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_qry_pkt4_.get() == sol.get());
+    EXPECT_TRUE(callback_qry_pkt4_.get() == discover.get());
 
     const Subnet4Collection* exp_subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
@@ -1636,7 +1713,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     // The server is supposed to pick the first subnet, because of matching
     // interface. Check that the value is reported properly.
     ASSERT_TRUE(callback_subnet4_);
-    EXPECT_EQ(exp_subnets->begin()->get(), callback_subnet4_.get());
+    EXPECT_EQ(callback_subnet4_.get(), exp_subnets->begin()->get());
 
     // Server is supposed to report two subnets
     ASSERT_EQ(exp_subnets->size(), callback_subnet4collection_->size());
@@ -1650,7 +1727,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     EXPECT_TRUE(callback_qry_options_copy_);
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
 // This test checks if callout installed on subnet4_select hook point can pick
@@ -1688,22 +1765,22 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
 
     CfgMgr::instance().commit();
 
-    // Install a callout
+    // Install subnet4_select_different_subnet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "subnet4_select", subnet4_select_different_subnet_callout));
+                        "subnet4_select", subnet4_select_different_subnet));
 
     // Prepare discover packet. Server should select first subnet for it
-    Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
-    sol->setRemoteAddr(IOAddress("192.0.2.1"));
-    sol->setIface("eth0");
-    sol->setIndex(ETH0_INDEX);
+    Pkt4Ptr discover = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    discover->setRemoteAddr(IOAddress("192.0.2.1"));
+    discover->setIface("eth0");
+    discover->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
-    sol->addOption(clientid);
+    discover->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt4Ptr adv = srv_->processDiscover(sol);
+    Pkt4Ptr adv = srv_->processDiscover(discover);
 
-    // check if we get response at all
+    // Check if we get response at all
     ASSERT_TRUE(adv);
 
     // The response should have an address from second pool, so let's check it
@@ -1723,7 +1800,35 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     EXPECT_TRUE((*subnet)->inPool(Lease::TYPE_V4, addr));
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
+}
+
+// Checks that subnet4_select is able to drop the packet.
+TEST_F(HooksDhcpv4SrvTest, subnet4SelectDrop) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Install subnet4_select_drop
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "subnet4_select", subnet4_select_drop));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered subnet4_select callback.
+    srv_->run();
+
+    // Check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(discover);
 }
 
 // This test verifies that the leases4_committed hook point is not triggered
@@ -1732,9 +1837,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDiscover) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
+    // Install leases4_committed callout
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
-
 
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
@@ -1760,7 +1865,6 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedInform) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
 
-
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.useRelay();
     ASSERT_NO_THROW(client.doInform());
@@ -1775,172 +1879,6 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedInform) {
     checkCalloutHandleReset(client.getContext().query_);
 }
 
-// This test verifies that incoming (positive) REQUEST/Renewing can be handled
-// properly and that callout installed on lease4_renew is triggered with
-// expected parameters.
-TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
-    const IOAddress addr("192.0.2.106");
-    const uint32_t temp_valid = 100;
-    const time_t temp_timestamp = time(NULL) - 10;
-
-    // Install a callout
-    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_renew", lease4_renew_callout));
-
-    // Generate client-id also sets client_id_ member
-    OptionPtr clientid = generateClientId();
-
-    // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
-
-    // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-
-    // Check that the lease is really in the database
-    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
-
-    // Let's create a RENEW
-    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-    req->setRemoteAddr(IOAddress(addr));
-    req->setYiaddr(addr);
-    req->setCiaddr(addr); // client's address
-    req->setIface("eth0");
-    req->setIndex(ETH0_INDEX);
-    req->setHWAddr(hwaddr2);
-
-    req->addOption(clientid);
-    req->addOption(srv_->getServerID());
-
-    // Pass it to the server and hope for a REPLY
-    Pkt4Ptr ack = srv_->processRequest(req);
-
-    // Check if we get response at all
-    checkResponse(ack, DHCPACK, 1234);
-
-    // Check that the lease is really in the database
-    l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
-
-    // Check that preferred, valid and cltt were really updated
-    EXPECT_EQ(l->valid_lft_, subnet_->getValid());
-
-    // Check that the callback called is indeed the one we installed
-    EXPECT_EQ("lease4_renew", callback_name_);
-
-    // Check that query4 argument passing was successful and
-    // returned proper value
-    EXPECT_TRUE(callback_qry_pkt4_.get() == req.get());
-
-    // Check that hwaddr parameter is passed properly
-    ASSERT_TRUE(callback_hwaddr_);
-    EXPECT_TRUE(*callback_hwaddr_ == *req->getHWAddr());
-
-    // Check that the subnet is passed properly
-    ASSERT_TRUE(callback_subnet4_);
-    EXPECT_EQ(callback_subnet4_->toText(), subnet_->toText());
-
-    ASSERT_TRUE(callback_clientid_);
-    ASSERT_TRUE(client_id_);
-    EXPECT_TRUE(*client_id_ == *callback_clientid_);
-
-    // Check if all expected parameters were really received
-    vector<string> expected_argument_names;
-    expected_argument_names.push_back("query4");
-    expected_argument_names.push_back("subnet4");
-    expected_argument_names.push_back("clientid");
-    expected_argument_names.push_back("hwaddr");
-    expected_argument_names.push_back("lease4");
-    sort(callback_argument_names_.begin(), callback_argument_names_.end());
-    sort(expected_argument_names.begin(), expected_argument_names.end());
-    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
-
-    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
-
-    // Pkt passed to a callout must be configured to copy retrieved options.
-    EXPECT_TRUE(callback_qry_options_copy_);
-
-    // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(req);
-}
-
-// This test verifies that a callout installed on lease4_renew can trigger
-// the server to not renew a lease.
-TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
-    const IOAddress addr("192.0.2.106");
-    const uint32_t temp_valid = 100;
-    const time_t temp_timestamp = time(NULL) - 10;
-
-    // Install a callout
-    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_renew", skip_callout));
-
-    // Generate client-id also sets client_id_ member
-    OptionPtr clientid = generateClientId();
-
-    // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
-
-    // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-
-    // Check that the lease is really in the database
-    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
-
-    // Check that preferred, valid and cltt really set.
-    // Constructed lease looks as if it was assigned 10 seconds ago
-    EXPECT_EQ(l->valid_lft_, temp_valid);
-    EXPECT_EQ(l->cltt_, temp_timestamp);
-
-    // Let's create a RENEW
-    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-    req->setRemoteAddr(IOAddress(addr));
-    req->setYiaddr(addr);
-    req->setCiaddr(addr); // client's address
-    req->setIface("eth0");
-    req->setIndex(ETH0_INDEX);
-    req->setHWAddr(hwaddr2);
-
-    req->addOption(clientid);
-    req->addOption(srv_->getServerID());
-
-    // Pass it to the server and hope for a REPLY
-    Pkt4Ptr ack = srv_->processRequest(req);
-    ASSERT_TRUE(ack);
-
-    // Check that the lease is really in the database
-    l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
-
-    // Check that valid and cltt were NOT updated
-    EXPECT_EQ(temp_valid, l->valid_lft_);
-    EXPECT_EQ(temp_timestamp, l->cltt_);
-
-    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
-
-    // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(req);
-}
-
 // This test verifies that the callout installed on the leases4_committed hook
 // point is executed as a result of DHCPREQUEST message sent to allocate new
 // lease or renew an existing lease.
@@ -1950,7 +1888,6 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
-
 
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
@@ -2055,16 +1992,108 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     EXPECT_FALSE(callback_deleted_lease4_);
 }
 
-// This test verifies that the callout installed on the leases4_committed hook
-// point is executed as a result of DHCPREQUEST message sent to reuse
-// an existing lease.
-TEST_F(HooksDhcpv4SrvTest, leases4CommittedCache) {
+// This test verifies that the leases4_committed callout is executed
+// with declined leases as argument when DHCPDECLINE is processed.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
 
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.useRelay();
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    resetCalloutBuffers();
+
+    ASSERT_NO_THROW(client.doDecline());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("deleted_leases4");
+    expected_argument_names.push_back("leases4");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No new allocations.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
+    EXPECT_EQ(Lease::STATE_DECLINED, callback_lease4_->state_);
+
+    // Released lease should be returned.
+    EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+}
+
+// This test verifies that the leases4_committed callout is executed
+// with deleted leases as argument when DHCPRELEASE is processed.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_callout));
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    resetCalloutBuffers();
+
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("deleted_leases4");
+    expected_argument_names.push_back("leases4");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No new allocations.
+    EXPECT_FALSE(callback_lease4_);
+
+    // Released lease should be returned.
+    ASSERT_TRUE(callback_deleted_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_deleted_lease4_->addr_.toText());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+}
+// This test verifies that the callout installed on the leases4_committed hook
+// point is executed as a result of DHCPREQUEST message sent to reuse an
+// existing lease.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedCache) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_callout));
 
     // Modify the subnet to reuse leases.
     subnet_->setCacheThreshold(.25);
@@ -2213,8 +2242,10 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     checkCalloutHandleReset(client2.getContext().query_);
 }
 
-// This test verifies that valid RELEASE triggers lease4_release callouts
-TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
+// This test verifies that incoming (positive) REQUEST/Renewing can be handled
+// properly and that callout installed on lease4_renew is triggered with
+// expected parameters.
+TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -2222,7 +2253,174 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
-    // Install a callout
+    // Install lease4_renew_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_renew", lease4_renew_callout));
+
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_timestamp, subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RENEW
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress(addr));
+    req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->setHWAddr(hwaddr2);
+
+    req->addOption(clientid);
+    req->addOption(srv_->getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt4Ptr ack = srv_->processRequest(req);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+
+    // Check that the lease is really in the database
+    l = checkLease(ack, clientid, req->getHWAddr(), addr);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt were really updated
+    EXPECT_EQ(l->valid_lft_, subnet_->getValid());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_renew", callback_name_);
+
+    // Check that query4 argument passing was successful and
+    // returned proper value
+    EXPECT_TRUE(callback_qry_pkt4_.get() == req.get());
+
+    // Check that hwaddr parameter is passed properly
+    ASSERT_TRUE(callback_hwaddr_);
+    EXPECT_TRUE(*callback_hwaddr_ == *req->getHWAddr());
+
+    // Check that the subnet is passed properly
+    ASSERT_TRUE(callback_subnet4_);
+    EXPECT_EQ(callback_subnet4_->toText(), subnet_->toText());
+
+    ASSERT_TRUE(callback_clientid_);
+    ASSERT_TRUE(client_id_);
+    EXPECT_TRUE(*client_id_ == *callback_clientid_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("subnet4");
+    expected_argument_names.push_back("clientid");
+    expected_argument_names.push_back("hwaddr");
+    expected_argument_names.push_back("lease4");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(req);
+}
+
+// This test verifies that a callout installed on lease4_renew can trigger
+// the server to not renew a lease.
+TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install lease4_renew_skip_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_renew", lease4_renew_skip_callout));
+
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_timestamp, subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Check that preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 10 seconds ago
+    EXPECT_EQ(l->valid_lft_, temp_valid);
+    EXPECT_EQ(l->cltt_, temp_timestamp);
+
+    // Let's create a RENEW
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress(addr));
+    req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->setHWAddr(hwaddr2);
+
+    req->addOption(clientid);
+    req->addOption(srv_->getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt4Ptr ack = srv_->processRequest(req);
+    ASSERT_TRUE(ack);
+
+    // Check that the lease is really in the database
+    l = checkLease(ack, clientid, req->getHWAddr(), addr);
+    ASSERT_TRUE(l);
+
+    // Check that valid and cltt were NOT updated
+    EXPECT_EQ(temp_valid, l->valid_lft_);
+    EXPECT_EQ(temp_timestamp, l->cltt_);
+
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(req);
+}
+
+// This test verifies that valid RELEASE triggers lease4_release callouts
+TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
+    IfaceMgrTestConfig test_config(true);
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
+    IfaceMgr::instance().openSockets4();
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install lease4_release_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_release", lease4_release_callout));
 
@@ -2233,7 +2431,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
-    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
@@ -2262,18 +2460,16 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     EXPECT_FALSE(l);
 
     // Try to get the lease by hardware address
-    // @todo: Uncomment this once trac2592 is implemented
-    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
-    // EXPECT_EQ(leases.size(), 0);
+    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
+    EXPECT_EQ(leases.size(), 0);
 
     // Try to get it by hw/subnet_id combination
-    l = LeaseMgrFactory::instance().getLease4(hw->hwaddr_, subnet_->getID());
+    l = LeaseMgrFactory::instance().getLease4(*hw, subnet_->getID());
     EXPECT_FALSE(l);
 
     // Try by client-id
-    // @todo: Uncomment this once trac2592 is implemented
-    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    //EXPECT_EQ(leases.size(), 0);
+    leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    EXPECT_EQ(leases.size(), 0);
 
     // Try by client-id/subnet-id
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
@@ -2302,8 +2498,95 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     checkCalloutHandleReset(rel);
 }
 
+// This test verifies that valid RELEASE triggers lease4_release callouts
+TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleNoDelete) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install lease4_release_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_release", lease4_release_callout));
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // Let's create a lease and put it in the LeaseMgr
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, hw,
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_timestamp, subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    // Generate client-id also duid_
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setRemoteAddr(addr);
+    rel->setCiaddr(addr);
+    rel->addOption(clientid);
+    rel->addOption(srv_->getServerID());
+    rel->setHWAddr(hw);
+
+    // Pass it to the server and hope for a REPLY
+    // Note: this is no response to RELEASE in DHCPv4
+    EXPECT_NO_THROW(srv_->processRelease(rel));
+
+    // The lease should not be gone from LeaseMgr
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_TRUE(l);
+
+    // Try to get the lease by hardware address
+    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
+    EXPECT_EQ(leases.size(), 1);
+
+    // Try to get it by hw/subnet_id combination
+    l = LeaseMgrFactory::instance().getLease4(*hw, subnet_->getID());
+    EXPECT_TRUE(l);
+
+    // Try by client-id
+    leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    EXPECT_EQ(leases.size(), 1);
+
+    // Try by client-id/subnet-id
+    l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
+    EXPECT_TRUE(l);
+
+    // Ok, the lease is *really* there.
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_release", callback_name_);
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_qry_pkt4_.get() == rel.get());
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("lease4");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(rel);
+}
+
 // This test verifies that skip flag returned by a callout installed on the
-// lease4_release hook point will keep the lease
+// lease4_release hook point will keep the lease.
 TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -2312,9 +2595,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
-    // Install a callout
+    // Install lease4_release_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_release", skip_callout));
+                        "lease4_release", lease4_release_skip));
 
     // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
@@ -2323,7 +2606,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
-    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
@@ -2367,56 +2650,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     checkCalloutHandleReset(rel);
 }
 
-// This test verifies that the leases4_committed callout is executed
-// with deleted leases as argument when DHCPRELEASE is processed.
-TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
-    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                    "leases4_committed", leases4_committed_callout));
-
-
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    client.setIfaceIndex(ETH1_INDEX);
-    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
-
-    // Make sure that we received a response
-    ASSERT_TRUE(client.getContext().response_);
-
-    resetCalloutBuffers();
-
-    ASSERT_NO_THROW(client.doRelease());
-
-    // Check that the callback called is indeed the one we installed
-    EXPECT_EQ("leases4_committed", callback_name_);
-
-    // Check if all expected parameters were really received
-    vector<string> expected_argument_names;
-    expected_argument_names.push_back("query4");
-    expected_argument_names.push_back("deleted_leases4");
-    expected_argument_names.push_back("leases4");
-
-    sort(expected_argument_names.begin(), expected_argument_names.end());
-    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
-
-    // No new allocations.
-    EXPECT_FALSE(callback_lease4_);
-
-    // Released lease should be returned.
-    ASSERT_TRUE(callback_deleted_lease4_);
-    EXPECT_EQ("192.0.2.100", callback_deleted_lease4_->addr_.toText());
-
-    // Pkt passed to a callout must be configured to copy retrieved options.
-    EXPECT_TRUE(callback_qry_options_copy_);
-
-    // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(client.getContext().query_);
-}
-
 // This test verifies that drop flag returned by a callout installed on the
-// lease4_release hook point will keep the lease
+// lease4_release hook point will keep the lease.
 TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -2425,9 +2660,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
-    // Install a callout
+    // Install lease4_release_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_release", drop_callout));
+                        "lease4_release", lease4_release_drop));
 
     // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
@@ -2436,7 +2671,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
-    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
@@ -2480,12 +2715,13 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     checkCalloutHandleReset(rel);
 }
 
-// Checks that decline4 hooks (lease4_decline) are triggered properly.
-TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
+// This test checks that the basic decline hook (lease4_decline) is
+// triggered properly.
+TEST_F(HooksDhcpv4SrvTest, lease4DeclineSimple) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install a callout
+    // Install lease4_decline callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_callout));
 
@@ -2531,14 +2767,14 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     checkCalloutHandleReset(client.getContext().query_);
 }
 
-// Checks that decline4 hook is able to skip the packet.
-TEST_F(HooksDhcpv4SrvTest, HooksDeclineSkip) {
+// Test that the lease4_decline hook point can handle SKIP status.
+TEST_F(HooksDhcpv4SrvTest, lease4DeclineSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install a callout
+    // Install lease4_decline_skip callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_decline", lease4_decline_skip_callout));
+                        "lease4_decline", lease4_decline_skip));
 
     HooksManager::setTestMode(true);
 
@@ -2581,14 +2817,14 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineSkip) {
     checkCalloutHandleReset(client.getContext().query_);
 }
 
-// Checks that decline4 hook is able to drop the packet.
-TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
+// Test that the lease4_decline hook point can handle DROP status.
+TEST_F(HooksDhcpv4SrvTest, lease4DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install a callout
+    // Install lease4_decline_drop callout. It will set the status to drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_decline", lease4_decline_drop_callout));
+                        "lease4_decline", lease4_decline_drop));
 
     HooksManager::setTestMode(true);
 
@@ -2631,57 +2867,9 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     checkCalloutHandleReset(client.getContext().query_);
 }
 
-// This test verifies that the leases4_committed callout is executed
-// with declined leases as argument when DHCPDECLINE is processed.
-TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
-    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                    "leases4_committed", leases4_committed_callout));
-
-
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.useRelay();
-    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
-
-    // Make sure that we received a response
-    ASSERT_TRUE(client.getContext().response_);
-
-    resetCalloutBuffers();
-
-    ASSERT_NO_THROW(client.doDecline());
-
-    // Check that the callback called is indeed the one we installed
-    EXPECT_EQ("leases4_committed", callback_name_);
-
-    // Check if all expected parameters were really received
-    vector<string> expected_argument_names;
-    expected_argument_names.push_back("query4");
-    expected_argument_names.push_back("deleted_leases4");
-    expected_argument_names.push_back("leases4");
-
-    sort(expected_argument_names.begin(), expected_argument_names.end());
-    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
-
-    // No new allocations.
-    ASSERT_TRUE(callback_lease4_);
-    EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
-    EXPECT_EQ(Lease::STATE_DECLINED, callback_lease4_->state_);
-
-    // Released lease should be returned.
-    EXPECT_FALSE(callback_deleted_lease4_);
-
-    // Pkt passed to a callout must be configured to copy retrieved options.
-    EXPECT_TRUE(callback_qry_options_copy_);
-
-    // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(client.getContext().query_);
-}
-
 // Checks if callout installed on host4_identifier can generate an
 // identifier and whether that identifier is actually used.
-TEST_F(HooksDhcpv4SrvTest, host4_identifier) {
+TEST_F(HooksDhcpv4SrvTest, host4Identifier) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -2725,10 +2913,10 @@ TEST_F(HooksDhcpv4SrvTest, host4_identifier) {
                         "host4_identifier", host4_identifier_foo_callout));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -2747,12 +2935,12 @@ TEST_F(HooksDhcpv4SrvTest, host4_identifier) {
     EXPECT_EQ("192.0.2.201", adv->getYiaddr().toText());
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
 
-// Checks if callout installed on host4_identifier can generate identifier of
+// Checks if callout installed on host4_identifier can generate an identifier of
 // other type. This particular callout always returns hwaddr.
-TEST_F(HooksDhcpv4SrvTest, host4_identifier_hwaddr) {
+TEST_F(HooksDhcpv4SrvTest, host4IdentifierHWAddr) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -2796,10 +2984,10 @@ TEST_F(HooksDhcpv4SrvTest, host4_identifier_hwaddr) {
                         "host4_identifier", host4_identifier_hwaddr_callout));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = generateSimpleDiscover();
+    Pkt4Ptr discover = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(sol);
+    srv_->fakeReceive(discover);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
@@ -2818,9 +3006,8 @@ TEST_F(HooksDhcpv4SrvTest, host4_identifier_hwaddr) {
     EXPECT_EQ("192.0.2.201", adv->getYiaddr().toText());
 
     // Check if the callout handle state was reset after the callout.
-    checkCalloutHandleReset(sol);
+    checkCalloutHandleReset(discover);
 }
-
 
 // Verifies that libraries are unloaded by server destruction
 // The callout libraries write their library index number to a marker
@@ -2993,7 +3180,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
 }
 
 // This test verifies that parked-packet-limit is properly enforced.
-TEST_F(HooksDhcpv4SrvTest, parkedPacketLimit) {
+TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     IfaceMgrTestConfig test_config(true);
 
     // Configure 1 directly reachable subnet, parked-packet-limit of 1.
@@ -3118,3 +3305,4 @@ TEST_F(HooksDhcpv4SrvTest, parkedPacketLimit) {
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
+}  // namespace

@@ -106,7 +106,6 @@ const char* OOR_CONFIGS[] = {
         "}"
     "}",
 
-
 // Configuration 3 - different subnet with reservations
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
@@ -164,35 +163,35 @@ const char* OOR_CONFIGS[] = {
 
 };
 
-/// @brief Enum for indexing into the array of configurations.
-/// These were created to make the test cases easier to follow.
-enum CfgIndex {
-    REF_CFG = 0,
-    DIFF_POOL,
-    DIFF_POOL_NO_HR,
-    DIFF_SUBNET,
-    DIFF_SUBNET_NO_HR,
-    NO_HR
-};
-
-/// @brief Enum for specifying expected response to client renewal attempt
-enum RenewOutcome {
-    DOES_RENEW,
-    DOES_NOT_RENEW,
-    DOES_NOT_NAK
-};
-
-/// @brief Enum for specifying expected response to client release attempt
-enum ReleaseOutcome {
-    DOES_RELEASE,
-    DOES_NOT_RELEASE
-};
-
 /// @brief Test fixture class for testing various exchanges when the client's
 /// leased address is out of range due to configuration changes.
 class OutOfRangeTest : public Dhcpv4SrvTest {
 public:
-    D2ClientMgr& d2_mgr_;
+
+    /// @brief Enum for indexing into the array of configurations.
+    /// These were created to make the test cases easier to follow.
+    enum CfgIndex {
+        REF_CFG = 0,
+        DIFF_POOL,
+        DIFF_POOL_NO_HR,
+        DIFF_SUBNET,
+        DIFF_SUBNET_NO_HR,
+        NO_HR
+    };
+
+    /// @brief Enum for specifying expected response to client renewal attempt.
+    enum RenewOutcome {
+        DOES_RENEW,
+        DOES_NOT_RENEW,
+        DOES_NOT_NAK
+    };
+
+    /// @brief Enum for specifying expected response to client release attempt.
+    enum ReleaseOutcome {
+        DOES_RELEASE_EXPIRE,
+        DOES_RELEASE_DELETE,
+        DOES_NOT_RELEASE
+    };
 
     /// @brief Constructor.
     ///
@@ -209,9 +208,18 @@ public:
     ~OutOfRangeTest() {
     }
 
-    void configure(const std::string& config, Dhcp4Client& client) {
+    /// @brief Configure specified DHCP server using JSON string.
+    ///
+    /// @param config String holding server configuration in JSON format.
+    /// @param client Instance of the client.
+    /// @param disable_affinity A boolean flag which indicates if lease affinity
+    /// should be disabled.
+    void configure(const std::string& config, Dhcp4Client& client,
+                   const bool disable_affinity = true) {
         NakedDhcpv4Srv& server = *client.getServer();
-        ASSERT_NO_FATAL_FAILURE(Dhcpv4SrvTest::configure(config, server));
+        ASSERT_NO_FATAL_FAILURE(Dhcpv4SrvTest::configure(config, server, true,
+                                                         true, true, false,
+                                                         disable_affinity));
         if (d2_mgr_.ddnsEnabled()) {
             ASSERT_NO_THROW(server.startD2());
         }
@@ -266,32 +274,39 @@ public:
     /// @param renew_outcome - expected server reaction in response to the
     /// client's stage two renewal attempt.
     /// @param release_outcome - expected server reaction in response to the
-    /// client's stage two release attempt.  Currently defaults to DOES_RELEASE
+    /// client's stage two release attempt.  Currently defaults to DOES_RELEASE_DELETE
     /// as no cases have been identified which do otherwise.
-    void oorRenewReleaseTest(enum CfgIndex cfg_idx,
+    /// @param disable_affinity A boolean flag which indicates if lease affinity
+    /// should be disabled. In the case lease affinity is enabled, the lease is
+    /// not removed, but instead it is expired, and no DNS update is performed.
+    void oorRenewReleaseTest(CfgIndex cfg_idx,
                              const std::string& hwaddress,
                              const std::string& expected_address,
-                             enum RenewOutcome renew_outcome,
-                             enum ReleaseOutcome release_outcome = DOES_RELEASE);
+                             RenewOutcome renew_outcome,
+                             ReleaseOutcome release_outcome = DOES_RELEASE_DELETE,
+                             const bool disable_affinity = true);
+
+    /// @brief D2 client manager.
+    D2ClientMgr& d2_mgr_;
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
-
 };
 
 void
-OutOfRangeTest::oorRenewReleaseTest(enum CfgIndex cfg_idx,
-                             const std::string& hwaddress,
-                             const std::string& expected_address,
-                             enum RenewOutcome renew_outcome,
-                             enum ReleaseOutcome release_outcome) {
+OutOfRangeTest::oorRenewReleaseTest(CfgIndex cfg_idx,
+                                    const std::string& hwaddress,
+                                    const std::string& expected_address,
+                                    RenewOutcome renew_outcome,
+                                    ReleaseOutcome release_outcome,
+                                    const bool disable_affinity) {
     // STAGE ONE:
 
     // Step 1 is to acquire the lease
     Dhcp4Client client(Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
-    configure(OOR_CONFIGS[REF_CFG], client);
+    configure(OOR_CONFIGS[REF_CFG], client, disable_affinity);
 
     // Set the host name so DNS updates will be performed
     client.includeHostname("test.example.com");
@@ -338,7 +353,7 @@ OutOfRangeTest::oorRenewReleaseTest(enum CfgIndex cfg_idx,
     // STAGE TWO:
 
     // Now reconfigure which should render our leased address out-of-range
-    configure(OOR_CONFIGS[cfg_idx], client);
+    configure(OOR_CONFIGS[cfg_idx], client, disable_affinity);
 
     // Try to renew after the configuration change..
     ASSERT_NO_THROW(client.doRequest());
@@ -372,55 +387,86 @@ OutOfRangeTest::oorRenewReleaseTest(enum CfgIndex cfg_idx,
 
     lease = LeaseMgrFactory::instance().getLease4(leased_address);
 
-    if (release_outcome == DOES_RELEASE) {
+    if (release_outcome == DOES_RELEASE_DELETE) {
         EXPECT_FALSE(lease);
         // Verify the DNS remove was queued.
         verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
                                 leased_address.toText());
     } else {
         // Lease should still exist, and no NCR should be queued.
-        EXPECT_TRUE(lease);
+        ASSERT_TRUE(lease);
         EXPECT_EQ(0, d2_mgr_.getQueueSize());
+        if (release_outcome == DOES_RELEASE_EXPIRE) {
+            EXPECT_TRUE(lease->expired());
+        } else {
+            EXPECT_FALSE(lease->expired());
+        }
     }
 }
-
 
 // Verifies that once-valid lease, whose address is no longer
 // within the subnet's pool:
 //
 // a: Is NAKed upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicOutOfPool) {
 
     std::string hwaddress = "";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address,
-                        DOES_NOT_NAK);
+    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_NAK);
+}
 
+// Verifies that once-valid lease, whose address is no longer
+// within the subnet's pool:
+//
+// a: Is NAKed upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, dynamicOutOfPoolNoDelete) {
+
+    std::string hwaddress = "";
+    std::string expected_address = "";
+
+    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_NAK,
+                        DOES_RELEASE_EXPIRE, false);
 }
 
 // Verifies that once-valid lease whose address is no longer
 // within any configured subnet:
 //
 // a: Is NAKed upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicOutOfSubnet) {
 
     std::string hwaddress = "";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address,
-                        DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW);
+}
+
+// Verifies that once-valid lease whose address is no longer
+// within any configured subnet:
+//
+// a: Is NAKed upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, dynamicOutOfSubnetNoDelete) {
+
+    std::string hwaddress = "";
+    std::string expected_address = "";
+
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_EXPIRE, false);
 }
 
 // Test verifies that once-valid dynamic address host reservation,
 // whose address is no longer within the subnet's pool:
 //
 // a: Is NAKed upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostOutOfPool) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
@@ -430,17 +476,44 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfPool) {
 }
 
 // Test verifies that once-valid dynamic address host reservation,
+// whose address is no longer within the subnet's pool:
+//
+// a: Is NAKed upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, dynamicHostOutOfPoolNoDelete) {
+    std::string hwaddress = "dd:dd:dd:dd:dd:01";
+    std::string expected_address = "";
+
+    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_NAK,
+                        DOES_RELEASE_EXPIRE, false);
+}
+
+// Test verifies that once-valid dynamic address host reservation,
 // whose address is no longer within any configured subnet:
 //
 // a: Is NAKed upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostOutOfSubnet) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address,
-                        DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW);
+}
+
+// Test verifies that once-valid dynamic address host reservation,
+// whose address is no longer within any configured subnet:
+//
+// a: Is NAKed upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetNoDelete) {
+    std::string hwaddress = "dd:dd:dd:dd:dd:01";
+    std::string expected_address = "";
+
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_EXPIRE, false);
 }
 
 // Test verifies that once-valid dynamic address host reservation,
@@ -448,7 +521,7 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnet) {
 // reservation has been removed:
 //
 // a: Is allowed to renew
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
@@ -460,11 +533,28 @@ TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
 }
 
 // Test verifies that once-valid dynamic address host reservation,
+// whose address is within the configured subnet and pool, but whose
+// reservation has been removed:
+//
+// a: Is allowed to renew
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, dynamicHostReservationRemovedNoDelete) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    std::string hwaddress = "dd:dd:dd:dd:dd:01";
+    std::string expected_address = "";
+
+    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_RENEW,
+                        DOES_RELEASE_EXPIRE, false);
+}
+
+// Test verifies that once-valid dynamic address host reservation,
 // whose address is no longer within any configured subnet, and which
 // no longer has reservation defined:
 //
 // a: Is NAKed upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetReservationRemoved) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
@@ -472,30 +562,58 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetReservationRemoved) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address,
-                        DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address, DOES_NOT_RENEW);
+}
+
+// Test verifies that once-valid dynamic address host reservation,
+// whose address is no longer within any configured subnet, and which
+// no longer has reservation defined:
+//
+// a: Is NAKed upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetReservationRemovedNoDelete) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    std::string hwaddress = "dd:dd:dd:dd:dd:01";
+    std::string expected_address = "";
+
+    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_EXPIRE, false);
 }
 
 // Test verifies that once-valid in-subnet fixed-address host reservation,
 // after the subnet pool changes:
 //
 // a: Is NAK'd upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, fixedHostOutOfSubnet) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
     std::string expected_address = "10.0.0.7";
 
-    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address,
-                        DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW);
 }
 
+// Test verifies that once-valid in-subnet fixed-address host reservation,
+// after the subnet pool changes:
+//
+// a: Is NAK'd upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, fixedHostOutOfSubnetNoDelete) {
+    std::string hwaddress = "ff:ff:ff:ff:ff:01";
+    std::string expected_address = "10.0.0.7";
+
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_EXPIRE, false);
+}
 
 // Test verifies that once-valid in-subnet fixed-address host reservation,
 // after the subnet pool is changed:
 //
 // a: Is ACK'd upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, fixedHostDifferentPool) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
@@ -505,10 +623,24 @@ TEST_F(OutOfRangeTest, fixedHostDifferentPool) {
 }
 
 // Test verifies that once-valid in-subnet fixed-address host reservation,
+// after the subnet pool is changed:
+//
+// a: Is ACK'd upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, fixedHostDifferentPoolNoDelete) {
+    std::string hwaddress = "ff:ff:ff:ff:ff:01";
+    std::string expected_address = "10.0.0.7";
+
+    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_RENEW,
+                        DOES_RELEASE_EXPIRE, false);
+}
+
+// Test verifies that once-valid in-subnet fixed-address host reservation,
 // whose reservation has been removed from the configuration
 //
 // a: Is NAK'd upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, fixedHostReservationRemoved) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
@@ -517,18 +649,46 @@ TEST_F(OutOfRangeTest, fixedHostReservationRemoved) {
     oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_NOT_NAK);
 }
 
+
+// Test verifies that once-valid in-subnet fixed-address host reservation,
+// whose reservation has been removed from the configuration
+//
+// a: Is NAK'd upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, fixedHostReservationRemovedNoDelete) {
+    std::string hwaddress = "ff:ff:ff:ff:ff:01";
+    std::string expected_address = "10.0.0.7";
+
+    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_NOT_NAK,
+                        DOES_RELEASE_EXPIRE, false);
+}
+
 // Test verifies that once-valid fixed address host reservation,
 // whose address is no longer within any configured subnet
 //
 // a: Is NAKed upon a renewal attempt
-// b: Is released properly upon release, including DNS removal
+// b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, fixedHostOutOfSubnetReservationRemoved) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
     std::string expected_address = "10.0.0.7";
 
-    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address,
-                        DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address, DOES_NOT_RENEW);
+}
+
+// Test verifies that once-valid fixed address host reservation,
+// whose address is no longer within any configured subnet
+//
+// a: Is NAKed upon a renewal attempt
+// b: Is expired properly upon release, including no DNS removal
+//
+TEST_F(OutOfRangeTest, fixedHostOutOfSubnetReservationRemovedNoDelete) {
+    std::string hwaddress = "ff:ff:ff:ff:ff:01";
+    std::string expected_address = "10.0.0.7";
+
+    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_EXPIRE, false);
 }
 
 } // end of anonymous namespace

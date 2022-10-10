@@ -3127,9 +3127,23 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
     // Ok, we've passed all checks. Let's release this address.
     bool success = false; // was the removal operation successful?
+    bool expired = false; // explicitly expired instead of removed?
+    auto expiration_cfg = CfgMgr::instance().getCurrentCfg()->getCfgExpiration();
 
+    // Callout didn't indicate to skip the release process. Let's release
+    // the address.
     if (!skip) {
-        success = LeaseMgrFactory::instance().deleteLease(lease);
+        // Delete lease only if affinity is disabled.
+        if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
+            expiration_cfg->getHoldReclaimedTime()) {
+            // Expire the lease.
+            lease->cltt_ -= lease->valid_lft_ + 1;
+            LeaseMgrFactory::instance().updateLease6(lease);
+            expired = true;
+            success = true;
+        } else {
+            success = LeaseMgrFactory::instance().deleteLease(lease);
+        }
     }
 
     // Here the success should be true if we removed lease successfully
@@ -3157,15 +3171,27 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_Success,
                           "Lease released. Thank you, please come again."));
 
-        // Need to decrease statistic for assigned addresses.
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
-            static_cast<int64_t>(-1));
+        if (expired) {
+            LOG_INFO(lease6_logger, DHCP6_RELEASE_NA_EXPIRED)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(lease->iaid_);
+        } else {
+            LOG_INFO(lease6_logger, DHCP6_RELEASE_NA_DELETED)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(lease->iaid_);
 
-        // Check if a lease has flags indicating that the FQDN update has
-        // been performed. If so, create NameChangeRequest which removes
-        // the entries.
-        queueNCR(CHG_REMOVE, lease);
+            // Need to decrease statistic for assigned addresses.
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
+                static_cast<int64_t>(-1));
+
+            // Check if a lease has flags indicating that the FQDN update has
+            // been performed. If so, create NameChangeRequest which removes
+            // the entries.
+            queueNCR(CHG_REMOVE, lease);
+        }
 
         return (ia_rsp);
     }
@@ -3280,20 +3306,36 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
 
-        skip = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to send the packet, so skip at this
+        // stage means "drop response".
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
+            skip = true;
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP)
+                .arg(query->getLabel());
+        }
     }
 
     // Ok, we've passed all checks. Let's release this prefix.
     bool success = false; // was the removal operation successful?
+    bool expired = false; // explicitly expired instead of removed?
+    auto expiration_cfg = CfgMgr::instance().getCurrentCfg()->getCfgExpiration();
 
+    // Callout didn't indicate to skip the release process. Let's release
+    // the prefix.
     if (!skip) {
-        success = LeaseMgrFactory::instance().deleteLease(lease);
-    } else {
-        // Callouts decided to skip the next processing step. The next
-        // processing step would to send the packet, so skip at this
-        // stage means "drop response".
-        LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP)
-            .arg(query->getLabel());
+        // Delete lease only if affinity is disabled.
+        if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
+            expiration_cfg->getHoldReclaimedTime()) {
+            // Expire the lease.
+            lease->cltt_ -= lease->valid_lft_ + 1;
+            LeaseMgrFactory::instance().updateLease6(lease);
+            expired = true;
+            success = true;
+        } else {
+            success = LeaseMgrFactory::instance().deleteLease(lease);
+        }
     }
 
     // Here the success should be true if we removed lease successfully
@@ -3322,10 +3364,24 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_Success,
                           "Lease released. Thank you, please come again."));
 
-        // Need to decrease statistic for assigned prefixes.
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
-            static_cast<int64_t>(-1));
+        if (expired) {
+            LOG_INFO(lease6_logger, DHCP6_RELEASE_PD_EXPIRED)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(static_cast<int>(lease->prefixlen_))
+                .arg(lease->iaid_);
+        } else {
+            LOG_INFO(lease6_logger, DHCP6_RELEASE_PD_DELETED)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(static_cast<int>(lease->prefixlen_))
+                .arg(lease->iaid_);
+
+            // Need to decrease statistic for assigned prefixes.
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
+                static_cast<int64_t>(-1));
+        }
     }
 
     return (ia_rsp);

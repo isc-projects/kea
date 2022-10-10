@@ -339,8 +339,8 @@ public:
     NakedDhcpv6SrvTest();
 
     // Generate IA_NA or IA_PD option with specified parameters
-    boost::shared_ptr<isc::dhcp::Option6IA> generateIA
-        (uint16_t type, uint32_t iaid, uint32_t t1, uint32_t t2);
+    boost::shared_ptr<isc::dhcp::Option6IA> generateIA(uint16_t type, uint32_t iaid,
+                                                       uint32_t t1, uint32_t t2);
 
     /// @brief generates interface-id option, based on text
     ///
@@ -400,8 +400,7 @@ public:
     // Checks if server response (ADVERTISE or REPLY) includes proper
     // server-id.
     void checkServerId(const isc::dhcp::Pkt6Ptr& rsp,
-                       const isc::dhcp::OptionPtr& expected_srvid)
-    {
+                       const isc::dhcp::OptionPtr& expected_srvid) {
         // check that server included its server-id
         isc::dhcp::OptionPtr tmp = rsp->getOption(D6O_SERVERID);
         EXPECT_EQ(tmp->getType(), expected_srvid->getType() );
@@ -412,8 +411,7 @@ public:
     // Checks if server response (ADVERTISE or REPLY) includes proper
     // client-id.
     void checkClientId(const isc::dhcp::Pkt6Ptr& rsp,
-                       const isc::dhcp::OptionPtr& expected_clientid)
-    {
+                       const isc::dhcp::OptionPtr& expected_clientid) {
         // check that server included our own client-id
         isc::dhcp::OptionPtr tmp = rsp->getOption(D6O_CLIENTID);
         ASSERT_TRUE(tmp);
@@ -429,8 +427,7 @@ public:
                           uint8_t expected_message_type,
                           uint32_t expected_transid,
                           uint16_t expected_status_code,
-                          uint32_t expected_t1, uint32_t expected_t2)
-    {
+                          uint32_t expected_t1, uint32_t expected_t2) {
         // Check if we get response at all
         checkResponse(rsp, expected_message_type, expected_transid);
 
@@ -463,14 +460,12 @@ public:
     /// @param expected_t1 expected T1 in IA_NA option
     /// @param expected_t2 expected T2 in IA_NA option
     /// @param check_addr whether to check for address with 0 lifetimes
-    void checkIA_NAStatusCode
-        (const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
-         uint16_t expected_status_code, uint32_t expected_t1,
-         uint32_t expected_t2, bool check_addr = true);
+    void checkIA_NAStatusCode(const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
+                              uint16_t expected_status_code, uint32_t expected_t1,
+                              uint32_t expected_t2, bool check_addr = true);
 
     void checkMsgStatusCode(const isc::dhcp::Pkt6Ptr& msg,
-                            uint16_t expected_status)
-    {
+                            uint16_t expected_status) {
         isc::dhcp::Option6StatusCodePtr status =
             boost::dynamic_pointer_cast<isc::dhcp::Option6StatusCode>
                 (msg->getOption(D6O_STATUS_CODE));
@@ -571,11 +566,14 @@ public:
     /// @param create_managers A boolean flag indicating if managers should be
     /// recreated.
     /// @param test A boolean flag which indicates if only testing config.
+    /// @param disable_affinity A boolean flag which indicates if lease affinity
+    /// should be disabled.
     void configure(const std::string& config,
                    const bool commit = true,
                    const bool open_sockets = false,
                    const bool create_managers = true,
-                   const bool test = false);
+                   const bool test = false,
+                   const bool disable_affinity = true);
 
     /// @brief Configure the DHCPv6 server using the JSON string.
     ///
@@ -588,12 +586,15 @@ public:
     /// @param create_managers A boolean flag indicating if managers should be
     /// recreated.
     /// @param test A boolean flag which indicates if only testing config.
+    /// @param disable_affinity A boolean flag which indicates if lease affinity
+    /// should be disabled.
     void configure(const std::string& config,
                    NakedDhcpv6Srv& srv,
                    const bool commit = true,
                    const bool open_sockets = false,
                    const bool create_managers = true,
-                   const bool test = false);
+                   const bool test = false,
+                   const bool disable_affinity = true);
 
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_NA option
@@ -810,10 +811,13 @@ public:
     /// @param type type (TYPE_NA or TYPE_PD)
     /// @param existing address to be preinserted into the database
     /// @param release_addr address being sent in RELEASE
+    /// @param disable_affinity A boolean flag which indicates if lease affinity
+    /// should be disabled.
     void
     testReleaseBasic(isc::dhcp::Lease::Type type,
                      const isc::asiolink::IOAddress& existing,
-                     const isc::asiolink::IOAddress& release_addr);
+                     const isc::asiolink::IOAddress& release_addr,
+                     const bool disable_affinity = true);
 
     /// @brief Performs negative RELEASE test
     ///

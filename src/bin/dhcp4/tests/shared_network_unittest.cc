@@ -2122,7 +2122,7 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
 
 // Shared network is selected based on the client class specified.
 TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
-   // Create client #1.
+    // Create client #1.
     Dhcp4Client client1(Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);

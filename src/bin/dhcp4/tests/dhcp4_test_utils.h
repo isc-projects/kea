@@ -559,11 +559,14 @@ public:
     /// @param create_managers A boolean flag indicating if managers should be
     /// recreated.
     /// @param test A boolean flag which indicates if only testing config.
+    /// @param disable_affinity A boolean flag which indicates if lease affinity
+    /// should be disabled.
     void configure(const std::string& config,
                    const bool commit = true,
                    const bool open_sockets = true,
                    const bool create_managers = true,
-                   const bool test = false);
+                   const bool test = false,
+                   const bool disable_affinity = true);
 
     /// @brief Configure specified DHCP server using JSON string.
     ///
@@ -576,12 +579,15 @@ public:
     /// @param create_managers A boolean flag indicating if managers should be
     /// recreated.
     /// @param test A boolean flag which indicates if only testing config.
+    /// @param disable_affinity A boolean flag which indicates if lease affinity
+    /// should be disabled.
     void configure(const std::string& config,
                    NakedDhcpv4Srv& srv,
                    const bool commit = true,
                    const bool open_sockets = true,
                    const bool create_managers = true,
-                   const bool test = false);
+                   const bool test = false,
+                   const bool disable_affinity = true);
 
     /// @brief Configure specified DHCP server using JSON string.
     ///

@@ -3427,12 +3427,26 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
         }
 
         // Callout didn't indicate to skip the release process. Let's release
-        // the lease.
+        // the address.
         if (!skip) {
-            bool success = LeaseMgrFactory::instance().deleteLease(lease);
+            // Ok, we've passed all checks. Let's release this address.
+            bool success = false; // was the removal operation successful?
+            bool expired = false; // explicitly expired instead of removed?
+            auto expiration_cfg = CfgMgr::instance().getCurrentCfg()->getCfgExpiration();
+
+            // Delete lease only if affinity is disabled.
+            if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
+                expiration_cfg->getHoldReclaimedTime()) {
+                // Expire the lease.
+                lease->cltt_ -= lease->valid_lft_ + 1;
+                LeaseMgrFactory::instance().updateLease4(lease);
+                expired = true;
+                success = true;
+            } else {
+                success = LeaseMgrFactory::instance().deleteLease(lease);
+            }
 
             if (success) {
-
                 context.reset(new AllocEngine::ClientContext4());
                 context->old_lease_ = lease;
 
@@ -3441,14 +3455,23 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                     .arg(release->getLabel())
                     .arg(lease->addr_.toText());
 
-                // Need to decrease statistic for assigned addresses.
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
-                    static_cast<int64_t>(-1));
+                if (expired) {
+                    LOG_INFO(lease4_logger, DHCP4_RELEASE_EXPIRED)
+                                            .arg(release->getLabel())
+                                            .arg(lease->addr_.toText());
+                } else {
+                    LOG_INFO(lease4_logger, DHCP4_RELEASE_DELETED)
+                        .arg(release->getLabel())
+                        .arg(lease->addr_.toText());
 
-                // Remove existing DNS entries for the lease, if any.
-                queueNCR(CHG_REMOVE, lease);
+                    // Need to decrease statistic for assigned addresses.
+                    StatsMgr::instance().addValue(
+                        StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
+                        static_cast<int64_t>(-1));
 
+                    // Remove existing DNS entries for the lease, if any.
+                    queueNCR(CHG_REMOVE, lease);
+                }
             } else {
                 // Release failed
                 LOG_ERROR(lease4_logger, DHCP4_RELEASE_FAIL)
