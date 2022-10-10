@@ -31,6 +31,9 @@
 // lease reclamation routine will process at most 500 leases or will
 // last for at most 100ms, during a single run. If there are still some
 // unreclaimed leases after 10 attempts, a warning message is issued.
+// If both "flush-reclaimed-timer-wait-time" and "hold-reclaimed-time" are not
+// 0, when the client sends a release message the lease is expired instead of
+// being deleted from the lease storage.
   "expired-leases-processing": {
     "reclaim-timer-wait-time": 5,
     "hold-reclaimed-time": 1800,

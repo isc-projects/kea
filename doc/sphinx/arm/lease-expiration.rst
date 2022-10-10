@@ -81,12 +81,16 @@ processing expired leases, with their default values:
 
 -  ``flush-reclaimed-timer-wait-time`` - this parameter controls how
    often the server initiates the lease reclamation procedure. Expressed in
-   seconds; the default value is 25.
+   seconds; the default value is 25. If both ``flush-reclaimed-timer-wait-time``
+   and ``hold-reclaimed-time`` are not 0, when the client sends a release
+   message the lease is expired instead of being deleted from the lease storage.
 
 -  ``hold-reclaimed-time`` - this parameter governs how long the lease
    should be kept after it is reclaimed. This enables lease affinity
    when set to a non-zero value. Expressed in seconds; the default value
-   is 3600.
+   is 3600. If both ``flush-reclaimed-timer-wait-time`` and
+   ``hold-reclaimed-time`` are not 0, when the client sends a release message
+   the lease is expired instead of being deleted from the lease storage.
 
 -  ``max-reclaim-leases`` - this parameter specifies the maximum number
    of reclaimed leases that can be processed at one time. Zero means
@@ -256,21 +260,22 @@ leases and reassigns them if they have not been assigned to another
 client. The ability of the server to reassign the same lease to a
 returning client is referred to as "lease affinity."
 
-When lease affinity is enabled (i.e. when ``hold-reclaimed-time`` is
-configured to a value greater than zero), the server still reclaims
-leases according to the parameters described in :ref:`lease-reclaim-config`,
-but the reclaimed leases are
-held in the database for a specified amount of
-time rather than removed. When the client returns, the server first verifies whether
-there are any reclaimed leases associated with this client and then
-reassigns them if possible. However, it is important to note that any
-reclaimed lease may be assigned to another client if that client
-specifically asks for it. Therefore, lease affinity does not guarantee
-that the reclaimed lease will be available for the client who used it
-before; it merely increases the chances of the client being assigned
-the same lease. If the lease pool is small - namely, in
-DHCPv4, for which address space is limited - there is an increased
-likelihood that the expired lease will be assigned to another client.
+When lease affinity is enabled (i.e. when ``hold-reclaimed-time`` is configured
+to a value greater than zero), the server still reclaims leases according to the
+parameters described in :ref:`lease-reclaim-config`, but the reclaimed leases
+are held in the database for a specified amount of time rather than removed.
+If both ``flush-reclaimed-timer-wait-time`` and ``hold-reclaimed-time`` are
+greater than zero, the lease is expired immediately when the client sends a
+release message instead of being deleted from the lease storage. When the client
+returns, the server first verifies whether there are any reclaimed leases
+associated with this client and then reassigns them if possible. However, it is
+important to note that any reclaimed lease may be assigned to another client if
+that client specifically asks for it. Therefore, lease affinity does not
+guarantee that the reclaimed lease will be available for the client who used it
+before; it merely increases the chances of the client being assigned the same
+lease. If the lease pool is small - namely, in DHCPv4, for which address space
+is limited - there is an increased likelihood that the expired lease will be
+assigned to another client.
 
 Consider the following configuration:
 

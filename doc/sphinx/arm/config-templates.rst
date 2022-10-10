@@ -23,7 +23,7 @@ Server1's DHCPv4 configuration file:
 
 .. literalinclude:: template-power-user-home-dhcp4-1.conf
    :language: javascript
-   :emphasize-lines: 25, 76, 81, 121, 133, 148, 152, 155-159, 167-181, 191-200
+   :emphasize-lines: 25, 79, 84, 124, 136, 151, 155, 158-162, 170-184, 194-203
    :linenos:
 
 Server2's Control Agent configuration file:
@@ -37,7 +37,7 @@ Server2's DHCPv4 configuration file:
 
 .. literalinclude:: template-power-user-home-dhcp4-2.conf
    :language: javascript
-   :emphasize-lines: 25, 76, 81, 121, 133, 148, 152, 155-159, 167-181, 191-200
+   :emphasize-lines: 25, 79, 84, 124, 136, 151, 155, 158-162, 170-184, 194-203
    :linenos:
 
 .. include:: template-ha-mt-tls.md
@@ -49,26 +49,26 @@ Server1's Control Agent configuration file:
 
 .. literalinclude:: template-ha-mt-tls-ca-1.conf
    :language: javascript
-   :emphasize-lines: 10, 14, 17, 20, 23, 32
+   :emphasize-lines: 10, 14, 18, 21, 24, 36
    :linenos:
 
 Server1's DHCPv4 configuration file:
 
 .. literalinclude:: template-ha-mt-tls-dhcp4-1.conf
    :language: javascript
-   :emphasize-lines: 25, 38-54, 95, 100, 133-142, 151, 153, 155, 157, 169, 171, 173, 175, 190, 194, 197-201
+   :emphasize-lines: 25, 38-54, 98, 103, 139-152, 161, 163, 165, 167, 181, 183, 185, 187, 204, 208, 211-215
    :linenos:
 
 Server2's Control Agent configuration file:
 
 .. literalinclude:: template-ha-mt-tls-ca-2.conf
    :language: javascript
-   :emphasize-lines: 10, 14, 17, 20, 23, 32
+   :emphasize-lines: 10, 14, 18, 21, 24, 36
    :linenos:
 
 Server2's DHCPv4 configuration file:
 
 .. literalinclude:: template-ha-mt-tls-dhcp4-2.conf
    :language: javascript
-   :emphasize-lines: 25, 38-54, 95, 100, 133-142, 151, 153, 155, 157, 169, 171, 173, 175, 190, 194, 197-201
+   :emphasize-lines: 25, 38-54, 98, 103, 139-152, 161, 163, 165, 167, 181, 183, 185, 187, 204, 208, 211-215
    :linenos:

@@ -80,6 +80,9 @@
     // are 100 leases or 250 ms for a single cycle. A warning message
     // will be logged if there are still expired leases in the
     // database after 5 consecutive reclamation cycles.
+    // If both "flush-reclaimed-timer-wait-time" and "hold-reclaimed-time" are
+    // not 0, when the client sends a release message the lease is expired
+    // instead of being deleted from the lease storage.
     "expired-leases-processing": {
         "reclaim-timer-wait-time": 10,
         "flush-reclaimed-timer-wait-time": 25,

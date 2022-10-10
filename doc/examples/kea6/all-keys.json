@@ -216,10 +216,18 @@
         "expired-leases-processing": {
             // Specifies the number of seconds since last removal of
             // the expired leases when next removal should occur.
+            // If both "flush-reclaimed-timer-wait-time" and
+            // "hold-reclaimed-time" are not 0, when the client sends a release
+            // message the lease is expired instead of being deleted from the
+            // lease storage.
             "flush-reclaimed-timer-wait-time": 25,
 
             // Specifies the time period in seconds to keep expired
             // leases in the lease database (lease affinity).
+            // If both "flush-reclaimed-timer-wait-time" and
+            // "hold-reclaimed-time" are not 0, when the client sends a release
+            // message the lease is expired instead of being deleted from the
+            // lease storage.
             "hold-reclaimed-time": 3600,
 
             // Specifies the maximum number of expired leases that can be
