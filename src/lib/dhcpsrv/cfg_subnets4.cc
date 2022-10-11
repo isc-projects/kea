@@ -225,9 +225,11 @@ CfgSubnets4::initSelector(const Pkt4Ptr& query) {
         OptionCustomPtr rai_custom =
             boost::dynamic_pointer_cast<OptionCustom>(rai);
         if (rai_custom) {
-            // If Relay Agent Information Link Selection is ignored in the configuration, skip
-            // returning the related subnet selector here, and move on to normal subnet selection.
-            bool ignore_link_sel = CfgMgr::instance().getCurrentCfg()->getIgnoreRAILinkSelection();
+            // If Relay Agent Information Link Selection is ignored in the
+            // configuration, skip returning the related subnet selector here,
+            // and move on to normal subnet selection.
+            bool ignore_link_sel = CfgMgr::instance().getCurrentCfg()->
+                                   getIgnoreRAILinkSelection();
             if (!ignore_link_sel) {
                 OptionPtr link_select =
                     rai_custom->getOption(RAI_OPTION_LINK_SELECTION);

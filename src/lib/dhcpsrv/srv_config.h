@@ -1160,11 +1160,14 @@ private:
     /// @brief Pointer to the configuration consistency settings
     CfgConsistencyPtr cfg_consist_;
 
-    /// @brief Compatibility flags
-    /// @{
+    /// @name Compatibility flags
+    ///
+    //@{
+    /// @brief Indicates whether lenient option parsing is enabled
     bool lenient_option_parsing_;
+    /// @brief Indicates whether RAI link-selection suboptions will be ignored
     bool ignore_rai_link_selection_;
-    /// @}
+    //@}
 
     /// @brief Flag which indicates if the server should do host reservations
     /// lookup before lease lookup. This parameter has effect only when

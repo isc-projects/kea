@@ -107,8 +107,10 @@
             // deterministically even if against RFC or common practice.
             "lenient-option-parsing": true,
             // Ignore Relay Agent Information Link Selection suboption if set
-            // to true. This will use normal subnet selection logic instead of
-            // attempting to use the subnet specified by the suboption.
+            // to true. Enabling this will cause Kea use normal subnet
+            // selection logic instead of attempting to use the subnet
+            // specified in the suboption. This config option defaults to
+            // false, as enabling it breaks RFC compliance.
             "ignore-rai-link-selection": false
         },
 

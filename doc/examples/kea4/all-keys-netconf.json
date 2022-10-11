@@ -105,11 +105,7 @@
         "compatibility": {
             // Parse options more leniently where fields can be deduced
             // deterministically even if against RFC or common practice.
-            "lenient-option-parsing": true,
-            // Ignore Relay Agent Information Link Selection suboption if set
-            // to true. This will use normal subnet selection logic instead of
-            // attempting to use the subnet specified by the suboption.
-            "ignore-rai-link-selection": false
+            "lenient-option-parsing": true
         },
 
         // Command control socket configuration parameters for Kea DHCPv4 server.
