@@ -819,11 +819,25 @@ public:
 
     /// @brief Upgrade a V4 lease user context to the new extended info entry.
     ///
+    /// In details:
+    ///  - change the "ISC" / "relay-agent-info" to a map.
+    ///  - move the "relay-agent-info" string to the "sub-options" entry of
+    ///    the map.
+    ///  - decode remote-id and relay-id from the RAI option content and
+    ///    add the raw value in hexadecimal in "remote-id" and/or "relay-id"
+    ///    entries of the map.
+    ///
     /// @param lease Pointer to the lease to be updated.
     /// @return True if the lease user context was updated, false otherwise.
     static bool upgradeLease4ExtendedInfo(const Lease4Ptr& lease);
 
     /// @brief Upgrade a V6 lease user context to the new extended info entry.
+    ///
+    /// In details:
+    ///  - change the "ISC" / "relays" list entry to "relay-info".
+    ///  - decode remote-id and relay-id from each relay options and
+    ///    add the raw value in hexadecimal in "remote-id" and/or "relay-id"
+    ///    in the relay item of the list.
     ///
     /// @param lease Pointer to the lease to be updated.
     /// @return True if the lease user context was updated, false otherwise.

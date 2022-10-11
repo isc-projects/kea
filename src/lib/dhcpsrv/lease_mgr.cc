@@ -391,12 +391,9 @@ LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease) {
     }
 
     if (!rai_def) {
-        // Should never be used...
-        rai_def.reset(new OptionDefinition("dhcp-agent-options",
-                                           DHO_DHCP_AGENT_OPTIONS,
-                                           DHCP4_OPTION_SPACE,
-                                           OPT_EMPTY_TYPE,
-                                           DHCP_AGENT_OPTION_SPACE));
+        // The definition is set when libdhcp++ is loaded so it is impossible
+        // to not be able to get it... so should not happen!
+        isc_throw(Unexpected, "can't find RAI option definition?!");
     }
 
     changed = true;

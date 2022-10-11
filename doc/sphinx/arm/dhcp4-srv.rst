@@ -4012,15 +4012,27 @@ subnet levels.
    }
 
 When set to ``true``, information relevant to the DHCPREQUEST asking for the lease is
-added into the lease's user-context as a map element labeled "ISC". Currently,
-the map contains a single value, the ``relay-agent-info`` option (DHCP Option 82),
-when the DHCPREQUEST received contains it. Since DHCPREQUESTs sent as renewals will likely not contain this
+added into the lease's user-context as a map element labeled "ISC". Since
+Kea version 2.3.2,  when the DHCPREQUEST received contains the option
+(DHCP Option 82) the map contains the ``relay-agent-info`` map
+with the content option (DHCP Option 82) in the ``sub-options`` entry and
+when present the ``remote-id`` and ``relay-id`` options.
+Since DHCPREQUESTs sent as renewals will likely not contain this
 information, the values taken from the last DHCPREQUEST that did contain it are
 retained on the lease. The lease's user-context looks something like this:
 
 ::
 
-  { "ISC": { "relay-agent-info": "0x52050104AABBCCDD" } }
+  { "ISC": { "relay-agent-info": { "sub-options": "0x0104AABBCCDD" } } }
+
+Or with remote and relay suboptions:
+
+::
+   { "ISC": { "relay-agent-info": {
+       "sub-options": "0x02030102030C03AABBCC",
+       "remote-id": "03010203",
+       "relay-id": "AABBCC"
+   } } }
 
 .. note::
 

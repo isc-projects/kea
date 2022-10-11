@@ -3477,20 +3477,32 @@ pretty-printed for clarity):
 
     {
         "ISC": {
-            "relays": [
+            "relay-info": [
             {
-                "hop": 2,
+                "hop": 3,
                 "link": "2001:db8::1",
                 "peer": "2001:db8::2"
             },
             {
-                "hop": 1,
+                "hop": 2,
                 "link": "2001:db8::3",
                 "options": "0x00C800080102030405060708",
                 "peer": "2001:db8::4"
+            },
+            {
+                "hop": 1",
+                "link": "2001:db8::5",
+                "options": "0x00250006010203040506003500086464646464646464",
+                "remote-id": "010203040506",
+                "relay-id": "6464646464646464"
             }]
         }
     }
+
+.. note::
+
+   Before Kea version 2.3.2 the entry was named ``relays``, remote and relay
+   identifier options were not decoded.
 
 .. note::
 
