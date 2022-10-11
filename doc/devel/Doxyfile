@@ -892,6 +892,7 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/lib/pgsql \
                          ../../src/lib/process \
                          ../../src/lib/stats \
+                         ../../src/lib/tcp \
                          ../../src/lib/testutils \
                          ../../src/lib/util \
                          ../../src/lib/util/encode \

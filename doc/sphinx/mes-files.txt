@@ -21,6 +21,7 @@ src/lib/process/process_messages.mes
 src/lib/asiodns/asiodns_messages.mes
 src/lib/eval/eval_messages.mes
 src/lib/d2srv/d2_messages.mes
+src/lib/tcp/tcp_messages.mes
 src/bin/dhcp4/dhcp4_messages.mes
 src/bin/agent/ca_messages.mes
 src/bin/dhcp6/dhcp6_messages.mes

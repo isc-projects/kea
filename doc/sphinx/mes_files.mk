@@ -21,6 +21,7 @@ mes_files += $(top_srcdir)/src/lib/process/process_messages.mes
 mes_files += $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
 mes_files += $(top_srcdir)/src/lib/eval/eval_messages.mes
 mes_files += $(top_srcdir)/src/lib/d2srv/d2_messages.mes
+mes_files += $(top_srcdir)/src/lib/tcp/tcp_messages.mes
 mes_files += $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
 mes_files += $(top_srcdir)/src/bin/agent/ca_messages.mes
 mes_files += $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
