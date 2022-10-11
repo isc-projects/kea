@@ -7198,9 +7198,9 @@ Selection suboption data will not be used for subnet selection. This will use
 normal subnet selection logic instead of attempting to use the subnet specified
 by the suboption. This option is not RFC compliant and is set to ``false`` by
 default. Setting this option to ``true`` can help with subnet selection in
-certain scenarios, for example, when your DHCP Relay Servers do not allow you
-to specify which suboptions are included in the Relay Agent Information
-option, and includes incorrect Link Selection information.
+certain scenarios, for example, when your DHCP relays do not allow you to
+specify which suboptions are included in the Relay Agent Information option,
+and include incorrect Link Selection information.
 
 .. code-block:: json
 
