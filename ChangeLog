@@ -1,3 +1,8 @@
+2070.	[func]		andrei
+	kea-netconf now requires libyang v2 and sysrepo v2 to compile and
+	run. Suport for libyang v1 and sysrepo v1 has been dropped.
+	(Gitlab #2311)
+
 2069.	[func]		fdupont
 	Added a new sanity checker named "extended-info-checks"
 	which checks and eventually upgrades lease extended
@@ -34,8 +39,6 @@
 	when the lease expied and was reclaimed.
 	(Gitlab #2588)
 
-Kea 2.3.1 (development) released on September 28, 2022
-
 2065.	[func]		djt
 	A compatibility config option called ignore-rai-link-selection
 	has been added to the DHCPv4 config allow operators to ignore
@@ -43,6 +46,8 @@ Kea 2.3.1 (development) released on September 28, 2022
 	When this configuration value is set to true, Kea will no longer
 	use data provided in the suboption for subnet selection.
 	(Gitlab #2543)
+
+Kea 2.3.1 (development) released on September 28, 2022
 
 2064.	[build]		mgodzina
 	The library version numbers have been bumped for the Kea 2.3.1
