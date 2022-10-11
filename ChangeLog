@@ -1,3 +1,8 @@
+2066.	[bug]		fdupont
+	Fixed lease reuse process to clear the user context
+	when the lease expied and was reclaimed.
+	(Gitlab #2588)
+
 Kea 2.3.1 (development) released on September 28, 2022
 
 2065.	[func]		djt
