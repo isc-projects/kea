@@ -147,7 +147,6 @@ public:
     ///
     /// See fake_received_ field for description
     virtual isc::dhcp::Pkt6Ptr receivePacket(int /*timeout*/) {
-
         // If there is anything prepared as fake incoming
         // traffic, use it
         if (!fake_received_.empty()) {
@@ -338,9 +337,17 @@ public:
     /// @brief Constructor
     NakedDhcpv6SrvTest();
 
-    // Generate IA_NA or IA_PD option with specified parameters
-    boost::shared_ptr<isc::dhcp::Option6IA> generateIA(uint16_t type, uint32_t iaid,
-                                                       uint32_t t1, uint32_t t2);
+    /// @brief Generate IA_NA or IA_PD option with specified parameters
+    ///
+    /// @param type The option type (usually 4 for IA_NA, 25 for IA_PD)
+    /// @param iaid The identity association identifier (id of IA)
+    /// @param t1 The T1 time
+    /// @param t2 The t2 time
+    /// @return The generated option
+    boost::shared_ptr<isc::dhcp::Option6IA> generateIA(uint16_t type,
+                                                       uint32_t iaid,
+                                                       uint32_t t1,
+                                                       uint32_t t2);
 
     /// @brief generates interface-id option, based on text
     ///
@@ -349,9 +356,8 @@ public:
     /// @return pointer to the option object
     isc::dhcp::OptionPtr generateInterfaceId(const std::string& iface_id) {
         isc::dhcp::OptionBuffer tmp(iface_id.begin(), iface_id.end());
-        return (isc::dhcp::OptionPtr
-                (new isc::dhcp::Option(isc::dhcp::Option::V6,
-                                       D6O_INTERFACE_ID, tmp)));
+        return (isc::dhcp::OptionPtr(new isc::dhcp::Option(isc::dhcp::Option::V6,
+                                                           D6O_INTERFACE_ID, tmp)));
     }
 
     /// @brief Generate binary data option
@@ -364,7 +370,8 @@ public:
     /// @param data_size number of bytes of data to generate
     ///
     /// @return Pointer to the new option
-    isc::dhcp::OptionPtr generateBinaryOption(const DHCPv6OptionType type, size_t data_size) {
+    isc::dhcp::OptionPtr generateBinaryOption(const DHCPv6OptionType type,
+                                              size_t data_size) {
         if (data_size == 0) {
             return (isc::dhcp::OptionPtr
                     (new isc::dhcp::Option(isc::dhcp::Option::V6, type)));
@@ -461,8 +468,10 @@ public:
     /// @param expected_t2 expected T2 in IA_NA option
     /// @param check_addr whether to check for address with 0 lifetimes
     void checkIA_NAStatusCode(const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
-                              uint16_t expected_status_code, uint32_t expected_t1,
-                              uint32_t expected_t2, bool check_addr = true);
+                              uint16_t expected_status_code,
+                              uint32_t expected_t1,
+                              uint32_t expected_t2,
+                              bool check_addr = true);
 
     void checkMsgStatusCode(const isc::dhcp::Pkt6Ptr& msg,
                             uint16_t expected_status) {

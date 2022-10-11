@@ -311,7 +311,7 @@ const char* values[] = {
     "DHCP4_RELEASE", "%1: address %2 was released properly.",
     "DHCP4_RELEASE_DELETED", "%1: address %2 was properly deleted on release.",
     "DHCP4_RELEASE_EXCEPTION", "%1: while trying to release address %2 an exception occurred: %3",
-    "DHCP4_RELEASE_EXPIRED", "%1: address %2 was properly expired on release.",
+    "DHCP4_RELEASE_EXPIRED", "%1: address %2 expired on release.",
     "DHCP4_RELEASE_FAIL", "%1: failed to remove lease for address %2",
     "DHCP4_RELEASE_FAIL_NO_LEASE", "%1: client is trying to release non-existing lease %2",
     "DHCP4_RELEASE_FAIL_WRONG_CLIENT", "%1: client is trying to release the lease %2 which belongs to a different client",
