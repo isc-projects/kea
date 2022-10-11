@@ -4028,6 +4028,7 @@ retained on the lease. The lease's user-context looks something like this:
 Or with remote and relay suboptions:
 
 ::
+
    { "ISC": { "relay-agent-info": {
        "sub-options": "0x02030102030C03AABBCC",
        "remote-id": "03010203",
