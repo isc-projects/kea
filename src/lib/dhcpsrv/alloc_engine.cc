@@ -3147,6 +3147,7 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
         lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        lease->setContext(ElementPtr());
         lease_update_fun(lease);
 
     } else {
