@@ -652,14 +652,16 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
         l = LeaseMgrFactory::instance().getLease6(type, release_addr);
         ASSERT_TRUE(l);
 
-        EXPECT_TRUE(l->expired());
+        EXPECT_EQ(l->valid_lft_, 0);
+        EXPECT_EQ(l->preferred_lft_, 0);
 
         // get lease by subnetid/duid/iaid combination
         l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
                                                   subnet_->getID());
         ASSERT_TRUE(l);
 
-        EXPECT_TRUE(l->expired());
+        EXPECT_EQ(l->valid_lft_, 0);
+        EXPECT_EQ(l->preferred_lft_, 0);
 
         // We should have decremented the address counter
         stat = StatsMgr::instance().getObservation(name);

@@ -3137,7 +3137,8 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
             expiration_cfg->getHoldReclaimedTime()) {
             // Expire the lease.
-            lease->cltt_ -= lease->valid_lft_ + 1;
+            lease->valid_lft_ = 0;
+            lease->preferred_lft_ = 0;
             LeaseMgrFactory::instance().updateLease6(lease);
             expired = true;
             success = true;
@@ -3327,9 +3328,11 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     if (!skip) {
         // Delete lease only if affinity is disabled.
         if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
-            expiration_cfg->getHoldReclaimedTime()) {
+            expiration_cfg->getHoldReclaimedTime() &&
+            lease->valid_lft_ != Lease::INFINITY_LFT) {
             // Expire the lease.
-            lease->cltt_ -= lease->valid_lft_ + 1;
+            lease->valid_lft_ = 0;
+            lease->preferred_lft_ = 0;
             LeaseMgrFactory::instance().updateLease6(lease);
             expired = true;
             success = true;

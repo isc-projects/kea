@@ -4651,14 +4651,16 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleNoDelete) {
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
     ASSERT_TRUE(l);
 
-    EXPECT_TRUE(l->expired());
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
 
     // Get lease by subnetid/duid/iaid combination
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_TRUE(l);
 
-    EXPECT_TRUE(l->expired());
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
@@ -4821,14 +4823,16 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleNoDelete) {
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
     ASSERT_TRUE(l);
 
-    EXPECT_TRUE(l->expired());
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
 
     // Get lease by subnetid/duid/iaid combination
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_TRUE(l);
 
-    EXPECT_TRUE(l->expired());
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);

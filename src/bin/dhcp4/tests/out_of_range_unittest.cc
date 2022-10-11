@@ -397,9 +397,10 @@ OutOfRangeTest::oorRenewReleaseTest(CfgIndex cfg_idx,
         ASSERT_TRUE(lease);
         EXPECT_EQ(0, d2_mgr_.getQueueSize());
         if (release_outcome == DOES_RELEASE_EXPIRE) {
-            EXPECT_TRUE(lease->expired());
+            EXPECT_EQ(lease->valid_lft_, 0);
         } else {
             EXPECT_FALSE(lease->expired());
+            EXPECT_TRUE(lease->valid_lft_ > 0);
         }
     }
 }

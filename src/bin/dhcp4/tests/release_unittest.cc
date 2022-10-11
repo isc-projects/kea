@@ -175,7 +175,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
         ASSERT_TRUE(lease);
 
         // The update succeeded, so the assigned-address should be expired
-        EXPECT_TRUE(lease->expired());
+        EXPECT_EQ(lease->valid_lft_, 0);
 
         // No lease has been removed, so the assigned-address should be the same
         // as before
@@ -412,7 +412,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNoSubnet) {
     ASSERT_TRUE(lease);
 
     // Check That the lease has been expired
-    EXPECT_TRUE(lease->expired());
+    EXPECT_EQ(lease->valid_lft_, 0);
 }
 
 } // end of anonymous namespace

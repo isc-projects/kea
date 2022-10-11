@@ -3436,9 +3436,10 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
 
             // Delete lease only if affinity is disabled.
             if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
-                expiration_cfg->getHoldReclaimedTime()) {
+                expiration_cfg->getHoldReclaimedTime() &&
+                lease->valid_lft_ != Lease::INFINITY_LFT) {
                 // Expire the lease.
-                lease->cltt_ -= lease->valid_lft_ + 1;
+                lease->valid_lft_ = 0;
                 LeaseMgrFactory::instance().updateLease4(lease);
                 expired = true;
                 success = true;
