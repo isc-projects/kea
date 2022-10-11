@@ -1284,7 +1284,6 @@ ExpirationAllocEngine6Test::createLeases() {
         user_context->set("index", Element::create(static_cast<int>(i)));
         lease->setContext(user_context);
         leases_.push_back(lease);
-
         // Copy the lease before adding it to the lease manager. We want to
         // make sure that modifications to the leases held in the leases_
         // container doesn't affect the leases in the lease manager.
