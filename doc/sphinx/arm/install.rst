@@ -77,10 +77,10 @@ reinstalled.
 
 Specifically, there is a possibility for the following packages to be removed
 during upgrade depending on which packages were originally installed:
-  - ``isc-kea-dhcp4``
-  - ``isc-kea-dhcp6``
-  - ``isc-kea-dhcp-ddns``
-  - ``isc-kea-hooks``
+- ``isc-kea-dhcp4``
+- ``isc-kea-dhcp6``
+- ``isc-kea-dhcp-ddns``
+- ``isc-kea-hooks``
 
 If your goal is to have the entire Kea software suite installed, it is
 recommended that you simply ``apt install isc-kea`` after upgrading, which

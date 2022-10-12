@@ -150,8 +150,9 @@ easier to install Kea using native packages.
 
         # service kea-dhcp6 restart
 
-   ``keactrl`` is not available in packages as similar functionality is provided
-   by the native systemctl scripts.
+.. note::
+  ``keactrl`` is not available in packages as similar functionality is provided
+  by the native systemctl scripts.
 
 7. On CentOS, Fedora, and Alpine, you will need to enable the service at boot
    time if that is desirable. This is done automatically at package
