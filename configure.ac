@@ -636,6 +636,11 @@ if test "x$usable_regex" != "xno" ; then
         AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])
 fi
 
+# Check for NETCONF support. If NETCONF was enabled in the build, and this check
+# passes, it will enforce the --std=c++20 flag. Let's do the check as early as
+# possible so that the rest of the checks include the flag as well.
+AX_NETCONF
+
 # Run the gtest detection routines. This supports --with-gtest and --with-gtest-source
 # parameters. If specified, those will set the HAVE_GTEST, HAVE_GTEST_SOURCE,
 # DISTCHECK_GTEST_CONFIGURE_FLAG, GTEST_INCLUDES, GTEST_LDFLAGS, GTEST_LDADD, GTEST_SOURCE
@@ -831,9 +836,6 @@ AC_ARG_WITH([cql],
 if test "${cql_config}" != "no" ; then
     AC_MSG_ERROR([$CQL_CONFIG Cassandra is no longer supported])
 fi
-
-# Check for sysrepo.
-AX_SYSREPO
 
 # Check for log4cplus
 DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=

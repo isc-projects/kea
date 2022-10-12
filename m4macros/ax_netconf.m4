@@ -1,4 +1,4 @@
-AC_DEFUN([AX_SYSREPO], [
+AC_DEFUN([AX_NETCONF], [
 
   AC_ARG_WITH([libyang],
     [AS_HELP_STRING([--with-libyang[[=PATH]]], [optional path to the libyang installation directory])],
