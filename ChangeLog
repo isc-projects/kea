@@ -1,12 +1,15 @@
+<<<<<<< HEAD
 2073.	[build]		razvan
 	The library version numbers have been bumped for the Kea 2.3.2
 	development release.
 	(Gitlab #2607)
 
 2072.	[func]		razvan
-	If both "flush-reclaimed-timer-wait-time" and "hold-reclaimed-time"
-	are not 0, when the client sends a release message the lease is
-	expired instead of being deleted from the lease storage.
+	If both "flush-reclaimed-timer-wait-time" and
+	"hold-reclaimed-time" are non 0, when the client sends a release
+	message the lease is expired instead of being deleted from the
+	lease storage. The default values are 25 and 3600 respectively,
+	effectively changing the default server behavior.
 	(Gitlab #2548)
 
 2071.	[perf]		andrei
