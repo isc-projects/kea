@@ -22,7 +22,7 @@ Installation From Cloudsmith Packages
 -------------------------------------
 ISC provides Kea packages for Alpine, CentOS, Debian, Fedora, RHEL, and Ubuntu.
 The recommended method for installing Kea on any of these systems from the
-Cloudsmith repository for Kea release 2.3.2 is to install the ``isc-kea``
+Cloudsmith repository for Kea release 2.3.1 is to install the ``isc-kea``
 metapackage. This metapackage is included on all supported distros and will
 install all of the services offered by the Kea software suite.
 
@@ -57,6 +57,39 @@ service manager. The services will be named: ``kea-dhcp4``, ``kea-dhcp6``,
    use the real service names, which are: ``isc-kea-dhcp4-server``,
    ``isc-kea-dhcp6-server``, ``isc-kea-dhcp-ddns-server``, and
    ``isc-kea-ctrl-agent``.
+
+Caveats for Upgrading Kea Packages
+----------------------------------
+
+To upgrade to Kea 2.3.2 or later on Debian and Ubuntu systems, you need to
+run ``apt dist-upgrade``, instead of the usual ``apt upgrade``. This is only
+required to upgrade from an earlier version of Kea to a version greater than
+2.3.2. Once this upgrade has been done, you can upgrade to later versions
+normally using  ``apt upgrade`` on Debian and Ubuntu systems.
+
+After upgrading to Kea 2.3.2 or later, it is possible that some Kea packages
+are removed from Debian and Ubuntu systems. This was an unavoidable side
+effect of overhauling our distribution packaging in 2.3.1 and 2.3.2. In order
+to ensure that the upgrade goes as smoothly as possible, pay attention to
+which packages are being removed and installed by the upgrade transaction,
+and ensure that all of the packages that your deployment requires get
+reinstalled.
+
+Specifically, there is a possibility for the following packages to be removed
+during upgrade depending on which packages were originally installed:
+  - ``isc-kea-dhcp4``
+  - ``isc-kea-dhcp6``
+  - ``isc-kea-dhcp-ddns``
+  - ``isc-kea-hooks``
+
+If your goal is to have the entire Kea software suite installed, it is
+recommended that you simply ``apt install isc-kea`` after upgrading, which
+will install all of the relevent subpackages that make up Kea.
+
+This upgrade path hiccup is not present on RPM and Alpine systems, however
+if you experience issues with upgrading past 2.3.1, please inform us on the
+Kea Users mailing list, or contact customer support if you have a support
+contract with ISC.
 
 .. _install-hierarchy:
 
