@@ -61,52 +61,112 @@ easier to install Kea using native packages.
 2. Use ``Set Me Up`` and follow instructions to add the repository
    to the local system.
 
-3. Update system repositories. For example:
+3. Update system repositories. For example on Debian/Ubuntu:
 
     .. code-block:: console
 
-        $ apt-get update
+        $ sudo apt update
+
+   On CentOS/Fedora:
+
+    .. code-block:: console
+
+        $ sudo yum update
+
+   On Alpine:
+
+    .. code-block:: console
+
+        # apk update
 
 4. Kea is split into various packages. The entire list is available on
    `cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum/dnf.
-   For example:
+   For example on Debian/Ubuntu:
 
     .. code-block:: console
 
-        $ apt-cache search isc-kea
+        $ apt search isc-kea
 
-5. Install specific packages:
-
-    .. code-block:: console
-
-        $ sudo apt-get install isc-kea-dhcp6
-
-   or all packages:
+   On CentOS/Fedora:
 
     .. code-block:: console
 
-        $ sudo apt-get install isc-kea*
+        $ yum search isc-kea
+
+   On Alpine:
+
+    .. code-block:: console
+
+        $ apk search isc-kea
+
+5. Install the metapackage containing all of the tools, services, and open
+   source hooks:
+
+    .. code-block:: console
+
+        $ sudo apt install isc-kea
+
+   or specific packages:
+
+    .. code-block:: console
+
+        $ sudo apt install isc-kea-dhcp6
+
+   or every single Kea related package, including development headers, debug
+   symbols, and premium hooks (if they are available to you):
+
+    .. code-block:: console
+
+        $ sudo apt install isc-kea*
 
    or all packages with a specified version number:
 
     .. code-block:: console
 
-        $ sudo apt-get install isc-kea*=1.8.1-isc0000920201106154401
+        $ sudo apt install isc-kea*=1.8.1-isc0000920201106154401
+
+.. note::
+  Not all package managers support installing packages with a glob (``*``),
+  please refer to your package managers manual before attempting to do so.
+
+  - On CentOS/Fedora systems, replace ``apt install`` with ``yum install``
+  - On Alpine systems, replace ``apt install`` with ``apk add``
 
 6. All installed packages should be now available directly; for example:
 
     .. code-block:: console
 
-       # kea-dhcp6 -c /path/to/your/kea6/config/file.json
+        # kea-dhcp6 -c /path/to/your/kea6/config/file.json
 
    or using systemd:
 
     .. code-block:: console
 
-       # systemctl restart kea-dhcp6
+        # systemctl restart kea-dhcp6
+
+   or using OpenRC on Alpine:
+
+    .. code-block:: console
+
+        # service kea-dhcp6 restart
 
    ``keactrl`` is not available in packages as similar functionality is provided
    by the native systemctl scripts.
+
+7. On CentOS, Fedora, and Alpine, you will need to enable the service at boot
+   time if that is desirable. This is done automatically at package
+   installation time on Debian and Ubuntu systems. For example, with systemd
+   on CentOS/Fedora:
+
+    .. code-block:: console
+
+        # systemctl enable kea-dhcp6
+
+   With OpenRC on Alpine:
+
+    .. code-block:: console
+
+        # rc-update add kea-dhcp6
 
 .. _quick-start-services:
 
