@@ -19,7 +19,8 @@
 
 #include <cstdlib>
 #include <boost/bind/bind.hpp>
-#include <boost/asio.hpp>
+
+#include <asiolink/asio_wrapper.h>
 #include <boost/asio/ssl.hpp>
 
 inline std::string CA_(const std::string& filename) {

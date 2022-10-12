@@ -60,6 +60,10 @@
 /// the check to cover everything that is not 6.0, hoping that 6.0 solves the
 /// problem.
 
+// Some boost headers need the <utility> header to be included for some Boost versions under C++20.
+// Include it in all situations for simplicity.
+#include <utility>
+
 #define GNU_CC_VERSION (__GNUC__ * 10000 \
                      + __GNUC_MINOR__ * 100 \
                      + __GNUC_PATCHLEVEL__)

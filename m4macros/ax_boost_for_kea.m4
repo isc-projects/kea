@@ -74,8 +74,28 @@ if test "${boost_include_path}" ; then
         BOOST_INCLUDES="-isystem ${boost_include_path}"
         CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/asio/signal_set.hpp boost/system/error_code.hpp boost/atomic.hpp boost/circular_buffer.hpp boost/functional/hash.hpp],,
-  AC_MSG_ERROR([Missing required boost header files]))
+
+# Some boost headers need the <utility> header to be included for some Boost versions under C++20.
+# Include it in all situations for simplicity.
+AC_CHECK_HEADERS(
+  [                                                             \
+    boost/asio.hpp                                              \
+    boost/asio/ip/address.hpp                                   \
+    boost/asio/signal_set.hpp                                   \
+    boost/atomic.hpp                                            \
+    boost/circular_buffer.hpp                                   \
+    boost/date_time/posix_time/posix_time_types.hpp             \
+    boost/foreach.hpp                                           \
+    boost/functional/hash.hpp                                   \
+    boost/interprocess/sync/interprocess_upgradable_mutex.hpp   \
+    boost/shared_ptr.hpp                                        \
+    boost/system/error_code.hpp                                 \
+  ],,
+  AC_MSG_ERROR([Missing required boost header files]),
+  [[
+    #include <utility>
+  ]]
+)
 
 AC_CHECK_HEADERS(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-in header.))
 
