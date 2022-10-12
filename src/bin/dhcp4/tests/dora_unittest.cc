@@ -2645,8 +2645,9 @@ DORATest::storeExtendedInfoEnabled() {
     ASSERT_TRUE(lease->getContext());
 
     // Make user the user-context content is correct.
-    std::string expected_context = "{ \"ISC\": { \"relay-agent-info\":"
-                                   " \"0x010A63686172746572393530\" } }";
+    std::string expected_context = "{ \"ISC\": { \"relay-agent-info\": {"
+                                   " \"sub-options\":"
+                                   " \"0x010A63686172746572393530\" } } }";
     stringstream ss;
     ss << *(lease->getContext());
     ASSERT_EQ(expected_context, ss.str());
