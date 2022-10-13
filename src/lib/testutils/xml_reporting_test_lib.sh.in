@@ -138,7 +138,7 @@ _add_failure_tag() {
     # * sed
     # * XML attribute values
     # * XML CDATA
-    failure_text=$(printf '%s\n%s' "${ERROR}" "${OUTPUT}" | \
+    failure_text=$(printf '%s\n%s' "${ERROR-}" "${OUTPUT-}" | \
         sed 's/"/ /g' | sed 's/\[/ /g' | sed 's/\]/ /g')
     linearized_failure_text=$(printf '%s' "${failure_text}" | tr '\n' ' ')
     failure_tag=$(printf '      <failure message="%s" type=""><![CDATA[%s]]></failure>' \
