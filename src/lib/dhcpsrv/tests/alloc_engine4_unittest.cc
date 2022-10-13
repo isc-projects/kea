@@ -44,12 +44,6 @@ namespace test {
 TEST_F(AllocEngine4Test, constructor) {
     boost::scoped_ptr<AllocEngine> x;
 
-    // Hashed and random allocators are not supported yet
-    ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_HASHED, 5, false)),
-                 NotImplemented);
-    ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_RANDOM, 5, false)),
-                 NotImplemented);
-
     // Create V4 (ipv6=false) Allocation Engine that will try at most
     // 100 attempts to pick up a lease
     ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100,
@@ -849,98 +843,6 @@ TEST_F(AllocEngine4Test, bootpRenew4) {
 
     // Check the renewed valid lifetime has the max value.
     EXPECT_EQ(infinity_lft, lease2->valid_lft_);
-}
-
-// This test verifies that the allocator picks addresses that belong to the
-// pool
-TEST_F(AllocEngine4Test, IterativeAllocator) {
-    boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
-
-    for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, cc_, clientid_,
-                                                 IOAddress("0.0.0.0"));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
-    }
-}
-
-// This test verifies that the allocator picks addresses that belong to the
-// pool using classification
-TEST_F(AllocEngine4Test, IterativeAllocator_class) {
-    boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
-
-    // Restrict pool_ to the foo class. Add a second pool with bar class.
-    pool_->allowClientClass("foo");
-    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.200"),
-                            IOAddress("192.0.2.209")));
-    pool->allowClientClass("bar");
-    subnet_->addPool(pool);
-
-    // Clients are in bar
-    cc_.insert("bar");
-
-    for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, cc_, clientid_,
-                                                 IOAddress("0.0.0.0"));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
-    }
-}
-
-// This test verifies that the iterative allocator really walks over all addresses
-// in all pools in specified subnet. It also must not pick the same address twice
-// unless it runs out of pool space and must start over.
-TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
-    NakedAllocEngine::IterativeAllocator alloc(Lease::TYPE_V4);
-
-    // Let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
-    for (int i = 2; i < 10; ++i) {
-        stringstream min, max;
-
-        min << "192.0.2." << i * 10 + 1;
-        max << "192.0.2." << i * 10 + 9;
-
-        Pool4Ptr pool(new Pool4(IOAddress(min.str()),
-                                IOAddress(max.str())));
-        // cout << "Adding pool: " << min.str() << "-" << max.str() << endl;
-        subnet_->addPool(pool);
-    }
-
-    int total = 10 + 8 * 9; // first pool (.100 - .109) has 10 addresses in it,
-                            // there are 8 extra pools with 9 addresses in each.
-
-    // Let's keep picked addresses here and check their uniqueness.
-    std::set<IOAddress> generated_addrs;
-    int cnt = 0;
-    while (++cnt) {
-        IOAddress candidate = alloc.pickAddress(subnet_, cc_, clientid_, IOAddress("0.0.0.0"));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
-
-        // One way to easily verify that the iterative allocator really works is
-        // to uncomment the following line and observe its output that it
-        // covers all defined subnets.
-        // cout << candidate.toText() << endl;
-
-        if (generated_addrs.find(candidate) == generated_addrs.end()) {
-            // We haven't had this
-            generated_addrs.insert(candidate);
-        } else {
-            // We have seen this address before. That should mean that we
-            // iterated over all addresses.
-            if (generated_addrs.size() == total) {
-                // We have exactly the number of address in all pools
-                break;
-            }
-            ADD_FAILURE() << "Too many or not enough unique addresses generated.";
-            break;
-        }
-
-        if ( cnt>total ) {
-            ADD_FAILURE() << "Too many unique addresses generated.";
-            break;
-        }
-    }
 }
 
 // This test checks if really small pools are working

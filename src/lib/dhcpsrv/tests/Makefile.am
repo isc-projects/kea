@@ -99,6 +99,7 @@ libdhcpsrv_unittests_SOURCES += host_reservations_list_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += ifaces_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += ip_range_unittest.cc
 libdhcpsrv_unittests_SOURCES += ip_range_permutation_unittest.cc
+libdhcpsrv_unittests_SOURCES += iterative_allocator_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_file_loader_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc

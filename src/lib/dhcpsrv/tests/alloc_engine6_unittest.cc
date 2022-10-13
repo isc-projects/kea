@@ -10,6 +10,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <dhcpsrv/allocator.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <eval/eval_context.h>
 #include <stats/stats_mgr.h>
@@ -57,10 +58,6 @@ TEST(ClientContext6Test, addAllocatedResource) {
 // parameters string and allocators are created.
 TEST_F(AllocEngine6Test, constructor) {
     boost::scoped_ptr<AllocEngine> x;
-
-    // Hashed and random allocators are not supported yet
-    ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_HASHED, 5)), NotImplemented);
-    ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_RANDOM, 5)), NotImplemented);
 
     ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100, true)));
 
@@ -301,8 +298,7 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
 // This test verifies that the allocator picks addresses that belong to the
 // pool
 TEST_F(AllocEngine6Test, IterativeAllocator) {
-    boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_NA));
+    boost::scoped_ptr<Allocator> alloc(new NakedIterativeAllocator(Lease::TYPE_NA));
 
     for (int i = 0; i < 1000; ++i) {
         IOAddress candidate = alloc->pickAddress(subnet_, cc_,
@@ -314,8 +310,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator) {
 // This test verifies that the allocator picks addresses that belong to the
 // pool using classification
 TEST_F(AllocEngine6Test, IterativeAllocator_class) {
-    boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_NA));
+    boost::scoped_ptr<Allocator> alloc(new NakedIterativeAllocator(Lease::TYPE_NA));
 
     // Restrict pool_ to the foo class. Add a second pool with bar class.
     pool_->allowClientClass("foo");
@@ -336,7 +331,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator_class) {
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorAddrStep) {
-    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_NA);
+    NakedIterativeAllocator alloc(Lease::TYPE_NA);
 
     subnet_->delPools(Lease::TYPE_NA); // Get rid of default pool
 
@@ -381,7 +376,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddrStep) {
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepInClass) {
-    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_NA);
+    NakedIterativeAllocator alloc(Lease::TYPE_NA);
 
     subnet_->delPools(Lease::TYPE_NA); // Get rid of default pool
 
@@ -432,7 +427,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepInClass) {
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepOutClass) {
-    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_NA);
+    NakedIterativeAllocator alloc(Lease::TYPE_NA);
 
     subnet_->delPools(Lease::TYPE_NA); // Get rid of default pool
 
@@ -477,7 +472,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepOutClass) {
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStep) {
-    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_PD);
+    NakedIterativeAllocator alloc(Lease::TYPE_PD);
 
     subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
 
@@ -554,7 +549,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStep) {
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepInClass) {
-    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_PD);
+    NakedIterativeAllocator alloc(Lease::TYPE_PD);
 
     subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
 
@@ -637,7 +632,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepInClass) {
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepOutClass) {
-    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_PD);
+    NakedIterativeAllocator alloc(Lease::TYPE_PD);
 
     subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
 
@@ -715,7 +710,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepOutClass) {
 
 // This test verifies that the iterative allocator can step over addresses
 TEST_F(AllocEngine6Test, IterativeAllocatorAddressIncrease) {
-    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_NA);
+    NakedIterativeAllocator alloc(Lease::TYPE_NA);
 
     // Let's pick the first address
     IOAddress addr1 = alloc.pickAddress(subnet_, cc_, duid_, IOAddress("2001:db8:1::10"));
@@ -735,7 +730,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddressIncrease) {
 
 // This test verifies that the allocator can step over prefixes
 TEST_F(AllocEngine6Test, IterativeAllocatorPrefixIncrease) {
-    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_PD);
+    NakedIterativeAllocator alloc(Lease::TYPE_PD);
 
     // For /128 prefix, increasePrefix should work the same as addressIncrease
     checkPrefixIncrease(alloc, "2001:db8::9", 128, "2001:db8::a");
@@ -787,7 +782,7 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixIncrease) {
 // in all pools in specified subnet. It also must not pick the same address twice
 // unless it runs out of pool space and must start over.
 TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
-    NakedAllocEngine::IterativeAllocator alloc(Lease::TYPE_NA);
+    NakedIterativeAllocator alloc(Lease::TYPE_NA);
 
     // let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
     for (int i = 2; i < 10; ++i) {

@@ -17,6 +17,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/iterative_allocator.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/network.h>
@@ -34,7 +35,6 @@
 #include <boost/make_shared.hpp>
 
 #include <algorithm>
-#include <cstring>
 #include <limits>
 #include <sstream>
 #include <stdint.h>
@@ -90,230 +90,7 @@ AllocEngineHooks Hooks;
 namespace isc {
 namespace dhcp {
 
-AllocEngine::IterativeAllocator::IterativeAllocator(Lease::Type lease_type)
-    : Allocator(lease_type) {
-}
-
-isc::asiolink::IOAddress
-AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& prefix,
-                                                const uint8_t prefix_len) {
-    if (!prefix.isV6()) {
-        isc_throw(BadValue, "Prefix operations are for IPv6 only (attempted to "
-                  "increase prefix " << prefix << ")");
-    }
-
-    // Get a buffer holding an address.
-    const std::vector<uint8_t>& vec = prefix.toBytes();
-
-    if (prefix_len < 1 || prefix_len > 128) {
-        isc_throw(BadValue, "Cannot increase prefix: invalid prefix length: "
-                  << prefix_len);
-    }
-
-    uint8_t n_bytes = (prefix_len - 1)/8;
-    uint8_t n_bits = 8 - (prefix_len - n_bytes*8);
-    uint8_t mask = 1 << n_bits;
-
-    // Explanation: n_bytes specifies number of full bytes that are in-prefix.
-    // They can also be used as an offset for the first byte that is not in
-    // prefix. n_bits specifies number of bits on the last byte that is
-    // (often partially) in prefix. For example for a /125 prefix, the values
-    // are 15 and 3, respectively. Mask is a bitmask that has the least
-    // significant bit from the prefix set.
-
-    uint8_t packed[V6ADDRESS_LEN];
-
-    // Copy the address. It must be V6, but we already checked that.
-    std::memcpy(packed, &vec[0], V6ADDRESS_LEN);
-
-    // Can we safely increase only the last byte in prefix without overflow?
-    if (packed[n_bytes] + uint16_t(mask) < 256u) {
-        packed[n_bytes] += mask;
-        return (IOAddress::fromBytes(AF_INET6, packed));
-    }
-
-    // Overflow (done on uint8_t, but the sum is greater than 255)
-    packed[n_bytes] += mask;
-
-    // Deal with the overflow. Start increasing the least significant byte
-    for (int i = n_bytes - 1; i >= 0; --i) {
-        ++packed[i];
-        // If we haven't overflowed (0xff->0x0) the next byte, then we are done
-        if (packed[i] != 0) {
-            break;
-        }
-    }
-
-    return (IOAddress::fromBytes(AF_INET6, packed));
-}
-
-isc::asiolink::IOAddress
-AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& address,
-                                                 bool prefix,
-                                                 const uint8_t prefix_len) {
-    if (!prefix) {
-        return (IOAddress::increase(address));
-    } else {
-        return (increasePrefix(address, prefix_len));
-    }
-}
-
-isc::asiolink::IOAddress
-AllocEngine::IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
-                                                     const ClientClasses& client_classes,
-                                                     const DuidPtr&,
-                                                     const IOAddress&) {
-    // Is this prefix allocation?
-    bool prefix = pool_type_ == Lease::TYPE_PD;
-    uint8_t prefix_len = 0;
-
-    // Let's get the last allocated address. It is usually set correctly,
-    // but there are times when it won't be (like after removing a pool or
-    // perhaps restarting the server).
-    IOAddress last = subnet->getLastAllocated(pool_type_);
-    bool valid = true;
-    bool retrying = false;
-
-    const PoolCollection& pools = subnet->getPools(pool_type_);
-
-    if (pools.empty()) {
-        isc_throw(AllocFailed, "No pools defined in selected subnet");
-    }
-
-    // first we need to find a pool the last address belongs to.
-    PoolCollection::const_iterator it;
-    PoolCollection::const_iterator first = pools.end();
-    PoolPtr first_pool;
-    for (it = pools.begin(); it != pools.end(); ++it) {
-        if (!(*it)->clientSupported(client_classes)) {
-            continue;
-        }
-        if (first == pools.end()) {
-            first = it;
-        }
-        if ((*it)->inRange(last)) {
-            break;
-        }
-    }
-
-    // Caller checked this cannot happen
-    if (first == pools.end()) {
-        isc_throw(AllocFailed, "No allowed pools defined in selected subnet");
-    }
-
-    // last one was bogus for one of several reasons:
-    // - we just booted up and that's the first address we're allocating
-    // - a subnet was removed or other reconfiguration just completed
-    // - perhaps allocation algorithm was changed
-    // - last pool does not allow this client
-    if (it == pools.end()) {
-        it = first;
-    }
-
-    for (;;) {
-        // Trying next pool
-        if (retrying) {
-            for (; it != pools.end(); ++it) {
-                if ((*it)->clientSupported(client_classes)) {
-                    break;
-                }
-            }
-            if (it == pools.end()) {
-                // Really out of luck today. That was the last pool.
-                break;
-            }
-        }
-
-        last = (*it)->getLastAllocated();
-        valid = (*it)->isLastAllocatedValid();
-        if (!valid && (last == (*it)->getFirstAddress())) {
-            // Pool was (re)initialized
-            (*it)->setLastAllocated(last);
-            subnet->setLastAllocated(pool_type_, last);
-            return (last);
-        }
-        // still can be bogus
-        if (valid && !(*it)->inRange(last)) {
-            valid = false;
-            (*it)->resetLastAllocated();
-            (*it)->setLastAllocated((*it)->getFirstAddress());
-        }
-
-        if (valid) {
-            // Ok, we have a pool that the last address belonged to, let's use it.
-            if (prefix) {
-                Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
-
-                if (!pool6) {
-                    // Something is gravely wrong here
-                    isc_throw(Unexpected, "Wrong type of pool: "
-                              << (*it)->toText()
-                              << " is not Pool6");
-                }
-                // Get the prefix length
-                prefix_len = pool6->getLength();
-            }
-
-            IOAddress next = increaseAddress(last, prefix, prefix_len);
-            if ((*it)->inRange(next)) {
-                // the next one is in the pool as well, so we haven't hit
-                // pool boundary yet
-                (*it)->setLastAllocated(next);
-                subnet->setLastAllocated(pool_type_, next);
-                return (next);
-            }
-
-            valid = false;
-            (*it)->resetLastAllocated();
-        }
-        // We hit pool boundary, let's try to jump to the next pool and try again
-        ++it;
-        retrying = true;
-    }
-
-    // Let's rewind to the beginning.
-    for (it = first; it != pools.end(); ++it) {
-        if ((*it)->clientSupported(client_classes)) {
-            (*it)->setLastAllocated((*it)->getFirstAddress());
-            (*it)->resetLastAllocated();
-        }
-    }
-
-    // ok to access first element directly. We checked that pools is non-empty
-    last = (*first)->getLastAllocated();
-    (*first)->setLastAllocated(last);
-    subnet->setLastAllocated(pool_type_, last);
-    return (last);
-}
-
-AllocEngine::HashedAllocator::HashedAllocator(Lease::Type lease_type)
-    : Allocator(lease_type) {
-    isc_throw(NotImplemented, "Hashed allocator is not implemented");
-}
-
-isc::asiolink::IOAddress
-AllocEngine::HashedAllocator::pickAddressInternal(const SubnetPtr&,
-                                                  const ClientClasses&,
-                                                  const DuidPtr&,
-                                                  const IOAddress&) {
-    isc_throw(NotImplemented, "Hashed allocator is not implemented");
-}
-
-AllocEngine::RandomAllocator::RandomAllocator(Lease::Type lease_type)
-    : Allocator(lease_type) {
-    isc_throw(NotImplemented, "Random allocator is not implemented");
-}
-
-isc::asiolink::IOAddress
-AllocEngine::RandomAllocator::pickAddressInternal(const SubnetPtr&,
-                                                  const ClientClasses&,
-                                                  const DuidPtr&,
-                                                  const IOAddress&) {
-    isc_throw(NotImplemented, "Random allocator is not implemented");
-}
-
-AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
-                         bool ipv6)
+AllocEngine::AllocEngine(AllocType, uint64_t attempts, bool ipv6)
     : attempts_(attempts), incomplete_v4_reclamations_(0),
       incomplete_v6_reclamations_(0) {
 
@@ -321,39 +98,13 @@ AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
     Lease::Type basic_type = ipv6 ? Lease::TYPE_NA : Lease::TYPE_V4;
 
     // Initialize normal address allocators
-    switch (engine_type) {
-    case ALLOC_ITERATIVE:
-        allocators_[basic_type] = AllocatorPtr(new IterativeAllocator(basic_type));
-        break;
-    case ALLOC_HASHED:
-        allocators_[basic_type] = AllocatorPtr(new HashedAllocator(basic_type));
-        break;
-    case ALLOC_RANDOM:
-        allocators_[basic_type] = AllocatorPtr(new RandomAllocator(basic_type));
-        break;
-    default:
-        isc_throw(BadValue, "Invalid/unsupported allocation algorithm");
-    }
+    allocators_[basic_type] = AllocatorPtr(new IterativeAllocator(basic_type));
 
     // If this is IPv6 allocation engine, initialize also temporary addrs
     // and prefixes
     if (ipv6) {
-        switch (engine_type) {
-        case ALLOC_ITERATIVE:
-            allocators_[Lease::TYPE_TA] = AllocatorPtr(new IterativeAllocator(Lease::TYPE_TA));
-            allocators_[Lease::TYPE_PD] = AllocatorPtr(new IterativeAllocator(Lease::TYPE_PD));
-            break;
-        case ALLOC_HASHED:
-            allocators_[Lease::TYPE_TA] = AllocatorPtr(new HashedAllocator(Lease::TYPE_TA));
-            allocators_[Lease::TYPE_PD] = AllocatorPtr(new HashedAllocator(Lease::TYPE_PD));
-            break;
-        case ALLOC_RANDOM:
-            allocators_[Lease::TYPE_TA] = AllocatorPtr(new RandomAllocator(Lease::TYPE_TA));
-            allocators_[Lease::TYPE_PD] = AllocatorPtr(new RandomAllocator(Lease::TYPE_PD));
-            break;
-        default:
-            isc_throw(BadValue, "Invalid/unsupported allocation algorithm");
-        }
+        allocators_[Lease::TYPE_TA] = AllocatorPtr(new IterativeAllocator(Lease::TYPE_TA));
+        allocators_[Lease::TYPE_PD] = AllocatorPtr(new IterativeAllocator(Lease::TYPE_PD));
     }
 
     // Register hook points
@@ -361,7 +112,8 @@ AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
     hook_index_lease6_select_ = Hooks.hook_index_lease6_select_;
 }
 
-AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
+AllocatorPtr
+AllocEngine::getAllocator(Lease::Type type) {
     std::map<Lease::Type, AllocatorPtr>::const_iterator alloc = allocators_.find(type);
 
     if (alloc == allocators_.end()) {

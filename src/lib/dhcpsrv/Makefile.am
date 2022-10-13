@@ -64,6 +64,7 @@ libkea_dhcpsrv_la_SOURCES  =
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc
+libkea_dhcpsrv_la_SOURCES += allocator.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += cache_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
@@ -114,6 +115,7 @@ libkea_dhcpsrv_la_SOURCES += hosts_log.cc hosts_log.h
 libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
 libkea_dhcpsrv_la_SOURCES += ip_range.h ip_range.cc
 libkea_dhcpsrv_la_SOURCES += ip_range_permutation.h ip_range_permutation.cc
+libkea_dhcpsrv_la_SOURCES += iterative_allocator.cc iterative_allocator.h
 libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
 libkea_dhcpsrv_la_SOURCES += lease_file_loader.h
@@ -292,6 +294,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	alloc_engine.h \
 	alloc_engine_log.h \
 	alloc_engine_messages.h \
+	allocator.h \
 	base_host_data_source.h \
 	cache_host_data_source.h \
 	callout_handle_store.h \
@@ -341,6 +344,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	hosts_log.h \
 	ip_range.h \
 	ip_range_permutation.h \
+	iterative_allocator.h \
 	key_from_key.h \
 	lease.h \
 	lease_file_loader.h \
