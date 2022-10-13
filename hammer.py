@@ -1471,6 +1471,8 @@ def _install_freeradius_client(system, revision, features, env, check_times):
     execute('make', cwd='freeradius-client', env=env, check_times=check_times)
     execute('sudo make install', cwd='freeradius-client', env=env, check_times=check_times)
     execute('rm -rf freeradius-client')
+    if system != 'alpine':
+        execute('sudo ldconfig', env=env)
     log.info('freeradius-client successfully installed.')
 
 
@@ -2156,6 +2158,8 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'install' in features:
         execute('sudo make install', timeout=2 * 60,
                 cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
+        if system != 'alpine':
+            execute('sudo ldconfig', dry_run=dry_run, env=env)
 
         if 'forge' in features:
             if 'mysql' in features:
