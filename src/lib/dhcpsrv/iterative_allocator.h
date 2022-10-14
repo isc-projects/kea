@@ -8,6 +8,7 @@
 #define ITERATIVE_ALLOCATOR_H
 
 #include <dhcpsrv/allocator.h>
+#include <dhcpsrv/iterative_allocation_state.h>
 #include <dhcpsrv/lease.h>
 
 #include <cstdint>
@@ -15,7 +16,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Address/prefix allocator that iterates over all addresses
+/// @brief Address/prefix allocator that iterates over all addresses.
 ///
 /// This class implements an iterative algorithm that returns all addresses in
 /// a pool iteratively, one after another. Once the last address is reached,
@@ -23,49 +24,65 @@ namespace dhcp {
 /// over).
 class IterativeAllocator : public Allocator {
 public:
-    /// @brief Default constructor
+
+    /// @brief Constructor.
     ///
-    /// Does not do anything
-    /// @param type - specifies allocation type
-    IterativeAllocator(Lease::Type type);
+    /// Does not do anything.
+    ///
+    /// @param lease_type specifies the type of allocated leases.
+    IterativeAllocator(const Lease::Type& lease_type);
 
 private:
-    /// @brief Returns the next address from pools in a subnet
+
+    /// @brief Returns the next address from the pools in the subnet.
     ///
-    /// @param subnet next address will be returned from pool of that subnet
-    /// @param client_classes list of classes client belongs to
-    /// @param duid Client's DUID (ignored)
-    /// @param hint Client's hint (ignored)
+    /// @param subnet next address will be returned from pool of that subnet.
+    /// @param client_classes list of classes client belongs to.
+    /// @param duid client DUID (ignored).
+    /// @param hint client hint (ignored).
     ///
-    /// @return the next address
+    /// @return next offered address.
     virtual asiolink::IOAddress pickAddressInternal(const SubnetPtr& subnet,
                                                     const ClientClasses& client_classes,
                                                     const DuidPtr& duid,
                                                     const asiolink::IOAddress& hint);
 
+    /// @brief Convenience function returning subnet allocation state instance.
+    ///
+    /// @param subnet subnet instance.
+    /// @return allocation state instance for the subnet.
+    SubnetIterativeAllocationStatePtr getSubnetState(const SubnetPtr& subnet) const;
+
+    /// @brief Convenience function returning pool allocation state instance.
+    ///
+    /// @param pool pool instance.
+    /// @return allocation state instance for the pool.
+    PoolIterativeAllocationStatePtr getPoolState(const PoolPtr& pool) const;
+
 protected:
-    /// @brief Returns the next prefix
+
+    /// @brief Returns the next prefix.
     ///
     /// This method works for IPv6 addresses only. It increases the
     /// specified prefix by a given prefix_len. For example, 2001:db8::
     /// increased by prefix length /32 will become 2001:db9::. This method
     /// is used to iterate over IPv6 prefix pools
     ///
-    /// @param prefix prefix to be increased
-    /// @param prefix_len length of the prefix to be increased
+    /// @param prefix prefix to be increased.
+    /// @param prefix_len length of the prefix to be increased.
     ///
-    /// @return result prefix
+    /// @return next prefix.
     static asiolink::IOAddress increasePrefix(const asiolink::IOAddress& prefix,
                                               const uint8_t prefix_len);
 
-    /// @brief Returns the next address or prefix
+    /// @brief Returns the next address or prefix.
     ///
     /// This method works for IPv4 addresses, IPv6 addresses and
     /// IPv6 prefixes.
     ///
     /// @param address address or prefix to be increased
-    /// @param prefix true when the previous argument is a prefix
-    /// @param prefix_len length of the prefix
+    /// @param prefix true when the previous argument is a prefix.
+    /// @param prefix_len length of the prefix.
     ///
     /// @return result address or prefix
     static asiolink::IOAddress increaseAddress(const asiolink::IOAddress& address,

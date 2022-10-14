@@ -2802,6 +2802,8 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
 
     EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
+
+    EXPECT_TRUE(subnet->getAllocationState());
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which

@@ -61,6 +61,7 @@ CLEANFILES += *.csv
 
 lib_LTLIBRARIES = libkea-dhcpsrv.la
 libkea_dhcpsrv_la_SOURCES  =
+libkea_dhcpsrv_la_SOURCES += allocation_state.cc allocation_state.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc
@@ -115,6 +116,7 @@ libkea_dhcpsrv_la_SOURCES += hosts_log.cc hosts_log.h
 libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
 libkea_dhcpsrv_la_SOURCES += ip_range.h ip_range.cc
 libkea_dhcpsrv_la_SOURCES += ip_range_permutation.h ip_range_permutation.cc
+libkea_dhcpsrv_la_SOURCES += iterative_allocation_state.cc iterative_allocation_state.h
 libkea_dhcpsrv_la_SOURCES += iterative_allocator.cc iterative_allocator.h
 libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
@@ -291,6 +293,7 @@ EXTRA_DIST += database_backends.dox libdhcpsrv.dox
 # Specify the headers for copying into the installation directory tree.
 libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv
 libkea_dhcpsrv_include_HEADERS = \
+	allocation_state.h \
 	alloc_engine.h \
 	alloc_engine_log.h \
 	alloc_engine_messages.h \
@@ -344,6 +347,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	hosts_log.h \
 	ip_range.h \
 	ip_range_permutation.h \
+	iterative_allocation_state.h \
 	iterative_allocator.h \
 	key_from_key.h \
 	lease.h \

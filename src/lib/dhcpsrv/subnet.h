@@ -11,6 +11,7 @@
 #include <cc/data.h>
 #include <cc/user_context.h>
 #include <dhcp/option_space_container.h>
+#include <dhcpsrv/allocation_state.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
@@ -30,7 +31,6 @@
 
 #include <cstdint>
 #include <map>
-#include <mutex>
 #include <utility>
 
 namespace isc {
@@ -75,51 +75,7 @@ public:
                 const isc::asiolink::IOAddress& addr,
                 const ClientClasses& client_classes) const;
 
-    /// @brief returns the last address that was tried from this subnet.
-    ///
-    /// This method returns the last address that was attempted to be allocated
-    /// from this subnet. This is used as helper information for the next
-    /// iteration of the allocation algorithm.
-    ///
-    /// @note: this routine is Kea thread safe.
-    ///
-    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
-    ///        AllocEngine::IterativeAllocator and keep the data there
-    ///
-    /// @param type lease type to be returned
-    /// @return address/prefix that was last tried from this subnet
-    isc::asiolink::IOAddress getLastAllocated(Lease::Type type) const;
-
-    /// @brief Returns the timestamp when the @c setLastAllocated function
-    /// was called.
-    ///
-    /// @note: this routine is Kea thread safe.
-    ///
-    /// @param lease_type Lease type for which last allocation timestamp should
-    /// be returned.
-    ///
-    /// @return Time when a lease of a specified type has been allocated from
-    /// this subnet. The negative infinity time is returned if a lease type is
-    /// not recognized (which is unlikely).
-    boost::posix_time::ptime
-    getLastAllocatedTime(const Lease::Type& lease_type) const;
-
-    /// @brief sets the last address that was tried from this subnet.
-    ///
-    /// This method sets the last address that was attempted to be allocated
-    /// from this subnet. This is used as helper information for the next
-    /// iteration of the allocation algorithm.
-    ///
-    /// @note: this routine is Kea thread safe.
-    ///
-    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
-    ///        AllocEngine::IterativeAllocator and keep the data there
-    /// @param addr address/prefix to that was tried last
-    /// @param type lease type to be set
-    void setLastAllocated(Lease::Type type,
-                          const isc::asiolink::IOAddress& addr);
-
-    /// @brief Returns unique ID for that subnet.
+     /// @brief Returns unique ID for that subnet.
     ///
     /// @return unique ID for that subnet
     SubnetID getID() const { return (id_); }
@@ -308,6 +264,22 @@ public:
     /// @return a collection of all pools
     PoolCollection& getPoolsWritable(Lease::Type type);
 
+    /// @brief Returns subnet-specific allocation state.
+    ///
+    /// The actual type of the state depends on the allocator type.
+    ///
+    /// @return allocation state.
+    SubnetAllocationStatePtr getAllocationState() const {
+        return (allocation_state_);
+    }
+
+    /// @brief Sets subnet-specific allocation state.
+    ///
+    /// @param allocation_state allocation state instance.
+    void setAllocationState(const SubnetAllocationStatePtr& allocation_state) {
+        allocation_state_ = allocation_state;
+    }
+
 protected:
 
     /// @brief Protected constructor.
@@ -429,86 +401,11 @@ protected:
     /// @brief a prefix length of the subnet.
     uint8_t prefix_len_;
 
-    /// @brief last allocated address.
-    ///
-    /// This is the last allocated address that was previously allocated from
-    /// this particular subnet. Some allocation algorithms (e.g. iterative) use
-    /// that value, others do not. It should be noted that although the value
-    /// is usually correct, there are cases when it is invalid, e.g. after
-    /// removing a pool, restarting or changing allocation algorithms. For
-    /// that purpose it should be only considered a help that should not be
-    /// fully trusted.
-    isc::asiolink::IOAddress last_allocated_ia_;
-
-    /// @brief last allocated temporary address.
-    ///
-    /// See @ref last_allocated_ia_ for details.
-    isc::asiolink::IOAddress last_allocated_ta_;
-
-    /// @brief last allocated IPv6 prefix.
-    ///
-    /// See @ref last_allocated_ia_ for details.
-    isc::asiolink::IOAddress last_allocated_pd_;
-
-    /// @brief Timestamp indicating when a lease of a specified type has been
-    /// last allocated from this subnet.
-    ///
-    /// @note: This map is protected by the mutex.
-    std::map<Lease::Type, boost::posix_time::ptime> last_allocated_time_;
+    /// @brief Holds subnet-specific allocation state.
+    SubnetAllocationStatePtr allocation_state_;
 
     /// @brief Shared network name.
     std::string shared_network_name_;
-
-private:
-
-    /// @brief returns the last address that was tried from this subnet.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// This method returns the last address that was attempted to be allocated
-    /// from this subnet. This is used as helper information for the next
-    /// iteration of the allocation algorithm.
-    ///
-    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
-    ///        AllocEngine::IterativeAllocator and keep the data there
-    ///
-    /// @param type lease type to be returned
-    /// @return address/prefix that was last tried from this subnet
-    isc::asiolink::IOAddress getLastAllocatedInternal(Lease::Type type) const;
-
-    /// @brief Returns the timestamp when the @c setLastAllocated function
-    /// was called.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// @param lease_type Lease type for which last allocation timestamp should
-    /// be returned.
-    ///
-    /// @return Time when a lease of a specified type has been allocated from
-    /// this subnet. The negative infinity time is returned if a lease type is
-    /// not recognized (which is unlikely).
-    boost::posix_time::ptime
-    getLastAllocatedTimeInternal(const Lease::Type& lease_type) const;
-
-    /// @brief sets the last address that was tried from this subnet.
-    ///
-    /// Should be called in a thread safe context.
-    ///
-    /// This method sets the last address that was attempted to be allocated
-    /// from this subnet. This is used as helper information for the next
-    /// iteration of the allocation algorithm.
-    ///
-    /// @note: this routine is Kea thread safe.
-    ///
-    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
-    ///        AllocEngine::IterativeAllocator and keep the data there
-    /// @param addr address/prefix to that was tried last
-    /// @param type lease type to be set
-    void setLastAllocatedInternal(Lease::Type type,
-                                  const isc::asiolink::IOAddress& addr);
-
-    /// @brief Mutex to protect the internal state.
-    boost::scoped_ptr<std::mutex> mutex_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/option6_pdexclude.h>
+#include <dhcpsrv/allocation_state.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/ip_range_permutation.h>
@@ -136,30 +137,20 @@ public:
         return (required_classes_);
     }
 
-    /// @brief returns the last address that was tried from this pool
+    /// @brief Returns pool-specific allocation state.
     ///
-    /// @return address/prefix that was last tried from this pool
-    isc::asiolink::IOAddress getLastAllocated() const {
-        return last_allocated_;
-    }
-
-    /// @brief checks if the last address is valid
-    /// @return true if the last address is valid
-    bool isLastAllocatedValid() const {
-        return last_allocated_valid_;
-    }
-
-    /// @brief sets the last address that was tried from this pool
+    /// The actual type of the state depends on the allocator type.
     ///
-    /// @param addr address/prefix to that was tried last
-    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
-        last_allocated_ = addr;
-        last_allocated_valid_ = true;
+    /// @return allocation state.
+    AllocationStatePtr getAllocationState() const {
+        return (allocation_state_);
     }
 
-    /// @brief resets the last address to invalid
-    void resetLastAllocated() {
-        last_allocated_valid_ = false;
+    /// @brief Sets pool-specific allocation state.
+    ///
+    /// @param allocation_state allocation state instance.
+    void setAllocationState(const AllocationStatePtr& allocation_state) {
+        allocation_state_ = allocation_state;
     }
 
     /// @brief Unparse a pool object.
@@ -234,6 +225,9 @@ protected:
 
     /// @brief Pointer to the user context (may be NULL)
     data::ConstElementPtr user_context_;
+
+    /// @brief Holds pool-specific allocation state.
+    AllocationStatePtr allocation_state_;
 
     /// @brief Last allocated address
     /// See @ref isc::dhcp::Subnet::last_allocated_ia_

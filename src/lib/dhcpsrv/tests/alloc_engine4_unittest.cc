@@ -28,6 +28,8 @@
 #include <pgsql/testutils/pgsql_schema.h>
 #endif
 
+#include <boost/pointer_cast.hpp>
+
 using namespace std;
 using namespace isc::hooks;
 using namespace isc::asiolink;
@@ -127,7 +129,8 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     // Set the last allocated to the beginning of the pool. The allocation
     // engine should detect that the first address is already allocated and
     // assign the first available one.
-    pool_->resetLastAllocated();
+    auto allocation_state = boost::dynamic_pointer_cast<PoolIterativeAllocationState>(pool_->getAllocationState());
+    allocation_state->resetLastAllocated();
 
     lease = engine->allocateLease4(ctx2);
 

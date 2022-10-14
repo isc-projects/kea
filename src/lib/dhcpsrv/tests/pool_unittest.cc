@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -285,28 +285,6 @@ TEST(Pool4Test, requiredClasses) {
 
     // Check that 'foo' is marked for required evaluation
     EXPECT_TRUE(pool->getRequiredClasses().contains("foo"));
-}
-
-// This test checks that handling for last allocated address/prefix is valid.
-TEST(Pool4Test, lastAllocated) {
-    // Create a pool.
-    IOAddress first("192.0.2.0");
-    Pool4Ptr pool(new Pool4(first, IOAddress("192.0.2.255")));
-
-    // Initial values are first invalid.
-    EXPECT_EQ(first.toText(), pool->getLastAllocated().toText());
-    EXPECT_FALSE(pool->isLastAllocatedValid());
-
-    // Now set last allocated
-    IOAddress addr("192.0.2.100");
-    EXPECT_NO_THROW(pool->setLastAllocated(addr));
-    EXPECT_EQ(addr.toText(), pool->getLastAllocated().toText());
-    EXPECT_TRUE(pool->isLastAllocatedValid());
-
-    // Reset makes it invalid and does not touch address
-    pool->resetLastAllocated();
-    EXPECT_EQ(addr.toText(), pool->getLastAllocated().toText());
-    EXPECT_FALSE(pool->isLastAllocatedValid());
 }
 
 TEST(Pool6Test, constructor_first_last) {
@@ -724,28 +702,6 @@ TEST(Pool6Test, requiredClasses) {
 
     // Check that 'foo' is marked for required evaluation
     EXPECT_TRUE(pool.getRequiredClasses().contains("foo"));
-}
-
-// This test checks that handling for last allocated address/prefix is valid.
-TEST(Pool6Test, lastAllocated) {
-    // Create a pool.
-    IOAddress first("2001:db8::1");
-    Pool6 pool(Lease::TYPE_NA, first, IOAddress("2001:db8::200"));
-
-    // Initial values are first invalid.
-    EXPECT_EQ(first.toText(), pool.getLastAllocated().toText());
-    EXPECT_FALSE(pool.isLastAllocatedValid());
-
-    // Now set last allocated
-    IOAddress addr("2001:db8::100");
-    EXPECT_NO_THROW(pool.setLastAllocated(addr));
-    EXPECT_EQ(addr.toText(), pool.getLastAllocated().toText());
-    EXPECT_TRUE(pool.isLastAllocatedValid());
-
-    // Reset makes it invalid and does not touch address
-    pool.resetLastAllocated();
-    EXPECT_EQ(addr.toText(), pool.getLastAllocated().toText());
-    EXPECT_FALSE(pool.isLastAllocatedValid());
 }
 
 }; // end of anonymous namespace

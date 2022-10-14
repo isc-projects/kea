@@ -8,6 +8,7 @@
 
 #include <dhcpsrv/iterative_allocator.h>
 #include <exceptions/exceptions.h>
+#include <boost/pointer_cast.hpp>
 #include <cstring>
 
 using namespace isc::asiolink;
@@ -16,7 +17,7 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-IterativeAllocator::IterativeAllocator(Lease::Type lease_type)
+IterativeAllocator::IterativeAllocator(const Lease::Type& lease_type)
     : Allocator(lease_type) {
 }
 
@@ -96,7 +97,7 @@ IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
-    IOAddress last = subnet->getLastAllocated(pool_type_);
+    IOAddress last = getSubnetState(subnet)->getLastAllocated(pool_type_);
     bool valid = true;
     bool retrying = false;
 
@@ -150,19 +151,19 @@ IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
             }
         }
 
-        last = (*it)->getLastAllocated();
-        valid = (*it)->isLastAllocatedValid();
+        last = getPoolState(*it)->getLastAllocated();
+        valid = getPoolState(*it)->isLastAllocatedValid();
         if (!valid && (last == (*it)->getFirstAddress())) {
             // Pool was (re)initialized
-            (*it)->setLastAllocated(last);
-            subnet->setLastAllocated(pool_type_, last);
+            getPoolState(*it)->setLastAllocated(last);
+            getSubnetState(subnet)->setLastAllocated(pool_type_, last);
             return (last);
         }
         // still can be bogus
         if (valid && !(*it)->inRange(last)) {
             valid = false;
-            (*it)->resetLastAllocated();
-            (*it)->setLastAllocated((*it)->getFirstAddress());
+            getPoolState(*it)->resetLastAllocated();
+            getPoolState(*it)->setLastAllocated((*it)->getFirstAddress());
         }
 
         if (valid) {
@@ -184,13 +185,13 @@ IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
             if ((*it)->inRange(next)) {
                 // the next one is in the pool as well, so we haven't hit
                 // pool boundary yet
-                (*it)->setLastAllocated(next);
-                subnet->setLastAllocated(pool_type_, next);
+                getPoolState(*it)->setLastAllocated(next);
+                getSubnetState(subnet)->setLastAllocated(pool_type_, next);
                 return (next);
             }
 
             valid = false;
-            (*it)->resetLastAllocated();
+            getPoolState(*it)->resetLastAllocated();
         }
         // We hit pool boundary, let's try to jump to the next pool and try again
         ++it;
@@ -200,16 +201,32 @@ IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
     // Let's rewind to the beginning.
     for (it = first; it != pools.end(); ++it) {
         if ((*it)->clientSupported(client_classes)) {
-            (*it)->setLastAllocated((*it)->getFirstAddress());
-            (*it)->resetLastAllocated();
+            getPoolState(*it)->setLastAllocated((*it)->getFirstAddress());
+            getPoolState(*it)->resetLastAllocated();
         }
     }
 
     // ok to access first element directly. We checked that pools is non-empty
-    last = (*first)->getLastAllocated();
-    (*first)->setLastAllocated(last);
-    subnet->setLastAllocated(pool_type_, last);
+    last = getPoolState(*first)->getLastAllocated();
+    getPoolState(*first)->setLastAllocated(last);
+    getSubnetState(subnet)->setLastAllocated(pool_type_, last);
     return (last);
+}
+
+SubnetIterativeAllocationStatePtr
+IterativeAllocator::getSubnetState(const SubnetPtr& subnet) const {
+    if (!subnet->getAllocationState()) {
+        subnet->setAllocationState(SubnetIterativeAllocationState::create(subnet));
+    }
+    return (boost::dynamic_pointer_cast<SubnetIterativeAllocationState>(subnet->getAllocationState()));
+}
+
+PoolIterativeAllocationStatePtr
+IterativeAllocator::getPoolState(const PoolPtr& pool) const {
+    if (!pool->getAllocationState()) {
+        pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+    }
+    return (boost::dynamic_pointer_cast<PoolIterativeAllocationState>(pool->getAllocationState()));
 }
 
 } // end of namespace isc::dhcp

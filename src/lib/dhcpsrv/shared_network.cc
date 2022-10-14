@@ -304,9 +304,19 @@ public:
 
         auto preferred_subnet = selected_subnet;
         for (auto s = subnets.begin(); s != subnets.end(); ++s) {
-            if (((*s)->getClientClass() == selected_subnet->getClientClass()) &&
-                ((*s)->getLastAllocatedTime(lease_type) >
-                 selected_subnet->getLastAllocatedTime(lease_type))) {
+            if ((*s)->getClientClass() != selected_subnet->getClientClass()) {
+                continue;
+            }
+            auto current_subnet_state = (*s)->getAllocationState();
+            if (!current_subnet_state) {
+                continue;
+            }
+            auto selected_subnet_state = selected_subnet->getAllocationState();
+            if (!selected_subnet_state) {
+                continue;
+            }
+            if (current_subnet_state->getLastAllocatedTime(lease_type) >
+                selected_subnet_state->getLastAllocatedTime(lease_type)) {
                 preferred_subnet = (*s);
             }
         }

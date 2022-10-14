@@ -15,6 +15,7 @@
 #include <eval/eval_context.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <boost/pointer_cast.hpp>
 
 using namespace std;
 using namespace isc::hooks;
@@ -106,7 +107,8 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     // Reset last allocated address to check that the other client will
     // be refused the already allocated address and will get the one
     // available.
-    pool_->resetLastAllocated();
+    auto allocation_state = boost::dynamic_pointer_cast<PoolIterativeAllocationState>(pool_->getAllocationState());
+    allocation_state->resetLastAllocated();
 
     // Simulate another client. This client should be assigned a different
     // address.

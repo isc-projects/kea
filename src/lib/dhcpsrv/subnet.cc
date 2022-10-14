@@ -60,23 +60,12 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const SubnetID id)
     : id_(id == 0 ? generateNextID() : id), prefix_(prefix),
       prefix_len_(len),
-      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
-      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-      last_allocated_pd_(lastAddrInPrefix(prefix, len)),
-      last_allocated_time_(),
-      shared_network_name_(),
-      mutex_(new std::mutex) {
+      shared_network_name_() {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len);
     }
-
-    // Initialize timestamps for each lease type to negative infinity.
-    last_allocated_time_[Lease::TYPE_V4] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_NA] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_TA] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_PD] = boost::posix_time::neg_infin;
 }
 
 bool
@@ -85,89 +74,6 @@ Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     IOAddress last = lastAddrInPrefix(prefix_, prefix_len_);
 
     return ((first <= addr) && (addr <= last));
-}
-
-isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLastAllocatedInternal(type));
-    } else {
-        return (getLastAllocatedInternal(type));
-    }
-}
-
-isc::asiolink::IOAddress Subnet::getLastAllocatedInternal(Lease::Type type) const {
-    // check if the type is valid (and throw if it isn't)
-    checkType(type);
-
-    switch (type) {
-    case Lease::TYPE_V4:
-    case Lease::TYPE_NA:
-        return last_allocated_ia_;
-    case Lease::TYPE_TA:
-        return last_allocated_ta_;
-    case Lease::TYPE_PD:
-        return last_allocated_pd_;
-    default:
-        isc_throw(BadValue, "Pool type " << type << " not supported");
-    }
-}
-
-boost::posix_time::ptime
-Subnet::getLastAllocatedTime(const Lease::Type& lease_type) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLastAllocatedTimeInternal(lease_type));
-    } else {
-        return (getLastAllocatedTimeInternal(lease_type));
-    }
-}
-
-boost::posix_time::ptime
-Subnet::getLastAllocatedTimeInternal(const Lease::Type& lease_type) const {
-    auto t = last_allocated_time_.find(lease_type);
-    if (t != last_allocated_time_.end()) {
-        return (t->second);
-    }
-
-    // This shouldn't happen, because we have initialized the structure
-    // for all lease types.
-    return (boost::posix_time::neg_infin);
-}
-
-void Subnet::setLastAllocated(Lease::Type type,
-                              const isc::asiolink::IOAddress& addr) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        setLastAllocatedInternal(type, addr);
-    } else {
-        setLastAllocatedInternal(type, addr);
-    }
-}
-
-void Subnet::setLastAllocatedInternal(Lease::Type type,
-                                      const isc::asiolink::IOAddress& addr) {
-
-    // check if the type is valid (and throw if it isn't)
-    checkType(type);
-
-    switch (type) {
-    case Lease::TYPE_V4:
-    case Lease::TYPE_NA:
-        last_allocated_ia_ = addr;
-        break;
-    case Lease::TYPE_TA:
-        last_allocated_ta_ = addr;
-        break;
-    case Lease::TYPE_PD:
-        last_allocated_pd_ = addr;
-        break;
-    default:
-        isc_throw(BadValue, "Pool type " << type << " not supported");
-    }
-
-    // Update the timestamp of last allocation.
-    last_allocated_time_[type] = boost::posix_time::microsec_clock::universal_time();
 }
 
 std::string

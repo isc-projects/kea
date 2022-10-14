@@ -8,6 +8,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcpsrv/iterative_allocation_state.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -499,6 +500,10 @@ PoolParser::parse(PoolStoragePtr pools,
             pool->requireClientClass((*cclass)->stringValue());
         }
     }
+
+    // Create allocation state for iterative allocator. We're going to
+    // make it configurable.
+    pool->setAllocationState(PoolIterativeAllocationState::create(pool));
 }
 
 boost::shared_ptr<OptionDataListParser>
@@ -657,6 +662,11 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     subnet_->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
+
+    // Set allocation state for iterative allocator. We will make it
+    // configurable.
+    auto subnet_prefix = subnet_->get();
+    subnet_->setAllocationState(SubnetIterativeAllocationState::create(subnet_));
 }
 
 boost::shared_ptr<OptionDataListParser>

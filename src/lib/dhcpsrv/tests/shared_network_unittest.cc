@@ -12,6 +12,7 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/iterative_allocation_state.h>
 #include <util/triplet.h>
 #include <exceptions/exceptions.h>
 #include <testutils/test_to_element.h>
@@ -398,6 +399,16 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
     Subnet4Ptr subnet4(new Subnet4(IOAddress("172.16.28.0"), 24, 10, 20, 30,
                                    SubnetID(4)));
 
+    auto state1 = SubnetIterativeAllocationState::create(subnet1);
+    auto state2 = SubnetIterativeAllocationState::create(subnet2);
+    auto state3 = SubnetIterativeAllocationState::create(subnet3);
+    auto state4 = SubnetIterativeAllocationState::create(subnet4);
+
+    subnet1->setAllocationState(state1);
+    subnet2->setAllocationState(state2);
+    subnet3->setAllocationState(state3);
+    subnet4->setAllocationState(state4);
+
     // Associate first two subnets with classes.
     subnet1->allowClientClass("class1");
     subnet2->allowClientClass("class1");
@@ -427,7 +438,7 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
 
     // Allocating an address from subnet2 updates the last allocated timestamp
     // for this subnet, which makes this subnet preferred over subnet1.
-    subnet2->setLastAllocated(Lease::TYPE_V4, IOAddress("192.0.2.25"));
+    state2->setLastAllocated(Lease::TYPE_V4, IOAddress("192.0.2.25"));
     preferred = network->getPreferredSubnet(subnet1);
     EXPECT_EQ(subnet2->getID(), preferred->getID());
 
@@ -447,7 +458,7 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
 
     // Allocate an address from the subnet3. This makes it preferred to
     // subnet4.
-    subnet3->setLastAllocated(Lease::TYPE_V4, IOAddress("172.16.25.23"));
+    state3->setLastAllocated(Lease::TYPE_V4, IOAddress("172.16.25.23"));
 
     // If the selected is subnet1, the preferred subnet is subnet2, because
     // it has the same set of classes as subnet1. The subnet3 can't be
@@ -481,6 +492,16 @@ TEST(SharedNetwork4Test, getPreferredSubnetMultiThreading) {
     Subnet4Ptr subnet4(new Subnet4(IOAddress("172.16.28.0"), 24, 10, 20, 30,
                                    SubnetID(4)));
 
+    auto state1 = SubnetIterativeAllocationState::create(subnet1);
+    auto state2 = SubnetIterativeAllocationState::create(subnet2);
+    auto state3 = SubnetIterativeAllocationState::create(subnet3);
+    auto state4 = SubnetIterativeAllocationState::create(subnet4);
+
+    subnet1->setAllocationState(state1);
+    subnet2->setAllocationState(state2);
+    subnet3->setAllocationState(state3);
+    subnet4->setAllocationState(state4);
+
     // Associate first two subnets with classes.
     subnet1->allowClientClass("class1");
     subnet2->allowClientClass("class1");
@@ -510,7 +531,7 @@ TEST(SharedNetwork4Test, getPreferredSubnetMultiThreading) {
 
     // Allocating an address from subnet2 updates the last allocated timestamp
     // for this subnet, which makes this subnet preferred over subnet1.
-    subnet2->setLastAllocated(Lease::TYPE_V4, IOAddress("192.0.2.25"));
+    state2->setLastAllocated(Lease::TYPE_V4, IOAddress("192.0.2.25"));
     preferred = network->getPreferredSubnet(subnet1);
     EXPECT_EQ(subnet2->getID(), preferred->getID());
 
@@ -530,7 +551,7 @@ TEST(SharedNetwork4Test, getPreferredSubnetMultiThreading) {
 
     // Allocate an address from the subnet3. This makes it preferred to
     // subnet4.
-    subnet3->setLastAllocated(Lease::TYPE_V4, IOAddress("172.16.25.23"));
+    state3->setLastAllocated(Lease::TYPE_V4, IOAddress("172.16.25.23"));
 
     // If the selected is subnet1, the preferred subnet is subnet2, because
     // it has the same set of classes as subnet1. The subnet3 can't be
@@ -1113,6 +1134,16 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
     Subnet6Ptr subnet4(new Subnet6(IOAddress("3000:1::"), 64, 10, 20, 30,
                                    40, SubnetID(4)));
 
+    auto state1 = SubnetIterativeAllocationState::create(subnet1);
+    auto state2 = SubnetIterativeAllocationState::create(subnet2);
+    auto state3 = SubnetIterativeAllocationState::create(subnet3);
+    auto state4 = SubnetIterativeAllocationState::create(subnet4);
+
+    subnet1->setAllocationState(state1);
+    subnet2->setAllocationState(state2);
+    subnet3->setAllocationState(state3);
+    subnet4->setAllocationState(state4);
+
     // Associate first two subnets with classes.
     subnet1->allowClientClass("class1");
     subnet2->allowClientClass("class1");
@@ -1146,7 +1177,7 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
 
     // Allocating an address from subnet2 updates the last allocated timestamp
     // for this subnet, which makes this subnet preferred over subnet1.
-    subnet2->setLastAllocated(Lease::TYPE_NA, IOAddress("2001:db8:1:2::"));
+    state2->setLastAllocated(Lease::TYPE_NA, IOAddress("2001:db8:1:2::"));
     preferred = network->getPreferredSubnet(subnet1, Lease::TYPE_NA);
     EXPECT_EQ(subnet2->getID(), preferred->getID());
 
@@ -1161,7 +1192,7 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
 
     // Although, if we pick a prefix from the subnet2, we should get the
     // subnet2 as preferred instead.
-    subnet2->setLastAllocated(Lease::TYPE_PD, IOAddress("3000:1234::"));
+    state2->setLastAllocated(Lease::TYPE_PD, IOAddress("3000:1234::"));
     preferred = network->getPreferredSubnet(subnet1, Lease::TYPE_PD);
     EXPECT_EQ(subnet2->getID(), preferred->getID());
 
@@ -1177,7 +1208,7 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
 
     // Allocate an address from the subnet3. This makes it preferred to
     // subnet4.
-    subnet3->setLastAllocated(Lease::TYPE_NA, IOAddress("2001:db8:2:1234::"));
+    state3->setLastAllocated(Lease::TYPE_NA, IOAddress("2001:db8:2:1234::"));
 
     // If the selected is subnet1, the preferred subnet is subnet2, because
     // it has the same set of classes as subnet1. The subnet3 can't be
@@ -1211,6 +1242,16 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
     Subnet6Ptr subnet4(new Subnet6(IOAddress("3000:1::"), 64, 10, 20, 30,
                                    40, SubnetID(4)));
 
+    auto state1 = SubnetIterativeAllocationState::create(subnet1);
+    auto state2 = SubnetIterativeAllocationState::create(subnet2);
+    auto state3 = SubnetIterativeAllocationState::create(subnet3);
+    auto state4 = SubnetIterativeAllocationState::create(subnet4);
+
+    subnet1->setAllocationState(state1);
+    subnet2->setAllocationState(state2);
+    subnet3->setAllocationState(state3);
+    subnet4->setAllocationState(state4);
+
     // Associate first two subnets with classes.
     subnet1->allowClientClass("class1");
     subnet2->allowClientClass("class1");
@@ -1244,7 +1285,7 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
 
     // Allocating an address from subnet2 updates the last allocated timestamp
     // for this subnet, which makes this subnet preferred over subnet1.
-    subnet2->setLastAllocated(Lease::TYPE_NA, IOAddress("2001:db8:1:2::"));
+    state2->setLastAllocated(Lease::TYPE_NA, IOAddress("2001:db8:1:2::"));
     preferred = network->getPreferredSubnet(subnet1, Lease::TYPE_NA);
     EXPECT_EQ(subnet2->getID(), preferred->getID());
 
@@ -1259,7 +1300,7 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
 
     // Although, if we pick a prefix from the subnet2, we should get the
     // subnet2 as preferred instead.
-    subnet2->setLastAllocated(Lease::TYPE_PD, IOAddress("3000:1234::"));
+    state2->setLastAllocated(Lease::TYPE_PD, IOAddress("3000:1234::"));
     preferred = network->getPreferredSubnet(subnet1, Lease::TYPE_PD);
     EXPECT_EQ(subnet2->getID(), preferred->getID());
 
@@ -1275,7 +1316,7 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
 
     // Allocate an address from the subnet3. This makes it preferred to
     // subnet4.
-    subnet3->setLastAllocated(Lease::TYPE_NA, IOAddress("2001:db8:2:1234::"));
+    state3->setLastAllocated(Lease::TYPE_NA, IOAddress("2001:db8:2:1234::"));
 
     // If the selected is subnet1, the preferred subnet is subnet2, because
     // it has the same set of classes as subnet1. The subnet3 can't be
