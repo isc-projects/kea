@@ -102,10 +102,13 @@ AC_DEFUN([AX_FIND_LIBRARY], [
         fi
 
         libraries_found=true
-        LIBRARY_LIBS="-L${p}/lib"
-        if test -n "${ISC_RPATH_FLAG}"; then
-          LIBRARY_LIBS="${LIBRARY_LIBS} ${ISC_RPATH_FLAG}${p}/lib"
-        fi
+
+        # Add -L.
+        for l in lib lib64; do
+          if test -d "${p}/${l}"; then
+            LIBRARY_LIBS="-L${p}/{l}"
+          fi
+        done
         for i in ${list_of_libraries}; do
           i_found=false
           for l in lib lib64; do
@@ -140,7 +143,7 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     LIBRARY_LIBS="$(printf '%s' "${LIBRARY_LIBS}" | sed 's/^ *//g;s/ *$//g')"
 
     # Add to the runtime search path if the flag is not already added.
-    if test -n "${ISC_RPATH_FLAG}" && test "$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Fc -e "${ISC_RPATH_FLAG}")" = 0; then
+    if test -n "${ISC_RPATH_FLAG}" && test "$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Fc -- "${ISC_RPATH_FLAG}")" = 0; then
       library_location=$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Eo '\-L.*\b' | sed 's/-L//g')
       if test -n "${library_location}"; then
         LIBRARY_LIBS="${LIBRARY_LIBS} ${ISC_RPATH_FLAG}${library_location}"
@@ -201,9 +204,15 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
       # Get the flags.
       LIBRARY_CPPFLAGS=$("${PKG_CONFIG}" --cflags-only-other "${library_pc_or_name}")
       LIBRARY_INCLUDEDIR=$("${PKG_CONFIG}" --cflags-only-I "${library_pc_or_name}")
+      LIBRARY_LIBDIR=$("${PKG_CONFIG}" --variable libdir "${library_pc_or_name}")
       LIBRARY_LIBS=$("${PKG_CONFIG}" --libs "${library_pc_or_name}")
       LIBRARY_VERSION=$("${PKG_CONFIG}" --modversion "${library_pc_or_name}")
       LIBRARY_PREFIX=$("${PKG_CONFIG}" --variable=prefix "${library_pc_or_name}")
+
+      # Sometimes pkg-config is stubborn in including -L, so let's include it ourselves.
+      if test -n "${LIBRARY_LIBDIR}" && test "$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Fc -- -L)" = 0; then
+        LIBRARY_LIBS="-L${LIBRARY_LIBDIR} ${LIBRARY_LIBS}"
+      fi
 
       # Get the variables.
       for i in $(printf '%s' "${list_of_variables}" | sed 's/,/ /g'); do
