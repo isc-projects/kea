@@ -1256,16 +1256,7 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters), timer_name_("") {
 
     // Check if the extended info tables are enabled.
-    std::string extended_info_tables;
-    try {
-        extended_info_tables = parameters_.at("extended-info-tables");
-    } catch (const exception&) {
-        extended_info_tables = "false";
-    }
-    // If extended_info_tables is 'true' we will enable them.
-    if (extended_info_tables == "true") {
-        setExtendedInfoEnabled(true);
-    }
+    LeaseMgr::setExtendedInfoEnabled(parameters);
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlLeaseMgr[";

@@ -126,8 +126,6 @@ TEST(MySqlOpenTest, OpenDatabase) {
     try {
         LeaseMgrFactory::create(validMySQLConnectionString());
         EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
-        EXPECT_THROW(LeaseMgrFactory::instance().setExtendedInfoEnabled(true),
-                     NotImplemented);
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -200,8 +198,14 @@ TEST(MySqlOpenTest, OpenDatabase) {
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, NULL, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for extended info tables.
+    const char* EX_INFO = "extended-info-tables=true";
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, EX_INFO)),
+        NotImplemented);
 
     // Tidy up after the test
     destroyMySQLSchema(true);

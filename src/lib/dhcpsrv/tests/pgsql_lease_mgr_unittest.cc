@@ -126,8 +126,6 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     try {
         LeaseMgrFactory::create(validPgSQLConnectionString());
         EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
-        EXPECT_THROW(LeaseMgrFactory::instance().setExtendedInfoEnabled(true),
-                     NotImplemented);
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -197,7 +195,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, NULL, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
     // Check for SSL/TLS support.
@@ -210,6 +208,12 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         0, 0, 0, 0, VALID_CA)), DbOpenError);
 #endif
+
+    // Check for extended info tables.
+    const char* EX_INFO = "extended-info-tables=true";
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, EX_INFO)),
+        NotImplemented);
 
     // Tidy up after the test
     destroyPgSQLSchema();

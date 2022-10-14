@@ -639,17 +639,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     bool conversion_needed = false;
 
     // Check if the extended info tables are enabled.
-    bool extended_info_enabled = false;
-    std::string extended_info_tables;
-    try {
-        extended_info_tables = conn_.getParameter("extended-info-tables");
-    } catch (const Exception&) {
-        extended_info_tables = "false";
-    }
-    // If extended_info_tables is 'true' we will enable them.
-    if (extended_info_tables == "true") {
-        setExtendedInfoEnabled(true);
-    }
+    setExtendedInfoEnabled(parameters);
 
     // Check the universe and use v4 file or v6 file.
     std::string universe = conn_.getParameter("universe");
@@ -2407,20 +2397,64 @@ Memfile_LeaseMgr::getLeaseLimit(ConstElementPtr parent, Lease::Type ltype, size_
 }
 
 Lease4Collection
-Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& /* relay_id */,
-                                      const IOAddress& /* lower_bound_address */,
-                                      const LeasePageSize& /* page_size */,
-                                      const time_t& /* qry_start_time = 0 */,
-                                      const time_t& /* qry_end_time = 0 */) {
+Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
+                                      const IOAddress& lower_bound_address,
+                                      const LeasePageSize& page_size,
+                                      const time_t& qry_start_time /* = 0 */,
+                                      const time_t& qry_end_time /* = 0 */) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases4ByRelayIdInternal(relay_id,
+                                            lower_bound_address,
+                                            page_size,
+                                            qry_start_time,
+                                            qry_end_time));
+    } else {
+        return (getLeases4ByRelayIdInternal(relay_id,
+                                            lower_bound_address,
+                                            page_size,
+                                            qry_start_time,
+                                            qry_end_time));
+    }
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4ByRelayIdInternal(const OptionBuffer&,
+                                              const IOAddress&,
+                                              const LeasePageSize&,
+                                              const time_t&,
+                                              const time_t&) {
     isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases4ByRelayId not implemented");
 }
 
 Lease4Collection
-Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
-                                       const IOAddress& /* lower_bound_address */,
-                                       const LeasePageSize& /* page_size */,
-                                       const time_t& /* qry_start_time = 0 */,
-                                       const time_t& /* qry_end_time = 0 */) {
+Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
+                                       const IOAddress& lower_bound_address,
+                                       const LeasePageSize& page_size,
+                                       const time_t& qry_start_time /* = 0 */,
+                                       const time_t& qry_end_time /* = 0 */) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases4ByRemoteIdInternal(remote_id,
+                                             lower_bound_address,
+                                             page_size,
+                                             qry_start_time,
+                                             qry_end_time));
+    } else {
+        return (getLeases4ByRemoteIdInternal(remote_id,
+                                             lower_bound_address,
+                                             page_size,
+                                             qry_start_time,
+                                             qry_end_time));
+    }
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer&,
+                                               const IOAddress&,
+                                               const LeasePageSize&,
+                                               const time_t&,
+                                               const time_t&) {
     isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases4ByRemoteId not implemented");
 }
 
@@ -2429,6 +2463,25 @@ Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
                                       const IOAddress& link_addr,
                                       const IOAddress& lower_bound_address,
                                       const LeasePageSize& page_size) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases6ByRelayIdInternal(relay_id,
+                                            link_addr,
+                                            lower_bound_address,
+                                            page_size));
+    } else {
+        return (getLeases6ByRelayIdInternal(relay_id,
+                                            link_addr,
+                                            lower_bound_address,
+                                            page_size));
+    }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByRelayIdInternal(const DUID& relay_id,
+                                              const IOAddress& link_addr,
+                                              const IOAddress& lower_bound_address,
+                                              const LeasePageSize& page_size) {
     const std::vector<uint8_t>& relay_id_data = relay_id.getDuid();
     Lease6Collection collection;
     if (link_addr.isV6Zero()) {
@@ -2486,6 +2539,25 @@ Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
                                        const IOAddress& link_addr,
                                        const IOAddress& lower_bound_address,
                                        const LeasePageSize& page_size) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases6ByRemoteIdInternal(remote_id,
+                                             link_addr,
+                                             lower_bound_address,
+                                             page_size));
+    } else {
+        return (getLeases6ByRemoteIdInternal(remote_id,
+                                             link_addr,
+                                             lower_bound_address,
+                                             page_size));
+    }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
+                                               const IOAddress& link_addr,
+                                               const IOAddress& lower_bound_address,
+                                               const LeasePageSize& page_size) {
     Lease6Collection collection;
     std::set<IOAddress> sorted;
     if (link_addr.isV6Zero()) {
@@ -2544,6 +2616,22 @@ Lease6Collection
 Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
                                    const IOAddress& lower_bound_address,
                                    const LeasePageSize& page_size) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases6ByLinkInternal(link_addr,
+                                         lower_bound_address,
+                                         page_size));
+    } else {
+        return (getLeases6ByLinkInternal(link_addr,
+                                         lower_bound_address,
+                                         page_size));
+    }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByLinkInternal(const IOAddress& link_addr,
+                                           const IOAddress& lower_bound_address,
+                                           const LeasePageSize& page_size) {
     Lease6Collection collection;
     const LinkAddressIndex& idx = link_addr6_.get<LinkAddressIndexTag>();
     LinkAddressIndex::const_iterator lb =

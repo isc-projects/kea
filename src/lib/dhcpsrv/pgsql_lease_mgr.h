@@ -971,9 +971,9 @@ private:
     /// @brief Clears the class-lease count map.
     virtual void clearClassLeaseCounts() override;
 
-    /// The following queries are used to fulfill Bulk LeaseQuery queries. They rely
-    /// on relay data contained in lease's user-context when the extended-store-info flag
-    /// is enabled.
+    /// The following queries are used to fulfill Bulk Lease Query
+    /// queries. They rely on relay data contained in lease's
+    /// user-context when the extended-store-info flag is enabled.
 
     /// @brief Returns existing IPv4 leases with a given relay-id.
     ///
@@ -1045,7 +1045,7 @@ private:
 
     /// @brief Returns existing IPv6 leases with on a given link.
     ///
-    /// @param link_addr limit results to leases on this link when not ::
+    /// @param link_addr limit results to leases on this link.
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1055,6 +1055,54 @@ private:
     getLeases6ByLink(const asiolink::IOAddress& link_addr,
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
+
+    /// @brief Write V4 leases to a file.
+    virtual void writeLeases4(const std::string& /*filename*/) override;
+
+    /// @brief Write V6 leases to a file.
+    virtual void writeLeases6(const std::string& /*filename*/) override;
+
+    /// @brief Context RAII Allocator.
+    class PgSqlLeaseContextAlloc {
+    public:
+
+        /// @brief Constructor
+        ///
+        /// This constructor takes a context of the pool if one is available
+        /// or creates a new one.
+        ///
+        /// @param mgr A parent instance
+        PgSqlLeaseContextAlloc(const PgSqlLeaseMgr& mgr);
+
+        /// @brief Destructor
+        ///
+        /// This destructor puts back the context in the pool.
+        ~PgSqlLeaseContextAlloc();
+
+        /// @brief The context
+        PgSqlLeaseContextPtr ctx_;
+
+    private:
+
+        /// @brief The manager
+        const PgSqlLeaseMgr& mgr_;
+    };
+
+protected:
+
+    /// Extended information / Bulk Lease Query shared interface.
+
+    /// @brief Modifies the setting whether the lease extended info tables
+    /// are enabled.
+    ///
+    /// Transient redefine to refuse the enable setting.
+    /// @param enabled new setting.
+    virtual void setExtendedInfoEnabled(const bool enabled) override {
+        if (enabled) {
+            isc_throw(isc::NotImplemented,
+                      "extended info tables are not yet supported by postgresql");
+        }
+    }
 
     /// @brief Delete lease6 extended info from tables.
     ///
@@ -1085,50 +1133,6 @@ private:
     /// @param link_addr The link address from the remote header.
     virtual void addLinkAddr6(const isc::asiolink::IOAddress& lease_addr,
                               const isc::asiolink::IOAddress& link_addr) override;
-
-    /// @brief Write V4 leases to a file.
-    virtual void writeLeases4(const std::string& /*filename*/) override;
-
-    /// @brief Write V6 leases to a file.
-    virtual void writeLeases6(const std::string& /*filename*/) override;
-
-    /// @brief Modifies the setting whether the lease extended info tables
-    /// are enabled.
-    ///
-    /// Transient redefine to refuse the enable setting.
-    /// @param enabled new setting.
-    virtual void setExtendedInfoEnabled(const bool enabled) override {
-        if (enabled) {
-            isc_throw(isc::NotImplemented,
-                      "extended info tables are not yet supported by postgresql");
-        }
-    }
-
-    /// @brief Context RAII Allocator.
-    class PgSqlLeaseContextAlloc {
-    public:
-
-        /// @brief Constructor
-        ///
-        /// This constructor takes a context of the pool if one is available
-        /// or creates a new one.
-        ///
-        /// @param mgr A parent instance
-        PgSqlLeaseContextAlloc(const PgSqlLeaseMgr& mgr);
-
-        /// @brief Destructor
-        ///
-        /// This destructor puts back the context in the pool.
-        ~PgSqlLeaseContextAlloc();
-
-        /// @brief The context
-        PgSqlLeaseContextPtr ctx_;
-
-    private:
-
-        /// @brief The manager
-        const PgSqlLeaseMgr& mgr_;
-    };
 
 private:
 

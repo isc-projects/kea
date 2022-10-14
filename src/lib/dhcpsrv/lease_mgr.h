@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
@@ -813,9 +814,9 @@ public:
     /// @brief Clears the class-lease count map.
     virtual void clearClassLeaseCounts() = 0;
 
-    /// The following queries are used to fulfill Bulk LeaseQuery queries. They rely
-    /// on relay data contained in lease's user-context when the extended-store-info flag
-    /// is enabled.
+    /// The following queries are used to fulfill Bulk Lease Query
+    /// queries. They rely on relay data contained in lease's
+    /// user-context when the extended-store-info flag is enabled.
 
     /// @brief Upgrade a V4 lease user context to the new extended info entry.
     ///
@@ -913,7 +914,7 @@ public:
 
     /// @brief Returns existing IPv6 leases with on a given link.
     ///
-    /// @param link_addr limit results to leases on this link when not ::
+    /// @param link_addr limit results to leases on this link.
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -923,6 +924,48 @@ public:
     getLeases6ByLink(const asiolink::IOAddress& link_addr,
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) = 0;
+
+    /// @brief Write V4 leases to a file.
+    ///
+    /// @param filename File name to write leases.
+    virtual void writeLeases4(const std::string& filename) = 0;
+
+    /// @brief Write V6 leases to a file.
+    ///
+    /// @param filename File name to write leases.
+    virtual void writeLeases6(const std::string& filename) = 0;
+
+    /// @brief Returns the setting indicating if lease extended info tables
+    /// are enabled.
+    ///
+    /// @return true if lease extended info tables are enabled or false
+    /// if they are disabled.
+    bool getExtendedInfoEnabled() const {
+        return (extended_info_enabled_);
+    }
+
+protected:
+
+    /// Extended information / Bulk Lease Query shared interface.
+
+    /// @brief Modifies the setting whether the lease extended info tables
+    /// are enabled.
+    ///
+    /// @note This method is virtual so backend doing specific action
+    /// on value changes can intercept it by redefining it.
+    ///
+    /// @param enabled new setting.
+    virtual void setExtendedInfoEnabled(const bool enabled) {
+        extended_info_enabled_ = enabled;
+    }
+
+    /// @brief Decode parameters to set whether the lease extended info tables
+    /// are enabled.
+    ///
+    /// @note: common code in constructors.
+    ///
+    /// @param parameters The parameter map.
+    virtual void setExtendedInfoEnabled(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Delete lease6 extended info from tables.
     ///
@@ -953,36 +996,6 @@ public:
     /// @param link_addr The link address from the remote header.
     virtual void addLinkAddr6(const isc::asiolink::IOAddress& lease_addr,
                               const isc::asiolink::IOAddress& link_addr) = 0;
-
-    /// @brief Modifies the setting whether the lease extended info tables
-    /// are enabled.
-    ///
-    /// @note This method is virtual so backend doing specific action
-    /// on value changes can intercept it by redefining it.
-    ///
-    /// @param enabled new setting.
-    virtual void setExtendedInfoEnabled(const bool enabled) {
-        extended_info_enabled_ = enabled;
-    }
-
-    /// @brief Returns the setting indicating if lease extended info tables
-    /// are enabled.
-    ///
-    /// @return true if lease extended info tables are enabled or false
-    /// if they are disabled.
-    bool getExtendedInfoEnabled() const {
-        return (extended_info_enabled_);
-    }
-
-    /// @brief Write V4 leases to a file.
-    ///
-    /// @param filename File name to write leases.
-    virtual void writeLeases4(const std::string& filename) = 0;
-
-    /// @brief Write V6 leases to a file.
-    ///
-    /// @param filename File name to write leases.
-    virtual void writeLeases6(const std::string& filename) = 0;
 
 private:
     /// The IOService object, used for all ASIO operations.

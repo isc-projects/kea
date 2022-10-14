@@ -98,6 +98,7 @@ public:
     }
 
     using Memfile_LeaseMgr::lfcCallback;
+    using Memfile_LeaseMgr::setExtendedInfoEnabled;
 };
 
 /// @brief Test fixture class for @c Memfile_LeaseMgr

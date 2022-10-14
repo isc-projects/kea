@@ -361,6 +361,20 @@ LeaseMgr::getDBVersion() {
     isc_throw(NotImplemented, "LeaseMgr::getDBVersion() called");
 }
 
+void
+LeaseMgr::setExtendedInfoEnabled(const DatabaseConnection::ParameterMap& parameters) {
+    std::string extended_info_tables;
+    try {
+        extended_info_tables = parameters.at("extended-info-tables");
+    } catch (const exception&) {
+        extended_info_tables = "false";
+    }
+    // If extended_info_tables is 'true' we will enable them.
+    if (extended_info_tables == "true") {
+        setExtendedInfoEnabled(true);
+    }
+}
+
 bool
 LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease) {
     static OptionDefinitionPtr rai_def;
