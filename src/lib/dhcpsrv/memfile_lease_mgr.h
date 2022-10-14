@@ -1065,6 +1065,8 @@ private:
     /// @brief stores IPv6 leases
     Lease6Storage storage6_;
 
+protected:
+
     /// @brief stores IPv6 by-relay-id cross-reference table
     Lease6ExtendedInfoRelayIdTable relay_id6_;
 
@@ -1074,7 +1076,6 @@ private:
     /// @brief stores IPv6 by-link-addr cross-reference table
     Lease6SimpleExtendedInfoLinkAddrTable link_addr6_;
 
-protected:
     /// @brief Holds the pointer to the DHCPv4 lease file IO.
     boost::shared_ptr<CSVLeaseFile4> lease_file4_;
 
