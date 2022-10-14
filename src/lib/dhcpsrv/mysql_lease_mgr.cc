@@ -1799,6 +1799,18 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
 MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters), timer_name_("") {
 
+    // Check if the extended info tables are enabled.
+    std::string extended_info_tables;
+    try {
+        extended_info_tables = parameters_.at("extended-info-tables");
+    } catch (const exception&) {
+        extended_info_tables = "false";
+    }
+    // If extended_info_tables is 'true' we will enable them.
+    if (extended_info_tables == "true") {
+        setExtendedInfoEnabled(true);
+    }
+
     // Create unique timer name per instance.
     timer_name_ = "MySqlLeaseMgr[";
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
@@ -3360,6 +3372,31 @@ MySqlLeaseMgr::checkError(MySqlLeaseContextPtr& ctx,
                           int status, StatementIndex index,
                           const char* what) const {
     ctx->conn_.checkError(status, index, what);
+}
+
+void
+MySqlLeaseMgr::deleteExtendedInfo6(const IOAddress& /* addr */) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExtendedInfo6 not implemented");
+}
+
+void
+MySqlLeaseMgr::addRelayId6(const IOAddress& /* lease_addr */,
+                           const IOAddress& /* link_addr */,
+                           const vector<uint8_t>& relay_id) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::addRelayId6 not implemented");
+}
+
+void
+MySqlLeaseMgr::addRemoteId6(const IOAddress& /* lease_addr */,
+                            const IOAddress& /* link_addr */,
+                            const vector<uint8_t>& remote_id) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::addRemoteId6 not implemented");
+}
+
+void
+MySqlLeaseMgr::addLinkAddr6(const IOAddress& /* lease_addr */,
+                            const IOAddress& /* link_addr */) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::addLinkAddr6 not implemented");
 }
 
 Lease4Collection

@@ -126,6 +126,8 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     try {
         LeaseMgrFactory::create(validPgSQLConnectionString());
         EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
+        EXPECT_THROW(LeaseMgrFactory::instance().setExtendedInfoEnabled(true),
+                     NotImplemented);
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"

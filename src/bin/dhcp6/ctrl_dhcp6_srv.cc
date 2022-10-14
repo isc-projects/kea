@@ -922,6 +922,9 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
+        if (cfg_db->getExtendedInfoEnabled()) {
+            cfg_db->setAppendedParameters("extended-info-tables=true");
+        }
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
         srv->getNetworkState()->reset(NetworkState::Origin::DB_CONNECTION);

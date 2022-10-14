@@ -400,16 +400,19 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
 
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 
-    pmap["lfc-interval"] = "10";
-    pmap["persist"] = "true";
-    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
-    pmap["max-row-errors"] = "5";
+    // Check the extended info enable flag.
+    EXPECT_FALSE(lease_mgr->getExtendedInfoEnabled());
+    pmap["extended-info-tables"] = "true";
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    EXPECT_TRUE(lease_mgr->getExtendedInfoEnabled());
 
     // Expecting that persist parameter is yes or no. Everything other than
     // that is wrong.
-    pmap["persist"] = "bogus";
+    pmap["lfc-interval"] = "10";
     pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["max-row-errors"] = "5";
+    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["persist"] = "bogus";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 
     // The lfc-interval must be an integer.
@@ -418,14 +421,17 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 
     // The max-row-errors must be an integer.
-    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "10";
     pmap["max-row-errors"] = "bogus";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 
     // The max-row-errors must be >= 0.
-    pmap["persist"] = "true";
     pmap["max-row-errors"] = "-1";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
+
+    // Moved to the end as it can leave the timer registered.
+    pmap["max-row-errors"] = "5";
+    EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 }
 
 /// @brief Checks if there is no lease manager NoLeaseManager is thrown.

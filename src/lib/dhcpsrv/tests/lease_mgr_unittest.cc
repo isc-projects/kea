@@ -398,6 +398,35 @@ public:
     }
 
     /// @brief Stub implementation.
+    void
+    deleteExtendedInfo6(const IOAddress& /* addr */) override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExtendedInfo6 not implemented");
+    }
+
+    /// @brief Stub implementation.
+    void
+    addRelayId6(const IOAddress& /* lease_addr */,
+                const IOAddress& /* link_addr */,
+                const vector<uint8_t>& relay_id) override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::addRelayId6 not implemented");
+    }
+
+    /// @brief Stub implementation.
+    void
+    addRemoteId6(const IOAddress& /* lease_addr */,
+                 const IOAddress& /* link_addr */,
+                 const vector<uint8_t>& remote_id) override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::addRemoteId6 not implemented");
+    }
+
+    /// @brief Stub implementation.
+    void
+    addLinkAddr6(const IOAddress& /* lease_addr */,
+                 const IOAddress& /* link_addr */) override {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::addLinkAddr6 not implemented");
+    }
+
+    /// @brief Stub implementation.
     Lease4Collection
     getLeases4ByRelayId(const OptionBuffer& /* relay_id */,
                         const IOAddress& /* lower_bound_address */,

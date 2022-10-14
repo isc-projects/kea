@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,8 @@ namespace dhcp {
 
 CfgDbAccess::CfgDbAccess()
     : appended_parameters_(), lease_db_access_("type=memfile"),
-      host_db_access_(), ip_reservations_unique_(true) {
+      host_db_access_(), ip_reservations_unique_(true),
+      extended_info_enabled_(false) {
 }
 
 std::string

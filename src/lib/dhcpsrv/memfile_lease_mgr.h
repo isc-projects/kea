@@ -1066,6 +1066,15 @@ private:
     /// @brief stores IPv6 leases
     Lease6Storage storage6_;
 
+    /// @brief stores IPv6 by-relay-id cross-reference table
+    Lease6ExtendedInfoRelayIdTable relay_id6_;
+
+    /// @brief stores IPv6 by-remote-id cross-reference table
+    Lease6ExtendedInfoRemoteIdTable remote_id6_;
+
+    /// @brief stores IPv6 by-link-addr cross-reference table
+    Lease6SimpleExtendedInfoLinkAddrTable link_addr6_;
+
 protected:
     /// @brief Holds the pointer to the DHCPv4 lease file IO.
     boost::shared_ptr<CSVLeaseFile4> lease_file4_;
@@ -1357,6 +1366,36 @@ public:
     getLeases6ByLink(const asiolink::IOAddress& link_addr,
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
+
+    /// @brief Delete lease6 extended info from tables.
+    ///
+    /// @param addr The address of the lease.
+    virtual void deleteExtendedInfo6(const isc::asiolink::IOAddress& addr) override;
+
+    /// @brief Add lease6 extended info into by-relay-id table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param link_addr The link address from the relay header.
+    /// @param relay_id The relay id from the relay header options.
+    virtual void addRelayId6(const isc::asiolink::IOAddress& lease_addr,
+                             const isc::asiolink::IOAddress& link_addr,
+                             const std::vector<uint8_t>& relay_id) override;
+
+    /// @brief Add lease6 extended info into by-remote-id table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param link_addr The link address from the remote header.
+    /// @param remote_id The remote id from the relay header options.
+    virtual void addRemoteId6(const isc::asiolink::IOAddress& lease_addr,
+                              const isc::asiolink::IOAddress& link_addr,
+                              const std::vector<uint8_t>& remote_id) override;
+
+    /// @brief Add lease6 extended info into by-link-addr table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param link_addr The link address from the remote header.
+    virtual void addLinkAddr6(const isc::asiolink::IOAddress& lease_addr,
+                              const isc::asiolink::IOAddress& link_addr) override;
 
     /// @brief Write V4 leases to a file.
     ///

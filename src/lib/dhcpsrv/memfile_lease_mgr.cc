@@ -638,6 +638,19 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     : LeaseMgr(), lfc_setup_(), conn_(parameters), mutex_(new std::mutex) {
     bool conversion_needed = false;
 
+    // Check if the extended info tables are enabled.
+    bool extended_info_enabled = false;
+    std::string extended_info_tables;
+    try {
+        extended_info_tables = conn_.getParameter("extended-info-tables");
+    } catch (const Exception&) {
+        extended_info_tables = "false";
+    }
+    // If extended_info_tables is 'true' we will enable them.
+    if (extended_info_tables == "true") {
+        setExtendedInfoEnabled(true);
+    }
+
     // Check the universe and use v4 file or v6 file.
     std::string universe = conn_.getParameter("universe");
     if (universe == "4") {
@@ -1831,13 +1844,19 @@ Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
         // Ignore and default to 0.
     }
 
-    uint32_t max_row_errors = 0;
+    int64_t max_row_errors64;
     try {
-        max_row_errors = boost::lexical_cast<uint32_t>(max_row_errors_str);
+        max_row_errors64 = boost::lexical_cast<int64_t>(max_row_errors_str);
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(isc::BadValue, "invalid value of the max-row-errors "
                   << max_row_errors_str << " specified");
     }
+    if ((max_row_errors64 < 0) ||
+        (max_row_errors64 > std::numeric_limits<uint32_t>::max())) {
+        isc_throw(isc::BadValue, "invalid value of the max-row-errors "
+                  << max_row_errors_str << " specified");
+    }
+    uint32_t max_row_errors = static_cast<uint32_t>(max_row_errors64);
 
     // Load the leasefile.completed, if exists.
     bool conversion_needed = false;
@@ -2406,26 +2425,186 @@ Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
 }
 
 Lease6Collection
-Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
-                                      const IOAddress& /* link_addr */,
-                                      const IOAddress& /* lower_bound_address */,
-                                      const LeasePageSize& /* page_size */) {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases6ByRelayId not implemented");
+Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
+                                      const IOAddress& link_addr,
+                                      const IOAddress& lower_bound_address,
+                                      const LeasePageSize& page_size) {
+    const std::vector<uint8_t>& relay_id_data = relay_id.getDuid();
+    Lease6Collection collection;
+    if (link_addr.isV6Zero()) {
+        const RelayIdIndex& idx = relay_id6_.get<RelayIdIndexTag>();
+        RelayIdIndex::const_iterator lb =
+            idx.lower_bound(boost::make_tuple(relay_id_data,
+                                              lower_bound_address));
+
+        // Return all leases being within the page size.
+        IOAddress last_addr = lower_bound_address;
+        for (; lb != idx.end(); ++lb) {
+            if ((*lb)->lease_addr_ == last_addr) {
+                // Already seen: skip it.
+                continue;
+            }
+            last_addr = (*lb)->lease_addr_;
+            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_addr);
+            if (lease) {
+                collection.push_back(lease);
+                if (collection.size() >= page_size.page_size_) {
+                    break;
+                }
+            }
+        }
+    } else {
+        const RelayIdLinkAddressIndex& idx =
+            relay_id6_.get<RelayIdLinkAddressIndexTag>();
+        RelayIdLinkAddressIndex::const_iterator lb =
+            idx.lower_bound(boost::make_tuple(relay_id_data,
+                                              link_addr,
+                                              lower_bound_address));
+
+        // Return all leases being within the page size.
+        IOAddress last_addr = lower_bound_address;
+        for (; lb != idx.end(); ++lb) {
+            if ((*lb)->lease_addr_ == last_addr) {
+                // Already seen: skip it.
+                continue;
+            }
+            last_addr = (*lb)->lease_addr_;
+            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_addr);
+            if (lease) {
+                collection.push_back(lease);
+                if (collection.size() >= page_size.page_size_) {
+                    break;
+                }
+            }
+        }
+    }
+    return (collection);
 }
 
 Lease6Collection
-Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
-                                       const IOAddress& /* link_addr */,
-                                       const IOAddress& /* lower_bound_address */,
-                                       const LeasePageSize& /* page_size*/) {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases6ByRemoteId not implemented");
+Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
+                                       const IOAddress& link_addr,
+                                       const IOAddress& lower_bound_address,
+                                       const LeasePageSize& page_size) {
+    Lease6Collection collection;
+    std::set<IOAddress> sorted;
+    if (link_addr.isV6Zero()) {
+        const RemoteIdIndex& idx = remote_id6_.get<RemoteIdIndexTag>();
+        RemoteIdIndexRange er = idx.equal_range(remote_id);
+
+        // Store all addresses greater than lower_bound_address.
+        for (auto it = er.first; it != er.second; ++it) {
+            const IOAddress& addr = (*it)->lease_addr_;
+            if (addr <= lower_bound_address) {
+                continue;
+            }
+            static_cast<void>(sorted.insert(addr));
+        }
+
+        // Return all leases being within the page size.
+        for (const IOAddress& addr : sorted) {
+            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, addr);
+            if (lease) {
+                collection.push_back(lease);
+                if (collection.size() >= page_size.page_size_) {
+                    break;
+                }
+            }
+        }
+    } else {
+        const RemoteIdLinkAddressIndex& idx =
+            remote_id6_.get<RemoteIdLinkAddressIndexTag>();
+        RemoteIdLinkAddressRange er =
+            idx.equal_range(boost::make_tuple(remote_id, link_addr));
+
+        // Store all addresses greater than lower_bound_address.
+        for (auto it = er.first; it != er.second; ++it) {
+            const IOAddress& addr = (*it)->lease_addr_;
+            if (addr <= lower_bound_address) {
+                continue;
+            }
+            static_cast<void>(sorted.insert(addr));
+        }
+
+        // Return all leases being within the page size.
+        for (const IOAddress& addr : sorted) {
+            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, addr);
+            if (lease) {
+                collection.push_back(lease);
+                if (collection.size() >= page_size.page_size_) {
+                    break;
+                }
+            }
+        }
+    }
+    return (collection);
 }
 
 Lease6Collection
-Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
-                                   const IOAddress& /* lower_bound_address */,
-                                   const LeasePageSize& /* page_size */) {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases6ByLink not implemented");
+Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
+                                   const IOAddress& lower_bound_address,
+                                   const LeasePageSize& page_size) {
+    Lease6Collection collection;
+    const LinkAddressIndex& idx = link_addr6_.get<LinkAddressIndexTag>();
+    LinkAddressIndex::const_iterator lb =
+        idx.lower_bound(boost::make_tuple(link_addr, lower_bound_address));
+
+    // Return all leases being within the page size.
+    IOAddress last_addr = lower_bound_address;
+    for (; lb != idx.end(); ++lb) {
+        if ((*lb)->lease_addr_ == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        last_addr = (*lb)->lease_addr_;
+        Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_addr);
+        if (lease) {
+            collection.push_back(lease);
+            if (collection.size() >= page_size.page_size_) {
+                break;
+            }
+        }
+    }
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::deleteExtendedInfo6(const IOAddress& addr) {
+    LeaseAddressRelayIdIndex& relay_id_idx =
+        relay_id6_.get<LeaseAddressIndexTag>();
+    static_cast<void>(relay_id_idx.erase(addr));
+    LeaseAddressRemoteIdIndex& remote_id_idx =
+        remote_id6_.get<LeaseAddressIndexTag>();
+    static_cast<void>(remote_id_idx.erase(addr));
+    LeaseAddressLinkAddressIndex& link_addr_idx =
+        link_addr6_.get<LeaseAddressIndexTag>();
+    static_cast<void>(link_addr_idx.erase(addr));
+}
+
+void
+Memfile_LeaseMgr::addRelayId6(const IOAddress& lease_addr,
+                              const IOAddress& link_addr,
+                              const std::vector<uint8_t>& relay_id) {
+    Lease6ExtendedInfoPtr ex_info;
+    ex_info.reset(new Lease6ExtendedInfo(lease_addr, link_addr, relay_id));
+    relay_id6_.insert(ex_info);
+}
+
+void
+Memfile_LeaseMgr::addRemoteId6(const IOAddress& lease_addr,
+                               const IOAddress& link_addr,
+                               const std::vector<uint8_t>& remote_id) {
+    Lease6ExtendedInfoPtr ex_info;
+    ex_info.reset(new Lease6ExtendedInfo(lease_addr, link_addr, remote_id));
+    remote_id6_.insert(ex_info);
+}
+
+void
+Memfile_LeaseMgr::addLinkAddr6(const IOAddress& lease_addr,
+                               const IOAddress& link_addr) {
+    Lease6SimpleExtendedInfoPtr ex_info;
+    ex_info.reset(new Lease6SimpleExtendedInfo(lease_addr, link_addr));
+    link_addr6_.insert(ex_info);
 }
 
 void

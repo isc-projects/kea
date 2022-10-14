@@ -224,7 +224,7 @@ class LeaseMgr {
 public:
     /// @brief Constructor
     ///
-    LeaseMgr()
+    LeaseMgr() : extended_info_enabled_(false)
     {}
 
     /// @brief Destructor
@@ -924,6 +924,56 @@ public:
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) = 0;
 
+    /// @brief Delete lease6 extended info from tables.
+    ///
+    /// @param addr The address of the lease.
+    virtual void deleteExtendedInfo6(const isc::asiolink::IOAddress& addr) = 0;
+
+    /// @brief Add lease6 extended info into by-relay-id table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param link_addr The link address from the relay header.
+    /// @param relay_id The relay id from the relay header options.
+    virtual void addRelayId6(const isc::asiolink::IOAddress& lease_addr,
+                             const isc::asiolink::IOAddress& link_addr,
+                             const std::vector<uint8_t>& relay_id) = 0;
+
+    /// @brief Add lease6 extended info into by-remote-id table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param link_addr The link address from the remote header.
+    /// @param remote_id The remote id from the relay header options.
+    virtual void addRemoteId6(const isc::asiolink::IOAddress& lease_addr,
+                              const isc::asiolink::IOAddress& link_addr,
+                              const std::vector<uint8_t>& remote_id) = 0;
+
+    /// @brief Add lease6 extended info into by-link-addr table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param link_addr The link address from the remote header.
+    virtual void addLinkAddr6(const isc::asiolink::IOAddress& lease_addr,
+                              const isc::asiolink::IOAddress& link_addr) = 0;
+
+    /// @brief Modifies the setting whether the lease extended info tables
+    /// are enabled.
+    ///
+    /// @note This method is virtual so backend doing specific action
+    /// on value changes can intercept it by redefining it.
+    ///
+    /// @param enabled new setting.
+    virtual void setExtendedInfoEnabled(const bool enabled) {
+        extended_info_enabled_ = enabled;
+    }
+
+    /// @brief Returns the setting indicating if lease extended info tables
+    /// are enabled.
+    ///
+    /// @return true if lease extended info tables are enabled or false
+    /// if they are disabled.
+    bool getExtendedInfoEnabled() const {
+        return (extended_info_enabled_);
+    }
+
     /// @brief Write V4 leases to a file.
     ///
     /// @param filename File name to write leases.
@@ -937,6 +987,10 @@ public:
 private:
     /// The IOService object, used for all ASIO operations.
     static isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief Holds the setting whether the lease extended info tables
+    /// are enabled or disabled. The default is disabled.
+    bool extended_info_enabled_;
 };
 
 }  // namespace dhcp
