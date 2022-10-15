@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,8 @@ isc::data::ElementPtr CfgConsistency::toElement() const {
     ElementPtr m(new MapElement());
     ElementPtr l(new StringElement(sanityCheckToText(getLeaseSanityCheck())));
     m->set("lease-checks", l);
+    ElementPtr x(new StringElement(sanityCheckToText(getExtendedInfoSanityCheck())));
+    m->set("extended-info-checks", x);
 
     return (m);
 }
@@ -39,7 +41,20 @@ std::string CfgConsistency::sanityCheckToText(LeaseSanity check_type) {
     }
 }
 
-};
-};
+std::string CfgConsistency::sanityCheckToText(ExtendedInfoSanity check_type) {
+    switch (check_type) {
+    case EXTENDED_INFO_CHECK_NONE:
+        return ("none");
+    case EXTENDED_INFO_CHECK_FIX:
+        return ("fix");
+    case EXTENDED_INFO_CHECK_STRICT:
+        return ("strict");
+    case EXTENDED_INFO_CHECK_PEDANTIC:
+        return ("pedantic");
+    default:
+        return ("unknown");
+    }
+}
 
-
+}
+}

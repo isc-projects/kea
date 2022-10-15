@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -161,7 +161,7 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
 
     default:
         // Shouldn't get here but some compilers and analyzers
-        // complain.  We'll we treat it as NONE and return the 
+        // complain.  We'll we treat it as NONE and return the
         // lease as-is.
         break;
 
@@ -183,5 +183,5 @@ SubnetID SanityChecker::findSubnetId(const LeaseType& lease, const SubnetsType& 
     return (subnet->getID());
 }
 
-};
-};
+}
+}

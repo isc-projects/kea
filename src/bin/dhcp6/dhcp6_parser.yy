@@ -163,6 +163,7 @@ using namespace std;
 
   SANITY_CHECKS "sanity-checks"
   LEASE_CHECKS "lease-checks"
+  EXTENDED_INFO_CHECKS "extended-info-checks"
 
   CLIENT_CLASSES "client-classes"
   REQUIRE_CLIENT_CLASSES "require-client-classes"
@@ -1114,7 +1115,9 @@ sanity_checks_params: sanity_checks_param
                         }
                     ;
 
-sanity_checks_param: lease_checks;
+sanity_checks_param: lease_checks
+                   | extended_info_checks
+                   ;
 
 lease_checks: LEASE_CHECKS {
     ctx.unique("lease-checks", ctx.loc2pos(@1));
@@ -1132,6 +1135,24 @@ lease_checks: LEASE_CHECKS {
     } else {
         error(@4, "Unsupported 'lease-checks value: " + string($4) +
               ", supported values are: none, warn, fix, fix-del, del");
+    }
+}
+
+extended_info_checks: EXTENDED_INFO_CHECKS {
+    ctx.unique("extended-info-checks", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+
+    if ( (string($4) == "none") ||
+         (string($4) == "fix") ||
+         (string($4) == "strict") ||
+         (string($4) == "pedantic")) {
+        ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
+        ctx.stack_.back()->set("extended-info-checks", user);
+        ctx.leave();
+    } else {
+        error(@4, "Unsupported 'extended-info-checks value: " + string($4) +
+              ", supported values are: none, fix, strict, pedantic");
     }
 }
 

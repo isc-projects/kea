@@ -430,12 +430,9 @@ LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease) {
 
     // Try to decode sub-options.
     string rai_hex = extended_info->stringValue();
-    if ((rai_hex.size() < 3) || (rai_hex[0] != '0') || (rai_hex[1] != 'x')) {
-        return (changed);
-    }
     try {
         vector<uint8_t> rai_data;
-        encode::decodeHex(rai_hex.substr(2), rai_data);
+        encode::decodeHex(rai_hex, rai_data);
         OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4, rai_data));
         if (!rai) {
             return (changed);
@@ -521,13 +518,9 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease) {
             return (changed);
         }
         string options_hex = options->stringValue();
-        if ((options_hex.size() < 3) || (options_hex[0] != '0') ||
-            (options_hex[1] != 'x')) {
-            return (changed);
-        }
         try {
             vector<uint8_t> options_data;
-            encode::decodeHex(options_hex.substr(2), options_data);
+            encode::decodeHex(options_hex, options_data);
             OptionCollection opts;
             LibDHCP::unpackOptions6(options_data, DHCP6_OPTION_SPACE, opts);
 

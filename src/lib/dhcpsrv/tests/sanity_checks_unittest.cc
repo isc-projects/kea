@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,7 +64,7 @@ public:
 
         vector<uint8_t> clientid(1);
 
-        time_t timestamp = time(NULL) - 86400 + random()%86400;
+        time_t timestamp = time(0) - 86400 + random()%86400;
 
         // Return created lease.
         return (Lease4Ptr(new Lease4(address, hwaddr,
@@ -120,23 +120,40 @@ public:
 
     void
     parserCheck(SrvConfig& cfg, const string& txt, bool exp_throw,
-                CfgConsistency::LeaseSanity exp_sanity) {
+                CfgConsistency::LeaseSanity exp_sanity,
+                CfgConsistency::ExtendedInfoSanity exp_sanity2) {
 
+        // Reset to defaults.
+        cfg.getConsistency()->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_NONE);
+        cfg.getConsistency()->setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+            
         SanityChecksParser parser;
 
         ElementPtr json;
         EXPECT_NO_THROW(json = Element::fromJSON(txt));
 
         if (exp_throw) {
-            EXPECT_THROW(parser.parse(cfg, json), DhcpConfigError);
-
-            return;
+            // Should throw DhcpConfigError.
+            try {
+                parser.parse(cfg, json);
+                ADD_FAILURE() << "should throw not did not throw";
+                return;
+            } catch (const DhcpConfigError&) {
+                return;
+            } catch (const exception& ex) {
+                ADD_FAILURE() << "throw another exception with " << ex.what();
+            }
+        } else {
+            // Should not throw.
+            try {
+                parser.parse(cfg, json);
+            } catch (const exception& ex) {
+                ADD_FAILURE() << "throw an exception with " << ex.what();
+            }
         }
 
-        // Should not throw.
-        EXPECT_NO_THROW(parser.parse(cfg, json));
-
         EXPECT_EQ(cfg.getConsistency()->getLeaseSanityCheck(), exp_sanity);
+        EXPECT_EQ(cfg.getConsistency()->getExtendedInfoSanityCheck(), exp_sanity2);
     }
 
 };
@@ -158,22 +175,68 @@ TEST_F(SanityChecksTest, leaseCheck) {
     string bogus3 = "{ \"lease-checks\": true }";
     string bogus4 = "{ \"lease-checks\": 42 }";
 
+    // These are valid and should be accepted.
+    string valid6 = "{ \"extended-info-checks\": \"none\" }";
+    string valid7 = "{ \"extended-info-checks\": \"fix\" }";
+    string valid8 = "{ \"extended-info-checks\": \"strict\" }";
+    string valid9 = "{ \"extended-info-checks\": \"pedantic\" }";
+    string valid10 = "{ \"lease-checks\": \"fix\",\n"
+        " \"extended-info-checks\": \"fix\" }";
+
+    string bogus5 = "{ \"extended-info-checks\": \"sanitize\" }";
+    string bogus6 = "{ \"extended-info-checks\": \"ignore\" }";
+    string bogus7 = "{ \"extended-info-checks\": true }";
+    string bogus8 = "{ \"extended-info-checks\": 42 }";
+
     SrvConfig cfg;
 
-    // The default should be to none.
+    // The lease default should be to none.
     EXPECT_EQ(cfg.getConsistency()->getLeaseSanityCheck(),
               CfgConsistency::LEASE_CHECK_NONE);
 
-    parserCheck(cfg, valid1, false, CfgConsistency::LEASE_CHECK_NONE);
-    parserCheck(cfg, valid2, false, CfgConsistency::LEASE_CHECK_WARN);
-    parserCheck(cfg, valid3, false, CfgConsistency::LEASE_CHECK_FIX);
-    parserCheck(cfg, valid4, false, CfgConsistency::LEASE_CHECK_FIX_DEL);
-    parserCheck(cfg, valid5, false, CfgConsistency::LEASE_CHECK_DEL);
+    // The extended info default should be to fix.
+    EXPECT_EQ(cfg.getConsistency()->getExtendedInfoSanityCheck(),
+              CfgConsistency::EXTENDED_INFO_CHECK_FIX);
 
-    parserCheck(cfg, bogus1, true, CfgConsistency::LEASE_CHECK_NONE);
-    parserCheck(cfg, bogus2, true, CfgConsistency::LEASE_CHECK_NONE);
-    parserCheck(cfg, bogus3, true, CfgConsistency::LEASE_CHECK_NONE);
-    parserCheck(cfg, bogus4, true, CfgConsistency::LEASE_CHECK_NONE);
+    parserCheck(cfg, valid1, false, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, valid2, false, CfgConsistency::LEASE_CHECK_WARN,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, valid3, false, CfgConsistency::LEASE_CHECK_FIX,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, valid4, false, CfgConsistency::LEASE_CHECK_FIX_DEL,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, valid5, false, CfgConsistency::LEASE_CHECK_DEL,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    parserCheck(cfg, bogus1, true, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, bogus2, true, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, bogus3, true, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, bogus4, true, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    parserCheck(cfg, valid6, false, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+    parserCheck(cfg, valid7, false, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, valid8, false, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_STRICT);
+    parserCheck(cfg, valid9, false, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC);
+    parserCheck(cfg, valid10, false, CfgConsistency::LEASE_CHECK_FIX,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    parserCheck(cfg, bogus5, true, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, bogus6, true, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, bogus7, true, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+    parserCheck(cfg, bogus8, true, CfgConsistency::LEASE_CHECK_NONE,
+                CfgConsistency::EXTENDED_INFO_CHECK_FIX);
 }
 
 // Verify whether sanity checker works as expected (valid v4).
@@ -375,4 +438,3 @@ TEST_F(SanityChecksTest,  guardOnly6) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(subnet->getID(), lease->subnet_id_);
 }
-

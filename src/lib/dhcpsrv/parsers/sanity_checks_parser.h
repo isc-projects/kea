@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,7 +26,7 @@ class SanityChecksParser : public isc::data::SimpleParser {
     void parse(SrvConfig& srv_cfg, const isc::data::ConstElementPtr& value);
 };
 
-};
-};
+}
+}
 
 #endif /* SANITY_CHECKS_PARSER_H */

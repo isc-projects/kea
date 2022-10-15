@@ -222,6 +222,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"extended-info-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SANITY_CHECKS:
+        return isc::dhcp::Dhcp4Parser::make_EXTENDED_INFO_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("extended-info-checks", driver.loc_);
+    }
+}
+
 \"dhcp-socket-type\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
