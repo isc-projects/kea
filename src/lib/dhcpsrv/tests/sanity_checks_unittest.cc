@@ -357,7 +357,7 @@ TEST_F(SanityChecksTest,  noSubnet6) {
 }
 
 // Verify whether sanity checker works as expected (guard v4).
-TEST_F(SanityChecksTest,  guard4) {
+TEST_F(SanityChecksTest, guard4) {
     // Create networks and lease in the first and guarded subnet.
     CfgMgr::instance().setFamily(AF_INET);
     Subnet4Ptr subnet1 = createSubnet4("192.168.1.0/24", 1);
@@ -379,7 +379,7 @@ TEST_F(SanityChecksTest,  guard4) {
 }
 
 // Verify whether sanity checker works as expected (guard v6).
-TEST_F(SanityChecksTest,  guard6) {
+TEST_F(SanityChecksTest, guard6) {
     // Create networks and lease in the first and guarded subnet.
     CfgMgr::instance().setFamily(AF_INET6);
     Subnet6Ptr subnet1 = createSubnet6("2001:db8:1::/64", 1);
@@ -401,7 +401,7 @@ TEST_F(SanityChecksTest,  guard6) {
 }
 
 // Verify whether sanity checker works as expected (guard only v4).
-TEST_F(SanityChecksTest,  guardOnly4) {
+TEST_F(SanityChecksTest, guardOnly4) {
     // Create guarded network and lease.
     CfgMgr::instance().setFamily(AF_INET);
     Subnet4Ptr subnet = createSubnet4("192.168.1.0/24", 1);
@@ -421,7 +421,7 @@ TEST_F(SanityChecksTest,  guardOnly4) {
 }
 
 // Verify whether sanity checker works as expected (valid v6).
-TEST_F(SanityChecksTest,  guardOnly6) {
+TEST_F(SanityChecksTest, guardOnly6) {
     // Create guarded network and lease.
     CfgMgr::instance().setFamily(AF_INET6);
     Subnet6Ptr subnet = createSubnet6("2001:db8:1::/64", 1);
@@ -524,7 +524,7 @@ public:
                 << " is broken";
         }
 
-        Lease4Ptr lease = newLease4(IOAddress("2001::1"), orig_context);
+        Lease4Ptr lease = newLease4(IOAddress("192.168.1.1"), orig_context);
         ConstElementPtr before;
         if (orig_context) {
             before = isc::data::copy(orig_context);
@@ -534,6 +534,59 @@ public:
         }
 
         bool ret = LeaseMgr::upgradeLease4ExtendedInfo(lease, sanity);
+        ConstElementPtr after = lease->getContext();
+        if (!before && !after) {
+            EXPECT_FALSE(ret) << "null before and null after";
+        } else if ((before && !after) || (!before && after)) {
+            EXPECT_TRUE(ret) << "only one of before and after is null";
+        } else if (before->equals(*after)) {
+            EXPECT_FALSE(ret) << "before == after";
+        } else {
+            EXPECT_TRUE(ret) << "before != after";
+        }
+        if (!exp_context) {
+            EXPECT_FALSE(after) << "expected null, got " << *after;
+        } else {
+            ASSERT_TRUE(after) << "expected not null, got null";
+            EXPECT_TRUE(exp_context->equals(*after))
+                << "expected: " << *exp_context << std::endl
+                << "actual: " << *after << std::endl;
+        }
+        EXPECT_TRUE(checkFile());
+    }
+
+    /// @brief Check IPv6 scenario.
+    ///
+    /// @brief original Original user context.
+    /// @brief expected Expected user context.
+    /// @brief sanity Extended info sanity level.
+    /// @break logs Expected log messages.
+    void check6(string description, string original, string expected,
+                CfgConsistency::ExtendedInfoSanity sanity,
+                vector<string> logs = {}) {
+        ElementPtr orig_context;
+        if (!original.empty()) {
+            ASSERT_NO_THROW(orig_context = Element::fromJSON(original))
+                << "invalid original user context, test " << description
+                << " is broken";
+        }
+        ElementPtr exp_context;
+        if (!expected.empty()) {
+            ASSERT_NO_THROW(exp_context = Element::fromJSON(expected))
+                << "invalid expected user context, test " << description
+                << " is broken";
+        }
+
+        Lease6Ptr lease = newLease6(IOAddress("2001::1"), orig_context);
+        ConstElementPtr before;
+        if (orig_context) {
+            before = isc::data::copy(orig_context);
+        }
+        for (const string& log : logs) {
+            addString(log);
+        }
+
+        bool ret = LeaseMgr::upgradeLease6ExtendedInfo(lease, sanity);
         ConstElementPtr after = lease->getContext();
         if (!before && !after) {
             EXPECT_FALSE(ret) << "null before and null after";
@@ -573,7 +626,7 @@ TEST_F(ExtendedInfoChecksTest, badTypeUserContext4) {
     string description = "user context not a map, fix";
     check4(description, "1", "", CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in user context a problem was found:"
              " user context is not a map)" });
 }
@@ -611,7 +664,7 @@ TEST_F(ExtendedInfoChecksTest, badTypeISC4) {
     check4(description, "{ \"ISC\": 1 }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in isc a problem was found:"
              " ISC entry is not a map)" });
 }
@@ -622,7 +675,7 @@ TEST_F(ExtendedInfoChecksTest, badTypeISC4other) {
     check4(description, "{ \"ISC\": 1, \"foo\": 2 }", "{ \"foo\": 2 }",
            CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in isc a problem was found:"
              " ISC entry is not a map)" });
 }
@@ -664,7 +717,7 @@ TEST_F(ExtendedInfoChecksTest, badTypeRAI) {
     check4(description, "{ \"ISC\": { \"relay-agent-info\": true } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in relay-agent-info a problem was found:"
              " relay-agent-info is not a map or a string)" });
 }
@@ -677,7 +730,7 @@ TEST_F(ExtendedInfoChecksTest, badTypeRAIother) {
            "{ \"ISC\": { \"foo\": 1 } }",
            CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in relay-agent-info a problem was found:"
              " relay-agent-info is not a map or a string)" });
 }
@@ -698,7 +751,7 @@ TEST_F(ExtendedInfoChecksTest, badEncodingStringRAI) {
     check4(description, "{ \"ISC\": { \"relay-agent-info\": \"foo\" } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in rai a problem was found:"
              " 'foo' is not a valid string of hexadecimal digits)" });
 }
@@ -710,7 +763,7 @@ TEST_F(ExtendedInfoChecksTest, emptyStringRAI) {
     check4(description, "{ \"ISC\": { \"relay-agent-info\": \"0x\" } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in rai a problem was found:"
              " '0x' is not a valid string of hexadecimal digits)" });
 }
@@ -725,7 +778,7 @@ TEST_F(ExtendedInfoChecksTest, upgradedRAI) {
            " \"0x0104AABBCCDD\" } } }",
            CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED"
-             " extended info for lease 2001::1 was upgraded" });
+             " extended info for lease 192.168.1.1 was upgraded" });
 }
 
 // Upgraded string relay-agent-info entry with ids.
@@ -738,7 +791,7 @@ TEST_F(ExtendedInfoChecksTest, upgradedRAIwithIds) {
            " \"relay-id\": \"AABBCC\" } } }",
            CfgConsistency::EXTENDED_INFO_CHECK_FIX,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED"
-             " extended info for lease 2001::1 was upgraded" });
+             " extended info for lease 192.168.1.1 was upgraded" });
 }
 
 // sub-options entry with a bad type is right up to the fix sanity level.
@@ -758,7 +811,7 @@ TEST_F(ExtendedInfoChecksTest, badTypeSubOptionsstrict) {
            "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\": 1 } } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in sub-options a problem was found:"
              " sub-options is not a string)" });
 }
@@ -784,7 +837,7 @@ TEST_F(ExtendedInfoChecksTest, badEncodingSubOptionsstrict) {
            " \"foo\" } } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in sub-options a problem was found:"
              " 'foo' is not a valid string of hexadecimal digits)" });
 }
@@ -806,7 +859,7 @@ TEST_F(ExtendedInfoChecksTest, badTypeRemoteId4strict) {
            "{ \"ISC\": { \"relay-agent-info\": { \"remote-id\": 1 } } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in remote-id a problem was found:"
              " remote-id is not a string)" });
 }
@@ -831,7 +884,7 @@ TEST_F(ExtendedInfoChecksTest, badEncodingRemoteId4strict) {
            " \"foo\" } } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in remote-id a problem was found:"
              " attempt to decode a value not in base16 char set)" });
 }
@@ -852,9 +905,20 @@ TEST_F(ExtendedInfoChecksTest, emptyRemoteId4strict) {
            "{ \"ISC\": { \"relay-agent-info\": { \"remote-id\": \"\" } } }",
            "", CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in remote-id a problem was found:"
              " remote-id is empty)" });
+}
+
+// Valid remote-id entry is right for all sanity levels.
+TEST_F(ExtendedInfoChecksTest, validRemoteId4strict) {
+    string description = "valid remote-id, strict";
+    check4(description,
+           "{ \"ISC\": { \"relay-agent-info\": { \"remote-id\":"
+           " \"AABB\" } } }",
+           "{ \"ISC\": { \"relay-agent-info\": { \"remote-id\":"
+           " \"AABB\" } } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT);
 }
 
 // relay-id entry with a bad type is right up to the fix sanity level.
@@ -874,7 +938,7 @@ TEST_F(ExtendedInfoChecksTest, badTypeRelayId4strict) {
            "{ \"ISC\": { \"relay-agent-info\": { \"relay-id\": 1 } } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in relay-id a problem was found:"
              " relay-id is not a string)" });
 }
@@ -899,7 +963,7 @@ TEST_F(ExtendedInfoChecksTest, badEncodingRelayId4strict) {
            " \"foo\" } } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in relay-id a problem was found:"
              " attempt to decode a value not in base16 char set)" });
 }
@@ -920,9 +984,20 @@ TEST_F(ExtendedInfoChecksTest, emptyRelayId4strict) {
            "{ \"ISC\": { \"relay-agent-info\": { \"relay-id\": \"\" } } }",
            "", CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in relay-id a problem was found:"
              " relay-id is empty)" });
+}
+
+// Valid relay-id entry is right for all sanity levels.
+TEST_F(ExtendedInfoChecksTest, validRelayId4strict) {
+    string description = "valid relay-id, strict";
+    check4(description,
+           "{ \"ISC\": { \"relay-agent-info\": { \"relay-id\":"
+           " \"AABB\" } } }",
+           "{ \"ISC\": { \"relay-agent-info\": { \"relay-id\":"
+           " \"AABB\" } } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT);
 }
 
 // Junk entries are right up to the strict sanity level.
@@ -941,7 +1016,7 @@ TEST_F(ExtendedInfoChecksTest, junk4pedantic) {
            "{ \"ISC\": { \"relay-agent-info\": { \"foo\": 1 } } }", "",
            CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
-             " extended info for lease 2001::1 failed checks"
+             " extended info for lease 192.168.1.1 failed checks"
              " (in relay-agent-info a problem was found:"
              " spurious 'foo' entry in relay-agent-info)" });
 }
@@ -953,4 +1028,471 @@ TEST_F(ExtendedInfoChecksTest, comment4) {
            "{ \"ISC\": { \"relay-agent-info\": { \"comment\": \"good\" } } }",
            "{ \"ISC\": { \"relay-agent-info\": { \"comment\": \"good\" } } }",
            CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC);
+}
+
+// No user context is right for any sanity check level including the highest.
+TEST_F(ExtendedInfoChecksTest, noUserContext6) {
+    string description = "no user context, pedantic";
+    check6(description, "", "", CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC);
+}
+
+// User context with a bad type is right only when no check is done.
+TEST_F(ExtendedInfoChecksTest, badTypeUserContext6none) {
+    string description = "user context not a map, none";
+    check6(description, "1", "1", CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+}
+
+// User context with a bad type is refused by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, badTypeUserContext6) {
+    string description = "user context not a map, fix";
+    check6(description, "1", "", CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in user context a problem was found:"
+             " user context is not a map)" });
+}
+
+// Empty user context is right only when no check is done.
+TEST_F(ExtendedInfoChecksTest, emptyTypeUserContext6none) {
+    string description = "empty user context, none";
+    check6(description, "{ }", "{ }",
+           CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+}
+
+// Empty user context is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, emptyTypeUserContext6) {
+    string description = "empty user context, fix";
+    check6(description, "{ }", "", CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+}
+
+// No ISC entry is right in all cases.
+TEST_F(ExtendedInfoChecksTest, noISC6) {
+    string description = "no ISC entry, pedantic";
+    check6(description, "{ \"foo\": 1 }", "{ \"foo\": 1 }",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC);
+}
+
+// ISC entry with a bad type is right only when no check is done.
+TEST_F(ExtendedInfoChecksTest, badTypeISC6none) {
+    string description = "ISC entry no a map, none";
+    check6(description, "{ \"ISC\": 1 }", "{ \"ISC\": 1 }",
+           CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+}
+
+// ISC entry with a bad type is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, badTypeISC6) {
+    string description = "ISC entry no a map, fix";
+    check6(description, "{ \"ISC\": 1 }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in isc a problem was found:"
+             " ISC entry is not a map)" });
+}
+
+// When the ISC entry is dropped other entries are kept.
+TEST_F(ExtendedInfoChecksTest, badTypeISC6other) {
+    string description = "ISC entry no a map with others, fix";
+    check6(description, "{ \"ISC\": 1, \"foo\": 2 }", "{ \"foo\": 2 }",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in isc a problem was found:"
+             " ISC entry is not a map)" });
+}
+
+// Empty ISC entry is kept only when no check is done.
+TEST_F(ExtendedInfoChecksTest, emptyISC6none) {
+    string description = "empty ISC entry, none";
+    check6(description, "{ \"ISC\": { } }", "{ \"ISC\": { } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+}
+
+// Empty ISC entry is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, emptyISC6) {
+    string description = "empty ISC entry, fix";
+    check6(description, "{ \"ISC\": { } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+}
+
+// relays is not upgraded when no check is done.
+TEST_F(ExtendedInfoChecksTest, relaysnone) {
+    string description = "relays, none";
+    check6(description, "{ \"ISC\": { \"relays\": true } }",
+           "{ \"ISC\": { \"relays\": true } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+}
+
+// relays is dropped when relay-info is present by all not none sanity
+// check levels.
+TEST_F(ExtendedInfoChecksTest, relaysAndRelayInfo) {
+    string description = "relays and relay-info, fix";
+    check6(description,
+           "{ \"ISC\": { \"relays\": true, \"relay-info\":"
+           " [ { \"foo\": 1 } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"foo\": 1 } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+}
+
+// relays with bad type is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, badTypeRelays) {
+    string description = "relays is not a list, fix";
+    check6(description, "{ \"ISC\": { \"relays\": true } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relays a problem was found:"
+             " relays is not a list)" });
+}
+
+// Empty relays is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, emptyRelays) {
+    string description = "empty relays, fix";
+    check6(description, "{ \"ISC\": { \"relays\": [ ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relays a problem was found:"
+             " relays is empty)" });
+}
+
+// Relay (element of relays) with bad type is dropped by all not none
+// sanity check levels.
+TEST_F(ExtendedInfoChecksTest, badTypeRelay) {
+    string description = "relay is not a map, fix";
+    check6(description, "{ \"ISC\": { \"relays\": [ 1 ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relay [relay#0] a problem was found:"
+             " relay#0 is not a map)" });
+}
+
+// options with bad type is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, badTypeOptions) {
+    string description = "options is not a string, fix";
+    check6(description, "{ \"ISC\": { \"relays\": [ { \"options\": 1 } ] } }",
+           "", CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in options [relay#0] a problem was found:"
+             " options is not a string)" });
+}
+
+// options which can't be decoded is dropped by all not none sanity
+// check levels.
+TEST_F(ExtendedInfoChecksTest, badEncodingOptions) {
+    string description = "options with junk value, fix";
+    check6(description,
+           "{ \"ISC\": { \"relays\": [ { \"options\": \"foo\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in options [relay#0] a problem was found:"
+             " 'foo' is not a valid string of hexadecimal digits)" });
+}
+
+// Valid relays is upgraded by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, upgradedRelays) {
+    string description = "upgraded relays, fix";
+    check6(description,
+           "{ \"ISC\": { \"relays\": [ { \"hop\": 33,"
+           " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+           " \"options\": \"0x00C800080102030405060708\" } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+           " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+           " \"options\": \"0x00C800080102030405060708\" } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED"
+             " extended info for lease 2001::1 was upgraded" });
+}
+
+// Valid relays with ids is upgraded by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, upgradedRelaysWithIds) {
+    string description = "upgraded relays with ids, fix";
+    check6(description,
+           "{ \"ISC\": { \"relays\": [ { \"hop\": 100,"
+            " \"options\": \"0x00250006010203040506003500086464646464646464\","
+            " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\" } ] } }",
+            "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100,"
+            " \"options\": \"0x00250006010203040506003500086464646464646464\","
+            " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\","
+            " \"remote-id\": \"010203040506\","
+           " \"relay-id\": \"6464646464646464\" } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED"
+             " extended info for lease 2001::1 was upgraded" });
+}
+
+// Valid relays with 2 relays is upgraded by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, upgradedRelays2) {
+    string description = "upgraded relays with 2 relays, fix";
+    check6(description,
+           "{ \"ISC\": { \"relays\": [ { \"hop\": 33,"
+            " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+            " \"options\": \"0x00C800080102030405060708\" }, { \"hop\": 100,"
+            " \"options\": \"0x00250006010203040506003500086464646464646464\","
+            " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\" } ] } }",
+            "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+            " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+            " \"options\": \"0x00C800080102030405060708\" }, { \"hop\": 100,"
+            " \"options\": \"0x00250006010203040506003500086464646464646464\","
+            " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\","
+            " \"remote-id\": \"010203040506\","
+           " \"relay-id\": \"6464646464646464\" } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED"
+             " extended info for lease 2001::1 was upgraded" });
+}
+
+// relayinfo with bad type is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, badTypeRelayInfo) {
+    string description = "relayinfo is not a list, fix";
+    check6(description, "{ \"ISC\": { \"relay-info\": true } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relay-info a problem was found:"
+             " relay-info is not a list)" });
+}
+
+// Empty relay-info is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, emptyRelayInfo) {
+    string description = "empty relay-info, fix";
+    check6(description, "{ \"ISC\": { \"relay-info\": [ ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relay-info a problem was found:"
+             " relay-info is empty)" });
+}
+
+// Relay (element of relay-info) with bad type is dropped by all not none
+// sanity check levels.
+TEST_F(ExtendedInfoChecksTest, badTypeRelay2) {
+    string description = "relay is not a map, fix";
+    check6(description, "{ \"ISC\": { \"relay-info\": [ 1 ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relay [relay#0] a problem was found:"
+             " relay#0 is not a map)" });
+}
+
+// options with bad type is dropped by all not none sanity check levels.
+TEST_F(ExtendedInfoChecksTest, badTypeOptions2) {
+    string description = "options is not a string, fix";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"options\": 1 } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in options [relay#0] a problem was found:"
+             " options is not a string)" });
+}
+
+// options which can't be decoded is dropped by all not none sanity
+// check levels.
+TEST_F(ExtendedInfoChecksTest, badEncodingOptions2) {
+    string description = "options with junk value, fix";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"options\": \"foo\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in options [relay#0] a problem was found:"
+             " 'foo' is not a valid string of hexadecimal digits)" });
+}
+
+// Relay without a link entry is right up to fix sanity check level.
+TEST_F(ExtendedInfoChecksTest, noLinkfix) {
+    string description = "no link, fix";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"foo\": 1  } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"foo\": 1  } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+}
+
+// Relay without a link entry is dropped by strict sanity check level and
+// higher.
+TEST_F(ExtendedInfoChecksTest, noLinkstrict) {
+    string description = "no link, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"foo\": 1  } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in link [relay#0] a problem was found:"
+             " no link)" });
+}
+
+// link entry with bad type is dropped by strict sanity check level and higher.
+TEST_F(ExtendedInfoChecksTest, badTypeLink) {
+    string description = "link is not a string, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": 1 } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in link [relay#0] a problem was found:"
+             " link is not a string)" });
+}
+
+// link entry which is not an address is dropped by strict sanity check level
+// and higher.
+TEST_F(ExtendedInfoChecksTest, notAddressLink) {
+    string description = "link is not an address, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"foo\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in link [relay#0] a problem was found:"
+             " Failed to convert string to address 'foo':"
+             " Invalid argument)" });
+}
+
+// link entry which is an IPv4 (vs IPv6) address is dropped by strict sanity
+// check level and higher.
+TEST_F(ExtendedInfoChecksTest, notV6Link) {
+    string description = "link is v4, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\":"
+           " \"192.128.1.1\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in link [relay#0] a problem was found:"
+             " link is not an IPv6 address)" });
+}
+
+// Valid link entry is right for all sanity levels.
+TEST_F(ExtendedInfoChecksTest, validLink) {
+    string description = "valid link, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\" } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\" } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT);
+}
+
+// remote-id entry with a bad type is right up to the fix sanity level.
+TEST_F(ExtendedInfoChecksTest, badTypeRemoteId6fix) {
+    string description = "remote-id not a string, fix";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"remote-id\": 1 } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"remote-id\": 1 } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+}
+
+// remote-id entry with a bad type is dropped at strict or higher
+// sanity levels.
+TEST_F(ExtendedInfoChecksTest, badTypeRemoteId6strict) {
+    string description = "remote-id not a string, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"remote-id\": 1,"
+           " \"link\": \"2001::2\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in remote-id [relay#0] a problem was found:"
+             " remote-id is not a string)" });
+}
+
+// remote-id entry which can't be decoded is dropped at strict or higher
+// sanity levels.
+TEST_F(ExtendedInfoChecksTest, badEncodingRemoteId6strict) {
+    string description = "remote-id with a junk value, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"remote-id\": \"foo\","
+           " \"link\": \"2001::2\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in remote-id [relay#0] a problem was found:"
+             " attempt to decode a value not in base16 char set)" });
+}
+
+// Empty remote-id entry is dropped at strict or higher sanity levels.
+TEST_F(ExtendedInfoChecksTest, emptyRemoteId6strict) {
+    string description = "empty remote-id, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"remote-id\": \"\","
+           " \"link\": \"2001::2\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in remote-id [relay#0] a problem was found:"
+             " remote-id is empty)" });
+}
+
+// Valid remote-id entry is right at all sanity levels.
+TEST_F(ExtendedInfoChecksTest, validRemoteId6strict) {
+    string description = "valid remote-id, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"remote-id\": \"AABB\","
+           " \"link\": \"2001::2\" } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"remote-id\": \"AABB\","
+           " \"link\": \"2001::2\" } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT);
+}
+
+// relay-id entry with a bad type is right up to the fix sanity level.
+TEST_F(ExtendedInfoChecksTest, badTypeRelayId6fix) {
+    string description = "relay-id not a string, fix";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"relay-id\": 1 } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"relay-id\": 1 } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+}
+
+// relay-id entry with a bad type is dropped at strict or higher
+// sanity levels.
+TEST_F(ExtendedInfoChecksTest, badTypeRelayId6strict) {
+    string description = "relay-id not a string, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"relay-id\": 1,"
+           " \"link\": \"2001::2\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relay-id [relay#0] a problem was found:"
+             " relay-id is not a string)" });
+}
+
+// relay-id entry which can't be decoded is dropped at strict or higher
+// sanity levels.
+TEST_F(ExtendedInfoChecksTest, badEncodingRelayId6strict) {
+    string description = "relay-id with a junk value, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"relay-id\": \"foo\","
+           " \"link\": \"2001::2\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relay-id [relay#0] a problem was found:"
+             " attempt to decode a value not in base16 char set)" });
+}
+
+// Empty relay-id entry is dropped at strict or higher sanity levels.
+TEST_F(ExtendedInfoChecksTest, emptyRelayId6strict) {
+    string description = "empty relay-id, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"relay-id\": \"\","
+           " \"link\": \"2001::2\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relay-id [relay#0] a problem was found:"
+             " relay-id is empty)" });
+}
+
+// Valid relay-id entry is right at all sanity levels.
+TEST_F(ExtendedInfoChecksTest, validRelayId6strict) {
+    string description = "valid relay-id, strict";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"relay-id\": \"AABB\","
+           " \"link\": \"2001::2\" } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"relay-id\": \"AABB\","
+           " \"link\": \"2001::2\" } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_STRICT);
 }

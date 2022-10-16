@@ -677,7 +677,6 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
             mutable_user_context->set("ISC", mutable_isc);
         }
 
-        verifying = "relay-info";
         relay_info = mutable_isc->get("relays");
         if (relay_info && isc->contains("relay-info")) {
             changed = true;
@@ -689,6 +688,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
             // Upgrade
             changed = true;
             upgraded = true;
+            verifying = "relays";
             mutable_isc->set("relay-info", relay_info);
             mutable_isc->remove("relays");
 
@@ -775,7 +775,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
         if (!upgraded && relay_info->empty()) {
             mutable_isc->remove("relay-info");
             removed_relay_info = true;
-            isc_throw(BadValue, "relay-info empty");
+            isc_throw(BadValue, "relay-info is empty");
         }
 
         verifying = "relay";
@@ -830,7 +830,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
                 isc_throw(BadValue, "link is not an IPv6 address");
             }
 
-            ConstElementPtr remote_id = relay_info->get("remote-id");
+            ConstElementPtr remote_id = relay->get("remote-id");
             if (!upgraded && remote_id) {
                 verifying = "remote-id";
                 if (remote_id->getType() != Element::string) {
@@ -848,7 +848,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
                 }
             }
 
-            ConstElementPtr relay_id = relay_info->get("relay-id");
+            ConstElementPtr relay_id = relay->get("relay-id");
             if (!upgraded && relay_id) {
                 verifying = "relay-id";
                 if (relay_id->getType() != Element::string) {
