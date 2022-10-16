@@ -1924,7 +1924,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
 
     if (!ctx.fake_allocation_) {
         // Add(update) the extended information on the lease.
-        static_cast<void>(updateLease6ExtendedInfo(expired, ctx));
+        updateLease6ExtendedInfo(expired, ctx);
 
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease6(expired);
@@ -2085,7 +2085,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 
     if (!ctx.fake_allocation_) {
         // Add(update) the extended information on the lease.
-        static_cast<void>(updateLease6ExtendedInfo(lease, ctx));
+        updateLease6ExtendedInfo(lease, ctx);
 
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
@@ -2401,7 +2401,8 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         }
 
         // @todo should we call storeLease6ExtendedInfo() here ?
-        if (updateLease6ExtendedInfo(lease, ctx)) {
+        updateLease6ExtendedInfo(lease, ctx);
+        if (lease->extended_info_action_ == ExtendedInfoAction::ACTION_UPDATE) {
             changed = true;
         }
 
@@ -3145,7 +3146,10 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
         lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
-        lease->setContext(ElementPtr());
+        if (lease->getContext()) {
+            lease->extended_info_action_ = ExtendedInfoAction::ACTION_DELETE;
+            lease->setContext(ElementPtr());
+        }
         lease_update_fun(lease);
 
     } else {
@@ -4043,7 +4047,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     lease->hostname_ = ctx.hostname_;
 
     // Add(update) the extended information on the lease.
-    static_cast<void>(updateLease4ExtendedInfo(lease, ctx));
+    updateLease4ExtendedInfo(lease, ctx);
 
     // Let's execute all callouts registered for lease4_select
     if (ctx.callout_handle_ &&
@@ -4623,28 +4627,27 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     }
 
     // Add(update) the extended information on the lease.
-    if (updateLease4ExtendedInfo(lease, ctx)) {
+    updateLease4ExtendedInfo(lease, ctx);
+    if (lease->extended_info_action_ == ExtendedInfoAction::ACTION_UPDATE) {
         changed = true;
     }
 
     return (changed);
 }
 
-bool
+void
 AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       const AllocEngine::ClientContext4& ctx) const {
-    bool changed = false;
-
     // If storage is not enabled then punt.
     if (!ctx.subnet_->getStoreExtendedInfo()) {
-        return (changed);
+        return;
     }
 
     // Look for relay agent information option (option 82)
     OptionPtr rai = ctx.query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (!rai) {
         // Pkt4 doesn't have it, so nothing to store (or update).
-        return (changed);
+        return;
     }
 
     // Create a StringElement with the hex string for relay-agent-info.
@@ -4693,30 +4696,26 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
     // Add/replace the extended info entry.
     ConstElementPtr old_extended_info = mutable_isc->get("relay-agent-info");
     if (!old_extended_info || (*old_extended_info != *extended_info)) {
-        changed = true;
+        lease->extended_info_action_ = ExtendedInfoAction::ACTION_UPDATE;
         mutable_isc->set("relay-agent-info", extended_info);
         mutable_user_context->set("ISC", mutable_isc);
     }
 
     // Update the lease's user_context.
     lease->setContext(mutable_user_context);
-
-    return (changed);
 }
 
 bool
 AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
                                       const AllocEngine::ClientContext6& ctx) const {
-    bool changed = false;
-
     // If storage is not enabled then punt.
     if (!ctx.subnet_->getStoreExtendedInfo()) {
-        return (changed);
+        return;
     }
 
     // If we do not have relay information, then punt.
     if (ctx.query_->relay_info_.empty()) {
-        return (changed);
+        return;
     }
 
     // We need to convert the vector of RelayInfo instances in
@@ -4802,15 +4801,13 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
     // Add/replace the extended info entry.
     ConstElementPtr old_extended_info = mutable_isc->get("relay-info");
     if (!old_extended_info || (*old_extended_info != *extended_info)) {
-        changed = true;
+        lease->extended_info_action_ = ExtendedInfoAction::ACTION_UPDATE;
         mutable_isc->set("relay-info", extended_info);
         mutable_user_context->set("ISC", mutable_isc);
     }
 
     // Update the lease's user context.
     lease->setContext(mutable_user_context);
-
-    return (changed);
 }
 
 void

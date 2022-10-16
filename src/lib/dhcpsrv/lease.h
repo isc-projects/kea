@@ -184,6 +184,16 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// belonging to this class.
     uint32_t state_;
 
+    /// @brief Action on extended info tables.
+    typedef enum {
+        ACTION_IGNORE, ///< ignore extended info,
+        ACTION_DELETE, ///< delete reference to the lease
+        ACTION_UPDATE  ///< update extended info tables.
+    } ExtendedInfoAction;
+
+    /// @brief Record the action on extended info tables in the lease.
+    ExtendedInfoAction extended_info_action_;
+
     /// @brief Convert Lease to Printable Form
     ///
     /// @return String form of the lease

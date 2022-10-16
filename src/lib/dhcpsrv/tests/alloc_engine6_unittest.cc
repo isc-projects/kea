@@ -4299,8 +4299,10 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         ctx.query_->relay_info_ = scenario.relays_;
 
         // Call AllocEngine::updateLease6ExtendeInfo().
-        bool ret;
-        ASSERT_NO_THROW_LOG(ret = engine_.callUpdateLease6ExtendedInfo(lease, ctx));
+        ASSERT_NO_THROW_LOG(engine_.callUpdateLease6ExtendedInfo(lease, ctx));
+        bool ret = (lease->extended_info_action_ == ExtendedInfoAction::ACTION_UPDATE);
+        // Reset the lease action.
+        lease->extended_info_action_ = ExtendedInfoAction::ACTION_IGNORE;
         ASSERT_EQ(scenario.exp_ret, ret);
 
         // Verify the lease has the expected user context content.
