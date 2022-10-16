@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -452,7 +452,7 @@ TEST(StringUtilTest, decodeFormattedHexString) {
     EXPECT_THROW(decodeFormattedHexString("0a ", decoded),
                  isc::BadValue);
     // '0x' prefix and spaces.
-    EXPECT_THROW(decodeFormattedHexString("x01 02", decoded),
+    EXPECT_THROW(decodeFormattedHexString("0x01 02", decoded),
                  isc::BadValue);
     // '0x' prefix and colons.
     EXPECT_THROW(decodeFormattedHexString("0x01:02", decoded),

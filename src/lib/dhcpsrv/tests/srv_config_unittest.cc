@@ -560,7 +560,8 @@ TEST_F(SrvConfigTest, unparse) {
     defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
     defaults += "\"hooks-libraries\": [ ],\n";
     defaults += "\"sanity-checks\": {\n";
-    defaults += "    \"lease-checks\": \"none\"\n";
+    defaults += "    \"lease-checks\": \"none\",\n";
+    defaults += "    \"extended-info-checks\": \"fix\"\n";
     defaults += "    },\n";
     defaults += "\"dhcp-ddns\": \n";
 

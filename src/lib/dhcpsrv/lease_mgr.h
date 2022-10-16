@@ -15,6 +15,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 
@@ -821,6 +822,7 @@ public:
     /// @brief Upgrade a V4 lease user context to the new extended info entry.
     ///
     /// In details:
+    ///  - perform sanity checks according to check level.
     ///  - change the "ISC" / "relay-agent-info" to a map.
     ///  - move the "relay-agent-info" string to the "sub-options" entry of
     ///    the map.
@@ -829,20 +831,29 @@ public:
     ///    entries of the map.
     ///
     /// @param lease Pointer to the lease to be updated.
+    /// @param check Sanity/consistency check level.
     /// @return True if the lease user context was updated, false otherwise.
-    static bool upgradeLease4ExtendedInfo(const Lease4Ptr& lease);
+    static bool
+    upgradeLease4ExtendedInfo(const Lease4Ptr& lease,
+                              CfgConsistency::ExtendedInfoSanity check =
+                              CfgConsistency::EXTENDED_INFO_CHECK_FIX);
 
     /// @brief Upgrade a V6 lease user context to the new extended info entry.
     ///
     /// In details:
+    ///  - perform sanity checks according to check level.
     ///  - change the "ISC" / "relays" list entry to "relay-info".
     ///  - decode remote-id and relay-id from each relay options and
     ///    add the raw value in hexadecimal in "remote-id" and/or "relay-id"
     ///    in the relay item of the list.
     ///
     /// @param lease Pointer to the lease to be updated.
+    /// @param check Sanity/consistency check level.
     /// @return True if the lease user context was updated, false otherwise.
-    static bool upgradeLease6ExtendedInfo(const Lease6Ptr& lease);
+    static bool
+    upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
+                              CfgConsistency::ExtendedInfoSanity check =
+                              CfgConsistency::EXTENDED_INFO_CHECK_FIX);
 
     /// @brief Returns existing IPv4 leases with a given relay-id.
     ///
