@@ -661,7 +661,17 @@
             // to "fix" but delete the lease if no suitable subnet found),
             // "del" (delete the lease if the lease has invalid subnet
             // identifier value).
-            "lease-checks": "warn"
+            "lease-checks": "warn",
+
+            // Specifies how Kea DHCPv4 server should behave when invalid
+            // extended info is read for a lease from the lease file, or
+            // whether to upgrade from old format. The following values
+            // are supported "none" (don't attempt to correct or upgrade
+            // the extended info), "fix" (fix common inconsistencies and
+            // upgrade from old format, this is the default), "strict"
+            // (fix inconsistencies with an impact on Lease Query),
+            // "pedantic" (enforce full Kea code format).
+            "extended-info-checks": "fix"
         },
 
         // List of shared networks used by Kea DHCPv4 server. The shared
