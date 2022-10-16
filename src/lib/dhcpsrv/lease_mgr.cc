@@ -903,7 +903,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
             }
 
             verifying = (upgraded ? "relays" : "relay-info");
-            for (auto elem : relay_info->mapValue()) {
+            for (auto elem : relay->mapValue()) {
                 if ((elem.first != "hop") &&
                     (elem.first != "link") &&
                     (elem.first != "peer") &&

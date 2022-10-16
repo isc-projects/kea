@@ -1,3 +1,11 @@
+2069.	[func]		fdupont
+	Added a new sanity checker named "extended-info-checks"
+	which checks and eventually upgrades lease extended
+	info which store into lease user context in DHCPv4
+	the dhcp-agent-options content and in DHCPv6 the
+	relay-msg fields and options.
+	(Gitlab #2595)
+
 2068.	[func]		djt
 	Kea's official APK, Deb, and RPM packages have been restructured
 	and made to follow a consistent packaging standard. Some of the

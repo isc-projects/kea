@@ -1496,3 +1496,119 @@ TEST_F(ExtendedInfoChecksTest, validRelayId6strict) {
            " \"link\": \"2001::2\" } ] } }",
            CfgConsistency::EXTENDED_INFO_CHECK_STRICT);
 }
+
+// Pedantic requires a peer entry.
+TEST_F(ExtendedInfoChecksTest, noPeerpedantic) {
+    string description = "no peer, pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\" } ] } }",
+           "", CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in peer [relay#0] a problem was found:"
+             " no peer)" });
+}
+
+// peer entry with bad type is dropped by pedantic sanity check level.
+TEST_F(ExtendedInfoChecksTest, badTypePeer) {
+    string description = "peer is not a string, pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\","
+           " \"peer\": 1 } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in peer [relay#0] a problem was found:"
+             " peer is not a string)" });
+}
+
+// peer entry which is not an address is dropped by pedantic sanity check level.
+TEST_F(ExtendedInfoChecksTest, notAddressPeer) {
+    string description = "peer is not an address, pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\","
+           " \"peer\": \"foo\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in peer [relay#0] a problem was found:"
+             " Failed to convert string to address 'foo':"
+             " Invalid argument)" });
+}
+
+// peer entry which is an IPv4 (vs IPv6) address is dropped by pedantic sanity
+// check level.
+TEST_F(ExtendedInfoChecksTest, notV6Peer) {
+    string description = "peer is v4, pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\","
+           " \"peer\": \"192.128.1.1\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in peer [relay#0] a problem was found:"
+             " peer is not an IPv6 address)" });
+}
+
+// Pedantic requires a hop entry.
+TEST_F(ExtendedInfoChecksTest, noHop) {
+    string description = "no hop, pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\","
+           " \"peer\": \"2001::3\" } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in hop [relay#0] a problem was found:"
+             " no hop)" });
+}
+
+// hop entry with bad type is dropped by pedantic sanity check level.
+TEST_F(ExtendedInfoChecksTest, badTypeHop) {
+    string description = "hop is not an integer pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\","
+           " \"peer\": \"2001::3\", \"hop\": false } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in hop [relay#0] a problem was found:"
+             " hop is not an integer)" });
+}
+
+// Valid relay.
+TEST_F(ExtendedInfoChecksTest, valid6Pedantic) {
+    string description = "valid, pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\","
+           " \"peer\": \"2001::3\", \"hop\": 10 } ] } }",
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\","
+           " \"peer\": \"2001::3\", \"hop\": 10 } ] } }",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC);
+}
+
+// Junk entries are dropped at the pedantic level.
+TEST_F(ExtendedInfoChecksTest, junk6pedantic) {
+    string description = "junk entry, pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relay-info\": [ { \"link\": \"2001::2\","
+           " \"peer\": \"2001::3\", \"hop\": 10, \"foo\": 1 } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relay-info [relay#0] a problem was found:"
+             " spurious 'foo' entry)" });
+}
+
+// Same with relays post upgrade checks.
+TEST_F(ExtendedInfoChecksTest, junkRelayspedantic) {
+    string description = "junk entry, pedantic";
+    check6(description,
+           "{ \"ISC\": { \"relays\": [ { \"link\": \"2001::2\","
+           " \"peer\": \"2001::3\", \"hop\": 10, \"foo\": 1 } ] } }", "",
+           CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+           { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
+             " extended info for lease 2001::1 failed checks"
+             " (in relays [relay#0] a problem was found:"
+             " spurious 'foo' entry)" });
+}

@@ -3386,8 +3386,8 @@ would not want all the leases associated with it to disappear from the
 lease database. Kea has a mechanism to implement sanity checks for situations
 like this.
 
-Kea supports a configuration scope called ``sanity-checks``. It
-currently allows only a single parameter, called ``lease-checks``, which
+Kea supports a configuration scope called ``sanity-checks``.
+A parameter, called ``lease-checks``,
 governs the verification carried out when a new lease is loaded from a
 lease file. This mechanism permits Kea to attempt to correct inconsistent data.
 
@@ -3512,6 +3512,32 @@ pretty-printed for clarity):
     labeled "ISC". In other words, ``user-context`` is intended to be a flexible
     container serving multiple purposes. As long as no other purpose also
     writes an "ISC" element to ``user-context`` there should not be a conflict.
+
+Extended lease information is also subject to configurable sanity checking.
+The parameter in the ``sanity-checks`` scope is named ``extended-info-checks``
+and supports these levels:
+
+-  ``none`` - do no check nor upgrade. This level should be used on when
+   extended info is not used at all or when no badly formatted extended
+   info, including using the old format, is expected.
+
+-  ``fix`` - fix some common inconsistencies and upgrade extended info
+   using the old format to the new one. It is the default level and is
+   convenient when Lease Query hook library is not loaded.
+
+-  ``strict`` - fix all inconsistencies which have an impact on the (Bulk)
+   Lease Query hook library.
+
+-  ``pedantic`` - enforce full conformance to the format produced by the
+   Kea code, for instance no extra entries are allowed at the exception
+   of ``comment``.
+
+.. note::
+
+   Currently this feature is currently implemented for the memfile
+   backend. The sanity check applies to the lease database in memory,
+   not to the lease file, i.e. inconsistent leases will stay in the lease
+   file.
 
 .. _dhcp6-multi-threading-settings:
 
