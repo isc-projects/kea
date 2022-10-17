@@ -61,6 +61,13 @@ easier to install Kea using native packages.
 2. Use ``Set Me Up`` and follow instructions to add the repository
    to the local system.
 
+.. note::
+  For example, the Debian setup instructions for Kea 2.3 can be found here:
+  https://cloudsmith.io/~isc/repos/kea-2-3/setup/#formats-deb
+
+  You can use the dropdown near the top of the page to get instructions for
+  another OS.
+
 3. Update system repositories. For example on Debian/Ubuntu:
 
     .. code-block:: console
