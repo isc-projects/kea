@@ -2851,23 +2851,37 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal() {
     // Use staging config here.
     CfgConsistency::ExtendedInfoSanity check =
         CfgMgr::instance().getStagingCfg()->getConsistency()->getExtendedInfoSanityCheck();
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6)
+        .arg(CfgConsistency::sanityCheckToText(check))
+        .arg(enabled ? "enabled" : "disabled");
+
     size_t leases = 0;
-    size_t updated = 0;
-    size_t added = 0;
+    size_t modified = 0;
+    size_t processed = 0;
 
     for (auto lease : storage6_) {
         leases++;
         try {
             if (upgradeLease6ExtendedInfo(lease, check)) {
-                updated++;
+                modified++;
             }
             if (enabled && addExtendedInfo6(lease)) {
-                added++;
+                processed++;
             }
         } catch (const std::exception& ex) {
-            // log
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR)
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
         }
     }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6)
+        .arg(leases)
+        .arg(modified)
+        .arg(processed);
 }
 
 void

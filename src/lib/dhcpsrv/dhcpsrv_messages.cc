@@ -73,7 +73,10 @@ extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FAIL_DISCARD = "DHCPSRV_LE
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FIXED = "DHCPSRV_LEASE_SANITY_FIXED";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_ADD_ADDR4 = "DHCPSRV_MEMFILE_ADD_ADDR4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_ADD_ADDR6 = "DHCPSRV_MEMFILE_ADD_ADDR6";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6 = "DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_BEGIN_TRANSACTION = "DHCPSRV_MEMFILE_BEGIN_TRANSACTION";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 = "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR = "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_COMMIT = "DHCPSRV_MEMFILE_COMMIT";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES = "DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_DB = "DHCPSRV_MEMFILE_DB";
@@ -318,7 +321,10 @@ const char* values[] = {
     "DHCPSRV_LEASE_SANITY_FIXED", "The lease %1 with subnet-id %2 failed subnet-id checks, but was corrected to subnet-id %3.",
     "DHCPSRV_MEMFILE_ADD_ADDR4", "adding IPv4 lease with address %1",
     "DHCPSRV_MEMFILE_ADD_ADDR6", "adding IPv6 lease with address %1",
+    "DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6", "building extended info tables with %1 sanity check level (%2)",
     "DHCPSRV_MEMFILE_BEGIN_TRANSACTION", "committing to memory file database",
+    "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6", "building extended info tables saw %1 leases, extended info sanity checks modified %2 leases and %3 leases were entered into tables",
+    "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR", "building extended info tables got an exception on the lease for %1: %2",
     "DHCPSRV_MEMFILE_COMMIT", "committing to memory file database",
     "DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES", "running LFC now to convert lease files to the current schema: %1.%2",
     "DHCPSRV_MEMFILE_DB", "opening memory file lease database: %1",

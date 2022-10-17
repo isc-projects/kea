@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <list>
 #include <sstream>
 
 #include <time.h>
@@ -397,24 +398,61 @@ public:
         isc_throw(NotImplemented, "ConcreteLeaseMgr::clearClassLeaseCounts() not implemented");
     }
 
-    /// @brief Stub implementation.
+    /// @brief Import addExtendedInfo6.
+    using LeaseMgr::addExtendedInfo6;
+
+    /// @brief Delete lease6 extended info from tables.
+    ///
+    /// @param addr The address of the lease.
     void
-    deleteExtendedInfo6(const IOAddress& /* addr */) override {
-        isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExtendedInfo6 not implemented");
+    deleteExtendedInfo6(const IOAddress& addr) override {
+        auto relay_id_it = relay_id6_.begin();
+        while (relay_id_it != relay_id6_.end()) {
+            if ((*relay_id_it)->lease_addr_ == addr) {
+                relay_id_it = relay_id6_.erase(relay_id_it);
+            } else {
+                ++relay_id_it;
+            }
+        }
+        auto remote_id_it = remote_id6_.begin();
+        while (remote_id_it != remote_id6_.end()) {
+            if ((*remote_id_it)->lease_addr_ == addr) {
+                remote_id_it = remote_id6_.erase(remote_id_it);
+            } else {
+                ++remote_id_it;
+            }
+        }
+        auto link_addr_it = link_addr6_.begin();
+        while (link_addr_it != link_addr6_.end()) {
+            if ((*link_addr_it)->lease_addr_ == addr) {
+                link_addr_it = link_addr6_.erase(link_addr_it);
+            } else {
+                ++link_addr_it;
+            }
+        }
     }
 
-    /// @brief Stub implementation.
+    /// @brief Add lease6 extended info into by-relay-id table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param relay_id The relay id from the relay header options.
     void
-    addRelayId6(const IOAddress& /* lease_addr */,
-                const vector<uint8_t>& /* relay_id */) override {
-        isc_throw(NotImplemented, "ConcreteLeaseMgr::addRelayId6 not implemented");
+    addRelayId6(const IOAddress& lease_addr,
+                const vector<uint8_t>& relay_id) override {
+        Lease6ExtendedInfoPtr ex_info;
+        ex_info.reset(new Lease6ExtendedInfo(lease_addr, relay_id));
+        relay_id6_.push_back(ex_info);
     }
 
-    /// @brief Stub implementation.
+    /// @brief Add lease6 extended info into by-remote-id table.
+    ///
+    /// @param lease_addr The address of the lease.
     void
-    addRemoteId6(const IOAddress& /* lease_addr */,
-                 const vector<uint8_t>& /* remote_id */) override {
-        isc_throw(NotImplemented, "ConcreteLeaseMgr::addRemoteId6 not implemented");
+    addRemoteId6(const IOAddress& lease_addr,
+                 const vector<uint8_t>& remote_id) override {
+        Lease6ExtendedInfoPtr ex_info;
+        ex_info.reset(new Lease6ExtendedInfo(lease_addr, remote_id));
+        remote_id6_.push_back(ex_info);
     }
 
     /// @brief Stub implementation.
@@ -525,6 +563,11 @@ public:
     using LeaseMgr::getLease6;
 
     Lease6Collection leases6_; ///< getLease6 methods return this as is
+
+    // List supports easier erase.
+    list<Lease6ExtendedInfoPtr> relay_id6_;
+    list<Lease6ExtendedInfoPtr> remote_id6_;
+    list<Lease6SimpleExtendedInfoPtr> link_addr6_;
 };
 
 class LeaseMgrTest : public GenericLeaseMgrTest {
@@ -1101,6 +1144,267 @@ TEST(Lease6ExtendedInfoTest, upgradeLease6ExtendedInfo) {
                 << "actual: " << *after << std::endl;
         }
     }
+}
+
+/// Verify setExtendedInfoEnabled without valid extended info.
+TEST(Lease6ExtendedInfoTest, invalidSetExtendedInfoEnabled) {
+
+    DatabaseConnection::ParameterMap pmap;
+    boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
+
+    // Structure that defines a test scenario.
+    struct Scenario {
+        string description_;       // test description.
+        string user_context_txt_;  // user context.
+    };
+
+    // Test scenarios.
+    vector<Scenario> scenarios {
+        {
+            "no user context",
+            ""
+        },
+        {
+            "user context is not a map",
+            "[ ]"
+        },
+        {
+            "no ISC entry",
+            "{ }"
+        },
+        {
+            "no ISC entry but not empty",
+            "{ \"foo\": true }"
+        },
+        {
+            "ISC entry is not a map",
+            "{ \"ISC\": true }"
+        },
+        {
+            "ISC entry is not a map, user context not empty",
+            "{ \"foo\": true, \"ISC\": true }"
+        },
+        {
+            "no relay-info",
+            "{ \"ISC\": { } }"
+        },
+        {
+            "no relay-info, ISC not empty",
+            "{ \"ISC\": { \"foo\": true } }"
+        },
+        {
+            "relay-info is not a list",
+            "{ \"ISC\": { \"relay-info\": { } } }"
+        },
+        {
+            "relay-info is not a list, ISC not empty",
+            "{ \"ISC\": { \"foo\": true, \"relay-info\": { } } }"
+        },
+        {
+            "relay-info is empty",
+            "{ \"ISC\": { \"relay-info\": [ ] } }"
+        },
+        {
+            "relay-info is empty, ISC not empty",
+            "{ \"ISC\": { \"foo\": true, \"relay-info\": [ ] } }"
+        },
+        {
+            "relay is not a map",
+            "{ \"ISC\": { \"relay-info\": [ \"foobar\" ] } }"
+        },
+        {
+            "relay has other values",
+            "{ \"ISC\": { \"relay-info\": [ { \"foo\": \"bar\" } ] } }"
+        }
+    };
+
+    Lease6Ptr lease(new Lease6());
+    ElementPtr user_context;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Create the user context from JSON.
+        if (scenario.user_context_txt_.empty()) {
+            user_context.reset();
+        } else {
+            ASSERT_NO_THROW(user_context = Element::fromJSON(scenario.user_context_txt_))
+                << "invalid user context, test " << scenario.description_
+                << " is broken";
+        }
+
+        // Perform the test.
+        lease->setContext(user_context);
+        mgr->relay_id6_.clear();
+        mgr->remote_id6_.clear();
+        mgr->link_addr6_.clear();
+        EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
+        EXPECT_TRUE(mgr->relay_id6_.empty());
+        EXPECT_TRUE(mgr->remote_id6_.empty());
+        EXPECT_TRUE(mgr->link_addr6_.empty());
+    }
+}
+
+/// Verify setExtendedInfoEnabled with one relay without ids.
+TEST(Lease6ExtendedInfoTest, noIdSetExtendedInfoEnabled) {
+
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+        " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+        " \"options\": \"0x00C800080102030405060708\" } ] } }";
+
+    DatabaseConnection::ParameterMap pmap;
+    boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
+
+    Lease6Ptr lease(new Lease6());
+    lease->addr_ = IOAddress("2001:db8::100");
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+    EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
+    EXPECT_TRUE(mgr->relay_id6_.empty());
+    EXPECT_TRUE(mgr->remote_id6_.empty());
+    ASSERT_EQ(1, mgr->link_addr6_.size());
+    Lease6SimpleExtendedInfoPtr sex_info = mgr->link_addr6_.front();
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ("2001:db8::1", sex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
+}
+
+/// Verify setExtendedInfoEnabled with one relay with ids.
+TEST(Lease6ExtendedInfoTest, idsSetExtendedInfoEnabled) {
+
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100,"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+
+    DatabaseConnection::ParameterMap pmap;
+    boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
+
+    Lease6Ptr lease(new Lease6());
+    lease->addr_ = IOAddress("2001:db8::100");
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+    EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
+
+    EXPECT_EQ(1, mgr->relay_id6_.size());
+    Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8::5", ex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& relay_id = ex_info->id_;
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, relay_id);
+
+    EXPECT_EQ(1, mgr->remote_id6_.size());
+    ex_info = mgr->remote_id6_.front();
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8::5", ex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& remote_id = ex_info->id_;
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, remote_id);
+
+    ASSERT_EQ(1, mgr->link_addr6_.size());
+    Lease6SimpleExtendedInfoPtr sex_info = mgr->link_addr6_.front();
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ("2001:db8::5", sex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
+}
+
+/// Verify setExtendedInfoEnabled with one relay with ids but :: link address.
+TEST(Lease6ExtendedInfoTest, linkZeroSetExtendedInfoEnabled) {
+
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100,"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"link\": \"::\", \"peer\": \"2001:db8::6\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+
+    DatabaseConnection::ParameterMap pmap;
+    boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
+
+    Lease6Ptr lease(new Lease6());
+    lease->addr_ = IOAddress("2001:db8::100");
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+    EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
+
+    EXPECT_EQ(1, mgr->relay_id6_.size());
+    Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("::", ex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& relay_id = ex_info->id_;
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, relay_id);
+
+    EXPECT_EQ(1, mgr->remote_id6_.size());
+    ex_info = mgr->remote_id6_.front();
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("::", ex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& remote_id = ex_info->id_;
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, remote_id);
+
+    EXPECT_TRUE(mgr->link_addr6_.empty());
+}
+
+/// Verify setExtendedInfoEnabled with two relays.
+TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoEnabled) {
+
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+        " \"link\": \"2001:db8::1\",  \"peer\": \"2001:db8::2\","
+        " \"options\": \"0x00C800080102030405060708\" }, { \"hop\": 100,"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"link\": \"2001:db8::5\", \"peer\": \"2001:db8::6\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+
+    DatabaseConnection::ParameterMap pmap;
+    boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
+
+    Lease6Ptr lease(new Lease6());
+    lease->addr_ = IOAddress("2001:db8::100");
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+    EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
+
+    EXPECT_EQ(1, mgr->relay_id6_.size());
+    Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8::5", ex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& relay_id = ex_info->id_;
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, relay_id);
+
+    EXPECT_EQ(1, mgr->remote_id6_.size());
+    ex_info = mgr->remote_id6_.front();
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8::5", ex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& remote_id = ex_info->id_;
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, remote_id);
+
+    ASSERT_EQ(2, mgr->link_addr6_.size());
+    Lease6SimpleExtendedInfoPtr sex_info = mgr->link_addr6_.front();
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ("2001:db8::1", sex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
+    sex_info = mgr->link_addr6_.back();
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ("2001:db8::5", sex_info->link_addr_.toText());
+    EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
 }
 
 // There's no point in calling any other methods in LeaseMgr, as they
