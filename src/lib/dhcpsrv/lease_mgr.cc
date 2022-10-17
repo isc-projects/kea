@@ -961,5 +961,79 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
     }
 }
 
+bool
+LeaseMgr::addExtendedInfo6(const Lease6Ptr& lease) {
+
+    bool added = false;
+    if (!lease) {
+        return (added);
+    }
+
+    ConstElementPtr user_context = lease->getContext();
+    if (!user_context || (user_context->getType() != Element::map) ||
+        user_context->empty()) {
+        return (added);
+    }
+
+    ConstElementPtr isc = user_context->get("ISC");
+    if (!isc || (isc->getType() != Element::map) || isc->empty()) {
+        return (added);
+    }
+
+    ConstElementPtr relay_info = isc->get("relay-info");
+    if (!relay_info || (relay_info->getType() != Element::list) ||
+        relay_info->empty()) {
+        return (added);
+    }
+
+    for (int i = 0; i < relay_info->size(); ++i) {
+        ConstElementPtr relay = relay_info->get(i);
+        if (!relay || (relay->getType() != Element::map) || relay->empty()) {
+            continue;
+        }
+        try {
+            ConstElementPtr link = relay->get("link");
+            if (!link || (link->getType() != Element::string)) {
+                continue;
+            }
+            IOAddress link_addr(link->stringValue());
+            if (!link_addr.isV6()) {
+                continue;
+            }
+            if (!link_addr.isV6Zero()) {
+                addLinkAddr6(lease->addr_, link_addr);
+                added = true;
+            }
+
+            ConstElementPtr relay_id = relay->get("relay-id");
+            if (relay_id) {
+                string relay_id_hex = relay_id->stringValue();
+                vector<uint8_t> relay_id_data;
+                encode::decodeHex(relay_id_hex, relay_id_data);
+                if (relay_id_data.empty()) {
+                    continue;
+                }
+                addRelayId6(lease->addr_, link_addr, relay_id_data);
+                added = true;
+            }
+
+            ConstElementPtr remote_id = relay->get("remote-id");
+            if (remote_id) {
+                string remote_id_hex = remote_id->stringValue();
+                vector<uint8_t> remote_id_data;
+                encode::decodeHex(remote_id_hex, remote_id_data);
+                if (remote_id_data.empty()) {
+                    continue;
+                }
+                addRemoteId6(lease->addr_, link_addr, remote_id_data);
+                added = true;
+            }
+        } catch (const exception&) {
+            continue;
+        }
+    }
+    return (added);
+}
+
 } // namespace isc::dhcp
 } // namespace isc

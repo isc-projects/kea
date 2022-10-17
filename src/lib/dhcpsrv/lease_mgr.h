@@ -961,6 +961,9 @@ public:
         return (extended_info_tables_enabled_);
     }
 
+    /// @brief Build extended info v6 tables.
+    virtual void buildExtendedInfoTables6() = 0;
+
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.
@@ -983,6 +986,12 @@ protected:
     ///
     /// @param parameters The parameter map.
     virtual void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& parameters);
+
+    /// @brief Extract extended info from a lease6 and add it into tables.
+    ///
+    /// @param lease IPv6 lease to process.
+    /// @return true if something was added, false otherwise.
+    virtual bool addExtendedInfo6(const Lease6Ptr& lease);
 
     /// @brief Delete lease6 extended info from tables.
     ///

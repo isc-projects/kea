@@ -1109,6 +1109,12 @@ private:
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
 
+    /// @brief Build extended info v6 tables.
+    virtual void buildExtendedInfoTables6() override {
+        isc_throw(isc::NotImplemented,
+                  "buildExtendedInfoTables6 is not yet implemented by mysql");
+    }
+
     /// @brief Context RAII Allocator.
     class MySqlLeaseContextAlloc {
     public:

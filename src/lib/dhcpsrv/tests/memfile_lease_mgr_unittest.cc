@@ -2460,6 +2460,10 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         "{ \"a\": \"b\"&#x2c \"c\": { \"d\": 1&#x2c\"e\": 2 } }\n"
     );
 
+    // Not sanitize user contexts.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
     startBackend(V6);
 
     // Check the lease with no key-value pairs in the user context.

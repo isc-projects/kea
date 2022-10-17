@@ -466,6 +466,10 @@ public:
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByLink not implemented");
     }
 
+    /// @brief Stub implementation.
+    virtual void buildExtendedInfoTables6() override {
+        isc_throw(isc::NotImplemented, "ConcreteLeaseMgr:buildExtendedInfoTables6 not implemented");
+    }
     ///  @brief Pretends to write V4 leases to a file.
     virtual void writeLeases4(const std::string&) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::writeLeases4() not implemented");

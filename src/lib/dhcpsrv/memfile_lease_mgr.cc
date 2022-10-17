@@ -8,6 +8,7 @@
 
 #include <asiolink/addr_utilities.h>
 #include <database/database_connection.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -84,9 +85,9 @@ public:
     /// @param lfc_interval An interval in seconds at which the cleanup should
     /// be performed.
     /// @param lease_file4 A pointer to the DHCPv4 lease file to be cleaned up
-    /// or NULL. If this is NULL, the @c lease_file6 must be non-null.
+    /// or null. If this is null, the @c lease_file6 must be non-null.
     /// @param lease_file6 A pointer to the DHCPv6 lease file to be cleaned up
-    /// or NULL. If this is NULL, the @c lease_file4 must be non-null.
+    /// or null. If this is null, the @c lease_file4 must be non-null.
     /// @param run_once_now A flag that causes LFC to be invoked immediately,
     /// regardless of the value of lfc_interval.  This is primarily used to
     /// cause lease file schema upgrades upon startup.
@@ -167,7 +168,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
     // Start preparing the command line for kea-lfc.
     std::string executable;
     char* c_executable = getenv(KEA_LFC_EXECUTABLE_ENV_NAME);
-    if (c_executable == NULL) {
+    if (!c_executable) {
         executable = KEA_LFC_EXECUTABLE;
     } else {
         executable = c_executable;
@@ -250,7 +251,7 @@ int
 LFCSetup::getExitStatus() const {
     if (!process_) {
         isc_throw(InvalidOperation, "unable to obtain LFC process exit code: "
-                  " the process is NULL");
+                  " the process is null");
     }
     return (process_->getExitStatus(pid_));
 }
@@ -659,6 +660,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
                                                  CSVLeaseFile6>(file6,
                                                                 lease_file6_,
                                                                 storage6_);
+            buildExtendedInfoTables6Internal();
         }
     }
 
@@ -754,6 +756,7 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
         lease_file6_->append(*lease);
     }
 
+    lease->extended_info_action_ = Lease::ACTION_IGNORE;
     storage6_.insert(lease);
 
     // Update lease current expiration time (allows update between the creation
@@ -762,6 +765,10 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
 
     // Increment class lease counters.
     class_lease_counter_.addLease(lease);
+
+    if (getExtendedInfoEnabled()) {
+        static_cast<void>(addExtendedInfo6(lease));
+    }
 
     return (true);
 }
@@ -1333,7 +1340,7 @@ Memfile_LeaseMgr::getExpiredLeases4Internal(Lease4Collection& expired_leases,
     // for the 'state' 'false' is less than 'true'. Also the leases with
     // expiration time lower than current time will be returned.
     Lease4StorageExpirationIndex::const_iterator ub =
-        index.upper_bound(boost::make_tuple(false, time(NULL)));
+        index.upper_bound(boost::make_tuple(false, time(0)));
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease4StorageExpirationIndex::const_iterator lease = index.begin();
@@ -1369,7 +1376,7 @@ Memfile_LeaseMgr::getExpiredLeases6Internal(Lease6Collection& expired_leases,
     // for the 'state' 'false' is less than 'true'. Also the leases with
     // expiration time lower than current time will be returned.
     Lease6StorageExpirationIndex::const_iterator ub =
-        index.upper_bound(boost::make_tuple(false, time(NULL)));
+        index.upper_bound(boost::make_tuple(false, time(0)));
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
@@ -1455,6 +1462,10 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
 
     bool persist = persistLeases(V6);
 
+    // Get the recorded action and reset it.
+    Lease::ExtendedInfoAction recorded_action = lease->extended_info_action_;
+    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+
     // Lease must exist if it is to be updated.
     Lease6StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
     if (lease_it == index.end()) {
@@ -1487,6 +1498,23 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
 
     // Adjust class lease counters.
     class_lease_counter_.updateLease(lease, old_lease);
+
+    // Update extended info tables.
+    if (getExtendedInfoEnabled()) {
+        switch (recorded_action) {
+        case Lease::ACTION_IGNORE:
+            break;
+
+        case Lease::ACTION_DELETE:
+            deleteExtendedInfo6(lease->addr_);
+            break;
+
+        case Lease::ACTION_UPDATE:
+            deleteExtendedInfo6(lease->addr_);
+            static_cast<void>(addExtendedInfo6(lease));
+            break;
+        }
+    }
 }
 
 void
@@ -1551,6 +1579,8 @@ Memfile_LeaseMgr::deleteLease(const Lease4Ptr& lease) {
 
 bool
 Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
+    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+
     const isc::asiolink::IOAddress& addr = lease->addr_;
     Lease6Storage::iterator l = storage6_.find(addr);
     if (l == storage6_.end()) {
@@ -1578,6 +1608,11 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
 
         // Decrement class lease counters.
         class_lease_counter_.removeLease(lease);
+
+        // Delete references from extended info tables.
+        if (getExtendedInfoEnabled()) {
+            deleteExtendedInfo6(lease->addr_);
+        }
 
         return (true);
     }
@@ -1638,12 +1673,12 @@ uint64_t
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
                                                const Universe& universe,
                                                StorageType& storage,
-                                               LeaseFileType& lease_file) const {
+                                               LeaseFileType& lease_file) {
     // Obtain the index which segragates leases by state and time.
     IndexType& index = storage.template get<ExpirationIndexTag>();
 
     // This returns the first element which is greater than the specified
-    // tuple (true, time(NULL) - secs). However, the range between the
+    // tuple (true, time(0) - secs). However, the range between the
     // beginning of the index and returned element also includes all the
     // elements for which the first value is false (lease state is NOT
     // reclaimed), because false < true. All elements between the
@@ -1652,7 +1687,7 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
     // be deleted, because their expiration time + secs has occurred earlier
     // than current time.
     typename IndexType::const_iterator upper_limit =
-        index.upper_bound(boost::make_tuple(true, time(NULL) - secs));
+        index.upper_bound(boost::make_tuple(true, time(0) - secs));
 
     // Now, we have to exclude all elements of the index which represent
     // leases in the state other than reclaimed - with the first value
@@ -1687,13 +1722,24 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
             }
         }
 
+        // Delete references from extended info tables.
+        if (getExtendedInfoEnabled()) {
+            // Swap if and for when v4 will be implemented.
+            if (universe == V6) {
+                for (typename IndexType::const_iterator lease = lower_limit;
+                     lease != upper_limit; ++lease) {
+                    deleteExtendedInfo6((*lease)->addr_);
+                }
+            }
+        }
+
         // Erase leases from memory.
         index.erase(lower_limit, upper_limit);
+
     }
     // Return number of leases deleted.
     return (num_leases);
 }
-
 
 std::string
 Memfile_LeaseMgr::getDescription() const {
@@ -2797,6 +2843,31 @@ Memfile_LeaseMgr::getLeases6ByLinkInternal(const IOAddress& link_addr,
         }
     }
     return (collection);
+}
+
+void
+Memfile_LeaseMgr::buildExtendedInfoTables6Internal() {
+    bool enabled = getExtendedInfoEnabled();
+    // Use staging config here.
+    CfgConsistency::ExtendedInfoSanity check =
+        CfgMgr::instance().getStagingCfg()->getConsistency()->getExtendedInfoSanityCheck();
+    size_t leases = 0;
+    size_t updated = 0;
+    size_t added = 0;
+
+    for (auto lease : storage6_) {
+        leases++;
+        try {
+            if (upgradeLease6ExtendedInfo(lease, check)) {
+                updated++;
+            }
+            if (enabled && addExtendedInfo6(lease)) {
+                added++;
+            }
+        } catch (const std::exception& ex) {
+            // log
+        }
+    }
 }
 
 void

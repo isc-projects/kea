@@ -838,7 +838,7 @@ private:
     uint64_t deleteExpiredReclaimedLeases(const uint32_t secs,
                                           const Universe& universe,
                                           StorageType& storage,
-                                          LeaseFileType& lease_file) const;
+                                          LeaseFileType& lease_file);
 
     /// @brief Fetches the most recent value for a subnet statistic
     ///
@@ -1370,6 +1370,15 @@ public:
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
 
+    /// @brief Build extended info v6 tables.
+    ///
+    /// @note: this method is a nop for memfile as tables are built at
+    /// start time.
+    virtual void buildExtendedInfoTables6() override {
+        isc_throw(isc::NotImplemented,
+                  "buildExtendedInfoTables6 is not yet implemented by memfile");
+    }
+
 private:
 
     /// @brief Returns existing IPv4 leases with a given relay-id.
@@ -1458,6 +1467,11 @@ private:
                              uint8_t link_len,
                              const asiolink::IOAddress& lower_bound_address,
                              const LeasePageSize& page_size);
+
+    /// @brief Build extended info v6 tables.
+    ///
+    /// @note: called at start time.
+    void buildExtendedInfoTables6Internal();
 
 public:
 
