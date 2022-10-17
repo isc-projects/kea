@@ -1,25 +1,4 @@
-2067.	[func]		fdupont
-	Updated the layout of extended information optionally
-	stored in lease user context to add remote and relay
-	identifier (sub-)options.
-	(Gitlab #2587)
-
-2066.	[bug]		fdupont
-	Fixed lease reuse process to clear the user context
-	when the lease expied and was reclaimed.
-	(Gitlab #2588)
-
-Kea 2.3.1 (development) released on September 28, 2022
-
-2066.	[func]		djt
-	A compatibility config option called ignore-rai-link-selection
-	has been added to the DHCPv4 config allow operators to ignore
-	Link Selection suboption data in Relay Agent information options.
-	When this configuration value is set to true, Kea will no longer
-	use data provided in the suboption for subnet selection.
-	(Gitlab #2543)
-
-2065.	[func]		djt
+2068.	[func]		djt
 	Kea's official APK, Deb, and RPM packages have been restructured
 	and made to follow a consistent packaging standard. Some of the
 	package names have been modified, and some packages have been
@@ -35,6 +14,27 @@ Kea 2.3.1 (development) released on September 28, 2022
 	``isc-kea`` metapackage, or install the packages explicitly by
 	name. Further details can be found in the Gitlab issue.
 	(Gitlab #2220)
+
+2067.	[func]		fdupont
+	Updated the layout of extended information optionally
+	stored in lease user context to add remote and relay
+	identifier (sub-)options.
+	(Gitlab #2587)
+
+2066.	[bug]		fdupont
+	Fixed lease reuse process to clear the user context
+	when the lease expied and was reclaimed.
+	(Gitlab #2588)
+
+Kea 2.3.1 (development) released on September 28, 2022
+
+2065.	[func]		djt
+	A compatibility config option called ignore-rai-link-selection
+	has been added to the DHCPv4 config allow operators to ignore
+	Link Selection suboption data in Relay Agent information options.
+	When this configuration value is set to true, Kea will no longer
+	use data provided in the suboption for subnet selection.
+	(Gitlab #2543)
 
 2064.	[build]		mgodzina
 	The library version numbers have been bumped for the Kea 2.3.1
