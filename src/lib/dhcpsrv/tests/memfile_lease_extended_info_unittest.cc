@@ -1047,14 +1047,8 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     // Create parameter values.
     IOAddress lease_addr(ADDRESS6[0]);
     IOAddress link_addr(ADDRESS6[1]);
-    string relay_id_str = DUID6[0];
-    vector<uint8_t> relay_id;
-    relay_id.resize(relay_id_str.size());
-    memmove(&relay_id[0], &relay_id_str[0], relay_id.size());
-    string remote_id_str = DUID6[1];
-    vector<uint8_t> remote_id;
-    remote_id.resize(remote_id_str.size());
-    memmove(&remote_id[0], &remote_id_str[0], remote_id.size());
+    vector<uint8_t> relay_id = createFromString(DUID6[0]);
+    vector<uint8_t> remote_id = createFromString(DUID6[1]);
 
     // Fill the table.
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, link_addr, relay_id));
@@ -1099,14 +1093,8 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
     // Create parameter values.
     IOAddress lease_addr(ADDRESS6[0]);
     IOAddress link_addr(ADDRESS6[1]);
-    string relay_id_str = DUID6[0];
-    vector<uint8_t> relay_id;
-    relay_id.resize(relay_id_str.size());
-    memmove(&relay_id[0], &relay_id_str[0], relay_id.size());
-    string remote_id_str = DUID6[1];
-    vector<uint8_t> remote_id;
-    remote_id.resize(remote_id_str.size());
-    memmove(&remote_id[0], &remote_id_str[0], remote_id.size());
+    vector<uint8_t> relay_id = createFromString(DUID6[0]);
+    vector<uint8_t> remote_id = createFromString(DUID6[1]);
 
     // Fill the table.
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, link_addr, relay_id));
@@ -1143,10 +1131,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
     IOAddress link_addr(ADDRESS6[2]);
-    string duid_str = DUID6[0];
-    vector<uint8_t> duid_data;
-    duid_data.resize(duid_str.size());
-    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
                                            123, 1000, 2000, 1)));
@@ -1207,10 +1192,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
     IOAddress link_addr(ADDRESS6[2]);
-    string duid_str = DUID6[0];
-    vector<uint8_t> duid_data;
-    duid_data.resize(duid_str.size());
-    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
                                            123, 1000, 2000, 1)));
@@ -1243,10 +1225,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
     IOAddress link_addr(ADDRESS6[2]);
-    string duid_str = DUID6[0];
-    vector<uint8_t> duid_data;
-    duid_data.resize(duid_str.size());
-    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
                                            123, 1000, 2000, 1)));
@@ -1294,10 +1273,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
     IOAddress link_addr(ADDRESS6[2]);
-    string duid_str = DUID6[0];
-    vector<uint8_t> duid_data;
-    duid_data.resize(duid_str.size());
-    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
                                            123, 1000, 2000, 1)));
@@ -1341,10 +1317,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
     IOAddress link_addr(ADDRESS6[2]);
-    string duid_str = DUID6[0];
-    vector<uint8_t> duid_data;
-    duid_data.resize(duid_str.size());
-    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
                                            123, 1000, 2000, 1)));
@@ -1393,10 +1366,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
     IOAddress link_addr(ADDRESS6[2]);
-    string duid_str = DUID6[0];
-    vector<uint8_t> duid_data;
-    duid_data.resize(duid_str.size());
-    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
                                            123, 1000, 2000, 1)));
@@ -1468,10 +1438,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6updateDisabled) {
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
     IOAddress link_addr(ADDRESS6[2]);
-    string duid_str = DUID6[0];
-    vector<uint8_t> duid_data;
-    duid_data.resize(duid_str.size());
-    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
                                            123, 1000, 2000, 1)));
@@ -1515,10 +1482,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
     IOAddress link_addr(ADDRESS6[2]);
-    string duid_str = DUID6[0];
-    vector<uint8_t> duid_data;
-    duid_data.resize(duid_str.size());
-    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
                                            123, 1000, 2000, 1)));
