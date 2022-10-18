@@ -104,10 +104,7 @@ public:
         ASSERT_EQ(ADDRESS6.size(), DUID6.size());
         for (size_t i = 0; i < ADDRESS6.size(); ++i) {
             Lease6Ptr lease;
-            string duid_str = DUID6[i];
-            vector<uint8_t> duid_data;
-            duid_data.resize(duid_str.size());
-            memmove(&duid_data[0], &duid_str[0], duid_data.size());
+            vector<uint8_t> duid_data = createFromString(DUID6[i]);
             DuidPtr duid(new DUID(duid_data));
             IOAddress addr(ADDRESS6[i]);
             ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, addr, duid,
