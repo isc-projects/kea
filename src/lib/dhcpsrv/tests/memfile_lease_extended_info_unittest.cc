@@ -1233,4 +1233,394 @@ TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
     EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
 }
 
+/// @brief Verifies that updateLease6 does not references to extended
+/// info tables when the action is ACTION_IGNORE.
+TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
+    start(Memfile_LeaseMgr::V6);
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+
+    // Create parameter values.
+    Lease6Ptr lease;
+    IOAddress lease_addr(ADDRESS6[1]);
+    IOAddress link_addr(ADDRESS6[2]);
+    string duid_str = DUID6[0];
+    vector<uint8_t> duid_data;
+    duid_data.resize(duid_str.size());
+    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    DuidPtr duid(new DUID(duid_data));
+    ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
+                                           123, 1000, 2000, 1)));
+
+    // Add the lease.
+    bool ret;
+    EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
+    EXPECT_TRUE(ret);
+
+    // Set user context.
+    lease.reset(new Lease6(*lease));
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+        " \"link\": \"2001:db8::2\",  \"peer\": \"2001:db8::3\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+
+    // Set action and call updateLease6.
+    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+    ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
+    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+
+    // Tables were not touched.
+    EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
+    EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
+    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
+
+    // Note that with persist when the database is reloaded the user context
+    // is still there so tables will be updated: the ACTION_IGNORE setting
+    // has no persistent effect: instead clenup the user context before
+    // calling updateLease6...
+}
+
+/// @brief Verifies that updateLease6 clears references from extended
+/// info tables when the action is ACTION_DELETE.
+TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
+    start(Memfile_LeaseMgr::V6);
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+
+    // Create parameter values.
+    Lease6Ptr lease;
+    IOAddress lease_addr(ADDRESS6[1]);
+    IOAddress link_addr(ADDRESS6[2]);
+    string duid_str = DUID6[0];
+    vector<uint8_t> duid_data;
+    duid_data.resize(duid_str.size());
+    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    DuidPtr duid(new DUID(duid_data));
+    ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
+                                           123, 1000, 2000, 1)));
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+        " \"link\": \"2001:db8::2\",  \"peer\": \"2001:db8::3\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+
+    // Add the lease.
+    bool ret;
+    EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
+
+    // Set action and call updateLease6.
+    lease.reset(new Lease6(*lease));
+    lease->extended_info_action_ = Lease::ACTION_DELETE;;
+    ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
+    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+
+    // Tables were cleared.
+    EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
+    EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
+    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
+}
+
+/// @brief Verifies that updateLease6 does not clears references from extended
+/// info tables when the action is ACTION_DELETE but tables are disabled.
+TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
+    start(Memfile_LeaseMgr::V6);
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+
+    // Create parameter values.
+    Lease6Ptr lease;
+    IOAddress lease_addr(ADDRESS6[1]);
+    IOAddress link_addr(ADDRESS6[2]);
+    string duid_str = DUID6[0];
+    vector<uint8_t> duid_data;
+    duid_data.resize(duid_str.size());
+    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    DuidPtr duid(new DUID(duid_data));
+    ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
+                                           123, 1000, 2000, 1)));
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+        " \"link\": \"2001:db8::2\",  \"peer\": \"2001:db8::3\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+
+    // Add the lease.
+    bool ret;
+    EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
+
+    // Disable on the fly extended info tables.
+    // Note it is a priori an illegal operation so this could have to be
+    // changed...
+    lease_mgr_->setExtendedInfoEnabled(false);
+
+    // Set action and call updateLease6.
+    lease.reset(new Lease6(*lease));
+    lease->extended_info_action_ = Lease::ACTION_DELETE;;
+    ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
+    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+
+    // Tables were not touched.
+    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
+}
+
+/// @brief Verifies that updateLease6 adds references to extended
+/// info tables when the action is ACTION_UPDATE.
+TEST_F(MemfileExtendedInfoTest, updateLease6update) {
+    start(Memfile_LeaseMgr::V6);
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+
+    // Create parameter values.
+    Lease6Ptr lease;
+    IOAddress lease_addr(ADDRESS6[1]);
+    IOAddress link_addr(ADDRESS6[2]);
+    string duid_str = DUID6[0];
+    vector<uint8_t> duid_data;
+    duid_data.resize(duid_str.size());
+    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    DuidPtr duid(new DUID(duid_data));
+    ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
+                                           123, 1000, 2000, 1)));
+
+    // Add the lease.
+    bool ret;
+    EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
+    EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
+    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
+
+    // Set user context.
+    lease.reset(new Lease6(*lease));
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+        " \"link\": \"2001:db8::2\",  \"peer\": \"2001:db8::3\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+
+    // Set action and call updateLease6.
+    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
+    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+
+    // Tables were updated.
+    ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
+    auto relay_id_it =  lease_mgr_->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr_->relay_id6_.cend());
+    Lease6ExtendedInfoPtr ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
+    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
+    const vector<uint8_t>& relay_id = ex_info->id_;
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, relay_id);
+
+    ASSERT_EQ(1, lease_mgr_->remote_id6_.size());
+    auto remote_id_it = lease_mgr_->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr_->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
+    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
+    const vector<uint8_t>& remote_id = ex_info->id_;
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, remote_id);
+
+    ASSERT_EQ(1, lease_mgr_->link_addr6_.size());
+    auto link_addr_it = lease_mgr_->link_addr6_.cbegin();
+    ASSERT_NE(link_addr_it, lease_mgr_->link_addr6_.cend());
+    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ(ADDRESS6[1], sex_info->lease_addr_.toText());
+    EXPECT_EQ(ADDRESS6[2], sex_info->link_addr_.toText());
+}
+
+/// @brief Verifies that updateLease6 does not add references to extended
+/// info tables when the action is ACTION_UPDATE but tables are disabled.
+TEST_F(MemfileExtendedInfoTest, updateLease6updateDisabled) {
+    start(Memfile_LeaseMgr::V6);
+    lease_mgr_->setExtendedInfoEnabled(false);
+
+    // Create parameter values.
+    Lease6Ptr lease;
+    IOAddress lease_addr(ADDRESS6[1]);
+    IOAddress link_addr(ADDRESS6[2]);
+    string duid_str = DUID6[0];
+    vector<uint8_t> duid_data;
+    duid_data.resize(duid_str.size());
+    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    DuidPtr duid(new DUID(duid_data));
+    ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
+                                           123, 1000, 2000, 1)));
+
+    // Add the lease.
+    bool ret;
+    EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
+    EXPECT_TRUE(ret);
+
+    // Set user context.
+    lease.reset(new Lease6(*lease));
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+        " \"link\": \"2001:db8::2\",  \"peer\": \"2001:db8::3\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+
+    // Set action and call updateLease6.
+    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
+    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+
+    // Tables were not touched.
+    EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
+    EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
+    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
+}
+
+/// @brief Verifies that updateLease6 modifies references to extended
+/// info tables when the action is ACTION_UPDATE and the extended
+/// info is modified before the call.
+TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
+    start(Memfile_LeaseMgr::V6);
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+
+    // Create parameter values.
+    Lease6Ptr lease;
+    IOAddress lease_addr(ADDRESS6[1]);
+    IOAddress link_addr(ADDRESS6[2]);
+    string duid_str = DUID6[0];
+    vector<uint8_t> duid_data;
+    duid_data.resize(duid_str.size());
+    memmove(&duid_data[0], &duid_str[0], duid_data.size());
+    DuidPtr duid(new DUID(duid_data));
+    ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
+                                           123, 1000, 2000, 1)));
+    lease.reset(new Lease6(*lease));
+    string user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
+        " \"link\": \"2001:db8::2\",  \"peer\": \"2001:db8::3\","
+        " \"options\": \"0x00250006010203040506003500086464646464646464\","
+        " \"remote-id\": \"010203040506\","
+        " \"relay-id\": \"6464646464646464\" } ] } }";
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease->setContext(user_context);
+
+    // Add the lease.
+    bool ret;
+    EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
+    EXPECT_TRUE(ret);
+
+    // Verify updated extended info tables.
+    ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
+    auto relay_id_it =  lease_mgr_->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr_->relay_id6_.cend());
+    Lease6ExtendedInfoPtr ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
+    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
+    const vector<uint8_t>& relay_id = ex_info->id_;
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, relay_id);
+
+    ASSERT_EQ(1, lease_mgr_->remote_id6_.size());
+    auto remote_id_it = lease_mgr_->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr_->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
+    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
+    const vector<uint8_t>& remote_id = ex_info->id_;
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, remote_id);
+
+    ASSERT_EQ(1, lease_mgr_->link_addr6_.size());
+    auto link_addr_it = lease_mgr_->link_addr6_.cbegin();
+    ASSERT_NE(link_addr_it, lease_mgr_->link_addr6_.cend());
+    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ(ADDRESS6[1], sex_info->lease_addr_.toText());
+    EXPECT_EQ(ADDRESS6[2], sex_info->link_addr_.toText());
+
+    // Change the user context.
+    IOAddress link_addr2(ADDRESS6[4]);
+    user_context_txt =
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44,"
+        " \"link\": \"2001:db8::4\",  \"peer\": \"2001:db8::5\","
+        " \"options\": \"0x00250006010203040507003500086465656565656565\","
+        " \"remote-id\": \"010203040507\","
+        " \"relay-id\": \"6565656565656565\" } ] } }";
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    lease.reset(new Lease6(*lease));
+    lease->setContext(user_context);
+
+    // Set action and call updateLease6.
+    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
+    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+
+    // Tables were updated.
+    ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
+    relay_id_it =  lease_mgr_->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr_->relay_id6_.cend());
+    ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
+    EXPECT_NE(ADDRESS6[2], ex_info->link_addr_.toText());
+    EXPECT_EQ(ADDRESS6[4], ex_info->link_addr_.toText());
+    const vector<uint8_t>& relay_id2 = ex_info->id_;
+    const vector<uint8_t>& exp_relay_id2 = vector<uint8_t>(8, 0x65);
+    EXPECT_NE(exp_relay_id, relay_id2);
+    EXPECT_EQ(exp_relay_id2, relay_id2);
+
+    ASSERT_EQ(1, lease_mgr_->remote_id6_.size());
+    remote_id_it = lease_mgr_->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr_->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
+    EXPECT_NE(ADDRESS6[2], ex_info->link_addr_.toText());
+    EXPECT_EQ(ADDRESS6[4], ex_info->link_addr_.toText());
+    const vector<uint8_t>& remote_id2 = ex_info->id_;
+    const vector<uint8_t>& exp_remote_id2 = { 1, 2, 3, 4, 5, 7 };
+    EXPECT_NE(exp_remote_id, remote_id2);
+    EXPECT_EQ(exp_remote_id2, remote_id2);
+
+    ASSERT_EQ(1, lease_mgr_->link_addr6_.size());
+    link_addr_it = lease_mgr_->link_addr6_.cbegin();
+    ASSERT_NE(link_addr_it, lease_mgr_->link_addr6_.cend());
+    sex_info = *link_addr_it;
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ(ADDRESS6[1], sex_info->lease_addr_.toText());
+    EXPECT_NE(ADDRESS6[2], sex_info->link_addr_.toText());
+    EXPECT_EQ(ADDRESS6[4], sex_info->link_addr_.toText());
+}
+
 }  // namespace
