@@ -55,7 +55,7 @@ public:
     }
 
     /// @brief Exposes protected methods and members.
-    using LeaseMgr::setExtendedInfoEnabled;
+    using LeaseMgr::setExtendedInfoTablesEnabled;
     using Memfile_LeaseMgr::relay_id6_;
     using Memfile_LeaseMgr::remote_id6_;
     using Memfile_LeaseMgr::deleteExtendedInfo6;
@@ -1042,7 +1042,7 @@ TEST_F(MemfileExtendedInfoTest, getLeases6ByLinkMultiThreading) {
 TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     start(Memfile_LeaseMgr::V6);
     initLease6();
-    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
 
     // Create parameter values.
     IOAddress lease_addr(ADDRESS6[0]);
@@ -1094,7 +1094,7 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
 TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
     start(Memfile_LeaseMgr::V6);
     initLease6();
-    lease_mgr_->setExtendedInfoEnabled(false);
+    lease_mgr_->setExtendedInfoTablesEnabled(false);
 
     // Create parameter values.
     IOAddress lease_addr(ADDRESS6[0]);
@@ -1134,7 +1134,7 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
 /// @brief Verifies that v6 addLease adds references to extended info tables.
 TEST_F(MemfileExtendedInfoTest, addLease6) {
     start(Memfile_LeaseMgr::V6);
-    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
     EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
@@ -1201,7 +1201,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
 /// when they are disabled.
 TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
     start(Memfile_LeaseMgr::V6);
-    lease_mgr_->setExtendedInfoEnabled(false);
+    lease_mgr_->setExtendedInfoTablesEnabled(false);
 
     // Create parameter values.
     Lease6Ptr lease;
@@ -1237,7 +1237,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
 /// info tables when the action is ACTION_IGNORE.
 TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
     start(Memfile_LeaseMgr::V6);
-    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
 
     // Create parameter values.
     Lease6Ptr lease;
@@ -1288,7 +1288,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
 /// info tables when the action is ACTION_DELETE.
 TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
     start(Memfile_LeaseMgr::V6);
-    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
 
     // Create parameter values.
     Lease6Ptr lease;
@@ -1335,7 +1335,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
 /// info tables when the action is ACTION_DELETE but tables are disabled.
 TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     start(Memfile_LeaseMgr::V6);
-    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
 
     // Create parameter values.
     Lease6Ptr lease;
@@ -1369,7 +1369,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     // Disable on the fly extended info tables.
     // Note it is a priori an illegal operation so this could have to be
     // changed...
-    lease_mgr_->setExtendedInfoEnabled(false);
+    lease_mgr_->setExtendedInfoTablesEnabled(false);
 
     // Set action and call updateLease6.
     lease.reset(new Lease6(*lease));
@@ -1387,7 +1387,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
 /// info tables when the action is ACTION_UPDATE.
 TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     start(Memfile_LeaseMgr::V6);
-    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
 
     // Create parameter values.
     Lease6Ptr lease;
@@ -1462,7 +1462,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
 /// info tables when the action is ACTION_UPDATE but tables are disabled.
 TEST_F(MemfileExtendedInfoTest, updateLease6updateDisabled) {
     start(Memfile_LeaseMgr::V6);
-    lease_mgr_->setExtendedInfoEnabled(false);
+    lease_mgr_->setExtendedInfoTablesEnabled(false);
 
     // Create parameter values.
     Lease6Ptr lease;
@@ -1509,7 +1509,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6updateDisabled) {
 /// info is modified before the call.
 TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     start(Memfile_LeaseMgr::V6);
-    EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+    EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
 
     // Create parameter values.
     Lease6Ptr lease;

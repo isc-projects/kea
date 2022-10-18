@@ -766,7 +766,7 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
     // Increment class lease counters.
     class_lease_counter_.addLease(lease);
 
-    if (getExtendedInfoEnabled()) {
+    if (getExtendedInfoTablesEnabled()) {
         static_cast<void>(addExtendedInfo6(lease));
     }
 
@@ -1500,7 +1500,7 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     class_lease_counter_.updateLease(lease, old_lease);
 
     // Update extended info tables.
-    if (getExtendedInfoEnabled()) {
+    if (getExtendedInfoTablesEnabled()) {
         switch (recorded_action) {
         case Lease::ACTION_IGNORE:
             break;
@@ -1610,7 +1610,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
         class_lease_counter_.removeLease(lease);
 
         // Delete references from extended info tables.
-        if (getExtendedInfoEnabled()) {
+        if (getExtendedInfoTablesEnabled()) {
             deleteExtendedInfo6(lease->addr_);
         }
 
@@ -1723,7 +1723,7 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
         }
 
         // Delete references from extended info tables.
-        if (getExtendedInfoEnabled()) {
+        if (getExtendedInfoTablesEnabled()) {
             // Swap if and for when v4 will be implemented.
             if (universe == V6) {
                 for (typename IndexType::const_iterator lease = lower_limit;
@@ -2847,7 +2847,7 @@ Memfile_LeaseMgr::getLeases6ByLinkInternal(const IOAddress& link_addr,
 
 void
 Memfile_LeaseMgr::buildExtendedInfoTables6Internal() {
-    bool enabled = getExtendedInfoEnabled();
+    bool enabled = getExtendedInfoTablesEnabled();
     // Use staging config here.
     CfgConsistency::ExtendedInfoSanity check =
         CfgMgr::instance().getStagingCfg()->getConsistency()->getExtendedInfoSanityCheck();

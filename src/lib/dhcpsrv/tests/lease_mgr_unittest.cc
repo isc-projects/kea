@@ -1146,8 +1146,8 @@ TEST(Lease6ExtendedInfoTest, upgradeLease6ExtendedInfo) {
     }
 }
 
-/// Verify setExtendedInfoEnabled without valid extended info.
-TEST(Lease6ExtendedInfoTest, invalidSetExtendedInfoEnabled) {
+/// Verify setExtendedInfoTablesEnabled without valid extended info.
+TEST(Lease6ExtendedInfoTest, invalidSetExtendedInfoTablesEnabled) {
 
     DatabaseConnection::ParameterMap pmap;
     boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
@@ -1244,8 +1244,8 @@ TEST(Lease6ExtendedInfoTest, invalidSetExtendedInfoEnabled) {
     }
 }
 
-/// Verify setExtendedInfoEnabled with one relay without ids.
-TEST(Lease6ExtendedInfoTest, noIdSetExtendedInfoEnabled) {
+/// Verify setExtendedInfoTablesEnabled with one relay without ids.
+TEST(Lease6ExtendedInfoTest, noIdSetExtendedInfoTablesEnabled) {
 
     string user_context_txt =
         "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
@@ -1270,8 +1270,8 @@ TEST(Lease6ExtendedInfoTest, noIdSetExtendedInfoEnabled) {
     EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
 }
 
-/// Verify setExtendedInfoEnabled with one relay with ids.
-TEST(Lease6ExtendedInfoTest, idsSetExtendedInfoEnabled) {
+/// Verify setExtendedInfoTablesEnabled with one relay with ids.
+TEST(Lease6ExtendedInfoTest, idsSetExtendedInfoTablesEnabled) {
 
     string user_context_txt =
         "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100,"
@@ -1315,8 +1315,9 @@ TEST(Lease6ExtendedInfoTest, idsSetExtendedInfoEnabled) {
     EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
 }
 
-/// Verify setExtendedInfoEnabled with one relay with ids but :: link address.
-TEST(Lease6ExtendedInfoTest, linkZeroSetExtendedInfoEnabled) {
+/// Verify setExtendedInfoTablesEnabled with one relay with ids but
+/// :: link address.
+TEST(Lease6ExtendedInfoTest, linkZeroSetExtendedInfoTablesEnabled) {
 
     string user_context_txt =
         "{ \"ISC\": { \"relay-info\": [ { \"hop\": 100,"
@@ -1356,8 +1357,8 @@ TEST(Lease6ExtendedInfoTest, linkZeroSetExtendedInfoEnabled) {
     EXPECT_TRUE(mgr->link_addr6_.empty());
 }
 
-/// Verify setExtendedInfoEnabled with two relays.
-TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoEnabled) {
+/// Verify setExtendedInfoTablesEnabled with two relays.
+TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoTablesEnabled) {
 
     string user_context_txt =
         "{ \"ISC\": { \"relay-info\": [ { \"hop\": 33,"
