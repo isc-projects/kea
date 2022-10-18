@@ -1510,7 +1510,7 @@ TEST(TemplateClientClassDef, unparseDef) {
     std::string name = "class1";
     ExpressionPtr expr;
     ASSERT_NO_THROW(cclass.reset(new TemplateClientClassDef(name, expr)));
-    std::string test = "option[12].text == 'foo'";
+    std::string test = "option[12].text";
     cclass->setTest(test);
     std::string comment = "bar";
     std::string user_context = "{ \"comment\": \"" + comment + "\", ";
@@ -1529,11 +1529,10 @@ TEST(TemplateClientClassDef, unparseDef) {
     // Unparse it
     std::string expected = "{\n"
         "\"name\": \"" + name + "\",\n"
-        "\"test\": \"" + test + "\",\n"
+        "\"template-test\": \"" + test + "\",\n"
         "\"only-if-required\": true,\n"
         "\"next-server\": \"" + next_server + "\",\n"
         "\"server-hostname\": \"" + sname + "\",\n"
-        "\"template-class\": true,\n"
         "\"boot-file-name\": \"" + filename + "\",\n"
         "\"option-data\": [ ],\n"
         "\"user-context\": { \"bar\": 1,\n"
@@ -1573,7 +1572,7 @@ TEST(ClientClassDictionary, templateUnparseDict) {
                     "\"name\": \"" + name + "\",\n"
                     "\"next-server\": \"0.0.0.0\",\n"
                     "\"server-hostname\": \"\",\n"
-                    "\"template-class\": true,\n"
+                    "\"template-test\": \"\",\n"
                     "\"boot-file-name\": \"\",\n"
                     "\"option-data\": [ ] }");
     };

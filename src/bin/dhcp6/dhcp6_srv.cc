@@ -569,7 +569,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     // Perform second pass of classification.
     evaluateClasses(pkt, true);
 
-    const ClientClasses& classes = pkt->getClassesAndSubClasses();
+    const ClientClasses& classes = pkt->getClasses();
     if (!classes.empty()) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
@@ -4056,7 +4056,7 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
         }
     }
 
-    const ClientClasses& classes = pkt->getClassesAndSubClasses();
+    const ClientClasses& classes = pkt->getClasses();
     if (!classes.empty()) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
             .arg(pkt->getLabel())

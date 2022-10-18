@@ -294,7 +294,13 @@ ClientClassDef::toElement() const {
 ElementPtr
 TemplateClientClassDef::toElement() const {
     auto const& result = ClientClassDef::toElement();
-    result->set("template-class", Element::create(true));
+    auto const& test = result->get("test");
+    if (test) {
+        result->set("template-test", test);
+        result->remove("test");
+    } else {
+        result->set("template-test", Element::create(""));
+    }
     return (result);
 }
 

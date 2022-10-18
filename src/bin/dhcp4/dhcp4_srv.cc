@@ -250,7 +250,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // Perform second pass of classification.
     evaluateClasses(query, true);
 
-    const ClientClasses& classes = query_->getClassesAndSubClasses();
+    const ClientClasses& classes = query_->getClasses();
     if (!classes.empty()) {
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
             .arg(query_->getLabel())
@@ -2489,7 +2489,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         Lease4Ptr lease;
 
-        auto const& classes = query->getClassesAndSubClasses();
+        auto const& classes = query->getClasses();
 
         // We used to issue a separate query (two actually: one for client-id
         // and another one for hw-addr for) each subnet in the shared network.

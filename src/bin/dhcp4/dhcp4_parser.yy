@@ -170,7 +170,7 @@ using namespace std;
   CLIENT_CLASSES "client-classes"
   REQUIRE_CLIENT_CLASSES "require-client-classes"
   TEST "test"
-  TEMPLATE_CLASS "template-class"
+  TEMPLATE_TEST "template-test"
   ONLY_IF_REQUIRED "only-if-required"
   CLIENT_CLASS "client-class"
 
@@ -2336,7 +2336,7 @@ not_empty_client_class_params: client_class_param
 
 client_class_param: client_class_name
                   | client_class_test
-                  | client_class_template_class
+                  | client_class_template_test
                   | only_if_required
                   | option_def_list
                   | option_data_list
@@ -2362,10 +2362,13 @@ client_class_test: TEST {
     ctx.leave();
 };
 
-client_class_template_class: TEMPLATE_CLASS COLON BOOLEAN {
-    ctx.unique("template-class", ctx.loc2pos(@1));
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("template-class", b);
+client_class_template_test: TEMPLATE_TEST {
+    ctx.unique("template-test", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr template_test(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("template-test", template_test);
+    ctx.leave();
 };
 
 only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {

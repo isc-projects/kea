@@ -933,14 +933,12 @@ TEST_F(Pkt4Test, clientClasses) {
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
     EXPECT_TRUE(pkt.getClasses().empty());
-    EXPECT_FALSE(pkt.hasSubClasses());
 
     // Add to the first class
     pkt.addClass(DOCSIS3_CLASS_EROUTER);
     EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
     ASSERT_FALSE(pkt.getClasses().empty());
-    EXPECT_FALSE(pkt.hasSubClasses());
 
     // Add to a second class
     pkt.addClass(DOCSIS3_CLASS_MODEM);
@@ -951,7 +949,6 @@ TEST_F(Pkt4Test, clientClasses) {
     EXPECT_NO_THROW(pkt.addClass("foo"));
     EXPECT_NO_THROW(pkt.addClass("foo"));
     EXPECT_NO_THROW(pkt.addClass("foo"));
-    EXPECT_FALSE(pkt.hasSubClasses());
 
     // Check that the packet belongs to 'foo'
     EXPECT_TRUE(pkt.inClass("foo"));
@@ -964,17 +961,14 @@ TEST_F(Pkt4Test, deferredClientClasses) {
 
     // Default values (do not belong to any class)
     EXPECT_TRUE(pkt.getClasses(true).empty());
-    EXPECT_FALSE(pkt.hasSubClasses());
 
     // Add to the first class
     pkt.addClass(DOCSIS3_CLASS_EROUTER, true);
     EXPECT_EQ(1, pkt.getClasses(true).size());
-    EXPECT_FALSE(pkt.hasSubClasses());
 
     // Add to a second class
     pkt.addClass(DOCSIS3_CLASS_MODEM, true);
     EXPECT_EQ(2, pkt.getClasses(true).size());
-    EXPECT_FALSE(pkt.hasSubClasses());
     EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_EROUTER));
     EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_MODEM));
     EXPECT_FALSE(pkt.getClasses(true).contains("foo"));
@@ -983,7 +977,6 @@ TEST_F(Pkt4Test, deferredClientClasses) {
     EXPECT_NO_THROW(pkt.addClass("foo", true));
     EXPECT_NO_THROW(pkt.addClass("foo", true));
     EXPECT_NO_THROW(pkt.addClass("foo", true));
-    EXPECT_FALSE(pkt.hasSubClasses());
 
     // Check that the packet belongs to 'foo'
     EXPECT_TRUE(pkt.getClasses(true).contains("foo"));
@@ -998,14 +991,12 @@ TEST_F(Pkt4Test, templateClasses) {
     EXPECT_FALSE(pkt.inClass("eth0"));
     EXPECT_FALSE(pkt.inClass("interface-id0"));
     EXPECT_TRUE(pkt.getClasses().empty());
-    EXPECT_FALSE(pkt.hasSubClasses());
 
     // Add to the first subclass
     pkt.addSubClass("template-interface-name", "eth0");
     EXPECT_TRUE(pkt.inClass("eth0"));
     EXPECT_FALSE(pkt.inClass("interface-id0"));
     ASSERT_FALSE(pkt.getClasses().empty());
-    EXPECT_TRUE(pkt.hasSubClasses());
 
     // Add to a second subclass
     pkt.addSubClass("template-interface-id", "interface-id0");

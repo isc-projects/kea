@@ -50,6 +50,12 @@ ExpressionParser::parse(ExpressionPtr& expression,
     // by str() enclosed in quotes.
     std::string value;
     expression_cfg->getValue(value);
+
+    if (parser_type == EvalContext::PARSER_STRING && value.empty()) {
+        isc_throw(DhcpConfigError, "expression can not be empty at ("
+            << expression_cfg->getPosition() << ")");
+    }
+
     try {
         EvalContext eval_ctx(family == AF_INET ? Option::V4 : Option::V6,
                              check_defined);
@@ -83,29 +89,33 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     EvalContext::ParserType parser_type = EvalContext::PARSER_BOOL;
 
-    // Let's try to parse the template-class flag
+    // Let's try to parse the template-test expression
     bool is_template = false;
-    if (class_def_cfg->contains("template-class")) {
-        is_template = getBoolean(class_def_cfg, "template-class");
-        if (is_template) {
-            parser_type = EvalContext::PARSER_STRING;
-        }
-    }
 
     // Parse matching expression
     ExpressionPtr match_expr;
     ConstElementPtr test_cfg = class_def_cfg->get("test");
+    ConstElementPtr template_test_cfg = class_def_cfg->get("template-test");
+    if (test_cfg && template_test_cfg) {
+        isc_throw(DhcpConfigError, "expected either 'test' or 'template-test' ("
+                  << test_cfg->getPosition() << ") and ("
+                  << template_test_cfg->getPosition() << ")");
+    }
     std::string test;
     bool depend_on_known = false;
+    EvalContext::CheckDefined check_defined = EvalContext::acceptAll;
+    if (template_test_cfg) {
+        test_cfg = template_test_cfg;
+        parser_type = EvalContext::PARSER_STRING;
+        is_template = true;
+    } else {
+        check_defined = [&class_dictionary, &depend_on_known, check_dependencies](const ClientClass& cclass) {
+            return (!check_dependencies || isClientClassDefined(class_dictionary, depend_on_known, cclass));
+        };
+    }
+
     if (test_cfg) {
         ExpressionParser parser;
-        auto check_defined =
-            [&class_dictionary, &depend_on_known, check_dependencies]
-            (const ClientClass& cclass) {
-                return (!check_dependencies || isClientClassDefined(class_dictionary,
-                                                                    depend_on_known,
-                                                                    cclass));
-        };
         parser.parse(match_expr, test_cfg, family, check_defined, parser_type);
         test = test_cfg->stringValue();
     }
@@ -285,7 +295,7 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
                                                       "valid-lifetime",
                                                       "min-valid-lifetime",
                                                       "max-valid-lifetime",
-                                                      "template-class"};
+                                                      "template-test"};
 
     // The v4 client class supports additional parameters.
     static std::set<std::string> supported_params_v4 = { "option-def",

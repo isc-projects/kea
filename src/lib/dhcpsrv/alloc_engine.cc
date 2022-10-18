@@ -425,7 +425,7 @@ inAllowedPool(AllocEngine::ClientContext6& ctx, const Lease::Type& lease_type,
     // If the subnet belongs to a shared network we will be iterating
     // over the subnets that belong to this shared network.
     Subnet6Ptr current_subnet = ctx.subnet_;
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
 
     while (current_subnet) {
         if (current_subnet->clientSupported(classes)) {
@@ -658,7 +658,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
         }
     }
 
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
 
     // We can only search for the reservation if a subnet has been selected.
     while (subnet) {
@@ -919,7 +919,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
 
     for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
         if (!subnet->clientSupported(classes)) {
@@ -1360,7 +1360,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     // There is no lease for a reservation in this IA. So, let's now iterate
     // over reservations specified and try to allocate one of them for the IA.
 
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
     for (Subnet6Ptr subnet = ctx.subnet_; subnet;
          subnet = subnet->getNextSubnet(ctx.subnet_)) {
 
@@ -2259,7 +2259,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     // is not permitted by subnet client classification, delete it.
     if (!(ctx.hasGlobalReservation(makeIPv6Resrv(*lease))) &&
         (((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) ||
-        !ctx.subnet_->clientSupported(ctx.query_->getClassesAndSubClasses()))) {
+        !ctx.subnet_->clientSupported(ctx.query_->getClasses()))) {
         // Oh dear, the lease is no longer valid. We need to get rid of it.
 
         // Remove this lease from LeaseMgr
@@ -3290,7 +3290,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 
         // No address reservation found here, so let's try another subnet
         // within the same shared network.
-        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClassesAndSubClasses());
+        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
     }
 
     return (false);
@@ -3316,7 +3316,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
 
     Subnet4Ptr original_subnet = ctx.subnet_;
 
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
 
     // Client identifier is optional. First check if we can try to lookup
     // by client-id.
@@ -3401,7 +3401,7 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
     // If the subnet belongs to a shared network we will be iterating
     // over the subnets that belong to this shared network.
     Subnet4Ptr current_subnet = ctx.subnet_;
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
 
     while (current_subnet) {
         if (current_subnet->inPool(Lease::TYPE_V4, address, classes)) {
@@ -3513,7 +3513,7 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
     // subnets allowed for this client within the shared network, we
     // can't allocate a lease.
     Subnet4Ptr subnet = ctx.subnet_;
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
     if (subnet && !subnet->clientSupported(classes)) {
         ctx.subnet_ = subnet->getNextSubnet(subnet, classes);
     }
@@ -3604,7 +3604,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         }
     }
 
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
     // We can only search for the reservation if a subnet has been selected.
     while (subnet) {
 
@@ -4411,7 +4411,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     // no matching pools for the client.
     uint64_t subnets_with_unavail_pools = 0;
 
-    auto const& classes = ctx.query_->getClassesAndSubClasses();
+    auto const& classes = ctx.query_->getClasses();
 
     while (subnet) {
         ClientIdPtr client_id;

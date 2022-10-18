@@ -68,7 +68,7 @@
                 "test": "member('ALL')",
 
                 // Template class flag.
-                "template-class": false
+                "template-test": ""
             }
         ],
 

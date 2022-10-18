@@ -125,7 +125,7 @@ with a queue capacity of 300 packets:
        ...
    }
 
-.. note:
+.. note::
 
    Congestion handling is currently incompatible with multi-threading;
    when both are enabled, congestion handling is silently disabled.

@@ -34,7 +34,7 @@ extern "C" {
 /// 1 otherwise.
 int lease4_add(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.leaseAddHandler(handle));
+    return(lease_cmds.leaseAddHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-add' command.
@@ -45,7 +45,7 @@ int lease4_add(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease6_add(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.leaseAddHandler(handle));
+    return(lease_cmds.leaseAddHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-bulk-apply' command.
@@ -67,7 +67,7 @@ int lease6_bulk_apply(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease4_get(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.leaseGetHandler(handle));
+    return(lease_cmds.leaseGetHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-get' command.
@@ -78,7 +78,7 @@ int lease4_get(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease6_get(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.leaseGetHandler(handle));
+    return(lease_cmds.leaseGetHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-get-all' command.
@@ -188,7 +188,7 @@ int lease6_get_by_hostname(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease4_del(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.lease4DelHandler(handle));
+    return(lease_cmds.lease4DelHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-del' command.
@@ -199,7 +199,7 @@ int lease4_del(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease6_del(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.lease6DelHandler(handle));
+    return(lease_cmds.lease6DelHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-update' command.
@@ -210,7 +210,7 @@ int lease6_del(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease4_update(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.lease4UpdateHandler(handle));
+    return(lease_cmds.lease4UpdateHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-update' command.
@@ -221,7 +221,7 @@ int lease4_update(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease6_update(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.lease6UpdateHandler(handle));
+    return(lease_cmds.lease6UpdateHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-wipe' command.
@@ -232,7 +232,7 @@ int lease6_update(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease4_wipe(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.lease4WipeHandler(handle));
+    return(lease_cmds.lease4WipeHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-wipe' command.
@@ -243,7 +243,7 @@ int lease4_wipe(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease6_wipe(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.lease6WipeHandler(handle));
+    return(lease_cmds.lease6WipeHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-resend-ddns' command.
@@ -254,7 +254,7 @@ int lease6_wipe(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease4_resend_ddns(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.lease4ResendDdnsHandler(handle));
+    return(lease_cmds.lease4ResendDdnsHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-resend-ddns' command.
@@ -265,7 +265,7 @@ int lease4_resend_ddns(CalloutHandle& handle) {
 /// 1 otherwise.
 int lease6_resend_ddns(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
-    return (lease_cmds.lease6ResendDdnsHandler(handle));
+    return(lease_cmds.lease6ResendDdnsHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-write' command.

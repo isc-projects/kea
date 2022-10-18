@@ -54,7 +54,7 @@ UserFile::readNextUser() {
 
         // We got something, try to make a user out of it.
         if (file_.gcount() > 0) {
-            return (makeUser(buf));
+            return(makeUser(buf));
         }
     }
 

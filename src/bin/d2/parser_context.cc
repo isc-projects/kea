@@ -169,25 +169,25 @@ D2ParserContext::contextName()
     case TSIG_KEYS:
         return ("tsig-keys");
     case ALGORITHM:
-        return ("algorithm");
+        return("algorithm");
     case DIGEST_BITS:
-        return ("digest-bits");
+        return("digest-bits");
     case SECRET:
-        return ("secret");
+        return("secret");
     case FORWARD_DDNS:
-        return ("forward-ddns");
+        return("forward-ddns");
     case REVERSE_DDNS:
-        return ("reverse-ddns");
+        return("reverse-ddns");
     case DDNS_DOMAIN:
-        return ("ddns-domain");
+        return("ddns-domain");
     case DDNS_DOMAINS:
-        return ("ddns-domains");
+        return("ddns-domains");
     case DNS_SERVER:
-        return ("dns-server");
+        return("dns-server");
     case DNS_SERVERS:
-        return ("dns-servers");
+        return("dns-servers");
     case CONTROL_SOCKET:
-        return ("control-socket");
+        return("control-socket");
     case LOGGERS:
         return ("loggers");
     case OUTPUT_OPTIONS:

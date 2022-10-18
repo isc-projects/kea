@@ -77,10 +77,7 @@ Pkt::delOption(uint16_t type) {
 
 bool
 Pkt::inClass(const ClientClass& client_class) {
-    if (classes_.contains(client_class)) {
-        return (true);
-    }
-    return (subclasses_.contains(client_class));
+    return (classes_.contains(client_class));
 }
 
 void
@@ -92,9 +89,7 @@ Pkt::addClass(const ClientClass& client_class, bool required) {
     ClientClasses& classes = !required ? classes_ : required_classes_;
     if (!classes.contains(client_class)) {
         classes.insert(client_class);
-        if (!subclasses_.empty()) {
-            subclasses_.insert(client_class);
-        }
+        static_cast<void>(subclasses_.push_back(SubClassRelation(client_class, client_class)));
     }
 }
 
@@ -105,11 +100,12 @@ Pkt::addSubClass(const ClientClass& template_class, const ClientClass& subclass)
         classes_.insert("ALL");
     }
     if (!classes_.contains(template_class)) {
-        if (subclasses_.empty()) {
-            subclasses_ = classes_;
-        }
         classes_.insert(template_class);
-        subclasses_.insert(subclass);
+        static_cast<void>(subclasses_.push_back(SubClassRelation(template_class, subclass)));
+    }
+    if (!classes_.contains(subclass)) {
+        classes_.insert(subclass);
+        static_cast<void>(subclasses_.push_back(SubClassRelation(subclass, subclass)));
     }
 }
 

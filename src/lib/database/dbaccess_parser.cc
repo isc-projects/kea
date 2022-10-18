@@ -91,7 +91,6 @@ DbAccessParser::parse(std::string& access_string,
                 max_row_errors = param.second->intValue();
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(max_row_errors);
-
             } else {
 
                 // all remaining string parameters

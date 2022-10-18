@@ -64,9 +64,9 @@ namespace dhcp {
     > ClientClassContainer;
 
     /// @brief Defines a single subclass (template class instantiation).
-    struct SubClass {
+    struct SubClassRelation {
         /// @brief Constructor.
-        SubClass(const ClientClass& template_class, const ClientClass& subclass) :
+        SubClassRelation(const ClientClass& template_class, const ClientClass& subclass) :
               template_class_(template_class), subclass_(subclass) {
         }
 
@@ -76,6 +76,30 @@ namespace dhcp {
         /// @brief The subclass name.
         ClientClass subclass_;
     };
+
+    /// @brief Tag for the sequence index.
+    struct TemplateClassSequenceTag { };
+
+    /// @brief Tag for the name index.
+    struct TemplateClassNameTag { };
+
+    /// @brief the subclass multi-index.
+    typedef boost::multi_index_container<
+        SubClassRelation,
+        boost::multi_index::indexed_by<
+            // First index is the sequence one.
+            boost::multi_index::sequenced<
+                boost::multi_index::tag<TemplateClassSequenceTag>
+            >,
+            // Second index is the name hash one.
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<TemplateClassNameTag>,
+                boost::multi_index::member<SubClassRelation,
+                                           ClientClass,
+                                           &SubClassRelation::template_class_>
+            >
+        >
+    > SubClassRelationContainer;
 
     /// @brief Container for storing client class names
     ///

@@ -378,7 +378,7 @@ TEST_F(ClientClassDefParserTest, checkAllSupported4) {
         "    \"min-valid-lifetime\": 1000,\n"
         "    \"max-valid-lifetime\": 1000,\n"
         "    \"next-server\": \"192.0.2.3\",\n"
-        "    \"template-class\": true,\n"
+        "    \"template-test\": \"\",\n"
         "    \"server-hostname\": \"myhost\",\n"
         "    \"boot-file-name\": \"efi\""
         "}\n";
@@ -400,7 +400,7 @@ TEST_F(ClientClassDefParserTest, checkAllSupported6) {
         "    \"option-data\": [ ],\n"
         "    \"user-context\": { },\n"
         "    \"only-if-required\": false,\n"
-        "    \"template-class\": true,\n"
+        "    \"template-test\": \"\",\n"
         "    \"preferred-lifetime\": 800,\n"
         "    \"min-preferred-lifetime\": 800,\n"
         "    \"max-preferred-lifetime\": 800\n"
@@ -638,8 +638,7 @@ TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass4) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"class_one\", \n"
-        "    \"template-class\": true, \n"
-        "    \"test\": \"" + test + "\" \n"
+        "    \"template-test\": \"" + test + "\" \n"
         "} \n";
 
     ClientClassDefPtr cclass;
@@ -730,8 +729,7 @@ TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass6) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"class_one\", \n"
-        "    \"template-class\": true, \n"
-        "    \"test\": \"" + test + "\" \n"
+        "    \"template-test\": \"" + test + "\" \n"
         "} \n";
 
     ClientClassDefPtr cclass;
@@ -894,8 +892,7 @@ TEST_F(ClientClassDefParserTest, templateBasicValidClass4) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"MICROSOFT\", \n"
-        "    \"test\": \"" + test + "\", \n"
-        "    \"template-class\": true, \n"
+        "    \"template-test\": \"" + test + "\", \n"
         "    \"option-data\": [ \n"
         "        { \n"
         "           \"name\": \"domain-name-servers\", \n"
@@ -994,8 +991,7 @@ TEST_F(ClientClassDefParserTest, templateBasicValidClass6) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"MICROSOFT\", \n"
-        "    \"test\": \"" + test + "\", \n"
-        "    \"template-class\": true, \n"
+        "    \"template-test\": \"" + test + "\", \n"
         "    \"option-data\": [ \n"
         "        { \n"
         "           \"name\": \"sip-server-addr\", \n"
@@ -1095,17 +1091,56 @@ TEST_F(ClientClassDefParserTest, invalidExpression) {
                  DhcpConfigError);
 }
 
-// Verifies that a class with an invalid expression, fails to parse.
+// Verifies that a class with an invalid template expression, fails to parse.
 TEST_F(ClientClassDefParserTest, templateInvalidExpression) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"one\", \n"
-        "    \"template-class\": true, \n"
-        "    \"test\": 777 \n"
+        "    \"template-test\": 777 \n"
         "} \n";
 
     ClientClassDefPtr cclass;
     ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6),
+                 DhcpConfigError);
+}
+
+// Verifies that a class with an empty expression, fails to parse.
+TEST_F(ClientClassDefParserTest, emptyExpression) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"one\", \n"
+        "    \"test\": \"\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6),
+                 DhcpConfigError);
+}
+
+// Verifies that a class with an empty expression, fails to parse.
+TEST_F(ClientClassDefParserTest, templateEmptyExpression) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"one\", \n"
+        "    \"template-test\": \"\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6),
+                 DhcpConfigError);
+}
+
+// Verifies that a class with both test and template-test expressions, fails to parse.
+TEST_F(ClientClassDefParserTest, bothTestAndTemplateTestExpressions) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"one\", \n"
+        "    \"test\": \"true\", \n"
+        "    \"template-test\": \"\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
                  DhcpConfigError);
 }
 
@@ -1187,15 +1222,15 @@ TEST_F(ClientClassDefListParserTest, templateSimpleValidList) {
         "[ \n"
         "   { \n"
         "       \"name\": \"one\", \n"
-        "       \"template-class\": true \n"
+        "       \"template-test\": \"''\" \n"
         "   }, \n"
         "   { \n"
         "       \"name\": \"two\", \n"
-        "       \"template-class\": true \n"
+        "       \"template-test\": \"''\" \n"
         "   }, \n"
         "   { \n"
         "       \"name\": \"three\", \n"
-        "       \"template-class\": true \n"
+        "       \"template-test\": \"''\" \n"
         "   } \n"
         "] \n";
 
@@ -1257,15 +1292,15 @@ TEST_F(ClientClassDefListParserTest, templateDuplicateClass) {
         "[ \n"
         "   { \n"
         "       \"name\": \"one\", \n"
-        "       \"template-class\": true \n"
+        "       \"template-test\": \"''\" \n"
         "   }, \n"
         "   { \n"
         "       \"name\": \"two\", \n"
-        "       \"template-class\": true \n"
+        "       \"template-test\": \"''\" \n"
         "   }, \n"
         "   { \n"
         "       \"name\": \"two\", \n"
-        "       \"template-class\": true \n"
+        "       \"template-test\": \"''\" \n"
         "   } \n"
         "] \n";
 

@@ -327,13 +327,6 @@ public:
         return (!required ? classes_ : required_classes_);
     }
 
-    /// @brief Returns true if the subclass set is not empty
-    ///
-    /// @return true if there is at least one subclass associated with the packet.
-    bool hasSubClasses() const {
-        return (!subclasses_.empty());
-    }
-
     /// @brief Returns the class set including template classes associated with
     /// subclasses
     ///
@@ -343,10 +336,7 @@ public:
     /// @return if required is false (the default) the classes the
     /// packet belongs to else the classes which are required to be
     /// evaluated.
-    const ClientClasses getClassesAndSubClasses() const {
-        if (subclasses_.empty()) {
-            return (classes_);
-        }
+    const SubClassRelationContainer& getSubClassesRelations() const {
         return (subclasses_);
     }
 
@@ -662,7 +652,7 @@ public:
     /// iterate over existing classes. Having it public also solves the problem
     /// of returned reference lifetime. It is preferred to use @ref inClass and
     /// @ref addSubClass to operate on this field.
-    ClientClasses subclasses_;
+    SubClassRelationContainer subclasses_;
 
     /// @brief Collection of options present in this message.
     ///
