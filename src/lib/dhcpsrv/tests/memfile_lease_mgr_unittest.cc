@@ -83,7 +83,6 @@ private:
 
     /// @brief Counter of callback function executions.
     int lfc_cnt_;
-
 };
 
 /// @brief A derivation of the lease manager exposing protected methods.
@@ -99,6 +98,9 @@ public:
 
     using Memfile_LeaseMgr::lfcCallback;
     using Memfile_LeaseMgr::setExtendedInfoTablesEnabled;
+    using Memfile_LeaseMgr::relay_id6_;
+    using Memfile_LeaseMgr::remote_id6_;
+    using Memfile_LeaseMgr::link_addr6_;
 };
 
 /// @brief Test fixture class for @c Memfile_LeaseMgr
@@ -125,6 +127,10 @@ public:
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
         removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+
+        // Reset staging extended info sanitizer to its default.
+        CfgMgr::instance().getStagingCfg()->getConsistency()->
+            setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
 
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -154,6 +160,9 @@ public:
         removeFiles(getLeaseFilePath("leasefile6_0.csv"));
         // Remove other files.
         removeOtherFiles();
+        // Reset staging extended info sanitizer to its default.
+        CfgMgr::instance().getStagingCfg()->getConsistency()->
+            setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
         // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -2431,7 +2440,7 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
     );
 }
 
-/// @brief Checks that complex user context can be read in v4.
+/// @brief Checks that complex user context can be read in v6.
 TEST_F(MemfileLeaseMgrTest, v6UserContext) {
     // Add some leases to the CSV file.
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
@@ -3534,6 +3543,275 @@ TEST_F(MemfileLeaseMgrTest, notPersistWriteLease6MultiThread) {
     ASSERT_TRUE(file.exists());
     string content1 = file.readFile();
     EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Checks that buildExtendedInfoTables6 both updates extended info
+/// and add them into tables at startup.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c  \"peer\": \"2001:db8::5\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,\n"
+    );
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    pmap["extended-info-tables"] = "true";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+
+    // Check the lease with extended info was upgraded.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_FALSE(isc->contains("relays"));
+    EXPECT_TRUE(isc->contains("relay-info"));
+
+    // Check that extended info tables were updated.
+    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    auto relay_id_it = lease_mgr->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
+    Lease6ExtendedInfoPtr ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    auto remote_id_it = lease_mgr->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->link_addr6_.size());
+    auto link_addr_it = lease_mgr->link_addr6_.cbegin();
+    ASSERT_NE(link_addr_it, lease_mgr->link_addr6_.cend());
+    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ("2001:db8:1::2", sex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", sex_info->link_addr_.toText());
+}
+
+/// @brief Checks that buildExtendedInfoTables6 does not update
+/// when extended info sanitizing is disabled.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6noSanitize) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c  \"peer\": \"2001:db8::5\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,\n"
+    );
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    pmap["extended-info-tables"] = "true";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was not updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check the lease with extended info was not upgraded.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_TRUE(isc->contains("relays"));
+    EXPECT_FALSE(isc->contains("relay-info"));
+
+    // Check that extended info tables were not updated.
+    EXPECT_TRUE(lease_mgr->relay_id6_.empty());
+    EXPECT_TRUE(lease_mgr->remote_id6_.empty());
+    EXPECT_TRUE(lease_mgr->link_addr6_.empty());
+}
+
+/// @brief Checks that buildExtendedInfoTables6 adds extended info to tables
+/// when enabled.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6enabled) {
+    // Add some leases to the CSV file: one empty map, one new extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c  \"peer\": \"2001:db8::5\"&#x2c"
+        " \"remote-id\": \"010203040506\"&#x2c"
+        " \"relay-id\": \"6464646464646464\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,\n"
+    );
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval=0"] = "0";
+    pmap["extended-info-tables"] = "true";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check that extended info tables were updated.
+    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    auto relay_id_it = lease_mgr->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
+    Lease6ExtendedInfoPtr ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    auto remote_id_it = lease_mgr->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->link_addr6_.size());
+    auto link_addr_it = lease_mgr->link_addr6_.cbegin();
+    ASSERT_NE(link_addr_it, lease_mgr->link_addr6_.cend());
+    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ("2001:db8:1::2", sex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", sex_info->link_addr_.toText());
+}
+
+/// @brief Checks that buildExtendedInfoTables6 does not add extended info
+/// to tables when disabled.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6disabled) {
+    // Add some leases to the CSV file: one empty map, one new extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c  \"peer\": \"2001:db8::5\"&#x2c"
+        " \"remote-id\": \"010203040506\"&#x2c"
+        " \"relay-id\": \"6464646464646464\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,\n"
+    );
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+
+    // Check that extended info tables were not updated.
+    EXPECT_TRUE(lease_mgr->relay_id6_.empty());
+    EXPECT_TRUE(lease_mgr->remote_id6_.empty());
+    EXPECT_TRUE(lease_mgr->link_addr6_.empty());
 }
 
 }  // namespace

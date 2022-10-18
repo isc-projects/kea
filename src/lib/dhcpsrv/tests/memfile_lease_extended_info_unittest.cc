@@ -1552,7 +1552,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
 
     // Tables were updated.
     ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
-    relay_id_it =  lease_mgr_->relay_id6_.cbegin();
+    relay_id_it = lease_mgr_->relay_id6_.cbegin();
     ASSERT_NE(relay_id_it, lease_mgr_->relay_id6_.cend());
     ex_info = *relay_id_it;
     ASSERT_TRUE(ex_info);
