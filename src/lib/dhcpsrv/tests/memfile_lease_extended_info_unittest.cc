@@ -102,7 +102,7 @@ public:
         pmap_["extended-info-tables"] = "true";
 
         ASSERT_NO_THROW(lease_mgr_.reset(new NakedMemfileLeaseMgr(pmap_)));
-        EXPECT_TRUE(lease_mgr_->getExtendedInfoEnabled());
+        EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
     }
 
     /// @brief Create and set v6 leases.

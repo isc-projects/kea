@@ -918,7 +918,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=4");
-        if (cfg_db->getExtendedInfoEnabled()) {
+        if (cfg_db->getExtendedInfoTablesEnabled()) {
             cfg_db->setAppendedParameters("extended-info-tables=true");
         }
         cfg_db->createManagers();

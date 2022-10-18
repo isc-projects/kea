@@ -24,7 +24,7 @@ namespace dhcp {
 CfgDbAccess::CfgDbAccess()
     : appended_parameters_(), lease_db_access_("type=memfile"),
       host_db_access_(), ip_reservations_unique_(true),
-      extended_info_enabled_(false) {
+      extended_info_tables_enabled_(false) {
 }
 
 std::string

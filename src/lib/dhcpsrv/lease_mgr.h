@@ -225,7 +225,7 @@ class LeaseMgr {
 public:
     /// @brief Constructor
     ///
-    LeaseMgr() : extended_info_enabled_(false)
+    LeaseMgr() : extended_info_tables_enabled_(false)
     {}
 
     /// @brief Destructor
@@ -940,8 +940,8 @@ public:
     ///
     /// @return true if lease extended info tables are enabled or false
     /// if they are disabled.
-    bool getExtendedInfoEnabled() const {
-        return (extended_info_enabled_);
+    bool getExtendedInfoTablesEnabled() const {
+        return (extended_info_tables_enabled_);
     }
 
 protected:
@@ -955,8 +955,8 @@ protected:
     /// on value changes can intercept it by redefining it.
     ///
     /// @param enabled new setting.
-    virtual void setExtendedInfoEnabled(const bool enabled) {
-        extended_info_enabled_ = enabled;
+    virtual void setExtendedInfoTablesEnabled(const bool enabled) {
+        extended_info_tables_enabled_ = enabled;
     }
 
     /// @brief Decode parameters to set whether the lease extended info tables
@@ -965,7 +965,7 @@ protected:
     /// @note: common code in constructors.
     ///
     /// @param parameters The parameter map.
-    virtual void setExtendedInfoEnabled(const db::DatabaseConnection::ParameterMap& parameters);
+    virtual void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Delete lease6 extended info from tables.
     ///
@@ -1003,7 +1003,7 @@ private:
 
     /// @brief Holds the setting whether the lease extended info tables
     /// are enabled or disabled. The default is disabled.
-    bool extended_info_enabled_;
+    bool extended_info_tables_enabled_;
 };
 
 }  // namespace dhcp

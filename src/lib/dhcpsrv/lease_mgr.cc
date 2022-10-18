@@ -362,7 +362,7 @@ LeaseMgr::getDBVersion() {
 }
 
 void
-LeaseMgr::setExtendedInfoEnabled(const DatabaseConnection::ParameterMap& parameters) {
+LeaseMgr::setExtendedInfoTablesEnabled(const DatabaseConnection::ParameterMap& parameters) {
     std::string extended_info_tables;
     try {
         extended_info_tables = parameters.at("extended-info-tables");
@@ -371,7 +371,7 @@ LeaseMgr::setExtendedInfoEnabled(const DatabaseConnection::ParameterMap& paramet
     }
     // If extended_info_tables is 'true' we will enable them.
     if (extended_info_tables == "true") {
-        setExtendedInfoEnabled(true);
+        setExtendedInfoTablesEnabled(true);
     }
 }
 

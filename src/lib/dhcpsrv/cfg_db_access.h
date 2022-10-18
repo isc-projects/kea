@@ -104,8 +104,8 @@ public:
     /// are enabled.
     ///
     /// @param enabled new setting to be used by @c LeaseMgr.
-    void setExtendedInfoEnabled(const bool enabled) {
-        extended_info_enabled_ = enabled;
+    void setExtendedInfoTablesEnabled(const bool enabled) {
+        extended_info_tables_enabled_ = enabled;
     }
 
     /// @brief Returns the setting indicating if lease extended info tables
@@ -113,8 +113,8 @@ public:
     ///
     /// @return true if lease extended info tables are enabled or false
     /// if they are disabled.
-    bool getExtendedInfoEnabled() const {
-        return (extended_info_enabled_);
+    bool getExtendedInfoTablesEnabled() const {
+        return (extended_info_tables_enabled_);
     }
 
     /// @brief Creates instance of lease manager and host data sources
@@ -144,7 +144,7 @@ protected:
 
     /// @brief Holds the setting whether the lease extended info tables
     /// are enabled or disabled. The default is disabled.
-    bool extended_info_enabled_;
+    bool extended_info_tables_enabled_;
 };
 
 /// @brief A pointer to the @c CfgDbAccess.

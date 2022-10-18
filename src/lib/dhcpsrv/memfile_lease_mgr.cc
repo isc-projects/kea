@@ -639,7 +639,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     bool conversion_needed = false;
 
     // Check if the extended info tables are enabled.
-    setExtendedInfoEnabled(parameters);
+    setExtendedInfoTablesEnabled(parameters);
 
     // Check the universe and use v4 file or v6 file.
     std::string universe = conn_.getParameter("universe");

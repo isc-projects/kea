@@ -1097,7 +1097,7 @@ protected:
     ///
     /// Transient redefine to refuse the enable setting.
     /// @param enabled new setting.
-    virtual void setExtendedInfoEnabled(const bool enabled) override {
+    virtual void setExtendedInfoTablesEnabled(const bool enabled) override {
         if (enabled) {
             isc_throw(isc::NotImplemented,
                       "extended info tables are not yet supported by postgresql");

@@ -98,7 +98,7 @@ public:
     }
 
     using Memfile_LeaseMgr::lfcCallback;
-    using Memfile_LeaseMgr::setExtendedInfoEnabled;
+    using Memfile_LeaseMgr::setExtendedInfoTablesEnabled;
 };
 
 /// @brief Test fixture class for @c Memfile_LeaseMgr
@@ -402,10 +402,10 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 
     // Check the extended info enable flag.
-    EXPECT_FALSE(lease_mgr->getExtendedInfoEnabled());
+    EXPECT_FALSE(lease_mgr->getExtendedInfoTablesEnabled());
     pmap["extended-info-tables"] = "true";
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
-    EXPECT_TRUE(lease_mgr->getExtendedInfoEnabled());
+    EXPECT_TRUE(lease_mgr->getExtendedInfoTablesEnabled());
 
     // Expecting that persist parameter is yes or no. Everything other than
     // that is wrong.
