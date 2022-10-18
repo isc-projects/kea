@@ -26,12 +26,6 @@ using namespace std;
 
 namespace {
 
-/// @brief IPv4 addresses used in the tests.
-const vector<string> ADDRESS4 = {
-    "192.0.2.0", "192.0.2.1", "192.0.2.2", "192.0.2.3",
-    "192.0.2.4", "192.0.2.5", "192.0.2.6", "192.0.2.7"
-};
-
 /// @brief IPv6 addresses used in the tests.
 const vector<string> ADDRESS6 = {
     "2001:db8::0", "2001:db8::1", "2001:db8::2", "2001:db8::3",
@@ -194,7 +188,7 @@ TEST_F(MemfileExtendedInfoTest, initLease6MultiThreading) {
 }
 
 /// @brief Verifies that add and delete work on the by relay id table.
-TEST_F(MemfileExtendedInfoTest, relayIdTable) {
+TEST_F(MemfileExtendedInfoTest, relayIdTable6) {
     // Lease manager is created with empty tables.
     start(Memfile_LeaseMgr::V6);
     EXPECT_EQ(0, lease_mgr_->relay_id6_.size());
@@ -247,7 +241,7 @@ TEST_F(MemfileExtendedInfoTest, relayIdTable) {
 }
 
 /// @brief Verifies that add and delete work on the by remote id table.
-TEST_F(MemfileExtendedInfoTest, remoteIdTable) {
+TEST_F(MemfileExtendedInfoTest, remoteIdTable6) {
     // Lease manager is created with empty tables.
     start(Memfile_LeaseMgr::V6);
     EXPECT_EQ(0, lease_mgr_->remote_id6_.size());
