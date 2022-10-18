@@ -118,6 +118,17 @@ public:
         }
     }
 
+    /// @brief Create a vector of uint8_t from a string.
+    ///
+    /// @param content A not empty string holding the content.
+    /// @return A vector of uint8_t with the given content.
+    inline vector<uint8_t> createFromString(const string& content) {
+        vector<uint8_t> v;
+        v.resize(content.size());
+        memmove(&v[0], &content[0], v.size());
+        return (v);
+    }
+
     /// @brief Parameter map.
     DatabaseConnection::ParameterMap pmap_;
 
@@ -201,14 +212,8 @@ TEST_F(MemfileExtendedInfoTest, relayIdTable6) {
     IOAddress link_addr5(ADDRESS6[5]);
     IOAddress link_addr6(ADDRESS6[6]);
     IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
-    string relay_id_str0 = DUID6[0];
-    vector<uint8_t> relay_id0;
-    relay_id0.resize(relay_id_str0.size());
-    memmove(&relay_id0[0], &relay_id_str0[0], relay_id0.size());
-    string relay_id_str1 = DUID6[1];
-    vector<uint8_t> relay_id1;
-    relay_id1.resize(relay_id_str1.size());
-    memmove(&relay_id1[0], &relay_id_str1[0], relay_id1.size());
+    vector<uint8_t> relay_id0 = createFromString(DUID6[0]);
+    vector<uint8_t> relay_id1 = createFromString(DUID6[1]);
 
     // Fill the table.
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr0, link_addr4, relay_id0));
@@ -254,14 +259,8 @@ TEST_F(MemfileExtendedInfoTest, remoteIdTable6) {
     IOAddress link_addr5(ADDRESS6[5]);
     IOAddress link_addr6(ADDRESS6[6]);
     IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
-    string remote_id_str0 = DUID6[0];
-    vector<uint8_t> remote_id0;
-    remote_id0.resize(remote_id_str0.size());
-    memmove(&remote_id0[0], &remote_id_str0[0], remote_id0.size());
-    string remote_id_str1 = DUID6[1];
-    vector<uint8_t> remote_id1;
-    remote_id1.resize(remote_id_str1.size());
-    memmove(&remote_id1[0], &remote_id_str1[0], remote_id1.size());
+    vector<uint8_t> remote_id0 = createFromString(DUID6[0]);
+    vector<uint8_t> remote_id1 = createFromString(DUID6[1]);
 
     // Fill the table.
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr0, link_addr4, remote_id0));
@@ -353,20 +352,11 @@ TEST_F(MemfileExtendedInfoTest, getLeases6ByRelayId) {
     IOAddress link_addr5(ADDRESS6[5]);
     IOAddress link_addr6(ADDRESS6[6]);
     IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
-    string relay_id_str0 = DUID6[0];
-    vector<uint8_t> relay_id_data0;
-    relay_id_data0.resize(relay_id_str0.size());
-    memmove(&relay_id_data0[0], &relay_id_str0[0], relay_id_data0.size());
+    vector<uint8_t> relay_id_data0 = createFromString(DUID6[0]);
     DUID relay_id0(relay_id_data0);
-    string relay_id_str1 = DUID6[1];
-    vector<uint8_t> relay_id_data1;
-    relay_id_data1.resize(relay_id_str1.size());
-    memmove(&relay_id_data1[0], &relay_id_str1[0], relay_id_data1.size());
+    vector<uint8_t> relay_id_data1 = createFromString(DUID6[1]);
     DUID relay_id1(relay_id_data1);
-    string relay_id_str2 = DUID6[2];
-    vector<uint8_t> relay_id_data2;
-    relay_id_data2.resize(relay_id_str2.size());
-    memmove(&relay_id_data2[0], &relay_id_str2[0], relay_id_data2.size());
+    vector<uint8_t> relay_id_data2 = createFromString(DUID6[2]);
     DUID relay_id2(relay_id_data2);
 
     // Fill the table.
@@ -504,20 +494,11 @@ TEST_F(MemfileExtendedInfoTest, getLeases6ByRelayIdMultiThreading) {
     IOAddress link_addr5(ADDRESS6[5]);
     IOAddress link_addr6(ADDRESS6[6]);
     IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
-    string relay_id_str0 = DUID6[0];
-    vector<uint8_t> relay_id_data0;
-    relay_id_data0.resize(relay_id_str0.size());
-    memmove(&relay_id_data0[0], &relay_id_str0[0], relay_id_data0.size());
+    vector<uint8_t> relay_id_data0 = createFromString(DUID6[0]);
     DUID relay_id0(relay_id_data0);
-    string relay_id_str1 = DUID6[1];
-    vector<uint8_t> relay_id_data1;
-    relay_id_data1.resize(relay_id_str1.size());
-    memmove(&relay_id_data1[0], &relay_id_str1[0], relay_id_data1.size());
+    vector<uint8_t> relay_id_data1 = createFromString(DUID6[1]);
     DUID relay_id1(relay_id_data1);
-    string relay_id_str2 = DUID6[2];
-    vector<uint8_t> relay_id_data2;
-    relay_id_data2.resize(relay_id_str2.size());
-    memmove(&relay_id_data2[0], &relay_id_str2[0], relay_id_data2.size());
+    vector<uint8_t> relay_id_data2 = createFromString(DUID6[2]);
     DUID relay_id2(relay_id_data2);
 
     // Fill the table.
@@ -654,18 +635,9 @@ TEST_F(MemfileExtendedInfoTest, getLeases6ByRemoteId) {
     IOAddress link_addr5(ADDRESS6[5]);
     IOAddress link_addr6(ADDRESS6[6]);
     IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
-    string remote_id_str0 = DUID6[0];
-    vector<uint8_t> remote_id0;
-    remote_id0.resize(remote_id_str0.size());
-    memmove(&remote_id0[0], &remote_id_str0[0], remote_id0.size());
-    string remote_id_str1 = DUID6[1];
-    vector<uint8_t> remote_id1;
-    remote_id1.resize(remote_id_str1.size());
-    memmove(&remote_id1[0], &remote_id_str1[0], remote_id1.size());
-    string remote_id_str2 = DUID6[2];
-    vector<uint8_t> remote_id2;
-    remote_id2.resize(remote_id_str2.size());
-    memmove(&remote_id2[0], &remote_id_str2[0], remote_id2.size());
+    vector<uint8_t> remote_id0 = createFromString(DUID6[0]);
+    vector<uint8_t> remote_id1 = createFromString(DUID6[1]);
+    vector<uint8_t> remote_id2 = createFromString(DUID6[2]);
 
     // Fill the table.
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr0,
@@ -802,18 +774,9 @@ TEST_F(MemfileExtendedInfoTest, getLeases6ByRemoteIdMultiThreading) {
     IOAddress link_addr5(ADDRESS6[5]);
     IOAddress link_addr6(ADDRESS6[6]);
     IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
-    string remote_id_str0 = DUID6[0];
-    vector<uint8_t> remote_id0;
-    remote_id0.resize(remote_id_str0.size());
-    memmove(&remote_id0[0], &remote_id_str0[0], remote_id0.size());
-    string remote_id_str1 = DUID6[1];
-    vector<uint8_t> remote_id1;
-    remote_id1.resize(remote_id_str1.size());
-    memmove(&remote_id1[0], &remote_id_str1[0], remote_id1.size());
-    string remote_id_str2 = DUID6[2];
-    vector<uint8_t> remote_id2;
-    remote_id2.resize(remote_id_str2.size());
-    memmove(&remote_id2[0], &remote_id_str2[0], remote_id2.size());
+    vector<uint8_t> remote_id0 = createFromString(DUID6[0]);
+    vector<uint8_t> remote_id1 = createFromString(DUID6[1]);
+    vector<uint8_t> remote_id2 = createFromString(DUID6[2]);
 
     // Fill the table.
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr0,
