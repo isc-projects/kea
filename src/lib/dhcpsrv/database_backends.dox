@@ -131,8 +131,8 @@
     and RADIUS) must return an empty collection (so not contributing
     to the final result) from all methods returning collections.
     Of course the core code must not use these methods with these backends
-    but there are some callers outside the code, e.g. the host commands
-    hook library.
+    but there are some callers outside the server core code, e.g. the
+    host commands hook library.
 
   @subsection dhcpdb-caching Caching
 
