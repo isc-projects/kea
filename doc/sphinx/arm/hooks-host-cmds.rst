@@ -689,8 +689,7 @@ an error. Here are some examples of possible results:
 
 .. note::
 
-   Host backends which do not support host collections as the host cache
-   and radius do not contribute to commands returning a collection as
-   ``reservation-get-all``. For instance these commands can't be used
-   to retrieve the content of the host cache: commands returning one
-   host entry or dedicated host cache commands should be used instead.
+   The host cache and RADIUS hook libraries are two host backends that do not
+   contribute to commands returning a collection of host reservations, such as
+   ``reservation-get-all``. Commands returning one host entry or dedicated host
+   cache commands should be used instead.

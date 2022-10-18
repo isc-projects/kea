@@ -128,10 +128,10 @@
     For subnet ID and identifier negative caching is optionally supported.
 
   - host backends which do not support host collection (as host cache
-    and radius) must return an empty collection (so not contributing
+    and RADIUS) must return an empty collection (so not contributing
     to the final result) from all methods returning collections.
     Of course the core code must not use these methods with these backends
-    but there are some callers outside the code code, e.g. the host cmds
+    but there are some callers outside the code, e.g. the host commands
     hook library.
 
   @subsection dhcpdb-caching Caching
