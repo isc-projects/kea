@@ -797,11 +797,11 @@ a normal operation during client shutdown. The first argument includes the
 client and transaction identification information. The second argument includes
 the released IPv4 address.
 
-% DHCP4_RELEASE_DELETED %1: address %2 was properly deleted on release.
-This informational message indicates that an address was properly deleted on
-release. It is a normal operation during client shutdown. The first argument
-includes the client and transaction identification information. The second
-argument includes the released IPv4 address.
+% DHCP4_RELEASE_DELETED %1: address %2 was deleted on release.
+This informational message indicates that an address was deleted on release. It
+is a normal operation during client shutdown. The first argument includes the
+client and transaction identification information. The second argument includes
+the released IPv4 address.
 
 % DHCP4_RELEASE_EXCEPTION %1: while trying to release address %2 an exception occurred: %3
 This message is output when an error was encountered during an attempt

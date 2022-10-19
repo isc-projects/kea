@@ -172,7 +172,7 @@ public:
         StatsMgr::instance().removeAll();
     }
 
-    /// @brief creates an option with specified option code
+    /// @brief creates an option with specified option code.
     ///
     /// This method is static, because it is used from callouts
     /// that do not have a pointer to HooksDhcpv4SrvTest object
@@ -199,7 +199,7 @@ public:
     /// Pkt4 object.
     ///
     /// @return pointer to allocated Pkt4 object
-    // Returns a vector containing a DHCPv4 packet header.
+    /// Returns a vector containing a DHCPv4 packet header.
     Pkt4Ptr
     generateSimpleDiscover() {
 
@@ -264,7 +264,8 @@ public:
         EXPECT_TRUE(callout_handle->getArgumentNames().empty());
     }
 
-    /// Test callback that stores received callout name and pkt4 value
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -282,11 +283,12 @@ public:
         return (0);
     }
 
-    /// Test callback that changes hwaddr value
+    /// @brief Test callback that changes hwaddr value.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer4_receive_change_hwaddr(CalloutHandle& callout_handle) {
+    buffer4_receive_change_hwaddr_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
@@ -302,11 +304,12 @@ public:
         return buffer4_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer4_receive_skip(CalloutHandle& callout_handle) {
+    buffer4_receive_skip_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
@@ -314,11 +317,12 @@ public:
         return buffer4_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer4_receive_drop(CalloutHandle& callout_handle) {
+    buffer4_receive_drop_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
@@ -326,7 +330,8 @@ public:
         return buffer4_receive_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and pkt4 value
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -344,11 +349,12 @@ public:
         return (0);
     }
 
-    /// Test callback that changes client-id value
+    /// @brief Test callback that changes client-id value.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt4_receive_change_clientid(CalloutHandle& callout_handle) {
+    pkt4_receive_change_clientid_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
@@ -363,11 +369,12 @@ public:
         return pkt4_receive_callout(callout_handle);
     }
 
-    /// Test callback that deletes client-id
+    /// @brief Test callback that deletes client-id.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt4_receive_delete_clientid(CalloutHandle& callout_handle) {
+    pkt4_receive_delete_clientid_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
@@ -381,11 +388,12 @@ public:
         return pkt4_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt4_receive_skip(CalloutHandle& callout_handle) {
+    pkt4_receive_skip_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
@@ -396,11 +404,12 @@ public:
         return pkt4_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt4_receive_drop(CalloutHandle& callout_handle) {
+    pkt4_receive_drop_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
@@ -411,7 +420,8 @@ public:
         return pkt4_receive_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and pkt4 value
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -435,11 +445,12 @@ public:
         return (0);
     }
 
-    // Test callback that changes server-id
+    /// @brief Test callback that changes server-id.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt4_send_change_serverid(CalloutHandle& callout_handle) {
+    pkt4_send_change_serverid_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("response4", pkt);
@@ -454,11 +465,12 @@ public:
         return pkt4_send_callout(callout_handle);
     }
 
-    /// Test callback that deletes server-id
+    /// @brief Test callback that deletes server-id.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt4_send_delete_serverid(CalloutHandle& callout_handle) {
+    pkt4_send_delete_serverid_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("response4", pkt);
@@ -470,11 +482,12 @@ public:
         return pkt4_send_callout(callout_handle);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt4_send_skip(CalloutHandle& callout_handle) {
+    pkt4_send_skip_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("response4", pkt);
@@ -485,11 +498,12 @@ public:
         return pkt4_send_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt4_send_drop(CalloutHandle& callout_handle) {
+    pkt4_send_drop_callout(CalloutHandle& callout_handle) {
 
         Pkt4Ptr pkt;
         callout_handle.getArgument("response4", pkt);
@@ -500,7 +514,8 @@ public:
         return pkt4_send_callout(callout_handle);
     }
 
-    /// Test callback that stores response packet.
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework.
     /// @return always 0
     static int
@@ -518,7 +533,8 @@ public:
         return (0);
     }
 
-    /// Test callback changes the output buffer to a hardcoded value
+    /// @brief Test callback changes the output buffer to a hardcoded value.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -534,11 +550,12 @@ public:
         return (0);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer4_send_skip(CalloutHandle& callout_handle) {
+    buffer4_send_skip_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
@@ -546,11 +563,12 @@ public:
         return buffer4_send_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer4_send_drop(CalloutHandle& callout_handle) {
+    buffer4_send_drop_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
@@ -558,7 +576,8 @@ public:
         return buffer4_send_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and subnet4 values
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -578,11 +597,12 @@ public:
         return (0);
     }
 
-    /// Test callback that picks the other subnet if possible.
+    /// @brief Test callback that picks the other subnet if possible.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    subnet4_select_different_subnet(CalloutHandle& callout_handle) {
+    subnet4_select_different_subnet_callout(CalloutHandle& callout_handle) {
 
         // Call the basic callout to record all passed values
         subnet4_select_callout(callout_handle);
@@ -601,11 +621,12 @@ public:
         return (0);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    subnet4_select_skip(CalloutHandle& callout_handle) {
+    subnet4_select_skip_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
@@ -613,11 +634,12 @@ public:
         return subnet4_select_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    subnet4_select_drop(CalloutHandle& callout_handle) {
+    subnet4_select_drop_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
@@ -625,7 +647,8 @@ public:
         return subnet4_select_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and subnet4 values
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -647,7 +670,8 @@ public:
         return (0);
     }
 
-    /// Test callback that sets the skip flag
+    /// @brief Test callback that sets the skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -659,7 +683,8 @@ public:
         return (0);
     }
 
-    /// Test callback that stores received callout name passed parameters
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -678,11 +703,12 @@ public:
         return (0);
     }
 
-    /// Test callback that sets the skip flag
+    /// @brief Test callback that sets the skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease4_release_skip(CalloutHandle& callout_handle) {
+    lease4_release_skip_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease4_release");
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
@@ -690,11 +716,12 @@ public:
         return (0);
     }
 
-    /// Test callback that sets the drop flag
+    /// @brief Test callback that sets the drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease4_release_drop(CalloutHandle& callout_handle) {
+    lease4_release_drop_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease4_release");
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
@@ -702,7 +729,7 @@ public:
         return (0);
     }
 
-    /// Test lease4_decline callback that stores received parameters.
+    /// @brief Test callback that stores callout name and passed parameters.
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -719,29 +746,32 @@ public:
         return (0);
     }
 
-    /// Test lease4_decline callback that sets next step to SKIP.
+    /// @brief Test callback that sets the skip flag.
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease4_decline_skip(CalloutHandle& callout_handle) {
+    lease4_decline_skip_callout(CalloutHandle& callout_handle) {
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (lease4_decline_callout(callout_handle));
     }
 
-    /// Test lease4_decline callback that sets next step to DROP.
+    /// @brief Test callback that sets the drop flag.
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease4_decline_drop(CalloutHandle& callout_handle) {
+    lease4_decline_drop_callout(CalloutHandle& callout_handle) {
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
         return (lease4_decline_callout(callout_handle));
     }
 
-    /// Test callback that stores values passed to leases4_committed.
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     leases4_committed_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("leases4_committed");
@@ -770,19 +800,26 @@ public:
         return (0);
     }
 
+    /// @brief Test callback which asks the server to unpark the packet.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static void
-    leases4_committed_unpark(ParkingLotHandlePtr parking_lot, Pkt4Ptr query) {
+    leases4_committed_unpark_callout(ParkingLotHandlePtr parking_lot, Pkt4Ptr query) {
         parking_lot->unpark(query);
     }
 
-    /// Test callback which asks the server to park the packet.
+    /// @brief Test callback which asks the server to park the packet.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     leases4_committed_park_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("leases4_committed");
 
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
-        io_service_->post(std::bind(&HooksDhcpv4SrvTest::leases4_committed_unpark,
+        io_service_->post(std::bind(&HooksDhcpv4SrvTest::leases4_committed_unpark_callout,
                                     callout_handle.getParkingLotHandlePtr(),
                                     callback_qry_pkt4_));
 
@@ -811,7 +848,7 @@ public:
         return (0);
     }
 
-    /// @brief Test host4_identifier callback by setting identifier to "foo"
+    /// @brief Test host4_identifier callback by setting identifier to "foo".
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -838,7 +875,7 @@ public:
         return (0);
     }
 
-    /// @brief Test host4_identifier callout by setting identifier to hwaddr
+    /// @brief Test host4_identifier callout by setting identifier to hwaddr.
     ///
     /// This callout always returns fixed HWADDR: 00:01:02:03:04:05
     ///
@@ -902,7 +939,7 @@ public:
     /// Pointer to the IO service used in the tests.
     static IOServicePtr io_service_;
 
-    // The following fields are used in testing pkt4_receive_callout
+    /// The following fields are used in testing pkt4_receive_callout
 
     /// String name of the received callout
     static string callback_name_;
@@ -1046,7 +1083,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
 
     // Install callback that modifies MAC addr of incoming packet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer4_receive", buffer4_receive_change_hwaddr));
+                        "buffer4_receive", buffer4_receive_change_hwaddr_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1088,7 +1125,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
 
     // Install buffer4_receive_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer4_receive", buffer4_receive_skip));
+                        "buffer4_receive", buffer4_receive_skip_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1117,7 +1154,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveDrop) {
 
     // Install buffer4_receive_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer4_receive", buffer4_receive_drop));
+                        "buffer4_receive", buffer4_receive_drop_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1190,7 +1227,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveValueChange) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt4_receive", pkt4_receive_change_clientid));
+                        "pkt4_receive", pkt4_receive_change_clientid_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1231,7 +1268,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
 
     // Install pkt4_receive_delete_clientid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt4_receive", pkt4_receive_delete_clientid));
+                        "pkt4_receive", pkt4_receive_delete_clientid_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1260,7 +1297,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
 
     // Install pkt4_receive_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt4_receive", pkt4_receive_skip));
+                        "pkt4_receive", pkt4_receive_skip_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1289,7 +1326,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDrop) {
 
     // Install pkt4_receive_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt4_receive", pkt4_receive_drop));
+                        "pkt4_receive", pkt4_receive_drop_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1370,7 +1407,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
 
     // Install pkt4_send_change_serverid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt4_send", pkt4_send_change_serverid));
+                        "pkt4_send", pkt4_send_change_serverid_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1412,7 +1449,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
 
     // Install pkt4_send_delete_serverid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt4_send", pkt4_send_delete_serverid));
+                        "pkt4_send", pkt4_send_delete_serverid_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1448,7 +1485,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSkip) {
 
     // Install pkt4_send_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt4_send", pkt4_send_skip));
+                        "pkt4_send", pkt4_send_skip_callout));
 
     // Let's create a simple REQUEST
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1484,7 +1521,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDrop) {
 
     // Install pkt4_send_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt4_send", pkt4_send_drop));
+                        "pkt4_send", pkt4_send_drop_callout));
 
     // Let's create a simple REQUEST
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1591,7 +1628,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
 
     // Install buffer4_send_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer4_send", buffer4_send_skip));
+                        "buffer4_send", buffer4_send_skip_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1623,7 +1660,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendDrop) {
 
     // Install buffer4_send_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer4_send", buffer4_send_drop));
+                        "buffer4_send", buffer4_send_drop_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -1767,7 +1804,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
 
     // Install subnet4_select_different_subnet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "subnet4_select", subnet4_select_different_subnet));
+                        "subnet4_select", subnet4_select_different_subnet_callout));
 
     // Prepare discover packet. Server should select first subnet for it
     Pkt4Ptr discover = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
@@ -1810,7 +1847,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectDrop) {
 
     // Install subnet4_select_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "subnet4_select", subnet4_select_drop));
+                        "subnet4_select", subnet4_select_drop_callout));
 
     // Let's create a simple DISCOVER
     Pkt4Ptr discover = generateSimpleDiscover();
@@ -2340,9 +2377,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
+                              client_id_->getDuid().size(), temp_valid,
+                              temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
@@ -2427,9 +2464,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleNoDelete) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
+                              client_id_->getDuid().size(), temp_valid,
+                              temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
@@ -2504,7 +2541,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 
     // Install lease4_release_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_release", lease4_release_skip));
+                        "lease4_release", lease4_release_skip_callout));
 
     // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
@@ -2515,9 +2552,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
+                              client_id_->getDuid().size(), temp_valid,
+                              temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
@@ -2616,7 +2653,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
 
     // Install lease4_release_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_release", lease4_release_drop));
+                        "lease4_release", lease4_release_drop_callout));
 
     // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
@@ -2627,9 +2664,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
+                              client_id_->getDuid().size(), temp_valid,
+                              temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
@@ -2728,7 +2765,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4DeclineSkip) {
 
     // Install lease4_decline_skip callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_decline", lease4_decline_skip));
+                        "lease4_decline", lease4_decline_skip_callout));
 
     HooksManager::setTestMode(true);
 
@@ -2778,7 +2815,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4DeclineDrop) {
 
     // Install lease4_decline_drop callout. It will set the status to drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease4_decline", lease4_decline_drop));
+                        "lease4_decline", lease4_decline_drop_callout));
 
     HooksManager::setTestMode(true);
 

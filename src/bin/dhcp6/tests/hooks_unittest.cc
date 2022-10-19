@@ -209,7 +209,8 @@ public:
         EXPECT_TRUE(callout_handle->getArgumentNames().empty());
     }
 
-    /// Test callback that stores received callout name and pkt6 value
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -227,11 +228,12 @@ public:
         return (0);
     }
 
-    /// Test callback that changes client-id value
+    /// @brief Test callback that changes client-id value.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt6_receive_change_clientid(CalloutHandle& callout_handle) {
+    pkt6_receive_change_clientid_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
@@ -246,11 +248,12 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    /// Test callback that deletes client-id
+    /// @brief Test callback that deletes client-id.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt6_receive_delete_clientid(CalloutHandle& callout_handle) {
+    pkt6_receive_delete_clientid_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
@@ -262,11 +265,12 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt6_receive_skip(CalloutHandle& callout_handle) {
+    pkt6_receive_skip_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
@@ -277,11 +281,12 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt6_receive_drop(CalloutHandle& callout_handle) {
+    pkt6_receive_drop_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
@@ -292,7 +297,8 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and pkt6 value
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -310,11 +316,12 @@ public:
         return (0);
     }
 
-    /// Test callback that changes first byte of client-id value
+    /// @brief Test callback that changes first byte of client-id value.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer6_receive_change_clientid(CalloutHandle& callout_handle) {
+    buffer6_receive_change_clientid_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
@@ -330,11 +337,12 @@ public:
         return buffer6_receive_callout(callout_handle);
     }
 
-    /// Test callback that deletes client-id
+    /// @brief Test callback that deletes client-id.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer6_receive_delete_clientid(CalloutHandle& callout_handle) {
+    buffer6_receive_delete_clientid_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
@@ -358,11 +366,12 @@ public:
         return buffer6_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer6_receive_skip(CalloutHandle& callout_handle) {
+    buffer6_receive_skip_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
@@ -370,11 +379,12 @@ public:
         return buffer6_receive_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer6_receive_drop(CalloutHandle& callout_handle) {
+    buffer6_receive_drop_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
@@ -382,7 +392,8 @@ public:
         return buffer6_receive_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and pkt6 value
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -406,11 +417,12 @@ public:
         return (0);
     }
 
-    // Test callback that changes server-id
+    /// @brief Test callback that changes server-id.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt6_send_change_serverid(CalloutHandle& callout_handle) {
+    pkt6_send_change_serverid_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("response6", pkt);
@@ -425,11 +437,12 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
-    /// Test callback that deletes server-id
+    /// @brief Test callback that deletes server-id.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt6_send_delete_serverid(CalloutHandle& callout_handle) {
+    pkt6_send_delete_serverid_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("response6", pkt);
@@ -441,11 +454,12 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt6_send_skip(CalloutHandle& callout_handle) {
+    pkt6_send_skip_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("response6", pkt);
@@ -456,11 +470,12 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    pkt6_send_drop(CalloutHandle& callout_handle) {
+    pkt6_send_drop_callout(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
         callout_handle.getArgument("response6", pkt);
@@ -471,7 +486,8 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
-    /// Test callback that stores response packet.
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework.
     /// @return always 0
     static int
@@ -489,11 +505,12 @@ public:
         return (0);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer6_send_skip(CalloutHandle& callout_handle) {
+    buffer6_send_skip_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
@@ -501,11 +518,12 @@ public:
         return buffer6_send_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    buffer6_send_drop(CalloutHandle& callout_handle) {
+    buffer6_send_drop_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
@@ -513,7 +531,8 @@ public:
         return buffer6_send_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and subnet6 values
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -533,11 +552,12 @@ public:
         return (0);
     }
 
-    /// Test callback that picks the other subnet if possible.
+    /// @brief Test callback that picks the other subnet if possible.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    subnet6_select_different_subnet(CalloutHandle& callout_handle) {
+    subnet6_select_different_subnet_callout(CalloutHandle& callout_handle) {
 
         // Call the basic callout to record all passed values
         subnet6_select_callout(callout_handle);
@@ -556,11 +576,12 @@ public:
         return (0);
     }
 
-    /// Test callback that sets skip flag
+    /// @brief Test callback that sets skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    subnet6_select_skip(CalloutHandle& callout_handle) {
+    subnet6_select_skip_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
@@ -568,11 +589,12 @@ public:
         return subnet6_select_callout(callout_handle);
     }
 
-    /// Test callback that sets drop flag
+    /// @brief Test callback that sets drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    subnet6_select_drop(CalloutHandle& callout_handle) {
+    subnet6_select_drop_callout(CalloutHandle& callout_handle) {
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
@@ -580,7 +602,8 @@ public:
         return subnet6_select_callout(callout_handle);
     }
 
-    /// Test callback that stores received callout name and subnet6 values
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -606,12 +629,14 @@ public:
     static const uint32_t override_preferred_;
     static const uint32_t override_valid_;
 
-    /// Test callback that overrides received lease. It updates
-    /// T1, T2, preferred and valid lifetimes
+    /// @brief Test callback that overrides received lease.
+    ///
+    /// It updates T1, T2, preferred and valid lifetimes
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease6_renew_update(CalloutHandle& callout_handle) {
+    lease6_renew_update_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_renew");
 
         callout_handle.getArgument("query6", callback_qry_pkt6_);
@@ -634,7 +659,8 @@ public:
         return (0);
     }
 
-    /// Test callback that sets the skip flag
+    /// @brief Test callback that sets the skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -646,7 +672,8 @@ public:
         return (0);
     }
 
-    /// Test callback that stores received callout name and pkt6 value
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -666,12 +693,14 @@ public:
         return (0);
     }
 
-    /// Test callback that overrides received lease. It updates
-    /// T1, T2, preferred and valid lifetimes
+    /// @brief Test callback that overrides received lease.
+    ///
+    /// It updates T1, T2, preferred and valid lifetimes
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease6_rebind_update(CalloutHandle& callout_handle) {
+    lease6_rebind_update_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_rebind");
 
         callout_handle.getArgument("query6", callback_qry_pkt6_);
@@ -694,18 +723,18 @@ public:
         return (0);
     }
 
-    /// Lease6_rebind callout that sets status to SKIP
+    /// @brief Test callback that sets the skip flag.
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease6_rebind_skip(CalloutHandle& callout_handle) {
+    lease6_rebind_skip_callout(CalloutHandle& callout_handle) {
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (lease6_rebind_callout(callout_handle));
     }
 
-    /// Lease6_rebind callout that sets status to DROP
+    /// @brief Test callback that sets the drop flag.
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -716,7 +745,8 @@ public:
         return (lease6_rebind_callout(callout_handle));
     }
 
-    /// Test callback that stores received callout name passed parameters
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -735,11 +765,12 @@ public:
         return (0);
     }
 
-    /// Test callback that sets the skip flag
+    /// @brief Test callback that sets the skip flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease6_release_skip(CalloutHandle& callout_handle) {
+    lease6_release_skip_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_release");
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
@@ -747,11 +778,12 @@ public:
         return (0);
     }
 
-    /// Test callback that sets the drop flag
+    /// @brief Test callback that sets the drop flag.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease6_release_drop(CalloutHandle& callout_handle) {
+    lease6_release_drop_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_release");
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
@@ -759,7 +791,7 @@ public:
         return (0);
     }
 
-    /// Test lease6_decline callback that stores received parameters.
+    /// @brief Test callback that stores callout name and passed parameters.
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -776,29 +808,32 @@ public:
         return (0);
     }
 
-    /// Test lease6_decline callback that sets next step to SKIP.
+    /// @brief Test callback that sets the skip flag.
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease6_decline_skip(CalloutHandle& callout_handle) {
+    lease6_decline_skip_callout(CalloutHandle& callout_handle) {
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (lease6_decline_callout(callout_handle));
     }
 
-    /// Test lease6_decline callback that sets next step to DROP.
+    /// @brief Test callback that sets the drop flag.
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
-    lease6_decline_drop(CalloutHandle& callout_handle) {
+    lease6_decline_drop_callout(CalloutHandle& callout_handle) {
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
         return (lease6_decline_callout(callout_handle));
     }
 
-    /// Test callback that stores values passed to leases6_committed.
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     leases6_committed_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("leases6_committed");
@@ -819,12 +854,19 @@ public:
         return (0);
     }
 
+    /// @brief Test callback which asks the server to unpark the packet.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static void
     leases6_committed_unpark(ParkingLotHandlePtr parking_lot, Pkt6Ptr query) {
         parking_lot->unpark(query);
     }
 
-    /// Test callback which asks the server to park the packet.
+    /// @brief Test callback which asks the server to park the packet.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     leases6_committed_park_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("leases6_committed");
@@ -852,7 +894,7 @@ public:
         return (0);
     }
 
-    /// @brief Test host6_identifier callback by setting identifier to "foo"
+    /// @brief Test host6_identifier callback by setting identifier to "foo".
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -879,7 +921,7 @@ public:
         return (0);
     }
 
-    /// @brief Test host6_identifier callout by setting identifier to hwaddr
+    /// @brief Test host6_identifier callout by setting identifier to hwaddr.
     ///
     /// This callout always returns fixed HWADDR: 00:01:02:03:04:05
     ///
@@ -1089,7 +1131,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveValueChange) {
 
     // Install buffer6_receive_change_clientid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer6_receive", buffer6_receive_change_clientid));
+                        "buffer6_receive", buffer6_receive_change_clientid_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1129,7 +1171,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDeleteClientId) {
 
     // Install buffer6_receive_delete_clientid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer6_receive", buffer6_receive_delete_clientid));
+                        "buffer6_receive", buffer6_receive_delete_clientid_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1156,7 +1198,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSkip) {
 
     // Install buffer6_receive_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer6_receive", buffer6_receive_skip));
+                        "buffer6_receive", buffer6_receive_skip_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1183,7 +1225,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDrop) {
 
     // Install buffer6_receive_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer6_receive", buffer6_receive_drop));
+                        "buffer6_receive", buffer6_receive_drop_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1252,7 +1294,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveValueChange) {
 
     // Install pkt6_receive_change_clientid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt6_receive", pkt6_receive_change_clientid));
+                        "pkt6_receive", pkt6_receive_change_clientid_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1291,7 +1333,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDeleteClientId) {
 
     // Install pkt6_receive_delete_clientid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt6_receive", pkt6_receive_delete_clientid));
+                        "pkt6_receive", pkt6_receive_delete_clientid_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1318,7 +1360,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSkip) {
 
     // Install pkt6_receive_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt6_receive", pkt6_receive_skip));
+                        "pkt6_receive", pkt6_receive_skip_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1345,7 +1387,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDrop) {
 
     // Install pkt6_receive_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt6_receive", pkt6_receive_drop));
+                        "pkt6_receive", pkt6_receive_drop_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1420,7 +1462,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendValueChange) {
 
     // Install pkt6_send_change_serverid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt6_send", pkt6_send_change_serverid));
+                        "pkt6_send", pkt6_send_change_serverid_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1460,7 +1502,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendDeleteServerId) {
 
     // Install pkt6_send_delete_serverid
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt6_send", pkt6_send_delete_serverid));
+                        "pkt6_send", pkt6_send_delete_serverid_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1494,7 +1536,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSkip) {
 
     // Install pkt6_send_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt6_send", pkt6_send_skip));
+                        "pkt6_send", pkt6_send_skip_callout));
 
     // Let's create a simple REQUEST
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1528,7 +1570,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendDrop) {
 
     // Install pkt6_send_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "pkt6_send", pkt6_send_drop));
+                        "pkt6_send", pkt6_send_drop_callout));
 
     // Let's create a simple REQUEST
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1597,7 +1639,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendSkip) {
 
     // Install buffer6_send_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer6_send", buffer6_send_skip));
+                        "buffer6_send", buffer6_send_skip_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1627,7 +1669,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendDrop) {
 
     // Install buffer6_send_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "buffer6_send", buffer6_send_drop));
+                        "buffer6_send", buffer6_send_drop_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -1775,7 +1817,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
 
     // Install subnet6_select_different_subnet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "subnet6_select", subnet6_select_different_subnet));
+                        "subnet6_select", subnet6_select_different_subnet_callout));
 
     // Prepare solicit packet. Server should select first subnet for it
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
@@ -1829,7 +1871,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectDrop) {
 
     // Install subnet6_select_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "subnet6_select", subnet6_select_drop));
+                        "subnet6_select", subnet6_select_drop_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
@@ -3010,7 +3052,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewLeaseUpdate) {
 
     // Install lease6_renew_update
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease6_renew", lease6_renew_update));
+                        "lease6_renew", lease6_renew_update_callout));
 
     const IOAddress addr("2001:db8:1:1::cafe:babe");
     const uint32_t iaid = 234;
@@ -3889,7 +3931,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSkip) {
 
     // Install lease6_release_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease6_release", lease6_release_skip));
+                        "lease6_release", lease6_release_skip_callout));
 
     const IOAddress addr("2001:db8:1:1::cafe:babe");
     const uint32_t iaid = 234;
@@ -3956,7 +3998,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseDrop) {
 
     // Install lease6_release_drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease6_release", lease6_release_drop));
+                        "lease6_release", lease6_release_drop_callout));
 
     const IOAddress addr("2001:db8:1:1::cafe:babe");
     const uint32_t iaid = 234;
@@ -4324,7 +4366,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindLeaseUpdate) {
 
     // Install lease6_rebind_update
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease6_rebind", lease6_rebind_update));
+                        "lease6_rebind", lease6_rebind_update_callout));
 
     const IOAddress addr("2001:db8:1:1::cafe:babe");
     const uint32_t iaid = 234;
@@ -4426,7 +4468,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindSkip) {
 
     // Install lease6_rebind_skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease6_rebind", lease6_rebind_skip));
+                        "lease6_rebind", lease6_rebind_skip_callout));
 
     const IOAddress addr("2001:db8:1:1::cafe:babe");
     const uint32_t iaid = 234;
@@ -4901,7 +4943,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
 
     // Install lease6_decline_skip callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease6_decline", lease6_decline_skip));
+                        "lease6_decline", lease6_decline_skip_callout));
 
     HooksManager::setTestMode(true);
 
@@ -4950,7 +4992,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
 
     // Install lease6_decline_drop callout. It will set the status to drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "lease6_decline", lease6_decline_drop));
+                        "lease6_decline", lease6_decline_drop_callout));
 
     HooksManager::setTestMode(true);
 

@@ -1519,7 +1519,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
 }
 
 // Test that when a release message is sent for a previously acquired lease,
-// DDNS updates are enabled that the server generates a NameChangeRequest
+// DDNS updates are enabled and the server generates a NameChangeRequest
 // to remove entries corresponding to the released (deleted) lease.
 TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
     IfaceMgrTestConfig test_config(true);
@@ -1567,7 +1567,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
 }
 
 // Test that when a release message is sent for a previously acquired lease,
-// DDNS updates are enabled that the server does not generate a NameChangeRequest
+// DDNS updates are enabled and the server does not generate a NameChangeRequest
 // to remove entries corresponding to the released (expired) lease.
 TEST_F(NameDhcpv4SrvTest, processRequestReleaseNoDelete) {
     IfaceMgrTestConfig test_config(true);

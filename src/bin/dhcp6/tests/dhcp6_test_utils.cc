@@ -845,7 +845,8 @@ Dhcpv6SrvTest::configure(const std::string& config,
                          const bool create_managers,
                          const bool test,
                          const bool disable_affinity) {
-    configure(config, srv_, commit, open_sockets, create_managers, test, disable_affinity);
+    configure(config, srv_, commit, open_sockets, create_managers, test,
+              disable_affinity);
 }
 
 void

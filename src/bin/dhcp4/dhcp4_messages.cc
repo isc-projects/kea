@@ -309,7 +309,7 @@ const char* values[] = {
     "DHCP4_QUERY_DATA", "%1, packet details: %2",
     "DHCP4_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
     "DHCP4_RELEASE", "%1: address %2 was released properly.",
-    "DHCP4_RELEASE_DELETED", "%1: address %2 was properly deleted on release.",
+    "DHCP4_RELEASE_DELETED", "%1: address %2 was deleted on release.",
     "DHCP4_RELEASE_EXCEPTION", "%1: while trying to release address %2 an exception occurred: %3",
     "DHCP4_RELEASE_EXPIRED", "%1: address %2 expired on release.",
     "DHCP4_RELEASE_FAIL", "%1: failed to remove lease for address %2",
