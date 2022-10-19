@@ -4050,7 +4050,7 @@ Extended lease information is also subject to configurable sanity checking.
 The parameter in the ``sanity-checks`` scope is named ``extended-info-checks``
 and supports these levels:
 
--  ``none`` - do no check nor upgrade. This level should be used on when
+-  ``none`` - do no check nor upgrade. This level should be used only when
    extended info is not used at all or when no badly formatted extended
    info, including using the old format, is expected.
 
@@ -4062,12 +4062,12 @@ and supports these levels:
    Lease Query hook library.
 
 -  ``pedantic`` - enforce full conformance to the format produced by the
-   Kea code, for instance no extra entries are allowed at the exception
+   Kea code, for instance no extra entries are allowed with the exception
    of ``comment``.
 
 .. note::
 
-   Currently this feature is currently implemented for the memfile
+   Currently this feature is implemented only for the memfile
    backend. The sanity check applies to the lease database in memory,
    not to the lease file, i.e. inconsistent leases will stay in the lease
    file.
