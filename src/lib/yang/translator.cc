@@ -49,26 +49,48 @@ TranslatorBasic::TranslatorBasic(Session session, const string& model)
 TranslatorBasic::~TranslatorBasic() {
 }
 
-ElementPtr
-TranslatorBasic::value(optional<DataNode> data_node) {
-    NodeType const node_type(data_node->schema().nodeType());
-    if (node_type == NodeType::Leaf || node_type == NodeType::Leaflist) {
-        DataNodeTerm const& leaf(data_node->asTerm());
-        Value const& v(leaf.value());
-        if (holds_alternative<string>(v) ||
-            holds_alternative<Enum>(v) ||
-            holds_alternative<IdentityRef>(v)) {
-            // Should be a string. Call create(). Should be slightly faster
-            // than wrapping value in double quotes and calling fromJSON().
-            return Element::create(string(leaf.valueStr()));
-        } else if (holds_alternative<Binary>(v)) {
-            return Element::create(decode64(string(leaf.valueStr())));
-        } else {
-            // This can be various types so defer to fromJSON().
-            return Element::fromJSON(string(leaf.valueStr()));
-        }
+void
+TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
+                                 const std::string& xpath,
+                                 const std::string& name) {
+    ConstElementPtr x = getItem(xpath + "/" + name);
+    if (x) {
+        storage->set(name, x);
     }
-    return ElementPtr();
+}
+
+void TranslatorBasic::checkAndSetLeaf(ConstElementPtr const& from,
+                                      string const& xpath,
+                                      string const& name,
+                                      LeafBaseType const type) {
+    ConstElementPtr const& x(from->get(name));
+    if (x) {
+        setItem(xpath + "/" + name, x, type);
+    }
+}
+
+void
+TranslatorBasic::delItem(const std::string& xpath) {
+    // TODO: Remove this if convenient. It is not strictly required and only done to detect
+    // missing schema nodes and throw an exception to keep old behavior.
+    try {
+        Context const& context(session_.getContext());
+        context.findPath(xpath);
+    } catch (libyang::Error const& ex) {
+        isc_throw(SysrepoError, "sysrepo error getting item at '" << xpath
+                  << "': " << ex.what());
+    }
+
+    try {
+        if (session_.getData(xpath)) {
+            session_.deleteItem(xpath);
+        }
+    } catch (sysrepo::Error const& ex) {
+        isc_throw(SysrepoError,
+                  "sysrepo error deleting item at '"
+                  << xpath << "': " << ex.what());
+    }
+    session_.applyChanges();
 }
 
 ElementPtr
@@ -125,6 +147,43 @@ TranslatorBasic::getItems(const string& xpath) {
     return getItem(xpath);
 }
 
+void
+TranslatorBasic::setItem(const string& xpath,
+                         ConstElementPtr elem,
+                         LeafBaseType type) {
+    optional<string> const s_val(value(elem, type));
+    try {
+        session_.setItem(xpath, s_val);
+    } catch (sysrepo::Error const& ex) {
+        isc_throw(SysrepoError,
+                  "sysrepo error setting item '" << elem->str()
+                  << "' at '" << xpath << "': " << ex.what());
+    }
+    session_.applyChanges();
+}
+
+ElementPtr
+TranslatorBasic::value(optional<DataNode> data_node) {
+    NodeType const node_type(data_node->schema().nodeType());
+    if (node_type == NodeType::Leaf || node_type == NodeType::Leaflist) {
+        DataNodeTerm const& leaf(data_node->asTerm());
+        Value const& v(leaf.value());
+        if (holds_alternative<string>(v) ||
+            holds_alternative<Enum>(v) ||
+            holds_alternative<IdentityRef>(v)) {
+            // Should be a string. Call create(). Should be slightly faster
+            // than wrapping value in double quotes and calling fromJSON().
+            return Element::create(string(leaf.valueStr()));
+        } else if (holds_alternative<Binary>(v)) {
+            return Element::create(decode64(string(leaf.valueStr())));
+        } else {
+            // This can be various types so defer to fromJSON().
+            return Element::fromJSON(string(leaf.valueStr()));
+        }
+    }
+    return ElementPtr();
+}
+
 optional<string>
 TranslatorBasic::value(ConstElementPtr const& element,
                        LeafBaseType const type) {
@@ -161,64 +220,6 @@ TranslatorBasic::value(ConstElementPtr const& element,
         // general string representation of ElementPtr.
         return element->str();
     }
-}
-
-void
-TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
-                         LeafBaseType type) {
-    optional<string> const s_val(value(elem, type));
-    try {
-        session_.setItem(xpath, s_val);
-    } catch (sysrepo::Error const& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting item '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
-    }
-    session_.applyChanges();
-}
-
-void
-TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
-                                 const std::string& xpath,
-                                 const std::string& name) {
-    ConstElementPtr x = getItem(xpath + "/" + name);
-    if (x) {
-        storage->set(name, x);
-    }
-}
-
-void TranslatorBasic::checkAndSetLeaf(ConstElementPtr const& from,
-                                      string const& xpath,
-                                      string const& name,
-                                      LeafBaseType const type) {
-    ConstElementPtr const& x(from->get(name));
-    if (x) {
-        setItem(xpath + "/" + name, x, type);
-    }
-}
-
-void
-TranslatorBasic::delItem(const std::string& xpath) {
-    // TODO: Remove this if convenient. It is not strictly required and only done to detect
-    // missing schema nodes and throw an exception to keep old behavior.
-    try {
-        Context const& context(session_.getContext());
-        context.findPath(xpath);
-    } catch (libyang::Error const& ex) {
-        isc_throw(SysrepoError, "sysrepo error getting item at '" << xpath
-                  << "': " << ex.what());
-    }
-
-    try {
-        if (session_.getData(xpath)) {
-            session_.deleteItem(xpath);
-        }
-    } catch (sysrepo::Error const& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error deleting item at '"
-                  << xpath << "': " << ex.what());
-    }
-    session_.applyChanges();
 }
 
 }  // namespace yang

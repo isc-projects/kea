@@ -28,33 +28,6 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorBasic();
 
-    /// @brief Translate basic value from YANG to JSON.
-    ///
-    /// @note Please don't use this outside tests.
-    ///
-    /// @param s_val The value.
-    /// @return The Element representing the sysrepo value.
-    /// @throw NotImplemented when the value type is not supported.
-    static isc::data::ElementPtr value(std::optional<libyang::DataNode> s_val);
-
-    /// @brief Get and translate basic value from YANG to JSON.
-    ///
-    /// @note Should be const as it is read only...
-    ///
-    /// @param xpath The xpath of the basic value.
-    /// @return The Element representing the item at xpath or null
-    /// when not found.
-    /// @throw SysrepoError when sysrepo raises an error.
-    /// @throw NotImplemented when the value type is not supported.
-    isc::data::ElementPtr getItem(const std::string& xpath);
-
-    /// @brief Get and translate a list of basic values from YANG to JSON.
-    ///
-    /// @param xpath The xpath of the list of basic values.
-    /// @return The ListElement representing the leaf-list at xpath or
-    /// null when not found.
-    isc::data::ElementPtr getItems(const std::string& xpath);
-
     /// @brief Retrieves an item and stores it in the specified storage.
     ///
     /// This will attempt to retrieve an item and, if exists, will
@@ -66,24 +39,6 @@ public:
     void checkAndGetLeaf(isc::data::ElementPtr& storage,
                          const std::string& xpath,
                          const std::string& name);
-
-    /// @brief Translate basic value from JSON to YANG.
-    ///
-    /// @note Please don't use this outside tests.
-    ///
-    /// @param elem The JSON element.
-    /// @param type The sysrepo type.
-    static std::optional<std::string> value(isc::data::ConstElementPtr const& elem,
-                                            libyang::LeafBaseType const type);
-
-    /// @brief Translate and set basic value from JSON to YANG.
-    ///
-    /// @param xpath The xpath of the basic value.
-    /// @param elem The JSON element.
-    /// @param type The sysrepo type.
-    void setItem(const std::string& xpath, isc::data::ConstElementPtr elem,
-                 libyang::LeafBaseType type);
-
 
     /// @brief Get an element from given ElementPtr node and set it in sysrepo
     /// at given xpath.
@@ -97,7 +52,6 @@ public:
                          std::string const& xpath,
                          std::string const& name,
                          libyang::LeafBaseType const type);
-
 
     /// @brief Delete basic value from YANG.
     ///
@@ -124,6 +78,24 @@ public:
             }
         }
     }
+
+    /// @brief Get and translate basic value from YANG to JSON.
+    ///
+    /// @note Should be const as it is read only...
+    ///
+    /// @param xpath The xpath of the basic value.
+    /// @return The Element representing the item at xpath or null
+    /// when not found.
+    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NotImplemented when the value type is not supported.
+    isc::data::ElementPtr getItem(const std::string& xpath);
+
+    /// @brief Get and translate a list of basic values from YANG to JSON.
+    ///
+    /// @param xpath The xpath of the list of basic values.
+    /// @return The ListElement representing the leaf-list at xpath or
+    /// null when not found.
+    isc::data::ElementPtr getItems(const std::string& xpath);
 
     /// @brief Retrieve a list as ElementPtr from sysrepo from a certain xpath.
     ///
@@ -159,6 +131,33 @@ public:
                                         << xpath << "': " << ex.what());
         }
     }
+
+    /// @brief Translate and set basic value from JSON to YANG.
+    ///
+    /// @param xpath The xpath of the basic value.
+    /// @param elem The JSON element.
+    /// @param type The sysrepo type.
+    void setItem(const std::string& xpath,
+                 isc::data::ConstElementPtr elem,
+                 libyang::LeafBaseType type);
+
+    /// @brief Translate basic value from YANG to JSON.
+    ///
+    /// @note Please don't use this outside tests.
+    ///
+    /// @param s_val The value.
+    /// @return The Element representing the sysrepo value.
+    /// @throw NotImplemented when the value type is not supported.
+    static isc::data::ElementPtr value(std::optional<libyang::DataNode> s_val);
+
+    /// @brief Translate basic value from JSON to YANG.
+    ///
+    /// @note Please don't use this outside tests.
+    ///
+    /// @param elem The JSON element.
+    /// @param type The sysrepo type.
+    static std::optional<std::string> value(isc::data::ConstElementPtr const& elem,
+                                            libyang::LeafBaseType const type);
 
 protected:
     /// @brief The sysrepo session.
