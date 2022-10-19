@@ -27,45 +27,44 @@ TranslatorLogger::~TranslatorLogger() {
 }
 
 ElementPtr
-TranslatorLogger::getLogger(const string& xpath) {
+TranslatorLogger::getLogger(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
             (model_ == KEA_DHCP_DDNS) ||
             (model_ == KEA_CTRL_AGENT)) {
-            return (getLoggerKea(xpath));
+            return (getLoggerKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting logger at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting logger: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getLogger not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorLogger::getLoggerKea(const string& xpath) {
-    ConstElementPtr name = getItem(xpath + "/name");
+TranslatorLogger::getLoggerKea(DataNode const& data_node) {
+    ConstElementPtr name = getItem(data_node, "name");
     if (!name) {
         // Can't happen as name is the key.
-        isc_throw(Unexpected, "getLoggerKea requires name: " << xpath);
+        isc_throw(Unexpected, "getLoggerKea requires name: ");
     }
     ElementPtr result = Element::createMap();
     result->set("name", name);
-    ConstElementPtr options = getOutputOptions(xpath);
+    ConstElementPtr options = getOutputOptions(data_node);
     if (options && (options->size() > 0)) {
         result->set("output_options", options);
     }
-    ConstElementPtr severity = getItem(xpath + "/severity");
+    ConstElementPtr severity = getItem(data_node, "severity");
     if (severity) {
         result->set("severity", severity);
     }
-    ConstElementPtr debuglevel = getItem(xpath + "/debuglevel");
+    ConstElementPtr debuglevel = getItem(data_node, "debuglevel");
     if (debuglevel) {
         result->set("debuglevel", debuglevel);
     }
-    ConstElementPtr context = getItem(xpath + "/user-context");
+    ConstElementPtr context = getItem(data_node, "user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
@@ -73,27 +72,27 @@ TranslatorLogger::getLoggerKea(const string& xpath) {
 }
 
 ElementPtr
-TranslatorLogger::getOutputOption(const string& xpath) {
-    ConstElementPtr output = getItem(xpath + "/output");
+TranslatorLogger::getOutputOption(DataNode const& data_node) {
+    ConstElementPtr output = getItem(data_node, "output");
     if (!output) {
         // Can't happen as output is the key.
-        isc_throw(Unexpected, "getOutputOption requires (!output): " << xpath);
+        isc_throw(Unexpected, "getOutputOption requires (!output): ");
     }
     ElementPtr result = Element::createMap();
     result->set("output", output);
-    ConstElementPtr maxver = getItem(xpath + "/maxver");
+    ConstElementPtr maxver = getItem(data_node, "maxver");
     if (maxver) {
         result->set("maxver", maxver);
     }
-    ConstElementPtr maxsize = getItem(xpath + "/maxsize");
+    ConstElementPtr maxsize = getItem(data_node, "maxsize");
     if (maxsize) {
         result->set("maxsize", maxsize);
     }
-    ConstElementPtr flush = getItem(xpath + "/flush");
+    ConstElementPtr flush = getItem(data_node, "flush");
     if (flush) {
         result->set("flush", flush);
     }
-    ConstElementPtr pattern = getItem(xpath + "/pattern");
+    ConstElementPtr pattern = getItem(data_node, "pattern");
     if (pattern) {
         result->set("pattern", pattern);
     }
@@ -101,13 +100,13 @@ TranslatorLogger::getOutputOption(const string& xpath) {
 }
 
 ElementPtr
-TranslatorLogger::getOutputOptions(const string& xpath) {
-    return getList(xpath + "/output-option", *this,
+TranslatorLogger::getOutputOptions(DataNode const& data_node) {
+    return getList(data_node, "output-option", *this,
                    &TranslatorLogger::getOutputOption);
 }
 
 void
-TranslatorLogger::setLogger(const string& xpath, ConstElementPtr elem) {
+TranslatorLogger::setLogger(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
@@ -121,12 +120,12 @@ TranslatorLogger::setLogger(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting logger '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorLogger::setLoggerKea(const string& xpath, ConstElementPtr elem) {
+TranslatorLogger::setLoggerKea(string const& xpath, ConstElementPtr elem) {
     // Skip name as it is the key.
     ConstElementPtr options = elem->get("output_options");
     if (options && (options->size() > 0)) {
@@ -148,7 +147,7 @@ TranslatorLogger::setLoggerKea(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorLogger::setOutputOption(const string& xpath, ConstElementPtr elem) {
+TranslatorLogger::setOutputOption(string const& xpath, ConstElementPtr elem) {
     // Keys are set by setting the list itself.
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
@@ -171,7 +170,7 @@ TranslatorLogger::setOutputOption(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorLogger::setOutputOptions(const string& xpath, ConstElementPtr elem) {
+TranslatorLogger::setOutputOptions(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr option = elem->get(i);
         if (!option->contains("output")) {
@@ -194,31 +193,39 @@ TranslatorLoggers::~TranslatorLoggers() {
 }
 
 ConstElementPtr
-TranslatorLoggers::getLoggers(const string& xpath) {
+TranslatorLoggers::getLoggers(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
             (model_ == KEA_DHCP_DDNS) ||
             (model_ == KEA_CTRL_AGENT)) {
-            return (getLoggersKea(xpath));
+            return (getLoggersKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting loggeres at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting loggers: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getLoggers not implemented for the model: " << model_);
 }
 
+ConstElementPtr
+TranslatorLoggers::getLoggers(string const& xpath) {
+    try {
+        return getLoggers(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
 ElementPtr
-TranslatorLoggers::getLoggersKea(const string& xpath) {
-    return getList<TranslatorLogger>(xpath + "/logger", *this,
+TranslatorLoggers::getLoggersKea(DataNode const& data_node) {
+    return getList<TranslatorLogger>(data_node, "logger", *this,
                                      &TranslatorLogger::getLogger);
 }
 
 void
-TranslatorLoggers::setLoggers(const string& xpath, ConstElementPtr elem) {
+TranslatorLoggers::setLoggers(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
@@ -231,13 +238,13 @@ TranslatorLoggers::setLoggers(const string& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error setting loggeres '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  "sysrepo error setting loggers '" << elem->str()
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorLoggers::setLoggersKea(const string& xpath, ConstElementPtr elem) {
+TranslatorLoggers::setLoggersKea(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr logger = elem->get(i);
         if (!logger->contains("name")) {

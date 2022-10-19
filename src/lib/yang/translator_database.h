@@ -113,12 +113,28 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorDatabase();
 
-    /// @brief Get and translate a database access from YANG to JSON.
+    /// @brief Translate a database access from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the control socket
+    ///
+    /// @return the JSON representation of the database
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getDatabase(libyang::DataNode const& data_node);
+
+    /// @brief Translate a database access from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getDatabase(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of the database.
+    ///
     /// @return JSON representation of the database.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getDatabase(const std::string& xpath);
+    isc::data::ElementPtr getDatabase(std::string const& xpath);
 
     /// @brief Translate and set database access from JSON to YANG.
     ///
@@ -134,10 +150,12 @@ public:
 protected:
     /// @brief getDatabase JSON for kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of the database.
-    /// @return JSON representation of the database or null if none.
+    /// @param data_node the YANG node representing the database configuration
+    ///
+    /// @return JSON representation of the database
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getDatabaseKea(const std::string& xpath);
+    isc::data::ElementPtr getDatabaseKea(libyang::DataNode const& data_node);
 
     /// @brief setDatabase for kea-dhcp[46]-server models.
     ///
@@ -166,12 +184,30 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorDatabases();
 
-    /// @brief Get and translate database accesses from YANG to JSON.
+    /// @brief Translate database accesses from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the databases
+    /// @param xpath the xpath of databases relative to {data_node}
+    ///
+    /// @return the JSON representation of the list of databases
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getDatabases(libyang::DataNode const& data_node,
+                                       std::string const& xpath);
+
+    /// @brief Translate database accesses from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getDatabases(libyang::DataNode, std::string) as a scalable alternative.
     ///
     /// @param xpath The xpath of databases including the list name.
+    ///
     /// @return JSON representation of databases.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getDatabases(const std::string& xpath);
+    isc::data::ElementPtr getDatabases(std::string const& xpath);
 
     /// @brief Translate and set database accesses from JSON to YANG.
     ///
@@ -185,15 +221,20 @@ public:
 protected:
     /// @brief getDatabases JSON for kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of databases including the list name.
+    /// @param data_node the YANG node representing the databases
+    /// @param xpath the xpath of databases relative to {data_node}
+    ///
     /// @return JSON representation of databases.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getDatabasesKea(const std::string& xpath);
+    isc::data::ElementPtr getDatabasesKea(libyang::DataNode const& data_node,
+                                          std::string const& xpath);
 
     /// @brief setDatabases for kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of databases including the list name.
     /// @param elem The JSON element.
+    ///
     /// @throw BadValue on database without type,
     void setDatabasesKea(const std::string& xpath,
                          isc::data::ConstElementPtr elem);

@@ -28,50 +28,58 @@ TranslatorOptionData::~TranslatorOptionData() {
 }
 
 ElementPtr
-TranslatorOptionData::getOptionData(const string& xpath) {
+TranslatorOptionData::getOptionData(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getOptionDataKea(xpath));
+            return (getOptionDataKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting option data at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting option data:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getOptionData not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorOptionData::getOptionDataKea(const string& xpath) {
-    ConstElementPtr code = getItem(xpath + "/code");
-    ConstElementPtr space = getItem(xpath + "/space");
+TranslatorOptionData::getOptionData(string const& xpath) {
+    try {
+        return getOptionData(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorOptionData::getOptionDataKea(DataNode const& data_node) {
+    ConstElementPtr code = getItem(data_node, "code");
+    ConstElementPtr space = getItem(data_node, "space");
     if (!code || !space) {
         // Can't happen as code and space are the keys.
-        isc_throw(Unexpected, "getOptionDataKea requires code and space: "
-                  << xpath);
+        isc_throw(Unexpected, "getOptionDataKea requires code and space");
     }
     ElementPtr result = Element::createMap();
     result->set("code", code);
     result->set("space", space);
-    ConstElementPtr name = getItem(xpath + "/name");
+    ConstElementPtr name = getItem(data_node, "name");
     if (name) {
         result->set("name", name);
     }
-    ConstElementPtr data = getItem(xpath + "/data");
+    ConstElementPtr data = getItem(data_node, "data");
     if (data) {
         result->set("data", data);
     }
-    ConstElementPtr format = getItem(xpath + "/csv-format");
+    ConstElementPtr format = getItem(data_node, "csv-format");
     if (format) {
         result->set("csv-format", format);
     }
-    ConstElementPtr send = getItem(xpath + "/always-send");
+    ConstElementPtr send = getItem(data_node, "always-send");
     if (send) {
         result->set("always-send", send);
     }
-    ConstElementPtr context = getItem(xpath + "/user-context");
+    ConstElementPtr context = getItem(data_node, "user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
@@ -79,7 +87,7 @@ TranslatorOptionData::getOptionDataKea(const string& xpath) {
 }
 
 void
-TranslatorOptionData::setOptionData(const string& xpath,
+TranslatorOptionData::setOptionData(string const& xpath,
                                     ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
@@ -93,12 +101,12 @@ TranslatorOptionData::setOptionData(const string& xpath,
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting option data '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorOptionData::setOptionDataKea(const string& xpath,
+TranslatorOptionData::setOptionDataKea(string const& xpath,
                                        ConstElementPtr elem) {
     // Skip keys code and space.
     ConstElementPtr name = elem->get("name");
@@ -134,29 +142,38 @@ TranslatorOptionDataList::~TranslatorOptionDataList() {
 }
 
 ConstElementPtr
-TranslatorOptionDataList::getOptionDataList(const string& xpath) {
+TranslatorOptionDataList::getOptionDataList(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getOptionDataListKea(xpath));
+            return (getOptionDataListKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting option data list at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting option data list:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getOptionDataList not implemented for the model: " << model_);
 }
 
 ConstElementPtr
-TranslatorOptionDataList::getOptionDataListKea(const string& xpath) {
-    return getList<TranslatorOptionData>(xpath + "/option-data", *this,
+TranslatorOptionDataList::getOptionDataList(string const& xpath) {
+    try {
+        return getOptionDataList(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ConstElementPtr
+TranslatorOptionDataList::getOptionDataListKea(DataNode const& data_node) {
+    return getList<TranslatorOptionData>(data_node, "option-data", *this,
                                          &TranslatorOptionData::getOptionData);
 }
 
 void
-TranslatorOptionDataList::setOptionDataList(const string& xpath,
+TranslatorOptionDataList::setOptionDataList(string const& xpath,
                                             ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
@@ -170,12 +187,12 @@ TranslatorOptionDataList::setOptionDataList(const string& xpath,
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting option data list '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorOptionDataList::setOptionDataListKea(const string& xpath,
+TranslatorOptionDataList::setOptionDataListKea(string const& xpath,
                                                ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr option = elem->get(i);

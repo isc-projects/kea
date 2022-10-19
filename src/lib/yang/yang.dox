@@ -54,12 +54,6 @@ the basic / base class and recursively from translators for embedded parts.
     given xpath and all its descendants and calls the given function.
   - @c isc::yang::TranslatorBasic::getItem() retrieves and translates a leaf
     from YANG to JSON.
-  - @c isc::yang::TranslatorBasic::getItems() retrieves and translates a
-    leaf-list from YANG to JSON.
-    - TODO: starting with sysrepo v2, this function already defers to
-      @c isc::yang::TranslatorBasic::getItem().
-      Remove @c isc::yang::TranslatorBasic::getItems() and replace all calls
-      with @c isc::yang::TranslatorBasic::getItem().
   - @c isc::yang::TranslatorBasic::getList() retrieves a list from Sysrepo and
     translates it form YANG to JSON.
   - @c isc::yang::TranslatorBasic::setItem() translates a leaf from JSON to

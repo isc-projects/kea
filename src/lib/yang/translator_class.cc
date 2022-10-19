@@ -31,68 +31,77 @@ TranslatorClass::~TranslatorClass() {
 }
 
 ElementPtr
-TranslatorClass::getClass(const string& xpath) {
+TranslatorClass::getClass(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getClassKea(xpath));
+            return (getClassKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting client class at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting client class:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getClass not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorClass::getClassKea(const string& xpath) {
-    ConstElementPtr name = getItem(xpath + "/name");
+TranslatorClass::getClass(string const& xpath) {
+    try {
+        return getClass(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorClass::getClassKea(DataNode const& data_node) {
+    ConstElementPtr name = getItem(data_node, "name");
     if (!name) {
         // Can't happen as the name is the key.
-        isc_throw(Unexpected, "getClassKea requires name: " << xpath);
+        isc_throw(Unexpected, "getClassKea requires name");
     }
     ElementPtr result = Element::createMap();
     result->set("name", name);
-    ConstElementPtr test = getItem(xpath + "/test");
+    ConstElementPtr test = getItem(data_node, "test");
     if (test) {
         result->set("test", test);
     }
-    ConstElementPtr required = getItem(xpath + "/only-if-required");
+    ConstElementPtr required = getItem(data_node, "only-if-required");
     if (required) {
         result->set("only-if-required", required);
     }
-    ConstElementPtr options = getOptionDataList(xpath);
+    ConstElementPtr options = getOptionDataList(data_node);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
-    checkAndGetLeaf(result, xpath, "valid-lifetime");
-    checkAndGetLeaf(result, xpath, "min-valid-lifetime");
-    checkAndGetLeaf(result, xpath, "max-valid-lifetime");
+    checkAndGetLeaf(result, data_node, "valid-lifetime");
+    checkAndGetLeaf(result, data_node, "min-valid-lifetime");
+    checkAndGetLeaf(result, data_node, "max-valid-lifetime");
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr defs = getOptionDefList(xpath);
+        ConstElementPtr defs = getOptionDefList(data_node);
         if (defs && (defs->size() > 0)) {
             result->set("option-def", defs);
         }
-        ConstElementPtr next = getItem(xpath + "/next-server");
+        ConstElementPtr next = getItem(data_node, "next-server");
         if (next) {
             result->set("next-server", next);
         }
-        ConstElementPtr hostname = getItem(xpath + "/server-hostname");
+        ConstElementPtr hostname = getItem(data_node, "server-hostname");
         if (hostname) {
             result->set("server-hostname", hostname);
         }
-        ConstElementPtr boot = getItem(xpath + "/boot-file-name");
+        ConstElementPtr boot = getItem(data_node, "boot-file-name");
         if (boot) {
             result->set("boot-file-name", boot);
         }
     } else if (model_ == KEA_DHCP6_SERVER) {
-        checkAndGetLeaf(result, xpath, "preferred-lifetime");
-        checkAndGetLeaf(result, xpath, "min-preferred-lifetime");
-        checkAndGetLeaf(result, xpath, "max-preferred-lifetime");
+        checkAndGetLeaf(result, data_node, "preferred-lifetime");
+        checkAndGetLeaf(result, data_node, "min-preferred-lifetime");
+        checkAndGetLeaf(result, data_node, "max-preferred-lifetime");
     }
-    ConstElementPtr context = getItem(xpath + "/user-context");
+    ConstElementPtr context = getItem(data_node, "user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
@@ -100,7 +109,7 @@ TranslatorClass::getClassKea(const string& xpath) {
 }
 
 void
-TranslatorClass::setClass(const string& xpath, ConstElementPtr elem) {
+TranslatorClass::setClass(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
@@ -112,12 +121,12 @@ TranslatorClass::setClass(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting client class '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
+TranslatorClass::setClassKea(string const& xpath, ConstElementPtr elem) {
     // Keys are set by setting the list itself.
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
@@ -177,30 +186,39 @@ TranslatorClasses::TranslatorClasses(Session session, const string& model)
 TranslatorClasses::~TranslatorClasses() {
 }
 
-ConstElementPtr
-TranslatorClasses::getClasses(const string& xpath) {
+ElementPtr
+TranslatorClasses::getClasses(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getClassesKea(xpath));
+            return (getClassesKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting client classes at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting client classes:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getClasses not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorClasses::getClassesKea(const string& xpath) {
-    return getList<TranslatorClass>(xpath + "/client-class", *this,
+TranslatorClasses::getClasses(string const& xpath) {
+    try {
+        return getClasses(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorClasses::getClassesKea(DataNode const& data_node) {
+    return getList<TranslatorClass>(data_node, "client-class", *this,
                                     &TranslatorClass::getClass);
 }
 
 void
-TranslatorClasses::setClasses(const string& xpath, ConstElementPtr elem) {
+TranslatorClasses::setClasses(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
@@ -212,12 +230,12 @@ TranslatorClasses::setClasses(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting client classes '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorClasses::setClassesKea(const string& xpath, ConstElementPtr elem) {
+TranslatorClasses::setClassesKea(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr cclass = elem->get(i);
         if (!cclass->contains("name")) {

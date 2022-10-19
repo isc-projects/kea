@@ -85,13 +85,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorOptionData();
 
-    /// @brief Get and translate an option data from YANG to JSON.
+    /// @brief Translate an option data from YANG to JSON.
     ///
+    /// @param data_node the YANG node representing the option data
+    ///
+    /// @return the JSON representation of the option data
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getOptionData(libyang::DataNode const& data_node);
+
+    /// @brief Translate an option data from YANG to JSON.
     ///
     /// @param xpath The xpath of the option data.
+    ///
     /// @return JSON representation of the option data.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getOptionData(const std::string& xpath);
+    isc::data::ElementPtr getOptionData(std::string const& xpath);
 
     /// @brief Translate and set option data from JSON to YANG.
     ///
@@ -103,10 +113,12 @@ public:
 protected:
     /// @brief getOptionData JSON for kea-dhcp[46].
     ///
-    /// @param xpath The xpath of the option data.
+    /// @param data_node the YANG node representing the option data
+    ///
     /// @return JSON representation of the option data.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getOptionDataKea(const std::string& xpath);
+    isc::data::ElementPtr getOptionDataKea(libyang::DataNode const& data_node);
 
     /// @brief setOptionData for kea-dhcp[46].
     ///
@@ -133,11 +145,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorOptionDataList();
 
-    /// @brief Get and translate option data list from YANG to JSON.
+    /// @brief Translate option data list from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of option data
+    ///
+    /// @return the JSON representation of the list of option data
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ConstElementPtr getOptionDataList(libyang::DataNode const& data_node);
+
+    /// @brief Translate option data list from YANG to JSON.
     ///
     /// @param xpath The xpath of the option data list.
+    ///
+    /// @return the JSON representation of the list of option data
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getOptionDataList(const std::string& xpath);
+    isc::data::ConstElementPtr getOptionDataList(std::string const& xpath);
 
     /// @brief Translate and set option data list from JSON to YANG.
     ///
@@ -149,9 +173,10 @@ public:
 protected:
     /// @brief getOptionDataList for kea-dhcp[46].
     ///
-    /// @param xpath The xpath of the option data list.
+    /// @param data_node the YANG node representing the list of option data
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getOptionDataListKea(const std::string& xpath);
+    isc::data::ConstElementPtr getOptionDataListKea(libyang::DataNode const& data_node);
 
     /// @brief setOptionDataList for kea-dhcp[46].
     ///

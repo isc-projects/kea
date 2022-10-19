@@ -28,54 +28,61 @@ TranslatorOptionDef::~TranslatorOptionDef() {
 }
 
 ElementPtr
-TranslatorOptionDef::getOptionDef(const string& xpath) {
+TranslatorOptionDef::getOptionDef(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getOptionDefKea(xpath));
+            return (getOptionDefKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting option definition at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting option definition:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getOptionDef not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorOptionDef::getOptionDefKea(const string& xpath) {
-    ConstElementPtr code = getItem(xpath + "/code");
-    ConstElementPtr name = getItem(xpath + "/name");
-    ConstElementPtr type = getItem(xpath + "/type");
-    ConstElementPtr space = getItem(xpath + "/space");
+TranslatorOptionDef::getOptionDef(string const& xpath) {
+    try {
+        return getOptionDef(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorOptionDef::getOptionDefKea(DataNode const& data_node) {
+    ConstElementPtr code = getItem(data_node, "code");
+    ConstElementPtr name = getItem(data_node, "name");
+    ConstElementPtr type = getItem(data_node, "type");
+    ConstElementPtr space = getItem(data_node, "space");
     if (!code || !space) {
         // Can't happen as code and space are the keys.
-        isc_throw(Unexpected, "getOptionDefKea requires code and space: "
-                  << xpath);
+        isc_throw(Unexpected, "getOptionDefKea requires code and space");
     }
     if (!name || !type) {
-        isc_throw(BadValue, "getOptionDefKea requires name and type: "
-                  << xpath);
+        isc_throw(BadValue, "getOptionDefKea requires name and type");
     }
     ElementPtr result = Element::createMap();
     result->set("code", code);
     result->set("name", name);
     result->set("type", type);
-    result->set("space", getItem(xpath + "/space"));
-    ConstElementPtr record = getItem(xpath + "/record-types");
+    result->set("space", getItem(data_node, "space"));
+    ConstElementPtr record = getItem(data_node, "record-types");
     if (record) {
         result->set("record-types", record);
     }
-    ConstElementPtr array = getItem(xpath + "/array");
+    ConstElementPtr array = getItem(data_node, "array");
     if (array) {
         result->set("array", array);
     }
-    ConstElementPtr encapsulate = getItem(xpath + "/encapsulate");
+    ConstElementPtr encapsulate = getItem(data_node, "encapsulate");
     if (encapsulate) {
         result->set("encapsulate", encapsulate);
     }
-    ConstElementPtr context = getItem(xpath + "/user-context");
+    ConstElementPtr context = getItem(data_node, "user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
@@ -83,7 +90,7 @@ TranslatorOptionDef::getOptionDefKea(const string& xpath) {
 }
 
 void
-TranslatorOptionDef::setOptionDef(const string& xpath, ConstElementPtr elem) {
+TranslatorOptionDef::setOptionDef(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
@@ -96,12 +103,12 @@ TranslatorOptionDef::setOptionDef(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting option definition '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorOptionDef::setOptionDefKea(const string& xpath,
+TranslatorOptionDef::setOptionDefKea(string const& xpath,
                                      ConstElementPtr elem) {
     // Skip code and space as they are the keys.
     ConstElementPtr name = elem->get("name");
@@ -143,29 +150,38 @@ TranslatorOptionDefList::~TranslatorOptionDefList() {
 }
 
 ConstElementPtr
-TranslatorOptionDefList::getOptionDefList(const string& xpath) {
+TranslatorOptionDefList::getOptionDefList(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getOptionDefListKea(xpath));
+            return (getOptionDefListKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting option definition list at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting option definition list:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getOptionDefList not implemented for the model: " << model_);
 }
 
 ConstElementPtr
-TranslatorOptionDefList::getOptionDefListKea(const string& xpath) {
-    return getList<TranslatorOptionDef>(xpath + "/option-def", *this,
+TranslatorOptionDefList::getOptionDefList(string const& xpath) {
+    try {
+        return getOptionDefList(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ConstElementPtr
+TranslatorOptionDefList::getOptionDefListKea(DataNode const& data_node) {
+    return getList<TranslatorOptionDef>(data_node, "option-def", *this,
                                         &TranslatorOptionDefList::getOptionDef);
 }
 
 void
-TranslatorOptionDefList::setOptionDefList(const string& xpath,
+TranslatorOptionDefList::setOptionDefList(string const& xpath,
                                           ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
@@ -179,12 +195,12 @@ TranslatorOptionDefList::setOptionDefList(const string& xpath,
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting option definition list '"
-                  << elem->str() << "' at '" << xpath << "': " << ex.what());
+                  << elem->str() << "' : " << ex.what());
     }
 }
 
 void
-TranslatorOptionDefList::setOptionDefListKea(const string& xpath,
+TranslatorOptionDefList::setOptionDefListKea(string const& xpath,
                                              ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr def = elem->get(i);

@@ -36,50 +36,64 @@ TranslatorSubnet::~TranslatorSubnet() {
 }
 
 ElementPtr
-TranslatorSubnet::getSubnet(const string& xpath) {
+TranslatorSubnet::getSubnet(DataNode const& data_node) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
-            return (getSubnetIetf6(xpath));
+            return (getSubnetIetf6(data_node));
         } else if ((model_ == KEA_DHCP4_SERVER) ||
                    (model_ == KEA_DHCP6_SERVER)) {
-            return (getSubnetKea(xpath));
+            return (getSubnetKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting subnet at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting subnet:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getSubnet not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorSubnet::getSubnetIetf6(const string& xpath) {
+TranslatorSubnet::getSubnet(string const& xpath) {
+    try {
+        return getSubnet(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorSubnet::getSubnetIetf6(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
     /// @todo timers
     /// @todo: option-data
-    ConstElementPtr pools = getPools(xpath + "/address-pools");
-    if (pools) {
-        /// Set empty list too.
-        result->set("pools", pools);
+    Set<DataNode> const& address_pools(data_node.findXPath("address-pools"));
+    if (!address_pools.empty()) {
+        ConstElementPtr const& pools(getPools(address_pools.front()));
+        if (pools && !pools->empty()) {
+            result->set("pools", pools);
+        }
     }
-    pools = getPdPools(xpath + "/pd-pools");
-    if (pools && (pools->size() > 0)) {
-        result->set("pd-pools", pools);
+    Set<DataNode> const& yang_pd_pools(data_node.findXPath("pd-pools"));
+    if (!yang_pd_pools.empty()) {
+        ConstElementPtr const& pd_pools(getPdPools(yang_pd_pools.front()));
+        if (pd_pools && !pd_pools->empty()) {
+            result->set("pd-pools", pd_pools);
+        }
     }
-    ConstElementPtr subnet = getItem(xpath + "/network-prefix");
+    ConstElementPtr subnet = getItem(data_node, "network-prefix");
     if (!subnet) {
         isc_throw(BadValue, "getSubnetIetf6 requires network prefix");
     }
     result->set("subnet", subnet);
-    ConstElementPtr id = getItem(xpath + "/network-range-id");
+    ConstElementPtr id = getItem(data_node, "network-range-id");
     if (!id) {
         isc_throw(BadValue, "getSubnetIetf6 requires network range id");
     }
     result->set("id", id);
     /// @todo: reservations
     /// missing a lot of things
-    ConstElementPtr description = getItem(xpath + "/network-description");
+    ConstElementPtr description = getItem(data_node, "network-description");
     /// Adding description if exists.
     if (description) {
         ElementPtr context = Element::createMap();
@@ -94,176 +108,176 @@ TranslatorSubnet::getSubnetIetf6(const string& xpath) {
 }
 
 ElementPtr
-TranslatorSubnet::getSubnetKea(const string& xpath) {
+TranslatorSubnet::getSubnetKea(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
     if (model_ == KEA_DHCP6_SERVER) {
-        ConstElementPtr preferred = getItem(xpath + "/preferred-lifetime");
+        ConstElementPtr preferred = getItem(data_node, "preferred-lifetime");
         if (preferred) {
             result->set("preferred-lifetime", preferred);
         }
-        ConstElementPtr min_pref = getItem(xpath + "/min-preferred-lifetime");
+        ConstElementPtr min_pref = getItem(data_node, "min-preferred-lifetime");
         if (min_pref) {
             result->set("min-preferred-lifetime", min_pref);
         }
-        ConstElementPtr max_pref = getItem(xpath + "/max-preferred-lifetime");
+        ConstElementPtr max_pref = getItem(data_node, "max-preferred-lifetime");
         if (max_pref) {
             result->set("max-preferred-lifetime", max_pref);
         }
     }
-    ConstElementPtr valid = getItem(xpath + "/valid-lifetime");
+    ConstElementPtr valid = getItem(data_node, "valid-lifetime");
     if (valid) {
         result->set("valid-lifetime", valid);
     }
-    ConstElementPtr min_valid = getItem(xpath + "/min-valid-lifetime");
+    ConstElementPtr min_valid = getItem(data_node, "min-valid-lifetime");
     if (min_valid) {
         result->set("min-valid-lifetime", min_valid);
     }
-    ConstElementPtr max_valid = getItem(xpath + "/max-valid-lifetime");
+    ConstElementPtr max_valid = getItem(data_node, "max-valid-lifetime");
     if (max_valid) {
         result->set("max-valid-lifetime", max_valid);
     }
-    ConstElementPtr renew = getItem(xpath + "/renew-timer");
+    ConstElementPtr renew = getItem(data_node, "renew-timer");
 
     if (renew) {
         result->set("renew-timer", renew);
     }
-    ConstElementPtr rebind = getItem(xpath + "/rebind-timer");
+    ConstElementPtr rebind = getItem(data_node, "rebind-timer");
     if (rebind) {
         result->set("rebind-timer", rebind);
     }
-    ConstElementPtr calculate = getItem(xpath + "/calculate-tee-times");
+    ConstElementPtr calculate = getItem(data_node, "calculate-tee-times");
     if (calculate) {
         result->set("calculate-tee-times", calculate);
     }
-    ConstElementPtr t1_percent = getItem(xpath + "/t1-percent");
+    ConstElementPtr t1_percent = getItem(data_node, "t1-percent");
     if (t1_percent) {
         result->set("t1-percent", t1_percent);
     }
-    ConstElementPtr t2_percent = getItem(xpath + "/t2-percent");
+    ConstElementPtr t2_percent = getItem(data_node, "t2-percent");
     if (t2_percent) {
         result->set("t2-percent", t2_percent);
     }
-    ConstElementPtr options = getOptionDataList(xpath);
+    ConstElementPtr options = getOptionDataList(data_node);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
-    ConstElementPtr pools = getPools(xpath);
+    ConstElementPtr pools = getPools(data_node);
     if (pools && (pools->size() > 0)) {
         result->set("pools", pools);
     }
     if (model_ == KEA_DHCP6_SERVER) {
-        pools = getPdPools(xpath);
-        if (pools && (pools->size() > 0)) {
-            result->set("pd-pools", pools);
+        ElementPtr pd_pools = getPdPools(data_node);
+        if (pd_pools && (pd_pools->size() > 0)) {
+            result->set("pd-pools", pd_pools);
         }
     }
-    ConstElementPtr subnet = getItem(xpath + "/subnet");
+    ConstElementPtr subnet = getItem(data_node, "subnet");
     if (!subnet) {
         isc_throw(BadValue, "getSubnetKea requires subnet");
     }
     result->set("subnet", subnet);
-    ConstElementPtr interface = getItem(xpath + "/interface");
+    ConstElementPtr interface = getItem(data_node, "interface");
     if (interface) {
         result->set("interface", interface);
     }
     if (model_ == KEA_DHCP6_SERVER) {
-        ConstElementPtr interface_id = getItem(xpath + "/interface-id");
+        ConstElementPtr interface_id = getItem(data_node, "interface-id");
         if (interface_id) {
             result->set("interface-id", interface_id);
         }
     }
-    ConstElementPtr id = getItem(xpath + "/id");
+    ConstElementPtr id = getItem(data_node, "id");
     if (!id) {
         isc_throw(BadValue, "getSubnetKea requires id");
     }
     result->set("id", id);
     if (model_ == KEA_DHCP6_SERVER) {
-        ConstElementPtr rapid_commit = getItem(xpath + "/rapid-commit");
+        ConstElementPtr rapid_commit = getItem(data_node, "rapid-commit");
         if (rapid_commit) {
             result->set("rapid-commit", rapid_commit);
         }
     }
-    ConstElementPtr guard =  getItem(xpath + "/client-class");
+    ConstElementPtr guard =  getItem(data_node, "client-class");
     if (guard) {
         result->set("client-class", guard);
     }
-    ConstElementPtr required = getItems(xpath + "/require-client-classes");
+    ConstElementPtr required = getItem(data_node, "require-client-classes");
     if (required && (required->size() > 0)) {
         result->set("require-client-classes", required);
     }
-    ConstElementPtr hosts = getHosts(xpath);
+    ConstElementPtr hosts = getHosts(data_node);
     if (hosts && (hosts->size() > 0)) {
         result->set("reservations", hosts);
     }
-    ConstElementPtr mode = getItem(xpath + "/reservation-mode");
+    ConstElementPtr mode = getItem(data_node, "reservation-mode");
     if (mode) {
         result->set("reservation-mode", mode);
     }
-    ConstElementPtr relay = getItems(xpath + "/relay/ip-addresses");
+    ConstElementPtr relay = getItem(data_node, "relay/ip-addresses");
     if (relay && (relay->size() > 0)) {
         ElementPtr relay_map = Element::createMap();
         relay_map->set("ip-addresses", relay);
         result->set("relay", relay_map);
     }
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr match = getItem(xpath + "/match-client-id");
+        ConstElementPtr match = getItem(data_node, "match-client-id");
         if (match) {
             result->set("match-client-id", match);
         }
-        ConstElementPtr auth = getItem(xpath + "/authoritative");
+        ConstElementPtr auth = getItem(data_node, "authoritative");
         if (auth) {
             result->set("authoritative", auth);
         }
-        ConstElementPtr next = getItem(xpath + "/next-server");
+        ConstElementPtr next = getItem(data_node, "next-server");
         if (next) {
             result->set("next-server", next);
         }
-        ConstElementPtr hostname = getItem(xpath + "/server-hostname");
+        ConstElementPtr hostname = getItem(data_node, "server-hostname");
         if (hostname) {
             result->set("server-hostname", hostname);
         }
-        ConstElementPtr boot = getItem(xpath + "/boot-file-name");
+        ConstElementPtr boot = getItem(data_node, "boot-file-name");
         if (boot) {
             result->set("boot-file-name", boot);
         }
-        ConstElementPtr s4o6_if = getItem(xpath + "/subnet-4o6-interface");
+        ConstElementPtr s4o6_if = getItem(data_node, "subnet-4o6-interface");
         if (s4o6_if) {
             result->set("4o6-interface", s4o6_if);
         }
-        ConstElementPtr s4o6_id = getItem(xpath + "/subnet-4o6-interface-id");
+        ConstElementPtr s4o6_id = getItem(data_node, "subnet-4o6-interface-id");
         if (s4o6_id) {
             result->set("4o6-interface-id", s4o6_id);
         }
-        ConstElementPtr s4o6_sub = getItem(xpath + "/subnet-4o6-subnet");
+        ConstElementPtr s4o6_sub = getItem(data_node, "subnet-4o6-subnet");
         if (s4o6_sub) {
             result->set("4o6-subnet", s4o6_sub);
         }
     }
-    ConstElementPtr context = getItem(xpath + "/user-context");
+    ConstElementPtr context = getItem(data_node, "user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
-    checkAndGetLeaf(result, xpath, "cache-max-age");
-    checkAndGetLeaf(result, xpath, "cache-threshold");
-    checkAndGetLeaf(result, xpath, "ddns-generated-prefix");
-    checkAndGetLeaf(result, xpath, "ddns-override-client-update");
-    checkAndGetLeaf(result, xpath, "ddns-override-no-update");
-    checkAndGetLeaf(result, xpath, "ddns-qualifying-suffix");
-    checkAndGetLeaf(result, xpath, "ddns-replace-client-name");
-    checkAndGetLeaf(result, xpath, "ddns-send-updates");
-    checkAndGetLeaf(result, xpath, "ddns-update-on-renew");
-    checkAndGetLeaf(result, xpath, "ddns-use-conflict-resolution");
-    checkAndGetLeaf(result, xpath, "hostname-char-replacement");
-    checkAndGetLeaf(result, xpath, "hostname-char-set");
-    checkAndGetLeaf(result, xpath, "reservations-global");
-    checkAndGetLeaf(result, xpath, "reservations-in-subnet");
-    checkAndGetLeaf(result, xpath, "reservations-out-of-pool");
-    checkAndGetLeaf(result, xpath, "store-extended-info");
+    checkAndGetLeaf(result, data_node, "cache-max-age");
+    checkAndGetLeaf(result, data_node, "cache-threshold");
+    checkAndGetLeaf(result, data_node, "ddns-generated-prefix");
+    checkAndGetLeaf(result, data_node, "ddns-override-client-update");
+    checkAndGetLeaf(result, data_node, "ddns-override-no-update");
+    checkAndGetLeaf(result, data_node, "ddns-qualifying-suffix");
+    checkAndGetLeaf(result, data_node, "ddns-replace-client-name");
+    checkAndGetLeaf(result, data_node, "ddns-send-updates");
+    checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
+    checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
+    checkAndGetLeaf(result, data_node, "hostname-char-replacement");
+    checkAndGetLeaf(result, data_node, "hostname-char-set");
+    checkAndGetLeaf(result, data_node, "reservations-global");
+    checkAndGetLeaf(result, data_node, "reservations-in-subnet");
+    checkAndGetLeaf(result, data_node, "reservations-out-of-pool");
+    checkAndGetLeaf(result, data_node, "store-extended-info");
     return (result);
 }
 
 void
-TranslatorSubnet::setSubnet(const string& xpath, ConstElementPtr elem) {
+TranslatorSubnet::setSubnet(string const& xpath, ConstElementPtr elem) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
             setSubnetIetf6(xpath, elem);
@@ -277,12 +291,12 @@ TranslatorSubnet::setSubnet(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting subnet '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorSubnet::setSubnetIetf6(const string& xpath, ConstElementPtr elem) {
+TranslatorSubnet::setSubnetIetf6(string const& xpath, ConstElementPtr elem) {
     /// Skip id as it is the key.
     AdaptorPool::fromSubnet(model_, elem, elem->get("pools"));
     ConstElementPtr context = elem->get("user-context");
@@ -310,7 +324,7 @@ TranslatorSubnet::setSubnetIetf6(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
+TranslatorSubnet::setSubnetKea(string const& xpath, ConstElementPtr elem) {
     /// Skip id as it is the key.
     if (model_ == KEA_DHCP6_SERVER) {
         ConstElementPtr preferred = elem->get("preferred-lifetime");
@@ -497,33 +511,42 @@ TranslatorSubnets::~TranslatorSubnets() {
 }
 
 ElementPtr
-TranslatorSubnets::getSubnets(const string& xpath) {
+TranslatorSubnets::getSubnets(DataNode const& data_node) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
-            return (getSubnetsCommon(xpath, "network-range"));
+            return (getSubnetsCommon(data_node, "network-range"));
         } else if (model_ == KEA_DHCP4_SERVER) {
-            return (getSubnetsCommon(xpath, "subnet4"));
+            return (getSubnetsCommon(data_node, "subnet4"));
         } else if (model_ == KEA_DHCP6_SERVER) {
-            return (getSubnetsCommon(xpath, "subnet6"));
+            return (getSubnetsCommon(data_node, "subnet6"));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting subnets at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting subnets:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getSubnets not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorSubnets::getSubnetsCommon(const string& xpath,
+TranslatorSubnets::getSubnets(string const& xpath) {
+    try {
+        return getSubnets(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorSubnets::getSubnetsCommon(DataNode const& data_node,
                                     const std::string& subsel) {
-    return getList<TranslatorSubnet>(xpath + "/" + subsel, *this,
+    return getList<TranslatorSubnet>(data_node, subsel, *this,
                                      &TranslatorSubnet::getSubnet);
 }
 
 void
-TranslatorSubnets::setSubnets(const string& xpath, ConstElementPtr elem) {
+TranslatorSubnets::setSubnets(string const& xpath, ConstElementPtr elem) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
             setSubnetsIetf6(xpath, elem);
@@ -538,12 +561,12 @@ TranslatorSubnets::setSubnets(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting subnets '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorSubnets::setSubnetsIetf6(const string& xpath, ConstElementPtr elem) {
+TranslatorSubnets::setSubnetsIetf6(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr subnet = elem->get(i);
         ostringstream range;
@@ -558,7 +581,7 @@ TranslatorSubnets::setSubnetsIetf6(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorSubnets::setSubnetsKea(const string& xpath, ConstElementPtr elem,
+TranslatorSubnets::setSubnetsKea(string const& xpath, ConstElementPtr elem,
                                  const std::string& subsel) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr subnet = elem->get(i);

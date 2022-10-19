@@ -27,33 +27,32 @@ TranslatorControlSocket::TranslatorControlSocket(Session session,
 TranslatorControlSocket::~TranslatorControlSocket() {
 }
 
-ConstElementPtr
-TranslatorControlSocket::getControlSocket(const string& xpath) {
+ElementPtr
+TranslatorControlSocket::getControlSocket(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
             (model_ == KEA_DHCP_DDNS) ||
             (model_ == KEA_CTRL_AGENT)) {
-            return (getControlSocketKea(xpath));
+            return (getControlSocketKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting control socket at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting control socket: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getControlSocket not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorControlSocket::getControlSocketKea(const string& xpath) {
-    ConstElementPtr name = getItem(xpath + "/socket-name");
-    ConstElementPtr type = getItem(xpath + "/socket-type");
+TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
+    ConstElementPtr name = getItem(data_node, "socket-name");
+    ConstElementPtr type = getItem(data_node, "socket-type");
     if (name && type) {
         ElementPtr result = Element::createMap();
         result->set("socket-name", name);
         result->set("socket-type", type);
-        ConstElementPtr context = getItem(xpath + "/user-context");
+        ConstElementPtr context = getItem(data_node, "user-context");
         if (context) {
             result->set("user-context",
                         Element::fromJSON(context->stringValue()));
@@ -63,8 +62,17 @@ TranslatorControlSocket::getControlSocketKea(const string& xpath) {
     return (ElementPtr());
 }
 
+ElementPtr
+TranslatorControlSocket::getControlSocket(string const& xpath) {
+    try {
+        return getControlSocket(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
 void
-TranslatorControlSocket::setControlSocket(const string& xpath,
+TranslatorControlSocket::setControlSocket(string const& xpath,
                                           ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
@@ -85,7 +93,7 @@ TranslatorControlSocket::setControlSocket(const string& xpath,
 }
 
 void
-TranslatorControlSocket::setControlSocketKea(const string& xpath,
+TranslatorControlSocket::setControlSocketKea(string const& xpath,
                                              ConstElementPtr elem) {
     if (!elem) {
         delItem(xpath);

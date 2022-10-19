@@ -199,7 +199,8 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, getList) {
     EXPECT_EQ(exp_net2, network->str());
 
     // Check that networks with non-existent name are not returned.
-    EXPECT_THROW(network = t_obj_->getSharedNetwork(xnetwork3), Unexpected);
+    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork3));
+    EXPECT_FALSE(network);
 
     // Now test returns all networks
     ConstElementPtr networks;

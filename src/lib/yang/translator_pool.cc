@@ -33,51 +33,60 @@ TranslatorPool::~TranslatorPool() {
 }
 
 ElementPtr
-TranslatorPool::getPool(const string& xpath) {
+TranslatorPool::getPool(DataNode const& data_node) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
-            return (getPoolIetf6(xpath));
+            return (getPoolIetf6(data_node));
         } else if ((model_ == KEA_DHCP4_SERVER) ||
                    (model_ == KEA_DHCP6_SERVER)) {
-            return (getPoolKea(xpath));
+            return (getPoolKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting pool at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting pool:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getPool not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorPool::getPoolIetf6(const string& xpath) {
+TranslatorPool::getPool(string const& xpath) {
+    try {
+        return getPool(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorPool::getPoolIetf6(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
     // Skip pool-id which exists but is not used.
-    ConstElementPtr pool = getItem(xpath + "/pool-prefix");
+    ConstElementPtr pool = getItem(data_node, "pool-prefix");
     if (!pool) {
-        isc_throw(BadValue, "getPoolIetf6 requires pool prefix at " << xpath);
+        isc_throw(BadValue, "getPoolIetf6 requires pool prefix");
     }
     result->set("pool", pool);
     // Ignore start-address - end-address as prefix form is mandatory?
-    ConstElementPtr guard = getItem(xpath + "/client-class");
+    ConstElementPtr guard = getItem(data_node, "client-class");
     if (guard) {
         result->set("client-class", guard);
     }
-    ConstElementPtr valid_lifetime = getItem(xpath + "/valid-lifetime");
+    ConstElementPtr valid_lifetime = getItem(data_node, "valid-lifetime");
     if (valid_lifetime) {
         result->set("valid-lifetime", valid_lifetime);
     }
     ConstElementPtr preferred_lifetime =
-        getItem(xpath + "/preferred-lifetime");
+        getItem(data_node, "preferred-lifetime");
     if (preferred_lifetime) {
         result->set("preferred-lifetime", preferred_lifetime);
     }
-    ConstElementPtr renew_time = getItem(xpath + "/renew-time");
+    ConstElementPtr renew_time = getItem(data_node, "renew-time");
     if (renew_time) {
         result->set("renew-timer", renew_time);
     }
-    ConstElementPtr rebind_time = getItem(xpath + "/rebind-time");
+    ConstElementPtr rebind_time = getItem(data_node, "rebind-time");
     if (rebind_time) {
         result->set("rebind-timer", rebind_time);
     }
@@ -92,36 +101,36 @@ TranslatorPool::getPoolIetf6(const string& xpath) {
 }
 
 ElementPtr
-TranslatorPool::getPoolKea(const string& xpath) {
+TranslatorPool::getPoolKea(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
-    ConstElementPtr prefix = getItem(xpath + "/prefix");
+    ConstElementPtr prefix = getItem(data_node, "prefix");
     if (prefix) {
         result->set("pool", prefix);
     } else {
-        ConstElementPtr start_addr = getItem(xpath + "/start-address");
-        ConstElementPtr end_addr = getItem(xpath + "/end-address");
+        ConstElementPtr start_addr = getItem(data_node, "start-address");
+        ConstElementPtr end_addr = getItem(data_node, "end-address");
         if (!start_addr || !end_addr) {
             isc_throw(BadValue, "getPoolKea requires either prefix or "
-                      "both start and end addresses at " << xpath);
+                      "both start and end addresses");
         }
         ostringstream range;
         range << start_addr->stringValue() << " - "
               << end_addr->stringValue();
         result->set("pool", Element::create(range.str()));
     }
-    ConstElementPtr options = getOptionDataList(xpath);
+    ConstElementPtr options = getOptionDataList(data_node);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
-    ConstElementPtr guard = getItem(xpath + "/client-class");
+    ConstElementPtr guard = getItem(data_node, "client-class");
     if (guard) {
         result->set("client-class", guard);
     }
-    ConstElementPtr required = getItems(xpath + "/require-client-classes");
+    ConstElementPtr required = getItem(data_node, "require-client-classes");
     if (required && (required->size() > 0)) {
         result->set("require-client-classes", required);
     }
-    ConstElementPtr context = getItem(xpath + "/user-context");
+    ConstElementPtr context = getItem(data_node, "user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
@@ -129,7 +138,7 @@ TranslatorPool::getPoolKea(const string& xpath) {
 }
 
 void
-TranslatorPool::setPool(const string& xpath, ConstElementPtr elem) {
+TranslatorPool::setPool(string const& xpath, ConstElementPtr elem) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
             setPoolIetf6(xpath, elem);
@@ -143,12 +152,12 @@ TranslatorPool::setPool(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting pool '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorPool::setPoolIetf6(const string& xpath, ConstElementPtr elem) {
+TranslatorPool::setPoolIetf6(string const& xpath, ConstElementPtr elem) {
     ConstElementPtr pool = elem->get("pool");
     if (!pool) {
         isc_throw(BadValue, "setPoolIetf6 requires pool: " << elem->str());
@@ -201,7 +210,7 @@ TranslatorPool::setPoolIetf6(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorPool::setPoolKea(const string& xpath, ConstElementPtr elem) {
+TranslatorPool::setPoolKea(string const& xpath, ConstElementPtr elem) {
     ConstElementPtr pool = elem->get("pool");
     if (!pool) {
         isc_throw(BadValue, "setPoolKea requires pool: " << elem->str());
@@ -271,37 +280,46 @@ TranslatorPools::~TranslatorPools() {
 }
 
 ElementPtr
-TranslatorPools::getPools(const string& xpath) {
+TranslatorPools::getPools(DataNode const& data_node) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
-            return (getPoolsIetf(xpath));
+            return (getPoolsIetf(data_node));
         } else if ((model_ == KEA_DHCP4_SERVER) ||
                    (model_ == KEA_DHCP6_SERVER)) {
-            return (getPoolsKea(xpath));
+            return (getPoolsKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting pools at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting pools:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getPools not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorPools::getPoolsIetf(const string& xpath) {
-    return getList<TranslatorPool>(xpath + "/address-pool", *this,
+TranslatorPools::getPools(string const& xpath) {
+    try {
+        return getPools(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorPools::getPoolsIetf(DataNode const& data_node) {
+    return getList<TranslatorPool>(data_node, "address-pool", *this,
                                    &TranslatorPool::getPool);
 }
 
 ElementPtr
-TranslatorPools::getPoolsKea(const string& xpath) {
-    return getList<TranslatorPool>(xpath + "/pool", *this,
+TranslatorPools::getPoolsKea(DataNode const& data_node) {
+    return getList<TranslatorPool>(data_node, "pool", *this,
                                    &TranslatorPool::getPool);
 }
 
 void
-TranslatorPools::setPools(const string& xpath, ConstElementPtr elem) {
+TranslatorPools::setPools(string const& xpath, ConstElementPtr elem) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
             setPoolsById(xpath, elem);
@@ -315,12 +333,12 @@ TranslatorPools::setPools(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting pools '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorPools::setPoolsById(const string& xpath, ConstElementPtr elem) {
+TranslatorPools::setPoolsById(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr pool = elem->get(i);
         ostringstream prefix;
@@ -330,7 +348,7 @@ TranslatorPools::setPoolsById(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorPools::setPoolsByAddresses(const string& xpath,
+TranslatorPools::setPoolsByAddresses(string const& xpath,
                                      ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr pool = elem->get(i);

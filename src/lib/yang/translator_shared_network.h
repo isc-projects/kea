@@ -176,12 +176,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorSharedNetwork();
 
-    /// @brief Get and translate a shared network from YANG to JSON.
+    /// @brief Translate a shared network from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the shared network
+    ///
+    /// @return the JSON representation of the shared network
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getSharedNetwork(libyang::DataNode const& data_node);
+
+    /// @brief Translate a shared network from YANG to JSON.
     ///
     /// @param xpath The xpath of the shared network.
+    ///
     /// @return JSON representation of the shared network.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getSharedNetwork(const std::string& xpath);
+    isc::data::ElementPtr getSharedNetwork(std::string const& xpath);
 
     /// @brief Translate and set shared network from JSON to YANG.
     ///
@@ -194,10 +205,11 @@ protected:
     /// @brief getSharedNetwork for kea-dhcp4-server and
     /// kea-dhcp6-server models
     ///
-    /// @param xpath The xpath of the shared network.
+    /// @param data_node the YANG node representing the shared nework
     /// @param subsel The subnet list name (either "subnet4" or "subnet6").
+    ///
     /// @return JSON representation of the shared network.
-    isc::data::ElementPtr getSharedNetworkKea(const std::string& xpath,
+    isc::data::ElementPtr getSharedNetworkKea(libyang::DataNode const& data_node,
                                               const std::string& subsel);
 
     /// @brief setSharedNetwork for kea-dhcp4-server and
@@ -230,11 +242,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorSharedNetworks();
 
-    /// @brief Get and translate shared networks from YANG to JSON.
+    /// @brief Translate shared networks from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of shared networks
+    ///
+    /// @return the JSON representation of the list of shared networks
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getSharedNetworks(libyang::DataNode const& data_node);
+
+    /// @brief Translate shared networks from YANG to JSON.
     ///
     /// @param xpath The xpath of the shared network list.
+    ///
+    /// @return the JSON representation of the list of shared networks
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getSharedNetworks(const std::string& xpath);
+    isc::data::ElementPtr getSharedNetworks(std::string const& xpath);
 
     /// @brief Translate and set shared networks from JSON to YANG.
     ///

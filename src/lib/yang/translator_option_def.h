@@ -88,12 +88,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorOptionDef();
 
-    /// @brief Get and translate an option definition from YANG to JSON.
+    /// @brief Translate an option definition from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the option definition
+    ///
+    /// @return the JSON representation of the option definition
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getOptionDef(libyang::DataNode const& data_node);
+
+    /// @brief Translate an option definition from YANG to JSON.
     ///
     /// @param xpath The xpath of the option definition.
+    ///
     /// @return JSON representation of the option definition.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getOptionDef(const std::string& xpath);
+    isc::data::ElementPtr getOptionDef(std::string const& xpath);
 
     /// @brief Translate and set option definition from JSON to YANG.
     ///
@@ -105,11 +116,13 @@ public:
 protected:
     /// @brief getOptionDef implementation specific to kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of the option definition.
+    /// @param data_node the YANG node representing the option definition
+    ///
     /// @return JSON representation of the option definition.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     /// @throw BadValue on option definition without name or type.
-    isc::data::ElementPtr getOptionDefKea(const std::string& xpath);
+    isc::data::ElementPtr getOptionDefKea(libyang::DataNode const& data_node);
 
     /// @brief setOptionDef implementation specific to kea-dhcp[46]-server models.
     ///
@@ -138,11 +151,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorOptionDefList();
 
-    /// @brief Get and translate option definition list from YANG to JSON.
+    /// @brief Translate option definition list from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of option definitions
+    ///
+    /// @return the JSON representation of the list of option definitions
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ConstElementPtr getOptionDefList(libyang::DataNode const& data_node);
+
+    /// @brief Translate option definition list from YANG to JSON.
     ///
     /// @param xpath The xpath of the option definition list.
+    ///
+    /// @return JSON representation of the list of option definitions
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getOptionDefList(const std::string& xpath);
+    isc::data::ConstElementPtr getOptionDefList(std::string const& xpath);
 
     /// @brief Translate and set option definition list from JSON to YANG.
     ///
@@ -155,9 +180,10 @@ protected:
     /// @brief getOptionDefList implementation specific to kea-dhcp[46]-server
     ///        models.
     ///
-    /// @param xpath The xpath of the option definition list.
+    /// @param data_node the YANG node representing the list of option definitions
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getOptionDefListKea(const std::string& xpath);
+    isc::data::ConstElementPtr getOptionDefListKea(libyang::DataNode const& data_node);
 
     /// @brief setOptionDefList implementation specific to kea-dhcp[46]-server
     ///        models.

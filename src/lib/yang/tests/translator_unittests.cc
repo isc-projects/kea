@@ -203,7 +203,7 @@ TEST_F(TranslatorBasicTest, getItem) {
     u8 = 3;
     s_val = to_string(u8);
     EXPECT_NO_THROW(sess.setItem(xpath, s_val));
-    EXPECT_NO_THROW(elem = t_obj->getItems(xpath));
+    EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::list, elem->getType());
     EXPECT_EQ(3, elem->size());

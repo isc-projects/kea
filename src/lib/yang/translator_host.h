@@ -123,12 +123,28 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorHost();
 
-    /// @brief Get and translate a host reservation from YANG to JSON.
+    /// @brief Translate a host reservation from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the host reservation
+    ///
+    /// @return the JSON representation of the host reservation
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getHost(libyang::DataNode const& data_node);
+
+    /// @brief Translate a host reservation from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getHost(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of the host reservation.
+    ///
     /// @return JSON representation of the host reservation.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getHost(const std::string& xpath);
+    isc::data::ElementPtr getHost(std::string const& xpath);
 
     /// @brief Translate and set host reservation from JSON to YANG.
     ///
@@ -139,9 +155,10 @@ public:
 protected:
     /// @brief getHost for kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of the host reservation.
+    /// @param data_node the YANG node representing the host reservation
+    ///
     /// @return JSON representation of the host reservation.
-    isc::data::ElementPtr getHostKea(const std::string& xpath);
+    isc::data::ElementPtr getHostKea(libyang::DataNode const& data_node);
 
     /// @brief setHost for kea-dhcp[46]-server models.
     ///
@@ -170,11 +187,28 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorHosts();
 
-    /// @brief Get and translate host reservations from YANG to JSON.
+    /// @brief Translate host reservations from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of host reservations
+    ///
+    /// @return the JSON representation of the list of host reservations
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getHosts(libyang::DataNode const& data_node);
+
+    /// @brief Translate host reservations from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getHosts(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of the host reservation list.
+    ///
+    /// @return JSON representation of the host reservation list.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getHosts(const std::string& xpath);
+    isc::data::ElementPtr getHosts(std::string const& xpath);
 
     /// @brief Translate and set (address) host reservations from JSON to YANG.
     ///

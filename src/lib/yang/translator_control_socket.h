@@ -79,12 +79,28 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorControlSocket();
 
-    /// @brief Get and translate a control socket from YANG to JSON.
+    /// @brief Translate a control socket from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the control socket
+    ///
+    /// @return the JSON representation of the control socket
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getControlSocket(libyang::DataNode const& data_node);
+
+    /// @brief Translate a control socket from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getControlSocket(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of the control socket.
-    /// @return JSON representation of the control socket or null.
+    ///
+    /// @return JSON representation of the control socket
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getControlSocket(const std::string& xpath);
+    isc::data::ElementPtr getControlSocket(std::string const& xpath);
 
     /// @brief Translate and set control socket from JSON to YANG.
     ///
@@ -96,10 +112,10 @@ public:
 protected:
     /// @brief getControlSocket JSON for kea models.
     ///
-    /// @param xpath The xpath of the control socket.
+    /// @param data_node the YANG node representing the control socket
     /// @return JSON representation of the control socket.
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getControlSocketKea(const std::string& xpath);
+    isc::data::ElementPtr getControlSocketKea(libyang::DataNode const& data_node);
 
     /// @brief setControlSocket for kea models.
     ///

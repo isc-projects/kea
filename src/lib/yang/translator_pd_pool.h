@@ -126,13 +126,25 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorPdPool();
 
-    /// @brief Get and translate a pd-pool from YANG to JSON.
+    /// @brief Translate a pd-pool from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the PD pool
+    ///
+    /// @return the JSON representation of the PD pool
+    ///
+    /// @throw BadValue on pd-pool without well formed prefix.
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getPdPool(libyang::DataNode const& data_node);
+
+    /// @brief Translate a pd-pool from YANG to JSON.
     ///
     /// @param xpath The xpath of the pd-pool.
+    ///
     /// @return JSON representation of the pd-pool.
-    /// @throw SysrepoError when sysrepo raises an error.
+    ///
     /// @throw BadValue on pd-pool without well formed prefix.
-    isc::data::ElementPtr getPdPool(const std::string& xpath);
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getPdPool(std::string const& xpath);
 
     /// @brief Translate and set pd-pool from JSON to YANG.
     ///
@@ -143,10 +155,12 @@ public:
 protected:
     /// @brief getPdPool for ietf-dhcpv6-server.
     ///
-    /// @param xpath The xpath of the pd-pool.
+    /// @param data_node the YANG node representing the PD pool
+    ///
     /// @return JSON representation of the pd-pool.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getPdPoolIetf6(const std::string& xpath);
+    isc::data::ElementPtr getPdPoolIetf6(libyang::DataNode const& data_node);
 
     /// @brief setPdPool for ietf-dhcpv6-server.
     ///
@@ -158,10 +172,12 @@ protected:
 
     /// @brief getPdPool for kea-dhcp6-server.
     ///
-    /// @param xpath The xpath of the pd-pool.
+    /// @param data_node the YANG node representing the PD pool
+    ///
     /// @return JSON representation of the pd-pool.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getPdPoolKea(const std::string& xpath);
+    isc::data::ElementPtr getPdPoolKea(libyang::DataNode const& data_node);
 
     /// @brief setPdPool for kea-dhcp6-server.
     ///
@@ -189,11 +205,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorPdPools();
 
-    /// @brief Get and translate pd-pools from YANG to JSON.
+    /// @brief Translate pd-pools from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of PD pools
+    ///
+    /// @return the JSON representation of the list of PD pools
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getPdPools(libyang::DataNode const& data_node);
+
+    /// @brief Translate pd-pools from YANG to JSON.
     ///
     /// @param xpath The xpath of the pd-pool list.
+    ///
+    /// @return the JSON representation of the list of PD pools
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getPdPools(const std::string& xpath);
+    isc::data::ElementPtr getPdPools(std::string const& xpath);
 
     /// @brief Translate and set pd-pools from JSON to YANG.
     ///
@@ -204,9 +232,10 @@ public:
 protected:
     /// @brief getPdPools common part.
     ///
-    /// @param xpath The xpath of the pd-pool list.
+    /// @param data_node the YANG node representing the list of PD pools
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getPdPoolsCommon(const std::string& xpath);
+    isc::data::ElementPtr getPdPoolsCommon(libyang::DataNode const& data_node);
 
     /// @brief setPdPools using pool-id.
     ///

@@ -86,12 +86,28 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorClass();
 
-    /// @brief Get and translate a client class from YANG to JSON.
+    /// @brief Translate a client class from YANG to JSON.
     ///
-    /// @param xpath The xpath of the class .
-    /// @return JSON representation of the class .
+    /// @param data_node the YANG node representing the class
+    ///
+    /// @return the JSON representation of the class
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getClass(const std::string& xpath);
+    isc::data::ElementPtr getClass(libyang::DataNode const& data_node);
+
+    /// @brief Translate a client class from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getClass(libyang::DataNode) as a scalable alternative.
+    ///
+    /// @param xpath the xpath of the class
+    ///
+    /// @return JSON representation of the class
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getClass(std::string const& xpath);
 
     /// @brief Translate and set client class from JSON to YANG.
     ///
@@ -102,10 +118,12 @@ public:
 protected:
     /// @brief getClass JSON for kea-dhcp[46].
     ///
-    /// @param xpath The xpath of the class .
-    /// @return JSON representation of the class .
+    /// @param data_node the YANG node representing the client class
+    ///
+    /// @return JSON representation of the class
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getClassKea(const std::string& xpath);
+    isc::data::ElementPtr getClassKea(libyang::DataNode const& data_node);
 
     /// @brief setClass for kea-dhcp[46].
     ///
@@ -132,12 +150,28 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorClasses();
 
-    /// @brief Get and translate client classes from YANG to JSON.
+    /// @brief Translate client classes from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the class
+    ///
+    /// @return the JSON representation of the list of classes
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getClasses(libyang::DataNode const& data_node);
+
+    /// @brief Translate client classes from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getClasses(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of classes.
+    ///
     /// @return JSON representation of classes.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getClasses(const std::string& xpath);
+    isc::data::ElementPtr getClasses(std::string const& xpath);
 
     /// @brief Translate and set client classes from JSON to YANG.
     ///
@@ -149,15 +183,18 @@ public:
 protected:
     /// @brief getClasses JSON for kea-dhcp[46].
     ///
-    /// @param xpath The xpath of classes.
+    /// @param data_node the YANG node representing the classes
+    ///
     /// @return JSON representation of classes.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getClassesKea(const std::string& xpath);
+    isc::data::ElementPtr getClassesKea(libyang::DataNode const& data_node);
 
     /// @brief setClasses for kea-dhcp[46].
     ///
     /// @param xpath The xpath of classes.
     /// @param elem The JSON element.
+    ///
     /// @throw BadValue on client class without name.
     void setClassesKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);

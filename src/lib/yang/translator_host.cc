@@ -29,73 +29,82 @@ TranslatorHost::~TranslatorHost() {
 }
 
 ElementPtr
-    TranslatorHost::getHost(const string& xpath) {
+TranslatorHost::getHost(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getHostKea(xpath));
+            return (getHostKea(data_node));
         }
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
-                  "sysrepo error getting host reservation at '" << xpath
-                  << "': " << ex.what());
+                  "sysrepo error getting host reservation:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getHost not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorHost::getHostKea(const string& xpath) {
-    ConstElementPtr id_type = getItem(xpath + "/identifier-type");
-    ConstElementPtr id = getItem(xpath + "/identifier");
+TranslatorHost::getHost(std::string const& xpath) {
+    try {
+        return getHost(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorHost::getHostKea(DataNode const& data_node) {
+    ConstElementPtr id_type = getItem(data_node, "identifier-type");
+    ConstElementPtr id = getItem(data_node, "identifier");
     if (!id_type || !id) {
         isc_throw(Unexpected, "getHostKea requires both identifier and "
                   "identifier-type");
     }
     ElementPtr result = Element::createMap();
     result->set(id_type->stringValue(), id);
-    ConstElementPtr hostname = getItem(xpath + "/hostname");
+    ConstElementPtr hostname = getItem(data_node, "hostname");
     if (hostname) {
         result->set("hostname", hostname);
     }
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr address = getItem(xpath + "/ip-address");
+        ConstElementPtr address = getItem(data_node, "ip-address");
         if (address) {
             result->set("ip-address", address);
         }
     } else {
-        ConstElementPtr addresses = getItems(xpath + "/ip-addresses");
+        ConstElementPtr addresses = getItem(data_node, "ip-addresses");
         if (addresses && (addresses->size() > 0)) {
             result->set("ip-addresses", addresses);
         }
-        ConstElementPtr prefixes = getItems(xpath + "/prefixes");
+        ConstElementPtr prefixes = getItem(data_node, "prefixes");
         if (prefixes && (prefixes->size() > 0)) {
             result->set("prefixes", prefixes);
         }
     }
-    ConstElementPtr options = getOptionDataList(xpath);
+    ConstElementPtr options = getOptionDataList(data_node);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
-    ConstElementPtr classes = getItems(xpath + "/client-classes");
+    ConstElementPtr classes = getItem(data_node, "client-classes");
     if (classes) {
         result->set("client-classes", classes);
     }
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr next = getItem(xpath + "/next-server");
+        ConstElementPtr next = getItem(data_node, "next-server");
         if (next) {
             result->set("next-server", next);
         }
-        ConstElementPtr server_hostname = getItem(xpath + "/server-hostname");
+        ConstElementPtr server_hostname = getItem(data_node, "server-hostname");
         if (server_hostname) {
             result->set("server-hostname", server_hostname);
         }
-        ConstElementPtr boot = getItem(xpath + "/boot-file-name");
+        ConstElementPtr boot = getItem(data_node, "boot-file-name");
         if (boot) {
             result->set("boot-file-name", boot);
         }
     }
-    ConstElementPtr context = getItem(xpath + "/user-context");
+    ConstElementPtr context = getItem(data_node, "user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
@@ -103,7 +112,7 @@ TranslatorHost::getHostKea(const string& xpath) {
 }
 
 void
-TranslatorHost::setHost(const string& xpath, ConstElementPtr elem) {
+TranslatorHost::setHost(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
@@ -115,12 +124,12 @@ TranslatorHost::setHost(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting host reservation '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
+TranslatorHost::setHostKea(string const& xpath, ConstElementPtr elem) {
     ConstElementPtr hostname = elem->get("hostname");
     // Skip identifier and identifier type as they are keys.
     if (hostname) {
@@ -191,13 +200,22 @@ TranslatorHosts::~TranslatorHosts() {
 }
 
 ElementPtr
-TranslatorHosts::getHosts(const string& xpath) {
-    return getList<TranslatorHost>(xpath + "/host", *this,
+TranslatorHosts::getHosts(DataNode const& data_node) {
+    return getList<TranslatorHost>(data_node, "host", *this,
                                    &TranslatorHost::getHost);
 }
 
+ElementPtr
+TranslatorHosts::getHosts(std::string const& xpath) {
+    try {
+        return getHosts(findXPath(xpath));
+    } catch(SysrepoError const&) {
+        return ElementPtr();
+    }
+}
+
 void
-TranslatorHosts::setHosts(const string& xpath, ConstElementPtr elem) {
+TranslatorHosts::setHosts(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
@@ -209,12 +227,12 @@ TranslatorHosts::setHosts(const string& xpath, ConstElementPtr elem) {
     } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting host reservations '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorHosts::setHostsKea(const string& xpath, ConstElementPtr elem) {
+TranslatorHosts::setHostsKea(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         string id_type = "unknown";
         ConstElementPtr host = elem->get(i);
