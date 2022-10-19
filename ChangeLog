@@ -1,3 +1,11 @@
+2071.	[perf]		andrei
+	Significantly improved the performance of editing configuration
+	with kea-netconf. Instead of making a request to the sysrepo
+	datastore for each leaf and leaf-list node, a single request is
+	done and the config is translated from the received data node.
+	This approach is considered experimental.
+	(Gitlab #2400)
+
 2070.	[func]		andrei
 	kea-netconf now requires libyang v2 and sysrepo v2 to compile and
 	run. Suport for libyang v1 and sysrepo v1 has been dropped.
