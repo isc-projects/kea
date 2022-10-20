@@ -240,7 +240,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
         // Instantiate allocation engine. The number of allocation attempts equal
         // to zero indicates that the allocation engine will use the number of
         // attempts depending on the pool size.
-        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 0));
+        alloc_engine_.reset(new AllocEngine(0));
 
         /// @todo call loadLibraries() when handling configuration changes
 

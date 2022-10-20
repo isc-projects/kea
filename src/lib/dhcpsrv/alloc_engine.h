@@ -44,18 +44,8 @@ namespace dhcp {
 /// This class represents a DHCP allocation engine. It is responsible
 /// for picking subnets, choosing and allocating a lease, extending,
 /// renewing, releasing and possibly expiring leases.
-///
-/// @todo: Does not handle out of leases well
-/// @todo: Does not handle out of allocation attempts well
 class AllocEngine : public boost::noncopyable {
 public:
-
-    /// @brief Specifies allocation type
-    typedef enum {
-        ALLOC_ITERATIVE, // iterative - one address after another
-        ALLOC_HASHED,    // hashed - client's DUID/client-id is hashed
-        ALLOC_RANDOM     // random - an address is randomly selected
-    } AllocType;
 
     /// @brief Constructor.
     ///
@@ -64,11 +54,10 @@ public:
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID.
     ///
-    /// @param engine_type selects allocation algorithm
     /// @param attempts number of attempts for each lease allocation before
     ///        we give up (0 means unlimited)
     /// @param ipv6 specifies if the engine should work for IPv4 or IPv6
-    AllocEngine(AllocType engine_type, uint64_t attempts, bool ipv6 = true);
+    AllocEngine(uint64_t attempts, bool ipv6 = true);
 
     /// @brief Destructor.
     virtual ~AllocEngine() { }

@@ -90,7 +90,7 @@ AllocEngineHooks Hooks;
 namespace isc {
 namespace dhcp {
 
-AllocEngine::AllocEngine(AllocType, uint64_t attempts, bool ipv6)
+AllocEngine::AllocEngine(uint64_t attempts, bool ipv6)
     : attempts_(attempts), incomplete_v4_reclamations_(0),
       incomplete_v6_reclamations_(0) {
 

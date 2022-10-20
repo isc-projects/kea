@@ -294,8 +294,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     uint8_t expected_len = pool->getLength();
 
     boost::scoped_ptr<AllocEngine> engine;
-    EXPECT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100)));
+    EXPECT_NO_THROW(engine.reset(new AllocEngine(100)));
     // We can't use ASSERT macros in non-void methods
     EXPECT_TRUE(engine);
     if (!engine) {
@@ -345,8 +344,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const DuidPtr& duid,
     uint8_t expected_len = pool->getLength();
 
     boost::scoped_ptr<AllocEngine> engine;
-    EXPECT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100)));
+    EXPECT_NO_THROW(engine.reset(new AllocEngine(100)));
     // We can't use ASSERT macros in non-void methods
     EXPECT_TRUE(engine);
     if (!engine) {
@@ -453,7 +451,7 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
                                         IOAddress requested,
                                         uint8_t expected_pd_len) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Let's create a lease and put it in the LeaseMgr
@@ -502,7 +500,7 @@ void
 AllocEngine6Test::allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
                                   uint8_t expected_pd_len) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Client would like to get a 3000::abc lease, which does not belong to any
