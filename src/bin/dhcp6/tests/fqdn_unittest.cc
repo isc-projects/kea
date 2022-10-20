@@ -1376,8 +1376,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     // exactly one address. This address will be handed out to the
     // client, will get expired and then be reused.
     CfgMgr::instance().clear();
-    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1:1::"), 56, 1, 2,
-                                     3, 4));
+    subnet_ = Subnet6::create(IOAddress("2001:db8:1:1::"), 56, 1, 2, 3, 4);
     subnet_->setIface("eth0");
     subnet_->setDdnsSendUpdates(true);
 

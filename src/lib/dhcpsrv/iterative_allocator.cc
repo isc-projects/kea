@@ -17,8 +17,9 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-IterativeAllocator::IterativeAllocator(const Lease::Type& lease_type)
-    : Allocator(lease_type) {
+IterativeAllocator::IterativeAllocator(const Lease::Type& lease_type,
+                                       const WeakSubnetPtr& subnet)
+    : Allocator(lease_type, subnet) {
 }
 
 isc::asiolink::IOAddress
@@ -86,8 +87,7 @@ IterativeAllocator::increaseAddress(const IOAddress& address,
 }
 
 IOAddress
-IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
-                                        const ClientClasses& client_classes,
+IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
                                         const DuidPtr&,
                                         const IOAddress&) {
     // Is this prefix allocation?
@@ -97,11 +97,11 @@ IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
-    IOAddress last = getSubnetState(subnet)->getLastAllocated(pool_type_);
+    IOAddress last = getSubnetState()->getLastAllocated(pool_type_);
     bool valid = true;
     bool retrying = false;
 
-    const PoolCollection& pools = subnet->getPools(pool_type_);
+    const PoolCollection& pools = subnet_.lock()->getPools(pool_type_);
 
     if (pools.empty()) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");
@@ -156,7 +156,7 @@ IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
         if (!valid && (last == (*it)->getFirstAddress())) {
             // Pool was (re)initialized
             getPoolState(*it)->setLastAllocated(last);
-            getSubnetState(subnet)->setLastAllocated(pool_type_, last);
+            getSubnetState()->setLastAllocated(pool_type_, last);
             return (last);
         }
         // still can be bogus
@@ -186,7 +186,7 @@ IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
                 // the next one is in the pool as well, so we haven't hit
                 // pool boundary yet
                 getPoolState(*it)->setLastAllocated(next);
-                getSubnetState(subnet)->setLastAllocated(pool_type_, next);
+                getSubnetState()->setLastAllocated(pool_type_, next);
                 return (next);
             }
 
@@ -209,12 +209,13 @@ IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
     // ok to access first element directly. We checked that pools is non-empty
     last = getPoolState(*first)->getLastAllocated();
     getPoolState(*first)->setLastAllocated(last);
-    getSubnetState(subnet)->setLastAllocated(pool_type_, last);
+    getSubnetState()->setLastAllocated(pool_type_, last);
     return (last);
 }
 
 SubnetIterativeAllocationStatePtr
-IterativeAllocator::getSubnetState(const SubnetPtr& subnet) const {
+IterativeAllocator::getSubnetState() const {
+    auto subnet = subnet_.lock();
     if (!subnet->getAllocationState()) {
         subnet->setAllocationState(SubnetIterativeAllocationState::create(subnet));
     }

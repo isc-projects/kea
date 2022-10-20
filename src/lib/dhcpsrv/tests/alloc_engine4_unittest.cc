@@ -50,14 +50,6 @@ TEST_F(AllocEngine4Test, constructor) {
     // 100 attempts to pick up a lease
     ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100,
                                             false)));
-
-    // There should be V4 allocator
-    ASSERT_TRUE(x->getAllocator(Lease::TYPE_V4));
-
-    // Check that allocators for V6 stuff are not created
-    EXPECT_THROW(x->getAllocator(Lease::TYPE_NA), BadValue);
-    EXPECT_THROW(x->getAllocator(Lease::TYPE_TA), BadValue);
-    EXPECT_THROW(x->getAllocator(Lease::TYPE_PD), BadValue);
 }
 
 // This test checks if two simple IPv4 allocations succeed and that the
@@ -862,7 +854,7 @@ TEST_F(AllocEngine4Test, smallPool4) {
     cfg_mgr.clear();
 
     // Create configuration similar to other tests, but with a single address pool
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
@@ -906,7 +898,7 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     cfg_mgr.clear();
 
     // Create configuration similar to other tests, but with a single address pool
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
@@ -961,8 +953,8 @@ public:
         // Create two subnets, each with a single address pool. The first subnet
         // has only one address in its address pool to make it easier to simulate
         // address exhaustion.
-        subnet1_.reset(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(1)));
-        subnet2_.reset(new Subnet4(IOAddress("10.1.2.0"), 24, 1, 2, 3, SubnetID(2)));
+        subnet1_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(1));
+        subnet2_ = Subnet4::create(IOAddress("10.1.2.0"), 24, 1, 2, 3, SubnetID(2));
         pool1_.reset(new Pool4(IOAddress("192.0.2.17"), IOAddress("192.0.2.17")));
         pool2_.reset(new Pool4(IOAddress("10.1.2.5"), IOAddress("10.1.2.100")));
 
@@ -1621,7 +1613,7 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     cfg_mgr.clear();
 
     // Create configuration similar to other tests, but with a single address pool
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
@@ -1758,7 +1750,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
     IOAddress addr("192.0.2.15");
     CfgMgr& cfg_mgr = CfgMgr::instance();
     cfg_mgr.clear();
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
@@ -1796,7 +1788,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
     IOAddress addr("192.0.2.15");
     CfgMgr& cfg_mgr = CfgMgr::instance();
     cfg_mgr.clear();
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
@@ -1837,7 +1829,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
     IOAddress addr("192.0.2.15");
     CfgMgr& cfg_mgr = CfgMgr::instance();
     cfg_mgr.clear();
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
@@ -1873,7 +1865,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
     IOAddress addr("192.0.2.15");
     CfgMgr& cfg_mgr = CfgMgr::instance();
     cfg_mgr.clear();
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);

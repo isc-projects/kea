@@ -739,9 +739,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id", 0,
                                                           subnet_id_max));
 
-    Subnet4Ptr subnet4(new Subnet4(addr, len, Triplet<uint32_t>(),
+    auto subnet4 = Subnet4::create(addr, len, Triplet<uint32_t>(),
                                    Triplet<uint32_t>(), Triplet<uint32_t>(),
-                                   subnet_id));
+                                   subnet_id);
     subnet_ = subnet4;
 
     // Move from reservation mode to new reservations flags.
@@ -1265,12 +1265,12 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     Triplet<uint32_t> pref = parseIntTriplet(params, "preferred-lifetime");
 
     // Create a new subnet.
-    Subnet6* subnet6 = new Subnet6(addr, len, Triplet<uint32_t>(),
+    auto subnet6 = Subnet6::create(addr, len, Triplet<uint32_t>(),
                                    Triplet<uint32_t>(),
                                    pref,
                                    Triplet<uint32_t>(),
                                    subnet_id);
-    subnet_.reset(subnet6);
+    subnet_ = subnet6;
 
     // Move from reservation mode to new reservations flags.
     ElementPtr mutable_params;

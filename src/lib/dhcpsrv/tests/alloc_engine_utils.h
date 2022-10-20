@@ -63,7 +63,8 @@ class NakedIterativeAllocator : public IterativeAllocator {
 public:
     /// @brief constructor
     /// @param type pool types that will be iterated through
-    NakedIterativeAllocator(Lease::Type type) : IterativeAllocator(type) {
+    NakedIterativeAllocator(Lease::Type type, const WeakSubnetPtr& subnet)
+        : IterativeAllocator(type, subnet) {
     }
 
     using IterativeAllocator::increaseAddress;
@@ -82,7 +83,6 @@ public:
     }
 
     // Expose internal classes for testing purposes
-    using AllocEngine::getAllocator;
     using AllocEngine::updateLease4ExtendedInfo;
 
     /// @brief Wrapper method for invoking AllocEngine4::updateLease4ExtendedInfo().

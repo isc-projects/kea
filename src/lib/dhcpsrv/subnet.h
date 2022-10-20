@@ -11,6 +11,7 @@
 #include <cc/data.h>
 #include <cc/user_context.h>
 #include <dhcp/option_space_container.h>
+#include <dhcpsrv/allocator.h>
 #include <dhcpsrv/allocation_state.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network.h>
@@ -264,6 +265,27 @@ public:
     /// @return a collection of all pools
     PoolCollection& getPoolsWritable(Lease::Type type);
 
+    /// @brief Returns lease allocator instance.
+    ///
+    /// An allocator is responsible for selecting leases from the subnet's
+    /// pools. Each subnet has one allocator common for all pools belonging
+    /// to the subnet. The allocation engine uses this function to get the
+    /// current subnet allocator and uses it to select and offer an address.
+    ///
+    /// @param type lease type for which the allocator instance should be
+    /// returned.
+    /// @return Allocator instance.
+    AllocatorPtr getAllocator(Lease::Type type) const;
+
+    /// @brief Sets new allocator instance.
+    ///
+    /// If the server is configured to use a different allocator for the
+    /// subnet, it can set the current allocator with this function.
+    ///
+    /// @param type lease type for which the allocator is set.
+    /// @param allocator new allocator instance.
+    void setAllocator(Lease::Type type, const AllocatorPtr& allocator);
+
     /// @brief Returns subnet-specific allocation state.
     ///
     /// The actual type of the state depends on the allocator type.
@@ -406,6 +428,9 @@ protected:
 
     /// @brief Shared network name.
     std::string shared_network_name_;
+
+    /// @brief Lease allocators used by the subnet.
+    std::map<Lease::Type, AllocatorPtr> allocators_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
@@ -451,6 +476,10 @@ public:
     /// object within a hooks library in cases when the library may be
     /// unloaded before the object is destroyed. This ensures that the
     /// ownership of the object by the Kea process is retained.
+    ///
+    /// It associates the subnet with the default, iterative, allocator.
+    /// Therefore, using this function should be preferred over the
+    /// constructor whenever the subnet needs a default allocator.
     ///
     /// @param prefix Subnet4 prefix
     /// @param length prefix length
@@ -601,6 +630,10 @@ public:
     /// object within a hooks library in cases when the library may be
     /// unloaded before the object is destroyed. This ensures that the
     /// ownership of the object by the Kea process is retained.
+    ///
+    /// It associates the subnet with the default, iterative, allocator.
+    /// Therefore, using this function should be preferred over the
+    /// constructor whenever the subnet needs a default allocator.
     ///
     /// @param prefix Subnet6 prefix
     /// @param length prefix length

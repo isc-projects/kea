@@ -176,7 +176,7 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
                              const uint8_t pd_delegated_length) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
-    subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 100, 200, 300, 400));
+    subnet_ = Subnet6::create(subnet, 56, 100, 200, 300, 400);
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, pool_start, pool_end));
 
     subnet_->addPool(pool_);
@@ -601,7 +601,7 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
                              const asiolink::IOAddress& pool_end) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
     pool_ = Pool4Ptr(new Pool4(pool_start, pool_end));
     subnet_->addPool(pool_);
 

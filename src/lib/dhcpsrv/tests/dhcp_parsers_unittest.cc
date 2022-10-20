@@ -2804,6 +2804,7 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 
     EXPECT_TRUE(subnet->getAllocationState());
+    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_V4));
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -2896,6 +2897,11 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
 
     EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
+
+    EXPECT_TRUE(subnet->getAllocationState());
+    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_NA));
+    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_TA));
+    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_PD));
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network

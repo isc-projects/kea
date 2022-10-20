@@ -56,8 +56,8 @@ BaseServerTest::~BaseServerTest() {
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()
     : NakedDhcpv6SrvTest(), srv_(0), multi_threading_(false) {
-    subnet_ = isc::dhcp::Subnet6Ptr(new isc::dhcp::Subnet6(isc::asiolink::IOAddress("2001:db8:1::"),
-                                                           48, 1000, 2000, 3000, 4000));
+    subnet_ = Subnet6::create(isc::asiolink::IOAddress("2001:db8:1::"),
+                              48, 1000, 2000, 3000, 4000);
     subnet_->setIface("eth0");
 
     pool_ = isc::dhcp::Pool6Ptr(new isc::dhcp::Pool6(isc::dhcp::Lease::TYPE_NA,
@@ -272,8 +272,8 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
     // and then be reused.
     if (expire_before_renew) {
         CfgMgr::instance().clear();
-        subnet_.reset(new Subnet6(IOAddress("2001:db8:1:1::"),
-                                  48, 1000, 2000, 3000, 4000));
+        subnet_ = Subnet6::create(IOAddress("2001:db8:1:1::"),
+                                  48, 1000, 2000, 3000, 4000);
         subnet_->setIface("eth0");
         pool_.reset(new Pool6(Lease::TYPE_NA, existing, existing));
         subnet_->addPool(pool_);

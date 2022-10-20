@@ -449,8 +449,8 @@ TEST_F(Dhcp6CBTest, mergeSubnets) {
     extractConfig(base_config);
 
     // Make a few subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:1::"), 64, 1, 2, 100, 100, SubnetID(1)));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:3::"), 64, 1, 2, 100, 100, SubnetID(3)));
+    auto subnet1 = Subnet6::create(IOAddress("2001:1::"), 64, 1, 2, 100, 100, SubnetID(1));
+    auto subnet3 = Subnet6::create(IOAddress("2001:3::"), 64, 1, 2, 100, 100, SubnetID(3));
 
     // Add subnet1 to db1 and subnet3 to db2
     db1_->createUpdateSubnet6(ServerSelector::ALL(), subnet1);

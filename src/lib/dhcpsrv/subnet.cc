@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/iterative_allocator.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <util/multi_threading_mgr.h>
@@ -192,7 +193,6 @@ Subnet4::Subnet4(const IOAddress& prefix, uint8_t length,
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
     }
-
     // Timers.
     setT1(t1);
     setT2(t2);
@@ -207,6 +207,10 @@ Subnet4::create(const IOAddress& prefix, uint8_t length,
                 const SubnetID id) {
     Subnet4Ptr subnet = boost::make_shared<Subnet4>
         (prefix, length, t1, t2, valid_lifetime, id);
+    subnet->setAllocator(Lease::TYPE_V4,
+                         boost::make_shared<IterativeAllocator>
+                         (Lease::TYPE_V4, subnet));
+
     return (subnet);
 }
 
@@ -294,6 +298,22 @@ PoolCollection& Subnet::getPoolsWritable(Lease::Type type) {
         isc_throw(BadValue, "Invalid pool type specified: "
                   << static_cast<int>(type));
     }
+}
+
+AllocatorPtr
+Subnet::getAllocator(Lease::Type type) const {
+    auto alloc = allocators_.find(type);
+
+    if (alloc == allocators_.end()) {
+        isc_throw(BadValue, "no allocator initialized for pool type "
+                  << Lease::typeToText(type));
+    }
+    return (alloc->second);
+}
+
+void
+Subnet::setAllocator(Lease::Type type, const AllocatorPtr& allocator) {
+    allocators_[type] = allocator;
 }
 
 const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& hint,
@@ -562,6 +582,16 @@ Subnet6::create(const IOAddress& prefix, uint8_t length,
                 const SubnetID id) {
     Subnet6Ptr subnet = boost::make_shared<Subnet6>
         (prefix, length, t1, t2, preferred_lifetime, valid_lifetime, id);
+    subnet->setAllocator(Lease::TYPE_NA,
+                         boost::make_shared<IterativeAllocator>
+                         (Lease::TYPE_NA, subnet));
+    subnet->setAllocator(Lease::TYPE_TA,
+                         boost::make_shared<IterativeAllocator>
+                         (Lease::TYPE_TA, subnet));
+    subnet->setAllocator(Lease::TYPE_PD,
+                         boost::make_shared<IterativeAllocator>
+                         (Lease::TYPE_PD, subnet));
+
     return (subnet);
 }
 

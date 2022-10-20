@@ -1231,10 +1231,10 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
     // Recreate subnet
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
-    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft));
+                              valid_lft);
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1311,10 +1311,10 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     // Recreate subnet
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(1000);
-    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft));
+                              valid_lft);
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1462,10 +1462,10 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
     // Recreate subnet
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(1000);
-    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft));
+                              valid_lft);
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1843,10 +1843,10 @@ TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     req->setIndex(ETH1_INDEX);
 
     // Recreate a subnet but set T1 and T2 to "unspecified".
-    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               Triplet<uint32_t>(),
                               Triplet<uint32_t>(),
-                              3000));
+                              3000);
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);

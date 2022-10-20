@@ -10,14 +10,24 @@
 #include <asiolink/io_address.h>
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
-#include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/lease.h>
 #include <util/multi_threading_mgr.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <mutex>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Forward declaration of a @c Subnet.
+///
+/// We don't include the subnet header because it would cause a
+/// circular dependency.
+class Subnet;
+
+/// @brief Weak pointer to the @c Subnet.
+typedef boost::weak_ptr<Subnet> WeakSubnetPtr;
 
 /// An exception that is thrown when allocation module fails (e.g. due to
 /// lack of available addresses)
@@ -37,10 +47,31 @@ public:
 ///
 /// This is an abstract class that should not be used directly, but rather
 /// specialized implementations should be used instead.
+///
+/// This class holds a weak pointer to the subnet owning it because
+/// it must not exist without the subnet. Also, it can't hold a shared
+/// pointer to the subnet because it would cause a circular dependency
+/// between the two.
 class Allocator {
 public:
 
-    /// @brief Picks a address or a delegated prefix
+    /// @brief Constructor
+    ///
+    /// Specifies which type of leases this allocator will assign.
+    ///
+    /// @param type specifies pool type (addresses, temporary addresses
+    /// or prefixes).
+    /// @param subnet weak pointer to the subnet owning the allocator.
+    Allocator(Lease::Type type, const WeakSubnetPtr& subnet)
+        : pool_type_(type),
+          subnet_(subnet) {
+    }
+
+    /// @brief Virtual destructor
+    virtual ~Allocator() {
+    }
+
+    /// @brief Picks an address or a delegated prefix.
     ///
     /// This method returns one address from the available pools in the
     /// specified subnet. It should not check if the address is used or
@@ -58,55 +89,56 @@ public:
     ///
     /// Pools which are not allowed for client classes are skipped.
     ///
-    /// @param subnet next address will be returned from pool of that subnet
     /// @param client_classes list of classes client belongs to
     /// @param duid Client's DUID
     /// @param hint Client's hint
     ///
     /// @return the next address.
     virtual isc::asiolink::IOAddress
-    pickAddress(const SubnetPtr& subnet,
-                const ClientClasses& client_classes,
+    pickAddress(const ClientClasses& client_classes,
                 const DuidPtr& duid,
                 const asiolink::IOAddress& hint) {
         if (util::MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<std::mutex> lock(mutex_);
-            return pickAddressInternal(subnet, client_classes, duid, hint);
+            return pickAddressInternal(client_classes, duid, hint);
         } else {
-            return pickAddressInternal(subnet, client_classes, duid, hint);
+            return pickAddressInternal(client_classes, duid, hint);
         }
     }
 
-        /// @brief Default constructor
-        ///
-        /// Specifies which type of leases this allocator will assign
-        /// @param pool_type specifies pool type (addresses, temp. addr or prefixes)
-        Allocator(Lease::Type pool_type) : pool_type_(pool_type) {
-        }
+private:
 
-        /// @brief Virtual destructor
-        virtual ~Allocator() {
-        }
+    /// @brief Picks an address or delegated prefix.
+    ///
+    /// Internal thread-unsafe implementation of the @c pickAddress.
+    /// Derived classes must provide their specific implementations of
+    /// this function.
+    ///
+    /// @param client_classes list of classes client belongs to
+    /// @param duid Client's DUID
+    /// @param hint Client's hint
+    ///
+    /// @return the next address.
+    virtual isc::asiolink::IOAddress
+    pickAddressInternal(const ClientClasses& client_classes,
+                        const DuidPtr& duid,
+                        const isc::asiolink::IOAddress& hint) = 0;
 
-    private:
-        virtual isc::asiolink::IOAddress
-        pickAddressInternal(const SubnetPtr& subnet,
-                            const ClientClasses& client_classes,
-                            const DuidPtr& duid,
-                            const isc::asiolink::IOAddress& hint) = 0;
+protected:
 
-    protected:
+    /// @brief Defines pool type allocation
+    Lease::Type pool_type_;
 
-        /// @brief Defines pool type allocation
-        Lease::Type pool_type_;
+    /// @brief Weak pointer to the subnet owning the allocator.
+    WeakSubnetPtr subnet_;
 
-    private:
+private:
 
-        /// @brief The mutex to protect the allocated lease
-        std::mutex mutex_;
+    /// @brief The mutex to protect the allocated lease.
+    std::mutex mutex_;
 };
 
-/// defines a pointer to allocator
+/// Defines a pointer to an allocator.
 typedef boost::shared_ptr<Allocator> AllocatorPtr;
 
 } // end of namespace isc::dhcp

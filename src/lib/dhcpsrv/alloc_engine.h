@@ -73,22 +73,7 @@ public:
     /// @brief Destructor.
     virtual ~AllocEngine() { }
 
-    /// @brief Returns allocator for a given pool type
-    ///
-    /// @param type type of pool (V4, IA, TA or PD)
-    ///
-    /// @throw BadValue if allocator for a given type is missing
-    ///
-    /// @return pointer to allocator handling a given resource types
-    AllocatorPtr getAllocator(Lease::Type type);
-
 private:
-
-    /// @brief A pointer to currently used allocator
-    ///
-    /// For IPv4, there will be only one allocator: TYPE_V4
-    /// For IPv6, there will be 3 allocators: TYPE_NA, TYPE_TA, TYPE_PD
-    std::map<Lease::Type, AllocatorPtr> allocators_;
 
     /// @brief number of attempts before we give up lease allocation (0=unlimited)
     uint64_t attempts_;

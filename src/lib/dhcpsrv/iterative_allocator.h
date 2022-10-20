@@ -27,23 +27,22 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Does not do anything.
-    ///
     /// @param lease_type specifies the type of allocated leases.
-    IterativeAllocator(const Lease::Type& lease_type);
+    /// @param subnet weak pointer to the subnet owning the allocator.
+    IterativeAllocator(const Lease::Type& lease_type, const WeakSubnetPtr& subnet);
 
 private:
 
     /// @brief Returns the next address from the pools in the subnet.
     ///
-    /// @param subnet next address will be returned from pool of that subnet.
+    /// Internal thread-unsafe implementation of the @c pickAddress.
+    ///
     /// @param client_classes list of classes client belongs to.
     /// @param duid client DUID (ignored).
     /// @param hint client hint (ignored).
     ///
     /// @return next offered address.
-    virtual asiolink::IOAddress pickAddressInternal(const SubnetPtr& subnet,
-                                                    const ClientClasses& client_classes,
+    virtual asiolink::IOAddress pickAddressInternal(const ClientClasses& client_classes,
                                                     const DuidPtr& duid,
                                                     const asiolink::IOAddress& hint);
 
@@ -51,7 +50,7 @@ private:
     ///
     /// @param subnet subnet instance.
     /// @return allocation state instance for the subnet.
-    SubnetIterativeAllocationStatePtr getSubnetState(const SubnetPtr& subnet) const;
+    SubnetIterativeAllocationStatePtr getSubnetState() const;
 
     /// @brief Convenience function returning pool allocation state instance.
     ///

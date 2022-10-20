@@ -94,33 +94,9 @@ AllocEngine::AllocEngine(AllocType, uint64_t attempts, bool ipv6)
     : attempts_(attempts), incomplete_v4_reclamations_(0),
       incomplete_v6_reclamations_(0) {
 
-    // Choose the basic (normal address) lease type
-    Lease::Type basic_type = ipv6 ? Lease::TYPE_NA : Lease::TYPE_V4;
-
-    // Initialize normal address allocators
-    allocators_[basic_type] = AllocatorPtr(new IterativeAllocator(basic_type));
-
-    // If this is IPv6 allocation engine, initialize also temporary addrs
-    // and prefixes
-    if (ipv6) {
-        allocators_[Lease::TYPE_TA] = AllocatorPtr(new IterativeAllocator(Lease::TYPE_TA));
-        allocators_[Lease::TYPE_PD] = AllocatorPtr(new IterativeAllocator(Lease::TYPE_PD));
-    }
-
     // Register hook points
     hook_index_lease4_select_ = Hooks.hook_index_lease4_select_;
     hook_index_lease6_select_ = Hooks.hook_index_lease6_select_;
-}
-
-AllocatorPtr
-AllocEngine::getAllocator(Lease::Type type) {
-    std::map<Lease::Type, AllocatorPtr>::const_iterator alloc = allocators_.find(type);
-
-    if (alloc == allocators_.end()) {
-        isc_throw(BadValue, "No allocator initialized for pool type "
-                  << Lease::typeToText(type));
-    }
-    return (alloc->second);
 }
 
 } // end of namespace isc::dhcp
@@ -649,13 +625,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 Lease6Collection
 AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
-    AllocatorPtr allocator = getAllocator(ctx.currentIA().type_);
-
-    if (!allocator) {
-        isc_throw(InvalidOperation, "No allocator specified for "
-                  << Lease6::typeToText(ctx.currentIA().type_));
-    }
-
     Lease6Collection leases;
 
     IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
@@ -864,8 +833,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
             ++total_attempts;
 
-            IOAddress candidate = allocator->pickAddress(subnet,
-                                                         classes,
+            auto allocator = subnet->getAllocator(ctx.currentIA().type_);
+            IOAddress candidate = allocator->pickAddress(classes,
                                                          ctx.duid_,
                                                          hint);
             // The first step is to find out prefix length. It is 128 for
@@ -4128,7 +4097,6 @@ AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& c
 Lease4Ptr
 AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     Lease4Ptr new_lease;
-    AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
     Subnet4Ptr subnet = ctx.subnet_;
 
     // Need to check if the subnet belongs to a shared network. If so,
@@ -4201,8 +4169,8 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
             ++total_attempts;
 
-            IOAddress candidate = allocator->pickAddress(subnet,
-                                                         classes,
+            auto allocator = subnet->getAllocator(Lease::TYPE_V4);
+            IOAddress candidate = allocator->pickAddress(classes,
                                                          client_id,
                                                          ctx.requested_address_);
             // First check for reservation when it is the choice.
