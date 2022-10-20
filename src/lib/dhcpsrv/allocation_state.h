@@ -55,13 +55,13 @@ public:
 
     /// @brief Returns last allocation time for the specified lease type.
     ///
-    /// @param lease_type specifies a lease type for which the last
-    /// allocation time should be returned.
+    /// @param type specifies a lease type for which the last allocation
+    /// time should be returned.
     /// @return Last allocation time for the lease type or
     /// @c boost::posix_time::neg_infin when no leases have been allocated
     /// from this subnet yet.
     boost::posix_time::ptime
-    getLastAllocatedTime(const Lease::Type& lease_type) const;
+    getLastAllocatedTime(Lease::Type type) const;
 
 protected:
 
@@ -70,9 +70,9 @@ protected:
     /// This function should be called by derived classes. It should be
     /// called in the thread-safe context.
     ///
-    /// @param lease_type specifies a lease type for which the last allocation
+    /// @param type specifies a lease type for which the last allocation
     /// time should be set to the current time.
-    void setCurrentAllocatedTimeInternal(const Lease::Type& lease_type);
+    void setCurrentAllocatedTimeInternal(Lease::Type type);
 
     /// @brief Returns the last allocation time of a specified lease type.
     ///
@@ -85,7 +85,7 @@ protected:
     /// this subnet. The negative infinity time is returned if a lease type is
     /// not recognized (which is unlikely).
     boost::posix_time::ptime
-    getLastAllocatedTimeInternal(const Lease::Type& lease_type) const;
+    getLastAllocatedTimeInternal(Lease::Type type) const;
 
     /// @brief Mutex used for thread-safe access to the state members.
     boost::scoped_ptr<std::mutex> mutex_;

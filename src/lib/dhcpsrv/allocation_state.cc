@@ -24,18 +24,18 @@ SubnetAllocationState::SubnetAllocationState()
 }
 
 boost::posix_time::ptime
-SubnetAllocationState::getLastAllocatedTime(const Lease::Type& lease_type) const {
+SubnetAllocationState::getLastAllocatedTime(Lease::Type type) const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLastAllocatedTimeInternal(lease_type));
+        return (getLastAllocatedTimeInternal(type));
     } else {
-        return (getLastAllocatedTimeInternal(lease_type));
+        return (getLastAllocatedTimeInternal(type));
     }
 }
 
 boost::posix_time::ptime
-SubnetAllocationState::getLastAllocatedTimeInternal(const Lease::Type& lease_type) const {
-    auto t = last_allocated_time_.find(lease_type);
+SubnetAllocationState::getLastAllocatedTimeInternal(Lease::Type type) const {
+    auto t = last_allocated_time_.find(type);
     if (t != last_allocated_time_.end()) {
         return (t->second);
     }
@@ -46,8 +46,8 @@ SubnetAllocationState::getLastAllocatedTimeInternal(const Lease::Type& lease_typ
 }
 
 void
-SubnetAllocationState::setCurrentAllocatedTimeInternal(const Lease::Type& lease_type) {
-    last_allocated_time_[lease_type] = boost::posix_time::microsec_clock::universal_time();
+SubnetAllocationState::setCurrentAllocatedTimeInternal(Lease::Type type) {
+    last_allocated_time_[type] = boost::posix_time::microsec_clock::universal_time();
 }
 
 }

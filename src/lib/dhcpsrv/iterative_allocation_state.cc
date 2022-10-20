@@ -32,28 +32,28 @@ SubnetIterativeAllocationState::SubnetIterativeAllocationState(const IOAddress& 
 }
 
 IOAddress
-SubnetIterativeAllocationState::getLastAllocated(const Lease::Type& lease_type) const {
+SubnetIterativeAllocationState::getLastAllocated(Lease::Type type) const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLastAllocatedInternal(lease_type));
+        return (getLastAllocatedInternal(type));
     } else {
-        return (getLastAllocatedInternal(lease_type));
+        return (getLastAllocatedInternal(type));
     }
 }
 
 void
-SubnetIterativeAllocationState::setLastAllocated(const Lease::Type& lease_type, const IOAddress& address) {
+SubnetIterativeAllocationState::setLastAllocated(Lease::Type type, const IOAddress& address) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
-        setLastAllocatedInternal(lease_type, address);
+        setLastAllocatedInternal(type, address);
     } else {
-        setLastAllocatedInternal(lease_type, address);
+        setLastAllocatedInternal(type, address);
     }
 }
 
 IOAddress
-SubnetIterativeAllocationState::getLastAllocatedInternal(const Lease::Type& lease_type) const {
-    switch (lease_type) {
+SubnetIterativeAllocationState::getLastAllocatedInternal(Lease::Type type) const {
+    switch (type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         return last_allocated_ia_;
@@ -62,14 +62,14 @@ SubnetIterativeAllocationState::getLastAllocatedInternal(const Lease::Type& leas
     case Lease::TYPE_PD:
         return last_allocated_pd_;
     default:
-        isc_throw(BadValue, "pool type " << lease_type << " not supported");
+        isc_throw(BadValue, "pool type " << type << " not supported");
     }
 }
 
 void
-SubnetIterativeAllocationState::setLastAllocatedInternal(const Lease::Type& lease_type,
+SubnetIterativeAllocationState::setLastAllocatedInternal(Lease::Type type,
                                                          const IOAddress& address) {
-    switch (lease_type) {
+    switch (type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         last_allocated_ia_ = address;
@@ -81,11 +81,11 @@ SubnetIterativeAllocationState::setLastAllocatedInternal(const Lease::Type& leas
         last_allocated_pd_ = address;
         break;
     default:
-        isc_throw(BadValue, "pool type " << lease_type << " not supported");
+        isc_throw(BadValue, "pool type " << type << " not supported");
     }
 
     // Update the timestamp of last allocation.
-    setCurrentAllocatedTimeInternal(lease_type);
+    setCurrentAllocatedTimeInternal(type);
 }
 
 PoolIterativeAllocationStatePtr

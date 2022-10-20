@@ -49,15 +49,15 @@ public:
 
     /// @brief Returns last allocated address or prefix.
     ///
-    /// @param lease_type type of the last allocated lease to be returned.
+    /// @param type type of the last allocated lease to be returned.
     /// @return last allocated address or prefix of a given type.
-    asiolink::IOAddress getLastAllocated(const Lease::Type& lease_type) const;
+    asiolink::IOAddress getLastAllocated(Lease::Type type) const;
 
     /// @brief Sets last alocated address or prefix.
     ///
-    /// @param lease_type type of the last allocated lease set.
+    /// @param type type of the last allocated lease set.
     /// @param address an address or prefix last allocated.
-    void setLastAllocated(const Lease::Type& lease_type, const asiolink::IOAddress& address);
+    void setLastAllocated(Lease::Type type, const asiolink::IOAddress& address);
 
 private:
 
@@ -65,17 +65,17 @@ private:
     ///
     /// It must be called in the thread-safe context.
     ///
-    /// @param lease_type type of the last allocated lease to be returned.
+    /// @param type type of the last allocated lease to be returned.
     /// @return last allocated address or prefix of a given type.
-    asiolink::IOAddress getLastAllocatedInternal(const Lease::Type& lease_type) const;
+    asiolink::IOAddress getLastAllocatedInternal(Lease::Type type) const;
 
     /// @brief Sets last alocated address or prefix.
     ///
     /// It must be called in the thread-safe context.
     ///
-    /// @param lease_type type of the last allocated lease set.
+    /// @param type type of the last allocated lease set.
     /// @param address an address or prefix last allocated.
-    void setLastAllocatedInternal(const Lease::Type& lease_type, const asiolink::IOAddress& address);
+    void setLastAllocatedInternal(Lease::Type type, const asiolink::IOAddress& address);
 
     /// @brief Last allocated address.
     ///

@@ -17,9 +17,9 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-IterativeAllocator::IterativeAllocator(const Lease::Type& lease_type,
+IterativeAllocator::IterativeAllocator(Lease::Type type,
                                        const WeakSubnetPtr& subnet)
-    : Allocator(lease_type, subnet) {
+    : Allocator(type, subnet) {
 }
 
 isc::asiolink::IOAddress

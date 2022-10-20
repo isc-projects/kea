@@ -27,9 +27,9 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param lease_type specifies the type of allocated leases.
+    /// @param type specifies the type of allocated leases.
     /// @param subnet weak pointer to the subnet owning the allocator.
-    IterativeAllocator(const Lease::Type& lease_type, const WeakSubnetPtr& subnet);
+    IterativeAllocator(Lease::Type type, const WeakSubnetPtr& subnet);
 
 private:
 
@@ -48,11 +48,16 @@ private:
 
     /// @brief Convenience function returning subnet allocation state instance.
     ///
-    /// @param subnet subnet instance.
+    /// It creates a new subnet state instance and assigns it to the subnet
+    /// if it hasn't been initialized.
+    ///
     /// @return allocation state instance for the subnet.
     SubnetIterativeAllocationStatePtr getSubnetState() const;
 
     /// @brief Convenience function returning pool allocation state instance.
+    ///
+    /// It creates a new pool state instance and assigns it to the pool
+    /// if it hasn't been initialized.
     ///
     /// @param pool pool instance.
     /// @return allocation state instance for the pool.
