@@ -665,7 +665,6 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
 
     // Set allocation state for iterative allocator. We will make it
     // configurable.
-    auto subnet_prefix = subnet_->get();
     subnet_->setAllocationState(SubnetIterativeAllocationState::create(subnet_));
 }
 
