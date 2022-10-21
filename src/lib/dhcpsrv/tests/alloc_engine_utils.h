@@ -135,7 +135,7 @@ public:
                     const asiolink::IOAddress& pool_start,
                     const asiolink::IOAddress& pool_end,
                     const asiolink::IOAddress& pd_pool_prefix =
-                     asiolink::IOAddress::IPV6_ZERO_ADDRESS(),
+                    asiolink::IOAddress::IPV6_ZERO_ADDRESS(),
                     const uint8_t pd_pool_length = 0,
                     const uint8_t pd_delegated_length = 0);
 
