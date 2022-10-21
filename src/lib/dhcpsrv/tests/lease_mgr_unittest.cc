@@ -407,7 +407,7 @@ public:
     void
     addRelayId6(const IOAddress& /* lease_addr */,
                 const IOAddress& /* link_addr */,
-                const vector<uint8_t>& relay_id) override {
+                const vector<uint8_t>& /* relay_id */) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::addRelayId6 not implemented");
     }
 
@@ -415,7 +415,7 @@ public:
     void
     addRemoteId6(const IOAddress& /* lease_addr */,
                  const IOAddress& /* link_addr */,
-                 const vector<uint8_t>& remote_id) override {
+                 const vector<uint8_t>& /* remote_id */) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::addRemoteId6 not implemented");
     }
 

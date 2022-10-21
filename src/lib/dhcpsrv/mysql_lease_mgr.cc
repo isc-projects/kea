@@ -3373,14 +3373,14 @@ MySqlLeaseMgr::deleteExtendedInfo6(const IOAddress& /* addr */) {
 void
 MySqlLeaseMgr::addRelayId6(const IOAddress& /* lease_addr */,
                            const IOAddress& /* link_addr */,
-                           const vector<uint8_t>& relay_id) {
+                           const vector<uint8_t>& /* relay_id */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::addRelayId6 not implemented");
 }
 
 void
 MySqlLeaseMgr::addRemoteId6(const IOAddress& /* lease_addr */,
                             const IOAddress& /* link_addr */,
-                            const vector<uint8_t>& remote_id) {
+                            const vector<uint8_t>& /* remote_id */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::addRemoteId6 not implemented");
 }
 

@@ -2567,14 +2567,14 @@ PgSqlLeaseMgr::deleteExtendedInfo6(const IOAddress& /* addr */) {
 void
 PgSqlLeaseMgr::addRelayId6(const IOAddress& /* lease_addr */,
                            const IOAddress& /* link_addr */,
-                           const vector<uint8_t>& relay_id) {
+                           const vector<uint8_t>& /* relay_id */) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::addRelayId6 not implemented");
 }
 
 void
 PgSqlLeaseMgr::addRemoteId6(const IOAddress& /* lease_addr */,
                             const IOAddress& /* link_addr */,
-                            const vector<uint8_t>& remote_id) {
+                            const vector<uint8_t>& /* remote_id */) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::addRemoteId6 not implemented");
 }
 

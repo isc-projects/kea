@@ -1145,6 +1145,17 @@ protected:
         }
     }
 
+    /// @brief Decode parameters to set whether the lease extended info tables
+    /// are enabled.
+    ///
+    /// @note: common code in constructors.
+    ///
+    /// @param parameters The parameter map.
+    virtual void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& /* parameters */) override {
+        isc_throw(isc::NotImplemented,
+                  "extended info tables are not yet supported by mysql");
+    }
+
     /// @brief Delete lease6 extended info from tables.
     ///
     /// @param addr The address of the lease.
