@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,6 +99,13 @@ public:
     /// prefixes in the range.
     asiolink::IOAddress next(bool& done);
 
+    /// @brief Resets the permutation state.
+    ///
+    /// It effectively causes the permutation to start over the process of
+    /// serving addresses. Any previously returned addresses can be returned
+    /// again after calling this function.
+    void reset();
+
 private:
 
     /// Beginning of the range.
@@ -114,6 +121,9 @@ private:
     /// cursor value is decreased every time a new IP address or prefix
     /// is returned.
     uint64_t cursor_;
+
+    /// Keeps the initial cursor position for @c reset function.
+    uint64_t initial_cursor_;
 
     /// Keeps the current permutation state. The state associates the
     /// swapped IP addresses or delegated prefixes with their positions in

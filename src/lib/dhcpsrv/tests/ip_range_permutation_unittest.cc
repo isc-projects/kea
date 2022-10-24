@@ -137,4 +137,33 @@ TEST(IPRangePermutationTest, pd) {
     EXPECT_TRUE(addrs.begin()->isV6Zero());
 }
 
+// This test verifies that it is possible to reset the permutation state.
+TEST(IPRangePermutationTest, reset) {
+    // Create address range with 11 addresses.
+    AddressRange range(IOAddress("192.0.2.10"), IOAddress("192.0.2.20"));
+    IPRangePermutation perm(range);
+
+    // This set will record unique IP addresses generated.
+    std::set<IOAddress> addrs;
+    bool done = false;
+
+    // Call the next() function several times to consume several addresses.
+    for (auto i = 0; i < 5; ++i) {
+        auto next = perm.next(done);
+        EXPECT_FALSE(next.isV4Zero());
+        addrs.insert(next);
+    }
+    EXPECT_EQ(5, addrs.size());
+
+    // Reset the permutation. We should be able to get all addresses again.
+    perm.reset();
+
+    for (auto i = 0; i < 11; ++i) {
+        auto next = perm.next(done);
+        EXPECT_FALSE(next.isV4Zero());
+        addrs.insert(next);
+    }
+    EXPECT_EQ(11, addrs.size());
+}
+
 } // end of anonymous namespace
