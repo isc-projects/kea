@@ -1,3 +1,8 @@
+2072.	[build]		razvan
+	The library version numbers have been bumped for the Kea 2.3.2
+	development release.
+	(Gitlab #2607)
+
 2071.	[perf]		andrei
 	Significantly improved the performance of editing configuration
 	with kea-netconf. Instead of making a request to the sysrepo
