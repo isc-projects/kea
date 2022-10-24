@@ -54,10 +54,10 @@ public:
     void writeLock() {
         std::unique_lock<std::mutex> lk(mutex_);
         // Wait until the write entered flag can be set.
-        gate1_.wait(lk, [=, this]() { return (!writeEntered()); });
+        gate1_.wait(lk, [&]() { return (!writeEntered()); });
         state_ |= WRITE_ENTERED;
         // Wait until there are no more readers.
-        gate2_.wait(lk, [=, this]() { return (readers() == 0); });
+        gate2_.wait(lk, [&]() { return (readers() == 0); });
     }
 
     /// @brief Unlock write.
@@ -74,7 +74,7 @@ public:
     void readLock() {
         std::unique_lock<std::mutex> lk(mutex_);
         // Wait if there is a writer or if readers overflow.
-        gate1_.wait(lk, [=, this]() { return (state_ < MAX_READERS); });
+        gate1_.wait(lk, [&]() { return (state_ < MAX_READERS); });
         ++state_;
     }
 
