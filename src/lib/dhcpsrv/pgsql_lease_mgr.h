@@ -1121,7 +1121,7 @@ protected:
     ///
     /// @param lease_addr The address of the lease.
     /// @param link_addr The link address from the relay header.
-    /// @param relay_id The relay id from the relay header options.  
+    /// @param relay_id The relay id from the relay header options.
     virtual void addRelayId6(const isc::asiolink::IOAddress& lease_addr,
                              const isc::asiolink::IOAddress& link_addr,
                              const std::vector<uint8_t>& relay_id) override;
