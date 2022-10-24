@@ -63,18 +63,18 @@ namespace dhcp {
         >
     > ClientClassContainer;
 
-    /// @brief Defines a single subclass (template class instantiation).
+    /// @brief Defines a subclass to template class relation.
     struct SubClassRelation {
         /// @brief Constructor.
-        SubClassRelation(const ClientClass& template_class, const ClientClass& subclass) :
-              template_class_(template_class), subclass_(subclass) {
+        SubClassRelation(const ClientClass& class_def, const ClientClass& subclass) :
+            class_def_(class_def), class_(subclass) {
         }
 
-        /// @brief The template class name.
-        ClientClass template_class_;
+        /// @brief The class definition name.
+        ClientClass class_def_;
 
-        /// @brief The subclass name.
-        ClientClass subclass_;
+        /// @brief The class or subclass name.
+        ClientClass class_;
     };
 
     /// @brief Tag for the sequence index.
@@ -96,7 +96,7 @@ namespace dhcp {
                 boost::multi_index::tag<TemplateClassNameTag>,
                 boost::multi_index::member<SubClassRelation,
                                            ClientClass,
-                                           &SubClassRelation::template_class_>
+                                           &SubClassRelation::class_def_>
             >
         >
     > SubClassRelationContainer;

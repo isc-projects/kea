@@ -97,7 +97,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     ConstElementPtr test_cfg = class_def_cfg->get("test");
     ConstElementPtr template_test_cfg = class_def_cfg->get("template-test");
     if (test_cfg && template_test_cfg) {
-        isc_throw(DhcpConfigError, "expected either 'test' or 'template-test' ("
+        isc_throw(DhcpConfigError, "can not use both 'test' and 'template-test' ("
                   << test_cfg->getPosition() << ") and ("
                   << template_test_cfg->getPosition() << ")");
     }

@@ -8156,7 +8156,7 @@ TEST_F(Dhcp6ParserTest, clientClassValidPreferredLifetime) {
     EXPECT_TRUE(class_def->getValid().unspecified());
 }
 
-// Verifies that client class definitions may specify
+// Verifies that template client class definitions may specify
 // valid and preferred lifetime triplets.
 TEST_F(Dhcp6ParserTest, templateClientClassValidPreferredLifetime) {
     string config = "{ " + genIfaceConfig() + "," +
