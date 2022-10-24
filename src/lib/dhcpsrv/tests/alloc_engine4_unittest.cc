@@ -4781,7 +4781,10 @@ TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {
                 if (class_name == "BOOTP") {
                     ctx.query_->addClass(class_name);
                 } else {
-                    ctx.query_->addSubClass(class_name, class_name + "_value");
+                    string subclass("SPAWN_");
+                    subclass += class_name;
+                    subclass += "_value";
+                    ctx.query_->addSubClass(class_name, subclass);
                 }
             }
 

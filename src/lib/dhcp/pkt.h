@@ -277,43 +277,26 @@ public:
     /// @return true if belongs
     bool inClass(const isc::dhcp::ClientClass& client_class);
 
-    /// @brief Adds packet to a specified class.
+    /// @brief Adds a specified class to the packet.
     ///
-    /// A packet can be added to the same class repeatedly. Any additional
-    /// attempts to add to a class the packet already belongs to, will be
+    /// A class can be added to the same packet repeatedly. Any additional
+    /// attempts to add to a packet the class already added, will be
     /// ignored silently.
-    ///
-    /// @note It is a matter of naming convention. Conceptually, the server
-    /// processes a stream of packets, with some packets belonging to given
-    /// classes. From that perspective, this method adds a packet to specified
-    /// class. Implementation wise, it looks the opposite - the class name
-    /// is added to the packet. Perhaps the most appropriate name for this
-    /// method would be associateWithClass()? But that seems overly long,
-    /// so I decided to stick with addClass().
     ///
     /// @param client_class name of the class to be added
     /// @param required the class is marked for required evaluation
     void addClass(const isc::dhcp::ClientClass& client_class,
                   bool required = false);
 
-    /// @brief Adds packet to a specified subclass.
+    /// @brief Adds a specified subclass to the packet.
     ///
-    /// A packet can be added to the same subclass repeatedly. Any additional
-    /// attempts to add to a subclass the packet already belongs to, will be
+    /// A subclass can be added to the same packet repeatedly. Any additional
+    /// attempts to add to a packet the subclass already added, will be
     /// ignored silently.
     ///
-    /// @note It is a matter of naming convention. Conceptually, the server
-    /// processes a stream of packets, with some packets belonging to given
-    /// subclasses. From that perspective, this method adds a packet to specified
-    /// subclass. Implementation wise, it looks the opposite - the subclass name
-    /// is added to the packet. Perhaps the most appropriate name for this
-    /// method would be associateWithSubClass()? But that seems overly long,
-    /// so I decided to stick with addSubClass().
-    /// @note The template class name is used to access the class definition.
-    ///
-    /// @param template_class name of the template class to be added
+    /// @param class_def name of the class definition to be added
     /// @param subclass name of the subclass to be added
-    void addSubClass(const isc::dhcp::ClientClass& template_class,
+    void addSubClass(const isc::dhcp::ClientClass& class_def,
                      const isc::dhcp::ClientClass& subclass);
 
     /// @brief Returns the class set

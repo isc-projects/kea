@@ -185,7 +185,11 @@ TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
                 .arg(getName())
                 .arg(subclass);
             // Matching: add the subclass
-            pkt->addSubClass(getName(), subclass);
+            std::string value("SPAWN_");
+            value += getName();
+            value += "_";
+            value += subclass;
+            pkt->addSubClass(getName(), value);
         }
     } catch (const Exception& ex) {
         LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)

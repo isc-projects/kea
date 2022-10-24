@@ -1362,28 +1362,31 @@ TEST_F(Pkt6Test, templateClasses) {
     Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
 
     // Default values (do not belong to any subclass)
-    EXPECT_FALSE(pkt.inClass("eth0"));
-    EXPECT_FALSE(pkt.inClass("interface-id0"));
+    EXPECT_FALSE(pkt.inClass("SPAWN_template-interface-name_eth0"));
+    EXPECT_FALSE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
     EXPECT_TRUE(pkt.getClasses().empty());
 
     // Add to the first subclass
-    pkt.addSubClass("template-interface-name", "eth0");
-    EXPECT_TRUE(pkt.inClass("eth0"));
-    EXPECT_FALSE(pkt.inClass("interface-id0"));
+    pkt.addSubClass("template-interface-name", "SPAWN_template-interface-name_eth0");
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-name_eth0"));
+    EXPECT_FALSE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
     ASSERT_FALSE(pkt.getClasses().empty());
 
     // Add to a second subclass
-    pkt.addSubClass("template-interface-id", "interface-id0");
-    EXPECT_TRUE(pkt.inClass("eth0"));
-    EXPECT_TRUE(pkt.inClass("interface-id0"));
+    pkt.addSubClass("template-interface-id", "SPAWN_template-interface-id_interface-id0");
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-name_eth0"));
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
 
     // Check that it's ok to add to the same subclass repeatedly
-    EXPECT_NO_THROW(pkt.addSubClass("template-foo", "bar"));
-    EXPECT_NO_THROW(pkt.addSubClass("template-foo", "bar"));
-    EXPECT_NO_THROW(pkt.addSubClass("template-bar", "bar"));
+    EXPECT_NO_THROW(pkt.addSubClass("template-foo", "SPAWN_template-foo_bar"));
+    EXPECT_NO_THROW(pkt.addSubClass("template-foo", "SPAWN_template-foo_bar"));
+    EXPECT_NO_THROW(pkt.addSubClass("template-bar", "SPAWN_template-bar_bar"));
 
-    // Check that the packet belongs to 'bar'
-    EXPECT_TRUE(pkt.inClass("bar"));
+    // Check that the packet belongs to 'SPAWN_template-foo_bar'
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-foo_bar"));
+
+    // Check that the packet belongs to 'SPAWN_template-bar_bar'
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-bar_bar"));
 }
 
 // Tests whether MAC can be obtained and that MAC sources are not

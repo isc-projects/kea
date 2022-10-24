@@ -5801,7 +5801,10 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
                                             Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
             // Add client classes (if any)
             for (auto class_name : scenario.classes_) {
-                ctx.query_->addSubClass(class_name, class_name + "_value");
+                string subclass("SPAWN_");
+                subclass += class_name;
+                subclass += "_value";
+                ctx.query_->addSubClass(class_name, subclass);
             }
 
             // Add hint
@@ -5939,7 +5942,10 @@ TEST_F(AllocEngine6Test, getTemplateClassPreferredLifetime) {
                                             Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
             // Add client classes (if any)
             for (auto class_name : scenario.classes_) {
-                ctx.query_->addSubClass(class_name, class_name + "_value");
+                string subclass("SPAWN_");
+                subclass += class_name;
+                subclass += "_value";
+                ctx.query_->addSubClass(class_name, subclass);
             }
 
             // Add hint
