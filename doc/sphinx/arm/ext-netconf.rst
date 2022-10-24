@@ -819,6 +819,14 @@ Changes to the running datastore are applied after validation to the Kea
 servers. Note that they are not by default copied back to the startup
 datastore, i.e. changes are not permanent.
 
+.. note::
+
+    kea-netconf fetches the entire configuration from any Sysrepo datastore in a
+    single get-config NETCONF operation. It underwent an extensive overhaul
+    from the approach prior to Kea 2.3.2 where a get-config operation was done
+    for each leaf and leaf-list node. Because of the broad changes, kea-netconf
+    is considered experimental.
+
 .. _operation-example-errors:
 
 Error Handling in NETCONF Operation Example
