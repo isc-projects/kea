@@ -143,6 +143,7 @@ libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
 
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
+libkea_dhcpsrv_la_SOURCES += random_allocation_state.cc random_allocation_state.h
 libkea_dhcpsrv_la_SOURCES += resource_handler.cc resource_handler.h
 libkea_dhcpsrv_la_SOURCES += sanity_checker.cc sanity_checker.h
 libkea_dhcpsrv_la_SOURCES += shared_network.cc shared_network.h
@@ -362,6 +363,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	network.h \
 	network_state.h \
 	pool.h \
+	random_allocation_state.h \
 	resource_handler.h \
 	sanity_checker.h \
 	shared_network.h \
