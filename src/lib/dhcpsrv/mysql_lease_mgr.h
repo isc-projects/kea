@@ -1151,10 +1151,7 @@ protected:
     /// @note: common code in constructors.
     ///
     /// @param parameters The parameter map.
-    virtual void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& /* parameters */) override {
-        isc_throw(isc::NotImplemented,
-                  "extended info tables are not yet supported by mysql");
-    }
+    virtual void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& parameters) override;
 
     /// @brief Delete lease6 extended info from tables.
     ///

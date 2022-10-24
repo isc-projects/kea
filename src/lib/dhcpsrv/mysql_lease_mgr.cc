@@ -1794,6 +1794,11 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
     // If running in single-threaded mode, there's nothing to do here.
 }
 
+void 
+MySqlLeaseMgr::setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& /* parameters */) {
+    isc_throw(isc::NotImplemented, "extended info tables are not yet supported by mysql");
+}
+
 // MySqlLeaseMgr Constructor and Destructor
 
 MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)

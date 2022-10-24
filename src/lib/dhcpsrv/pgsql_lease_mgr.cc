@@ -1250,6 +1250,11 @@ PgSqlLeaseMgr::PgSqlLeaseContextAlloc::~PgSqlLeaseContextAlloc() {
     // If running in single-threaded mode, there's nothing to do here.
 }
 
+void 
+PgSqlLeaseMgr::setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& /* parameters */) {
+    isc_throw(isc::NotImplemented, "extended info tables are not yet supported by mysql");
+}
+
 // PgSqlLeaseMgr Constructor and Destructor
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
