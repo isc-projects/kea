@@ -51,8 +51,6 @@ using namespace isc::util;
 
 using namespace std;
 
-// namespace has to be named, because friends are defined in Dhcpv6Srv class
-// Maybe it should be isc::test?
 namespace {
 
 // Checks if hooks are implemented properly.
@@ -1129,7 +1127,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSimple) {
 // the values and the parameters are indeed used by the server.
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveValueChange) {
 
-    // Install buffer6_receive_change_clientid
+    // Install buffer6_receive_change_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_change_clientid_callout));
 
@@ -1169,7 +1167,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveValueChange) {
 // client-id option is deleted, so the packet is expected to be dropped)
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDeleteClientId) {
 
-    // Install buffer6_receive_delete_clientid
+    // Install buffer6_receive_delete_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_delete_clientid_callout));
 
@@ -1196,7 +1194,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDeleteClientId) {
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSkip) {
 
-    // Install buffer6_receive_skip
+    // Install buffer6_receive_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_skip_callout));
 
@@ -1223,7 +1221,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSkip) {
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDrop) {
 
-    // Install buffer6_receive_drop
+    // Install buffer6_receive_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_drop_callout));
 
@@ -1292,7 +1290,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSimple) {
 // the values and the parameters are indeed used by the server.
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveValueChange) {
 
-    // Install pkt6_receive_change_clientid
+    // Install pkt6_receive_change_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_change_clientid_callout));
 
@@ -1331,7 +1329,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveValueChange) {
 // client-id option is deleted, so the packet is expected to be dropped)
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDeleteClientId) {
 
-    // Install pkt6_receive_delete_clientid
+    // Install pkt6_receive_delete_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_delete_clientid_callout));
 
@@ -1358,7 +1356,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDeleteClientId) {
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSkip) {
 
-    // Install pkt6_receive_skip
+    // Install pkt6_receive_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_skip_callout));
 
@@ -1385,7 +1383,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSkip) {
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDrop) {
 
-    // Install pkt6_receive_drop
+    // Install pkt6_receive_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_drop_callout));
 
@@ -1460,7 +1458,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSimple) {
 // the values and the packet sent contains those changes
 TEST_F(HooksDhcpv6SrvTest, pkt6SendValueChange) {
 
-    // Install pkt6_send_change_serverid
+    // Install pkt6_send_change_serverid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_change_serverid_callout));
 
@@ -1500,7 +1498,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendValueChange) {
 // be sent
 TEST_F(HooksDhcpv6SrvTest, pkt6SendDeleteServerId) {
 
-    // Install pkt6_send_delete_serverid
+    // Install pkt6_send_delete_serverid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_delete_serverid_callout));
 
@@ -1534,7 +1532,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendDeleteServerId) {
 // will cause the server to send an empty response.
 TEST_F(HooksDhcpv6SrvTest, pkt6SendSkip) {
 
-    // Install pkt6_send_skip
+    // Install pkt6_send_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_skip_callout));
 
@@ -1550,7 +1548,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSkip) {
     // In particular, it should call registered pkt6_send callback.
     srv_->run();
 
-    // Check that the server send the packet
+    // Check that the server sent the packet
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Get the first packet and check that it has zero length (i.e. the server
@@ -1568,7 +1566,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSkip) {
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, pkt6SendDrop) {
 
-    // Install pkt6_send_drop
+    // Install pkt6_send_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_drop_callout));
 
@@ -1637,7 +1635,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendSimple) {
 // causes the packet to not be sent
 TEST_F(HooksDhcpv6SrvTest, buffer6SendSkip) {
 
-    // Install buffer6_send_skip
+    // Install buffer6_send_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_send", buffer6_send_skip_callout));
 
@@ -1667,7 +1665,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendSkip) {
 // causes the packet to not be sent
 TEST_F(HooksDhcpv6SrvTest, buffer6SendDrop) {
 
-    // Install buffer6_send_drop
+    // Install buffer6_send_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_send", buffer6_send_drop_callout));
 
@@ -1815,7 +1813,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
 
     CfgMgr::instance().commit();
 
-    // Install subnet6_select_different_subnet
+    // Install subnet6_select_different_subnet_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "subnet6_select", subnet6_select_different_subnet_callout));
 
@@ -1869,7 +1867,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
 // Checks that subnet6_select is able to drop the packet.
 TEST_F(HooksDhcpv6SrvTest, subnet6SelectDrop) {
 
-    // Install subnet6_select_drop
+    // Install subnet6_select_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "subnet6_select", subnet6_select_drop_callout));
 
@@ -1915,7 +1913,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedSolicit) {
 
     ASSERT_NO_THROW(configure(config, *client.getServer()));
 
-    // Install leases6_committed callout
+    // Install leases6_committed_callout
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases6_committed", leases6_committed_callout));
 
@@ -1958,7 +1956,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedConfirm) {
     // Get a lease for the client.
     ASSERT_NO_THROW(client.doSARR());
 
-    // Install leases6_committed callout
+    // Install leases6_committed_callout
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases6_committed", leases6_committed_callout));
 
@@ -2992,7 +2990,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewSimple) {
     // Server-id is mandatory in RENEW
     req->addOption(srv.getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRenew(req);
     ASSERT_TRUE(reply);
 
@@ -3050,7 +3048,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewSimple) {
 TEST_F(HooksDhcpv6SrvTest, lease6RenewLeaseUpdate) {
     NakedDhcpv6Srv srv(0);
 
-    // Install lease6_renew_update
+    // Install lease6_renew_update_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_renew", lease6_renew_update_callout));
 
@@ -3106,7 +3104,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewLeaseUpdate) {
     subnet_->setT1Percent(0.60);
     subnet_->setT2Percent(0.80);
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRenew(req);
     ASSERT_TRUE(reply);
 
@@ -3201,7 +3199,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewSkip) {
     // Server-id is mandatory in RENEW
     req->addOption(srv.getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRenew(req);
     ASSERT_TRUE(reply);
 
@@ -3621,7 +3619,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimple) {
     // Server-id is mandatory in RELEASE
     rel->addOption(srv.getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRelease(rel);
 
     ASSERT_TRUE(reply);
@@ -3709,7 +3707,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleNoDelete) {
     // Server-id is mandatory in RELEASE
     req->addOption(srv.getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRelease(req);
 
     ASSERT_TRUE(reply);
@@ -3799,7 +3797,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimple) {
     // Server-id is mandatory in RELEASE
     req->addOption(srv.getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRelease(req);
 
     ASSERT_TRUE(reply);
@@ -3881,7 +3879,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleNoDelete) {
     // Server-id is mandatory in RELEASE
     req->addOption(srv.getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRelease(req);
 
     ASSERT_TRUE(reply);
@@ -3929,7 +3927,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleNoDelete) {
 TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSkip) {
     NakedDhcpv6Srv srv(0);
 
-    // Install lease6_release_skip
+    // Install lease6_release_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_release", lease6_release_skip_callout));
 
@@ -3968,7 +3966,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSkip) {
     // Server-id is mandatory in RELEASE
     rel->addOption(srv.getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRelease(rel);
 
     ASSERT_TRUE(reply);
@@ -3996,7 +3994,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSkip) {
 TEST_F(HooksDhcpv6SrvTest, lease6ReleaseDrop) {
     NakedDhcpv6Srv srv(0);
 
-    // Install lease6_release_drop
+    // Install lease6_release_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_release", lease6_release_drop_callout));
 
@@ -4035,7 +4033,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseDrop) {
     // Server-id is mandatory in RELEASE
     rel->addOption(srv.getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRelease(rel);
 
     ASSERT_TRUE(reply);
@@ -4309,7 +4307,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindSimple) {
     req->addOption(ia);
     req->addOption(clientid);
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRebind(req);
     ASSERT_TRUE(reply);
 
@@ -4364,7 +4362,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindSimple) {
 TEST_F(HooksDhcpv6SrvTest, lease6RebindLeaseUpdate) {
     NakedDhcpv6Srv srv(0);
 
-    // Install lease6_rebind_update
+    // Install lease6_rebind_update_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_rebind", lease6_rebind_update_callout));
 
@@ -4417,7 +4415,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindLeaseUpdate) {
     subnet_->setT1Percent(0.60);
     subnet_->setT2Percent(0.80);
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRebind(req);
     ASSERT_TRUE(reply);
 
@@ -4466,7 +4464,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindLeaseUpdate) {
 TEST_F(HooksDhcpv6SrvTest, lease6RebindSkip) {
     NakedDhcpv6Srv srv(0);
 
-    // Install lease6_rebind_skip
+    // Install lease6_rebind_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_rebind", lease6_rebind_skip_callout));
 
@@ -4510,7 +4508,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindSkip) {
     req->addOption(ia);
     req->addOption(clientid);
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt6Ptr reply = srv.processRebind(req);
     ASSERT_TRUE(reply);
 
@@ -4889,7 +4887,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
 TEST_F(HooksDhcpv6SrvTest, lease6DeclineSimple) {
     IfaceMgrTestConfig test_config(true);
 
-    // Install lease6_decline callout
+    // Install lease6_decline_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_callout));
 
@@ -4941,7 +4939,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSimple) {
 TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
     IfaceMgrTestConfig test_config(true);
 
-    // Install lease6_decline_skip callout. It will set the status to skip
+    // Install lease6_decline_skip_callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_skip_callout));
 
@@ -4990,7 +4988,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
 TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
 
-    // Install lease6_decline_drop callout. It will set the status to drop
+    // Install lease6_decline_drop_callout. It will set the status to drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_drop_callout));
 

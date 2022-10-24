@@ -39,8 +39,6 @@ using namespace isc::util;
 
 using namespace std;
 
-// namespace has to be named, because friends are defined in Dhcpv6Srv class
-// Maybe it should be isc::test?
 namespace {
 
 // Checks if hooks are implemented properly.
@@ -1081,7 +1079,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install callback that modifies MAC addr of incoming packet
+    // Install buffer4_receive_change_hwaddr_callout that modifies MAC addr of incoming packet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_change_hwaddr_callout));
 
@@ -1123,7 +1121,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install buffer4_receive_skip
+    // Install buffer4_receive_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_skip_callout));
 
@@ -1152,7 +1150,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install buffer4_receive_drop
+    // Install buffer4_receive_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_drop_callout));
 
@@ -1266,7 +1264,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_delete_clientid
+    // Install pkt4_receive_delete_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_receive", pkt4_receive_delete_clientid_callout));
 
@@ -1295,7 +1293,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_skip
+    // Install pkt4_receive_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_receive", pkt4_receive_skip_callout));
 
@@ -1324,7 +1322,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_receive_drop
+    // Install pkt4_receive_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_receive", pkt4_receive_drop_callout));
 
@@ -1405,7 +1403,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_send_change_serverid
+    // Install pkt4_send_change_serverid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_change_serverid_callout));
 
@@ -1447,7 +1445,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_send_delete_serverid
+    // Install pkt4_send_delete_serverid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_delete_serverid_callout));
 
@@ -1483,7 +1481,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_send_skip
+    // Install pkt4_send_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_skip_callout));
 
@@ -1499,7 +1497,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSkip) {
     // In particular, it should call registered pkt4_send callback.
     srv_->run();
 
-    // Check that the server send the packet
+    // Check that the server sent the packet
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Get the first packet and check that it has zero length (i.e. the server
@@ -1519,7 +1517,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install pkt4_send_drop
+    // Install pkt4_send_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt4_send", pkt4_send_drop_callout));
 
@@ -1626,7 +1624,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install buffer4_send_skip
+    // Install buffer4_send_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_send", buffer4_send_skip_callout));
 
@@ -1658,7 +1656,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install buffer4_send_drop
+    // Install buffer4_send_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_send", buffer4_send_drop_callout));
 
@@ -1802,7 +1800,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
 
     CfgMgr::instance().commit();
 
-    // Install subnet4_select_different_subnet
+    // Install subnet4_select_different_subnet_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "subnet4_select", subnet4_select_different_subnet_callout));
 
@@ -1845,7 +1843,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install subnet4_select_drop
+    // Install subnet4_select_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "subnet4_select", subnet4_select_drop_callout));
 
@@ -1874,7 +1872,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDiscover) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install leases4_committed callout
+    // Install leases4_committed_callout
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
 
@@ -1961,7 +1959,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     req->addOption(clientid);
     req->addOption(srv_->getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt4Ptr ack = srv_->processRequest(req);
 
     // Check if we get response at all
@@ -2064,7 +2062,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     req->addOption(clientid);
     req->addOption(srv_->getServerID());
 
-    // Pass it to the server and hope for a REPLY
+    // Pass it to the server and hope for a response
     Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
 
@@ -2395,7 +2393,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
 
-    // Pass it to the server and hope for a REPLY
     // Note: this is no response to RELEASE in DHCPv4
     EXPECT_NO_THROW(srv_->processRelease(rel));
 
@@ -2482,7 +2479,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleNoDelete) {
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
 
-    // Pass it to the server and hope for a REPLY
     // Note: this is no response to RELEASE in DHCPv4
     EXPECT_NO_THROW(srv_->processRelease(rel));
 
@@ -2539,7 +2535,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
-    // Install lease4_release_skip
+    // Install lease4_release_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_release", lease4_release_skip_callout));
 
@@ -2570,7 +2566,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
 
-    // Pass it to the server and hope for a REPLY
     // Note: this is no response to RELEASE in DHCPv4
     EXPECT_NO_THROW(srv_->processRelease(rel));
 
@@ -2651,7 +2646,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
-    // Install lease4_release_drop
+    // Install lease4_release_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_release", lease4_release_drop_callout));
 
@@ -2682,7 +2677,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
 
-    // Pass it to the server and hope for a REPLY
     // Note: this is no response to RELEASE in DHCPv4
     EXPECT_NO_THROW(srv_->processRelease(rel));
 
@@ -2712,7 +2706,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4DeclineSimple) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install lease4_decline callout
+    // Install lease4_decline_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_callout));
 
@@ -2763,7 +2757,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4DeclineSkip) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install lease4_decline_skip callout. It will set the status to skip
+    // Install lease4_decline_skip_callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_skip_callout));
 
@@ -2813,7 +2807,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install lease4_decline_drop callout. It will set the status to drop
+    // Install lease4_decline_drop_callout. It will set the status to drop
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_drop_callout));
 

@@ -749,7 +749,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         HooksManager::callCallouts(Hooks.hook_index_buffer6_receive_, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to parse the packet, so skip at this
+        // processing step would be to parse the packet, so skip at this
         // stage means that callouts did the parsing already, so server
         // should skip parsing.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
@@ -868,7 +868,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         HooksManager::callCallouts(Hooks.hook_index_pkt6_receive_, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to process the packet, so skip at this
+        // processing step would be to process the packet, so skip at this
         // stage means drop.
         if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
             (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
@@ -1258,7 +1258,7 @@ Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
         HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to pack the packet (create wire data).
+        // processing step would be to pack the packet (create wire data).
         // That step will be skipped if any callout sets skip flag.
         // It essentially means that the callout already did packing,
         // so the server does not have to do it again.
@@ -1319,7 +1319,7 @@ Dhcpv6Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
+            // processing step would be to parse the packet, so skip at this
             // stage means drop.
             if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
                 (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
@@ -3115,7 +3115,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to send the packet, so skip at this
+        // processing step would be to send the packet, so skip at this
         // stage means "drop response".
         if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
             (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
@@ -3131,7 +3131,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     auto expiration_cfg = CfgMgr::instance().getCurrentCfg()->getCfgExpiration();
 
     // Callout didn't indicate to skip the release process. Let's release
-    // the address.
+    // the lease.
     if (!skip) {
         // Delete lease only if affinity is disabled.
         if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
@@ -3308,7 +3308,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to send the packet, so skip at this
+        // processing step would be to send the packet, so skip at this
         // stage means "drop response".
         if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
             (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
@@ -3324,7 +3324,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     auto expiration_cfg = CfgMgr::instance().getCurrentCfg()->getCfgExpiration();
 
     // Callout didn't indicate to skip the release process. Let's release
-    // the prefix.
+    // the lease.
     if (!skip) {
         // Delete lease only if affinity is disabled.
         if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
@@ -3916,7 +3916,7 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
                                    *callout_handle);
 
         // Callouts decided to SKIP the next processing step. The next
-        // processing step would to actually decline the lease, so we'll
+        // processing step would be to actually decline the lease, so we'll
         // keep the lease as is.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_DECLINE_SKIP)

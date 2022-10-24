@@ -1177,7 +1177,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         }
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to parse the packet, so skip at this
+        // processing step would be to parse the packet, so skip at this
         // stage means that callouts did the parsing already, so server
         // should skip parsing.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
@@ -1279,7 +1279,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
                                    *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to process the packet, so skip at this
+        // processing step would be to process the packet, so skip at this
         // stage means drop.
         if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
             (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
@@ -1579,7 +1579,7 @@ Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
                                    *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to pack the packet (create wire data).
+        // processing step would be to pack the packet (create wire data).
         // That step will be skipped if any callout sets skip flag.
         // It essentially means that the callout already did packing,
         // so the server does not have to do it again.
@@ -1642,7 +1642,7 @@ Dhcpv4Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
+            // processing step would be to parse the packet, so skip at this
             // stage means drop.
             if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
                 (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
@@ -3415,7 +3415,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
-            // processing step would to send the packet, so skip at this
+            // processing step would be to send the packet, so skip at this
             // stage means "drop response".
             if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
                 (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
@@ -3427,7 +3427,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
         }
 
         // Callout didn't indicate to skip the release process. Let's release
-        // the address.
+        // the lease.
         if (!skip) {
             // Ok, we've passed all checks. Let's release this address.
             bool success = false; // was the removal operation successful?
