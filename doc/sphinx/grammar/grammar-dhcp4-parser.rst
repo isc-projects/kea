@@ -270,8 +270,11 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | sanity_checks_params ","
 
      sanity_checks_param ::= lease_checks
+                        | extended_info_checks
 
      lease_checks ::= "lease-checks" ":" STRING
+
+     extended_info_checks ::= "extended-info-checks" ":" STRING
 
      hosts_database ::= "hosts-database" ":" "{" database_map_params "}"
 
@@ -799,6 +802,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      client_class_param ::= client_class_name
                        | client_class_test
+                       | client_class_template_test
                        | only_if_required
                        | option_def_list
                        | option_data_list
@@ -815,6 +819,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      client_class_name ::= name
 
      client_class_test ::= "test" ":" STRING
+
+     client_class_template_test ::= "template-test" ":" STRING
 
      only_if_required ::= "only-if-required" ":" BOOLEAN
 
@@ -990,7 +996,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | compatibility_params "," compatibility_param
                          | compatibility_params ","
 
-     compatibility_param ::= lenient_option_parsing | ignore-rai-link-selection |
+     compatibility_param ::= lenient_option_parsing
+                        | ignore-rai-link-selection
                         | unknown_map_entry
 
      lenient_option_parsing ::= "lenient-option-parsing" ":" BOOLEAN

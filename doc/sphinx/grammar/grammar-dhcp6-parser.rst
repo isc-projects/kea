@@ -344,8 +344,11 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | sanity_checks_params ","
 
      sanity_checks_param ::= lease_checks
+                        | extended_info_checks
 
      lease_checks ::= "lease-checks" ":" STRING
+
+     extended_info_checks ::= "extended-info-checks" ":" STRING
 
      mac_sources ::= "mac-sources" ":" "[" mac_sources_list "]"
 
@@ -822,6 +825,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      client_class_param ::= client_class_name
                        | client_class_test
+                       | client_class_template_test
                        | only_if_required
                        | option_data_list
                        | user_context
@@ -837,6 +841,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      client_class_name ::= name
 
      client_class_test ::= "test" ":" STRING
+
+     client_class_template_test ::= "template-test" ":" STRING
 
      only_if_required ::= "only-if-required" ":" BOOLEAN
 

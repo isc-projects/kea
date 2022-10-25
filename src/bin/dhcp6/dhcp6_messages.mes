@@ -799,17 +799,17 @@ is a normal operation during client shutdown. The first argument includes
 the client and transaction identification information. The second and third
 argument hold the released IPv6 address and IAID respectively.
 
-% DHCP6_RELEASE_NA_EXPIRED %1: binding for address %2 and iaid=%3 expired on release
-This informational message indicates that an address expired on release. It is a
-normal operation during client shutdown. The first argument includes the client
-and transaction identification information. The second and third argument hold
-the released IPv6 address and IAID respectively.
-
 % DHCP6_RELEASE_NA_DELETED %1: binding for address %2 and iaid=%3 was deleted on release
 This informational message indicates that an address was deleted on release. It
 is a normal operation during client shutdown. The first argument includes the
 client and transaction identification information. The second and third argument
 hold the released IPv6 address and IAID respectively.
+
+% DHCP6_RELEASE_NA_EXPIRED %1: binding for address %2 and iaid=%3 expired on release
+This informational message indicates that an address expired on release. It is a
+normal operation during client shutdown. The first argument includes the client
+and transaction identification information. The second and third argument hold
+the released IPv6 address and IAID respectively.
 
 % DHCP6_RELEASE_NA_FAIL %1: failed to remove address lease for address %2 and iaid=%3
 This error message indicates that the software failed to remove an address
@@ -841,17 +841,17 @@ is a normal operation during client shutdown. The first argument holds
 the client and transaction identification information. The second and
 third argument hold the prefix and its length. The fourth argument holds IAID.
 
-% DHCP6_RELEASE_PD_EXPIRED %1: prefix %2/%3 for iaid=%4 expired on release
-This informational message indicates that a prefix expired on release. It is a
-normal operation during client shutdown. The first argument holds the client and
-transaction identification information. The second and third argument hold the
-prefix and its length. The fourth argument holds IAID.
-
 % DHCP6_RELEASE_PD_DELETED %1: prefix %2/%3 for iaid=%4 was deleted on release
 This informational message indicates that a prefix was deleted on release. It is
 a normal operation during client shutdown. The first argument holds the client
 and transaction identification information. The second and third argument hold
 the prefix and its length. The fourth argument holds IAID.
+
+% DHCP6_RELEASE_PD_EXPIRED %1: prefix %2/%3 for iaid=%4 expired on release
+This informational message indicates that a prefix expired on release. It is a
+normal operation during client shutdown. The first argument holds the client and
+transaction identification information. The second and third argument hold the
+prefix and its length. The fourth argument holds IAID.
 
 % DHCP6_RELEASE_PD_FAIL %1: failed to release prefix %2/%3 for iaid=%4
 This error message indicates that the software failed to remove a prefix

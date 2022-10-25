@@ -283,6 +283,22 @@ This warning message is displayed when the version is a development
 % DHCP4_DHCP4O6_BAD_PACKET received malformed DHCPv4o6 packet: %1
 A malformed DHCPv4o6 packet was received.
 
+% DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP %1: packet was dropped, because a callout set the next step to 'drop'
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the next step to 'drop' value. For this particular hook
+point, the setting to that value instructs the server to drop the received
+packet. The argument specifies the client and transaction identification
+information.
+
+% DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set the next skip flag
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the next step to SKIP value. For this particular hook
+point, the setting of the flag instructs the server not to choose a
+subnet, an action that severely limits further processing; the server
+will be only able to offer global options - no addresses will be assigned.
+The argument specifies the client and transaction identification
+information.
+
 % DHCP4_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
@@ -313,6 +329,28 @@ sent to the DHCPv6 server to be forwarded to the client. The first
 argument contains the client and the transaction identification
 information. The second and third argument contains the packet name
 and type respectively. The fourth argument contains detailed packet
+information.
+
+% DHCP4_DHCP4O6_SUBNET_DATA %1: the selected subnet details: %2
+This debug message includes the details of the subnet selected for
+the client. The first argument includes the client and the
+transaction identification information. The second arguments
+includes the subnet details.
+
+% DHCP4_DHCP4O6_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments
+This is a debug message noting the selection of a subnet to be used for
+address and option assignment. Subnet selection is one of the early
+steps in the processing of incoming client message. The first
+argument includes the client and the transaction identification
+information. The second argument holds the selected subnet id.
+
+% DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED %1: failed to select subnet for the client
+This debug message indicates that the server failed to select the
+subnet for the client which has sent a message to the server.
+The server will not be able to offer any lease to the client and
+will drop its message if the received message was DHCPDISCOVER,
+and will send DHCPNAK if the received message was DHCPREQUEST.
+The argument includes the client and the transaction identification
 information.
 
 % DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command
@@ -437,22 +475,6 @@ packet. The argument specifies the client and transaction identification
 information.
 
 % DHCP4_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set the next skip flag
-This debug message is printed when a callout installed on the
-subnet4_select hook point sets the next step to SKIP value. For this particular hook
-point, the setting of the flag instructs the server not to choose a
-subnet, an action that severely limits further processing; the server
-will be only able to offer global options - no addresses will be assigned.
-The argument specifies the client and transaction identification
-information.
-
-% DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP %1: packet was dropped, because a callout set the next step to 'drop'
-This debug message is printed when a callout installed on the
-subnet4_select hook point sets the next step to 'drop' value. For this particular hook
-point, the setting to that value instructs the server to drop the received
-packet. The argument specifies the client and transaction identification
-information.
-
-% DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set the next skip flag
 This debug message is printed when a callout installed on the
 subnet4_select hook point sets the next step to SKIP value. For this particular hook
 point, the setting of the flag instructs the server not to choose a
@@ -791,12 +813,6 @@ is a normal operation during client shutdown. The first argument includes
 the client and transaction identification information. The second argument
 includes the released IPv4 address.
 
-% DHCP4_RELEASE_EXPIRED %1: address %2 expired on release.
-This informational message indicates that an address expired on release. It is
-a normal operation during client shutdown. The first argument includes the
-client and transaction identification information. The second argument includes
-the released IPv4 address.
-
 % DHCP4_RELEASE_DELETED %1: address %2 was deleted on release.
 This informational message indicates that an address was deleted on release. It
 is a normal operation during client shutdown. The first argument includes the
@@ -812,6 +828,12 @@ server operation. The first argument includes the client and the
 transaction identification information. The second argument
 includes the IPv4 address which release was attempted. The last
 argument includes the detailed error description.
+
+% DHCP4_RELEASE_EXPIRED %1: address %2 expired on release.
+This informational message indicates that an address expired on release. It is
+a normal operation during client shutdown. The first argument includes the
+client and transaction identification information. The second argument includes
+the released IPv4 address.
 
 % DHCP4_RELEASE_FAIL %1: failed to remove lease for address %2
 This error message indicates that the software failed to remove a
@@ -938,12 +960,6 @@ the client. The first argument includes the client and the
 transaction identification information. The second arguments
 includes the subnet details.
 
-% DHCP4_DHCP4O6_SUBNET_DATA %1: the selected subnet details: %2
-This debug message includes the details of the subnet selected for
-the client. The first argument includes the client and the
-transaction identification information. The second arguments
-includes the subnet details.
-
 % DHCP4_SUBNET_DYNAMICALLY_CHANGED %1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments
 This debug message indicates that the server is using another subnet
 than initially selected for client assignments. This newly selected
@@ -960,22 +976,6 @@ argument includes the client and the transaction identification
 information. The second argument holds the selected subnet id.
 
 % DHCP4_SUBNET_SELECTION_FAILED %1: failed to select subnet for the client
-This debug message indicates that the server failed to select the
-subnet for the client which has sent a message to the server.
-The server will not be able to offer any lease to the client and
-will drop its message if the received message was DHCPDISCOVER,
-and will send DHCPNAK if the received message was DHCPREQUEST.
-The argument includes the client and the transaction identification
-information.
-
-% DHCP4_DHCP4O6_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments
-This is a debug message noting the selection of a subnet to be used for
-address and option assignment. Subnet selection is one of the early
-steps in the processing of incoming client message. The first
-argument includes the client and the transaction identification
-information. The second argument holds the selected subnet id.
-
-% DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED %1: failed to select subnet for the client
 This debug message indicates that the server failed to select the
 subnet for the client which has sent a message to the server.
 The server will not be able to offer any lease to the client and
