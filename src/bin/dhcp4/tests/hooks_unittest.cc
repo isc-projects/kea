@@ -2393,7 +2393,94 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
 
-    // Note: this is no response to RELEASE in DHCPv4
+    // Note: there is no response to RELEASE in DHCPv4
+    EXPECT_NO_THROW(srv_->processRelease(rel));
+
+    // The lease should be gone from LeaseMgr
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_FALSE(l);
+
+    // Try to get the lease by hardware address
+    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
+    EXPECT_EQ(leases.size(), 0);
+
+    // Try to get it by hw/subnet_id combination
+    l = LeaseMgrFactory::instance().getLease4(*hw, subnet_->getID());
+    EXPECT_FALSE(l);
+
+    // Try by client-id
+    leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    EXPECT_EQ(leases.size(), 0);
+
+    // Try by client-id/subnet-id
+    l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
+    EXPECT_FALSE(l);
+
+    // Ok, the lease is *really* not there.
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_release", callback_name_);
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_qry_pkt4_.get() == rel.get());
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("lease4");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(rel);
+}
+
+// This test verifies that valid RELEASE triggers lease4_release callouts
+// This test is using infinite lease with lease affinity enabled.
+TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleInfiniteLease) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_valid = Lease::INFINITY_LFT;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install lease4_release_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_release", lease4_release_callout));
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // Let's create a lease and put it in the LeaseMgr
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
+                              client_id_->getDuid().size(), temp_valid,
+                              temp_timestamp, subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    // Generate client-id also duid_
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setRemoteAddr(addr);
+    rel->setCiaddr(addr);
+    rel->addOption(clientid);
+    rel->addOption(srv_->getServerID());
+    rel->setHWAddr(hw);
+
+    // Note: there is no response to RELEASE in DHCPv4
     EXPECT_NO_THROW(srv_->processRelease(rel));
 
     // The lease should be gone from LeaseMgr
@@ -2479,7 +2566,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleNoDelete) {
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
 
-    // Note: this is no response to RELEASE in DHCPv4
+    // Note: there is no response to RELEASE in DHCPv4
     EXPECT_NO_THROW(srv_->processRelease(rel));
 
     // The lease should not be gone from LeaseMgr
@@ -2566,7 +2653,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
 
-    // Note: this is no response to RELEASE in DHCPv4
+    // Note: there is no response to RELEASE in DHCPv4
     EXPECT_NO_THROW(srv_->processRelease(rel));
 
     // The lease should be still there
@@ -2677,7 +2764,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
 
-    // Note: this is no response to RELEASE in DHCPv4
+    // Note: there is no response to RELEASE in DHCPv4
     EXPECT_NO_THROW(srv_->processRelease(rel));
 
     // The lease should be still there

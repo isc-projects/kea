@@ -3659,6 +3659,97 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimple) {
 // This test verifies that incoming (positive) RELEASE can be handled properly,
 // that a REPLY is generated, that the response has status code and that the
 // lease is indeed removed from the database.
+// This test is using infinite lease with lease affinity enabled.
+//
+// expected:
+// - returned REPLY message has copy of client-id
+// - returned REPLY message has server-id
+// - returned REPLY message has IA that does not include an IAADDR
+// - lease is actually removed from LeaseMgr
+TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleInfiniteLease) {
+    NakedDhcpv6Srv srv(0);
+
+    // Install lease6_release_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_release", lease6_release_callout));
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
+
+    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+    // value on purpose. They should be updated during RENEW.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
+                               501, 502, subnet_->getID(),
+                               HWAddrPtr(), 0));
+    lease->cltt_ = 1234;
+    lease->valid_lft_ = Lease::INFINITY_LFT;
+    lease->current_valid_lft_ = Lease::INFINITY_LFT;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    Pkt6Ptr rel = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
+    rel->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
+
+    OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
+    ia->addOption(released_addr_opt);
+    rel->addOption(ia);
+    rel->addOption(clientid);
+
+    // Server-id is mandatory in RELEASE
+    rel->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a response
+    Pkt6Ptr reply = srv.processRelease(rel);
+
+    ASSERT_TRUE(reply);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease6_release", callback_name_);
+
+    // Check that appropriate parameters are passed to the callouts
+    EXPECT_TRUE(callback_qry_pkt6_);
+    EXPECT_TRUE(callback_lease6_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("lease6");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Check that the lease is really gone in the database
+    // get lease by address
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_FALSE(l);
+
+    // Get lease by subnetid/duid/iaid combination
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
+                                              subnet_->getID());
+    ASSERT_FALSE(l);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(rel);
+}
+
+// This test verifies that incoming (positive) RELEASE can be handled properly,
+// that a REPLY is generated, that the response has status code and that the
+// lease is indeed removed from the database.
 //
 // expected:
 // - returned REPLY message has copy of client-id
@@ -3776,6 +3867,91 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimple) {
                                501, 502, subnet_->getID(),
                                HWAddrPtr(), 80));
     lease->cltt_ = 1234;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
+                                                        prefix);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, iaid, 1500, 3000);
+
+    OptionPtr released_addr_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix, 80,
+                                                    300, 500));
+    ia->addOption(released_addr_opt);
+    req->addOption(ia);
+    req->addOption(clientid);
+
+    // Server-id is mandatory in RELEASE
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a response
+    Pkt6Ptr reply = srv.processRelease(req);
+
+    ASSERT_TRUE(reply);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease6_release", callback_name_);
+
+    // Check that appropriate parameters are passed to the callouts
+    EXPECT_TRUE(callback_qry_pkt6_);
+    EXPECT_TRUE(callback_lease6_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("lease6");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Check that the lease is really gone in the database
+    // get lease by address
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
+    ASSERT_FALSE(l);
+
+    // Get lease by subnetid/duid/iaid combination
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, *duid_, iaid,
+                                              subnet_->getID());
+    ASSERT_FALSE(l);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(req);
+}
+
+// This is a variant of the previous test that tests that callouts are
+// properly invoked for the prefix release case.
+// This test is using infinite lease with lease affinity enabled.
+TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleInfiniteLease) {
+    NakedDhcpv6Srv srv(0);
+
+    // Install lease6_release_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_release", lease6_release_callout));
+
+    const IOAddress prefix("2001:db8:1:2:1::");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the prefix we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, prefix));
+
+    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+    // value on purpose. They should be updated during RENEW.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_PD, prefix, duid_, iaid,
+                               501, 502, subnet_->getID(),
+                               HWAddrPtr(), 80));
+    lease->cltt_ = 1234;
+    lease->valid_lft_ = Lease::INFINITY_LFT;
+    lease->current_valid_lft_ = Lease::INFINITY_LFT;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database

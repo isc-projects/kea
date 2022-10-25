@@ -3135,7 +3135,8 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     if (!skip) {
         // Delete lease only if affinity is disabled.
         if (expiration_cfg->getFlushReclaimedTimerWaitTime() &&
-            expiration_cfg->getHoldReclaimedTime()) {
+            expiration_cfg->getHoldReclaimedTime() &&
+            lease->valid_lft_ != Lease::INFINITY_LFT) {
             // Expire the lease.
             lease->valid_lft_ = 0;
             lease->preferred_lft_ = 0;
