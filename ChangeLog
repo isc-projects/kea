@@ -23,7 +23,7 @@ Kea 2.3.2 (development) released on October 26, 2022
 
 2070.	[func]		andrei
 	kea-netconf now requires libyang v2 and sysrepo v2 to compile and
-	run. Suport for libyang v1 and sysrepo v1 has been dropped.
+	run. Support for libyang v1 and sysrepo v1 has been dropped.
 	(Gitlab #2311)
 
 2069.	[func]		fdupont
