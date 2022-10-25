@@ -7,6 +7,7 @@
 #ifndef TCP_CONNECTION_H
 #define TCP_CONNECTION_H
 
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <tcp/tcp_connection_acceptor.h>
@@ -18,35 +19,138 @@
 #include <array>
 #include <functional>
 #include <string>
+#include <iostream>
 
 namespace isc {
 namespace tcp {
 
+/// @todo Take this out, it's just for dev coding
+#if 0
+#define HERE(a) std::cout << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << a << std::endl << std::flush;
+#else
+#define HERE(a) 
+#endif
+
+/// @brief Defines a data structure for storing raw bytes of data on the wire.
+typedef std::vector<uint8_t> WireData;
+typedef boost::shared_ptr<WireData> WireDataPtr;
+
+/// @brief Abstract class used to receive an inbound message.
 class TcpRequest {
 public:
     /// @brief Constructor.
     TcpRequest(){};
 
-    /// @brief Returns pointer to the first byte of the input buffer.
-    char* getInputBufData() {
-        return (input_buf_.data());
+    /// @brief Destructor
+    virtual ~TcpRequest(){};
+
+    /// @brief Adds data to an incomplete request
+    ///
+    /// @param buf A pointer to the buffer holding the data.
+    /// @param nbytes Size of the data within the buffer.
+    /// @return number of bytes posted (consumed)
+    virtual size_t postBuffer(const void* buf, const size_t nbytes) = 0;
+
+    /// @brief Returns true if the request is incomplete.
+    ///
+    /// @return true if the request is incomplete.
+    virtual bool needData() const = 0;
+
+    /// @brief Returns request contents formatted for log output
+    ///
+    /// @param limit Maximum length of the buffer to be output. If the limit is 0,
+    /// the length of the output is unlimited.
+    /// @return Textual representation of the input buffer.
+    virtual std::string logFormatRequest(const size_t limit = 0) const = 0;
+
+    /// @brief Unpacks wire data once the message has been completely received.
+    virtual void unpack() = 0;
+
+    /// @brief Returns pointer to the first byte of the wire data.
+    const uint8_t* getWireData() const {
+        return (wire_data_.data());
     }
 
-    /// @brief Returns input buffer size (i.e. capacity).
-    size_t getInputBufSize() const {
-        return (input_buf_.size());
+    /// @brief Returns current size of the wire data.
+    size_t getWireDataSize() const {
+        return (wire_data_.size());
     }
+
+    /// @brief Dumps a buffer of bytes as a string of hexadecimal digits
+    ///
+    /// @param data pointer to the data to dump 
+    /// @param length number of bytes to dump. Caller should ensure the length
+    /// does not exceed the buffer.
+    static std::string dumpAsHex(const uint8_t* data, size_t length);
 
 private:
-    /// @brief Buffer for received data.
-    std::array<char, 32768> input_buf_;
+
+    /// @brief Exception safe wrapper around logForamteRequest
+    ///
+    /// @param limit Maximum length of the buffer to be output. If the limit is 0,
+    /// the length of the output is unlimited.
+    /// @return Textual representation of the input buffer.
+    std::string logFormatRequestSafe(const size_t limit = 0) const;
+
+protected:
+    /// @brief Buffer for the  accumulated request data.
+    WireData wire_data_;
 };
 
+/// @brief Defines a smart pointer to a TcpRequest.
 typedef boost::shared_ptr<TcpRequest> TcpRequestPtr;
 
-typedef util::OutputBuffer TcpResponse;
-typedef boost::shared_ptr<TcpResponse> TcpResponsePtr;
+/// @brief Abstract class used to create and send an outbound response.
+class TcpResponse {
+public:
+    /// @brief Constructor
+    TcpResponse()
+    : send_in_progress_(false) {};
 
+    /// @brief Destructor
+    virtual ~TcpResponse() {};
+
+    /// @brief Checks if the output buffer contains some data to be
+    /// sent.
+    ///
+    /// @return true if the output buffer contains data to be sent,
+    /// false otherwise.
+    bool wireDataAvail() const {
+        return (!wire_data_.empty());
+    }
+
+    /// @brief Returns pointer to the first byte of the wire data.
+    const uint8_t* getWireData() const {
+        return (wire_data_.data());
+    }
+
+    /// @brief Returns current size of the wire data.
+    size_t getWireDataSize() const {
+        return (wire_data_.size());
+    }
+
+    /// @brief Prepares the wire data content for writing.
+    virtual void pack() = 0;
+
+    /// @brief Erases n bytes from the beginning of the wire data.
+    ///
+    /// @param length Number of bytes to be erased.
+    virtual void consumeWireData(const size_t length);
+
+    bool sendInProgress() {
+        return(send_in_progress_);
+    }
+
+protected:
+    /// @brief Buffer used for outbound data.
+    WireData wire_data_;
+
+private:
+    /// @brief Returns true once wire data consumption has begun.
+    bool send_in_progress_;
+};
+
+typedef boost::shared_ptr<TcpResponse> TcpResponsePtr;
 
 /// @brief Generic error reported within @ref TcpConnection class.
 class TcpConnectionError : public Exception {
@@ -61,9 +165,11 @@ public:
 /// declaring @ref TcpConnectionPool to avoid circular inclusion.
 class TcpConnectionPool;
 
+#if 0
 class TcpConnection;
 /// @brief Pointer to the @ref TcpConnection.
 typedef boost::shared_ptr<TcpConnection> TcpConnectionPtr;
+#endif
 
 /// @brief Accepts and handles a single TCP connection.
 class TcpConnection : public boost::enable_shared_from_this<TcpConnection> {
@@ -114,19 +220,19 @@ public:
     /// @param tls_context TLS context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
-    /// @param response_creator Pointer to the response creator object used to
-    /// create TCP response from the TCP request received.
     /// @param callback Callback invoked when new connection is accepted.
     /// @param request_timeout Configured timeout for a TCP request.
     /// @param idle_timeout Timeout after which persistent TCP connection is
     /// closed by the server.
+    /// @param read_max maximum size of a single socket read.  Defaults to 32K.
     TcpConnection(asiolink::IOService& io_service,
                    const TcpConnectionAcceptorPtr& acceptor,
                    const asiolink::TlsContextPtr& tls_context,
                    TcpConnectionPool& connection_pool,
                    const TcpConnectionAcceptorCallback& callback,
                    const long request_timeout,
-                   const long idle_timeout);
+                   const long idle_timeout,
+                   const size_t read_max = 32768);
 
     /// @brief Destructor.
     ///
@@ -165,6 +271,49 @@ public:
     /// indicates that this function should create new request.
     void doRead(TcpRequestPtr request = TcpRequestPtr());
 
+    /// @brief Appends newly received raw data to the given request.
+    ///
+    /// The input data is passed into the current request's postBuffer method.
+    /// If the request is still incomplete, we return it and wait for more
+    /// data to post.  Otherwise, the request is complete and it is passed into
+    /// @ref TcpConnection::requestReceived() to be processed.  Upon return from 
+    /// that, a new request is created and returned to be used for the next
+    /// read cycle.
+    ///
+    /// @param request request to which data should be posted.
+    /// @param input_data raw data to post.
+    ///
+    /// @return Pointer to the request to use for the next read.
+    TcpRequestPtr postData(TcpRequestPtr request, WireData& input_data);
+
+    /// @brief Processes a request once it has been completely received.
+    /// 
+    /// This function is called by @c postData() if the post results
+    /// in a completion (i.e. request's needData() returns false).
+    virtual void requestReceived(TcpRequestPtr request) = 0;
+
+    /// @brief Creates a new, empty request.
+    ///
+    /// This function is called by @c postData(), following the completion
+    /// of the current request, to create a new request for accepting the 
+    /// next data read.
+    ///
+    /// @return Pointer to the new request.
+    virtual TcpRequestPtr createRequest() = 0;
+
+    /// @brief Fetches the maxium number of bytes read during single socket
+    /// read.
+    /// @return Maximum number of bytes to read.
+    size_t getReadMax() const {
+        return(read_max_);
+    }
+
+    /// @brief Sets the maxium number of bytes read during single socket read.
+    ///
+    /// @param read_max maximum number of bytes to read.
+    /// @throw BadValue if the parameter is not greater than zero.
+    void setReadMax(const size_t read_max);
+
 protected:
 
     /// @brief Starts asynchronous write to the socket.
@@ -173,7 +322,7 @@ protected:
     ///
     /// In case of error the connection is stopped.
     ///
-    /// @param request Pointer to the request for which the write
+    /// @param response Pointer to the response to write
     /// operation should be performed.
     void doWrite(TcpResponsePtr response);
 
@@ -182,7 +331,6 @@ protected:
     /// Internally it calls @ref TcpConnection::doWrite to send the data.
     ///
     /// @param response Pointer to the TCP response to be sent.
-    /// @param request Pointer to the request.
     void asyncSendResponse(TcpResponsePtr response);
 
     /// @brief Local callback invoked when new connection is accepted.
@@ -256,6 +404,7 @@ protected:
     void requestTimeoutCallback(TcpRequestPtr request);
 #endif
 
+    /// @brief Callback invoked when the client has been idle.
     void idleTimeoutCallback();
 
     /// @brief Shuts down current connection.
@@ -268,6 +417,16 @@ protected:
 
     /// @brief returns remote address in textual form
     std::string getRemoteEndpointAddressAsText() const;
+
+    /// @brief Returns pointer to the first byte of the input buffer.
+    unsigned char* getInputBufData() {
+        return (input_buf_.data());
+    }
+
+    /// @brief Returns input buffer size.
+    size_t getInputBufSize() const {
+        return (input_buf_.size());
+    }
 
     /// @brief Timer used to detect Request Timeout.
     asiolink::IntervalTimer request_timer_;
@@ -296,7 +455,19 @@ protected:
 
     /// @brief External TCP acceptor callback.
     TcpConnectionAcceptorCallback acceptor_callback_;
+
+    /// @brief Maximum bytes to read in a single socket read.
+    size_t read_max_;
+
+    /// @brief Maximum bytes to write in a single socket write.
+    size_t write_max_;
+
+    /// @brief Buffer for a single socket read.  
+    WireData input_buf_;
 };
+
+/// @brief Pointer to the @ref TcpConnection.
+typedef boost::shared_ptr<TcpConnection> TcpConnectionPtr;
 
 } // end of namespace isc::tcp
 } // end of namespace isc

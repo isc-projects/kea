@@ -25,6 +25,13 @@ first argument specifies an address of the remote endpoint which sent the
 request. The second argument provides the request in the textual format.
 The request is truncated by the logger if it is too large to be printed.
 
+% TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS detailed information about malformed request received from %1:\n%2
+This debug message is issued when the TCP server receives a malformed
+request. It includes detailed information about the received request. The
+first argument specifies an address of the remote endpoint which sent the
+request. The second argument provides the request in the textual format.
+The request is truncated by the logger if it is too large to be printed.
+
 % TCP_CONNECTION_CLOSE_CALLBACK_FAILED Connection close callback threw an exception
 This is an error message emitted when the close connection callback
 registered on the connection failed unexpectedly.  This is a programmatic

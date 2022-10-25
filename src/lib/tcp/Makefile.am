@@ -18,6 +18,7 @@ libkea_tcp_la_SOURCES += tcp_connection_pool.cc tcp_connection_pool.h
 libkea_tcp_la_SOURCES += tcp_listener.cc tcp_listener.h
 libkea_tcp_la_SOURCES += tcp_log.cc tcp_log.h
 libkea_tcp_la_SOURCES += tcp_messages.cc tcp_messages.h
+libkea_tcp_la_SOURCES += tcp_stream.cc tcp_stream.h
 
 libkea_tcp_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_tcp_la_CPPFLAGS = $(AM_CPPFLAGS)

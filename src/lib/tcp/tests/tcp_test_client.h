@@ -8,9 +8,7 @@
 #define TCP_TEST_CLIENT_H
 
 #include <cc/data.h>
-#include <http/client.h>
-#include <http/http_types.h>
-
+#include <tcp/tcp_connection.h>
 #include <boost/asio/read.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -18,6 +16,7 @@
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
+using namespace isc::tcp;
 
 /// @brief Entity which can connect to the TCP server endpoint.
 class TcpTestClient : public boost::noncopyable {
@@ -73,20 +72,26 @@ public:
         });
     }
 
-    /// @brief Send HTTP request.
+    /// @brief Send a stream request.
     ///
-    /// @param request HTTP request in the textual format.
+    /// @param request request data to send textual format.
     void sendRequest(const std::string& request) {
-        sendPartialRequest(request);
+        // Prepend the length of the request.
+        uint16_t size = static_cast<uint16_t>(request.size());
+        WireData wire_request;
+        wire_request.push_back(static_cast<uint8_t>((size & 0xff00U) >> 8));
+        wire_request.push_back(static_cast<uint8_t>(size & 0x00ffU));
+        wire_request.insert(wire_request.end(), request.begin(), request.end());
+        sendPartialRequest(wire_request);
     }
 
     /// @brief Send part of the HTTP request.
     ///
     /// @param request part of the HTTP request to be sent.
-    void sendPartialRequest(std::string request) {
-        socket_.async_send(boost::asio::buffer(request.data(), request.size()),
-                           [this, request](const boost::system::error_code& ec,
-                                           std::size_t bytes_transferred) mutable {
+    void sendPartialRequest(WireData& wire_request) {
+        socket_.async_send(boost::asio::buffer(wire_request.data(), wire_request.size()),
+                           [this, wire_request](const boost::system::error_code& ec,
+                                                std::size_t bytes_transferred) mutable {
             if (ec) {
                 if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
@@ -106,15 +111,15 @@ public:
             }
 
             // Remove the part of the request which has been sent.
-            if (bytes_transferred > 0 && (request.size() <= bytes_transferred)) {
-                request.erase(0, bytes_transferred);
+            if (bytes_transferred > 0 && (wire_request.size() <= bytes_transferred)) {
+                std::cout << "wrote: " << TcpRequest::dumpAsHex(wire_request.data(), bytes_transferred) << std::endl;
+                wire_request.erase(wire_request.begin(), wire_request.begin() + bytes_transferred);
             }
 
             // Continue sending request data if there are still some data to be
             // sent.
-            if (!request.empty()) {
-                sendPartialRequest(request);
-
+            if (!wire_request.empty()) {
+                sendPartialRequest(wire_request);
             } else {
                 // Request has been sent. Start receiving response.
                 response_.clear();
@@ -141,7 +146,7 @@ public:
 
                 } else {
                     // Error occurred, bail...
-                    ADD_FAILURE() << "error occurred while receiving HTTP"
+                    ADD_FAILURE() << "error occurred while receiving TCP"
                         " response from the server: " << ec.message();
                     io_service_.stop();
                 }
@@ -154,7 +159,8 @@ public:
 
             // Two consecutive new lines end the part of the response we're
             // expecting.
-            if (response_.find("\r\n\r\n", 0) != std::string::npos) {
+            if (response_.find("good bye", 0) != std::string::npos) {
+                std::cout << "I'm done:[" << response_ << "]" << std::endl;
                 receive_done_ = true;
                 io_service_.stop();
             } else {

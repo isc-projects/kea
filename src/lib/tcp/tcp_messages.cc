@@ -8,6 +8,7 @@ namespace isc {
 namespace asiolink {
 
 extern const isc::log::MessageID TCP_BAD_CLIENT_REQUEST_RECEIVED = "TCP_BAD_CLIENT_REQUEST_RECEIVED";
+extern const isc::log::MessageID TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS = "TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS";
 extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED = "TCP_CLIENT_REQUEST_RECEIVED";
 extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED_DETAILS = "TCP_CLIENT_REQUEST_RECEIVED_DETAILS";
 extern const isc::log::MessageID TCP_CONNECTION_CLOSE_CALLBACK_FAILED = "TCP_CONNECTION_CLOSE_CALLBACK_FAILED";
@@ -31,6 +32,7 @@ namespace {
 
 const char* values[] = {
     "TCP_BAD_CLIENT_REQUEST_RECEIVED", "bad request received from %1: %2",
+    "TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about malformed request received from %1:\n%2",
     "TCP_CLIENT_REQUEST_RECEIVED", "received TCP request from %1",
     "TCP_CLIENT_REQUEST_RECEIVED_DETAILS", "detailed information about well-formed request received from %1:\n%2",
     "TCP_CONNECTION_CLOSE_CALLBACK_FAILED", "Connection close callback threw an exception",

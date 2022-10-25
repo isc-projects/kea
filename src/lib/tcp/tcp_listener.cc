@@ -100,16 +100,7 @@ TcpListener::acceptHandler(const boost::system::error_code&) {
 
 TcpConnectionPtr
 TcpListener::createConnection(const TcpConnectionAcceptorCallback& /* callback */) {
-#if 1
     isc_throw(NotImplemented, "TcpListener::createConnection:");
-#else
-    TcpConnectionPtr
-/// @todo TKM - I think what we want is to define TcpConnectionFactory
-/// instead of a response creator.  Let TcpListener accept a factory
-/// for that, which is used here to create for BLQ an LeaseQueryConnection
-    return (connectionFactory(io_service_, acceptor_, tls_context_,
-                              connections_, callback, request_timeout_, idle_timeout_));
-#endif
 }
 
 IOAddress

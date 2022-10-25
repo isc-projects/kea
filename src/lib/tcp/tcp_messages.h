@@ -9,6 +9,7 @@ namespace isc {
 namespace asiolink {
 
 extern const isc::log::MessageID TCP_BAD_CLIENT_REQUEST_RECEIVED;
+extern const isc::log::MessageID TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS;
 extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED;
 extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED_DETAILS;
 extern const isc::log::MessageID TCP_CONNECTION_CLOSE_CALLBACK_FAILED;
