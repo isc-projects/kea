@@ -222,9 +222,9 @@ TEST(SharedNetwork4Test, replaceSubnet4) {
     EXPECT_TRUE(network->replace(subnet));
 
     // Second subnet was updated.
-    EXPECT_EQ(10, returned_subnet->getT1());
-    EXPECT_EQ(20, returned_subnet->getT2());
-    EXPECT_EQ(30, returned_subnet->getValid());
+    EXPECT_EQ(10, returned_subnet->getT1().get());
+    EXPECT_EQ(20, returned_subnet->getT2().get());
+    EXPECT_EQ(30, returned_subnet->getValid().get());
     SharedNetwork4Ptr network1;
     returned_subnet->getSharedNetwork(network1);
     EXPECT_FALSE(network1);
@@ -233,9 +233,9 @@ TEST(SharedNetwork4Test, replaceSubnet4) {
     returned_subnet = *network->getAllSubnets()->begin();
     ASSERT_TRUE(returned_subnet);
     ASSERT_EQ(1, returned_subnet->getID());
-    EXPECT_EQ(100, returned_subnet->getT1());
-    EXPECT_EQ(200, returned_subnet->getT2());
-    EXPECT_EQ(300, returned_subnet->getValid());
+    EXPECT_EQ(100, returned_subnet->getT1().get());
+    EXPECT_EQ(200, returned_subnet->getT2().get());
+    EXPECT_EQ(300, returned_subnet->getValid().get());
     returned_subnet->getSharedNetwork(network1);
     EXPECT_TRUE(network1);
     EXPECT_TRUE(network == network1);
@@ -955,10 +955,10 @@ TEST(SharedNetwork6Test, replaceSubnet6) {
     EXPECT_TRUE(network->replace(subnet));
 
     // Second subnet was updated.
-    EXPECT_EQ(10, returned_subnet->getT1());
-    EXPECT_EQ(20, returned_subnet->getT2());
-    EXPECT_EQ(30, returned_subnet->getPreferred());
-    EXPECT_EQ(40, returned_subnet->getValid());
+    EXPECT_EQ(10, returned_subnet->getT1().get());
+    EXPECT_EQ(20, returned_subnet->getT2().get());
+    EXPECT_EQ(30, returned_subnet->getPreferred().get());
+    EXPECT_EQ(40, returned_subnet->getValid().get());
     SharedNetwork6Ptr network1;
     returned_subnet->getSharedNetwork(network1);
     EXPECT_FALSE(network1);
@@ -967,10 +967,10 @@ TEST(SharedNetwork6Test, replaceSubnet6) {
     returned_subnet = *network->getAllSubnets()->begin();
     ASSERT_TRUE(returned_subnet);
     ASSERT_EQ(1, returned_subnet->getID());
-    EXPECT_EQ(100, returned_subnet->getT1());
-    EXPECT_EQ(200, returned_subnet->getT2());
-    EXPECT_EQ(300, returned_subnet->getPreferred());
-    EXPECT_EQ(400, returned_subnet->getValid());
+    EXPECT_EQ(100, returned_subnet->getT1().get());
+    EXPECT_EQ(200, returned_subnet->getT2().get());
+    EXPECT_EQ(300, returned_subnet->getPreferred().get());
+    EXPECT_EQ(400, returned_subnet->getValid().get());
     returned_subnet->getSharedNetwork(network1);
     EXPECT_TRUE(network1);
     EXPECT_TRUE(network == network1);

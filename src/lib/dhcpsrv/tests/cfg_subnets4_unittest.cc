@@ -59,7 +59,7 @@ void checkMergedSubnet(CfgSubnets4& cfg_subnets,
 
     // Make sure we have the one we expect.
     ASSERT_EQ(exp_subnet_id, subnet->getID()) << "subnet ID is wrong";
-    ASSERT_EQ(exp_valid, subnet->getValid()) << "subnet valid time is wrong";
+    ASSERT_EQ(exp_valid, subnet->getValid().get()) << "subnet valid time is wrong";
 
     SharedNetwork4Ptr shared_network;
     subnet->getSharedNetwork(shared_network);
@@ -1400,7 +1400,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getValid().unspecified());
-        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().get());
         EXPECT_EQ(100, subnet->getValid().getMin());
         EXPECT_EQ(100, subnet->getValid().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1424,7 +1424,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getValid().unspecified());
-        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().get());
         EXPECT_EQ(100, subnet->getValid().getMin());
         EXPECT_EQ(100, subnet->getValid().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1448,7 +1448,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getValid().unspecified());
-        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().get());
         EXPECT_EQ(100, subnet->getValid().getMin());
         EXPECT_EQ(100, subnet->getValid().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1474,7 +1474,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getValid().unspecified());
-        EXPECT_EQ(200, subnet->getValid());
+        EXPECT_EQ(200, subnet->getValid().get());
         EXPECT_EQ(100, subnet->getValid().getMin());
         EXPECT_EQ(200, subnet->getValid().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1500,7 +1500,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getValid().unspecified());
-        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().get());
         EXPECT_EQ(100, subnet->getValid().getMin());
         EXPECT_EQ(200, subnet->getValid().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1538,7 +1538,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getValid().unspecified());
-        EXPECT_EQ(200, subnet->getValid());
+        EXPECT_EQ(200, subnet->getValid().get());
         EXPECT_EQ(100, subnet->getValid().getMin());
         EXPECT_EQ(300, subnet->getValid().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1588,7 +1588,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getValid().unspecified());
-        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().get());
         EXPECT_EQ(100, subnet->getValid().getMin());
         EXPECT_EQ(100, subnet->getValid().getMax());
         data::ConstElementPtr repr = subnet->toElement();

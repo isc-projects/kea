@@ -490,10 +490,10 @@ public:
         }
         Subnet6Ptr s = *subnet_it;
 
-        EXPECT_EQ(t1, s->getT1());
-        EXPECT_EQ(t2, s->getT2());
-        EXPECT_EQ(pref, s->getPreferred());
-        EXPECT_EQ(valid, s->getValid());
+        EXPECT_EQ(t1, s->getT1().get());
+        EXPECT_EQ(t2, s->getT2().get());
+        EXPECT_EQ(pref, s->getPreferred().get());
+        EXPECT_EQ(valid, s->getValid().get());
         EXPECT_EQ(min_pref ? min_pref : pref, s->getPreferred().getMin());
         EXPECT_EQ(max_pref ? max_pref : pref, s->getPreferred().getMax());
         EXPECT_EQ(min_valid ? min_valid : valid, s->getValid().getMin());
@@ -1381,12 +1381,12 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1000, subnet->getT1());
-    EXPECT_EQ(2000, subnet->getT2());
-    EXPECT_EQ(3000, subnet->getPreferred());
+    EXPECT_EQ(1000, subnet->getT1().get());
+    EXPECT_EQ(2000, subnet->getT2().get());
+    EXPECT_EQ(3000, subnet->getPreferred().get());
     EXPECT_EQ(2000, subnet->getPreferred().getMin());
     EXPECT_EQ(4000, subnet->getPreferred().getMax());
-    EXPECT_EQ(4000, subnet->getValid());
+    EXPECT_EQ(4000, subnet->getValid().get());
     EXPECT_EQ(3000, subnet->getValid().getMin());
     EXPECT_EQ(5000, subnet->getValid().getMax());
 
@@ -1724,12 +1724,12 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getT1());
-    EXPECT_EQ(2, subnet->getT2());
-    EXPECT_EQ(3, subnet->getPreferred());
+    EXPECT_EQ(1, subnet->getT1().get());
+    EXPECT_EQ(2, subnet->getT2().get());
+    EXPECT_EQ(3, subnet->getPreferred().get());
     EXPECT_EQ(2, subnet->getPreferred().getMin());
     EXPECT_EQ(4, subnet->getPreferred().getMax());
-    EXPECT_EQ(4, subnet->getValid());
+    EXPECT_EQ(4, subnet->getValid().get());
     EXPECT_EQ(3, subnet->getValid().getMin());
     EXPECT_EQ(5, subnet->getValid().getMax());
 }
@@ -2155,10 +2155,10 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1000, subnet->getT1());
-    EXPECT_EQ(2000, subnet->getT2());
-    EXPECT_EQ(3000, subnet->getPreferred());
-    EXPECT_EQ(4000, subnet->getValid());
+    EXPECT_EQ(1000, subnet->getT1().get());
+    EXPECT_EQ(2000, subnet->getT2().get());
+    EXPECT_EQ(3000, subnet->getPreferred().get());
+    EXPECT_EQ(4000, subnet->getValid().get());
 }
 
 // Goal of this test is to verify if invalid pool definitions

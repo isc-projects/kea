@@ -765,9 +765,9 @@ public:
         }
         Subnet4Ptr s = *subnet_it;
 
-        EXPECT_EQ(t1, s->getT1());
-        EXPECT_EQ(t2, s->getT2());
-        EXPECT_EQ(valid, s->getValid());
+        EXPECT_EQ(t1, s->getT1().get());
+        EXPECT_EQ(t2, s->getT2().get());
+        EXPECT_EQ(valid, s->getValid().get());
         EXPECT_EQ(min_valid ? min_valid : valid, s->getValid().getMin());
         EXPECT_EQ(max_valid ? max_valid : valid, s->getValid().getMax());
 
@@ -1059,8 +1059,8 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
 
     EXPECT_TRUE(subnet->getT1().unspecified());
     EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(2000, subnet->getT2());
-    EXPECT_EQ(4000, subnet->getValid());
+    EXPECT_EQ(2000, subnet->getT2().get());
+    EXPECT_EQ(4000, subnet->getValid().get());
 
     // Check that subnet-id is 1
     EXPECT_EQ(1, subnet->getID());
@@ -1091,9 +1091,9 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     EXPECT_FALSE(subnet->getT1().unspecified());
-    EXPECT_EQ(1000, subnet->getT1());
+    EXPECT_EQ(1000, subnet->getT1().get());
     EXPECT_TRUE(subnet->getT2().unspecified());
-    EXPECT_EQ(4000, subnet->getValid());
+    EXPECT_EQ(4000, subnet->getValid().get());
 
     // Check that subnet-id is 1
     EXPECT_EQ(1, subnet->getID());
@@ -1128,9 +1128,9 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1000, subnet->getT1());
-    EXPECT_EQ(2000, subnet->getT2());
-    EXPECT_EQ(4000, subnet->getValid());
+    EXPECT_EQ(1000, subnet->getT1().get());
+    EXPECT_EQ(2000, subnet->getT2().get());
+    EXPECT_EQ(4000, subnet->getValid().get());
     EXPECT_EQ(3000, subnet->getValid().getMin());
     EXPECT_EQ(5000, subnet->getValid().getMax());
 
@@ -1905,9 +1905,9 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getT1());
-    EXPECT_EQ(2, subnet->getT2());
-    EXPECT_EQ(4, subnet->getValid());
+    EXPECT_EQ(1, subnet->getT1().get());
+    EXPECT_EQ(2, subnet->getT2().get());
+    EXPECT_EQ(4, subnet->getValid().get());
     EXPECT_EQ(3, subnet->getValid().getMin());
     EXPECT_EQ(5, subnet->getValid().getMax());
 }
@@ -2023,9 +2023,9 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1000, subnet->getT1());
-    EXPECT_EQ(2000, subnet->getT2());
-    EXPECT_EQ(4000, subnet->getValid());
+    EXPECT_EQ(1000, subnet->getT1().get());
+    EXPECT_EQ(2000, subnet->getT2().get());
+    EXPECT_EQ(4000, subnet->getValid().get());
 }
 
 // Goal of this test is to verify if invalid pool definitions

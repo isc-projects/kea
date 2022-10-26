@@ -1362,7 +1362,7 @@ TEST_F(ClientClassDefParserTest, noFixedFields6) {
     ASSERT_TRUE(cclass);
 
     // And it should not have any fixed fields set
-    EXPECT_EQ(0, cclass->getPreferred());
+    EXPECT_EQ(0, cclass->getPreferred().get());
     EXPECT_EQ(0, cclass->getPreferred().getMin());
     EXPECT_EQ(0, cclass->getPreferred().getMax());
 

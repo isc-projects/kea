@@ -254,9 +254,9 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("srv1", network->getClientClass().get());
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
-    EXPECT_EQ(99, network->getT1());
-    EXPECT_EQ(199, network->getT2());
-    EXPECT_EQ(399, network->getValid());
+    EXPECT_EQ(99, network->getT1().get());
+    EXPECT_EQ(199, network->getT2().get());
+    EXPECT_EQ(399, network->getValid().get());
     EXPECT_EQ(299, network->getValid().getMin());
     EXPECT_EQ(499, network->getValid().getMax());
     EXPECT_TRUE(network->getCalculateTeeTimes());
@@ -278,7 +278,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
-    EXPECT_EQ(123, network->getCacheMaxAge());
+    EXPECT_EQ(123, network->getCacheMaxAge().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
 
     // Relay information.
@@ -300,7 +300,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     Subnet4Ptr subnet = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.1.2.0", subnet->get().first.toText());
-    EXPECT_EQ(300, subnet->getValid());
+    EXPECT_EQ(300, subnet->getValid().get());
     EXPECT_EQ(200, subnet->getValid().getMin());
     EXPECT_EQ(400, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
@@ -310,7 +310,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     subnet = network->getSubnet(SubnetID(2));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
-    EXPECT_EQ(30, subnet->getValid());
+    EXPECT_EQ(30, subnet->getValid().get());
     EXPECT_EQ(30, subnet->getValid().getMin());
     EXPECT_EQ(30, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
@@ -664,13 +664,13 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("srv1", network->getClientClass().get());
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
-    EXPECT_EQ(211, network->getPreferred());
+    EXPECT_EQ(211, network->getPreferred().get());
     EXPECT_EQ(111, network->getPreferred().getMin());
     EXPECT_EQ(311, network->getPreferred().getMax());
     EXPECT_TRUE(network->getRapidCommit());
-    EXPECT_EQ(99, network->getT1());
-    EXPECT_EQ(199, network->getT2());
-    EXPECT_EQ(399, network->getValid());
+    EXPECT_EQ(99, network->getT1().get());
+    EXPECT_EQ(199, network->getT2().get());
+    EXPECT_EQ(399, network->getValid().get());
     EXPECT_EQ(299, network->getValid().getMin());
     EXPECT_EQ(499, network->getValid().getMax());
     EXPECT_TRUE(network->getCalculateTeeTimes());
@@ -686,7 +686,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
-    EXPECT_EQ(123, network->getCacheMaxAge());
+    EXPECT_EQ(123, network->getCacheMaxAge().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
 
     // Relay information.
@@ -708,10 +708,10 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     Subnet6Ptr subnet = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("3000::", subnet->get().first.toText());
-    EXPECT_EQ(300, subnet->getPreferred());
+    EXPECT_EQ(300, subnet->getPreferred().get());
     EXPECT_EQ(200, subnet->getPreferred().getMin());
     EXPECT_EQ(400, subnet->getPreferred().getMax());
-    EXPECT_EQ(400, subnet->getValid());
+    EXPECT_EQ(400, subnet->getValid().get());
     EXPECT_EQ(300, subnet->getValid().getMin());
     EXPECT_EQ(500, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
@@ -721,10 +721,10 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     subnet = network->getSubnet(SubnetID(2));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("2001:db8:1::", subnet->get().first.toText());
-    EXPECT_EQ(30, subnet->getPreferred());
+    EXPECT_EQ(30, subnet->getPreferred().get());
     EXPECT_EQ(30, subnet->getPreferred().getMin());
     EXPECT_EQ(30, subnet->getPreferred().getMax());
-    EXPECT_EQ(40, subnet->getValid());
+    EXPECT_EQ(40, subnet->getValid().get());
     EXPECT_EQ(40, subnet->getValid().getMin());
     EXPECT_EQ(40, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());

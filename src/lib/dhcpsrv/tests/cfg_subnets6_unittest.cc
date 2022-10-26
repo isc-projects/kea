@@ -65,7 +65,7 @@ void checkMergedSubnet(CfgSubnets6& cfg_subnets,
 
     // Make sure we have the one we expect.
     ASSERT_EQ(exp_subnet_id, subnet->getID()) << "subnet ID is wrong";
-    ASSERT_EQ(exp_valid, subnet->getValid()) << "subnetID:"
+    ASSERT_EQ(exp_valid, subnet->getValid().get()) << "subnetID:"
               << subnet->getID() << ", subnet valid time is wrong";
 
     SharedNetwork6Ptr shared_network;
@@ -1200,7 +1200,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(100, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1224,7 +1224,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(100, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1248,7 +1248,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(100, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1274,7 +1274,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(200, subnet->getPreferred());
+        EXPECT_EQ(200, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(200, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1300,7 +1300,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(200, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1338,7 +1338,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(200, subnet->getPreferred());
+        EXPECT_EQ(200, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(300, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1388,7 +1388,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(100, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();

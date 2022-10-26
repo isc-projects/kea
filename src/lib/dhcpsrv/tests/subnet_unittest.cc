@@ -179,9 +179,9 @@ TEST(Subnet4Test, subnetID) {
 TEST(Subnet4Test, inRange) {
     Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
 
-    EXPECT_EQ(1000, subnet.getT1());
-    EXPECT_EQ(2000, subnet.getT2());
-    EXPECT_EQ(3000, subnet.getValid());
+    EXPECT_EQ(1000, subnet.getT1().get());
+    EXPECT_EQ(2000, subnet.getT2().get());
+    EXPECT_EQ(3000, subnet.getValid().get());
 
     EXPECT_FALSE(subnet.hasRelays());
 
@@ -894,10 +894,10 @@ TEST(Subnet6Test, subnetID) {
 TEST(Subnet6Test, inRange) {
     Subnet6 subnet(IOAddress("2001:db8:1::"), 64, 1000, 2000, 3000, 4000);
 
-    EXPECT_EQ(1000, subnet.getT1());
-    EXPECT_EQ(2000, subnet.getT2());
-    EXPECT_EQ(3000, subnet.getPreferred());
-    EXPECT_EQ(4000, subnet.getValid());
+    EXPECT_EQ(1000, subnet.getT1().get());
+    EXPECT_EQ(2000, subnet.getT2().get());
+    EXPECT_EQ(3000, subnet.getPreferred().get());
+    EXPECT_EQ(4000, subnet.getValid().get());
 
     EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:0:ffff:ffff:ffff:ffff:ffff")));
     EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::0")));
