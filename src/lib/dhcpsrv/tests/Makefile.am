@@ -123,6 +123,7 @@ libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += random_allocation_state_unittest.cc
+libdhcpsrv_unittests_SOURCES += random_allocator_unittest.cc
 libdhcpsrv_unittests_SOURCES += resource_handler_unittest.cc
 libdhcpsrv_unittests_SOURCES += sanity_checks_unittest.cc
 libdhcpsrv_unittests_SOURCES += shared_network_parser_unittest.cc

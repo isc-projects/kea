@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,7 +52,8 @@ PrefixRange::PrefixRange(const asiolink::IOAddress& prefix, const uint8_t length
 
 PrefixRange::PrefixRange(const asiolink::IOAddress& start, const asiolink::IOAddress& end,
                          const uint8_t delegated)
-    : start_(start), end_(end), prefix_length_(0), delegated_length_(delegated) {
+    : start_(start), end_(end), prefix_length_(prefixLengthFromRange(start, end)),
+      delegated_length_(delegated) {
     if (!start_.isV6() || !end_.isV6()) {
         isc_throw(BadValue, "IPv6 prefix required for prefix delegation range but "
                   << start_ << ":" << end_ << " was specified");

@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,6 +107,41 @@ TEST(IPRangePermutationTest, ipv6) {
 // generated.
 TEST(IPRangePermutationTest, pd) {
     PrefixRange range(IOAddress("3000::"), 112, 120);
+    IPRangePermutation perm(range);
+
+    std::set<IOAddress> addrs;
+    bool done = false;
+    for (auto i = 0; i < 257; ++i) {
+        auto next = perm.next(done);
+        if (!next.isV6Zero()) {
+            // Make sure the prefix is within the range.
+            EXPECT_LE(range.start_, next);
+            EXPECT_LE(next, range.end_);
+        }
+        // If we went over all delegated prefixes in the range, the flags indicating
+        // that the permutation is exhausted should be set to true.
+        if (i >= 255) {
+            EXPECT_TRUE(done);
+            EXPECT_TRUE(perm.exhausted());
+        } else {
+            // We're not done yet, so these flag should still be false.
+            EXPECT_FALSE(done);
+            EXPECT_FALSE(perm.exhausted());
+        }
+        // Insert the prefix returned to the set.
+        addrs.insert(next);
+    }
+
+    // We should have recorded 257 unique addresses, including the zero address.
+    EXPECT_EQ(257, addrs.size());
+    EXPECT_TRUE(addrs.begin()->isV6Zero());
+}
+
+// This test verifies that a permutation of delegated prefixes is
+// generated from the prefix range specified using first and last
+// address.
+TEST(IPRangePermutationTest, pdStartEnd) {
+    PrefixRange range(IOAddress("3000::"), IOAddress("3000::ffff"), 120);
     IPRangePermutation perm(range);
 
     std::set<IOAddress> addrs;
