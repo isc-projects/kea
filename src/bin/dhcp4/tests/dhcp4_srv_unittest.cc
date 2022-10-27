@@ -5023,6 +5023,8 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
             HWAddrPtr hw_addr(new HWAddr(HWAddr::fromText(scenario.hw_str_, 10)));
             query->setHWAddr(hw_addr);
 
+            srv.classifyPacket(query);
+
             // Process it.
             Pkt4Ptr response = srv.processDiscover(query);
 

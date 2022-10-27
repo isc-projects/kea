@@ -234,8 +234,7 @@ TEST_F(HAImplTest, buffer4Receive) {
 
     // The client class should be assigned to the message to indicate that the
     // server1 should process this message.
-    ASSERT_EQ(2, query4->getClasses().size());
-    EXPECT_TRUE(query4->inClass("ALL"));
+    ASSERT_EQ(1, query4->getClasses().size());
     EXPECT_TRUE(query4->inClass("HA_server1"));
 
     // Check that the message has been parsed. The DHCP message type should
@@ -323,8 +322,7 @@ TEST_F(HAImplTest, buffer6Receive) {
 
     // The client class should be assigned to the message to indicate that the
     // server1 should process this message.
-    ASSERT_EQ(2, query6->getClasses().size());
-    EXPECT_TRUE(query6->inClass("ALL"));
+    ASSERT_EQ(1, query6->getClasses().size());
     EXPECT_TRUE(query6->inClass("HA_server1"));
 
     // Check that the message has been parsed. The DHCP message type should
