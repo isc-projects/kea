@@ -168,6 +168,8 @@ ClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
     }
 }
 
+const std::string TemplateClientClassDef::SPAWN_CLASS_PREFIX("SPAWN_");
+
 TemplateClientClassDef::TemplateClientClassDef(const std::string& name,
                                                const ExpressionPtr& match_expr,
                                                const CfgOptionPtr& options) :
@@ -185,7 +187,7 @@ TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
                 .arg(getName())
                 .arg(subclass);
             // Matching: add the subclass
-            std::string value("SPAWN_");
+            std::string value(TemplateClientClassDef::SPAWN_CLASS_PREFIX);
             value += getName();
             value += "_";
             value += subclass;
@@ -573,6 +575,12 @@ builtinNames = {
     "ALL", "KNOWN", "UNKNOWN", "BOOTP"
 };
 
+/// @brief The prefixes used to check if a class is BuiltIn class.
+///
+/// The 'SPAWN_' prefix is not added to this list to permit other template
+/// classes to associate the packet to regular classes which use this prefix in
+/// their name. This guarantees that regular classes are never treated as
+/// built-in classes.
 std::list<std::string>
 builtinPrefixes = {
     "VENDOR_CLASS_", "HA_", "AFTER_", "EXTERNAL_"

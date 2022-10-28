@@ -246,9 +246,9 @@ private:
     std::string test_;
 
     /// @brief The only-if-required flag: when false (the default) membership
-    /// is determined during classification so is available, of instance,
-    /// for subnet selection. When true, membership is evaluated
-    /// only when required and is usable only for option configuration.
+    /// is determined during classification so is available for instance for
+    /// subnet selection. When true, membership is evaluated only when required
+    /// and is usable only for option configuration.
     bool required_;
 
     /// @brief The depend on known aka use host flag: when false (the default),
@@ -312,6 +312,15 @@ public:
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const override;
+
+    /// @brief This is a prefix added to the spawned class name
+    ///
+    /// If incoming packet is associated with the template class, the name of
+    /// generated spawned class is prepended with this prefix.
+    /// For example, a packet that associates with the template class "FOO" by
+    /// evaluating the templeta class expression to BAR will cause the packet to
+    /// be assigned to class SPAWN_FOO_BAR.
+    static const std::string SPAWN_CLASS_PREFIX;
 };
 
 /// @brief a pointer to an ClientClassDef
@@ -493,7 +502,6 @@ extern std::list<std::string> builtinPrefixes;
 /// @param client_class A client class name to look for.
 /// @return true if built-in, false if not.
 bool isClientClassBuiltIn(const ClientClass& client_class);
-
 
 /// @brief Check if a client class name is already defined,
 /// i.e. is built-in or in the dictionary,

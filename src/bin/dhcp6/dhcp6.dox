@@ -543,8 +543,6 @@ true, this packet is considered a member of said class. Class definitions are st
 in isc::dhcp::ClientClassDef objects that are kept in isc::dhcp::ClientClassDictionary
 and can be retrieved from CfgMgr using isc::dhcp::SrvConfig::getClientClassDictionary().
 This is convenient as there are often multiple classes associated with a given scope.
-As of Kea 1.0, the only supported scope is global, but there are plans to support
-class definitions that are subnet specific.
 
 Client classification is done in isc::dhcp::Dhcpv6Srv::classifyPacket. First, the old
 "built-in" (see @ref dhcpv6ClassifierSimple) classification is called (see @ref

@@ -672,38 +672,165 @@ digits separated by the separator, e.g ``':'``, ``'-'``, ``''`` (empty separator
 Configuring Classes
 ===================
 
-A class contains five items: a name, a test expression, option data,
-an option definition, and an ``only-if-required`` flag. The name must exist and
-must be unique among all classes. The test expression, option data and
-definition, and ``only-if-required`` flag are optional.
+A class can contains the following items:
+ - ``name`` parameter is mandatory and must be unique among all classes.
+ - ``test`` expression is not mandatory and represents a string containing the
+   logical expression used to determine membership in the class. The entire
+   expression is included in double quotes ("). The result should evaluate to a
+   boolean value (``true`` or ``false``).
+ - ``template-test`` expression is not mandatory and represents a string
+   containing the logical expression used to generate a spawning class. The
+   entire expression is included in double quotes ("). The result should
+   evaluate to a string value representing the variable part of the spawned
+   class name. If the resulting string is empty, no spawning class is generated.
+   The resulting spawned class has the following generated name format:
+   "SPAWN_<template-class-name>_<evaluated-value>".
+   After classes are evaluated and spawned class is generated, the corresponding
+   template class name is also associated with the packet.
+ - ``option-data`` list is not mandatory and contains options that should be
+   assigned to members of this class. In the case of a template class, these
+   options are assigned to the generated spawning class.
+ - ``option-def`` list is not mandatory and is used to define custom options.
+ - ``only-if-required`` flag is not mandatory and when the value is set to false
+   (the default) membership is determined during classification so is
+   available for instance for subnet selection. When the value is set to true,
+   membership is evaluated only when required and is usable only for option
+   configuration.
+ - ``user-context`` is not mandatory and represents a map with user defined data
+   and possibly configuration options for hooks libraries.
+ - ``next-server`` is not mandatory and configures the 'siaddr' field in
+   packets associated with this class. It is used in DHCP4 only.
+ - ``server-hostname`` is not mandatory and configures the 'sname' field in
+   packets associated with this class. It is used in DHCP4 only
+ - ``boot-file-name`` is not mandatory and configures the 'file' field in
+   packets associated with this class. It is used in DHCP4 only.
+ - ``valid-lifetime``, ``min-valid-lifetime``, and ``max-valid-lifetime`` are
+   not mandatory and configure the valid lifetime fields for this client class.
+ - ``preferred-lifetime``, ``min-preferred-lifetime`` and
+   ``max-preferred-lifetime`` are not mandatory and configure the preferred
+   lifetime fields for this client class. It is used in DHCP6 only.
 
-The test expression is a string containing the logical expression used
-to determine membership in the class. The entire expression is in double
-quotes (").
+A valid configuration contains at most one of ``test`` or ``template-test``
+parameters. The ``template-test`` parameter also indicates if the class is a
+template class. If both are provided, the configuration is rejected.
 
-The option data is a list which defines any options that should be
-assigned to members of this class.
+::
 
-The option definition is for DHCPv4 option 43
-(:ref:`dhcp4-vendor-opts`) and DHCPv4 private options
-(:ref:`dhcp4-private-opts`).
+   "Dhcp4": {
+       "client-classes": [
+           {
+               "name": "Client-ID",
+               "template-test": "substring(option[61].hex,0,3)",
+           },
+           ...
+       ],
+       ...
+   }
 
-Usually the test expression is evaluated before subnet selection, but in
-some cases it is useful to evaluate it later when the subnet,
-shared network, or pools are known but output-option processing has not yet
-been done. The ``only-if-required`` flag, which is ``false`` by default, allows the
-evaluation of the test expression only when it is required, i.e. in a
-``require-client-classes`` list of the selected subnet, shared network, or
-pool.
+If the received DHCP4 packet contans option 61, then the first 3 bytes represent
+value 'foo' in ASCII, then the spawned class will used the
+"SPAWN_Client-ID_foo" name.
+Both "SPAWN_Client-ID_foo" and "Client-ID" classes will be associated with the
+packet.
 
-The ``require-client-classes`` list, which is valid for shared-network,
-subnet, and pool scope, specifies the classes which are evaluated in the
-second pass before output-option processing. The list is built in the
-reversed precedence order of option data, i.e. an option data item in a
-subnet takes precedence over one in a shared network, but required class in
-a subnet is added after one in a shared network. The mechanism is
-related to the ``only-if-required`` flag but it is not mandatory that the
-flag be set to ``true``.
+.. note ::
+
+   Template classes can also be used to spawn classes which match regular
+   classes, effectively associating the regular class to the packet.
+   To achieve this, the regular class must also contain the fixed part of the
+   spawned class name:
+
+   SPAWN_<template-class-name-used-to-activate-this-regular-class>_<evaluated-value-filtering-this-regular-class>
+
+::
+
+   "Dhcp6": {
+       "client-classes": [
+           {
+               "name": "SPAWN_Client-ID_foobar",
+               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
+           },
+           {
+               "name": "Client-ID",
+               "template-test": "substring(option[1].hex,0,6)",
+           },
+           ...
+       ],
+       ...
+   }
+
+If the received DHCP6 packet contans option 1 (client identifier) with hex value
+`0x0002AABBCCDD`, then the "SPAWN_Client-ID_foobar" will be associated with the
+packet. Moreover, if the first 6 bytes represent value 'foobar' in ASCII, then
+the spawned class will use the "SPAWN_Client-ID_foobar" name effectively
+associating the regular class to the packet. In this second case, both
+"SPAWN_Client-ID_foobar" and "Client-ID" classes will be associated with the
+packet.
+The ``test`` expression on the regular classs "SPAWN_Client-ID_foobar" is not
+mandatory and can be omitted, but it is used here with a different match
+expression for example purposes.
+
+Usually the ``test`` and ``template-test`` expression are evaluated before
+subnet selection, but in some cases it is useful to evaluate it later when the
+subnet, shared network, or pools are known but output-option processing has not
+yet been done. The ``only-if-required`` flag, which is ``false`` by default,
+allows the evaluation of the ``test`` expression or the ``template-test``
+expression only when it is required, i.e. in a ``require-client-classes`` list
+of the selected subnet, shared network, or pool.
+
+The ``require-client-classes`` list, which is valid for shared-network, subnet,
+and pool scope, specifies the classes which are evaluated in the second pass
+before output-option processing. The list is built in the reversed precedence
+order of option data, i.e. an option data item in a subnet takes precedence over
+one in a shared network, but required class in a subnet is added after one in a
+shared network. The mechanism is related to the ``only-if-required`` flag but it
+is not mandatory that the flag be set to ``true``.
+
+.. note ::
+
+   The ``template-test`` expression can also be used to filter generated spawned
+   classes, so that they are created only when needed by using the `ifelse`
+   instruction.
+
+::
+
+   "Dhcp4": {
+       "client-classes": [
+           {
+               "name": "Client-ID",
+               "template-test": "ifelse(substring(option[61].hex,4,3) == 'foo', substring(option[12].hex,0,12), '')",
+           },
+           ...
+       ],
+       ...
+   }
+
+.. note ::
+
+   The template classes can be used to configure limits which, just like options,
+   are associated with the spawned class. This permits configuring limits which
+   apply for all packets associated with a class spawned at runtime, according
+   to the ``template-test`` expression in the parent template class.
+   For a more detaild description on how to configure limits using the limits
+   hooks library see the :ref:`hooks-limits-configuration`.
+
+::
+
+   "Dhcp6": {
+       "client-classes": [
+           {
+               "name": "Client-ID",
+               "template-test": "substring(option[1].hex,0,6)",
+               "user-context" : {
+                   "limits": {
+                      "rate-limit": "60 packets per day"
+                   }
+               }
+           },
+           ...
+       ],
+       ...
+   }
 
 In the following example, the class named "Client_foo" is defined. It is
 comprised of all clients whose client IDs (option 61) start with the
