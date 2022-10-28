@@ -585,7 +585,13 @@ TEST_F(ClassifyTest, matchClassification) {
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
+        "    \"test\": \"option[host-name].text == 'foo'\" },"
+        "{   \"name\": \"template-client-id\","
+        "    \"template-test\": \"substring(option[1].hex,0,3)\" },"
+        "{   \"name\": \"SPAWN_template-hostname_foo\" },"
+        "{   \"name\": \"template-hostname\","
+        "    \"template-test\": \"option[host-name].text\"} ] }";
+
     ASSERT_NO_THROW(configure(config));
 
     // Create packets with enough to select the subnet
@@ -611,10 +617,34 @@ TEST_F(ClassifyTest, matchClassification) {
     srv.classifyPacket(query2);
     srv.classifyPacket(query3);
 
+    EXPECT_EQ(query1->classes_.size(), 6);
+    EXPECT_EQ(query2->classes_.size(), 3);
+    EXPECT_EQ(query3->classes_.size(), 6);
+
+    EXPECT_TRUE(query1->inClass("ALL"));
+    EXPECT_TRUE(query2->inClass("ALL"));
+    EXPECT_TRUE(query3->inClass("ALL"));
+
     // Packets with the exception of the second should be in the router class
     EXPECT_TRUE(query1->inClass("router"));
     EXPECT_FALSE(query2->inClass("router"));
     EXPECT_TRUE(query3->inClass("router"));
+
+    EXPECT_TRUE(query1->inClass("template-hostname"));
+    EXPECT_FALSE(query2->inClass("template-hostname"));
+    EXPECT_TRUE(query3->inClass("template-hostname"));
+
+    EXPECT_TRUE(query1->inClass("SPAWN_template-hostname_foo"));
+    EXPECT_FALSE(query2->inClass("SPAWN_template-hostname_foo"));
+    EXPECT_TRUE(query3->inClass("SPAWN_template-hostname_foo"));
+
+    EXPECT_TRUE(query1->inClass("template-client-id"));
+    EXPECT_TRUE(query2->inClass("template-client-id"));
+    EXPECT_TRUE(query3->inClass("template-client-id"));
+
+    EXPECT_TRUE(query1->inClass("SPAWN_template-client-id_def"));
+    EXPECT_TRUE(query2->inClass("SPAWN_template-client-id_def"));
+    EXPECT_TRUE(query3->inClass("SPAWN_template-client-id_def"));
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;

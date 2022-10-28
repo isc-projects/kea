@@ -181,6 +181,12 @@ server uses an appropriate pool or subnet to allocate IP addresses
 (and/or prefixes), based on the assigned client classes. The details can
 be found in :ref:`hooks-high-availability`.
 
+The ``SPAWN_`` prefix is used by template classes to generate spawn classes
+names at runtime. The spawned class name is constructed by prepending the
+``SPAWN_`` prefix to the template class name and the evaluated value:
+"SPAWN_<template-class-name>_<evaluated-value>".
+The details can be found in :ref:`classification-configuring`.
+
 The ``BOOTP`` class is used by the BOOTP hook library to classify and
 respond to inbound BOOTP queries.
 
