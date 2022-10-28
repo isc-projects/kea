@@ -1372,12 +1372,12 @@ public:
 
     /// @brief Build extended info v6 tables.
     ///
-    /// @note: this method is a nop for memfile as tables are built at
-    /// start time.
-    virtual void buildExtendedInfoTables6() override {
-        isc_throw(isc::NotImplemented,
-                  "buildExtendedInfoTables6 is not yet implemented by memfile");
-    }
+    /// @note: this method is a nop for memfile when update is false
+    /// as tables are built at start time.
+    ///
+    /// @param update Update extended info in database.
+    /// @return The number of updates in the database or 0.
+    virtual size_t buildExtendedInfoTables6(bool update) override;
 
 private:
 
@@ -1470,8 +1470,11 @@ private:
 
     /// @brief Build extended info v6 tables.
     ///
-    /// @note: called at start time.
-    void buildExtendedInfoTables6Internal();
+    /// @param check Extended info sanity level.
+    /// @param update Update extended info in database.
+    /// @return The number of updates in the database or 0.
+    size_t buildExtendedInfoTables6Internal(isc::dhcp::CfgConsistency::ExtendedInfoSanity check,
+                                            bool update);
 
 public:
 

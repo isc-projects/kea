@@ -3431,5 +3431,11 @@ MySqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
     isc_throw(NotImplemented, "MySqlLeaseMgr::getLeases6ByLink not implemented");
 }
 
+size_t
+MySqlLeaseMgr::buildExtendedInfoTables6(bool /* update */) {
+    isc_throw(isc::NotImplemented,
+              "MySqlLeaseMgr::buildExtendedInfoTables6 not implemented");
+}
+
 }  // namespace dhcp
 }  // namespace isc

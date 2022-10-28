@@ -2625,5 +2625,11 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
     isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByLink not implemented");
 }
 
+size_t
+PgSqlLeaseMgr::buildExtendedInfoTables6(bool /* update */) {
+    isc_throw(isc::NotImplemented,
+              "PgSqlLeaseMgr::buildExtendedInfoTables6 not implemented");
+}
+
 }  // namespace dhcp
 }  // namespace isc

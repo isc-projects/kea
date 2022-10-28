@@ -386,10 +386,10 @@ with the specified address to the memory file backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the memory file backend database.
 
-% DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6 building extended info tables with %1 sanity check level (%2)
+% DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6 building extended info tables with %1 sanity check level%2, tables %3
 A debug message issued when the server is building extended info tables.
-The extended info sanity check level and the fact tables are enabled or
-disabled are displayed.
+The extended info sanity check level, update in file when requested
+and the fact tables are enabled or disabled are displayed.
 
 % DHCPSRV_MEMFILE_BEGIN_TRANSACTION committing to memory file database
 The code has issued a begin transaction call.  For the memory file database, this is
@@ -399,8 +399,9 @@ a no-op.
 A debug message issued when the server is building extended info tables and
 receives an exception processing a lease.
 
-% DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 building extended info tables saw %1 leases, extended info sanity checks modified %2 leases and %3 leases were entered into tables
-Extended info tables build was finished. Some statistics are displayed.
+% DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 building extended info tables saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases were entered into tables
+Extended info tables build was finished. Some statistics are displayed, the
+updated in database is returned to the command interface.
 
 % DHCPSRV_MEMFILE_COMMIT committing to memory file database
 The code has issued a commit call.  For the memory file database, this is

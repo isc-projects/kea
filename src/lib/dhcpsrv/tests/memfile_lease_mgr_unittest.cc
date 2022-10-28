@@ -3564,7 +3564,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6) {
         "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
         "200,200,8,100,0,7,0,1,1,,,1,"
         "{ \"ISC\": { \"relays\": [ { \"hop\": 44&#x2c"
-        " \"link\": \"2001:db8::4\"&#x2c  \"peer\": \"2001:db8::5\"&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
         " \"options\": \"0x00250006010203040506003500086464646464646464\""
         " } ] } },,\n"
     );
@@ -3644,7 +3644,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6noSanitize) {
         "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
         "200,200,8,100,0,7,0,1,1,,,1,"
         "{ \"ISC\": { \"relays\": [ { \"hop\": 44&#x2c"
-        " \"link\": \"2001:db8::4\"&#x2c  \"peer\": \"2001:db8::5\"&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
         " \"options\": \"0x00250006010203040506003500086464646464646464\""
         " } ] } },,\n"
     );
@@ -3707,7 +3707,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6enabled) {
         "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
         "200,200,8,100,0,7,0,1,1,,,1,"
         "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
-        " \"link\": \"2001:db8::4\"&#x2c  \"peer\": \"2001:db8::5\"&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
         " \"remote-id\": \"010203040506\"&#x2c"
         " \"relay-id\": \"6464646464646464\"&#x2c"
         " \"options\": \"0x00250006010203040506003500086464646464646464\""
@@ -3786,7 +3786,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6disabled) {
         "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
         "200,200,8,100,0,7,0,1,1,,,1,"
         "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
-        " \"link\": \"2001:db8::4\"&#x2c  \"peer\": \"2001:db8::5\"&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
         " \"remote-id\": \"010203040506\"&#x2c"
         " \"relay-id\": \"6464646464646464\"&#x2c"
         " \"options\": \"0x00250006010203040506003500086464646464646464\""
@@ -3812,6 +3812,103 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6disabled) {
     EXPECT_TRUE(lease_mgr->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr->remote_id6_.empty());
     EXPECT_TRUE(lease_mgr->link_addr6_.empty());
+}
+
+/// @brief Checks that buildExtendedInfoTables6 updates when explicitly
+/// requested.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6ExplicitSanitize) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    string content =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,\n";
+    io.writeFile(content);
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was not updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check the lease with extended info was not upgraded.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_TRUE(isc->contains("relays"));
+    EXPECT_FALSE(isc->contains("relay-info"));
+
+    // Enable sanitizing.
+    CfgMgr::instance().getCurrentCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    // Now run buildExtendedInfoTables6 with update set to true.
+    size_t updated = 0;
+    EXPECT_NO_THROW(updated = lease_mgr->buildExtendedInfoTables6(true));
+    EXPECT_EQ(2, updated);
+
+    // Check the lease with empty user context was updated.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+
+    // Check the lease with extended info was upgraded.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_FALSE(isc->contains("relays"));
+    EXPECT_TRUE(isc->contains("relay-info"));
+
+    // Check the lease file was updated.
+    string new_content =
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        "&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"relay-id\": \"6464646464646464\"&#x2c"
+        " \"remote-id\": \"010203040506\" } ] } },,\n";
+    string expected = content + new_content;
+    EXPECT_EQ(expected, io.readFile());
 }
 
 }  // namespace

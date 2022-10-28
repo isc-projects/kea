@@ -962,7 +962,10 @@ public:
     }
 
     /// @brief Build extended info v6 tables.
-    virtual void buildExtendedInfoTables6() = 0;
+    ///
+    /// @param update Update extended info in database.
+    /// @return The number of updates in the database or 0.
+    virtual size_t buildExtendedInfoTables6(bool update) = 0;
 
 protected:
 

@@ -505,7 +505,7 @@ public:
     }
 
     /// @brief Stub implementation.
-    virtual void buildExtendedInfoTables6() override {
+    virtual size_t buildExtendedInfoTables6(bool /* update */) override {
         isc_throw(isc::NotImplemented, "ConcreteLeaseMgr:buildExtendedInfoTables6 not implemented");
     }
     ///  @brief Pretends to write V4 leases to a file.

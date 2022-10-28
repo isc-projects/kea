@@ -660,7 +660,9 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
                                                  CSVLeaseFile6>(file6,
                                                                 lease_file6_,
                                                                 storage6_);
-            buildExtendedInfoTables6Internal();
+            CfgConsistency::ExtendedInfoSanity check =
+                CfgMgr::instance().getStagingCfg()->getConsistency()->getExtendedInfoSanityCheck();
+            static_cast<void>(buildExtendedInfoTables6Internal(check, false));
         }
     }
 
@@ -2845,30 +2847,34 @@ Memfile_LeaseMgr::getLeases6ByLinkInternal(const IOAddress& link_addr,
     return (collection);
 }
 
-void
-Memfile_LeaseMgr::buildExtendedInfoTables6Internal() {
+size_t
+Memfile_LeaseMgr::buildExtendedInfoTables6Internal(CfgConsistency::ExtendedInfoSanity check,
+                                                   bool update) {
     bool enabled = getExtendedInfoTablesEnabled();
-    // Use staging config here.
-    CfgConsistency::ExtendedInfoSanity check =
-        CfgMgr::instance().getStagingCfg()->getConsistency()->getExtendedInfoSanityCheck();
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
               DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6)
         .arg(CfgConsistency::sanityCheckToText(check))
+        .arg(update ? " updating in file" : "")
         .arg(enabled ? "enabled" : "disabled");
 
     size_t leases = 0;
     size_t modified = 0;
+    size_t updated = 0;
     size_t processed = 0;
 
     for (auto lease : storage6_) {
-        leases++;
+        ++leases;
         try {
             if (upgradeLease6ExtendedInfo(lease, check)) {
-                modified++;
+                ++modified;
+                if (update && persistLeases(V6)) {
+                    lease_file6_->append(*lease);
+                    ++updated;
+                }
             }
             if (enabled && addExtendedInfo6(lease)) {
-                processed++;
+                ++processed;
             }
         } catch (const std::exception& ex) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
@@ -2881,7 +2887,22 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal() {
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6)
         .arg(leases)
         .arg(modified)
+        .arg(updated)
         .arg(processed);
+
+    return (updated);
+}
+
+size_t
+Memfile_LeaseMgr::buildExtendedInfoTables6(bool update) {
+    CfgConsistency::ExtendedInfoSanity check =
+        CfgMgr::instance().getCurrentCfg()->getConsistency()->getExtendedInfoSanityCheck();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (buildExtendedInfoTables6Internal(check, update));
+    } else {
+        return (buildExtendedInfoTables6Internal(check, update));
+    }
 }
 
 void
