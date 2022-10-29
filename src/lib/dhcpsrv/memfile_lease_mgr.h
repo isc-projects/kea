@@ -1376,8 +1376,10 @@ public:
     /// as tables are built at start time.
     ///
     /// @param update Update extended info in database.
+    /// @param current specify whether to use current (true) or staging
+    /// (false) config.
     /// @return The number of updates in the database or 0.
-    virtual size_t buildExtendedInfoTables6(bool update) override;
+    virtual size_t buildExtendedInfoTables6(bool update, bool current) override;
 
 private:
 
@@ -1470,11 +1472,11 @@ private:
 
     /// @brief Build extended info v6 tables.
     ///
-    /// @param check Extended info sanity level.
     /// @param update Update extended info in database.
+    /// @param current specify whether to use current (true) or staging
+    /// (false) config.
     /// @return The number of updates in the database or 0.
-    size_t buildExtendedInfoTables6Internal(isc::dhcp::CfgConsistency::ExtendedInfoSanity check,
-                                            bool update);
+    size_t buildExtendedInfoTables6Internal(bool update, bool current);
 
 public:
 

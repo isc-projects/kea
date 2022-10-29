@@ -3432,7 +3432,7 @@ MySqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
 }
 
 size_t
-MySqlLeaseMgr::buildExtendedInfoTables6(bool /* update */) {
+MySqlLeaseMgr::buildExtendedInfoTables6(bool /* update */, bool /* current */) {
     isc_throw(isc::NotImplemented,
               "MySqlLeaseMgr::buildExtendedInfoTables6 not implemented");
 }

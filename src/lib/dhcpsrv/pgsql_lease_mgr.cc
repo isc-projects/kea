@@ -2626,7 +2626,7 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
 }
 
 size_t
-PgSqlLeaseMgr::buildExtendedInfoTables6(bool /* update */) {
+PgSqlLeaseMgr::buildExtendedInfoTables6(bool /* update */, bool /* current */) {
     isc_throw(isc::NotImplemented,
               "PgSqlLeaseMgr::buildExtendedInfoTables6 not implemented");
 }

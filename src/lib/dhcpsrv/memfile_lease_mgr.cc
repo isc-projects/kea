@@ -660,9 +660,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
                                                  CSVLeaseFile6>(file6,
                                                                 lease_file6_,
                                                                 storage6_);
-            CfgConsistency::ExtendedInfoSanity check =
-                CfgMgr::instance().getStagingCfg()->getConsistency()->getExtendedInfoSanityCheck();
-            static_cast<void>(buildExtendedInfoTables6Internal(check, false));
+            static_cast<void>(buildExtendedInfoTables6Internal(false, false));
         }
     }
 
@@ -2848,8 +2846,18 @@ Memfile_LeaseMgr::getLeases6ByLinkInternal(const IOAddress& link_addr,
 }
 
 size_t
-Memfile_LeaseMgr::buildExtendedInfoTables6Internal(CfgConsistency::ExtendedInfoSanity check,
-                                                   bool update) {
+Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
+    CfgConsistencyPtr cfg;
+    if (current) {
+        cfg = CfgMgr::instance().getCurrentCfg()->getConsistency();
+    } else {
+        cfg = CfgMgr::instance().getStagingCfg()->getConsistency();
+    }
+    if (!cfg) {
+        isc_throw(Unexpected, "the " << (current ? "current" : "staging")
+                  << " consistency configuration is null");
+    }
+    auto check = cfg->getExtendedInfoSanityCheck();
     bool enabled = getExtendedInfoTablesEnabled();
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
@@ -2894,14 +2902,12 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(CfgConsistency::ExtendedInfoS
 }
 
 size_t
-Memfile_LeaseMgr::buildExtendedInfoTables6(bool update) {
-    CfgConsistency::ExtendedInfoSanity check =
-        CfgMgr::instance().getCurrentCfg()->getConsistency()->getExtendedInfoSanityCheck();
+Memfile_LeaseMgr::buildExtendedInfoTables6(bool update, bool current) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
-        return (buildExtendedInfoTables6Internal(check, update));
+        return (buildExtendedInfoTables6Internal(update, current));
     } else {
-        return (buildExtendedInfoTables6Internal(check, update));
+        return (buildExtendedInfoTables6Internal(update, current));
     }
 }
 

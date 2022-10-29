@@ -3876,7 +3876,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6ExplicitSanitize) {
 
     // Now run buildExtendedInfoTables6 with update set to true.
     size_t updated = 0;
-    EXPECT_NO_THROW(updated = lease_mgr->buildExtendedInfoTables6(true));
+    EXPECT_NO_THROW(updated = lease_mgr->buildExtendedInfoTables6(true, true));
     EXPECT_EQ(2, updated);
 
     // Check the lease with empty user context was updated.
