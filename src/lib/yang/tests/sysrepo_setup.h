@@ -78,7 +78,7 @@ public:
         if (model_ == IETF_DHCPV6_SERVER) {
             toplevel_node = "server";
         }
-        t_obj_->delItem("/" + model_ + ":" + toplevel_node);
+        t_obj_->deleteItem("/" + model_ + ":" + toplevel_node);
     }
 
     /// @brief Sysrepo session.

@@ -36,7 +36,7 @@ TranslatorHost::getHost(DataNode const& data_node) {
             return (getHostKea(data_node));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting host reservation:"
                   << ex.what());
     }
@@ -48,7 +48,7 @@ ElementPtr
 TranslatorHost::getHost(std::string const& xpath) {
     try {
         return getHost(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -122,7 +122,7 @@ TranslatorHost::setHost(string const& xpath, ConstElementPtr elem) {
                       "setHost not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting host reservation '" << elem->str()
                   << "' : " << ex.what());
     }
@@ -209,7 +209,7 @@ ElementPtr
 TranslatorHosts::getHosts(std::string const& xpath) {
     try {
         return getHosts(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -225,7 +225,7 @@ TranslatorHosts::setHosts(string const& xpath, ConstElementPtr elem) {
                       "setHosts not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting host reservations '" << elem->str()
                   << "' : " << ex.what());
     }

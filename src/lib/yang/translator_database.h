@@ -119,7 +119,7 @@ public:
     ///
     /// @return the JSON representation of the database
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getDatabase(libyang::DataNode const& data_node);
 
     /// @brief Translate a database access from YANG to JSON.
@@ -133,7 +133,7 @@ public:
     ///
     /// @return JSON representation of the database.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getDatabase(std::string const& xpath);
 
     /// @brief Translate and set database access from JSON to YANG.
@@ -154,7 +154,7 @@ protected:
     ///
     /// @return JSON representation of the database
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getDatabaseKea(libyang::DataNode const& data_node);
 
     /// @brief setDatabase for kea-dhcp[46]-server models.
@@ -191,7 +191,7 @@ public:
     ///
     /// @return the JSON representation of the list of databases
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getDatabases(libyang::DataNode const& data_node,
                                        std::string const& xpath);
 
@@ -206,7 +206,7 @@ public:
     ///
     /// @return JSON representation of databases.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getDatabases(std::string const& xpath);
 
     /// @brief Translate and set database accesses from JSON to YANG.
@@ -226,7 +226,7 @@ protected:
     ///
     /// @return JSON representation of databases.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getDatabasesKea(libyang::DataNode const& data_node,
                                           std::string const& xpath);
 

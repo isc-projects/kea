@@ -91,7 +91,7 @@ public:
     ///
     /// @return the JSON representation of the option data
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getOptionData(libyang::DataNode const& data_node);
 
     /// @brief Translate an option data from YANG to JSON.
@@ -100,7 +100,7 @@ public:
     ///
     /// @return JSON representation of the option data.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getOptionData(std::string const& xpath);
 
     /// @brief Translate and set option data from JSON to YANG.
@@ -117,7 +117,7 @@ protected:
     ///
     /// @return JSON representation of the option data.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getOptionDataKea(libyang::DataNode const& data_node);
 
     /// @brief setOptionData for kea-dhcp[46].
@@ -151,7 +151,7 @@ public:
     ///
     /// @return the JSON representation of the list of option data
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ConstElementPtr getOptionDataList(libyang::DataNode const& data_node);
 
     /// @brief Translate option data list from YANG to JSON.
@@ -160,7 +160,7 @@ public:
     ///
     /// @return the JSON representation of the list of option data
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ConstElementPtr getOptionDataList(std::string const& xpath);
 
     /// @brief Translate and set option data list from JSON to YANG.
@@ -175,7 +175,7 @@ protected:
     ///
     /// @param data_node the YANG node representing the list of option data
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ConstElementPtr getOptionDataListKea(libyang::DataNode const& data_node);
 
     /// @brief setOptionDataList for kea-dhcp[46].

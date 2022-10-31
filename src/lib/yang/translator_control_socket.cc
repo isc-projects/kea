@@ -37,7 +37,7 @@ TranslatorControlSocket::getControlSocket(DataNode const& data_node) {
             return (getControlSocketKea(data_node));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting control socket: " << ex.what());
     }
     isc_throw(NotImplemented,
@@ -66,7 +66,7 @@ ElementPtr
 TranslatorControlSocket::getControlSocket(string const& xpath) {
     try {
         return getControlSocket(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -86,7 +86,7 @@ TranslatorControlSocket::setControlSocket(string const& xpath,
                     << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting control socket '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
     }
@@ -96,7 +96,7 @@ void
 TranslatorControlSocket::setControlSocketKea(string const& xpath,
                                              ConstElementPtr elem) {
     if (!elem) {
-        delItem(xpath);
+        deleteItem(xpath);
         return;
     }
     ConstElementPtr name = elem->get("socket-name");

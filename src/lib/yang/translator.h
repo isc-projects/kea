@@ -8,7 +8,7 @@
 #define ISC_TRANSLATOR_H 1
 
 #include <cc/data.h>
-#include <yang/sysrepo_error.h>
+#include <yang/netconf_error.h>
 
 #include <sysrepo-cpp/Connection.hpp>
 #include <sysrepo-cpp/Session.hpp>
@@ -54,7 +54,7 @@ public:
     /// @brief Delete basic value from YANG.
     ///
     /// @param xpath The xpath of the basic value.
-    void delItem(const std::string& xpath);
+    void deleteItem(const std::string& xpath);
 
     /// @brief Retrieves a YANG data node by xpath.
     ///
@@ -66,7 +66,7 @@ public:
     ///
     /// @return the requested YANG data node
     ///
-    /// @throw SysrepoError if no YANG data node was found
+    /// @throw NetconfError if no YANG data node was found
     libyang::DataNode findXPath(std::string const& xpath);
 
     /// @brief Run a function for a node and all its children.
@@ -103,7 +103,7 @@ public:
     /// @return The Element representing the item at xpath or null
     /// when not found.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getItem(libyang::DataNode const& data_node,
                                   std::string const& xpath) const;
 
@@ -116,7 +116,7 @@ public:
     /// @param xpath The xpath of the basic value.
     /// @return The Element representing the item at xpath or null
     /// when not found.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getItem(std::string const& xpath) const;
 
     /// @brief Retrieve a list as ElementPtr from sysrepo from a certain xpath.
@@ -146,7 +146,7 @@ public:
             }
             return result;
         } catch (libyang::Error const& ex) {
-            isc_throw(SysrepoError, "sysrepo error getting item: " << ex.what());
+            isc_throw(NetconfError, "sysrepo error getting item: " << ex.what());
         }
     }
 
@@ -160,7 +160,7 @@ public:
     ///
     /// @return a DataNode if found, or nullopt otherwise
     ///
-    /// @throw SysrepoError when the used sysrepo API throws an error
+    /// @throw NetconfError when the used sysrepo API throws an error
     std::optional<libyang::DataNode> getNode(std::string const& xpath) const;
 
     /// @brief Translate and set basic value from JSON to YANG.
@@ -177,7 +177,7 @@ public:
     /// @param data_node the YANG data node
     ///
     /// @return the translated JSON element
-    static isc::data::ElementPtr value(std::optional<libyang::DataNode> data_node);
+    static isc::data::ElementPtr translate(std::optional<libyang::DataNode> data_node);
 
     /// @brief Translate basic value from JSON to YANG.
     ///
@@ -185,8 +185,8 @@ public:
     /// @param type The sysrepo type.
     ///
     /// @return string representation of {elem}, or nullopt if {elem} is null
-    static std::optional<std::string> value(isc::data::ConstElementPtr const& elem,
-                                            libyang::LeafBaseType const type);
+    static std::optional<std::string> translate(isc::data::ConstElementPtr const& elem,
+                                                libyang::LeafBaseType const type);
 
 protected:
     /// @brief The sysrepo session.

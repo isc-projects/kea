@@ -133,7 +133,7 @@ public:
     /// @return the JSON representation of the PD pool
     ///
     /// @throw BadValue on pd-pool without well formed prefix.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPdPool(libyang::DataNode const& data_node);
 
     /// @brief Translate a pd-pool from YANG to JSON.
@@ -143,7 +143,7 @@ public:
     /// @return JSON representation of the pd-pool.
     ///
     /// @throw BadValue on pd-pool without well formed prefix.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPdPool(std::string const& xpath);
 
     /// @brief Translate and set pd-pool from JSON to YANG.
@@ -159,7 +159,7 @@ protected:
     ///
     /// @return JSON representation of the pd-pool.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPdPoolIetf6(libyang::DataNode const& data_node);
 
     /// @brief setPdPool for ietf-dhcpv6-server.
@@ -176,7 +176,7 @@ protected:
     ///
     /// @return JSON representation of the pd-pool.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPdPoolKea(libyang::DataNode const& data_node);
 
     /// @brief setPdPool for kea-dhcp6-server.
@@ -211,7 +211,7 @@ public:
     ///
     /// @return the JSON representation of the list of PD pools
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPdPools(libyang::DataNode const& data_node);
 
     /// @brief Translate pd-pools from YANG to JSON.
@@ -220,7 +220,7 @@ public:
     ///
     /// @return the JSON representation of the list of PD pools
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPdPools(std::string const& xpath);
 
     /// @brief Translate and set pd-pools from JSON to YANG.
@@ -234,7 +234,7 @@ protected:
     ///
     /// @param data_node the YANG node representing the list of PD pools
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPdPoolsCommon(libyang::DataNode const& data_node);
 
     /// @brief setPdPools using pool-id.

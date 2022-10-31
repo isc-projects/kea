@@ -38,7 +38,7 @@ TranslatorPdPool::getPdPool(DataNode const& data_node) {
             return (getPdPoolKea(data_node));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting pd-pool:"
                   << ex.what());
     }
@@ -50,7 +50,7 @@ ElementPtr
 TranslatorPdPool::getPdPool(string const& xpath) {
     try {
         return getPdPool(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -199,7 +199,7 @@ TranslatorPdPool::setPdPool(string const& xpath, ConstElementPtr elem) {
                       "setPdPool not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting pd-pool '" << elem->str()
                   << "' : " << ex.what());
     }
@@ -303,7 +303,7 @@ TranslatorPdPools::getPdPools(DataNode const& data_node) {
             return (getPdPoolsCommon(data_node));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting pd-pools:"
                   << ex.what());
     }
@@ -315,7 +315,7 @@ ElementPtr
 TranslatorPdPools::getPdPools(string const& xpath) {
     try {
         return getPdPools(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -338,7 +338,7 @@ TranslatorPdPools::setPdPools(string const& xpath, ConstElementPtr elem) {
                       "setPdPools not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting pools '" << elem->str()
                   << "' : " << ex.what());
     }

@@ -34,7 +34,7 @@ TranslatorDatabase::getDatabase(DataNode const& data_node) {
             return (getDatabaseKea(data_node));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting database access: " << ex.what());
     }
     isc_throw(NotImplemented,
@@ -45,7 +45,7 @@ ElementPtr
 TranslatorDatabase::getDatabase(string const& xpath) {
     try {
         return getDatabase(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -95,7 +95,7 @@ TranslatorDatabase::setDatabase(string const& xpath,
                       "setDatabase not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting database access '" << elem->str()
                   << "' : " << ex.what());
     }
@@ -106,7 +106,7 @@ TranslatorDatabase::setDatabaseKea(string const& xpath,
                                    ConstElementPtr elem,
                                    bool skip) {
     if (!elem) {
-        delItem(xpath);
+        deleteItem(xpath);
         return;
     }
     if (!skip) {
@@ -159,7 +159,7 @@ TranslatorDatabases::getDatabases(DataNode const& data_node,
             return (getDatabasesKea(data_node, xpath));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting database accesses: " << ex.what());
     }
     isc_throw(NotImplemented,
@@ -170,7 +170,7 @@ ElementPtr
 TranslatorDatabases::getDatabases(string const& xpath) {
     try {
         return getDatabases(findXPath(xpath), xpath);
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -193,7 +193,7 @@ TranslatorDatabases::setDatabases(string const& xpath, ConstElementPtr elem) {
                       << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting database accesses '" << elem->str()
                   << "' : " << ex.what());
     }
@@ -203,7 +203,7 @@ void
 TranslatorDatabases::setDatabasesKea(string const& xpath,
                                      ConstElementPtr elem) {
     if (!elem) {
-        delItem(xpath);
+        deleteItem(xpath);
         return;
     }
     for (size_t i = 0; i < elem->size(); ++i) {

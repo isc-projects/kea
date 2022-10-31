@@ -698,7 +698,7 @@ NetconfAgent::logChanges(Session sess, string_view const& model) {
         } else if (node_type == NodeType::List) {
             msg << " (list)";
         } else {
-            optional<string> const str(TranslatorBasic::value(TranslatorBasic::value(change.node), LeafBaseType::Unknown));
+            optional<string> const str(TranslatorBasic::translate(TranslatorBasic::translate(change.node), LeafBaseType::Unknown));
             if (str) {
                 msg << " = " << *str;
             }

@@ -289,7 +289,7 @@ public:
     ///
     /// @return the JSON representation of the subnet
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     /// @throw BadValue on a subnet without prefix or id.
     isc::data::ElementPtr getSubnet(libyang::DataNode const& data_node);
 
@@ -299,7 +299,7 @@ public:
     ///
     /// @return JSON representation of the subnet.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     /// @throw BadValue on a subnet without prefix or id.
     isc::data::ElementPtr getSubnet(std::string const& xpath);
 
@@ -362,7 +362,7 @@ public:
     ///
     /// @return the JSON representation of the list of subnets
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getSubnets(libyang::DataNode const& data_node);
 
     /// @brief Get and translate subnets from YANG to JSON.
@@ -371,7 +371,7 @@ public:
     ///
     /// @return the JSON representation of the list of subnets
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getSubnets(std::string const& xpath);
 
     /// @brief Translate and set subnets from JSON to YANG.

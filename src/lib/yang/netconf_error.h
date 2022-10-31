@@ -13,9 +13,9 @@ namespace isc {
 namespace yang {
 
 /// @brief Sysrepo error.
-class SysrepoError : public isc::Exception {
+class NetconfError : public isc::Exception {
 public:
-    SysrepoError(const char* file, size_t line, const char* what) :
+    NetconfError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
     {}
 };

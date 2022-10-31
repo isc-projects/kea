@@ -81,16 +81,16 @@ TEST_F(TranslatorPoolsTestIetfV6, getIetf) {
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet = "/ietf-dhcpv6-server:server/server-config/"
         "network-ranges/network-range[network-range-id='111']";
-    string const v_subnet("2001:db8::/48");
-    const string& subnet_subnet = subnet + "/network-prefix";
-    EXPECT_NO_THROW(sess_->setItem(subnet_subnet, v_subnet));
+    string const subnet_value("2001:db8::/48");
+    string const& network_prefix_path = subnet + "/network-prefix";
+    EXPECT_NO_THROW(sess_->setItem(network_prefix_path, subnet_value));
     sess_->applyChanges();
 
     // Create the pool 2001:db8::1:0/112 #222.
     const string& xpath = subnet + "/address-pools";
     const string& prefix = xpath + "/address-pool[pool-id='222']/pool-prefix";
-    string const s_val("2001:db8::1:0/112");
-    EXPECT_NO_THROW(sess_->setItem(prefix, s_val));
+    string const value("2001:db8::1:0/112");
+    EXPECT_NO_THROW(sess_->setItem(prefix, value));
     sess_->applyChanges();
 
     // Get the pool.

@@ -85,7 +85,7 @@ public:
     ///
     /// @return the JSON representation of the control socket
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getControlSocket(libyang::DataNode const& data_node);
 
     /// @brief Translate a control socket from YANG to JSON.
@@ -99,7 +99,7 @@ public:
     ///
     /// @return JSON representation of the control socket
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getControlSocket(std::string const& xpath);
 
     /// @brief Translate and set control socket from JSON to YANG.
@@ -114,7 +114,7 @@ protected:
     ///
     /// @param data_node the YANG node representing the control socket
     /// @return JSON representation of the control socket.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getControlSocketKea(libyang::DataNode const& data_node);
 
     /// @brief setControlSocket for kea models.

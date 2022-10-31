@@ -65,14 +65,14 @@ TEST_F(TranslatorBasicTest, getItem) {
     sess.switchDatastore(sysrepo::Datastore::Candidate);
     boost::scoped_ptr<TranslatorBasic> t_obj;
     ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
-    string s_val;
+    string value;
     ConstElementPtr elem;
     string xpath;
 
     // String.
     xpath = "/keatest-module:main/string";
-    s_val = "str";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "str";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::string, elem->getType());
@@ -81,8 +81,8 @@ TEST_F(TranslatorBasicTest, getItem) {
 
     // Bool.
     xpath = "/keatest-module:main/boolean";
-    s_val = "true";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "true";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::boolean, elem->getType());
@@ -92,8 +92,8 @@ TEST_F(TranslatorBasicTest, getItem) {
     // Unsigned 8 bit integer.
     xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
-    s_val = to_string(u8);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u8);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -103,8 +103,8 @@ TEST_F(TranslatorBasicTest, getItem) {
     // Unsigned 16 bit integer.
     xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
-    s_val = to_string(u16);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u16);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -114,8 +114,8 @@ TEST_F(TranslatorBasicTest, getItem) {
     // Unsigned 32 bit integer.
     xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
-    s_val = to_string(u32);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u32);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -125,8 +125,8 @@ TEST_F(TranslatorBasicTest, getItem) {
     // Signed 8 bit integer.
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
-    s_val = to_string(s8);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(s8);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -136,8 +136,8 @@ TEST_F(TranslatorBasicTest, getItem) {
     // Signed 16 bit integer.
     xpath = "/keatest-module:main/i16";
     int16_t s16(16);
-    s_val = to_string(s16);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(s16);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -147,8 +147,8 @@ TEST_F(TranslatorBasicTest, getItem) {
     // Signed 32 bit integer.
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
-    s_val = to_string(s32);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(s32);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -157,8 +157,8 @@ TEST_F(TranslatorBasicTest, getItem) {
 
     // Identity reference.
     xpath = "/keatest-module:main/id_ref";
-    s_val = "keatest-module:id_1";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "keatest-module:id_1";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::string, elem->getType());
@@ -167,8 +167,8 @@ TEST_F(TranslatorBasicTest, getItem) {
 
     // Enumeration item.
     xpath = "/keatest-module:main/enum";
-    s_val = "maybe";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "maybe";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::string, elem->getType());
@@ -177,8 +177,8 @@ TEST_F(TranslatorBasicTest, getItem) {
 
     // Binary.
     xpath = "/keatest-module:main/raw";
-    s_val = "Zm9vYmFy";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "Zm9vYmFy";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::string, elem->getType());
@@ -195,14 +195,14 @@ TEST_F(TranslatorBasicTest, getItem) {
 
     // Leaf-list: 1, 2 and 3.
     u8 = 1;
-    s_val = to_string(u8);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u8);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     u8 = 2;
-    s_val = to_string(u8);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u8);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     u8 = 3;
-    s_val = to_string(u8);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u8);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::list, elem->getType());
@@ -212,8 +212,8 @@ TEST_F(TranslatorBasicTest, getItem) {
 
     // Unknown / unsupported.
     xpath = "/keatest-module:main/dec64";
-    s_val = to_string(9.85);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(9.85);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::real, elem->getType());
@@ -222,102 +222,102 @@ TEST_F(TranslatorBasicTest, getItem) {
 
     // Not found.
     xpath = "/keatest-module:main/no_such_string";
-    EXPECT_THROW(t_obj->delItem(xpath), SysrepoError);
-    EXPECT_THROW(elem = t_obj->getItem(xpath), SysrepoError);
+    EXPECT_THROW(t_obj->deleteItem(xpath), NetconfError);
+    EXPECT_THROW(elem = t_obj->getItem(xpath), NetconfError);
     EXPECT_FALSE(elem);
     elem.reset();
 
     // Check error.
     xpath = "null";
-    EXPECT_THROW_MSG(elem = t_obj->getItem(xpath), SysrepoError,
+    EXPECT_THROW_MSG(elem = t_obj->getItem(xpath), NetconfError,
                      "sysrepo error getting item at 'null': Couldn't find schema node: null");
     EXPECT_FALSE(elem);
 }
 
 // Test JSON to basic YANG value conversion using the static method.
 TEST_F(TranslatorBasicTest, valueTo) {
-    optional<string> s_val;
+    optional<string> value;
 
     // Null.
     ConstElementPtr elem;
-    EXPECT_NO_THROW_LOG(s_val = TranslatorBasic::value(elem, LeafBaseType::String));
-    EXPECT_EQ(nullopt, s_val);
+    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translate(elem, LeafBaseType::String));
+    EXPECT_EQ(nullopt, value);
     EXPECT_FALSE(elem);
 
     // Container.
     elem = Element::createMap();
-    EXPECT_THROW(TranslatorBasic::value(elem, LeafBaseType::Unknown), NotImplemented);
+    EXPECT_THROW(TranslatorBasic::translate(elem, LeafBaseType::Unknown), NotImplemented);
 
     // List.
     elem = Element::createList();
-    EXPECT_THROW(TranslatorBasic::value(elem, LeafBaseType::Unknown), NotImplemented);
+    EXPECT_THROW(TranslatorBasic::translate(elem, LeafBaseType::Unknown), NotImplemented);
 
     // String.
     string str("foo");
     elem = Element::create(str);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::String));
-    EXPECT_EQ(elem->stringValue(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::String));
+    EXPECT_EQ(elem->stringValue(), value);
 
     // Bool.
     elem = Element::create(false);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Bool));
-    EXPECT_EQ(elem->str(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Bool));
+    EXPECT_EQ(elem->str(), value);
 
     // Unsigned 8 bit integer.
     elem = Element::create(123);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Uint8));
-    EXPECT_EQ(elem->str(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Uint8));
+    EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Unsigned 16 bit integer.
     elem = Element::create(12345);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Uint16));
-    EXPECT_EQ(elem->str(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Uint16));
+    EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Unsigned 32 bit integer.
     elem = Element::create(123456789);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Uint32));
-    EXPECT_EQ(elem->str(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Uint32));
+    EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Signed 8 bit integer.
     elem = Element::create(-123);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Int8));
-    EXPECT_EQ(elem->str(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Int8));
+    EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Signed 16 bit integer.
     elem = Element::create(-12345);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Int16));
-    EXPECT_EQ(elem->str(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Int16));
+    EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Signed 32 bit integer.
     elem = Element::create(-123456789);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Int32));
-    EXPECT_EQ(elem->str(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Int32));
+    EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Identity reference.
     elem = Element::create(str);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::IdentityRef));
-    EXPECT_EQ(elem->stringValue(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::IdentityRef));
+    EXPECT_EQ(elem->stringValue(), value);
 
     // Enumeration item.
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Enum));
-    EXPECT_EQ(elem->stringValue(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Enum));
+    EXPECT_EQ(elem->stringValue(), value);
 
     // Binary.
     elem = Element::create(string("foobar"));
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Binary));
-    EXPECT_EQ("Zm9vYmFy", s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Binary));
+    EXPECT_EQ("Zm9vYmFy", value);
 
     // Decimal 64.
     double d64(.1234);
     elem = Element::create(d64);
-    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, LeafBaseType::Dec64));
-    EXPECT_EQ(elem->str(), s_val);
+    EXPECT_NO_THROW(value = TranslatorBasic::translate(elem, LeafBaseType::Dec64));
+    EXPECT_EQ(elem->str(), value);
 }
 
 // Test JSON to basic YANG value conversion using sysrepo test models.
@@ -332,138 +332,138 @@ TEST_F(TranslatorBasicTest, setItem) {
     string xpath;
 
     // String.
-    optional<DataNode> s_val;
+    optional<DataNode> data_node;
     xpath = "/keatest-module:main/string";
     elem = Element::create(string("str"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::String));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::String, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->stringValue(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::String, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->stringValue(), string(data_node->asTerm().valueStr()));
 
     // Bool.
     xpath = "/keatest-module:main/boolean";
     elem = Element::create(true);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Bool));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Bool, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->str(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Bool, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->str(), string(data_node->asTerm().valueStr()));
 
     // Unsigned 8 bit integer.
     xpath = "/keatest-module:main/ui8";
     elem = Element::create(8);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Uint8));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Uint8, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->str(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Uint8, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->str(), string(data_node->asTerm().valueStr()));
 
     // Unsigned 16 bit integer.
     xpath = "/keatest-module:main/ui16";
     elem = Element::create(16);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Uint16));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Uint16, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->str(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Uint16, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->str(), string(data_node->asTerm().valueStr()));
 
     // Unsigned 32 bit integer.
     xpath = "/keatest-module:main/ui32";
     elem = Element::create(32);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Uint32));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Uint32, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->str(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Uint32, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->str(), string(data_node->asTerm().valueStr()));
 
     // Signed 8 bit integer.
     xpath = "/keatest-module:main/i8";
     elem = Element::create(8);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Int8));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Int8, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->str(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Int8, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->str(), string(data_node->asTerm().valueStr()));
 
     // Signed 16 bit integer.
     xpath = "/keatest-module:main/i16";
     elem = Element::create(16);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Int16));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Int16, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->str(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Int16, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->str(), string(data_node->asTerm().valueStr()));
 
     // Signed 32 bit integer.
     xpath = "/keatest-module:main/i32";
     elem = Element::create(32);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Int32));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Int32, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->str(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Int32, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->str(), string(data_node->asTerm().valueStr()));
 
     // Identity reference.
     xpath = "/keatest-module:main/id_ref";
     elem = Element::create(string("keatest-module:id_1"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::IdentityRef));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::IdentityRef, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->stringValue(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::IdentityRef, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->stringValue(), string(data_node->asTerm().valueStr()));
 
     // Enumeration item.
     xpath = "/keatest-module:main/enum";
     elem = Element::create(string("maybe"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Enum));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Enum, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->stringValue(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Enum, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->stringValue(), string(data_node->asTerm().valueStr()));
 
     // Binary.
     xpath = "/keatest-module:main/raw";
     elem = Element::create(string("foobar"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Binary));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Binary, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ("Zm9vYmFy", string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Binary, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ("Zm9vYmFy", string(data_node->asTerm().valueStr()));
 
     // Decimal 64.
     xpath = "/keatest-module:main/dec64";
     double d64(9.85);
     elem = Element::create(d64);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, LeafBaseType::Dec64));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    ASSERT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    ASSERT_TRUE(s_val);
-    ASSERT_EQ(LeafBaseType::Dec64, s_val->schema().asLeaf().valueType().base());
-    EXPECT_EQ(elem->str(), string(s_val->asTerm().valueStr()));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Dec64, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(elem->str(), string(data_node->asTerm().valueStr()));
 
     // Leaf-list.
     xpath = "/keatest-module:main/numbers";
@@ -471,19 +471,19 @@ TEST_F(TranslatorBasicTest, setItem) {
     EXPECT_NO_THROW(t_obj->setItem(xpath, Element::fromJSON("2"), LeafBaseType::Uint8));
     EXPECT_NO_THROW(t_obj->setItem(xpath, Element::fromJSON("3"), LeafBaseType::Uint8));
     ElementPtr got(t_obj->getItem(xpath));
-    ASSERT_EQ(LeafBaseType::Dec64, s_val->schema().asLeaf().valueType().base());
+    ASSERT_EQ(LeafBaseType::Dec64, data_node->schema().asLeaf().valueType().base());
     EXPECT_EQ("[ 1, 2, 3 ]", got->str());
 
     // Clean it.
-    EXPECT_NO_THROW(t_obj->delItem(xpath));
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    EXPECT_FALSE(s_val);
-    s_val.reset();
+    EXPECT_NO_THROW(t_obj->deleteItem(xpath));
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    EXPECT_FALSE(data_node);
+    data_node.reset();
 
     // Bad xpath.
     xpath = "/keatest-module:main/no_such_string";
     elem = Element::create(string("str"));
-    EXPECT_THROW_MSG(t_obj->setItem(xpath, elem, LeafBaseType::String), SysrepoError,
+    EXPECT_THROW_MSG(t_obj->setItem(xpath, elem, LeafBaseType::String), NetconfError,
                      "sysrepo error setting item '\"str\"' at '" + xpath +
                      "': Session::setItem: Couldn't set "
                      "'/keatest-module:main/no_such_string' to 'str': SR_ERR_INVAL_ARG");
@@ -500,18 +500,18 @@ TEST_F(TranslatorBasicTest, setItem) {
 
     // Delete (twice).
     xpath = "/keatest-module:main/string";
-    EXPECT_NO_THROW(s_val = sess.getData(xpath));
-    EXPECT_TRUE(s_val);
-    EXPECT_NO_THROW(s_val = s_val->findPath(xpath));
-    EXPECT_TRUE(s_val);
-    ASSERT_TRUE(NodeType::Leaf == s_val->schema().nodeType());
-    EXPECT_EQ("true", s_val->asTerm().valueStr());
-    EXPECT_NO_THROW(t_obj->delItem(xpath));
-    EXPECT_NO_THROW_LOG(s_val = sess.getData(xpath));
-    EXPECT_FALSE(s_val);
-    EXPECT_NO_THROW(t_obj->delItem(xpath));
-    EXPECT_NO_THROW_LOG(s_val = sess.getData(xpath));
-    EXPECT_FALSE(s_val);
+    EXPECT_NO_THROW(data_node = sess.getData(xpath));
+    EXPECT_TRUE(data_node);
+    EXPECT_NO_THROW(data_node = data_node->findPath(xpath));
+    EXPECT_TRUE(data_node);
+    ASSERT_TRUE(NodeType::Leaf == data_node->schema().nodeType());
+    EXPECT_EQ("true", data_node->asTerm().valueStr());
+    EXPECT_NO_THROW(t_obj->deleteItem(xpath));
+    EXPECT_NO_THROW_LOG(data_node = sess.getData(xpath));
+    EXPECT_FALSE(data_node);
+    EXPECT_NO_THROW(t_obj->deleteItem(xpath));
+    EXPECT_NO_THROW_LOG(data_node = sess.getData(xpath));
+    EXPECT_FALSE(data_node);
 }
 
 // Test YANG list item retrieval.

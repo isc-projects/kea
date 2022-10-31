@@ -48,7 +48,7 @@ the basic / base class and recursively from translators for embedded parts.
     over @c isc::yang::TranslatorBasic::getItem().
   - @c isc::yang::TranslatorBasic::checkAndSetLeaf() is a convenience wrapper
     over @c isc::yang::TranslatorBasic::setItem().
-  - @c isc::yang::TranslatorBasic::delItem() deletes the data node found at
+  - @c isc::yang::TranslatorBasic::deleteItem() deletes the data node found at
     given xpth.
   - @c isc::yang::TranslatorBasic::forAll() iterates over the node found at
     given xpath and all its descendants and calls the given function.
@@ -58,9 +58,9 @@ the basic / base class and recursively from translators for embedded parts.
     translates it form YANG to JSON.
   - @c isc::yang::TranslatorBasic::setItem() translates a leaf from JSON to
     YANG and sets it in Sysrepo.
-  - @c isc::yang::TranslatorBasic::value(ConstElementPtr, LeafBaseType)
+  - @c isc::yang::TranslatorBasic::translate(ConstElementPtr, LeafBaseType)
     translates a JSON leaf to a string.
-  - @c isc::yang::TranslatorBasic::value(optional<DataNode>) translates a YANG
+  - @c isc::yang::TranslatorBasic::translate(optional<DataNode>) translates a YANG
     leaf to a JSON node.
 
 @section yangTranslatorPool Pool translator

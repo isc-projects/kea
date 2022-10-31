@@ -38,7 +38,7 @@ TranslatorClass::getClass(DataNode const& data_node) {
             return (getClassKea(data_node));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting client class:"
                   << ex.what());
     }
@@ -50,7 +50,7 @@ ElementPtr
 TranslatorClass::getClass(string const& xpath) {
     try {
         return getClass(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -119,7 +119,7 @@ TranslatorClass::setClass(string const& xpath, ConstElementPtr elem) {
                       "setClass not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting client class '" << elem->str()
                   << "' : " << ex.what());
     }
@@ -194,7 +194,7 @@ TranslatorClasses::getClasses(DataNode const& data_node) {
             return (getClassesKea(data_node));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting client classes:"
                   << ex.what());
     }
@@ -206,7 +206,7 @@ ElementPtr
 TranslatorClasses::getClasses(string const& xpath) {
     try {
         return getClasses(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -228,7 +228,7 @@ TranslatorClasses::setClasses(string const& xpath, ConstElementPtr elem) {
                       "setClasses not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting client classes '" << elem->str()
                   << "' : " << ex.what());
     }

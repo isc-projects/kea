@@ -92,7 +92,7 @@ public:
     ///
     /// @return the JSON representation of the class
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getClass(libyang::DataNode const& data_node);
 
     /// @brief Translate a client class from YANG to JSON.
@@ -106,7 +106,7 @@ public:
     ///
     /// @return JSON representation of the class
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getClass(std::string const& xpath);
 
     /// @brief Translate and set client class from JSON to YANG.
@@ -122,7 +122,7 @@ protected:
     ///
     /// @return JSON representation of the class
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getClassKea(libyang::DataNode const& data_node);
 
     /// @brief setClass for kea-dhcp[46].
@@ -156,7 +156,7 @@ public:
     ///
     /// @return the JSON representation of the list of classes
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getClasses(libyang::DataNode const& data_node);
 
     /// @brief Translate client classes from YANG to JSON.
@@ -170,7 +170,7 @@ public:
     ///
     /// @return JSON representation of classes.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getClasses(std::string const& xpath);
 
     /// @brief Translate and set client classes from JSON to YANG.
@@ -187,7 +187,7 @@ protected:
     ///
     /// @return JSON representation of classes.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getClassesKea(libyang::DataNode const& data_node);
 
     /// @brief setClasses for kea-dhcp[46].

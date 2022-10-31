@@ -140,7 +140,7 @@ public:
     ///
     /// @return the JSON representation of the pool
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPool(libyang::DataNode const& data_node);
 
     /// @brief Translate a pool from YANG to JSON.
@@ -149,7 +149,7 @@ public:
     ///
     /// @return JSON representation of the pool.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPool(std::string const& xpath);
 
     /// @brief Translate and set (address) pool from JSON to YANG.
@@ -225,7 +225,7 @@ public:
     ///
     /// @return the JSON representation of the list of pools
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPools(libyang::DataNode const& data_node);
 
     /// @brief Translate pools from YANG to JSON.
@@ -234,7 +234,7 @@ public:
     ///
     /// @return the JSON representation of the list of pools
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getPools(std::string const& xpath);
 
     /// @brief Translate and set (address) pools from JSON to YANG.

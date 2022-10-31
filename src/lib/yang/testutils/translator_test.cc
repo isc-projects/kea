@@ -76,12 +76,12 @@ YangRepr::YangReprItem::get(const string& xpath, Session session) {
     LeafBaseType type(LeafBaseType::Unknown);
     bool settable = true;
     try {
-        optional<DataNode> s_val(session.getData(xpath));
-        if (!s_val) {
+        optional<DataNode> data_node(session.getData(xpath));
+        if (!data_node) {
             isc_throw(BadValue, "YangReprItem failed at '" << xpath << "'");
         }
-        s_val = s_val->findPath(xpath);
-        SchemaNode const& schema(s_val->schema());
+        data_node = data_node->findPath(xpath);
+        SchemaNode const& schema(data_node->schema());
         NodeType const node_type(schema.nodeType());
         if (node_type == NodeType::Leaf) {
             type = schema.asLeaf().valueType().base();
@@ -92,16 +92,16 @@ YangRepr::YangReprItem::get(const string& xpath, Session session) {
         }
         if (type == LeafBaseType::Union) {
             // Get the underlying type.
-            type = getUnionType(s_val->asTerm().value());
+            type = getUnionType(data_node->asTerm().value());
         }
         if (type == LeafBaseType::Leafref) {
             // Get the underlying type.
-            type = s_val->schema().asLeaf().valueType().asLeafRef().resolvedType().base();
+            type = data_node->schema().asLeaf().valueType().asLeafRef().resolvedType().base();
         }
-        value = TranslatorBasic::value(TranslatorBasic::value(s_val), type);
-        val_xpath = string(s_val->path());
+        value = TranslatorBasic::translate(TranslatorBasic::translate(data_node), type);
+        val_xpath = string(data_node->path());
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error in YangReprItem: " << ex.what());
     }
     return (YangReprItem(val_xpath, value, type, settable));
@@ -118,7 +118,7 @@ YangRepr::get(Session session) const {
             result.emplace(xpath, YangReprItem::get(xpath, session));
         });
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error in YangRepr::getTree: " << ex.what());
     }
     return (result);
@@ -183,7 +183,7 @@ YangRepr::set(const Tree& tree, Session session) const {
                 session.setItem(item.xpath_, item.value_);
             }
         } catch (Error const& ex) {
-            isc_throw(SysrepoError,
+            isc_throw(NetconfError,
                       "sysrepo error in YangRepr::set for " << item
                       << ", error: " << ex.what());
         }

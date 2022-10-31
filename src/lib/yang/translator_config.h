@@ -421,7 +421,7 @@ public:
     /// @brief Translate the whole DHCP server configuration from YANG to JSON.
     ///
     /// @return JSON representation of the config.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getConfig();
 
     /// @brief Translate and set the DHCP server configuration from JSON to YANG.
@@ -438,7 +438,7 @@ protected:
     /// only partially and nothing else.
     ///
     /// @return JSON representation of the config.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getConfigIetf6();
 
     /// @brief delConfig for ietf-dhcpv6-server.
@@ -456,13 +456,13 @@ protected:
     /// @brief getConfig for kea-dhcp4-server.
     ///
     /// @return JSON representation of the config.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getConfigKea4();
 
     /// @brief getConfig for kea-dhcp6-server.
     ///
     /// @return JSON representation of the config.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getConfigKea6();
 
     /// @brief getServer common part for kea-dhcp[46]-server:config.
@@ -475,13 +475,13 @@ protected:
     /// @brief getServer for kea-dhcp4-server:config.
     ///
     /// @return JSON representation of the config.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getServerKeaDhcp4();
 
     /// @brief getServer for kea-dhcp6-server:config.
     ///
     /// @return JSON representation of the config.
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getServerKeaDhcp6();
 
     /// @brief delConfig for kea-dhcp[46]-server.

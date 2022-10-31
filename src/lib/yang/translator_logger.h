@@ -109,7 +109,7 @@ public:
     ///
     /// @return JSON representation of the logger.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getLogger(libyang::DataNode const& data_node);
 
     /// @brief Translate and set logger from JSON to YANG.
@@ -125,7 +125,7 @@ protected:
     ///
     /// @return JSON representation of the output option.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getOutputOption(libyang::DataNode const& data_node);
 
     /// @brief Translate output options from YANG to JSON.
@@ -134,7 +134,7 @@ protected:
     ///
     /// @return JSON representation of output options.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getOutputOptions(libyang::DataNode const& data_node);
 
     /// @brief Translate and set an output option from JSON to YANG.
@@ -158,7 +158,7 @@ protected:
     ///
     /// @return JSON representation of the logger.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getLoggerKea(libyang::DataNode const& data_node);
 
     /// @brief setLogger for loggers.
@@ -191,7 +191,7 @@ public:
     ///
     /// @return the JSON representation of the list of loggers
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ConstElementPtr getLoggers(libyang::DataNode const& data_node);
 
     /// @brief Translate loggers from YANG to JSON.
@@ -200,7 +200,7 @@ public:
     ///
     /// @return JSON representation of loggers.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ConstElementPtr getLoggers(std::string const& xpath);
 
     /// @brief Translate and set loggers from JSON to YANG.
@@ -218,7 +218,7 @@ protected:
     ///
     /// @return JSON representation of loggers.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getLoggersKea(libyang::DataNode const& data_node);
 
     /// @brief setLoggers for loggers.

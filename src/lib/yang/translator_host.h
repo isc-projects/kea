@@ -129,7 +129,7 @@ public:
     ///
     /// @return the JSON representation of the host reservation
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getHost(libyang::DataNode const& data_node);
 
     /// @brief Translate a host reservation from YANG to JSON.
@@ -143,7 +143,7 @@ public:
     ///
     /// @return JSON representation of the host reservation.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getHost(std::string const& xpath);
 
     /// @brief Translate and set host reservation from JSON to YANG.
@@ -193,7 +193,7 @@ public:
     ///
     /// @return the JSON representation of the list of host reservations
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getHosts(libyang::DataNode const& data_node);
 
     /// @brief Translate host reservations from YANG to JSON.
@@ -207,7 +207,7 @@ public:
     ///
     /// @return JSON representation of the host reservation list.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getHosts(std::string const& xpath);
 
     /// @brief Translate and set (address) host reservations from JSON to YANG.

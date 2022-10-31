@@ -19,7 +19,7 @@ libkea_yang_la_SOURCES += adaptor_pool.cc adaptor_pool.h
 libkea_yang_la_SOURCES += adaptor_option.cc adaptor_option.h
 libkea_yang_la_SOURCES += adaptor_subnet.cc adaptor_subnet.h
 libkea_yang_la_SOURCES += adaptor_config.cc adaptor_config.h
-libkea_yang_la_SOURCES += sysrepo_error.h
+libkea_yang_la_SOURCES += netconf_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
 libkea_yang_la_SOURCES += translator_control_socket.cc
 libkea_yang_la_SOURCES += translator_control_socket.h
@@ -61,7 +61,7 @@ libkea_yang_include_HEADERS = \
 	adaptor_option.h \
 	adaptor_pool.h \
 	adaptor_subnet.h \
-	sysrepo_error.h \
+	netconf_error.h \
 	translator.h \
 	translator_class.h \
 	translator_config.h \

@@ -46,7 +46,7 @@ TranslatorSharedNetwork::getSharedNetwork(DataNode const& data_node) {
             return (getSharedNetworkKea(data_node, "subnet6"));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting shared network:"
                   << ex.what());
     }
@@ -58,7 +58,7 @@ ElementPtr
 TranslatorSharedNetwork::getSharedNetwork(string const& xpath) {
     try {
         return getSharedNetwork(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -218,7 +218,7 @@ TranslatorSharedNetwork::setSharedNetwork(string const& xpath,
                       << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting shared network '" << elem->str()
                   << "' : " << ex.what());
     }
@@ -397,7 +397,7 @@ ElementPtr
 TranslatorSharedNetworks::getSharedNetworks(string const& xpath) {
     try {
         return getSharedNetworks(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -415,7 +415,7 @@ TranslatorSharedNetworks::setSharedNetworks(string const& xpath,
                       << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting shared networks '" << elem->str()
                   << "' : " << ex.what());
     }

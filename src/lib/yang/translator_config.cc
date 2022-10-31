@@ -58,7 +58,7 @@ TranslatorConfig::getConfig() {
             return (getConfigKea6());
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError, "sysrepo error getting config: " << ex.what());
+        isc_throw(NetconfError, "sysrepo error getting config: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getConfig not implemented for the model: " << model_);
@@ -73,7 +73,7 @@ TranslatorConfig::getConfigIetf6() {
     optional<DataNode> config;
     try {
         config = findXPath(xpath);
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return result;
     }
     Set<DataNode> const& nodes(config->findXPath("server-config/network-ranges"));
@@ -367,7 +367,7 @@ TranslatorConfig::getServerKeaDhcp4() {
     optional<DataNode> config_optional;
     try {
         config_optional = findXPath(xpath);
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
     DataNode const config(*config_optional);
@@ -400,7 +400,7 @@ TranslatorConfig::getServerKeaDhcp6() {
     optional<DataNode> config_optional;
     try {
         config_optional = findXPath(xpath);
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
     DataNode const config(*config_optional);
@@ -485,7 +485,7 @@ TranslatorConfig::setConfig(ConstElementPtr elem) {
                       "setConfig not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting config '" << elem->str()
                   << "': " << ex.what());
     }
@@ -493,7 +493,7 @@ TranslatorConfig::setConfig(ConstElementPtr elem) {
 
 void
 TranslatorConfig::delConfigIetf6() {
-    delItem("/" + model_ + ":server");
+    deleteItem("/" + model_ + ":server");
 }
 
 void
@@ -512,7 +512,7 @@ TranslatorConfig::setConfigIetf6(ConstElementPtr elem) {
 
 void
 TranslatorConfig::delConfigKea() {
-    delItem("/" + model_ + ":config");
+    deleteItem("/" + model_ + ":config");
 }
 
 void

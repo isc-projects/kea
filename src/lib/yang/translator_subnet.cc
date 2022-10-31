@@ -45,7 +45,7 @@ TranslatorSubnet::getSubnet(DataNode const& data_node) {
             return (getSubnetKea(data_node));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting subnet:"
                   << ex.what());
     }
@@ -57,7 +57,7 @@ ElementPtr
 TranslatorSubnet::getSubnet(string const& xpath) {
     try {
         return getSubnet(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -289,7 +289,7 @@ TranslatorSubnet::setSubnet(string const& xpath, ConstElementPtr elem) {
                       "setSubnet not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting subnet '" << elem->str()
                   << "' : " << ex.what());
     }
@@ -521,7 +521,7 @@ TranslatorSubnets::getSubnets(DataNode const& data_node) {
             return (getSubnetsCommon(data_node, "subnet6"));
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error getting subnets:"
                   << ex.what());
     }
@@ -533,7 +533,7 @@ ElementPtr
 TranslatorSubnets::getSubnets(string const& xpath) {
     try {
         return getSubnets(findXPath(xpath));
-    } catch(SysrepoError const&) {
+    } catch(NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -559,7 +559,7 @@ TranslatorSubnets::setSubnets(string const& xpath, ConstElementPtr elem) {
                       "setSubnets not implemented for the model: " << model_);
         }
     } catch (Error const& ex) {
-        isc_throw(SysrepoError,
+        isc_throw(NetconfError,
                   "sysrepo error setting subnets '" << elem->str()
                   << "' : " << ex.what());
     }

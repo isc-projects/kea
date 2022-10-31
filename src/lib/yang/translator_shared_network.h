@@ -182,7 +182,7 @@ public:
     ///
     /// @return the JSON representation of the shared network
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getSharedNetwork(libyang::DataNode const& data_node);
 
     /// @brief Translate a shared network from YANG to JSON.
@@ -191,7 +191,7 @@ public:
     ///
     /// @return JSON representation of the shared network.
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getSharedNetwork(std::string const& xpath);
 
     /// @brief Translate and set shared network from JSON to YANG.
@@ -248,7 +248,7 @@ public:
     ///
     /// @return the JSON representation of the list of shared networks
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getSharedNetworks(libyang::DataNode const& data_node);
 
     /// @brief Translate shared networks from YANG to JSON.
@@ -257,7 +257,7 @@ public:
     ///
     /// @return the JSON representation of the list of shared networks
     ///
-    /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getSharedNetworks(std::string const& xpath);
 
     /// @brief Translate and set shared networks from JSON to YANG.

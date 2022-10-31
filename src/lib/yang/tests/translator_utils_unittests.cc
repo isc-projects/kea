@@ -81,68 +81,68 @@ TEST(YangReprTest, getTest) {
 
     // Fill the test module.
     string xpath;
-    string s_val;
+    string value;
 
     xpath = "/keatest-module:main/string";
-    s_val = "str";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "str";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/boolean";
-    s_val = "true";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "true";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
-    s_val = to_string(u8);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u8);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
-    s_val = to_string(u16);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u16);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
-    s_val = to_string(u32);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(u32);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
-    s_val = to_string(s8);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(s8);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/i16";
     int16_t s16(16);
-    s_val = to_string(s16);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(s16);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
-    s_val = to_string(s32);
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = to_string(s32);
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/id_ref";
-    s_val = "keatest-module:id_1";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "keatest-module:id_1";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     xpath = "/keatest-module:main/enum";
-    s_val = "maybe";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "maybe";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     // Binary.
     xpath = "/keatest-module:main/raw";
-    s_val = "Zm9vYmFy";
-    EXPECT_NO_THROW(sess.setItem(xpath, s_val));
+    value = "Zm9vYmFy";
+    EXPECT_NO_THROW(sess.setItem(xpath, value));
     EXPECT_NO_THROW(sess.applyChanges());
 
     // Get it.
@@ -241,17 +241,17 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
     // Cleanup.
     TranslatorBasic translator(sess, model);
     if (model == "keatest-module") {
-        translator.delItem("/keatest-module:container");
-        translator.delItem("/keatest-module:kernel-modules");
-        translator.delItem("/keatest-module:list");
-        translator.delItem("/keatest-module:main");
-        translator.delItem("/keatest-module:presence-container");
+        translator.deleteItem("/keatest-module:container");
+        translator.deleteItem("/keatest-module:kernel-modules");
+        translator.deleteItem("/keatest-module:list");
+        translator.deleteItem("/keatest-module:main");
+        translator.deleteItem("/keatest-module:presence-container");
     } else {
         std::string toplevel_node("config");
         if (model == IETF_DHCPV6_SERVER) {
             toplevel_node = "server";
         }
-        EXPECT_NO_THROW(translator.delItem("/" + model + ":" + toplevel_node));
+        EXPECT_NO_THROW(translator.deleteItem("/" + model + ":" + toplevel_node));
     }
 
     // Get it.
