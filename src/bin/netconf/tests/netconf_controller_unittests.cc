@@ -136,7 +136,7 @@ TEST_F(NetconfControllerTest, commandLineArgs) {
     char* argv2[] = { const_cast<char*>("progName"),
                       const_cast<char*>("-x") };
     argc = 2;
-    EXPECT_THROW(parseArgs(argc, argv2), InvalidUsage);
+    EXPECT_THROW_MSG(parseArgs(argc, argv2), InvalidUsage, "unsupported option: [x] ");
 }
 
 // Tests application process creation and initialization.

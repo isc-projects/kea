@@ -118,8 +118,8 @@ TEST(AdaptorPoolTest, fromSubnetKea) {
     EXPECT_TRUE(copied->equals(*json));
 
     // Check that the model name is actually checked.
-    EXPECT_THROW(AdaptorPool::fromSubnet("non-existent-module", json, pools),
-                 NotImplemented);
+    EXPECT_THROW_MSG(AdaptorPool::fromSubnet("non-existent-module", json, pools), NotImplemented,
+                     "fromSubnet not implemented for the model: non-existent-module");
 }
 
 // Verifies that fromSubnet works as expected.
@@ -190,8 +190,8 @@ TEST(AdaptorPoolTest, toSubnetKea) {
     EXPECT_NO_THROW_LOG(AdaptorPool::toSubnet(KEA_DHCP6_SERVER, json, pools));
     EXPECT_TRUE(copied->equals(*json));
     // Model name is not free: an error is raised if it is not expected.
-    EXPECT_THROW(AdaptorPool::toSubnet("keatest-module", json, pools),
-                 NotImplemented);
+    EXPECT_THROW_MSG(AdaptorPool::toSubnet("keatest-module", json, pools), NotImplemented,
+                     "toSubnet not implemented for the model: keatest-module");
 }
 
 // Verifies that toSubnet works as expected.
@@ -267,8 +267,10 @@ TEST(AdaptorPoolTest, toSubnetBad) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr pools = json->get("pools");
-    EXPECT_THROW(AdaptorPool::toSubnet(IETF_DHCPV6_SERVER, json, pools),
-                 BadValue);
+    EXPECT_THROW_MSG(AdaptorPool::toSubnet(IETF_DHCPV6_SERVER, json, pools), BadValue,
+                     "inconsistent value of rebind-timer in [ { \"pool\": \"2001:db8:1::/80\", "
+                     "\"rebind-timer\": 2000 }, { \"pool\": \"2001:db8:1:0:1::/80\", "
+                     "\"rebind-timer\": 20 } ]");
 }
 
 }; // end of anonymous namespace

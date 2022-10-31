@@ -52,8 +52,8 @@ TEST(NetconfProcess, construction) {
     // Verify that the constructor will fail if given an empty
     // io service.
     IOServicePtr lcl_io_service;
-    EXPECT_THROW(NetconfProcess("TestProcess", lcl_io_service),
-                 DProcessBaseError);
+    EXPECT_THROW_MSG(NetconfProcess("TestProcess", lcl_io_service), DProcessBaseError,
+                     "IO Service cannot be null");
 
     // Verify that the constructor succeeds with a valid io_service
     lcl_io_service.reset(new IOService());

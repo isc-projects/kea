@@ -66,7 +66,8 @@ TEST(AdaptorOptionTest, checkTypeNoType) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    EXPECT_THROW(AdaptorOption::checkType(json), MissingKey);
+    EXPECT_THROW_MSG(AdaptorOption::checkType(json), MissingKey,
+                     "missing type in option definition {  }");
 }
 
 // Verifies that checkCode accepts an option with code.
@@ -85,7 +86,7 @@ TEST(AdaptorOptionTest, checkCodeNoCode) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    EXPECT_THROW(AdaptorOption::checkCode(json), MissingKey);
+    EXPECT_THROW_MSG(AdaptorOption::checkCode(json), MissingKey, "missing code in option {  }");
 }
 
 // Verifies that collect works as expected.
@@ -101,7 +102,7 @@ TEST(AdaptorOptionTest, collect) {
     ASSERT_NO_THROW_LOG(AdaptorOption::collect(json, codes));
     EXPECT_EQ(1, codes.size());
     EXPECT_EQ(123, codes["bar@foo"]);
-    EXPECT_THROW(codes.at("foo@bar"), out_of_range);
+    EXPECT_FALSE(codes.contains("foo@bar"));
 }
 
 // Verifies that collect skips an already known option definition.
@@ -159,7 +160,8 @@ TEST(AdaptorOptionTest, setCodeNoName) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     OptionCodes codes;
-    EXPECT_THROW(AdaptorOption::setCode(json, codes), MissingKey);
+    EXPECT_THROW_MSG(AdaptorOption::setCode(json, codes), MissingKey,
+                     "missing name and code in option { \"space\": \"bar\" }");
 }
 
 // Note the code assumes there is a space, i.e. setSpace was called.
@@ -174,7 +176,8 @@ TEST(AdaptorOptionTest, setCodeNotInMap) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     OptionCodes codes;
-    EXPECT_THROW(AdaptorOption::setCode(json, codes), MissingKey);
+    EXPECT_THROW_MSG(AdaptorOption::setCode(json, codes), MissingKey,
+                     "can't get code from option { \"name\": \"foo\", \"space\": \"bar\" }");
 }
 
 /// @brief Test class to make initCodes public.
@@ -208,7 +211,7 @@ TEST(AdaptorOptionTest, initCodes4) {
     ASSERT_NO_THROW_LOG(AdaptorOption::initCodes(codes, DHCP4_OPTION_SPACE));
     EXPECT_EQ(DHO_SUBNET_MASK, codes["dhcp4@subnet-mask"]);
     EXPECT_EQ(DHO_TIME_OFFSET, codes["dhcp4@time-offset"]);
-    EXPECT_THROW(codes.at("dhcp6@clientid"), out_of_range);
+    EXPECT_FALSE(codes.contains("dhcp6@clientid"));
 
     // initCodes loads last resort too.
     EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS,
@@ -224,7 +227,7 @@ TEST(AdaptorOptionTest, initCodes6) {
     ASSERT_NO_THROW_LOG(AdaptorOption::initCodes(codes, DHCP6_OPTION_SPACE));
     EXPECT_EQ(D6O_CLIENTID, codes["dhcp6@clientid"]);
     EXPECT_EQ(D6O_SERVERID, codes["dhcp6@serverid"]);
-    EXPECT_THROW(codes.at("dhcp4@subnet-mask"), out_of_range);
+    EXPECT_FALSE(codes.contains("dhcp4@subnet-mask"));
 
     // initCodes loads DOCSIS3 too.
     EXPECT_EQ(32, codes["vendor-4491@tftp-servers"]);

@@ -160,12 +160,16 @@ TEST(AdaptorTest, toParent) {
     EXPECT_TRUE(json->equals(*Element::fromJSON(expected)));
 
     // param[345] have different values so it should throw.
-    EXPECT_THROW(Adaptor::toParent("param3",json, json->get("list")),
-                 BadValue);
-    EXPECT_THROW(Adaptor::toParent("param4",json, json->get("list")),
-                 BadValue);
-    EXPECT_THROW(Adaptor::toParent("param5",json, json->get("list")),
-                 BadValue);
+    EXPECT_THROW_MSG(Adaptor::toParent("param3", json, json->get("list")), BadValue,
+                     "inconsistent value of param3 in [ { \"param3\": 234, \"param4\": true }, { "
+                     "\"another\": \"entry\", \"param3\": 123, \"param5\": false } ]");
+    EXPECT_THROW_MSG(Adaptor::toParent("param4", json, json->get("list")), BadValue,
+                     "inconsistent value of param4 in [ { \"param3\": 234, \"param4\": true }, { "
+                     "\"another\": \"entry\", \"param3\": 123, \"param5\": false } ]");
+    EXPECT_THROW_MSG(Adaptor::toParent("param5", json, json->get("list")), BadValue,
+                     "inconsistent value of param5 in [ { \"param3\": 234, \"param4\": true }, { "
+                     "\"another\": \"entry\", \"param3\": 123, \"param5\": false } ]");
+
     // And not modify the value.
     EXPECT_TRUE(json->equals(*Element::fromJSON(expected)));
 }

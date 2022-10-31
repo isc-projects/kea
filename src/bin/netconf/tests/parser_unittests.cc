@@ -850,14 +850,14 @@ TEST(ParserTest, mapEntries) {
 /// @param json the JSON configuration with the duplicate entry.
 void testDuplicate(ConstElementPtr json) {
     string config = json->str();
+    SCOPED_TRACE("\n* Tested config: \n---\n" + json->str() + "\n---");
+
     size_t where = config.find("DDDD");
     ASSERT_NE(string::npos, where);
     string before = config.substr(0, where);
     string after = config.substr(where + 4, string::npos);
     ParserContext ctx;
-    EXPECT_THROW(ctx.parseString(before + after,
-                                 ParserContext::PARSER_NETCONF),
-                 ParseError) << "config: " << config;
+    EXPECT_THROW(ctx.parseString(before + after, ParserContext::PARSER_NETCONF), ParseError);
 }
 
 // This test checks that duplicate entries make parsing to fail.
@@ -887,6 +887,8 @@ TEST(ParserTest, duplicateMapEntries) {
                         (elem.first == "parameters")) {
                         continue;
                     }
+
+                    SCOPED_TRACE("\n* Tested duplicate element: " + elem.first);
 
                     // Perform tests.
                     string dup = elem.first + "DDDD";

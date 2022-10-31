@@ -102,7 +102,7 @@ TEST(NetconfCfgMgr, contextServer) {
     EXPECT_EQ(1, ctx.getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("d2"));
     EXPECT_EQ(server1, ctx.getCfgServersMap()->at("d2"));
-    EXPECT_THROW(ctx.getCfgServersMap()->at("dhcp4"), std::out_of_range);
+    EXPECT_FALSE(ctx.getCfgServersMap()->contains("dhcp4"));
 
     // Now set the v6 server and sanity check again
     EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("dhcp6", server2)));
@@ -152,7 +152,8 @@ TEST(NetconfCfgMgr, contextGlobals) {
     EXPECT_EQ(0, globals->mapValue().size());
 
     // Attempting to extract globals from a non-map should throw.
-    ASSERT_THROW(ctx.extractConfiguredGlobals(Element::create(777)), BadValue);
+    EXPECT_THROW_MSG(ctx.extractConfiguredGlobals(Element::create(777)), BadValue,
+                     "extractConfiguredGlobals must be given a map element");
 
     // Now let's create a configuration from which to extract global scalars.
     // Extraction (currently) has no business logic, so the elements we use

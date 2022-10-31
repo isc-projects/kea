@@ -91,7 +91,8 @@ TEST(StdoutControlSocketTest, configGet) {
     ASSERT_TRUE(cfg);
     StdoutControlSocketPtr scs(new StdoutControlSocket(cfg));
     ASSERT_TRUE(scs);
-    EXPECT_THROW(scs->configGet("foo"), NotImplemented);
+    EXPECT_THROW_MSG(scs->configGet("foo"), NotImplemented,
+                     "No config-get for stdout control socket");
 }
 
 // Verifies that a stdout control socket does not nothing for configTest.
@@ -397,7 +398,8 @@ TEST_F(UnixControlSocketTest, timeout) {
     thread_.reset(new thread([this]() { waitReady(); }));
 
     // Try configGet: it should get a communication error,
-    EXPECT_THROW(ucs->configGet("foo"), ControlSocketError);
+    EXPECT_THROW_MSG(ucs->configGet("foo"), ControlSocketError,
+                     "communication error: No such file or directory");
     signalReady();
 }
 

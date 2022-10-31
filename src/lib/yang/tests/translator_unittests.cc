@@ -222,8 +222,12 @@ TEST_F(TranslatorBasicTest, getItem) {
 
     // Not found.
     xpath = "/keatest-module:main/no_such_string";
-    EXPECT_THROW(t_obj->deleteItem(xpath), NetconfError);
-    EXPECT_THROW(elem = t_obj->getItem(xpath), NetconfError);
+    EXPECT_THROW_MSG(t_obj->deleteItem(xpath), NetconfError,
+                     "sysrepo error getting item at '/keatest-module:main/no_such_string': "
+                     "Couldn't find schema node: /keatest-module:main/no_such_string");
+    EXPECT_THROW_MSG(elem = t_obj->getItem(xpath), NetconfError,
+                     "sysrepo error getting item at '/keatest-module:main/no_such_string': "
+                     "Couldn't find schema node: /keatest-module:main/no_such_string");
     EXPECT_FALSE(elem);
     elem.reset();
 
@@ -246,11 +250,13 @@ TEST_F(TranslatorBasicTest, valueTo) {
 
     // Container.
     elem = Element::createMap();
-    EXPECT_THROW(TranslatorBasic::translate(elem, LeafBaseType::Unknown), NotImplemented);
+    EXPECT_THROW_MSG(TranslatorBasic::translate(elem, LeafBaseType::Unknown), NotImplemented,
+                     "TranslatorBasic::value(): map element");
 
     // List.
     elem = Element::createList();
-    EXPECT_THROW(TranslatorBasic::translate(elem, LeafBaseType::Unknown), NotImplemented);
+    EXPECT_THROW_MSG(TranslatorBasic::translate(elem, LeafBaseType::Unknown), NotImplemented,
+                     "TranslatorBasic::value(): list element");
 
     // String.
     string str("foo");
