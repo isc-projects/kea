@@ -75,7 +75,6 @@ namespace yang {
 /// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
 class TranslatorOptionData : virtual public TranslatorBasic {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -83,7 +82,7 @@ public:
     TranslatorOptionData(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorOptionData();
+    virtual ~TranslatorOptionData() = default;
 
     /// @brief Translate an option data from YANG to JSON.
     ///
@@ -126,7 +125,7 @@ protected:
     /// @param elem The JSON element.
     void setOptionDataKea(const std::string& xpath,
                           isc::data::ConstElementPtr elem);
-};
+};  // TranslatorOptionData
 
 /// @brief A translator class for converting an option data list between
 /// YANG and JSON.
@@ -134,7 +133,6 @@ protected:
 /// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
 class TranslatorOptionDataList : virtual public TranslatorOptionData {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -143,7 +141,7 @@ public:
                              const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorOptionDataList();
+    virtual ~TranslatorOptionDataList() = default;
 
     /// @brief Translate option data list from YANG to JSON.
     ///
@@ -185,7 +183,7 @@ protected:
     /// @throw BadValue on option data without code or space.
     void setOptionDataListKea(const std::string& xpath,
                               isc::data::ConstElementPtr elem);
-};
+};  // TranslatorOptionDataList
 
 }  // namespace yang
 }  // namespace isc

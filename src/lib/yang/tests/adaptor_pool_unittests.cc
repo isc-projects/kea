@@ -273,4 +273,4 @@ TEST(AdaptorPoolTest, toSubnetBad) {
                      "\"rebind-timer\": 20 } ]");
 }
 
-}; // end of anonymous namespace
+}  // anonymous namespace

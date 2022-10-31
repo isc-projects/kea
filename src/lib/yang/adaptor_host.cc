@@ -23,12 +23,6 @@ const string
 AdaptorHost::STD_CHARACTERS =
     "0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-.@_";
 
-AdaptorHost::AdaptorHost() {
-}
-
-AdaptorHost::~AdaptorHost() {
-}
-
 void
 AdaptorHost::quoteIdentifier(ElementPtr host) {
     ConstElementPtr flex_id = host->get("flex-id");
@@ -64,5 +58,5 @@ AdaptorHost::quoteIdentifier(ElementPtr host) {
     host->set("flex-id", Element::create(tmp.str()));
 }
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc

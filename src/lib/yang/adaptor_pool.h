@@ -27,12 +27,8 @@ namespace yang {
 /// removes timers from pools as they are not expected by Kea at this scope.
 class AdaptorPool {
 public:
-
-    /// @brief Constructor.
-    AdaptorPool();
-
     /// @brief Destructor.
-    virtual ~AdaptorPool();
+    virtual ~AdaptorPool() = default;
 
     /// @brief Canonize pool.
     ///
@@ -90,9 +86,9 @@ protected:
     /// @param pools The children pools.
     static void toSubnetIetf6(isc::data::ElementPtr subnet,
                               isc::data::ConstElementPtr pools);
-};
+};  // AdaptorPool
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_ADAPTOR_POOL_H

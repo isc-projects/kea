@@ -29,22 +29,20 @@ extern char const option_data_list[] = "option data list";
 class TranslatorOptionDataListTestv4 :
     public GenericTranslatorTest<option_data_list, TranslatorOptionDataList> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorOptionDataListTestv4() {
         model_ = KEA_DHCP4_SERVER;
      }
-};
+};  // TranslatorOptionDataListTestv4
 
 class TranslatorOptionDataListTestv6 :
     public GenericTranslatorTest<option_data_list, TranslatorOptionDataList> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorOptionDataListTestv6() {
         model_ = KEA_DHCP6_SERVER;
      }
-};
+};  // TranslatorOptionDataListTestv6
 
 // This test verifies that an empty option data list can be properly
 // translated from YANG to JSON.

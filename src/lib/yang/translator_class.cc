@@ -27,9 +27,6 @@ TranslatorClass::TranslatorClass(Session session, const string& model)
       TranslatorOptionDefList(session, model) {
 }
 
-TranslatorClass::~TranslatorClass() {
-}
-
 ElementPtr
 TranslatorClass::getClass(DataNode const& data_node) {
     try {
@@ -181,9 +178,6 @@ TranslatorClasses::TranslatorClasses(Session session, const string& model)
       TranslatorOptionDef(session, model),
       TranslatorOptionDefList(session, model),
       TranslatorClass(session, model) {
-}
-
-TranslatorClasses::~TranslatorClasses() {
 }
 
 ElementPtr

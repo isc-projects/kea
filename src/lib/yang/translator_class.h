@@ -76,7 +76,6 @@ namespace yang {
 class TranslatorClass : virtual public TranslatorOptionDataList,
     virtual public TranslatorOptionDefList  {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -84,7 +83,7 @@ public:
     TranslatorClass(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorClass();
+    virtual ~TranslatorClass() = default;
 
     /// @brief Translate a client class from YANG to JSON.
     ///
@@ -131,7 +130,7 @@ protected:
     /// @param elem The JSON element.
     void setClassKea(const std::string& xpath,
                      isc::data::ConstElementPtr elem);
-};
+};  // TranslatorClass
 
 /// @brief A translator class for converting a client class list between
 /// YANG and JSON.
@@ -140,7 +139,6 @@ protected:
 /// not define client class contents.
 class TranslatorClasses : virtual public TranslatorClass {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -148,7 +146,7 @@ public:
     TranslatorClasses(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorClasses();
+    virtual ~TranslatorClasses() = default;
 
     /// @brief Translate client classes from YANG to JSON.
     ///
@@ -198,7 +196,7 @@ protected:
     /// @throw BadValue on client class without name.
     void setClassesKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);
-};
+};  // TranslatorClasses
 
 }  // namespace yang
 }  // namespace isc

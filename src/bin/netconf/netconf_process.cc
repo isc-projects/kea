@@ -95,5 +95,5 @@ NetconfProcess::getNetconfCfgMgr() {
     return (boost::dynamic_pointer_cast<NetconfCfgMgr>(getCfgMgr()));
 }
 
-} // namespace isc::netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

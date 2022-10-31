@@ -78,7 +78,6 @@ namespace yang {
 /// @todo: Support for ietf-dhcpv6-server model.
 class TranslatorOptionDef : virtual public TranslatorBasic {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -86,7 +85,7 @@ public:
     TranslatorOptionDef(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorOptionDef();
+    virtual ~TranslatorOptionDef() = default;
 
     /// @brief Translate an option definition from YANG to JSON.
     ///
@@ -131,7 +130,7 @@ protected:
     /// @throw BadValue on option definition without name or type.
     void setOptionDefKea(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
-};
+};  // TranslatorOptionDef
 
 // @brief A translator class for converting an option definition list
 // between YANG and JSON.
@@ -140,7 +139,6 @@ protected:
 /// @todo: Support for ietf-dhcpv6-server model.
 class TranslatorOptionDefList : virtual public TranslatorOptionDef {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -149,7 +147,7 @@ public:
                             const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorOptionDefList();
+    virtual ~TranslatorOptionDefList() = default;
 
     /// @brief Translate option definition list from YANG to JSON.
     ///
@@ -193,7 +191,7 @@ protected:
     /// @throw BadValue on option definition without code or space.
     void setOptionDefListKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
-};
+};  // TranslatorOptionDefList
 
 }  // namespace yang
 }  // namespace isc

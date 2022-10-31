@@ -95,12 +95,12 @@ private:
 
     /// @brief Netconf agent.
     NetconfAgent agent_;
-};
+};  // NetconfProcess
 
 /// @brief Defines a shared pointer to NetconfProcess.
 typedef boost::shared_ptr<NetconfProcess> NetconfProcessPtr;
 
-}; // namespace isc::netconf
-}; // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // NETCONF_PROCESS_H

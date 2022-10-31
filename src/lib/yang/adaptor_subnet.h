@@ -29,12 +29,8 @@ typedef std::set<isc::dhcp::SubnetID> SubnetIDSet;
 /// code should work without it.
 class AdaptorSubnet {
 public:
-
-    /// @brief Constructor.
-    AdaptorSubnet();
-
     /// @brief Destructor.
-    virtual ~AdaptorSubnet();
+    virtual ~AdaptorSubnet() = default;
 
     /// @brief Collect a subnet ID.
     ///
@@ -58,9 +54,9 @@ public:
     ///
     /// @param subnet The subnet.
     static void updateRelay(isc::data::ElementPtr subnet);
-};
+};  // AdaptorSubnet
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_ADAPTOR_SUBNET_H

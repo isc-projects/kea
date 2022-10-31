@@ -22,7 +22,6 @@ namespace test {
 /// It is used in tests to conduct operations on whole configurations.
 class YangRepr {
 public:
-
     /// @brief Constructor.
     ///
     /// @param model The model name.
@@ -139,7 +138,7 @@ public:
 private:
     /// @brief The model name.
     std::string model_;
-};
+};  // YangRepr
 
 /// @brief Alias for Items.
 typedef YangRepr::YangReprItem YRItem;

@@ -23,9 +23,6 @@ TranslatorLogger::TranslatorLogger(Session session, const string& model)
     : TranslatorBasic(session, model) {
 }
 
-TranslatorLogger::~TranslatorLogger() {
-}
-
 ElementPtr
 TranslatorLogger::getLogger(DataNode const& data_node) {
     try {
@@ -187,9 +184,6 @@ TranslatorLogger::setOutputOptions(string const& xpath, ConstElementPtr elem) {
 TranslatorLoggers::TranslatorLoggers(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorLogger(session, model) {
-}
-
-TranslatorLoggers::~TranslatorLoggers() {
 }
 
 ConstElementPtr

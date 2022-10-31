@@ -17,12 +17,6 @@ using namespace isc::data;
 namespace isc {
 namespace yang {
 
-Adaptor::Adaptor() {
-}
-
-Adaptor::~Adaptor() {
-}
-
 ConstElementPtr
 Adaptor::getContext(ConstElementPtr parent)
 {
@@ -295,7 +289,7 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
     }
 }
 
-} // end of anonymous namespace
+}  //anonymous namespace
 
 /// Apply recursively starting at the beginning of the path.
 void
@@ -304,5 +298,5 @@ Adaptor::modify(ConstElementPtr path, ConstElementPtr actions,
     applyDown(path, actions, config, 0);
 }
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc

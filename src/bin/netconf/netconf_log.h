@@ -48,7 +48,7 @@ extern const char* NETCONF_LOGGER_NAME;
 /// @brief Base logger for the netconf agent
 extern isc::log::Logger netconf_logger;
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // NETCONF_LOG_H

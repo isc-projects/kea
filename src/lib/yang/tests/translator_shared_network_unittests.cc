@@ -28,21 +28,19 @@ extern char const shared_networks[] = "shared networks";
 class TranslatorSharedNetworksTestKeaV4 :
     public GenericTranslatorTest<shared_networks, TranslatorSharedNetworks> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorSharedNetworksTestKeaV4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorSharedNetworksTestKeaV4
 class TranslatorSharedNetworksTestKeaV6 :
     public GenericTranslatorTest<shared_networks, TranslatorSharedNetworks> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorSharedNetworksTestKeaV6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorSharedNetworksTestKeaV6
 
 // This test verifies that an empty shared network list can be properly
 // translated from YANG to JSON.

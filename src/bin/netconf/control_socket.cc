@@ -37,5 +37,5 @@ controlSocketFactory(CfgControlSocketPtr ctrl_sock) {
     }
 }
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

@@ -103,7 +103,6 @@ namespace yang {
 /// - kea-dhcp6-server
 class TranslatorDatabase : virtual public TranslatorBasic {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -111,7 +110,7 @@ public:
     TranslatorDatabase(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorDatabase();
+    virtual ~TranslatorDatabase() = default;
 
     /// @brief Translate a database access from YANG to JSON.
     ///
@@ -166,7 +165,7 @@ protected:
     void setDatabaseKea(const std::string& xpath,
                         isc::data::ConstElementPtr elem,
                         bool skip);
-};
+};  // TranslatorDatabase
 
 /// @brief A translator class for converting a database access list between
 /// YANG and JSON.
@@ -174,7 +173,6 @@ protected:
 /// Supports kea-dhcp[46]-server, does not exist in ietf-dhcpv6-server.
 class TranslatorDatabases : virtual public TranslatorDatabase {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -182,7 +180,7 @@ public:
     TranslatorDatabases(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorDatabases();
+    virtual ~TranslatorDatabases() = default;
 
     /// @brief Translate database accesses from YANG to JSON.
     ///
@@ -238,7 +236,7 @@ protected:
     /// @throw BadValue on database without type,
     void setDatabasesKea(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
-};
+};  // TranslatorDatabases
 
 }  // namespace yang
 }  // namespace isc

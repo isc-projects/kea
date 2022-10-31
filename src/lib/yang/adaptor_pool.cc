@@ -15,12 +15,6 @@ using namespace isc::data;
 namespace isc {
 namespace yang {
 
-AdaptorPool::AdaptorPool() {
-}
-
-AdaptorPool::~AdaptorPool() {
-}
-
 void
 AdaptorPool::canonizePool(ElementPtr pool) {
     const string& orig = pool->get("pool")->stringValue();
@@ -83,5 +77,5 @@ AdaptorPool::toSubnetIetf6(ElementPtr subnet, ConstElementPtr pools) {
     Adaptor::toParent("rebind-timer", subnet, pools);
 }
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  //namespace yang
+}  // namespace isc

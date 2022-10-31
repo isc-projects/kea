@@ -74,12 +74,12 @@ private:
     /// @brief Constructor is declared private to maintain the integrity of
     /// the singleton instance.
     NetconfController();
-};
+};  // NetconfController
 
 // @Defines a shared pointer to NetconfController
 typedef boost::shared_ptr<NetconfController> NetconfControllerPtr;
 
-} // namespace isc::netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // NETCONF_CONTROLLER_H

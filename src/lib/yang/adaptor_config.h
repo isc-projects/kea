@@ -25,13 +25,6 @@ namespace yang {
 class AdaptorConfig : public AdaptorHost, public AdaptorOption,
     public AdaptorSubnet {
 public:
-
-    /// @brief Constructor.
-    AdaptorConfig();
-
-    /// @brief Destructor.
-    virtual ~AdaptorConfig();
-
     /// @brief Pre process a DHCPv4 configuration.
     ///
     /// Assign subnet IDs, check and set defaults in options, etc.
@@ -284,9 +277,9 @@ protected:
     static void preProcess(isc::data::ElementPtr dhcp,
                            const std::string& subsel,
                            const std::string& space);
-};
+};  // AdaptorConfig
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  //namespace yang
+}  // namespace isc
 
 #endif // ISC_ADAPTOR_CONFIG_H

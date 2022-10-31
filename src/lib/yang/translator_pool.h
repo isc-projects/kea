@@ -124,7 +124,6 @@ namespace yang {
 /// @endcode
 class TranslatorPool : virtual public TranslatorOptionDataList {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -132,7 +131,7 @@ public:
     TranslatorPool(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorPool();
+    virtual ~TranslatorPool() = default;
 
     /// @brief Translate a pool from YANG to JSON.
     ///
@@ -202,14 +201,13 @@ protected:
     /// @param elem The JSON element.
     /// @throw BadValue on a pool without a well formed prefix.
     void setPoolKea(const std::string& xpath, isc::data::ConstElementPtr elem);
-};
+};  // TranslatorPool
 
 /// @brief A translator class for converting pools between YANG and JSON.
 ///
 /// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 class TranslatorPools : virtual public TranslatorPool {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -217,7 +215,7 @@ public:
     TranslatorPools(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorPools();
+    virtual ~TranslatorPools() = default;
 
     /// @brief Translate pools from YANG to JSON.
     ///
@@ -272,7 +270,7 @@ protected:
     /// @throw BadValue on a pool without a prefix.
     void setPoolsByAddresses(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
-};
+};  // TranslatorPools
 
 }  // namespace yang
 }  // namespace isc

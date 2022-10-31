@@ -273,7 +273,6 @@ namespace yang {
 class TranslatorSubnet : virtual public TranslatorPools,
     virtual public TranslatorPdPools, virtual public TranslatorHosts {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -281,7 +280,7 @@ public:
     TranslatorSubnet(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorSubnet();
+    virtual ~TranslatorSubnet() = default;
 
     /// @brief Get and translate a subnet from YANG to JSON.
     ///
@@ -338,7 +337,7 @@ protected:
     /// @param elem The JSON element.
     void setSubnetKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-};
+};  // TranslatorSubnets
 
 /// @brief A translator class for converting a subnet list between
 /// YANG and JSON.
@@ -346,7 +345,6 @@ protected:
 /// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 class TranslatorSubnets : virtual public TranslatorSubnet {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -354,7 +352,7 @@ public:
     TranslatorSubnets(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorSubnets();
+    virtual ~TranslatorSubnets() = default;
 
     /// @brief Get and translate subnets from YANG to JSON.
     ///
@@ -406,7 +404,7 @@ protected:
     void setSubnetsKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem,
                        const std::string& subsel);
-};
+};  // TranslatorSubnets
 
 }  // namespace yang
 }  // namespace isc

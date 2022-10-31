@@ -25,11 +25,8 @@ public:
     /// characters (digit, letters, -, ., @, _).
     static const std::string STD_CHARACTERS;
 
-    /// @brief Constructor.
-    AdaptorHost();
-
     /// @brief Destructor.
-    virtual ~AdaptorHost();
+    virtual ~AdaptorHost() = default;
 
     /// @brief Quote when needed a host identifier.
     ///
@@ -39,9 +36,9 @@ public:
     ///
     /// @param host The host.
     static void quoteIdentifier(isc::data::ElementPtr host);
-};
+};  // AdaptorHost
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  //namespace yang
+}  // namespace isc
 
 #endif // ISC_ADAPTOR_HOST_H

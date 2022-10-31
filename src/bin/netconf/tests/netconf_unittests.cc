@@ -58,14 +58,6 @@ typedef boost::shared_ptr<thread> ThreadPtr;
 /// @brief Test version of the NetconfAgent class.
 class NakedNetconfAgent : public NetconfAgent {
 public:
-    /// @brief Constructor.
-    NakedNetconfAgent() {
-    }
-
-    /// @brief Destructor.
-    virtual ~NakedNetconfAgent() {
-    }
-
     /// Export protected methods and fields.
     using NetconfAgent::keaConfig;
     using NetconfAgent::initSysrepo;
@@ -77,7 +69,7 @@ public:
     using NetconfAgent::running_sess_;
     using NetconfAgent::modules_;
     using NetconfAgent::subscriptions_;
-};
+};  // NakedNetconfAgent
 
 /// @brief Type definition for the pointer to NakedNetconfAgent objects.
 typedef boost::shared_ptr<NakedNetconfAgent> NakedNetconfAgentPtr;
@@ -183,7 +175,7 @@ public:
 
     /// @brief Response list.
     vector<string> responses_;
-};
+};  // NetconfAgentTest
 
 /// @brief Special test fixture for logging tests.
 class NetconfAgentLogTest : public dhcp::test::LogContentTest {
@@ -252,7 +244,7 @@ public:
 
     /// @brief Test netconf agent.
     NakedNetconfAgentPtr agent_;
-};
+};  // NetconfAgentLogTest
 
 /// @brief Fake server (returns OK answer).
 void

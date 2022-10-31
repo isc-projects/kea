@@ -32,9 +32,6 @@ TranslatorSubnet::TranslatorSubnet(Session session, const string& model)
       TranslatorHosts(session, model) {
 }
 
-TranslatorSubnet::~TranslatorSubnet() {
-}
-
 ElementPtr
 TranslatorSubnet::getSubnet(DataNode const& data_node) {
     try {
@@ -505,9 +502,6 @@ TranslatorSubnets::TranslatorSubnets(Session session, const string& model)
       TranslatorHost(session, model),
       TranslatorHosts(session, model),
       TranslatorSubnet(session, model) {
-}
-
-TranslatorSubnets::~TranslatorSubnets() {
 }
 
 ElementPtr

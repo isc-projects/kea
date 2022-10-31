@@ -52,5 +52,5 @@ StdoutControlSocket::configSet(ConstElementPtr config,
     return (createAnswer());
 }
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

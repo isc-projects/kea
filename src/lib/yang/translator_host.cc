@@ -25,9 +25,6 @@ TranslatorHost::TranslatorHost(Session session, const string& model)
       TranslatorOptionDataList(session, model) {
 }
 
-TranslatorHost::~TranslatorHost() {
-}
-
 ElementPtr
 TranslatorHost::getHost(DataNode const& data_node) {
     try {
@@ -194,9 +191,6 @@ TranslatorHosts::TranslatorHosts(Session session, const string& model)
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorHost(session, model) {
-}
-
-TranslatorHosts::~TranslatorHosts() {
 }
 
 ElementPtr

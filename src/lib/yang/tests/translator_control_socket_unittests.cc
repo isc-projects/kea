@@ -29,36 +29,35 @@ extern char const control_socket[] = "control socket";
 class TranslatorControlSocketTestv4 :
     public GenericTranslatorTest<control_socket, TranslatorControlSocket> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorControlSocketTestv4() {
         model_ = KEA_DHCP4_SERVER;
     }
 
     virtual ~TranslatorControlSocketTestv4() = default;
-};
+};  // TranslatorControlSocketTestv4
+
 class TranslatorControlSocketTestv6 :
     public GenericTranslatorTest<control_socket, TranslatorControlSocket> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorControlSocketTestv6() {
         model_ = KEA_DHCP6_SERVER;
     }
 
     virtual ~TranslatorControlSocketTestv6() = default;
-};
+};  // TranslatorControlSocketTestv6
+
 class TranslatorControlSocketTestCtrlAgent :
     public GenericTranslatorTest<control_socket, TranslatorControlSocket> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorControlSocketTestCtrlAgent() {
         model_ = KEA_CTRL_AGENT;
     }
 
     virtual ~TranslatorControlSocketTestCtrlAgent() = default;
-};
+};  // TranslatorControlSocketTestCtrlAgent
 
 // This test verifies that an empty control socket can be properly
 // translated from YANG to JSON.

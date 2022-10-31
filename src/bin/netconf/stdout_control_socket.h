@@ -23,7 +23,6 @@ namespace netconf {
 /// This class implements config-test (always OK) and config-set.
 class StdoutControlSocket : public ControlSocketBase {
 public:
-
     /// @brief Constructor.
     ///
     /// Use std::cout.
@@ -72,7 +71,7 @@ protected:
 
     /// @brief The output stream (std::cout outside tests).
     std::ostream& output_;
-};
+};  // StdoutControlSocket
 
 /// @brief Type definition for the pointer to the @c StdoutControlSocket.
 typedef boost::shared_ptr<StdoutControlSocket> StdoutControlSocketPtr;
@@ -84,7 +83,7 @@ typedef boost::shared_ptr<StdoutControlSocket> StdoutControlSocketPtr;
 template <> ControlSocketBasePtr
 createControlSocket<CfgControlSocket::Type::STDOUT>(CfgControlSocketPtr ctrl_sock);
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // STDOUT_CONTROL_SOCKET_H

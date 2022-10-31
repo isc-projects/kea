@@ -48,7 +48,7 @@ private:
                       << std::endl;
         }
     }
-};
+};  // SysrepoSetup
 
 /// @brief Test Fixture template for translator tests.
 ///
@@ -87,10 +87,10 @@ public:
     /// @brief Shared pointer to the transaction object.
     boost::shared_ptr<translator_t> t_obj_;
     std::string model_;
-};
+};  // GenericTranslatorTest
 
-} // namespace test
-} // namespace yang
-} // namespace isc
+}  // namespace test
+}  // namespace yang
+}  // namespace isc
 
 #endif // SYSREPO_SETUP_H

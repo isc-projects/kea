@@ -113,7 +113,6 @@ namespace yang {
 /// ietf-dhcpv6-server is not supported yet.
 class TranslatorHost : virtual public TranslatorOptionDataList {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -121,7 +120,7 @@ public:
     TranslatorHost(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorHost();
+    virtual ~TranslatorHost() = default;
 
     /// @brief Translate a host reservation from YANG to JSON.
     ///
@@ -165,7 +164,7 @@ protected:
     /// @param xpath The xpath of the host reservation.
     /// @param elem The JSON element.
     void setHostKea(const std::string& xpath, isc::data::ConstElementPtr elem);
-};
+};  // TranslatorHost
 
 /// @brief A translator class for converting host reservations list between
 /// YANG and JSON.
@@ -177,7 +176,6 @@ protected:
 /// The ietf-dhcpv6-server model is not yet supported.
 class TranslatorHosts : virtual public TranslatorHost {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -185,7 +183,7 @@ public:
     TranslatorHosts(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorHosts();
+    virtual ~TranslatorHosts() = default;
 
     /// @brief Translate host reservations from YANG to JSON.
     ///
@@ -224,7 +222,7 @@ protected:
     /// @throw BadValue on host reservation without known identifier type.
     void setHostsKea(const std::string& xpath,
                      isc::data::ConstElementPtr elem);
-};
+};  // TranslatorHosts
 
 }  // namespace yang
 }  // namespace isc

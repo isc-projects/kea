@@ -18,9 +18,9 @@ public:
     NetconfError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
     {}
-};
+};  // NetconfError
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_SYSREPO_ERROR_H

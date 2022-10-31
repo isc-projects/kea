@@ -23,9 +23,6 @@ TranslatorDatabase::TranslatorDatabase(Session session, const string& model)
     : TranslatorBasic(session, model) {
 }
 
-TranslatorDatabase::~TranslatorDatabase() {
-}
-
 ElementPtr
 TranslatorDatabase::getDatabase(DataNode const& data_node) {
     try {
@@ -145,9 +142,6 @@ TranslatorDatabases::TranslatorDatabases(Session session,
                                          const string& model)
     : TranslatorBasic(session, model),
       TranslatorDatabase(session, model) {
-}
-
-TranslatorDatabases::~TranslatorDatabases() {
 }
 
 ElementPtr

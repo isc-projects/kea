@@ -29,30 +29,27 @@ extern char const pool_list[] = "pool list";
 class TranslatorPoolsTestKeaV4 :
     public GenericTranslatorTest<pool_list, TranslatorPools> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorPoolsTestKeaV4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorPoolsTestKeaV4
 class TranslatorPoolsTestKeaV6 :
     public GenericTranslatorTest<pool_list, TranslatorPools> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorPoolsTestKeaV6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorPoolsTestKeaV6
 class TranslatorPoolsTestIetfV6 :
     public GenericTranslatorTest<pool_list, TranslatorPools> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorPoolsTestIetfV6() {
         model_ = IETF_DHCPV6_SERVER;
     }
-};
+};  // TranslatorPoolsTestIetfV6
 
 // This test verifies that an empty pool list can be properly
 // translated from YANG to JSON using IETF model.

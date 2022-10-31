@@ -29,30 +29,27 @@ extern char const option_definition_list[] = "option definition list";
 class TranslatorOptionDefListTestKeaV4 :
     public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorOptionDefListTestKeaV4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorOptionDefListTestKeaV4
 class TranslatorOptionDefListTestKeaV6 :
     public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorOptionDefListTestKeaV6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorOptionDefListTestKeaV6
 class TranslatorOptionDefListTestIetfV6 :
     public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorOptionDefListTestIetfV6() {
         model_ = IETF_DHCPV6_SERVER;
     }
-};
+};  // TranslatorOptionDefListTestIetfV6
 
 // This test verifies that an empty option definition list can be properly
 // translated from YANG to JSON.
@@ -139,4 +136,4 @@ TEST_F(TranslatorOptionDefListTestKeaV6, set) {
     EXPECT_TRUE(def->equals(*got->get(0)));
 }
 
-}; // end of anonymous namespace
+}  // anonymous namespace

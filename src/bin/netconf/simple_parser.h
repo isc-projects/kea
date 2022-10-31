@@ -67,8 +67,8 @@ public:
     static const isc::data::SimpleDefaults D2_DEFAULTS;
     static const isc::data::SimpleDefaults CA_DEFAULTS;
     static const isc::data::ParamsList INHERIT_TO_SERVERS;
-};
+};  // NetconfSimpleParser
 
-};
-};
+}  // namespace netconf
+}  // namespace isc
 #endif

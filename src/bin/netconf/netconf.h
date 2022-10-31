@@ -172,9 +172,9 @@ protected:
 
     /// @brief Subscription map.
     std::map<const std::string, sysrepo::Subscription> subscriptions_;
-};
+};  // NetconfAgent
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // NETCONF_H

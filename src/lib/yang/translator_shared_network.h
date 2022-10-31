@@ -165,7 +165,6 @@ namespace yang {
 /// - kea-dhcp6-server
 class TranslatorSharedNetwork : virtual public TranslatorSubnets {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -174,7 +173,7 @@ public:
                             const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorSharedNetwork();
+    virtual ~TranslatorSharedNetwork() = default;
 
     /// @brief Translate a shared network from YANG to JSON.
     ///
@@ -221,7 +220,7 @@ protected:
     void setSharedNetworkKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem,
                              const std::string& subsel);
-};
+};  // TranslatorSharedNetwork
 
 /// @brief A translator class for converting a shared network list between
 /// YANG and JSON.
@@ -231,7 +230,6 @@ protected:
 /// - kea-dhcp6-server
 class TranslatorSharedNetworks : virtual public TranslatorSharedNetwork {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -240,7 +238,7 @@ public:
                              const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorSharedNetworks();
+    virtual ~TranslatorSharedNetworks() = default;
 
     /// @brief Translate shared networks from YANG to JSON.
     ///
@@ -276,7 +274,7 @@ protected:
     /// @throw BadValue on a shared network without name.
     void setSharedNetworksKea(const std::string& xpath,
                               isc::data::ConstElementPtr elem);
-};
+};  // TranslatorSharedNetworks
 
 }  // namespace yang
 }  // namespace isc

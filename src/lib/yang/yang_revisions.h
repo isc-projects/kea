@@ -27,7 +27,7 @@ static const std::map<std::string, std::string> YANG_REVISIONS = {
     { "kea-dhcp6-server", "2022-07-27" },
     { "kea-ctrl-agent", "2019-08-12" },
     { "kea-dhcp-ddns", "2022-07-27" }
-};
+};  // YANG_REVISIONS
 
 }  // namespace yang
 }  // namespace isc

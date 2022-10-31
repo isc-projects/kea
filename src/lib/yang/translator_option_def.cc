@@ -24,9 +24,6 @@ TranslatorOptionDef::TranslatorOptionDef(Session session,
     : TranslatorBasic(session, model) {
 }
 
-TranslatorOptionDef::~TranslatorOptionDef() {
-}
-
 ElementPtr
 TranslatorOptionDef::getOptionDef(DataNode const& data_node) {
     try {
@@ -144,9 +141,6 @@ TranslatorOptionDefList::TranslatorOptionDefList(Session session,
                                                  const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionDef(session, model) {
-}
-
-TranslatorOptionDefList::~TranslatorOptionDefList() {
 }
 
 ConstElementPtr

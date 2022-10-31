@@ -20,8 +20,8 @@ namespace netconf {
 class ControlSocketError : public isc::Exception {
 public:
     ControlSocketError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
+        isc::Exception(file, line, what) { }
+};  // ControlSocketError
 
 /// @brief Base class for control socket communication.
 ///
@@ -31,7 +31,6 @@ public:
 /// communicate with other Kea daemons.
 class ControlSocketBase {
 public:
-
     /// @brief Constructor.
     ///
     /// @param ctrl_sock The control socket configuration.
@@ -44,8 +43,7 @@ public:
     }
 
     /// @brief Destructor (does nothing).
-    virtual ~ControlSocketBase() {
-    }
+    virtual ~ControlSocketBase() = default;
 
     /// @brief Getter which returns the socket type.
     ///
@@ -101,7 +99,7 @@ public:
 
     /// @brief The control socket configuration.
     CfgControlSocketPtr socket_cfg_;
-};
+};  // ControlSocketBase
 
 /// @brief Type definition for the pointer to the @c ControlSocketBase.
 typedef boost::shared_ptr<ControlSocketBase> ControlSocketBasePtr;
@@ -125,7 +123,7 @@ createControlSocket(CfgControlSocketPtr ctrl_sock) {
 ControlSocketBasePtr
 controlSocketFactory(CfgControlSocketPtr ctrl_sock);
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // CONTROL_SOCKET_H

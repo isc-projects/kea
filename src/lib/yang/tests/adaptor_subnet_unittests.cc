@@ -210,4 +210,4 @@ TEST(AdaptorSubnetTest, updateRelayAddress) {
 
 // It does not make sense to have both ip-address and ip-addresses...
 
-}; // end of anonymous namespace
+}  // anonymous namespace

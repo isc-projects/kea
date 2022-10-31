@@ -115,7 +115,7 @@ private:
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
-};
+};  // NetconfConfig
 
 /// @brief Ctrl Netconf Configuration Manager.
 ///
@@ -123,7 +123,6 @@ private:
 /// configuration.
 class NetconfCfgMgr : public process::DCfgMgrBase {
 public:
-
     /// @brief Constructor.
     NetconfCfgMgr();
 
@@ -175,12 +174,12 @@ protected:
     ///
     /// @return Returns a ConfigPtr to the new context instance.
     virtual process::ConfigPtr createNewContext();
-};
+};  // NetconfCfgMgr
 
 /// @brief Defines a shared pointer to NetconfCfgMgr.
 typedef boost::shared_ptr<NetconfCfgMgr> NetconfCfgMgrPtr;
 
-} // namespace isc::netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // NETCONF_CFG_MGR_H

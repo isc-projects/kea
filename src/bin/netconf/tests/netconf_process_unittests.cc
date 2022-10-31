@@ -37,15 +37,11 @@ public:
         NetconfConfigPtr ctx = getNetconfCfgMgr()->getNetconfConfig();
     }
 
-    /// @brief Destructor
-    virtual ~NetconfProcessTest() {
-    }
-
     /// @brief Callback that will invoke shutdown method.
     void genShutdownCallback() {
         shutdown(isc::data::ConstElementPtr());
     }
-};
+};  // NetconfProcessTest
 
 // Test construction of the NetconfProcess object.
 TEST(NetconfProcess, construction) {

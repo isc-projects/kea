@@ -2378,7 +2378,7 @@ switch (yykind)
 
 
 #line 14 "netconf_parser.yy"
-} } // isc::netconf
+} }  // isc::netconf
 #line 2383 "netconf_parser.h"
 
 

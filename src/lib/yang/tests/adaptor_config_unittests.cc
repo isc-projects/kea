@@ -57,7 +57,7 @@ void testFile(const std::string& fname, bool v6, ElementPtr& result) {
     result = json;
 }
 
-};
+};  // AdaptorConfigTest
 
 TEST_F(AdaptorConfigTest, loadExamples4) {
     vector<string> configs = {
@@ -144,4 +144,4 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
 /// @todo: Check option data using kea6/with-ddns.json
 /// @todo: Check option defs using kea6/dhcpv4-over-dhcpv6.json
 
-}; // end of anonymous namespace
+}  // anonymous namespace

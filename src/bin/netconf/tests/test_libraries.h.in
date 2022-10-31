@@ -19,6 +19,6 @@ namespace {
 // Basic library with context_create and three "standard" callouts.
 static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbasic.so";
 
-} // anonymous namespace
+}  // anonymous namespace
 
 #endif // TEST_LIBRARIES_H

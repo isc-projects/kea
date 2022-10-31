@@ -29,21 +29,19 @@ extern char const pd_pool_list[] = "pd pool list";
 class TranslatorPdPoolsTestKeaV6 :
     public GenericTranslatorTest<pd_pool_list, TranslatorPdPools> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorPdPoolsTestKeaV6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorPdPoolsTestKeaV6
 class TranslatorPdPoolsTestIetfV6 :
     public GenericTranslatorTest<pd_pool_list, TranslatorPdPools> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorPdPoolsTestIetfV6() {
         model_ = IETF_DHCPV6_SERVER;
     }
-};
+};  // TranslatorPdPoolsTestIetfV6
 
 // This test verifies that an empty pd pool list can be properly
 // translated from YANG to JSON using the IETF model.

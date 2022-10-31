@@ -26,9 +26,6 @@ TranslatorPdPool::TranslatorPdPool(Session session, const string& model)
       TranslatorOptionDataList(session, model) {
 }
 
-TranslatorPdPool::~TranslatorPdPool() {
-}
-
 ElementPtr
 TranslatorPdPool::getPdPool(DataNode const& data_node) {
     try {
@@ -290,9 +287,6 @@ TranslatorPdPools::TranslatorPdPools(Session session, const string& model)
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPdPool(session, model) {
-}
-
-TranslatorPdPools::~TranslatorPdPools() {
 }
 
 ElementPtr

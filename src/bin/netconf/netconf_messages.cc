@@ -42,8 +42,8 @@ extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_FAILED = "NETCONF_VALID
 extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_REJECTED = "NETCONF_VALIDATE_CONFIG_REJECTED";
 extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_STARTED = "NETCONF_VALIDATE_CONFIG_STARTED";
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 namespace {
 
@@ -87,5 +87,5 @@ const char* values[] = {
 
 const isc::log::MessageInitializer initializer(values);
 
-} // Anonymous namespace
+}  // Anonymous namespace
 

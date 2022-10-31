@@ -19,7 +19,7 @@ public:
     MissingKey(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
     {}
-};
+};  // MissingKey
 
 /// @brief JSON adaptor between canonical Kea and YANG models.
 ///
@@ -29,12 +29,8 @@ public:
 /// The basic adaptor provides a set of tools.
 class Adaptor {
 public:
-
-    /// @brief Constructor.
-    Adaptor();
-
     /// @brief Destructor.
-    virtual ~Adaptor();
+    virtual ~Adaptor() = default;
 
     /// @brief Get user context.
     ///
@@ -125,9 +121,9 @@ public:
                        isc::data::ConstElementPtr actions,
                        isc::data::ElementPtr config);
 
-};
+};  // Adaptor
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_ADAPTOR_H

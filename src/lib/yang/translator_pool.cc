@@ -29,9 +29,6 @@ TranslatorPool::TranslatorPool(Session session, const string& model)
       TranslatorOptionDataList(session, model) {
 }
 
-TranslatorPool::~TranslatorPool() {
-}
-
 ElementPtr
 TranslatorPool::getPool(DataNode const& data_node) {
     try {
@@ -274,9 +271,6 @@ TranslatorPools::TranslatorPools(Session session, const string& model)
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model) {
-}
-
-TranslatorPools::~TranslatorPools() {
 }
 
 ElementPtr

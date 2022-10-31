@@ -68,7 +68,6 @@ namespace yang {
 /// - kea-ctrl-agent
 class TranslatorControlSocket : virtual public TranslatorBasic {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -77,7 +76,7 @@ public:
                             const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorControlSocket();
+    virtual ~TranslatorControlSocket() = default;
 
     /// @brief Translate a control socket from YANG to JSON.
     ///
@@ -128,7 +127,7 @@ protected:
     /// @throw BadValue on control socket without socket type or name.
     void setControlSocketKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
-};
+};  // TranslatorControlSocket
 
 }  // namespace yang
 }  // namespace isc

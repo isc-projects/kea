@@ -58,11 +58,7 @@ public:
     TestStdoutControlSocket(CfgControlSocketPtr ctrl_sock, ostream& output)
         : StdoutControlSocket(ctrl_sock, output) {
     }
-
-    /// @brief Destructor.
-    virtual ~TestStdoutControlSocket() {
-    }
-};
+};  // TestStdoutControlSocket
 
 /// @brief Type definition for the pointer to the @c TestStdoutControlSocket.
 typedef boost::shared_ptr<TestStdoutControlSocket> TestStdoutControlSocketPtr;
@@ -205,7 +201,7 @@ public:
 
     /// @brief IOService object.
     IOService io_service_;
-};
+};  // UnixControlSocketTest
 
 /// @brief Server method running in a thread reflecting the command.
 ///
@@ -500,7 +496,7 @@ protected:
         response->finalize();
         return (response);
     }
-};
+};  // TestHttpResponseCreator
 
 /// @brief Implementation of the test HttpResponseCreatorFactory.
 class TestHttpResponseCreatorFactory : public HttpResponseCreatorFactory {
@@ -511,7 +507,7 @@ public:
         HttpResponseCreatorPtr response_creator(new TestHttpResponseCreator());
         return (response_creator);
     }
-};
+};  // TestHttpResponseCreatorFactory
 
 /// @brief Test fixture class for http control sockets.
 class HttpControlSocketTest : public ThreadedTest {
@@ -609,7 +605,7 @@ public:
 
     /// @brief Pointer to listener.
     HttpListenerPtr listener_;
-};
+};  // HttpControlSocketTest
 
 /// @brief Create the reflecting listener.
 void

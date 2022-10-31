@@ -33,7 +33,7 @@ public:
     }
 
     virtual ~TranslatorDatabaseTestv4() = default;
-};
+};  // TranslatorDatabaseTestv4
 
 class TranslatorDatabaseTestv6 :
     public GenericTranslatorTest<database_access, TranslatorDatabase> {
@@ -43,7 +43,7 @@ public:
     }
 
     virtual ~TranslatorDatabaseTestv6() = default;
-};
+};  // TranslatorDatabaseTestv6
 
 // This test verifies that an empty database can be properly
 // translated from YANG to JSON.
@@ -140,22 +140,20 @@ extern char const database_accesses[] = "database accesses";
 class TranslatorDatabasesTestv4 :
     public GenericTranslatorTest<database_accesses, TranslatorDatabases> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorDatabasesTestv4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorDatabasesTestv4
 
 class TranslatorDatabasesTestv6 :
     public GenericTranslatorTest<database_accesses, TranslatorDatabases> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorDatabasesTestv6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorDatabasesTestv6
 
 // This test verifies that an empty database list can be properly
 // translated from YANG to JSON.

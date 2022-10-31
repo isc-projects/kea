@@ -24,9 +24,6 @@ TranslatorControlSocket::TranslatorControlSocket(Session session,
     : TranslatorBasic(session, model) {
 }
 
-TranslatorControlSocket::~TranslatorControlSocket() {
-}
-
 ElementPtr
 TranslatorControlSocket::getControlSocket(DataNode const& data_node) {
     try {

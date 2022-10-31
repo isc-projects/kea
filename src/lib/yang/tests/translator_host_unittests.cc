@@ -30,22 +30,20 @@ extern char const host_reservations[] = "host reservations";
 class TranslatorHostsTestv4 :
     public GenericTranslatorTest<host_reservations, TranslatorHosts> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorHostsTestv4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorHostsTestv4
 
 class TranslatorHostsTestv6 :
     public GenericTranslatorTest<host_reservations, TranslatorHosts> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorHostsTestv6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorHostsTestv6
 
 // This test verifies that an empty host reservation list can be properly
 // translated from YANG to JSON.
@@ -190,4 +188,4 @@ TEST_F(TranslatorHostsTestv6, getMany) {
               "\"ip-addresses\": [ \"2001:db8::2\" ] } ]");
 }
 
-}; // end of anonymous namespace
+}  // anonymous namespace

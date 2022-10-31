@@ -26,9 +26,6 @@ TranslatorBasic::TranslatorBasic(Session session, const string& model)
     : session_(session), model_(model) {
 }
 
-TranslatorBasic::~TranslatorBasic() {
-}
-
 void
 TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
                                  DataNode const& data_node,

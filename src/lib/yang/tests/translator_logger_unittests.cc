@@ -28,21 +28,20 @@ extern char const logger_list[] = "logger list";
 class TranslatorLoggersTestv4 :
     public GenericTranslatorTest<logger_list, TranslatorLoggers> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorLoggersTestv4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorLoggersTestv4
+
 class TranslatorLoggersTestv6 :
     public GenericTranslatorTest<logger_list, TranslatorLoggers> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorLoggersTestv6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorLoggersTestv6
 
 // This test verifies that an empty logger list can be properly
 // translated from YANG to JSON.

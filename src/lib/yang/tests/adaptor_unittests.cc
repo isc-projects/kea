@@ -395,4 +395,4 @@ TEST(AdaptorTest, modifyListAllDelete) {
     EXPECT_TRUE(expected->equals(*json));
 }
 
-}; // end of anonymous namespace
+}  // anonymous namespace

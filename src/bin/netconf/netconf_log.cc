@@ -23,6 +23,6 @@ const char* NETCONF_LOGGER_NAME = "netconf";
 
 isc::log::Logger netconf_logger(NETCONF_LOGGER_NAME);
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 

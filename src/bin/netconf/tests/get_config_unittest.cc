@@ -116,7 +116,7 @@ pathReplacer(ConstElementPtr netconf_cfg) {
 class NakedNetconfCfgMgr : public NetconfCfgMgr {
 public:
     using NetconfCfgMgr::parse;
-};
+};  // NakedNetconfCfgMgr
 
 }  // namespace
 
@@ -227,7 +227,7 @@ public:
     boost::scoped_ptr<NakedNetconfCfgMgr> srv_; ///< Netconf server under test
     int rcode_;                       ///< Return code from element parsing
     ConstElementPtr comment_;         ///< Reason for parse fail
-};
+};  // NetconfGetCfgTest
 
 // Test a simple configuration.
 TEST_F(NetconfGetCfgTest, simple) {

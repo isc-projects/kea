@@ -169,5 +169,5 @@ NetconfCfgMgr::jsonPathsToRedact() const {
     return list;
 }
 
-} // namespace isc::netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

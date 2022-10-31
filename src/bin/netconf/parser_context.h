@@ -305,9 +305,9 @@ public:
     ///
     /// @return Element structure representing parsed text.
     isc::data::ElementPtr parseCommon();
-};
+};  // ParserContext
 
-} // end of isc::netconf namespace
-} // end of isc namespace
+}  // namespace netconf
+}  // namespace isc
 
 #endif

@@ -37,7 +37,7 @@ namespace  {
 class NakedNetconfCfgMgr : public NetconfCfgMgr {
 public:
     using NetconfCfgMgr::parse;
-};
+};  // NakedNetconfCfgMgr
 
 // Tests construction of NetconfCfgMgr class.
 TEST(NetconfCfgMgr, construction) {
@@ -357,7 +357,7 @@ const char* NETCONF_CONFIGS[] = {
     "        }\n"
     "    }\n"
     "}"
-};
+};  // NETCONF_CONFIGS
 
 // Tests the handling of bad socket type. Can't use the fixture class
 // because the Netconf parser does not allow bad socket types.
@@ -405,7 +405,7 @@ public:
 
     /// Configuration Manager (used in tests)
     NakedNetconfCfgMgr cfg_mgr_;
-};
+};  // NetconfParserTest
 
 // This test verifies if an empty config is handled properly. In practice such
 // a config makes little sense, but perhaps it's ok for a default deployment.

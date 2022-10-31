@@ -633,7 +633,7 @@ const std::vector<std::pair<std::string, YRTree> > TEST_CONFIGS =
     { subnetOptionsModelKeaDhcp4,  subnetOptionsTreeKeaDhcp4 },
     { subnetOptionsModelKeaDhcp6,  subnetOptionsTreeKeaDhcp6 },
     { designExampleModel,          designExampleTree }
-};
+};  // TEST_CONFIGS
 
 }  // namespace test
 }  // namespace yang

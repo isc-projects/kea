@@ -34,9 +34,6 @@ TranslatorSharedNetwork::TranslatorSharedNetwork(Session session,
       TranslatorSubnets(session, model) {
 }
 
-TranslatorSharedNetwork::~TranslatorSharedNetwork() {
-}
-
 ElementPtr
 TranslatorSharedNetwork::getSharedNetwork(DataNode const& data_node) {
     try {
@@ -382,9 +379,6 @@ TranslatorSharedNetworks::TranslatorSharedNetworks(Session session,
       TranslatorSubnet(session, model),
       TranslatorSubnets(session, model),
       TranslatorSharedNetwork(session, model) {
-}
-
-TranslatorSharedNetworks::~TranslatorSharedNetworks() {
 }
 
 ElementPtr

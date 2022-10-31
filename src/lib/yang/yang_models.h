@@ -31,7 +31,7 @@ static const std::string KEA_DHCP_DDNS = "kea-dhcp-ddns";
 /// by ISC in the near future.
 static const std::string KEA_CTRL_AGENT = "kea-ctrl-agent";
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_YANG_MODELS_H

@@ -300,7 +300,7 @@ namespace isc { namespace netconf {
   }
 
 #line 14 "netconf_parser.yy"
-} } // isc::netconf
+} }  // isc::netconf
 #line 305 "location.hh"
 
 #endif // !YY_NETCONF_LOCATION_HH_INCLUDED

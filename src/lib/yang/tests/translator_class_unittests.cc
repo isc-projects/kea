@@ -29,21 +29,20 @@ extern char const client_classes[] = "client classes";
 class TranslatorClassesTestv4 :
     public GenericTranslatorTest<client_classes, TranslatorClasses> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorClassesTestv4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorClassesTestv4
+
 class TranslatorClassesTestv6 :
     public GenericTranslatorTest<client_classes, TranslatorClasses> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorClassesTestv6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorClassesTestv6
 
 // This test verifies that an empty client class list can be properly
 // translated from YANG to JSON.

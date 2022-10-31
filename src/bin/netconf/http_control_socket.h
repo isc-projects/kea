@@ -22,7 +22,6 @@ namespace netconf {
 /// This class implements config-get, config-test and config-set.
 class HttpControlSocket : public ControlSocketBase {
 public:
-
     /// @brief Constructor.
     ///
     /// @param ctrl_sock The control socket configuration.
@@ -71,7 +70,7 @@ private:
     /// @param command The command to send.
     /// @return The answer.
     data::ConstElementPtr sendCommand(data::ConstElementPtr command);
-};
+};  // HttpControlSocket
 
 /// @brief Type definition for the pointer to the @c HttpControlSocket.
 typedef boost::shared_ptr<HttpControlSocket> HttpControlSocketPtr;
@@ -83,7 +82,7 @@ typedef boost::shared_ptr<HttpControlSocket> HttpControlSocketPtr;
 template <> ControlSocketBasePtr
 createControlSocket<CfgControlSocket::Type::HTTP>(CfgControlSocketPtr ctrl_sock);
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // HTTP_CONTROL_SOCKET_H

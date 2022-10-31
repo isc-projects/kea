@@ -26,7 +26,7 @@ public:
     TranslatorBasic(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorBasic();
+    virtual ~TranslatorBasic() = default;
 
     /// @brief Retrieves a child YANG data node identified by name from the
     /// given parent YANG container node and stores it in the specified storage.
@@ -209,7 +209,7 @@ protected:
 
     /// @brief The model.
     std::string model_;
-};
+};  // TranslatorBasic
 
 }  // namespace yang
 }  // namespace isc

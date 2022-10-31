@@ -184,7 +184,7 @@ TEST(AdaptorOptionTest, setCodeNotInMap) {
 class TestAdaptorOption : public AdaptorOption {
 public:
     using AdaptorOption::initCodesInternal;
-};
+};  // TestAdaptorOption
 
 // Verifies that initCodesInternal works as expected.
 TEST(AdaptorOptionTest, initCodesInternal) {
@@ -241,4 +241,4 @@ TEST(AdaptorOptionTest, initCodes6) {
     EXPECT_EQ(ISC_V6_4O6_INTERFACE, codes["vendor-2495@4o6-interface"]);
 }
 
-} // end of anonymous namespace
+}  //anonymous namespace

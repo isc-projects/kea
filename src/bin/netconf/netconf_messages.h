@@ -43,7 +43,7 @@ extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_FAILED;
 extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_REJECTED;
 extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_STARTED;
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
 #endif // NETCONF_MESSAGES_H

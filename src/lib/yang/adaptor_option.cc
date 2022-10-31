@@ -17,12 +17,6 @@ using namespace isc::dhcp;
 namespace isc {
 namespace yang {
 
-AdaptorOption::AdaptorOption() {
-}
-
-AdaptorOption::~AdaptorOption() {
-}
-
 void
 AdaptorOption::setSpace(ElementPtr option, const string& space) {
     if (!option->contains("space")) {
@@ -124,5 +118,5 @@ AdaptorOption::initCodesInternal(OptionCodes& codes, const string& space,
     }
 }
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc

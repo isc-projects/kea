@@ -28,30 +28,29 @@ extern char const subnet_list[] = "subnet list";
 class TranslatorSubnetsTestKeaV4 :
     public GenericTranslatorTest<subnet_list, TranslatorSubnets> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorSubnetsTestKeaV4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorSubnetsTestKeaV4
+
 class TranslatorSubnetsTestKeaV6 :
     public GenericTranslatorTest<subnet_list, TranslatorSubnets> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorSubnetsTestKeaV6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorSubnetsTestKeaV6
+
 class TranslatorSubnetsTestIetfV6 :
     public GenericTranslatorTest<subnet_list, TranslatorSubnets> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorSubnetsTestIetfV6() {
         model_ = IETF_DHCPV6_SERVER;
     }
-};
+};  // TranslatorSubnetsTestIetfV6
 
 // This test verifies that an empty subnet list can be properly
 // translated from YANG to JSON using IETF model.

@@ -408,7 +408,6 @@ class TranslatorConfig : virtual public TranslatorControlSocket,
     virtual public TranslatorSharedNetworks,
     virtual public TranslatorLoggers {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -416,7 +415,7 @@ public:
     TranslatorConfig(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorConfig();
+    virtual ~TranslatorConfig() = default;
 
     /// @brief Translate the whole DHCP server configuration from YANG to JSON.
     ///
@@ -550,9 +549,9 @@ protected:
     ///
     /// @param elem The JSON element.
     void setServerKeaDhcp6(isc::data::ConstElementPtr elem);
-};
+};  // TranslatorConfig
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
 #endif // ISC_TRANSLATOR_CONFIG_H

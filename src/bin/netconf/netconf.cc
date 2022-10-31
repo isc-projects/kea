@@ -136,9 +136,9 @@ public:
             .arg(service_pair_.first)
             .arg(tree);
     }
-};
+};  // NetconfAgentCallback
 
-} // end of anonymous namespace
+}  //anonymous namespace
 
 namespace isc {
 namespace netconf {
@@ -741,5 +741,5 @@ bool NetconfAgent::shouldShutdown() const {
         ->shouldShutdown();
 }
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

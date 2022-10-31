@@ -93,7 +93,6 @@ namespace yang {
 /// - kea-ctrl-agent
 class TranslatorLogger : virtual public TranslatorBasic {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -101,7 +100,7 @@ public:
     TranslatorLogger(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorLogger();
+    virtual ~TranslatorLogger() = default;
 
     /// @brief Translate a logger from YANG to JSON.
     ///
@@ -167,7 +166,7 @@ protected:
     /// @param elem The JSON element.
     void setLoggerKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-};
+};  // TranslatorLogger
 
 /// @brief A translator class for converting a logger list between
 /// YANG and JSON.
@@ -175,7 +174,6 @@ protected:
 /// Currently supports all kea servers and agents. Specific to Kea.
 class TranslatorLoggers : virtual public TranslatorLogger {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -183,7 +181,7 @@ public:
     TranslatorLoggers(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorLoggers();
+    virtual ~TranslatorLoggers() = default;
 
     /// @brief Translate loggers from YANG to JSON.
     ///
@@ -228,7 +226,7 @@ protected:
     /// @throw BadValue on a logger without name.
     void setLoggersKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);
-};
+};  // TranslatorLoggers
 
 }  // namespace yang
 }  // namespace isc

@@ -55,7 +55,6 @@ const char* valid_netconf_config =
 /// has extensive set of unit tests that are independent from Netconf.
 class NetconfControllerTest : public DControllerTest {
 public:
-
     /// @brief Constructor.
     NetconfControllerTest()
         : DControllerTest(NetconfController::instance) {
@@ -83,7 +82,7 @@ public:
         }
         return (p);
     }
-};
+};  // NetconfControllerTest
 
 // Basic Controller instantiation testing.
 // Verifies that the controller singleton gets created and that the

@@ -44,7 +44,7 @@ private:
         session.deleteItem("/keatest-module:presence-container");
         session.applyChanges();
     }
-};
+};  // TranslatorBasicTest
 
 namespace {
 
@@ -545,4 +545,4 @@ TEST_F(TranslatorBasicTest, list) {
     EXPECT_FALSE(element);
 }
 
-} // anonymous namespace
+}  // anonymous namespace

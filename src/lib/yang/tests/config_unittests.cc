@@ -181,23 +181,23 @@ public:
     Session session_;
 
     std::unique_ptr<TranslatorBasic> translator_;
-};
+};  // ConfigTest
 
 struct ConfigTestKeaV4 : ConfigTest {
     ConfigTestKeaV4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // ConfigTestKeav4
 struct ConfigTestKeaV6 : ConfigTest {
     ConfigTestKeaV6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // ConfigTestKeaV6
 struct ConfigTestIetfV6 : ConfigTest {
     ConfigTestIetfV6() {
         model_ = IETF_DHCPV6_SERVER;
     }
-};
+};  // ConfigTestIetfV6
 
 // Check empty config with ietf-dhcpv6-server model.
 TEST_F(ConfigTestIetfV6, emptyIetf6) {

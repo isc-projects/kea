@@ -75,7 +75,7 @@ public:
         UNIX,    //< Unix socket.
         HTTP,    //< HTTP socket.
         STDOUT   //< standard output.
-    };
+    };  // Type
 
     /// @brief Constructor.
     ///
@@ -138,7 +138,7 @@ private:
 
     /// @brief The HTTP server URL.
     const isc::http::Url url_;
-};
+};  // CfgControlSocket
 
 /// @brief Defines a pointer for CfgControlSocket instances.
 typedef boost::shared_ptr<CfgControlSocket> CfgControlSocketPtr;
@@ -267,7 +267,7 @@ private:
 
     /// @brief The control socket.
     CfgControlSocketPtr control_socket_;
-};
+};  // CfgServer
 
 /// @brief Defines a pointer for CfgServer instances.
 typedef boost::shared_ptr<CfgServer> CfgServerPtr;
@@ -303,7 +303,7 @@ public:
     ///
     /// @return pointer to the new CfgControlSocket instance.
     CfgControlSocketPtr parse(data::ConstElementPtr ctrl_sock_config);
-};
+};  // ControlSocketConfigParser
 
 /// @brief Parser for CfgServer.
 ///
@@ -320,7 +320,7 @@ public:
     /// @param server_config is the value from the "managed-servers" map to parse.
     /// @return pointer to the new CfgServer instance.
     CfgServerPtr parse(data::ConstElementPtr server_config);
-};
+};  // ServerConfigParser
 
 }  // namespace netconf
 }  // namespace isc

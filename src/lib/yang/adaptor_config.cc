@@ -20,12 +20,6 @@ const string DHCP6_SPACE = "dhcp6";
 namespace isc {
 namespace yang {
 
-AdaptorConfig::AdaptorConfig() {
-}
-
-AdaptorConfig::~AdaptorConfig() {
-}
-
 bool
 AdaptorConfig::subnetsCollectID(ConstElementPtr subnets, SubnetIDSet& set) {
     bool have_ids = true;
@@ -654,5 +648,5 @@ AdaptorConfig::preProcess6(ConstElementPtr config) {
     preProcess(mutable_dhcp, "subnet6", DHCP6_SPACE);
 }
 
-}  // end of namespace isc::yang
-}  // end of namespace isc
+}  // namespace yang
+}  // namespace isc

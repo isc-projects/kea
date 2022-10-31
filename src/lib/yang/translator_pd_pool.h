@@ -116,7 +116,6 @@ namespace yang {
 /// - ietf-dhcpv6-server (partial support)
 class TranslatorPdPool : virtual public TranslatorOptionDataList {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -124,7 +123,7 @@ public:
     TranslatorPdPool(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorPdPool();
+    virtual ~TranslatorPdPool() = default;
 
     /// @brief Translate a pd-pool from YANG to JSON.
     ///
@@ -185,7 +184,7 @@ protected:
     /// @param elem The JSON element.
     void setPdPoolKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-};
+};  // TranslatorPdPool
 
 /// @brief A translator class for converting a pd-pool list between
 /// YANG and JSON.
@@ -195,7 +194,6 @@ protected:
 /// - ietf-dhcpv6-server (partial support)
 class TranslatorPdPools : virtual public TranslatorPdPool {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
@@ -203,7 +201,7 @@ public:
     TranslatorPdPools(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorPdPools();
+    virtual ~TranslatorPdPools() = default;
 
     /// @brief Translate pd-pools from YANG to JSON.
     ///
@@ -251,7 +249,7 @@ protected:
     /// @throw BadValue on pd-pool without prefix or prefix length.
     void setPdPoolsPrefix(const std::string& xpath,
                           isc::data::ConstElementPtr elem);
-};
+};  // TranslatorPdPools
 
 }  // namespace yang
 }  // namespace isc
