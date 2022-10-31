@@ -184,11 +184,14 @@ NetconfAgent::clear() {
 
 void
 NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+
     // If the boot-update flag is not set.
-    if (!service_pair.second->getBootUpdate()) {
+    if (!configuration->getBootUpdate()) {
         return;
     }
-    CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
+    CfgControlSocketPtr ctrl_sock = configuration->getCfgControlSocket();
     if (!ctrl_sock) {
         return;
     }
@@ -199,7 +202,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
@@ -207,15 +210,15 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     int rcode;
     ConstElementPtr config;
     LOG_INFO(netconf_logger, NETCONF_GET_CONFIG_STARTED)
-        .arg(service_pair.first);
+        .arg(server);
     try {
-        answer = comm->configGet(service_pair.first);
+        answer = comm->configGet(server);
         config = parseAnswer(rcode, answer);
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "config-get command failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
@@ -223,19 +226,19 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "config-get command returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
     if (!config) {
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg("config-get command returned an empty configuration");
         return;
     }
     LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
               NETCONF_GET_CONFIG)
-        .arg(service_pair.first)
+        .arg(server)
         .arg(prettyPrint(config));
 }
 
@@ -334,47 +337,50 @@ NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
 
 void
 NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+
     // If we're shutting down, or the boot-update flag is not set or the model
     // associated with it is not specified.
-    if (!service_pair.second->getBootUpdate() ||
-        service_pair.second->getModel().empty()) {
+    if (!configuration->getBootUpdate() ||
+        configuration->getModel().empty()) {
         return;
     }
 
     // First we need a way to reach the actual servers.
-    CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
+    CfgControlSocketPtr ctrl_sock = configuration->getCfgControlSocket();
     if (!ctrl_sock) {
         return;
     }
 
     LOG_INFO(netconf_logger, NETCONF_SET_CONFIG_STARTED)
-        .arg(service_pair.first);
+        .arg(server);
     ConstElementPtr config;
     try {
         // Retrieve configuration from Sysrepo.
-        TranslatorConfig tc(*startup_sess_, service_pair.second->getModel());
+        TranslatorConfig tc(*startup_sess_, configuration->getModel());
         config = tc.getConfig();
         if (!config) {
             ostringstream msg;
             msg << "YANG configuration for "
-                << service_pair.second->getModel()
+                << configuration->getModel()
                 << " is empty";
             LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(msg.str());
             return;
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
                       NETCONF_SET_CONFIG)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(prettyPrint(config));
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "get YANG configuration for " << service_pair.first
+        msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
@@ -385,20 +391,20 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "control socket creation failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
     ConstElementPtr answer;
     int rcode;
     try {
-        answer = comm->configSet(config, service_pair.first);
+        answer = comm->configSet(config, server);
         parseAnswer(rcode, answer);
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "config-set command failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
@@ -406,26 +412,27 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "config-set command returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
     LOG_INFO(netconf_logger, NETCONF_BOOT_UPDATE_COMPLETED)
-        .arg(service_pair.first);
+        .arg(server);
 }
 
 void
 NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
-    string const& model(service_pair.second->getModel());
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+    string const& model(configuration->getModel());
 
     // If we're shutting down, or the subscribe-changes flag is not set or
-    // the model associated with it is not specified.
-    if (!service_pair.second->getSubscribeChanges() ||
-        model.empty()) {
+    // the model is not specified, give up on subscribing.
+    if (!configuration->getSubscribeChanges() || model.empty()) {
         return;
     }
     LOG_INFO(netconf_logger, NETCONF_SUBSCRIBE_CONFIG)
-        .arg(service_pair.first)
+        .arg(server)
         .arg(model);
     auto callback = [=](Session session,
                         uint32_t subscription_id,
@@ -438,20 +445,20 @@ NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
     };
     try {
         SubscribeOptions options(SubscribeOptions::Default);
-        if (!service_pair.second->getValidateChanges()) {
+        if (!configuration->getValidateChanges()) {
             options = options | SubscribeOptions::DoneOnly;
         }
         Subscription subscription(
             running_sess_->onModuleChange(model, callback, std::nullopt, 0, options));
-        subscriptions_.emplace(service_pair.first, forward<Subscription>(subscription));
+        subscriptions_.emplace(server, forward<Subscription>(subscription));
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "module change subscribe failed with " << ex.what();
         msg << "change subscription for model " << model <<
             " failed with: " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SUBSCRIBE_CONFIG_FAILED)
-            .arg(service_pair.first)
-            .arg(service_pair.second->getModel())
+            .arg(server)
+            .arg(configuration->getModel())
             .arg(msg.str());
         return;
     }
@@ -460,15 +467,17 @@ NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
 
 void
 NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
-    std::string const& model(service_pair.second->getModel());
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+    string const& model(configuration->getModel());
+
     // If we're shutting down, or the subscribe-changes flag is not set or
-    // the model associated with it is not specified.
-    if (!service_pair.second->getSubscribeNotifications() ||
-        model.empty()) {
+    // the model is not specified, give up on subscribing.
+    if (!configuration->getSubscribeNotifications() || model.empty()) {
         return;
     }
     LOG_INFO(netconf_logger, NETCONF_SUBSCRIBE_NOTIFICATIONS)
-        .arg(service_pair.first)
+        .arg(server)
         .arg(model);
 
     auto callback = [=](Session session,
@@ -481,14 +490,14 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
     };
     try {
         Subscription subscription(running_sess_->onNotification(model, callback));
-        subscriptions_.emplace(service_pair.first, forward<Subscription>(subscription));
+        subscriptions_.emplace(server, forward<Subscription>(subscription));
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "event notification subscription for model " << model <<
             " failed with: " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SUBSCRIBE_NOTIFICATIONS_FAILED)
-            .arg(service_pair.first)
-            .arg(service_pair.second->getModel())
+            .arg(server)
+            .arg(configuration->getModel())
             .arg(msg.str());
         return;
     }
@@ -496,45 +505,48 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
 
 sysrepo::ErrorCode
 NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+
     // If we're shutting down, or the subscribe-changes or the
     // validate-changes flag is not set or the model associated with
     // it is not specified.
-    if (!service_pair.second->getSubscribeChanges() ||
-        !service_pair.second->getValidateChanges() ||
-        service_pair.second->getModel().empty()) {
+    if (!configuration->getSubscribeChanges() ||
+        !configuration->getValidateChanges() ||
+        configuration->getModel().empty()) {
         return (sysrepo::ErrorCode::Ok);
     }
-    CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
+    CfgControlSocketPtr ctrl_sock = configuration->getCfgControlSocket();
     if (!ctrl_sock) {
         return (sysrepo::ErrorCode::Ok);
     }
     LOG_INFO(netconf_logger, NETCONF_VALIDATE_CONFIG_STARTED)
-        .arg(service_pair.first);
+        .arg(server);
     ConstElementPtr config;
     try {
-        TranslatorConfig tc(sess, service_pair.second->getModel());
+        TranslatorConfig tc(sess, configuration->getModel());
         config = tc.getConfig();
         if (!config) {
             ostringstream msg;
             msg << "YANG configuration for "
-                << service_pair.second->getModel()
+                << configuration->getModel()
                 << " is empty";
             LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(msg.str());
             return (sysrepo::ErrorCode::OperationFailed);
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
                       NETCONF_VALIDATE_CONFIG)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(prettyPrint(config));
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "get YANG configuration for " << service_pair.first
+        msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return (sysrepo::ErrorCode::ValidationFailed);;
     }
@@ -545,20 +557,20 @@ NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return (sysrepo::ErrorCode::Ok);
     }
     ConstElementPtr answer;
     int rcode;
     try {
-        answer = comm->configTest(config, service_pair.first);
+        answer = comm->configTest(config, server);
         parseAnswer(rcode, answer);
     } catch (const std::exception& ex) {
         stringstream msg;
         msg << "configTest failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return (sysrepo::ErrorCode::ValidationFailed);
     }
@@ -566,23 +578,26 @@ NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
         stringstream msg;
         msg << "configTest returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_REJECTED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return (sysrepo::ErrorCode::ValidationFailed);
     }
     LOG_INFO(netconf_logger, NETCONF_VALIDATE_CONFIG_COMPLETED)
-        .arg(service_pair.first);
+        .arg(server);
     return (sysrepo::ErrorCode::Ok);
 }
 
 sysrepo::ErrorCode
 NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+
     // Check if we should and can process this update.
-    if (!service_pair.second->getSubscribeChanges() ||
-        service_pair.second->getModel().empty()) {
+    if (!configuration->getSubscribeChanges() ||
+        configuration->getModel().empty()) {
         return (sysrepo::ErrorCode::Ok);
     }
-    CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
+    CfgControlSocketPtr ctrl_sock = configuration->getCfgControlSocket();
     if (!ctrl_sock) {
         return (sysrepo::ErrorCode::Ok);
     }
@@ -590,34 +605,34 @@ NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
     // All looks good, let's get started. Print an info that we're about
     // to update the configuration.
     LOG_INFO(netconf_logger, NETCONF_UPDATE_CONFIG_STARTED)
-        .arg(service_pair.first);
+        .arg(server);
 
     // Retrieve the configuration from SYSREPO first.
     ConstElementPtr config;
     try {
-        TranslatorConfig tc(sess, service_pair.second->getModel());
+        TranslatorConfig tc(sess, configuration->getModel());
         config = tc.getConfig();
         if (!config) {
             ostringstream msg;
             msg << "YANG configuration for "
-                << service_pair.second->getModel()
+                << configuration->getModel()
                 << " is empty";
             LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(msg.str());
             return (sysrepo::ErrorCode::ValidationFailed);
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
                       NETCONF_UPDATE_CONFIG)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(prettyPrint(config));
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "get YANG configuration for " << service_pair.first
+        msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return (sysrepo::ErrorCode::ValidationFailed);
     }
@@ -631,7 +646,7 @@ NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return (sysrepo::ErrorCode::Ok);
     }
@@ -640,13 +655,13 @@ NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
     ConstElementPtr answer;
     int rcode;
     try {
-        answer = comm->configSet(config, service_pair.first);
+        answer = comm->configSet(config, server);
         parseAnswer(rcode, answer);
     } catch (const std::exception& ex) {
         stringstream msg;
         msg << "configSet failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return (sysrepo::ErrorCode::ValidationFailed);
     }
@@ -656,12 +671,12 @@ NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
         stringstream msg;
         msg << "configSet returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return (sysrepo::ErrorCode::ValidationFailed);
     }
     LOG_INFO(netconf_logger, NETCONF_UPDATE_CONFIG_COMPLETED)
-        .arg(service_pair.first);
+        .arg(server);
     return (sysrepo::ErrorCode::Ok);
 }
 
