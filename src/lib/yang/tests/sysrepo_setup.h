@@ -85,7 +85,7 @@ public:
     std::optional<sysrepo::Session> sess_;
 
     /// @brief Shared pointer to the transaction object.
-    boost::shared_ptr<translator_t> t_obj_;
+    std::shared_ptr<translator_t> t_obj_;
     std::string model_;
 };  // GenericTranslatorTest
 

@@ -17,8 +17,6 @@
 #include <testutils/test_to_element.h>
 #include <netconf/tests/test_libraries.h>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -41,7 +39,7 @@ public:
 
 // Tests construction of NetconfCfgMgr class.
 TEST(NetconfCfgMgr, construction) {
-    boost::scoped_ptr<NetconfCfgMgr> cfg_mgr;
+    std::unique_ptr<NetconfCfgMgr> cfg_mgr;
 
     // Verify that configuration manager constructions without error.
     ASSERT_NO_THROW_LOG(cfg_mgr.reset(new NetconfCfgMgr()));

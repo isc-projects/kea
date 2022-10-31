@@ -10,8 +10,6 @@
 #include <yang/translator.h>
 #include <yang/tests/sysrepo_setup.h>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -54,7 +52,7 @@ TEST_F(TranslatorBasicTest, constructor) {
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
     // Get a translator object.
-    boost::scoped_ptr<TranslatorBasic> t_obj;
+    std::unique_ptr<TranslatorBasic> t_obj;
     EXPECT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
 }
 
@@ -63,7 +61,7 @@ TEST_F(TranslatorBasicTest, getItem) {
     // Get a translator object to play with.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
-    boost::scoped_ptr<TranslatorBasic> t_obj;
+    std::unique_ptr<TranslatorBasic> t_obj;
     ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
     string value;
     ConstElementPtr elem;
@@ -331,7 +329,7 @@ TEST_F(TranslatorBasicTest, setItem) {
     // Get a translator object to play with.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
-    boost::scoped_ptr<TranslatorBasic> t_obj;
+    std::unique_ptr<TranslatorBasic> t_obj;
     ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
 
     ElementPtr elem;
@@ -525,7 +523,7 @@ TEST_F(TranslatorBasicTest, list) {
     // Get a translator object to play with.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
-    boost::scoped_ptr<TranslatorBasic> t_obj;
+    std::unique_ptr<TranslatorBasic> t_obj;
     ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
     string xpath;
 

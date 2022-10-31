@@ -12,7 +12,6 @@
 #include <asiolink/io_error.h>
 
 #include <boost/foreach.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <sstream>

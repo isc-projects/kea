@@ -42,7 +42,7 @@ using isc::yang::test::SysrepoSetup;
 namespace {
 
 /// @brief Type definition for the pointer to Thread objects.
-using ThreadPtr = boost::shared_ptr<thread>;
+using ThreadPtr = std::shared_ptr<thread>;
 
 //////////////////////////////// STDOUT ////////////////////////////////
 
@@ -61,7 +61,7 @@ public:
 };  // TestStdoutControlSocket
 
 /// @brief Type definition for the pointer to the @c TestStdoutControlSocket.
-using TestStdoutControlSocketPtr = boost::shared_ptr<TestStdoutControlSocket>;
+using TestStdoutControlSocketPtr = std::shared_ptr<TestStdoutControlSocket>;
 
 // Verifies that the createControlSocket template can create a stdout
 // control socket.
@@ -74,7 +74,7 @@ TEST(StdoutControlSocketTest, createControlSocket) {
     ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     StdoutControlSocketPtr scs =
-        boost::dynamic_pointer_cast<StdoutControlSocket>(cs);
+        std::dynamic_pointer_cast<StdoutControlSocket>(cs);
     EXPECT_TRUE(scs);
 }
 
@@ -301,7 +301,7 @@ TEST_F(UnixControlSocketTest, createControlSocket) {
     ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     UnixControlSocketPtr ucs =
-        boost::dynamic_pointer_cast<UnixControlSocket>(cs);
+        std::dynamic_pointer_cast<UnixControlSocket>(cs);
     EXPECT_TRUE(ucs);
 }
 
@@ -628,7 +628,7 @@ TEST_F(HttpControlSocketTest, createControlSocket) {
     ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     HttpControlSocketPtr hcs =
-        boost::dynamic_pointer_cast<HttpControlSocket>(cs);
+        std::dynamic_pointer_cast<HttpControlSocket>(cs);
     EXPECT_TRUE(hcs);
 }
 

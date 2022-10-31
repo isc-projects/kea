@@ -14,8 +14,6 @@
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -224,7 +222,7 @@ public:
         EXPECT_TRUE(executeConfiguration(config, "reset config"));
     }
 
-    boost::scoped_ptr<NakedNetconfCfgMgr> srv_; ///< Netconf server under test
+    std::unique_ptr<NakedNetconfCfgMgr> srv_; ///< Netconf server under test
     int rcode_;                       ///< Return code from element parsing
     ConstElementPtr comment_;         ///< Reason for parse fail
 };  // NetconfGetCfgTest

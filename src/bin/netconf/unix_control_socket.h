@@ -73,7 +73,7 @@ private:
 };  // UnixControlSocket
 
 /// @brief Type definition for the pointer to the @c UnixControlSocket.
-using UnixControlSocketPtr = boost::shared_ptr<UnixControlSocket>;
+using UnixControlSocketPtr = std::shared_ptr<UnixControlSocket>;
 
 /// @brief Factory template specialization for unix control sockets.
 ///

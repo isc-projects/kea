@@ -141,7 +141,7 @@ private:
 };  // CfgControlSocket
 
 /// @brief Defines a pointer for CfgControlSocket instances.
-using CfgControlSocketPtr = boost::shared_ptr<CfgControlSocket>;
+using CfgControlSocketPtr = std::shared_ptr<CfgControlSocket>;
 
 /// @brief Represents a Managed CfgServer.
 ///
@@ -270,7 +270,7 @@ private:
 };  // CfgServer
 
 /// @brief Defines a pointer for CfgServer instances.
-using CfgServerPtr = boost::shared_ptr<CfgServer>;
+using CfgServerPtr = std::shared_ptr<CfgServer>;
 
 /// @brief Defines a map of CfgServers, keyed by the name.
 using CfgServersMap = std::map<std::string, CfgServerPtr>;
@@ -279,7 +279,7 @@ using CfgServersMap = std::map<std::string, CfgServerPtr>;
 using CfgServersMapPair = std::pair<std::string, CfgServerPtr>;
 
 /// @brief Defines a pointer to map of CfgServers.
-using CfgServersMapPtr = boost::shared_ptr<CfgServersMap>;
+using CfgServersMapPtr = std::shared_ptr<CfgServersMap>;
 
 /// @brief Dumps the contents of a CfgServer as text to a output stream.
 ///
