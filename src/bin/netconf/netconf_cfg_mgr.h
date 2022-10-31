@@ -20,7 +20,7 @@ namespace netconf {
 
 class NetconfConfig;
 /// @brief Pointer to a configuration context.
-typedef boost::shared_ptr<NetconfConfig> NetconfConfigPtr;
+using NetconfConfigPtr = boost::shared_ptr<NetconfConfig>;
 
 /// @brief Netconf Configuration Context.
 ///
@@ -177,7 +177,7 @@ protected:
 };  // NetconfCfgMgr
 
 /// @brief Defines a shared pointer to NetconfCfgMgr.
-typedef boost::shared_ptr<NetconfCfgMgr> NetconfCfgMgrPtr;
+using NetconfCfgMgrPtr = boost::shared_ptr<NetconfCfgMgr>;
 
 }  // namespace netconf
 }  // namespace isc

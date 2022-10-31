@@ -771,7 +771,7 @@ void loadFile(const string& fname, ElementPtr list) {
 // This test checks that all map entries are in the sample file.
 TEST(ParserTest, mapEntries) {
     // Type of keyword set.
-    typedef set<string> KeywordSet;
+    using KeywordSet = set<string>;
 
     // Get keywords from the syntax file (netconf_parser.yy).
     ifstream syntax_file(SYNTAX_FILE);

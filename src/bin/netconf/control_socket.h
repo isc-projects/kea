@@ -102,7 +102,7 @@ public:
 };  // ControlSocketBase
 
 /// @brief Type definition for the pointer to the @c ControlSocketBase.
-typedef boost::shared_ptr<ControlSocketBase> ControlSocketBasePtr;
+using ControlSocketBasePtr = boost::shared_ptr<ControlSocketBase>;
 
 /// @brief Factory template for control sockets.
 ///

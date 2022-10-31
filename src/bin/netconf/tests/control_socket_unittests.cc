@@ -42,7 +42,7 @@ using isc::yang::test::SysrepoSetup;
 namespace {
 
 /// @brief Type definition for the pointer to Thread objects.
-typedef boost::shared_ptr<thread> ThreadPtr;
+using ThreadPtr = boost::shared_ptr<thread>;
 
 //////////////////////////////// STDOUT ////////////////////////////////
 
@@ -61,7 +61,7 @@ public:
 };  // TestStdoutControlSocket
 
 /// @brief Type definition for the pointer to the @c TestStdoutControlSocket.
-typedef boost::shared_ptr<TestStdoutControlSocket> TestStdoutControlSocketPtr;
+using TestStdoutControlSocketPtr = boost::shared_ptr<TestStdoutControlSocket>;
 
 // Verifies that the createControlSocket template can create a stdout
 // control socket.
@@ -408,16 +408,16 @@ const string SERVER_ADDRESS = "127.0.0.1";
 const uint16_t SERVER_PORT = 18123;
 
 /// @brief Test HTTP JSON response.
-typedef TestHttpResponseBase<HttpResponseJson> Response;
+using Response = TestHttpResponseBase<HttpResponseJson>;
 
 /// @brief Pointer to test HTTP JSON response.
-typedef boost::shared_ptr<Response> ResponsePtr;
+using ResponsePtr = boost::shared_ptr<Response>;
 
 /// @brief Generic test HTTP response.
-typedef TestHttpResponseBase<HttpResponse> GenericResponse;
+using GenericResponse = TestHttpResponseBase<HttpResponse>;
 
 /// @brief Pointer to generic test HTTP response.
-typedef boost::shared_ptr<GenericResponse> GenericResponsePtr;
+using GenericResponsePtr = boost::shared_ptr<GenericResponse>;
 
 /// @brief Implementation of the HttpResponseCreator.
 ///

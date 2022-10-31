@@ -21,7 +21,7 @@ namespace yang {
 ///
 /// The map is used to store space+name to code mappings so for
 /// an option data without a code entry the code entry can be supplied.
-typedef std::map<std::string, uint16_t> OptionCodes;
+using OptionCodes = std::map<std::string, uint16_t>;
 
 /// @brief JSON adaptor for option data or definition setting defaults.
 ///

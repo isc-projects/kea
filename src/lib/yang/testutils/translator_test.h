@@ -141,10 +141,10 @@ private:
 };  // YangRepr
 
 /// @brief Alias for Items.
-typedef YangRepr::YangReprItem YRItem;
+using YRItem = YangRepr::YangReprItem;
 
 /// @brief Alias for Trees.
-typedef YangRepr::Tree YRTree;
+using YRTree = YangRepr::Tree;
 
 /// @brief Overrides standard output operator for LeafBaseType.
 std::ostream& operator<<(std::ostream& os, libyang::LeafBaseType type);

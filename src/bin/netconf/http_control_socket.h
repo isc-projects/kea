@@ -73,7 +73,7 @@ private:
 };  // HttpControlSocket
 
 /// @brief Type definition for the pointer to the @c HttpControlSocket.
-typedef boost::shared_ptr<HttpControlSocket> HttpControlSocketPtr;
+using HttpControlSocketPtr = boost::shared_ptr<HttpControlSocket>;
 
 /// @brief Factory template specialization for http control sockets.
 ///

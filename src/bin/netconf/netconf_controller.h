@@ -77,7 +77,7 @@ private:
 };  // NetconfController
 
 // @Defines a shared pointer to NetconfController
-typedef boost::shared_ptr<NetconfController> NetconfControllerPtr;
+using NetconfControllerPtr = boost::shared_ptr<NetconfController>;
 
 }  // namespace netconf
 }  // namespace isc

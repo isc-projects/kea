@@ -74,7 +74,7 @@ protected:
 };  // StdoutControlSocket
 
 /// @brief Type definition for the pointer to the @c StdoutControlSocket.
-typedef boost::shared_ptr<StdoutControlSocket> StdoutControlSocketPtr;
+using StdoutControlSocketPtr = boost::shared_ptr<StdoutControlSocket>;
 
 /// @brief Factory template specialization for stdout control sockets.
 ///

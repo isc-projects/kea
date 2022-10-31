@@ -26,7 +26,7 @@ namespace netconf {
 class NetconfAgent;
 
 /// @brief Type definition for the pointer to the @c NetconfAgent.
-typedef boost::shared_ptr<NetconfAgent> NetconfAgentPtr;
+using NetconfAgentPtr = boost::shared_ptr<NetconfAgent>;
 
 /// @brief Netconf agent.
 ///

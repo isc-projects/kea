@@ -53,7 +53,7 @@ namespace {
 const string TEST_SOCKET = "test-socket";
 
 /// @brief Type definition for the pointer to Thread objects.
-typedef boost::shared_ptr<thread> ThreadPtr;
+using ThreadPtr = boost::shared_ptr<thread>;
 
 /// @brief Test version of the NetconfAgent class.
 class NakedNetconfAgent : public NetconfAgent {
@@ -72,7 +72,7 @@ public:
 };  // NakedNetconfAgent
 
 /// @brief Type definition for the pointer to NakedNetconfAgent objects.
-typedef boost::shared_ptr<NakedNetconfAgent> NakedNetconfAgentPtr;
+using NakedNetconfAgentPtr = boost::shared_ptr<NakedNetconfAgent>;
 
 /// @brief Clear YANG configuration.
 ///

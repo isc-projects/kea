@@ -98,7 +98,7 @@ private:
 };  // NetconfProcess
 
 /// @brief Defines a shared pointer to NetconfProcess.
-typedef boost::shared_ptr<NetconfProcess> NetconfProcessPtr;
+using NetconfProcessPtr = boost::shared_ptr<NetconfProcess>;
 
 }  // namespace netconf
 }  // namespace isc

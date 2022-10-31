@@ -15,7 +15,7 @@ namespace isc {
 namespace yang {
 
 /// @brief Set of SubnetIDs.
-typedef std::set<isc::dhcp::SubnetID> SubnetIDSet;
+using SubnetIDSet = std::set<isc::dhcp::SubnetID>;
 
 /// @brief JSON adaptor for subnets adding IDs and canonizes relays.
 ///
