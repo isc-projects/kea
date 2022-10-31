@@ -3911,4 +3911,103 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6ExplicitSanitize) {
     EXPECT_EQ(expected, io.readFile());
 }
 
+/// @brief Checks that buildExtendedInfoTables6 can rebuild tables.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
+    // Add some leases to the CSV file: one empty map, one new extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"remote-id\": \"010203040506\"&#x2c"
+        " \"relay-id\": \"6464646464646464\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,\n"
+    );
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval=0"] = "0";
+    pmap["extended-info-tables"] = "true";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check that extended info tables were updated.
+    EXPECT_EQ(1, lease_mgr->relay_id6_.size());
+    EXPECT_EQ(1, lease_mgr->remote_id6_.size());
+    EXPECT_EQ(1, lease_mgr->link_addr6_.size());
+
+    // Add a junk entry in each table.
+    IOAddress lease_addr("2001:db8:1::10");
+    IOAddress link_addr("2001:db8::11");
+    const vector<uint8_t>& relay_id = vector<uint8_t>(10, 0x65);
+    Lease6ExtendedInfoPtr relay;
+    relay.reset(new Lease6ExtendedInfo(lease_addr, link_addr, relay_id));
+    lease_mgr->relay_id6_.insert(relay);
+    const vector<uint8_t>& remote_id = { 10, 11, 12, 13, 14, 15, 16 };
+    Lease6ExtendedInfoPtr remote;
+    remote.reset(new Lease6ExtendedInfo(lease_addr, link_addr, remote_id));
+    lease_mgr->remote_id6_.insert(remote);
+    Lease6SimpleExtendedInfoPtr link;
+    link.reset(new Lease6SimpleExtendedInfo(lease_addr, link_addr));
+    lease_mgr->link_addr6_.insert(link);
+
+    // Check that tables grown.
+    EXPECT_EQ(2, lease_mgr->relay_id6_.size());
+    EXPECT_EQ(2, lease_mgr->remote_id6_.size());
+    EXPECT_EQ(2, lease_mgr->link_addr6_.size());
+
+    // Rebuild the tables.
+    size_t updated = 0;
+    EXPECT_NO_THROW(updated = lease_mgr->buildExtendedInfoTables6(false, false));
+    EXPECT_EQ(0, updated);
+
+    // Check tables.
+    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    auto relay_id_it = lease_mgr->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
+    Lease6ExtendedInfoPtr ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    auto remote_id_it = lease_mgr->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->link_addr6_.size());
+    auto link_addr_it = lease_mgr->link_addr6_.cbegin();
+    ASSERT_NE(link_addr_it, lease_mgr->link_addr6_.cend());
+    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
+    ASSERT_TRUE(sex_info);
+    EXPECT_EQ("2001:db8:1::2", sex_info->lease_addr_.toText());
+    EXPECT_EQ("2001:db8::4", sex_info->link_addr_.toText());
+}
+
 }  // namespace

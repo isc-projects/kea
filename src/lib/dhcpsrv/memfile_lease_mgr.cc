@@ -2866,6 +2866,13 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
         .arg(update ? " updating in file" : "")
         .arg(enabled ? "enabled" : "disabled");
 
+    // Clear tables when enabled.
+    if (enabled) {
+        relay_id6_.clear();
+        remote_id6_.clear();
+        link_addr6_.clear();
+    }
+
     size_t leases = 0;
     size_t modified = 0;
     size_t updated = 0;
