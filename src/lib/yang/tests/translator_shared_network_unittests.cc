@@ -50,7 +50,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV4, getEmpty) {
     // Get the shared network list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr networks;
-    EXPECT_NO_THROW(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
     ASSERT_FALSE(networks);
 }
 
@@ -62,12 +62,12 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, get) {
     const string& xnetwork = xpath + "/shared-network[name='foo']";
     const string& xsubnet = xnetwork + "/subnet6[id='111']/subnet";
     string const v_subnet("2001:db8::/48");
-    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet, v_subnet));
     sess_->applyChanges();
 
     // Get the shared network.
     ConstElementPtr network;
-    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork));
+    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetwork(xnetwork));
     ASSERT_TRUE(network);
     ElementPtr subnet = Element::createMap();
     subnet->set("id", Element::create(111));
@@ -81,7 +81,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, get) {
 
     // Get the shared network list and check if the shared network is in it.
     ConstElementPtr networks;
-    EXPECT_NO_THROW(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
     ASSERT_TRUE(networks);
     ASSERT_EQ(Element::list, networks->getType());
     ASSERT_EQ(1, networks->size());
@@ -94,11 +94,11 @@ TEST_F(TranslatorSharedNetworksTestKeaV4, setEmpty) {
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr networks = Element::createList();
-    EXPECT_NO_THROW(t_obj_->setSharedNetworks(xpath, networks));
+    EXPECT_NO_THROW_LOG(t_obj_->setSharedNetworks(xpath, networks));
 
     // Get it back.
     networks.reset();
-    EXPECT_NO_THROW(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
     ASSERT_FALSE(networks);
 }
 
@@ -117,11 +117,11 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, set) {
     share->set("name", Element::create(string("foo")));
     share->set("subnet6", subnets);
     networks->add(share);
-    EXPECT_NO_THROW(t_obj_->setSharedNetworks(xpath, networks));
+    EXPECT_NO_THROW_LOG(t_obj_->setSharedNetworks(xpath, networks));
 
     // Get it back.
     networks.reset();
-    EXPECT_NO_THROW(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
     ASSERT_TRUE(networks);
     ASSERT_EQ(Element::list, networks->getType());
     ASSERT_EQ(1, networks->size());
@@ -163,25 +163,25 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, getList) {
     // Create the subnet1: 2001:db8:1::/48 #1 in shared network foo.
     const string& xsubnet1 = xnetwork1 + "/subnet6[id='1']/subnet";
     string const v_subnet1("2001:db8:1::/48");
-    EXPECT_NO_THROW(sess_->setItem(xsubnet1, v_subnet1));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet1, v_subnet1));
     sess_->applyChanges();
 
     // Create the subnet2: 2001:db8:2::/48 #2 in shared network foo.
     const string& xsubnet2 = xnetwork1 + "/subnet6[id='2']/subnet";
     string const v_subnet2("2001:db8:2::/48");
-    EXPECT_NO_THROW(sess_->setItem(xsubnet2, v_subnet2));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet2, v_subnet2));
     sess_->applyChanges();
 
     // Create the subnet1: 2001:db8:101::/48 #101 in shared network foo.
     const string& xsubnet3 = xnetwork2 + "/subnet6[id='101']/subnet";
     string const v_subnet("2001:db8:101::/48");
-    EXPECT_NO_THROW(sess_->setItem(xsubnet3, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet3, v_subnet));
     sess_->applyChanges();
 
     // Create the subnet2: 2001:db8:2::/48 #2 in shared network foo.
     const string& xsubnet4 = xnetwork2 + "/subnet6[id='102']/subnet";
     string const v_subnet4("2001:db8:102::/48");
-    EXPECT_NO_THROW(sess_->setItem(xsubnet4, v_subnet4));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet4, v_subnet4));
     sess_->applyChanges();
 
     // Ok, now test the getters. Let's start with the easier ones that
@@ -189,22 +189,22 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, getList) {
     ConstElementPtr network;
 
     // Get the first network.
-    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork1));
+    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetwork(xnetwork1));
     ASSERT_TRUE(network);
     EXPECT_EQ(exp_net1, network->str());
 
     // Get the second network.
-    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork2));
+    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetwork(xnetwork2));
     ASSERT_TRUE(network);
     EXPECT_EQ(exp_net2, network->str());
 
     // Check that networks with non-existent name are not returned.
-    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork3));
+    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetwork(xnetwork3));
     EXPECT_FALSE(network);
 
     // Now test returns all networks
     ConstElementPtr networks;
-    EXPECT_NO_THROW(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
     ASSERT_TRUE(networks);
     EXPECT_EQ(exp_both, networks->str());
 }

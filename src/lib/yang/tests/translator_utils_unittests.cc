@@ -74,10 +74,10 @@ TEST(YangReprTest, getTest) {
     sess.switchDatastore(sysrepo::Datastore::Candidate);
 
     // Cleanup.
-    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:container"));
-    EXPECT_NO_THROW(sess.applyChanges());
-    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:main"));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.deleteItem("/keatest-module:container"));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.deleteItem("/keatest-module:main"));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     // Fill the test module.
     string xpath;
@@ -85,70 +85,70 @@ TEST(YangReprTest, getTest) {
 
     xpath = "/keatest-module:main/string";
     value = "str";
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/boolean";
     value = "true";
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
     value = to_string(u8);
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
     value = to_string(u16);
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
     value = to_string(u32);
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
     value = to_string(s8);
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/i16";
     int16_t s16(16);
     value = to_string(s16);
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
     value = to_string(s32);
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/id_ref";
     value = "keatest-module:id_1";
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     xpath = "/keatest-module:main/enum";
     value = "maybe";
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     // Binary.
     xpath = "/keatest-module:main/raw";
     value = "Zm9vYmFy";
-    EXPECT_NO_THROW(sess.setItem(xpath, value));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     // Get it.
     YangRepr repr(testModel);
     YRTree tree;
-    EXPECT_NO_THROW(tree = repr.get(sess));
+    EXPECT_NO_THROW_LOG(tree = repr.get(sess));
 
     // Verify.
     EXPECT_TRUE(repr.verify(testTree, sess, cerr));
@@ -163,15 +163,15 @@ TEST(YangReprTrest, getTestErrors) {
     sess.switchDatastore(sysrepo::Datastore::Candidate);
 
     // Cleanup.
-    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:container"));
-    EXPECT_NO_THROW(sess.applyChanges());
-    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:main"));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.deleteItem("/keatest-module:container"));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.deleteItem("/keatest-module:main"));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     // Get it.
     YangRepr repr(testModel);
     YRTree tree;
-    EXPECT_NO_THROW(repr.set(testTree, sess));
+    EXPECT_NO_THROW_LOG(repr.set(testTree, sess));
 
     // Verify.
     EXPECT_TRUE(repr.verify(testTree, sess, cerr));
@@ -212,14 +212,14 @@ TEST(YangReprTest, setTest) {
     sess.switchDatastore(sysrepo::Datastore::Candidate);
 
     // Cleanup.
-    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:container"));
-    EXPECT_NO_THROW(sess.applyChanges());
-    EXPECT_NO_THROW(sess.deleteItem("/keatest-module:main"));
-    EXPECT_NO_THROW(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.deleteItem("/keatest-module:container"));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
+    EXPECT_NO_THROW_LOG(sess.deleteItem("/keatest-module:main"));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
 
     // Set the module content.
     YangRepr repr(testModel);
-    EXPECT_NO_THROW(repr.set(testTree, sess));
+    EXPECT_NO_THROW_LOG(repr.set(testTree, sess));
 
     // Verify it.
     EXPECT_TRUE(repr.verify(testTree, sess, cerr));
@@ -232,6 +232,7 @@ TEST(YangReprTest, setTest) {
 /// @param model name of the model to be verified against.
 /// @param tree tree to be verified.
 void sanityCheckConfig(const std::string& model, const YRTree& tree) {
+    SCOPED_TRACE("\n* Tested model: " + model);
     SysrepoSetup::cleanSharedMemory();
 
     // Get a translator object to play with.
@@ -251,19 +252,16 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
         if (model == IETF_DHCPV6_SERVER) {
             toplevel_node = "server";
         }
-        EXPECT_NO_THROW(translator.deleteItem("/" + model + ":" + toplevel_node));
+        EXPECT_NO_THROW_LOG(translator.deleteItem("/" + model + ":" + toplevel_node));
     }
 
     // Get it.
     YangRepr repr(model);
 
-    EXPECT_NO_THROW(repr.set(tree, sess))
-        << " for model " << model;
+    EXPECT_NO_THROW_LOG(repr.set(tree, sess));
     bool result = false;
-    EXPECT_NO_THROW(result = repr.verify(tree, sess, cerr))
-        << " for model " << model;
-    EXPECT_TRUE(result)
-        << " for model " << model;
+    EXPECT_NO_THROW_LOG(result = repr.verify(tree, sess, cerr));
+    EXPECT_TRUE(result);
 }
 
 // This is test environment sanity check. It verifies that all configuration

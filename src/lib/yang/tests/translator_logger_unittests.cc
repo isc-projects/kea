@@ -50,7 +50,7 @@ TEST_F(TranslatorLoggersTestv4, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr loggers;
-    EXPECT_NO_THROW(loggers = t_obj_->getLoggers(xpath));
+    EXPECT_NO_THROW_LOG(loggers = t_obj_->getLoggers(xpath));
     ASSERT_FALSE(loggers);
 }
 
@@ -64,15 +64,15 @@ TEST_F(TranslatorLoggersTestv6, get) {
     const string& xoption = xlogger + "/output-option[output='/bar']";
     const string& xmaxver = xoption + "/maxver";
     string const s_severity("WARN");
-    EXPECT_NO_THROW(sess_->setItem(xseverity, s_severity));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xseverity, s_severity));
     uint32_t max_ver = 10;
     string const s_maxver(to_string(max_ver));
-    EXPECT_NO_THROW(sess_->setItem(xmaxver, s_maxver));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xmaxver, s_maxver));
     sess_->applyChanges();
 
     // Get empty.
     ConstElementPtr loggers;
-    EXPECT_NO_THROW(loggers = t_obj_->getLoggers(xpath));
+    EXPECT_NO_THROW_LOG(loggers = t_obj_->getLoggers(xpath));
     ASSERT_TRUE(loggers);
     ASSERT_EQ(1, loggers->size());
     ConstElementPtr logger = loggers->get(0);
@@ -122,7 +122,7 @@ TEST_F(TranslatorLoggersTestv4, set) {
 
     // Get it back.
     ConstElementPtr gots;
-    EXPECT_NO_THROW(gots = t_obj_->getLoggers(xpath));
+    EXPECT_NO_THROW_LOG(gots = t_obj_->getLoggers(xpath));
     ASSERT_TRUE(gots);
     ASSERT_EQ(1, gots->size());
     ConstElementPtr got = gots->get(0);

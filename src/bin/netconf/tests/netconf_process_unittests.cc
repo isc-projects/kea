@@ -76,7 +76,7 @@ TEST_F(NetconfProcessTest, shutdown) {
 
     // Record start time, and invoke run().
     ptime start = microsec_clock::universal_time();
-    EXPECT_NO_THROW(run());
+    EXPECT_NO_THROW_LOG(run());
 
     // Record stop time.
     ptime stop = microsec_clock::universal_time();

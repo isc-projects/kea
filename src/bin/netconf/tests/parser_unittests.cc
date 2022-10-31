@@ -54,7 +54,7 @@ void compareJSON(ConstElementPtr a, ConstElementPtr b) {
 /// @param compare whether to compare the output with legacy JSON parser
 void testParser(const std::string& txt, ParserContext::ParserType parser_type,
     bool compare = true) {
-    SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
+    SCOPED_TRACE("\n* Tested config: \n---\n" + txt + "\n---");
 
     ConstElementPtr test_json;
     ASSERT_NO_THROW_LOG({
@@ -357,13 +357,13 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << "(" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW_LOG(json = Element::fromJSONFile(decommented, true));
     reference_json = moveComments(json);
 
     // remove the temporary file
-    EXPECT_NO_THROW(::remove(decommented.c_str()));
+    EXPECT_NO_THROW_LOG(::remove(decommented.c_str()));
 
-    EXPECT_NO_THROW(
+    EXPECT_NO_THROW_LOG(
     try {
         ParserContext ctx;
         test_json = ctx.parseFile(fname, ParserContext::PARSER_NETCONF);
@@ -401,8 +401,7 @@ TEST(ParserTest, file) {
 void testError(const std::string& txt,
                ParserContext::ParserType parser_type,
                const std::string& msg) {
-    SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
-
+    SCOPED_TRACE("\n* Tested config: \n---\n" + txt + "\n---");
 
     ParserContext ctx;
     EXPECT_THROW_MSG(ctx.parseString(txt, parser_type), ParseError, msg);
@@ -764,7 +763,7 @@ TEST(ParserTest, unicodeSlash) {
 void loadFile(const string& fname, ElementPtr list) {
     ParserContext ctx;
     ElementPtr json;
-    EXPECT_NO_THROW(json = ctx.parseFile(fname, ParserContext::PARSER_NETCONF));
+    EXPECT_NO_THROW_LOG(json = ctx.parseFile(fname, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(json);
     list->add(json);
 }
@@ -868,7 +867,7 @@ TEST(ParserTest, duplicateMapEntries) {
     sample_fname += "/simple-dhcp6.json";
     ParserContext ctx;
     ElementPtr sample_json;
-    EXPECT_NO_THROW(sample_json =
+    EXPECT_NO_THROW_LOG(sample_json =
         ctx.parseFile(sample_fname, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(sample_json);
 

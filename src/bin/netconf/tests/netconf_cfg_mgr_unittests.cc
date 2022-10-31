@@ -52,7 +52,7 @@ TEST(NetconfCfgMgr, construction) {
     EXPECT_TRUE(context);
 
     // Verify that the manager can be destructed without error.
-    EXPECT_NO_THROW(cfg_mgr.reset());
+    EXPECT_NO_THROW_LOG(cfg_mgr.reset());
 }
 
 // Tests if getContext can be retrieved.
@@ -96,7 +96,7 @@ TEST(NetconfCfgMgr, contextServer) {
     CfgServerPtr server4(new CfgServer("model4", socket4));
 
     // Ok, now set the server for D2
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("d2", server1)));
+    EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("d2", server1)));
 
     // Now check the values returned
     EXPECT_EQ(1, ctx.getCfgServersMap()->size());
@@ -105,7 +105,7 @@ TEST(NetconfCfgMgr, contextServer) {
     EXPECT_THROW(ctx.getCfgServersMap()->at("dhcp4"), std::out_of_range);
 
     // Now set the v6 server and sanity check again
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("dhcp6", server2)));
+    EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("dhcp6", server2)));
 
     // Should be possible to retrieve two servers
     EXPECT_EQ(2, ctx.getCfgServersMap()->size());
@@ -114,8 +114,8 @@ TEST(NetconfCfgMgr, contextServer) {
     EXPECT_EQ(server2, ctx.getCfgServersMap()->at("dhcp6"));
 
     // Finally, set all servers.
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("dhcp4", server3)));
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("ca", server4)));
+    EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("dhcp4", server3)));
+    EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("ca", server4)));
     EXPECT_EQ(4, ctx.getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("dhcp4"));
     ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("ca"));
@@ -363,11 +363,11 @@ const char* NETCONF_CONFIGS[] = {
 TEST(NetconfParser, badSocketType) {
     ConstElementPtr json;
     ParserContext parser;
-    EXPECT_NO_THROW(json = parser.parseString(NETCONF_CONFIGS[10],
+    EXPECT_NO_THROW_LOG(json = parser.parseString(NETCONF_CONFIGS[10],
                                               ParserContext::PARSER_JSON));
     ConstElementPtr answer;
     NakedNetconfCfgMgr cfg_mgr;
-    EXPECT_NO_THROW(answer = cfg_mgr.parse(json, false));
+    EXPECT_NO_THROW_LOG(answer = cfg_mgr.parse(json, false));
     int rcode = 0;
     string expected =
         "\"Unknown control socket type: tcp 'tcp' (<string>:5:32)\"";
@@ -387,7 +387,7 @@ public:
         isc::netconf::ParserContext parser;
         ConstElementPtr json = parser.parseString(config, ParserContext::PARSER_SUB_NETCONF);
 
-        EXPECT_NO_THROW(answer_ = cfg_mgr_.parse(json, false));
+        EXPECT_NO_THROW_LOG(answer_ = cfg_mgr_.parse(json, false));
         EXPECT_TRUE(checkAnswer(expected_answer));
     }
 

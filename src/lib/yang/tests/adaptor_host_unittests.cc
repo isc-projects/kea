@@ -28,7 +28,7 @@ TEST(AdaptorHostTest, notFlexId) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -42,7 +42,7 @@ TEST(AdaptorHostTest, noQuote) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -55,7 +55,7 @@ TEST(AdaptorHostTest, quotes) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr id = json->get("flex-id");
     ASSERT_TRUE(id);
@@ -73,7 +73,7 @@ TEST(AdaptorHostTest, extraQuote) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr id = json->get("flex-id");
     ASSERT_TRUE(id);
@@ -90,7 +90,7 @@ TEST(AdaptorHostTest, notStandard) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr id = json->get("flex-id");
     ASSERT_TRUE(id);
@@ -108,7 +108,7 @@ TEST(AdaptorHostTest, notQuoted) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr id = json->get("flex-id");
     ASSERT_TRUE(id);

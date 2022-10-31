@@ -99,9 +99,9 @@ TEST(AdaptorTest, fromParent) {
         "}\n";
 
     ConstElementPtr json = Element::fromJSON(config);
-    EXPECT_NO_THROW(Adaptor::fromParent("param1", json, json->get("list")));
-    EXPECT_NO_THROW(Adaptor::fromParent("param2", json, json->get("list")));
-    EXPECT_NO_THROW(Adaptor::fromParent("param3", json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::fromParent("param1", json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::fromParent("param2", json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::fromParent("param3", json, json->get("list")));
 
     string expected = "{\n"
         " \"param1\": 123,\n"
@@ -139,7 +139,7 @@ TEST(AdaptorTest, toParent) {
         "}\n";
 
     ElementPtr json = Element::fromJSON(config);
-    EXPECT_NO_THROW(Adaptor::toParent("param1", json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::toParent("param1", json, json->get("list")));
     EXPECT_TRUE(json->equals(*Element::fromJSON(config)));
 
     string expected = "{\n"
@@ -156,7 +156,7 @@ TEST(AdaptorTest, toParent) {
         " ]\n"
         "}\n";
 
-    EXPECT_NO_THROW(Adaptor::toParent("param2",json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::toParent("param2",json, json->get("list")));
     EXPECT_TRUE(json->equals(*Element::fromJSON(expected)));
 
     // param[345] have different values so it should throw.

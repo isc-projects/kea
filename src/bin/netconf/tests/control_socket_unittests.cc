@@ -215,11 +215,11 @@ UnixControlSocketTest::reflectServer() {
     // Acceptor.
     boost::asio::local::stream_protocol::acceptor
         acceptor(io_service_.get_io_service());
-    EXPECT_NO_THROW(acceptor.open());
+    EXPECT_NO_THROW_LOG(acceptor.open());
     boost::asio::local::stream_protocol::endpoint
         endpoint(unixSocketFilePath());
-    EXPECT_NO_THROW(acceptor.bind(endpoint));
-    EXPECT_NO_THROW(acceptor.listen());
+    EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
+    EXPECT_NO_THROW_LOG(acceptor.listen());
     boost::asio::local::stream_protocol::socket
         socket(io_service_.get_io_service());
 
@@ -286,7 +286,7 @@ UnixControlSocketTest::reflectServer() {
 
     // Close socket.
     if (socket.is_open()) {
-        EXPECT_NO_THROW(socket.close());
+        EXPECT_NO_THROW_LOG(socket.close());
     }
 
     EXPECT_FALSE(timeout);
@@ -322,7 +322,7 @@ TEST_F(UnixControlSocketTest, configGet) {
 
     // Try configGet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = ucs->configGet("foo"));
+    EXPECT_NO_THROW_LOG(reflected = ucs->configGet("foo"));
     ASSERT_TRUE(reflected);
     ASSERT_EQ(Element::map, reflected->getType());
     ConstElementPtr command = reflected->get("received");
@@ -348,7 +348,7 @@ TEST_F(UnixControlSocketTest, configTest) {
     ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = ucs->configTest(json, "foo"));
+    EXPECT_NO_THROW_LOG(reflected = ucs->configTest(json, "foo"));
     ASSERT_TRUE(reflected);
     ASSERT_EQ(Element::map, reflected->getType());
     ConstElementPtr command = reflected->get("received");
@@ -375,7 +375,7 @@ TEST_F(UnixControlSocketTest, configSet) {
     ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = ucs->configSet(json, "foo"));
+    EXPECT_NO_THROW_LOG(reflected = ucs->configSet(json, "foo"));
     ASSERT_TRUE(reflected);
     ASSERT_EQ(Element::map, reflected->getType());
     ConstElementPtr command = reflected->get("received");
@@ -647,7 +647,7 @@ TEST_F(HttpControlSocketTest, configGet) {
 
     // Try configGet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configGet("foo"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configGet("foo"));
     stop();
 
     // Check result.
@@ -675,7 +675,7 @@ TEST_F(HttpControlSocketTest, configGetCA) {
 
     // Try configGet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configGet("ca"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configGet("ca"));
     stop();
 
     // Check result.
@@ -704,7 +704,7 @@ TEST_F(HttpControlSocketTest, configTest) {
 
     // Try configTest.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configTest(json, "foo"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configTest(json, "foo"));
     stop();
 
     // Check result.
@@ -736,7 +736,7 @@ TEST_F(HttpControlSocketTest, configTestCA) {
 
     // Try configTest.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configTest(json, "ca"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configTest(json, "ca"));
     stop();
 
     // Check result.
@@ -766,7 +766,7 @@ TEST_F(HttpControlSocketTest, configSet) {
 
     // Try configSet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configSet(json, "foo"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configSet(json, "foo"));
     stop();
 
     // Check result.
@@ -798,7 +798,7 @@ TEST_F(HttpControlSocketTest, configSetCA) {
 
     // Try configSet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configSet(json, "ca"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configSet(json, "ca"));
     stop();
 
     // Check result.

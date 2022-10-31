@@ -66,7 +66,7 @@ TEST_F(TranslatorControlSocketTestv4, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config/control-socket";
     ConstElementPtr sock;
-    EXPECT_NO_THROW(sock = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocket(xpath));
     EXPECT_FALSE(sock);
 }
 
@@ -79,16 +79,16 @@ TEST_F(TranslatorControlSocketTestv6, get) {
     const string& xtype = xpath + "/socket-type";
     const string& xcontext = xpath + "/user-context";
     string const s_name("/tmp/kea.sock");
-    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xname, s_name));
     string const s_type("unix");
-    EXPECT_NO_THROW(sess_->setItem(xtype, s_type));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xtype, s_type));
     string const s_context("{ \"foo\": 1 }");
-    EXPECT_NO_THROW(sess_->setItem(xcontext, s_context));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xcontext, s_context));
     sess_->applyChanges();
 
     // Get it.
     ConstElementPtr sock;
-    EXPECT_NO_THROW(sock = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocket(xpath));
     ASSERT_TRUE(sock);
     ASSERT_EQ(Element::map, sock->getType());
     EXPECT_EQ(3, sock->size());
@@ -124,7 +124,7 @@ TEST_F(TranslatorControlSocketTestCtrlAgent, set) {
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW(got = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(got = t_obj_->getControlSocket(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::map, got->getType());
     EXPECT_EQ(3, got->size());
@@ -150,25 +150,25 @@ TEST_F(TranslatorControlSocketTestv4, setEmpty) {
     const string& xtype = xpath + "/socket-type";
     const string& xcontext = xpath + "/user-context";
     string const s_name("/tmp/kea.sock");
-    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xname, s_name));
     string const s_type("unix");
-    EXPECT_NO_THROW(sess_->setItem(xtype, s_type));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xtype, s_type));
     string const s_context("{ \"foo\": 1 }");
-    EXPECT_NO_THROW(sess_->setItem(xcontext, s_context));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xcontext, s_context));
     sess_->applyChanges();
 
     // Get it back.
     ConstElementPtr sock;
-    EXPECT_NO_THROW(sock = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocket(xpath));
     ASSERT_TRUE(sock);
     EXPECT_EQ(sock->str(),
         R"({ "socket-name": "/tmp/kea.sock", "socket-type": "unix", "user-context": { "foo": 1 } })");
 
     // Reset to empty.
-    EXPECT_NO_THROW(t_obj_->setControlSocket(xpath, ConstElementPtr()));
+    EXPECT_NO_THROW_LOG(t_obj_->setControlSocket(xpath, ConstElementPtr()));
 
     // Get it back.
-    EXPECT_NO_THROW(sock = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocket(xpath));
     EXPECT_FALSE(sock);
 }
 

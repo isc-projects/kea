@@ -51,7 +51,7 @@ TEST_F(TranslatorClassesTestv4, getEmpty) {
     // Get the client class list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr classes;
-    EXPECT_NO_THROW(classes = t_obj_->getClasses(xpath));
+    EXPECT_NO_THROW_LOG(classes = t_obj_->getClasses(xpath));
     EXPECT_FALSE(classes);
 }
 
@@ -63,12 +63,12 @@ TEST_F(TranslatorClassesTestv6, get) {
     const string& xclass = xpath + "/client-class[name='foo']";
     const string& xtest = xclass + "/test";
     string const v_test("not member('ALL')");
-    EXPECT_NO_THROW(sess_->setItem(xtest, v_test));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xtest, v_test));
     sess_->applyChanges();
 
     // Get the client class.
     ConstElementPtr cclass;
-    EXPECT_NO_THROW(cclass = t_obj_->getClass(xclass));
+    EXPECT_NO_THROW_LOG(cclass = t_obj_->getClass(xclass));
     ASSERT_TRUE(cclass);
     ElementPtr expected = Element::createMap();
     expected->set("name", Element::create(string("foo")));
@@ -77,7 +77,7 @@ TEST_F(TranslatorClassesTestv6, get) {
 
     // Get the client class list and check if the client class is in it.
     ConstElementPtr classes;
-    EXPECT_NO_THROW(classes = t_obj_->getClasses(xpath));
+    EXPECT_NO_THROW_LOG(classes = t_obj_->getClasses(xpath));
     ASSERT_TRUE(classes);
     ASSERT_EQ(Element::list, classes->getType());
     ASSERT_EQ(1, classes->size());
@@ -90,11 +90,11 @@ TEST_F(TranslatorClassesTestv4, setEmpty) {
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr classes = Element::createList();
-    EXPECT_NO_THROW(t_obj_->setClasses(xpath, classes));
+    EXPECT_NO_THROW_LOG(t_obj_->setClasses(xpath, classes));
 
     // Get it back.
     classes.reset();
-    EXPECT_NO_THROW(classes = t_obj_->getClasses(xpath));
+    EXPECT_NO_THROW_LOG(classes = t_obj_->getClasses(xpath));
     EXPECT_FALSE(classes);
 }
 
@@ -109,11 +109,11 @@ TEST_F(TranslatorClassesTestv6, set) {
     cclass->set("test", Element::create(string("''==''")));
     cclass->set("only-if-required", Element::create(false));
     classes->add(cclass);
-    EXPECT_NO_THROW(t_obj_->setClasses(xpath, classes));
+    EXPECT_NO_THROW_LOG(t_obj_->setClasses(xpath, classes));
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW(got = t_obj_->getClasses(xpath));
+    EXPECT_NO_THROW_LOG(got = t_obj_->getClasses(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::list, got->getType());
     ASSERT_EQ(1, got->size());

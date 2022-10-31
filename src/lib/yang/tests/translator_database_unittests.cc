@@ -51,7 +51,7 @@ TEST_F(TranslatorDatabaseTestv4, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     ConstElementPtr database;
-    EXPECT_NO_THROW(database = t_obj_->getDatabase(xpath));
+    EXPECT_NO_THROW_LOG(database = t_obj_->getDatabase(xpath));
     EXPECT_FALSE(database);
 }
 
@@ -63,15 +63,15 @@ TEST_F(TranslatorDatabaseTestv4, get) {
     const string& xtype = xpath + "/database-type";
     const string& xinterval = xpath + "/lfc-interval";
     string const s_type("memfile");
-    EXPECT_NO_THROW(sess_->setItem(xtype, s_type));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xtype, s_type));
     uint32_t li = 3600;
     string const s_interval(to_string(li));
-    EXPECT_NO_THROW(sess_->setItem(xinterval, s_interval));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xinterval, s_interval));
     sess_->applyChanges();
 
     // Get empty.
     ConstElementPtr database;
-    EXPECT_NO_THROW(database = t_obj_->getDatabase(xpath));
+    EXPECT_NO_THROW_LOG(database = t_obj_->getDatabase(xpath));
     ASSERT_TRUE(database);
     EXPECT_EQ(2, database->size());
     ConstElementPtr type = database->get("type");
@@ -96,7 +96,7 @@ TEST_F(TranslatorDatabaseTestv4, set) {
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW(got = t_obj_->getDatabase(xpath));
+    EXPECT_NO_THROW_LOG(got = t_obj_->getDatabase(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::map, got->getType());
     EXPECT_EQ(2, got->size());
@@ -118,10 +118,10 @@ TEST_F(TranslatorDatabaseTestv4, setEmpty) {
     const string& xtype = xpath + "/database-type";
     const string& xinterval = xpath + "/lfc-interval";
     string const s_type("memfile");
-    EXPECT_NO_THROW(sess_->setItem(xtype, s_type));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xtype, s_type));
     uint32_t li = 3600;
     string const s_interval(to_string(li));
-    EXPECT_NO_THROW(sess_->setItem(xinterval, s_interval));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xinterval, s_interval));
     sess_->applyChanges();
 
     // Reset to empty.
@@ -129,7 +129,7 @@ TEST_F(TranslatorDatabaseTestv4, setEmpty) {
 
     // Get it back.
     ConstElementPtr database;
-    EXPECT_NO_THROW(database = t_obj_->getDatabase(xpath));
+    EXPECT_NO_THROW_LOG(database = t_obj_->getDatabase(xpath));
     EXPECT_FALSE(database);
 }
 
@@ -163,7 +163,7 @@ TEST_F(TranslatorDatabasesTestv6, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp6-server:config/hosts-database";
     ConstElementPtr databases;
-    EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
+    EXPECT_NO_THROW_LOG(databases = t_obj_->getDatabases(xpath));
     EXPECT_FALSE(databases);
 }
 
@@ -179,21 +179,21 @@ TEST_F(TranslatorDatabasesTestv4, get) {
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
     string const s_name("kea");
-    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xname, s_name));
     string const s_user("kea");
-    EXPECT_NO_THROW(sess_->setItem(xuser, s_user));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xuser, s_user));
     string const s_password("kea");
-    EXPECT_NO_THROW(sess_->setItem(xpassword, s_password));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xpassword, s_password));
     string const s_host("localhost");
-    EXPECT_NO_THROW(sess_->setItem(xhost, s_host));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xhost, s_host));
     uint16_t mport = 3306;
     string const s_port(to_string(mport));
-    EXPECT_NO_THROW(sess_->setItem(xport, s_port));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xport, s_port));
     sess_->applyChanges();
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
+    EXPECT_NO_THROW_LOG(databases = t_obj_->getDatabases(xpath));
     ASSERT_TRUE(databases);
     ASSERT_EQ(1, databases->size());
     ConstElementPtr database = databases->get(0);
@@ -239,7 +239,7 @@ TEST_F(TranslatorDatabasesTestv6, set) {
 
     // Get it back.
     ConstElementPtr gots;
-    EXPECT_NO_THROW(gots = t_obj_->getDatabases(xpath));
+    EXPECT_NO_THROW_LOG(gots = t_obj_->getDatabases(xpath));
     ASSERT_TRUE(gots);
     ASSERT_EQ(Element::list, gots->getType());
     ASSERT_EQ(1, gots->size());
@@ -269,24 +269,24 @@ TEST_F(TranslatorDatabasesTestv4, setEmpty) {
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
     string const s_name("kea");
-    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xname, s_name));
     string const s_user("kea");
-    EXPECT_NO_THROW(sess_->setItem(xuser, s_user));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xuser, s_user));
     string const s_password("kea");
-    EXPECT_NO_THROW(sess_->setItem(xpassword, s_password));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xpassword, s_password));
     string const s_host("localhost");
-    EXPECT_NO_THROW(sess_->setItem(xhost, s_host));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xhost, s_host));
     uint16_t mport = 3306;
     string const s_port(to_string(mport));
-    EXPECT_NO_THROW(sess_->setItem(xport, s_port));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xport, s_port));
     sess_->applyChanges();
 
     // Reset to empty.
-    EXPECT_NO_THROW(t_obj_->setDatabase(xdatabase, ConstElementPtr()));
+    EXPECT_NO_THROW_LOG(t_obj_->setDatabase(xdatabase, ConstElementPtr()));
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
+    EXPECT_NO_THROW_LOG(databases = t_obj_->getDatabases(xpath));
     EXPECT_FALSE(databases);
 }
 
@@ -302,24 +302,24 @@ TEST_F(TranslatorDatabasesTestv4, setEmpties) {
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
     string const s_name("kea");
-    EXPECT_NO_THROW(sess_->setItem(xname, s_name));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xname, s_name));
     string const s_user("kea");
-    EXPECT_NO_THROW(sess_->setItem(xuser, s_user));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xuser, s_user));
     string const s_password("kea");
-    EXPECT_NO_THROW(sess_->setItem(xpassword, s_password));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xpassword, s_password));
     string const s_host("localhost");
-    EXPECT_NO_THROW(sess_->setItem(xhost, s_host));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xhost, s_host));
     uint16_t mport = 3306;
     string const s_port(to_string(mport));
-    EXPECT_NO_THROW(sess_->setItem(xport, s_port));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xport, s_port));
     sess_->applyChanges();
 
     // Reset to empty.
-    EXPECT_NO_THROW(t_obj_->setDatabases(xdatabase, ConstElementPtr()));
+    EXPECT_NO_THROW_LOG(t_obj_->setDatabases(xdatabase, ConstElementPtr()));
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
+    EXPECT_NO_THROW_LOG(databases = t_obj_->getDatabases(xpath));
     EXPECT_FALSE(databases);
 }
 

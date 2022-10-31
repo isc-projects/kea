@@ -88,8 +88,8 @@ typedef boost::shared_ptr<NakedNetconfAgent> NakedNetconfAgentPtr;
 void clearYang(NakedNetconfAgentPtr agent) {
     if (agent && (agent->startup_sess_)) {
         string xpath = "/kea-dhcp4-server:config";
-        EXPECT_NO_THROW(agent->startup_sess_->deleteItem(xpath));
-        EXPECT_NO_THROW(agent->startup_sess_->applyChanges());
+        EXPECT_NO_THROW_LOG(agent->startup_sess_->deleteItem(xpath));
+        EXPECT_NO_THROW_LOG(agent->startup_sess_->applyChanges());
     }
 }
 
@@ -260,13 +260,13 @@ NetconfAgentTest::fakeServer() {
     // Acceptor.
     boost::asio::local::stream_protocol::acceptor
         acceptor(io_service_->get_io_service());
-    EXPECT_NO_THROW(acceptor.open());
+    EXPECT_NO_THROW_LOG(acceptor.open());
     boost::asio::local::stream_protocol::endpoint
         endpoint(unixSocketFilePath());
     boost::asio::socket_base::reuse_address option(true);
     acceptor.set_option(option);
-    EXPECT_NO_THROW(acceptor.bind(endpoint));
-    EXPECT_NO_THROW(acceptor.listen());
+    EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
+    EXPECT_NO_THROW_LOG(acceptor.listen());
     boost::asio::local::stream_protocol::socket
         socket(io_service_->get_io_service());
 
@@ -311,13 +311,13 @@ NetconfAgentTest::fakeServer() {
     rbuf.resize(received);
     requests_.push_back(rbuf);
     ConstElementPtr json;
-    EXPECT_NO_THROW(json = Element::fromJSON(rbuf));
+    EXPECT_NO_THROW_LOG(json = Element::fromJSON(rbuf));
     EXPECT_TRUE(json);
     string command;
     ConstElementPtr config;
     if (json) {
         ConstElementPtr arg;
-        EXPECT_NO_THROW(command = parseCommand(arg, json));
+        EXPECT_NO_THROW_LOG(command = parseCommand(arg, json));
         if (command == "config-get") {
             config = Element::fromJSON("{ \"comment\": \"empty\" }");
         }
@@ -343,9 +343,9 @@ NetconfAgentTest::fakeServer() {
 
     // Close socket and acceptor.
     if (socket.is_open()) {
-        EXPECT_NO_THROW(socket.close());
+        EXPECT_NO_THROW_LOG(socket.close());
     }
-    EXPECT_NO_THROW(acceptor.close());
+    EXPECT_NO_THROW_LOG(acceptor.close());
     // Removed the socket file so it can be called again immediately.
     removeUnixSocketFile();
 
@@ -361,7 +361,7 @@ NetconfAgentTest::fakeServer() {
 
 // Verifies that the initSysrepo method opens sysrepo connection and sessions.
 TEST_F(NetconfAgentTest, initSysrepo) {
-    EXPECT_NO_THROW(agent_->initSysrepo());
+    EXPECT_NO_THROW_LOG(agent_->initSysrepo());
     EXPECT_TRUE(agent_->startup_sess_);
     EXPECT_TRUE(agent_->running_sess_);
     EXPECT_EQ(0, agent_->subscriptions_.size());
@@ -377,7 +377,7 @@ TEST_F(NetconfAgentLogTest, checkModule) {
     ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp6-server"));
 
     // kea-dhcp[46]-server should be available.
-    EXPECT_NO_THROW(agent_->initSysrepo());
+    EXPECT_NO_THROW_LOG(agent_->initSysrepo());
     EXPECT_EQ(1, agent_->modules_.count("kea-dhcp4-server"));
     EXPECT_EQ(1, agent_->modules_.count("kea-dhcp6-server"));
     EXPECT_TRUE(agent_->checkModule("kea-dhcp4-server"));
@@ -415,7 +415,7 @@ TEST_F(NetconfAgentLogTest, checkModules) {
     ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp6-server"));
 
     // kea-dhcp[46]-server should be available.
-    EXPECT_NO_THROW(agent_->initSysrepo());
+    EXPECT_NO_THROW_LOG(agent_->initSysrepo());
     EXPECT_EQ(1, agent_->modules_.count("kea-dhcp4-server"));
     EXPECT_EQ(1, agent_->modules_.count("kea-dhcp6-server"));
 
@@ -473,7 +473,7 @@ TEST_F(NetconfAgentLogTest, logChanges) {
     };
     SubscribeOptions const options(SubscribeOptions::Default | SubscribeOptions::DoneOnly);
     optional<Subscription> subscription;
-    EXPECT_NO_THROW(subscription = agent_->running_sess_->onModuleChange(KEA_DHCP4_SERVER, cb,
+    EXPECT_NO_THROW_LOG(subscription = agent_->running_sess_->onModuleChange(KEA_DHCP4_SERVER, cb,
                                                                          std::nullopt, 0, options));
     thread_.reset(new thread([this]() { io_service_->run(); }));
 
@@ -488,7 +488,7 @@ TEST_F(NetconfAgentLogTest, logChanges) {
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
           "10.0.2.0/24", LeafBaseType::String, true }
     });
-    EXPECT_NO_THROW(repr.set(tree1, *agent_->running_sess_));
+    EXPECT_NO_THROW_LOG(repr.set(tree1, *agent_->running_sess_));
 
     // Check that the debug output was correct.
     addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: created: "
@@ -532,13 +532,13 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
     };
     SubscribeOptions const options(SubscribeOptions::Default | SubscribeOptions::DoneOnly);
     optional<Subscription> subscription;
-    EXPECT_NO_THROW(subscription = agent_->running_sess_->onModuleChange(KEA_DHCP4_SERVER, cb,
+    EXPECT_NO_THROW_LOG(subscription = agent_->running_sess_->onModuleChange(KEA_DHCP4_SERVER, cb,
                                                                          std::nullopt, 0, options));
     thread_.reset(new thread([this]() { io_service_->run(); }));
 
     // Change configuration (subnet #1 moved to #10).
     string xpath = "/kea-dhcp4-server:config/subnet4[id='1']";
-    EXPECT_NO_THROW(agent_->running_sess_->deleteItem(xpath));
+    EXPECT_NO_THROW_LOG(agent_->running_sess_->deleteItem(xpath));
     const YRTree tree1 = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='10']/id",
           "10", LeafBaseType::Uint32, false },
@@ -549,7 +549,7 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
           "10.0.2.0/24", LeafBaseType::String, true }
     });
-    EXPECT_NO_THROW(repr.set(tree1, *agent_->running_sess_));
+    EXPECT_NO_THROW_LOG(repr.set(tree1, *agent_->running_sess_));
 
     // Check that the debug output was correct.
     addString(
@@ -589,7 +589,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
-    EXPECT_NO_THROW(json =
+    EXPECT_NO_THROW_LOG(json =
         parser_context.parseString(config, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(json);
     ASSERT_EQ(Element::map, json->getType());
@@ -600,7 +600,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
     NetconfSimpleParser parser;
-    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+    EXPECT_NO_THROW_LOG(parser.parse(ctx, json, false));
 
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
@@ -615,7 +615,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     waitReady();
 
     // Try keaConfig.
-    EXPECT_NO_THROW(agent_->keaConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->keaConfig(service_pair));
 
     // Wait server to be stopped.
     waitStopped();
@@ -686,7 +686,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
-    EXPECT_NO_THROW(json =
+    EXPECT_NO_THROW_LOG(json =
         parser_context.parseString(config, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(json);
     ASSERT_EQ(Element::map, json->getType());
@@ -697,7 +697,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
     NetconfSimpleParser parser;
-    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+    EXPECT_NO_THROW_LOG(parser.parse(ctx, json, false));
 
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
@@ -712,7 +712,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     waitReady();
 
     // Try yangConfig.
-    EXPECT_NO_THROW(agent_->yangConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->yangConfig(service_pair));
 
     // Wait server to be stopped.
     waitStopped();
@@ -778,7 +778,7 @@ TEST_F(NetconfAgentTest, subscribeConfig) {
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
-    EXPECT_NO_THROW(json =
+    EXPECT_NO_THROW_LOG(json =
         parser_context.parseString(config, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(json);
     ASSERT_EQ(Element::map, json->getType());
@@ -789,7 +789,7 @@ TEST_F(NetconfAgentTest, subscribeConfig) {
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
     NetconfSimpleParser parser;
-    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+    EXPECT_NO_THROW_LOG(parser.parse(ctx, json, false));
 
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
@@ -801,11 +801,11 @@ TEST_F(NetconfAgentTest, subscribeConfig) {
     EXPECT_EQ(0, agent_->subscriptions_.size());
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     /// Unsubscribe.
-    EXPECT_NO_THROW(agent_->subscriptions_.clear());
+    EXPECT_NO_THROW_LOG(agent_->subscriptions_.clear());
 }
 
 // Verifies that the update method works as expected: apply new YANG configuration
@@ -847,7 +847,7 @@ TEST_F(NetconfAgentTest, update) {
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
-    EXPECT_NO_THROW(json =
+    EXPECT_NO_THROW_LOG(json =
         parser_context.parseString(config, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(json);
     ASSERT_EQ(Element::map, json->getType());
@@ -858,7 +858,7 @@ TEST_F(NetconfAgentTest, update) {
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
     NetconfSimpleParser parser;
-    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+    EXPECT_NO_THROW_LOG(parser.parse(ctx, json, false));
 
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
@@ -868,7 +868,7 @@ TEST_F(NetconfAgentTest, update) {
 
     // Subscribe YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Launch server.
@@ -888,7 +888,7 @@ TEST_F(NetconfAgentTest, update) {
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
           "10.0.2.0/24", LeafBaseType::String, true }
     });
-    EXPECT_NO_THROW(repr.set(tree1, *agent_->running_sess_));
+    EXPECT_NO_THROW_LOG(repr.set(tree1, *agent_->running_sess_));
 
     // Wait server to be stopped.
     waitStopped();
@@ -972,7 +972,7 @@ TEST_F(NetconfAgentTest, validate) {
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
-    EXPECT_NO_THROW(json =
+    EXPECT_NO_THROW_LOG(json =
         parser_context.parseString(config, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(json);
     ASSERT_EQ(Element::map, json->getType());
@@ -983,7 +983,7 @@ TEST_F(NetconfAgentTest, validate) {
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
     NetconfSimpleParser parser;
-    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+    EXPECT_NO_THROW_LOG(parser.parse(ctx, json, false));
 
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
@@ -993,7 +993,7 @@ TEST_F(NetconfAgentTest, validate) {
 
     // Subscribe YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Launch server twice.
@@ -1018,7 +1018,7 @@ TEST_F(NetconfAgentTest, validate) {
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
           "10.0.2.0/24", LeafBaseType::String, true }
     });
-    EXPECT_NO_THROW(repr.set(tree1, *agent_->running_sess_));
+    EXPECT_NO_THROW_LOG(repr.set(tree1, *agent_->running_sess_));
 
     // Wait servers to be stopped.
     waitStopped();
@@ -1131,7 +1131,7 @@ TEST_F(NetconfAgentTest, noValidate) {
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
-    EXPECT_NO_THROW(json =
+    EXPECT_NO_THROW_LOG(json =
         parser_context.parseString(config, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(json);
     ASSERT_EQ(Element::map, json->getType());
@@ -1142,7 +1142,7 @@ TEST_F(NetconfAgentTest, noValidate) {
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
     NetconfSimpleParser parser;
-    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+    EXPECT_NO_THROW_LOG(parser.parse(ctx, json, false));
 
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
@@ -1152,7 +1152,7 @@ TEST_F(NetconfAgentTest, noValidate) {
 
     // Subscribe YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Change configuration (add invalid user context).

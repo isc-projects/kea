@@ -37,11 +37,11 @@ void testFile(const std::string& fname, bool v6, ElementPtr& result) {
 
     string decommented = decommentJSONfile(fname);
 
-    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW_LOG(json = Element::fromJSONFile(decommented, true));
     reference_json = moveComments(json);
 
     // remove the temporary file
-    EXPECT_NO_THROW(::remove(decommented.c_str()));
+    EXPECT_NO_THROW_LOG(::remove(decommented.c_str()));
 
     string before = json->str();
     if (v6) {

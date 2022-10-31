@@ -60,7 +60,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getEmptyIetf) {
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_FALSE(subnets);
 }
 
@@ -70,7 +70,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getEmptyKea) {
     // Get the subnet list and check if it is empty.
     const string& xpath = "/kea-dhcp6-server:config";
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_FALSE(subnets);
 }
 
@@ -83,12 +83,12 @@ TEST_F(TranslatorSubnetsTestIetfV6, getIetf) {
     const string& xsub = xpath + "/network-range[network-range-id='111']";
     string const v_subnet("2001:db8::/48");
     const string& xsubnet = xsub + "/network-prefix";
-    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet, v_subnet));
     sess_->applyChanges();
 
     // Get the subnet.
     ConstElementPtr subnet;
-    EXPECT_NO_THROW(subnet = t_obj_->getSubnet(xsub));
+    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnet(xsub));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("{ \"id\": 111, "
               "\"subnet\": \"2001:db8::/48\" }",
@@ -96,7 +96,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getIetf) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -112,12 +112,12 @@ TEST_F(TranslatorSubnetsTestKeaV6, getKea) {
     const string& xsub = xpath + "/subnet6[id='111']";
     string const v_subnet("2001:db8::/48");
     const string& xsubnet = xsub + "/subnet";
-    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet, v_subnet));
     sess_->applyChanges();
 
     // Get the subnet.
     ConstElementPtr subnet;
-    EXPECT_NO_THROW(subnet = t_obj_->getSubnet(xsub));
+    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnet(xsub));
     ASSERT_TRUE(subnet);
     ElementPtr expected = Element::createMap();
     expected->set("id", Element::create(111));
@@ -126,7 +126,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getKea) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -142,25 +142,25 @@ TEST_F(TranslatorSubnetsTestIetfV6, getPoolsIetf) {
     const string& xsub = xpath + "/network-range[network-range-id='111']";
     string const v_subnet("2001:db8::/48");
     const string& xsubnet = xsub + "/network-prefix";
-    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet, v_subnet));
     sess_->applyChanges();
 
     // Create the pool 2001:db8::1:0/112 #1.
     const string& xpool = xsub + "/address-pools";
     const string& prefix1 = xpool + "/address-pool[pool-id='1']/pool-prefix";
     string const s_pool1("2001:db8::1:0/112");
-    EXPECT_NO_THROW(sess_->setItem(prefix1, s_pool1));
+    EXPECT_NO_THROW_LOG(sess_->setItem(prefix1, s_pool1));
     sess_->applyChanges();
 
     // Create the pool 2001:db8::2:0/112 #2.
     const string& prefix2 = xpool + "/address-pool[pool-id='2']/pool-prefix";
     string const s_pool2("2001:db8::2:0/112");
-    EXPECT_NO_THROW(sess_->setItem(prefix2, s_pool2));
+    EXPECT_NO_THROW_LOG(sess_->setItem(prefix2, s_pool2));
     sess_->applyChanges();
 
     // Get the subnet.
     ConstElementPtr subnet;
-    EXPECT_NO_THROW(subnet = t_obj_->getSubnet(xsub));
+    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnet(xsub));
     ASSERT_TRUE(subnet);
     string expected =
         "{\n"
@@ -179,7 +179,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getPoolsIetf) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -194,25 +194,25 @@ TEST_F(TranslatorSubnetsTestKeaV6, getPoolsKea) {
     const string& xsub = xpath + "/subnet6[id='111']";
     string const v_subnet("2001:db8::/48");
     const string& xsubnet = xsub + "/subnet";
-    EXPECT_NO_THROW(sess_->setItem(xsubnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xsubnet, v_subnet));
     sess_->applyChanges();
 
     // Create the pool 2001:db8::1:0/112.
     const string& prefix1 = xsub + "/pool[start-address='2001:db8::1:0']" +
         "[end-address='2001:db8::1:ffff']/prefix";
     string const s_pool1("2001:db8::1:0/112");
-    EXPECT_NO_THROW(sess_->setItem(prefix1, s_pool1));
+    EXPECT_NO_THROW_LOG(sess_->setItem(prefix1, s_pool1));
     sess_->applyChanges();
 
     // Create the pool 2001:db8::2:0/112.
     const string& prefix2 = xsub + "/pool[start-address='2001:db8::2:0']" +
         "[end-address='2001:db8::2:ffff']";
-    EXPECT_NO_THROW(sess_->setItem(prefix2, nullopt));
+    EXPECT_NO_THROW_LOG(sess_->setItem(prefix2, nullopt));
     sess_->applyChanges();
 
     // Get the subnet.
     ConstElementPtr subnet;
-    EXPECT_NO_THROW(subnet = t_obj_->getSubnet(xsub));
+    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnet(xsub));
     ASSERT_TRUE(subnet);
     string expected =
         "{\n"
@@ -231,7 +231,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getPoolsKea) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -245,11 +245,11 @@ TEST_F(TranslatorSubnetsTestIetfV6, setEmptyIetf) {
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
     ConstElementPtr subnets = Element::createList();
-    EXPECT_NO_THROW(t_obj_->setSubnets(xpath, subnets));
+    EXPECT_NO_THROW_LOG(t_obj_->setSubnets(xpath, subnets));
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_FALSE(subnets);
 }
 
@@ -259,11 +259,11 @@ TEST_F(TranslatorSubnetsTestKeaV4, setEmptyKea) {
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr subnets = Element::createList();
-    EXPECT_NO_THROW(t_obj_->setSubnets(xpath, subnets));
+    EXPECT_NO_THROW_LOG(t_obj_->setSubnets(xpath, subnets));
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_FALSE(subnets);
 }
 
@@ -278,11 +278,11 @@ TEST_F(TranslatorSubnetsTestIetfV6, setIetf) {
     subnet->set("subnet", Element::create(string("2001:db8::/48")));
     subnet->set("id", Element::create(123));
     subnets->add(subnet);
-    EXPECT_NO_THROW(t_obj_->setSubnets(xpath, subnets));
+    EXPECT_NO_THROW_LOG(t_obj_->setSubnets(xpath, subnets));
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -299,11 +299,11 @@ TEST_F(TranslatorSubnetsTestKeaV4, setKea) {
     subnet->set("subnet", Element::create(string("10.0.1.0/24")));
     subnet->set("id", Element::create(123));
     subnets->add(subnet);
-    EXPECT_NO_THROW(t_obj_->setSubnets(xpath, subnets));
+    EXPECT_NO_THROW_LOG(t_obj_->setSubnets(xpath, subnets));
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -333,11 +333,11 @@ TEST_F(TranslatorSubnetsTestIetfV6, setTwoIetf) {
 
     // Add the subnet.
     subnets->add(subnet);
-    EXPECT_NO_THROW(t_obj_->setSubnets(xpath, subnets));
+    EXPECT_NO_THROW_LOG(t_obj_->setSubnets(xpath, subnets));
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -366,11 +366,11 @@ TEST_F(TranslatorSubnetsTestKeaV4, setTwoKea) {
 
     // Add the subnet.
     subnets->add(subnet);
-    EXPECT_NO_THROW(t_obj_->setSubnets(xpath, subnets));
+    EXPECT_NO_THROW_LOG(t_obj_->setSubnets(xpath, subnets));
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());

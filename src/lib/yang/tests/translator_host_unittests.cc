@@ -54,7 +54,7 @@ TEST_F(TranslatorHostsTestv6, getEmpty) {
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
     ConstElementPtr hosts;
-    EXPECT_NO_THROW(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
     ASSERT_FALSE(hosts);
 }
 
@@ -66,7 +66,7 @@ TEST_F(TranslatorHostsTestv6, get) {
         "/kea-dhcp6-server:config/subnet6[id='111']";
     string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(subnet, v_subnet));
     sess_->applyChanges();
 
     // Create the host reservation for 2001:db8::1.
@@ -75,12 +75,12 @@ TEST_F(TranslatorHostsTestv6, get) {
           << "[identifier='00:01:02:03:04:05']";
     const string& xaddr = shost.str() + "/ip-addresses";
     string const s_addr("2001:db8::1");
-    EXPECT_NO_THROW(sess_->setItem(xaddr, s_addr));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xaddr, s_addr));
     sess_->applyChanges();
 
     // Get the host.
     ConstElementPtr host;
-    EXPECT_NO_THROW(host = t_obj_->getHost(shost.str()));
+    EXPECT_NO_THROW_LOG(host = t_obj_->getHost(shost.str()));
     ASSERT_TRUE(host);
     ElementPtr expected = Element::createMap();
     ElementPtr addresses = Element::createList();
@@ -92,7 +92,7 @@ TEST_F(TranslatorHostsTestv6, get) {
     // Get the host reservation list and check if the host reservation
     // is in it.
     ConstElementPtr hosts;
-    EXPECT_NO_THROW(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
     ASSERT_EQ(1, hosts->size());
@@ -107,16 +107,16 @@ TEST_F(TranslatorHostsTestv6, setEmpty) {
         "/kea-dhcp6-server:config/subnet6[id='111']";
     string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(subnet, v_subnet));
     sess_->applyChanges();
 
     // Set empty list.
     ConstElementPtr hosts = Element::createList();
-    EXPECT_NO_THROW(t_obj_->setHosts(xpath, hosts));
+    EXPECT_NO_THROW_LOG(t_obj_->setHosts(xpath, hosts));
 
     // Get it back.
     hosts.reset();
-    EXPECT_NO_THROW(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
     ASSERT_FALSE(hosts);
 }
 
@@ -128,7 +128,7 @@ TEST_F(TranslatorHostsTestv4, set) {
         "/kea-dhcp4-server:config/subnet4[id='111']";
     string const v_subnet("10.0.0.0/24");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(subnet, v_subnet));
     sess_->applyChanges();
 
     // Set one host.
@@ -138,11 +138,11 @@ TEST_F(TranslatorHostsTestv4, set) {
     host->set("ip-address", Element::create(string("10.0.0.1")));
     host->set("hostname", Element::create(string("foo")));
     hosts->add(host);
-    EXPECT_NO_THROW(t_obj_->setHosts(xpath, hosts));
+    EXPECT_NO_THROW_LOG(t_obj_->setHosts(xpath, hosts));
 
     // Get it back.
     hosts.reset();
-    EXPECT_NO_THROW(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
     ASSERT_EQ(1, hosts->size());
@@ -157,7 +157,7 @@ TEST_F(TranslatorHostsTestv6, getMany) {
         "/kea-dhcp6-server:config/subnet6[id='111']";
     string const v_subnet("2001:db8::/48");
     const string& subnet = xpath + "/subnet";
-    EXPECT_NO_THROW(sess_->setItem(subnet, v_subnet));
+    EXPECT_NO_THROW_LOG(sess_->setItem(subnet, v_subnet));
     sess_->applyChanges();
 
     // Create the host reservation for 2001:db8::1.
@@ -166,7 +166,7 @@ TEST_F(TranslatorHostsTestv6, getMany) {
           << "[identifier='00:01:02:03:04:05']";
     const string& xaddr = shost.str() + "/ip-addresses";
     string const s_addr("2001:db8::1");
-    EXPECT_NO_THROW(sess_->setItem(xaddr, s_addr));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xaddr, s_addr));
     sess_->applyChanges();
 
     // Create another reservation for 2001:db8::2
@@ -175,12 +175,12 @@ TEST_F(TranslatorHostsTestv6, getMany) {
            << "[identifier='00:01:0a:0b:0c:0d']";
     const string xaddr2 = shost2.str() + "/ip-addresses";
     string const s_addr2("2001:db8::2");
-    EXPECT_NO_THROW(sess_->setItem(xaddr2, s_addr2));
+    EXPECT_NO_THROW_LOG(sess_->setItem(xaddr2, s_addr2));
     sess_->applyChanges();
 
     // Get the host.
     ConstElementPtr hosts;
-    EXPECT_NO_THROW(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
     ASSERT_TRUE(hosts);
 
     EXPECT_EQ(hosts->str(),
