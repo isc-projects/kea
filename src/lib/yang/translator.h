@@ -189,6 +189,21 @@ public:
                                                 libyang::LeafBaseType const type);
 
 protected:
+    /// @brief Decode a YANG element of binary type to a string that
+    /// can be stored in an Element::string JSON.
+    ///
+    /// @param input string to be decoded
+    ///
+    /// @return the decoded string
+    static std::string decode64(std::string const& input);
+
+    /// @brief Encode a string such that it can be stored in a YANG element of binary type.
+    ///
+    /// @param input string to be encoded
+    ///
+    /// @return the encoded string
+    static std::string encode64(std::string const& input);
+
     /// @brief The sysrepo session.
     sysrepo::Session session_;
 

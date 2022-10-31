@@ -19,26 +19,6 @@ using namespace isc::util::encode;
 using namespace libyang;
 using namespace sysrepo;
 
-namespace {
-
-string encode64(const string& input) {
-    vector<uint8_t> binary;
-    binary.resize(input.size());
-    memmove(&binary[0], input.c_str(), binary.size());
-    return (encodeBase64(binary));
-}
-
-string decode64(const string& input) {
-    vector<uint8_t> binary;
-    decodeBase64(input, binary);
-    string result;
-    result.resize(binary.size());
-    memmove(&result[0], &binary[0], result.size());
-    return (result);
-}
-
-} // end of anonymous namespace
-
 namespace isc {
 namespace yang {
 
@@ -69,6 +49,16 @@ void TranslatorBasic::checkAndSetLeaf(ConstElementPtr const& from,
     }
 }
 
+string
+TranslatorBasic::decode64(string const& input) {
+    vector<uint8_t> binary;
+    decodeBase64(input, binary);
+    string result;
+    result.resize(binary.size());
+    memmove(&result[0], &binary[0], result.size());
+    return (result);
+}
+
 void
 TranslatorBasic::deleteItem(const std::string& xpath) {
     /// @todo: Remove this if convenient. It is not strictly required and only done to detect
@@ -91,6 +81,15 @@ TranslatorBasic::deleteItem(const std::string& xpath) {
                   << xpath << "': " << ex.what());
     }
     session_.applyChanges();
+}
+
+
+string
+TranslatorBasic::encode64(string const& input) {
+    vector<uint8_t> binary;
+    binary.resize(input.size());
+    memmove(&binary[0], input.c_str(), binary.size());
+    return (encodeBase64(binary));
 }
 
 DataNode
