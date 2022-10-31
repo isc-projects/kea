@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#define KEATEST_MODULE
 #include <yang/yang_revisions.h>
 
 #include <sysrepo-cpp/Connection.hpp>
@@ -15,6 +14,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace libyang;
@@ -23,8 +23,6 @@ using namespace isc::yang;
 
 using libyang::Context;
 using libyang::Module;
-
-const string REPOSITORY = SYSREPO_REPO;
 
 /// @brief Returns nicely formed error message if module is missing
 ///

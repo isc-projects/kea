@@ -11,7 +11,6 @@
 #include <yang/adaptor_option.h>
 #include <yang/adaptor_pool.h>
 #include <yang/adaptor_subnet.h>
-#include <list>
 
 namespace isc {
 namespace yang {

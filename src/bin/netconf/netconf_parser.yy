@@ -15,10 +15,13 @@
 %define parse.assert
 %code requires
 {
-#include <string>
 #include <cc/data.h>
-#include <boost/lexical_cast.hpp>
 #include <netconf/parser_context_decl.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <sstream>
+#include <string>
 
 using namespace isc::netconf;
 using namespace isc::data;

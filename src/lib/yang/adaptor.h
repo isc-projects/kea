@@ -7,8 +7,8 @@
 #ifndef ISC_ADAPTOR_H
 #define ISC_ADAPTOR_H 1
 
-#include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace yang {

@@ -8,7 +8,6 @@
 #define ISC_TRANSLATOR_POOL_H 1
 
 #include <yang/translator_option_data.h>
-#include <list>
 
 namespace isc {
 namespace yang {

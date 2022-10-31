@@ -11,7 +11,6 @@
 #include <yang/translator_pool.h>
 #include <yang/translator_pd_pool.h>
 #include <yang/translator_host.h>
-#include <list>
 
 namespace isc {
 namespace yang {

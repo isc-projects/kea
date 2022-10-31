@@ -7,8 +7,10 @@
 #ifndef ISC_YANG_CONFIGS_H
 #define ISC_YANG_CONFIGS_H
 
-#include <yang/yang_models.h>
 #include <yang/testutils/translator_test.h>
+#include <yang/yang_models.h>
+
+#include <vector>
 
 namespace isc {
 namespace yang {

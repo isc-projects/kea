@@ -6,10 +6,10 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor_host.h>
-
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

@@ -6,12 +6,14 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
+#include <asiolink/io_address.h>
 #include <yang/adaptor.h>
 #include <yang/translator_pool.h>
 #include <yang/yang_models.h>
+
 #include <boost/lexical_cast.hpp>
+
 #include <sstream>
 
 using namespace std;

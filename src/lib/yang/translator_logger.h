@@ -8,7 +8,6 @@
 #define ISC_TRANSLATOR_LOGGER_H 1
 
 #include <yang/translator.h>
-#include <list>
 
 namespace isc {
 namespace yang {

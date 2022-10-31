@@ -7,14 +7,14 @@
 #ifndef ISC_YANG_REVISIONS_H
 #define ISC_YANG_REVISIONS_H 1
 
-#include <map>
 #include <string>
+#include <unordered_map>
 
 namespace isc {
 namespace yang {
 
 // Table of module name / revision.
-static const std::map<std::string, std::string> YANG_REVISIONS = {
+static const std::unordered_map<std::string, std::string> YANG_REVISIONS = {
 #ifdef KEATEST_MODULE
     { "keatest-module", "2018-11-20" },
 #endif  // KEATEST_MODULE

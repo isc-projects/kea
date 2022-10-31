@@ -9,9 +9,9 @@
 #ifndef NETCONF_H
 #define NETCONF_H
 
-#include <netconf/netconf_cfg_mgr.h>
 #include <netconf/control_socket.h>
 #include <netconf/http_control_socket.h>
+#include <netconf/netconf_cfg_mgr.h>
 #include <netconf/stdout_control_socket.h>
 #include <netconf/unix_control_socket.h>
 

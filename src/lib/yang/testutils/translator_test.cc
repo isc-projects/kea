@@ -10,7 +10,8 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <sstream>
+#include <variant>
+#include <vector>
 
 using namespace std;
 using namespace isc::data;

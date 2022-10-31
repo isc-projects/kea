@@ -6,12 +6,13 @@
 
 #include <config.h>
 
-#include <yang/translator.h>
 #include <util/encode/base64.h>
+#include <yang/translator.h>
 
 #include <sysrepo-cpp/utils/exception.hpp>
 
 #include <cstring>
+#include <vector>
 
 using namespace std;
 using namespace isc::data;

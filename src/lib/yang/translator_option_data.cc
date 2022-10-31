@@ -6,9 +6,10 @@
 
 #include <config.h>
 
-#include <yang/translator_option_data.h>
 #include <yang/adaptor.h>
+#include <yang/translator_option_data.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;

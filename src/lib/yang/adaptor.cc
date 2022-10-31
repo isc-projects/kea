@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <yang/adaptor.h>
-#include <boost/foreach.hpp>
 
 #include <iostream>
 
@@ -42,7 +41,7 @@ Adaptor::fromParent(const string& name, ConstElementPtr parent,
     if (!param) {
         return;
     }
-    BOOST_FOREACH(ElementPtr item, list->listValue()) {
+    for (ElementPtr const& item : list->listValue()) {
         // don't override. Skip this entry if it already has the parameter.
         if (item->contains(name)) {
             continue;
@@ -56,7 +55,7 @@ Adaptor::toParent(const string& name, ElementPtr parent,
                   ConstElementPtr list) {
     ConstElementPtr param;
     bool first = true;
-    BOOST_FOREACH(ElementPtr item, list->listValue()) {
+    for (ElementPtr const& item : list->listValue()) {
         if (first) {
             first = false;
             param = item->get(name);
@@ -70,7 +69,7 @@ Adaptor::toParent(const string& name, ElementPtr parent,
         }
     }
     if (!first && param) {
-        BOOST_FOREACH(ElementPtr item, list->listValue()) {
+        for (ElementPtr const& item : list->listValue()) {
             if (param) {
                 item->remove(name);
             }

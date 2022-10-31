@@ -9,6 +9,8 @@
 #include <yang/adaptor_pool.h>
 #include <yang/yang_models.h>
 
+#include <vector>
+
 using namespace std;
 using namespace isc::data;
 

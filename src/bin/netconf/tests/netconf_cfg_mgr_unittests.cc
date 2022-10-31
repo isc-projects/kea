@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,18 +6,18 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
+#include <cc/command_interpreter.h>
+#include <exceptions/exceptions.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
-#include <exceptions/exceptions.h>
-#include <cc/command_interpreter.h>
-#include <process/testutils/d_test_stubs.h>
+#include <netconf/tests/test_libraries.h>
 #include <process/d_cfg_mgr.h>
-#include <yang/yang_models.h>
+#include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <netconf/tests/test_libraries.h>
-
-#include <gtest/gtest.h>
+#include <yang/yang_models.h>
 
 using namespace std;
 using namespace isc;

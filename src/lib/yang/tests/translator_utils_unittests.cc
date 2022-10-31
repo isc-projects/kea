@@ -6,11 +6,11 @@
 
 #include <config.h>
 
-#include <testutils/gtest_utils.h>
-#include <yang/tests/yang_configs.h>
-#include <yang/tests/sysrepo_setup.h>
-
 #include <gtest/gtest.h>
+
+#include <testutils/gtest_utils.h>
+#include <yang/tests/sysrepo_setup.h>
+#include <yang/tests/yang_configs.h>
 
 #include <sstream>
 

@@ -6,13 +6,12 @@
 
 #include <config.h>
 
-#include <netconf/simple_parser.h>
-#include <netconf/netconf_config.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
-#include <boost/foreach.hpp>
+#include <netconf/netconf_config.h>
+#include <netconf/simple_parser.h>
 
 using namespace isc::data;
 

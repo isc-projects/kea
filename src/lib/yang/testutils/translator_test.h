@@ -8,8 +8,8 @@
 #define ISC_TRANSLATOR_TEST_H 1
 
 #include <yang/translator.h>
+
 #include <vector>
-#include <iostream>
 #include <unordered_map>
 
 namespace isc {

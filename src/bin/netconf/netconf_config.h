@@ -7,17 +7,17 @@
 #ifndef NETCONF_CONFIG_H
 #define NETCONF_CONFIG_H
 
-#include <cc/data.h>
 #include <cc/cfg_to_element.h>
-#include <cc/user_context.h>
+#include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <http/url.h>
+#include <cc/user_context.h>
 #include <exceptions/exceptions.h>
-
-#include <boost/foreach.hpp>
+#include <http/url.h>
 
 #include <stdint.h>
+
 #include <string>
+#include <unordered_map>
 
 namespace isc {
 namespace netconf {
@@ -273,7 +273,7 @@ private:
 using CfgServerPtr = std::shared_ptr<CfgServer>;
 
 /// @brief Defines a map of CfgServers, keyed by the name.
-using CfgServersMap = std::map<std::string, CfgServerPtr>;
+using CfgServersMap = std::unordered_map<std::string, CfgServerPtr>;
 
 /// @brief Defines a iterator pairing of name and CfgServer
 using CfgServersMapPair = std::pair<std::string, CfgServerPtr>;

@@ -1,4 +1,6 @@
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS  =
+AM_CPPFLAGS += -DKEATEST_MODULE
+AM_CPPFLAGS += -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += $(LIBYANG_CPPFLAGS)
 AM_CPPFLAGS += $(LIBYANG_INCLUDEDIR)

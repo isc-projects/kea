@@ -6,12 +6,14 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
 #include <yang/adaptor_config.h>
 
-#include <gtest/gtest.h>
+#include <vector>
 
 using namespace std;
 using namespace isc;

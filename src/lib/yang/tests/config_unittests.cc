@@ -6,19 +6,20 @@
 
 #include <config.h>
 
-#include <testutils/io_utils.h>
-#include <testutils/user_context_utils.h>
-#include <yang/translator_config.h>
-#include <yang/yang_models.h>
-#include <yang/tests/json_configs.h>
-#include <yang/tests/yang_configs.h>
-#include <yang/tests/sysrepo_setup.h>
-
-#include <boost/algorithm/string.hpp>
-
 #include <gtest/gtest.h>
 
+#include <testutils/io_utils.h>
+#include <testutils/user_context_utils.h>
+#include <yang/tests/json_configs.h>
+#include <yang/tests/sysrepo_setup.h>
+#include <yang/tests/yang_configs.h>
+#include <yang/translator_config.h>
+#include <yang/yang_models.h>
+
 #include <iostream>
+#include <vector>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace isc;

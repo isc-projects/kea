@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,13 +9,13 @@
 
 #include <config.h>
 
-#include <netconf/unix_control_socket.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <cc/json_feed.h>
 #include <config/client_connection.h>
 #include <config/timeouts.h>
+#include <netconf/unix_control_socket.h>
 
 using namespace std;
 using namespace isc::asiolink;

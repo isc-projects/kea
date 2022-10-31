@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <yang/translator_shared_network.h>
-#include <yang/adaptor.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;

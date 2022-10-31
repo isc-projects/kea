@@ -8,7 +8,7 @@
 #define ISC_TRANSLATOR_DATABASE_H 1
 
 #include <yang/translator.h>
-#include <list>
+
 
 namespace isc {
 namespace yang {

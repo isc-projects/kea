@@ -9,8 +9,10 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <yang/adaptor_host.h>
+
 #include <iomanip>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::data;

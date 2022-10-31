@@ -14,13 +14,13 @@
 /// - hookpt_one callout is supplied.
 
 #include <config.h>
+
 #include <hooks/hooks.h>
 
 using namespace isc::hooks;
 using namespace std;
 
 namespace {
-
 extern "C" {
 
 // Callouts.  All return their result through the "result" argument.
@@ -67,6 +67,5 @@ load(isc::hooks::LibraryHandle&) {
     return (0);
 }
 
-}
-}
-
+}  // extern "C"
+}  // namespace

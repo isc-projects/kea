@@ -47,16 +47,19 @@
 // "%code requires" blocks.
 #line 17 "netconf_parser.yy"
 
-#include <string>
 #include <cc/data.h>
-#include <boost/lexical_cast.hpp>
 #include <netconf/parser_context_decl.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <sstream>
+#include <string>
 
 using namespace isc::netconf;
 using namespace isc::data;
 using namespace std;
 
-#line 60 "netconf_parser.h"
+#line 63 "netconf_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -205,7 +208,7 @@ using namespace std;
 
 #line 14 "netconf_parser.yy"
 namespace isc { namespace netconf {
-#line 209 "netconf_parser.h"
+#line 212 "netconf_parser.h"
 
 
 
@@ -2378,8 +2381,8 @@ switch (yykind)
 
 
 #line 14 "netconf_parser.yy"
-} }  // isc::netconf
-#line 2383 "netconf_parser.h"
+} } // isc::netconf
+#line 2386 "netconf_parser.h"
 
 
 

@@ -9,7 +9,6 @@
 
 #include <yang/translator_option_data.h>
 #include <yang/translator_option_def.h>
-#include <list>
 
 namespace isc {
 namespace yang {

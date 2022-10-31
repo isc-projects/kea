@@ -7,15 +7,16 @@
 #ifndef ISC_ADAPTOR_SUBNET_H
 #define ISC_ADAPTOR_SUBNET_H 1
 
-#include <yang/adaptor.h>
 #include <dhcpsrv/subnet_id.h>
-#include <set>
+#include <yang/adaptor.h>
+
+#include <unordered_set>
 
 namespace isc {
 namespace yang {
 
 /// @brief Set of SubnetIDs.
-using SubnetIDSet = std::set<isc::dhcp::SubnetID>;
+using SubnetIDSet = std::unordered_set<isc::dhcp::SubnetID>;
 
 /// @brief JSON adaptor for subnets adding IDs and canonizes relays.
 ///

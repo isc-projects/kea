@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,10 +9,9 @@
 
 #include <cc/data.h>
 #include <hooks/hooks_config.h>
-#include <process/d_cfg_mgr.h>
 #include <netconf/netconf_config.h>
-#include <boost/pointer_cast.hpp>
-#include <map>
+#include <process/d_cfg_mgr.h>
+
 #include <string>
 
 namespace isc {

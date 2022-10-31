@@ -10,8 +10,8 @@
 #ifndef CONTROL_SOCKET_H
 #define CONTROL_SOCKET_H
 
-#include <netconf/netconf_config.h>
 #include <exceptions/exceptions.h>
+#include <netconf/netconf_config.h>
 
 namespace isc {
 namespace netconf {

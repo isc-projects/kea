@@ -9,7 +9,6 @@
 
 #include <yang/translator.h>
 #include <yang/translator_subnet.h>
-#include <list>
 
 namespace isc {
 namespace yang {

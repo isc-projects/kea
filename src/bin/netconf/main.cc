@@ -5,8 +5,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <netconf/netconf_controller.h>
+
 #include <exceptions/exceptions.h>
+#include <netconf/netconf_controller.h>
+
 #include <cstdlib>
 #include <iostream>
 

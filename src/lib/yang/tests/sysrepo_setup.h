@@ -9,13 +9,13 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <testutils/gtest_utils.h>
 #include <yang/translator.h>
 #include <yang/yang_models.h>
 
 #include <sysrepo-cpp/Connection.hpp>
-
-#include <gtest/gtest.h>
 
 namespace isc {
 namespace yang {

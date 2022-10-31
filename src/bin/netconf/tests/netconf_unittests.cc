@@ -6,31 +6,33 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/interval_timer.h>
+#include <asiolink/io_service.h>
+#include <cc/command_interpreter.h>
 #include <netconf/netconf.h>
 #include <netconf/netconf_process.h>
 #include <netconf/parser_context.h>
 #include <netconf/simple_parser.h>
 #include <netconf/unix_control_socket.h>
-#include <asiolink/asio_wrapper.h>
-#include <asiolink/interval_timer.h>
-#include <asiolink/io_service.h>
-#include <cc/command_interpreter.h>
+#include <testutils/log_utils.h>
+#include <testutils/sandbox.h>
+#include <testutils/threaded_test.h>
+#include <yang/tests/sysrepo_setup.h>
+#include <yang/testutils/translator_test.h>
+#include <yang/translator_config.h>
 #include <yang/yang_models.h>
 #include <yang/yang_revisions.h>
-#include <yang/tests/sysrepo_setup.h>
-#include <yang/translator_config.h>
-#include <yang/testutils/translator_test.h>
-#include <testutils/log_utils.h>
-#include <testutils/threaded_test.h>
-#include <testutils/sandbox.h>
 
 #include <sysrepo-cpp/utils/exception.hpp>
 
-#include <gtest/gtest.h>
-
 #include <chrono>
+#include <iostream>
 #include <sstream>
 #include <thread>
+#include <vector>
 
 using namespace std;
 using namespace isc;
@@ -362,11 +364,13 @@ TEST_F(NetconfAgentTest, initSysrepo) {
 
 // Verifies that the checkModule method emits expected errors.
 TEST_F(NetconfAgentLogTest, checkModule) {
-    // keatest-module should not be in YANG_REVISIONS.
-    EXPECT_EQ(0, YANG_REVISIONS.count("keatest-module"));
-    // But kea-dhcp[46]-server must be in.
+    // Various modules should be available.
+    EXPECT_EQ(1, YANG_REVISIONS.count("keatest-module"));
     ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp4-server"));
     ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp6-server"));
+
+    // Non-existing modules should not.
+    EXPECT_EQ(0, agent_->modules_.count("does-not-exist"));
 
     // kea-dhcp[46]-server should be available.
     EXPECT_NO_THROW_LOG(agent_->initSysrepo());

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,16 +6,14 @@
 
 #include <config.h>
 
-#include <netconf/netconf_cfg_mgr.h>
-#include <netconf/netconf_process.h>
+#include <gtest/gtest.h>
+
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <netconf/netconf_cfg_mgr.h>
+#include <netconf/netconf_process.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <gtest/gtest.h>
 
 #include <functional>
 

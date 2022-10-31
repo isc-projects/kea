@@ -6,11 +6,12 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
+#include <yang/tests/sysrepo_setup.h>
 #include <yang/translator_pool.h>
 #include <yang/yang_models.h>
-#include <yang/tests/sysrepo_setup.h>
 
-#include <gtest/gtest.h>
 #include <sstream>
 
 using namespace std;

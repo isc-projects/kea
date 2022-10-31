@@ -6,11 +6,11 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
+#include <yang/tests/sysrepo_setup.h>
 #include <yang/translator_subnet.h>
 #include <yang/yang_models.h>
-#include <yang/tests/sysrepo_setup.h>
-
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

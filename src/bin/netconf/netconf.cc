@@ -9,16 +9,15 @@
 
 #include <config.h>
 
+#include <cc/command_interpreter.h>
 #include <netconf/netconf.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_log.h>
-#include <cc/command_interpreter.h>
 #include <yang/translator_config.h>
 #include <yang/yang_revisions.h>
 
-#include <boost/algorithm/string.hpp>
-
 #include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::config;

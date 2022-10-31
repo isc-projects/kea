@@ -8,7 +8,6 @@
 #define ISC_ADAPTOR_POOL_H 1
 
 #include <yang/adaptor.h>
-#include <list>
 
 namespace isc {
 namespace yang {

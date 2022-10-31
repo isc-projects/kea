@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,14 +6,14 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space.h>
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor_option.h>
-
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

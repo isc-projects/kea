@@ -10,8 +10,7 @@
 #include <dhcp/option_data_types.h>
 #include <yang/adaptor.h>
 
-#include <list>
-#include <map>
+#include <unordered_map>
 
 namespace isc {
 namespace yang {
@@ -21,7 +20,7 @@ namespace yang {
 ///
 /// The map is used to store space+name to code mappings so for
 /// an option data without a code entry the code entry can be supplied.
-using OptionCodes = std::map<std::string, uint16_t>;
+using OptionCodes = std::unordered_map<std::string, uint16_t>;
 
 /// @brief JSON adaptor for option data or definition setting defaults.
 ///

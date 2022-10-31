@@ -6,10 +6,8 @@
 
 #include <config.h>
 
-#include <netconf/netconf_config.h>
-#include <netconf/http_control_socket.h>
-#include <netconf/stdout_control_socket.h>
-#include <netconf/unix_control_socket.h>
+#include <gtest/gtest.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
@@ -19,12 +17,15 @@
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
-#include <testutils/threaded_test.h>
+#include <netconf/http_control_socket.h>
+#include <netconf/netconf_config.h>
+#include <netconf/stdout_control_socket.h>
+#include <netconf/unix_control_socket.h>
 #include <testutils/sandbox.h>
+#include <testutils/threaded_test.h>
 #include <yang/tests/sysrepo_setup.h>
 
-#include <gtest/gtest.h>
-
+#include <iostream>
 #include <sstream>
 #include <thread>
 

@@ -8,12 +8,11 @@
 #define ISC_TRANSLATOR_CONFIG_H 1
 
 #include <yang/translator.h>
+#include <yang/translator_class.h>
 #include <yang/translator_control_socket.h>
 #include <yang/translator_database.h>
-#include <yang/translator_class.h>
-#include <yang/translator_shared_network.h>
 #include <yang/translator_logger.h>
-#include <list>
+#include <yang/translator_shared_network.h>
 
 namespace isc {
 namespace yang {

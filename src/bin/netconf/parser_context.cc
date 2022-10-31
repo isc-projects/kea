@@ -6,15 +6,15 @@
 
 #include <config.h>
 
-#include <netconf/parser_context.h>
-#include <netconf/netconf_parser.h>
-#include <netconf/netconf_log.h>
-#include <exceptions/exceptions.h>
-//#include <cc/dhcp_config_error.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
+#include <netconf/netconf_log.h>
+#include <netconf/netconf_parser.h>
+#include <netconf/parser_context.h>
+
 #include <fstream>
-#include <sstream>
 #include <limits>
+#include <sstream>
 
 namespace isc {
 namespace netconf {

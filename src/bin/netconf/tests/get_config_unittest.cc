@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,20 +6,19 @@
 
 #include <config.h>
 
-#include <cc/data.h>
-#include <cc/command_interpreter.h>
-#include <testutils/gtest_utils.h>
-#include <testutils/user_context_utils.h>
-#include <process/testutils/d_test_stubs.h>
-#include <netconf/netconf_cfg_mgr.h>
-#include <netconf/parser_context.h>
-
 #include <gtest/gtest.h>
 
-#include <iostream>
+#include <cc/command_interpreter.h>
+#include <cc/data.h>
+#include <netconf/netconf_cfg_mgr.h>
+#include <netconf/parser_context.h>
+#include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/user_context_utils.h>
+
 #include <fstream>
+#include <iostream>
 #include <string>
-#include <sstream>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
