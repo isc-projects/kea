@@ -41,7 +41,7 @@ TranslatorOptionDef::getOptionDef(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorOptionDef::getOptionDef(string const& xpath) {
+TranslatorOptionDef::getOptionDefFromAbsoluteXpath(string const& xpath) {
     try {
         return getOptionDef(findXPath(xpath));
     } catch(NetconfError const&) {
@@ -160,7 +160,7 @@ TranslatorOptionDefList::getOptionDefList(DataNode const& data_node) {
 }
 
 ConstElementPtr
-TranslatorOptionDefList::getOptionDefList(string const& xpath) {
+TranslatorOptionDefList::getOptionDefListFromAbsoluteXpath(string const& xpath) {
     try {
         return getOptionDefList(findXPath(xpath));
     } catch(NetconfError const&) {

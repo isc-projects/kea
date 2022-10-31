@@ -300,7 +300,7 @@ public:
     ///
     /// @throw NetconfError when sysrepo raises an error.
     /// @throw BadValue on a subnet without prefix or id.
-    isc::data::ElementPtr getSubnet(std::string const& xpath);
+    isc::data::ElementPtr getSubnetFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set subnet from JSON to YANG.
     ///
@@ -370,7 +370,7 @@ public:
     /// @return the JSON representation of the list of subnets
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getSubnets(std::string const& xpath);
+    isc::data::ElementPtr getSubnetsFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set subnets from JSON to YANG.
     ///

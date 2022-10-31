@@ -50,7 +50,7 @@ TEST_F(TranslatorClassesTestv4, getEmpty) {
     // Get the client class list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr classes;
-    EXPECT_NO_THROW_LOG(classes = t_obj_->getClasses(xpath));
+    EXPECT_NO_THROW_LOG(classes = t_obj_->getClassesFromAbsoluteXpath(xpath));
     EXPECT_FALSE(classes);
 }
 
@@ -67,7 +67,7 @@ TEST_F(TranslatorClassesTestv6, get) {
 
     // Get the client class.
     ConstElementPtr cclass;
-    EXPECT_NO_THROW_LOG(cclass = t_obj_->getClass(xclass));
+    EXPECT_NO_THROW_LOG(cclass = t_obj_->getClassFromAbsoluteXpath(xclass));
     ASSERT_TRUE(cclass);
     ElementPtr expected = Element::createMap();
     expected->set("name", Element::create(string("foo")));
@@ -76,7 +76,7 @@ TEST_F(TranslatorClassesTestv6, get) {
 
     // Get the client class list and check if the client class is in it.
     ConstElementPtr classes;
-    EXPECT_NO_THROW_LOG(classes = t_obj_->getClasses(xpath));
+    EXPECT_NO_THROW_LOG(classes = t_obj_->getClassesFromAbsoluteXpath(xpath));
     ASSERT_TRUE(classes);
     ASSERT_EQ(Element::list, classes->getType());
     ASSERT_EQ(1, classes->size());
@@ -93,7 +93,7 @@ TEST_F(TranslatorClassesTestv4, setEmpty) {
 
     // Get it back.
     classes.reset();
-    EXPECT_NO_THROW_LOG(classes = t_obj_->getClasses(xpath));
+    EXPECT_NO_THROW_LOG(classes = t_obj_->getClassesFromAbsoluteXpath(xpath));
     EXPECT_FALSE(classes);
 }
 
@@ -112,7 +112,7 @@ TEST_F(TranslatorClassesTestv6, set) {
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW_LOG(got = t_obj_->getClasses(xpath));
+    EXPECT_NO_THROW_LOG(got = t_obj_->getClassesFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::list, got->getType());
     ASSERT_EQ(1, got->size());

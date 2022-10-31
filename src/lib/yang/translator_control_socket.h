@@ -99,7 +99,7 @@ public:
     /// @return JSON representation of the control socket
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getControlSocket(std::string const& xpath);
+    isc::data::ElementPtr getControlSocketFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set control socket from JSON to YANG.
     ///

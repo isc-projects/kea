@@ -48,7 +48,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV4, getEmpty) {
     // Get the shared network list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr networks;
-    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworksFromAbsoluteXpath(xpath));
     ASSERT_FALSE(networks);
 }
 
@@ -65,7 +65,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, get) {
 
     // Get the shared network.
     ConstElementPtr network;
-    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetwork(xnetwork));
+    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetworkFromAbsoluteXpath(xnetwork));
     ASSERT_TRUE(network);
     ElementPtr subnet = Element::createMap();
     subnet->set("id", Element::create(111));
@@ -79,7 +79,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, get) {
 
     // Get the shared network list and check if the shared network is in it.
     ConstElementPtr networks;
-    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworksFromAbsoluteXpath(xpath));
     ASSERT_TRUE(networks);
     ASSERT_EQ(Element::list, networks->getType());
     ASSERT_EQ(1, networks->size());
@@ -96,7 +96,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV4, setEmpty) {
 
     // Get it back.
     networks.reset();
-    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworksFromAbsoluteXpath(xpath));
     ASSERT_FALSE(networks);
 }
 
@@ -119,7 +119,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, set) {
 
     // Get it back.
     networks.reset();
-    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworksFromAbsoluteXpath(xpath));
     ASSERT_TRUE(networks);
     ASSERT_EQ(Element::list, networks->getType());
     ASSERT_EQ(1, networks->size());
@@ -187,22 +187,22 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, getList) {
     ConstElementPtr network;
 
     // Get the first network.
-    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetwork(xnetwork1));
+    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetworkFromAbsoluteXpath(xnetwork1));
     ASSERT_TRUE(network);
     EXPECT_EQ(exp_net1, network->str());
 
     // Get the second network.
-    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetwork(xnetwork2));
+    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetworkFromAbsoluteXpath(xnetwork2));
     ASSERT_TRUE(network);
     EXPECT_EQ(exp_net2, network->str());
 
     // Check that networks with non-existent name are not returned.
-    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetwork(xnetwork3));
+    EXPECT_NO_THROW_LOG(network = t_obj_->getSharedNetworkFromAbsoluteXpath(xnetwork3));
     EXPECT_FALSE(network);
 
     // Now test returns all networks
     ConstElementPtr networks;
-    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworks(xpath));
+    EXPECT_NO_THROW_LOG(networks = t_obj_->getSharedNetworksFromAbsoluteXpath(xpath));
     ASSERT_TRUE(networks);
     EXPECT_EQ(exp_both, networks->str());
 }

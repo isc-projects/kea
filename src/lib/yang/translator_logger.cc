@@ -204,7 +204,7 @@ TranslatorLoggers::getLoggers(DataNode const& data_node) {
 }
 
 ConstElementPtr
-TranslatorLoggers::getLoggers(string const& xpath) {
+TranslatorLoggers::getLoggersFromAbsoluteXpath(string const& xpath) {
     try {
         return getLoggers(findXPath(xpath));
     } catch(NetconfError const&) {

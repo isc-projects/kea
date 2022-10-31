@@ -106,7 +106,7 @@ public:
     /// @return JSON representation of the class
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getClass(std::string const& xpath);
+    isc::data::ElementPtr getClassFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set client class from JSON to YANG.
     ///
@@ -169,7 +169,7 @@ public:
     /// @return JSON representation of classes.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getClasses(std::string const& xpath);
+    isc::data::ElementPtr getClassesFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set client classes from JSON to YANG.
     ///

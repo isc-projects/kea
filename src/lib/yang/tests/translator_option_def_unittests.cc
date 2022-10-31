@@ -57,7 +57,7 @@ TEST_F(TranslatorOptionDefListTestKeaV4, getEmpty) {
     // Get the option definition list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr options;
-    EXPECT_NO_THROW_LOG(options = t_obj_->getOptionDefList(xpath));
+    EXPECT_NO_THROW_LOG(options = t_obj_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_FALSE(options);
 }
 
@@ -80,7 +80,7 @@ TEST_F(TranslatorOptionDefListTestKeaV6, get) {
 
     // Get the option def.
     ConstElementPtr def;
-    EXPECT_NO_THROW_LOG(def = t_obj_->getOptionDef(xdef));
+    EXPECT_NO_THROW_LOG(def = t_obj_->getOptionDefFromAbsoluteXpath(xdef));
     ASSERT_TRUE(def);
     EXPECT_EQ("{ "
               "\"array\": false, "
@@ -92,7 +92,7 @@ TEST_F(TranslatorOptionDefListTestKeaV6, get) {
 
     // Get the option definition list.
     ConstElementPtr defs;
-    EXPECT_NO_THROW_LOG(defs = t_obj_->getOptionDefList(xpath));
+    EXPECT_NO_THROW_LOG(defs = t_obj_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(defs);
     ASSERT_EQ(Element::list, defs->getType());
     EXPECT_EQ(1, defs->size());
@@ -109,7 +109,7 @@ TEST_F(TranslatorOptionDefListTestKeaV4, setEmpty) {
 
     // Get it back.
     defs.reset();
-    EXPECT_NO_THROW_LOG(defs = t_obj_->getOptionDefList(xpath));
+    EXPECT_NO_THROW_LOG(defs = t_obj_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_FALSE(defs);
 }
 
@@ -130,7 +130,7 @@ TEST_F(TranslatorOptionDefListTestKeaV6, set) {
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW_LOG(got = t_obj_->getOptionDefList(xpath));
+    EXPECT_NO_THROW_LOG(got = t_obj_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(1, got->size());
     EXPECT_TRUE(def->equals(*got->get(0)));

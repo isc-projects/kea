@@ -94,6 +94,19 @@ public:
         }
     }
 
+    /// @brief Get a YANG data node found at the given absolute xpath.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    ///
+    /// @param xpath the xpath at which the YANG data node is to be found
+    ///
+    /// @return a DataNode if found, or nullopt otherwise
+    ///
+    /// @throw NetconfError when the used sysrepo API throws an error
+    std::optional<libyang::DataNode> getData(std::string const& xpath) const;
+
     /// @brief Translate a basic value from YANG to JSON for
     /// a given xpath that is relative to the given source node.
     ///
@@ -117,7 +130,7 @@ public:
     /// @return The Element representing the item at xpath or null
     /// when not found.
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getItem(std::string const& xpath) const;
+    isc::data::ElementPtr getItemFromAbsoluteXpath(std::string const& xpath) const;
 
     /// @brief Retrieve a list as ElementPtr from sysrepo from a certain xpath.
     ///
@@ -150,19 +163,6 @@ public:
         }
     }
 
-    /// @brief Get a YANG data node found at the given absolute xpath.
-    ///
-    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
-    /// datastore by calling Session::getData(). It should be used sparingly in production code,
-    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
-    ///
-    /// @param xpath the xpath at which the YANG data node is to be found
-    ///
-    /// @return a DataNode if found, or nullopt otherwise
-    ///
-    /// @throw NetconfError when the used sysrepo API throws an error
-    std::optional<libyang::DataNode> getNode(std::string const& xpath) const;
-
     /// @brief Translate and set basic value from JSON to YANG.
     ///
     /// @param xpath The xpath of the basic value.
@@ -177,7 +177,7 @@ public:
     /// @param data_node the YANG data node
     ///
     /// @return the translated JSON element
-    static isc::data::ElementPtr translate(std::optional<libyang::DataNode> data_node);
+    static isc::data::ElementPtr translateFromYang(std::optional<libyang::DataNode> data_node);
 
     /// @brief Translate basic value from JSON to YANG.
     ///
@@ -185,8 +185,8 @@ public:
     /// @param type The sysrepo type.
     ///
     /// @return string representation of {elem}, or nullopt if {elem} is null
-    static std::optional<std::string> translate(isc::data::ConstElementPtr const& elem,
-                                                libyang::LeafBaseType const type);
+    static std::optional<std::string> translateToYang(isc::data::ConstElementPtr const& elem,
+                                                      libyang::LeafBaseType const type);
 
 protected:
     /// @brief Decode a YANG element of binary type to a string that

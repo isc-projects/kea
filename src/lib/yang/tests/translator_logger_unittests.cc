@@ -49,7 +49,7 @@ TEST_F(TranslatorLoggersTestv4, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr loggers;
-    EXPECT_NO_THROW_LOG(loggers = t_obj_->getLoggers(xpath));
+    EXPECT_NO_THROW_LOG(loggers = t_obj_->getLoggersFromAbsoluteXpath(xpath));
     ASSERT_FALSE(loggers);
 }
 
@@ -71,7 +71,7 @@ TEST_F(TranslatorLoggersTestv6, get) {
 
     // Get empty.
     ConstElementPtr loggers;
-    EXPECT_NO_THROW_LOG(loggers = t_obj_->getLoggers(xpath));
+    EXPECT_NO_THROW_LOG(loggers = t_obj_->getLoggersFromAbsoluteXpath(xpath));
     ASSERT_TRUE(loggers);
     ASSERT_EQ(1, loggers->size());
     ConstElementPtr logger = loggers->get(0);
@@ -121,7 +121,7 @@ TEST_F(TranslatorLoggersTestv4, set) {
 
     // Get it back.
     ConstElementPtr gots;
-    EXPECT_NO_THROW_LOG(gots = t_obj_->getLoggers(xpath));
+    EXPECT_NO_THROW_LOG(gots = t_obj_->getLoggersFromAbsoluteXpath(xpath));
     ASSERT_TRUE(gots);
     ASSERT_EQ(1, gots->size());
     ConstElementPtr got = gots->get(0);

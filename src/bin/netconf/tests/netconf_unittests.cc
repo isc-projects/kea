@@ -64,7 +64,7 @@ public:
     using NetconfAgent::checkModule;
     using NetconfAgent::checkModules;
     using NetconfAgent::yangConfig;
-    using NetconfAgent::subscribeConfig;
+    using NetconfAgent::subscribeToDataChanges;
     using NetconfAgent::startup_sess_;
     using NetconfAgent::running_sess_;
     using NetconfAgent::modules_;
@@ -466,7 +466,8 @@ TEST_F(NetconfAgentLogTest, logChanges) {
     SubscribeOptions const options(SubscribeOptions::Default | SubscribeOptions::DoneOnly);
     optional<Subscription> subscription;
     EXPECT_NO_THROW_LOG(subscription = agent_->running_sess_->onModuleChange(KEA_DHCP4_SERVER, cb,
-                                                                         std::nullopt, 0, options));
+                                                                             std::nullopt, 0,
+                                                                             options));
     thread_.reset(new thread([this]() { io_service_->run(); }));
 
     // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
@@ -525,7 +526,8 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
     SubscribeOptions const options(SubscribeOptions::Default | SubscribeOptions::DoneOnly);
     optional<Subscription> subscription;
     EXPECT_NO_THROW_LOG(subscription = agent_->running_sess_->onModuleChange(KEA_DHCP4_SERVER, cb,
-                                                                         std::nullopt, 0, options));
+                                                                             std::nullopt, 0,
+                                                                             options));
     thread_.reset(new thread([this]() { io_service_->run(); }));
 
     // Change configuration (subnet #1 moved to #10).
@@ -750,8 +752,8 @@ TEST_F(NetconfAgentTest, yangConfig) {
     EXPECT_TRUE(expected->equals(*response));
 }
 
-// Verifies that the subscribeConfig method works as expected.
-TEST_F(NetconfAgentTest, subscribeConfig) {
+// Verifies that the subscribeToDataChanges method works as expected.
+TEST_F(NetconfAgentTest, subscribeToDataChanges) {
     // Netconf configuration.
     string config_prefix = "{\n"
         "  \"Netconf\": {\n"
@@ -789,11 +791,11 @@ TEST_F(NetconfAgentTest, subscribeConfig) {
     ASSERT_EQ(1, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
-    // Try subscribeConfig.
+    // Try subscribeToDataChanges.
     EXPECT_EQ(0, agent_->subscriptions_.size());
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW_LOG(agent_->subscribeConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->subscribeToDataChanges(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     /// Unsubscribe.
@@ -858,9 +860,9 @@ TEST_F(NetconfAgentTest, update) {
     ASSERT_EQ(1, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
-    // Subscribe YANG changes.
+    // Subscribe to YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW_LOG(agent_->subscribeConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->subscribeToDataChanges(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Launch server.
@@ -983,18 +985,17 @@ TEST_F(NetconfAgentTest, validate) {
     ASSERT_EQ(1, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
-    // Subscribe YANG changes.
+    // Subscribe to YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW_LOG(agent_->subscribeConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->subscribeToDataChanges(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Launch server twice.
-    thread_.reset(new thread([this]()
-                             {
-                                 fakeServer();
-                                 fakeServer();
-                                 signalStopped();
-                             }));
+    thread_.reset(new thread([this]() {
+        fakeServer();
+        fakeServer();
+        signalStopped();
+    }));
 
     // Wait until the server is listening.
     waitReady();
@@ -1142,9 +1143,9 @@ TEST_F(NetconfAgentTest, noValidate) {
     ASSERT_EQ(1, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
-    // Subscribe YANG changes.
+    // Subscribe to YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW_LOG(agent_->subscribeConfig(service_pair));
+    EXPECT_NO_THROW_LOG(agent_->subscribeToDataChanges(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Change configuration (add invalid user context).
@@ -1156,7 +1157,8 @@ TEST_F(NetconfAgentTest, noValidate) {
         { "/kea-dhcp4-server:config/subnet4[id='1']/user-context",
           "BOGUS", LeafBaseType::String, true }
     });
-    EXPECT_THROW_MSG(repr.set(tree1, *agent_->running_sess_), sysrepo::Error, "Session::applyChanges: Couldn't apply changes: SR_ERR_CALLBACK_FAILED");
+    EXPECT_THROW_MSG(repr.set(tree1, *agent_->running_sess_), sysrepo::Error,
+                     "Session::applyChanges: Couldn't apply changes: SR_ERR_CALLBACK_FAILED");
 }
 
 }  // namespace

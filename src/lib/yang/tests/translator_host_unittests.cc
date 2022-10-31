@@ -52,7 +52,7 @@ TEST_F(TranslatorHostsTestv6, getEmpty) {
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
     ConstElementPtr hosts;
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(hosts);
 }
 
@@ -78,7 +78,7 @@ TEST_F(TranslatorHostsTestv6, get) {
 
     // Get the host.
     ConstElementPtr host;
-    EXPECT_NO_THROW_LOG(host = t_obj_->getHost(shost.str()));
+    EXPECT_NO_THROW_LOG(host = t_obj_->getHostFromAbsoluteXpath(shost.str()));
     ASSERT_TRUE(host);
     ElementPtr expected = Element::createMap();
     ElementPtr addresses = Element::createList();
@@ -90,7 +90,7 @@ TEST_F(TranslatorHostsTestv6, get) {
     // Get the host reservation list and check if the host reservation
     // is in it.
     ConstElementPtr hosts;
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
     ASSERT_EQ(1, hosts->size());
@@ -114,7 +114,7 @@ TEST_F(TranslatorHostsTestv6, setEmpty) {
 
     // Get it back.
     hosts.reset();
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(hosts);
 }
 
@@ -140,7 +140,7 @@ TEST_F(TranslatorHostsTestv4, set) {
 
     // Get it back.
     hosts.reset();
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
     ASSERT_EQ(1, hosts->size());
@@ -178,7 +178,7 @@ TEST_F(TranslatorHostsTestv6, getMany) {
 
     // Get the host.
     ConstElementPtr hosts;
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHosts(xpath));
+    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(hosts);
 
     EXPECT_EQ(hosts->str(),

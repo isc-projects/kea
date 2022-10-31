@@ -60,7 +60,7 @@ TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorControlSocket::getControlSocket(string const& xpath) {
+TranslatorControlSocket::getControlSocketFromAbsoluteXpath(string const& xpath) {
     try {
         return getControlSocket(findXPath(xpath));
     } catch(NetconfError const&) {

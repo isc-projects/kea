@@ -199,7 +199,7 @@ public:
     /// @return JSON representation of loggers.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ConstElementPtr getLoggers(std::string const& xpath);
+    isc::data::ConstElementPtr getLoggersFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set loggers from JSON to YANG.
     ///

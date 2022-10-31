@@ -51,7 +51,7 @@ TEST_F(TranslatorPdPoolsTestIetfV6, getEmptyIetf) {
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
         "/network-range[network-range-id='111']/pd-pools";
     ConstElementPtr pools;
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(pools);
 }
 
@@ -61,7 +61,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getEmptyKea) {
     // Get the pd-pool list and check if it is empty.
     const string& xpath = "/kea-dhcp6-server:config/subnet6[id='111']";
     ConstElementPtr pools;
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(pools);
 }
 
@@ -90,7 +90,7 @@ TEST_F(TranslatorPdPoolsTestIetfV6, getIetf) {
 
     // Get the pool.
     ConstElementPtr pool;
-    EXPECT_NO_THROW_LOG(pool = t_obj_->getPdPool(xpath));
+    EXPECT_NO_THROW_LOG(pool = t_obj_->getPdPoolFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pool);
     ElementPtr expected = Element::createMap();
     expected->set("prefix", Element::create(string("2001:db8:0:1000::")));
@@ -99,7 +99,7 @@ TEST_F(TranslatorPdPoolsTestIetfV6, getIetf) {
 
     // Get the pd-pool list and check if the pd-pool is in it.
     ConstElementPtr pools;
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(subnet + "/pd-pools"));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(subnet + "/pd-pools"));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -129,7 +129,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getKea) {
 
     // Get the pool.
     ConstElementPtr pool;
-    EXPECT_NO_THROW_LOG(pool = t_obj_->getPdPool(spool.str()));
+    EXPECT_NO_THROW_LOG(pool = t_obj_->getPdPoolFromAbsoluteXpath(spool.str()));
     ASSERT_TRUE(pool);
     ElementPtr expected = Element::createMap();
     expected->set("prefix", Element::create(string("2001:db8:0:1000::")));
@@ -139,7 +139,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getKea) {
 
     // Get the pd-pool list and check if the pd-pool is in it.
     ConstElementPtr pools;
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -165,7 +165,7 @@ TEST_F(TranslatorPdPoolsTestIetfV6, setEmptyIetf) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(pools);
 }
 
@@ -186,7 +186,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, setEmptyKea) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(pools);
 }
 
@@ -213,7 +213,7 @@ TEST_F(TranslatorPdPoolsTestIetfV6, setIetf) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -242,7 +242,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, setKea) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -282,7 +282,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getListKea) {
 
     // Get the pools list.
     ConstElementPtr pools;
-    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW_LOG(pools = t_obj_->getPdPoolsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pools);
 
     // Check that both of them are returned properly.

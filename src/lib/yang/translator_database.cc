@@ -39,7 +39,7 @@ TranslatorDatabase::getDatabase(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorDatabase::getDatabase(string const& xpath) {
+TranslatorDatabase::getDatabaseFromAbsoluteXpath(string const& xpath) {
     try {
         return getDatabase(findXPath(xpath));
     } catch(NetconfError const&) {
@@ -161,7 +161,7 @@ TranslatorDatabases::getDatabases(DataNode const& data_node,
 }
 
 ElementPtr
-TranslatorDatabases::getDatabases(string const& xpath) {
+TranslatorDatabases::getDatabasesFromAbsoluteXpath(string const& xpath) {
     try {
         return getDatabases(findXPath(xpath), xpath);
     } catch(NetconfError const&) {

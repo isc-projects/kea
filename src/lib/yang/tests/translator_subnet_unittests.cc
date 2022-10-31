@@ -59,7 +59,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getEmptyIetf) {
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
     ConstElementPtr subnets;
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(subnets);
 }
 
@@ -69,7 +69,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getEmptyKea) {
     // Get the subnet list and check if it is empty.
     const string& xpath = "/kea-dhcp6-server:config";
     ConstElementPtr subnets;
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(subnets);
 }
 
@@ -87,7 +87,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getIetf) {
 
     // Get the subnet.
     ConstElementPtr subnet;
-    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnet(xsub));
+    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnetFromAbsoluteXpath(xsub));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("{ \"id\": 111, "
               "\"subnet\": \"2001:db8::/48\" }",
@@ -95,7 +95,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getIetf) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -116,7 +116,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getKea) {
 
     // Get the subnet.
     ConstElementPtr subnet;
-    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnet(xsub));
+    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnetFromAbsoluteXpath(xsub));
     ASSERT_TRUE(subnet);
     ElementPtr expected = Element::createMap();
     expected->set("id", Element::create(111));
@@ -125,7 +125,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getKea) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -159,7 +159,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getPoolsIetf) {
 
     // Get the subnet.
     ConstElementPtr subnet;
-    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnet(xsub));
+    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnetFromAbsoluteXpath(xsub));
     ASSERT_TRUE(subnet);
     string expected =
         "{\n"
@@ -178,7 +178,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getPoolsIetf) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -211,7 +211,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getPoolsKea) {
 
     // Get the subnet.
     ConstElementPtr subnet;
-    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnet(xsub));
+    EXPECT_NO_THROW_LOG(subnet = t_obj_->getSubnetFromAbsoluteXpath(xsub));
     ASSERT_TRUE(subnet);
     string expected =
         "{\n"
@@ -230,7 +230,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getPoolsKea) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -248,7 +248,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, setEmptyIetf) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(subnets);
 }
 
@@ -262,7 +262,7 @@ TEST_F(TranslatorSubnetsTestKeaV4, setEmptyKea) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(subnets);
 }
 
@@ -281,7 +281,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, setIetf) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -302,7 +302,7 @@ TEST_F(TranslatorSubnetsTestKeaV4, setKea) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -336,7 +336,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, setTwoIetf) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -369,7 +369,7 @@ TEST_F(TranslatorSubnetsTestKeaV4, setTwoKea) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnets(xpath));
+    EXPECT_NO_THROW_LOG(subnets = t_obj_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());

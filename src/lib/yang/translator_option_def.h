@@ -103,7 +103,7 @@ public:
     /// @return JSON representation of the option definition.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getOptionDef(std::string const& xpath);
+    isc::data::ElementPtr getOptionDefFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set option definition from JSON to YANG.
     ///
@@ -165,7 +165,7 @@ public:
     /// @return JSON representation of the list of option definitions
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ConstElementPtr getOptionDefList(std::string const& xpath);
+    isc::data::ConstElementPtr getOptionDefListFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set option definition list from JSON to YANG.
     ///

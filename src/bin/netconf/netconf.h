@@ -147,7 +147,7 @@ protected:
     /// @brief Subscribe changes for a module in YANG datastore.
     ///
     /// @param service_pair The service name and configuration pair.
-    void subscribeConfig(const CfgServersMapPair& service_pair);
+    void subscribeToDataChanges(const CfgServersMapPair& service_pair);
 
     /// @brief Subscribe to notifications for a given YANG module.
     ///

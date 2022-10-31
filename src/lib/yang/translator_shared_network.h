@@ -191,7 +191,7 @@ public:
     /// @return JSON representation of the shared network.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getSharedNetwork(std::string const& xpath);
+    isc::data::ElementPtr getSharedNetworkFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set shared network from JSON to YANG.
     ///
@@ -256,7 +256,7 @@ public:
     /// @return the JSON representation of the list of shared networks
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getSharedNetworks(std::string const& xpath);
+    isc::data::ElementPtr getSharedNetworksFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set shared networks from JSON to YANG.
     ///

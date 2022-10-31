@@ -170,7 +170,7 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
 
     for (auto const& pair : *servers) {
         yangConfig(pair);
-        subscribeConfig(pair);
+        subscribeToDataChanges(pair);
         subscribeToNotifications(pair);
     }
 }
@@ -421,7 +421,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
 }
 
 void
-NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
+NetconfAgent::subscribeToDataChanges(const CfgServersMapPair& service_pair) {
     string const& server(service_pair.first);
     CfgServerPtr const& configuration(service_pair.second);
     string const& model(configuration->getModel());
@@ -713,7 +713,9 @@ NetconfAgent::logChanges(Session sess, string_view const& model) {
         } else if (node_type == NodeType::List) {
             msg << " (list)";
         } else {
-            optional<string> const str(TranslatorBasic::translate(TranslatorBasic::translate(change.node), LeafBaseType::Unknown));
+            optional<string> const str(
+                TranslatorBasic::translateToYang(TranslatorBasic::translateFromYang(change.node),
+                                                 LeafBaseType::Unknown));
             if (str) {
                 msg << " = " << *str;
             }

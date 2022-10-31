@@ -143,7 +143,7 @@ public:
     ///
     /// @throw BadValue on pd-pool without well formed prefix.
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getPdPool(std::string const& xpath);
+    isc::data::ElementPtr getPdPoolFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set pd-pool from JSON to YANG.
     ///
@@ -219,7 +219,7 @@ public:
     /// @return the JSON representation of the list of PD pools
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getPdPools(std::string const& xpath);
+    isc::data::ElementPtr getPdPoolsFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set pd-pools from JSON to YANG.
     ///

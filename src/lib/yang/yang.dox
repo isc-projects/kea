@@ -58,10 +58,10 @@ the basic / base class and recursively from translators for embedded parts.
     translates it form YANG to JSON.
   - @c isc::yang::TranslatorBasic::setItem() translates a leaf from JSON to
     YANG and sets it in Sysrepo.
-  - @c isc::yang::TranslatorBasic::translate(ConstElementPtr, LeafBaseType)
-    translates a JSON leaf to a string.
-  - @c isc::yang::TranslatorBasic::translate(optional<DataNode>) translates a YANG
+  - @c isc::yang::TranslatorBasic::translateFromYang(optional<DataNode>, string) translates a YANG
     leaf to a JSON node.
+  - @c isc::yang::TranslatorBasic::translateToYang(ConstElementPtr, LeafBaseType)
+    translates a JSON leaf to a string.
 
 @section yangTranslatorPool Pool translator
 

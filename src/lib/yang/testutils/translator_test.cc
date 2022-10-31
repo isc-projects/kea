@@ -98,7 +98,8 @@ YangRepr::YangReprItem::get(const string& xpath, Session session) {
             // Get the underlying type.
             type = data_node->schema().asLeaf().valueType().asLeafRef().resolvedType().base();
         }
-        value = TranslatorBasic::translate(TranslatorBasic::translate(data_node), type);
+        value = TranslatorBasic::translateToYang(TranslatorBasic::translateFromYang(data_node),
+                                                 type);
         val_xpath = string(data_node->path());
     } catch (Error const& ex) {
         isc_throw(NetconfError,

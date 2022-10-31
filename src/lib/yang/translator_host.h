@@ -143,7 +143,7 @@ public:
     /// @return JSON representation of the host reservation.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getHost(std::string const& xpath);
+    isc::data::ElementPtr getHostFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set host reservation from JSON to YANG.
     ///
@@ -206,7 +206,7 @@ public:
     /// @return JSON representation of the host reservation list.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getHosts(std::string const& xpath);
+    isc::data::ElementPtr getHostsFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set (address) host reservations from JSON to YANG.
     ///

@@ -133,7 +133,7 @@ public:
     /// @return JSON representation of the database.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getDatabase(std::string const& xpath);
+    isc::data::ElementPtr getDatabaseFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set database access from JSON to YANG.
     ///
@@ -205,7 +205,7 @@ public:
     /// @return JSON representation of databases.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getDatabases(std::string const& xpath);
+    isc::data::ElementPtr getDatabasesFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set database accesses from JSON to YANG.
     ///

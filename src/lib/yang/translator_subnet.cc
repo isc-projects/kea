@@ -51,7 +51,7 @@ TranslatorSubnet::getSubnet(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorSubnet::getSubnet(string const& xpath) {
+TranslatorSubnet::getSubnetFromAbsoluteXpath(string const& xpath) {
     try {
         return getSubnet(findXPath(xpath));
     } catch(NetconfError const&) {
@@ -524,7 +524,7 @@ TranslatorSubnets::getSubnets(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorSubnets::getSubnets(string const& xpath) {
+TranslatorSubnets::getSubnetsFromAbsoluteXpath(string const& xpath) {
     try {
         return getSubnets(findXPath(xpath));
     } catch(NetconfError const&) {

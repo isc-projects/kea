@@ -65,7 +65,7 @@ TEST_F(TranslatorControlSocketTestv4, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config/control-socket";
     ConstElementPtr sock;
-    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocketFromAbsoluteXpath(xpath));
     EXPECT_FALSE(sock);
 }
 
@@ -87,7 +87,7 @@ TEST_F(TranslatorControlSocketTestv6, get) {
 
     // Get it.
     ConstElementPtr sock;
-    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocketFromAbsoluteXpath(xpath));
     ASSERT_TRUE(sock);
     ASSERT_EQ(Element::map, sock->getType());
     EXPECT_EQ(3, sock->size());
@@ -123,7 +123,7 @@ TEST_F(TranslatorControlSocketTestCtrlAgent, set) {
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW_LOG(got = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(got = t_obj_->getControlSocketFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::map, got->getType());
     EXPECT_EQ(3, got->size());
@@ -158,7 +158,7 @@ TEST_F(TranslatorControlSocketTestv4, setEmpty) {
 
     // Get it back.
     ConstElementPtr sock;
-    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocketFromAbsoluteXpath(xpath));
     ASSERT_TRUE(sock);
     EXPECT_EQ(sock->str(),
         R"({ "socket-name": "/tmp/kea.sock", "socket-type": "unix", "user-context": { "foo": 1 } })");
@@ -167,7 +167,7 @@ TEST_F(TranslatorControlSocketTestv4, setEmpty) {
     EXPECT_NO_THROW_LOG(t_obj_->setControlSocket(xpath, ConstElementPtr()));
 
     // Get it back.
-    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocket(xpath));
+    EXPECT_NO_THROW_LOG(sock = t_obj_->getControlSocketFromAbsoluteXpath(xpath));
     EXPECT_FALSE(sock);
 }
 

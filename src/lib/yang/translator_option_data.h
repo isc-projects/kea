@@ -100,7 +100,7 @@ public:
     /// @return JSON representation of the option data.
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getOptionData(std::string const& xpath);
+    isc::data::ElementPtr getOptionDataFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set option data from JSON to YANG.
     ///
@@ -159,7 +159,7 @@ public:
     /// @return the JSON representation of the list of option data
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ConstElementPtr getOptionDataList(std::string const& xpath);
+    isc::data::ConstElementPtr getOptionDataListFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set option data list from JSON to YANG.
     ///

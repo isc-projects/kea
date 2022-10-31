@@ -91,7 +91,7 @@ TranslatorBasic::encode64(string const& input) {
 
 DataNode
 TranslatorBasic::findXPath(string const& xpath) {
-    optional<DataNode> const& data_node(getNode(xpath));
+    optional<DataNode> const& data_node(getData(xpath));
     if (!data_node) {
         isc_throw(NetconfError, "no data");
     }
@@ -102,54 +102,8 @@ TranslatorBasic::findXPath(string const& xpath) {
     return at_path.front();
 }
 
-ElementPtr
-TranslatorBasic::getItem(DataNode const& data_node, string const& xpath) const {
-    try {
-        Set<DataNode> const& nodes(data_node.findXPath(xpath));
-        if (nodes.empty()) {
-            return ElementPtr();
-        }
-        DataNode const& front(nodes.front());
-        NodeType const node_type(front.schema().nodeType());
-
-        // Leaf-list
-        if (node_type == NodeType::Leaflist) {
-            ElementPtr result(Element::createList());
-            for (DataNode const& i : nodes) {
-                result->add(translate(i));
-            }
-            return result;
-        } else if (node_type == NodeType::Container) {
-            /// @todo:
-            /// isc_throw(NetconfError, "getting containers not supported, xpath is '" << xpath << "'");
-            return ElementPtr();
-        } else if (node_type == NodeType::List) {
-            /// @todo:
-            /// isc_throw(NetconfError, "getting lists not supported, xpath is '" << xpath << "'");
-            return ElementPtr();
-        }
-
-        // Leaf
-        return translate(front);
-    } catch (sysrepo::Error const& ex) {
-        isc_throw(NetconfError, "sysrepo error getting item at '" << xpath
-                  << "': " << ex.what());
-    }
-}
-
-ElementPtr
-TranslatorBasic::getItem(string const& xpath) const {
-    optional<DataNode> const& data_node(getNode(xpath));
-    if (!data_node) {
-        /// @todo:
-        /// isc_throw(NetconfError, "no data ");
-        return ElementPtr();
-    }
-    return getItem(*data_node, xpath);
-}
-
 optional<DataNode>
-TranslatorBasic::getNode(string const& xpath) const {
+TranslatorBasic::getData(string const& xpath) const {
     /// @todo: Remove this if convenient. It is not strictly required and only done to detect
     /// missing schema nodes and throw an exception to keep old behavior.
     try {
@@ -171,10 +125,56 @@ TranslatorBasic::getNode(string const& xpath) const {
     return data_node;
 }
 
+ElementPtr
+TranslatorBasic::getItem(DataNode const& data_node, string const& xpath) const {
+    try {
+        Set<DataNode> const& nodes(data_node.findXPath(xpath));
+        if (nodes.empty()) {
+            return ElementPtr();
+        }
+        DataNode const& front(nodes.front());
+        NodeType const node_type(front.schema().nodeType());
+
+        // Leaf-list
+        if (node_type == NodeType::Leaflist) {
+            ElementPtr result(Element::createList());
+            for (DataNode const& i : nodes) {
+                result->add(translateFromYang(i));
+            }
+            return result;
+        } else if (node_type == NodeType::Container) {
+            /// @todo:
+            /// isc_throw(NetconfError, "getting containers not supported, xpath is '" << xpath << "'");
+            return ElementPtr();
+        } else if (node_type == NodeType::List) {
+            /// @todo:
+            /// isc_throw(NetconfError, "getting lists not supported, xpath is '" << xpath << "'");
+            return ElementPtr();
+        }
+
+        // Leaf
+        return translateFromYang(front);
+    } catch (sysrepo::Error const& ex) {
+        isc_throw(NetconfError, "sysrepo error getting item at '" << xpath
+                  << "': " << ex.what());
+    }
+}
+
+ElementPtr
+TranslatorBasic::getItemFromAbsoluteXpath(string const& xpath) const {
+    optional<DataNode> const& data_node(getData(xpath));
+    if (!data_node) {
+        /// @todo:
+        /// isc_throw(NetconfError, "no data ");
+        return ElementPtr();
+    }
+    return getItem(*data_node, xpath);
+}
+
 void
 TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
                          LeafBaseType type) {
-    optional<string> const value(translate(elem, type));
+    optional<string> const value(translateToYang(elem, type));
     try {
         session_.setItem(xpath, value);
     } catch (sysrepo::Error const& ex) {
@@ -185,7 +185,7 @@ TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
 }
 
 ElementPtr
-TranslatorBasic::translate(optional<DataNode> data_node) {
+TranslatorBasic::translateFromYang(optional<DataNode> data_node) {
     NodeType const node_type(data_node->schema().nodeType());
     if (node_type == NodeType::Leaf || node_type == NodeType::Leaflist) {
         DataNodeTerm const& leaf(data_node->asTerm());
@@ -207,8 +207,8 @@ TranslatorBasic::translate(optional<DataNode> data_node) {
 }
 
 optional<string>
-TranslatorBasic::translate(ConstElementPtr const& element,
-                       LeafBaseType const type) {
+TranslatorBasic::translateToYang(ConstElementPtr const& element,
+                                 LeafBaseType const type) {
     if (!element) {
         // A null ElementPtr is how we signal that this item requires no value.
         // Useful when setting YANG lists which is the only way to set their

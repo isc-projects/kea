@@ -44,7 +44,7 @@ TranslatorClass::getClass(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorClass::getClass(string const& xpath) {
+TranslatorClass::getClassFromAbsoluteXpath(string const& xpath) {
     try {
         return getClass(findXPath(xpath));
     } catch(NetconfError const&) {
@@ -197,7 +197,7 @@ TranslatorClasses::getClasses(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorClasses::getClasses(string const& xpath) {
+TranslatorClasses::getClassesFromAbsoluteXpath(string const& xpath) {
     try {
         return getClasses(findXPath(xpath));
     } catch(NetconfError const&) {

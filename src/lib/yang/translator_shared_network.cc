@@ -52,7 +52,7 @@ TranslatorSharedNetwork::getSharedNetwork(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorSharedNetwork::getSharedNetwork(string const& xpath) {
+TranslatorSharedNetwork::getSharedNetworkFromAbsoluteXpath(string const& xpath) {
     try {
         return getSharedNetwork(findXPath(xpath));
     } catch(NetconfError const&) {
@@ -388,7 +388,7 @@ TranslatorSharedNetworks::getSharedNetworks(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorSharedNetworks::getSharedNetworks(string const& xpath) {
+TranslatorSharedNetworks::getSharedNetworksFromAbsoluteXpath(string const& xpath) {
     try {
         return getSharedNetworks(findXPath(xpath));
     } catch(NetconfError const&) {

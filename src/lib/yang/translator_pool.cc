@@ -48,7 +48,7 @@ TranslatorPool::getPool(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorPool::getPool(string const& xpath) {
+TranslatorPool::getPoolFromAbsoluteXpath(string const& xpath) {
     try {
         return getPool(findXPath(xpath));
     } catch(NetconfError const&) {
@@ -292,7 +292,7 @@ TranslatorPools::getPools(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorPools::getPools(string const& xpath) {
+TranslatorPools::getPoolsFromAbsoluteXpath(string const& xpath) {
     try {
         return getPools(findXPath(xpath));
     } catch(NetconfError const&) {
