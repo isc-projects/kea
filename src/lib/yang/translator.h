@@ -36,7 +36,40 @@ public:
     /// @param name name of the parameter
     void checkAndGetLeaf(isc::data::ElementPtr& storage,
                          libyang::DataNode const& data_node,
-                         const std::string& name);
+                         std::string const& name) const;
+
+    /// @brief Retrieves a child YANG data node identified by name from the
+    /// given parent YANG container node and stores it in the specified storage.
+    ///
+    /// @param storage ElementMap where result will be stored
+    /// @param data_node parent data node of container type
+    /// @param name name of the parameter
+    void checkAndGetDivergingLeaf(isc::data::ElementPtr& storage,
+                                  libyang::DataNode const& data_node,
+                                  std::string const& name,
+                                  std::string const& yang_name) const;
+
+    /// @brief Retrieves a child YANG data node identified by name from the given parent YANG
+    /// container node, converts it from string to JSON and stores it in the specified storage.
+    ///
+    /// @param storage ElementMap where result will be stored
+    /// @param data_node parent data node of container type
+    /// @param name name of the parameter
+    void checkAndGetAndJsonifyLeaf(isc::data::ElementPtr& storage,
+                                   libyang::DataNode const& data_node,
+                                   const std::string& name) const;
+
+    /// @brief Get an element from given ElementPtr node and set it in sysrepo
+    /// at given xpath.
+    ///
+    /// @param from the parent configuration node from which to take the value
+    /// @param xpath the xpath to the YANG node without the last node
+    /// @param name the name of the YANG node which should also match the map
+    /// key in the JSON configuration
+    /// @param type the sysrepo node type
+    void checkAndJsonifyAndSetLeaf(isc::data::ConstElementPtr const& from,
+                                   std::string const& xpath,
+                                   std::string const& name);
 
     /// @brief Get an element from given ElementPtr node and set it in sysrepo
     /// at given xpath.
@@ -50,6 +83,44 @@ public:
                          std::string const& xpath,
                          std::string const& name,
                          libyang::LeafBaseType const type);
+
+    /// @brief Get an element from given ElementPtr node and set it in sysrepo
+    /// at given xpath.
+    ///
+    /// @param from the parent configuration node from which to take the value
+    /// @param xpath the xpath to the YANG node without the last node
+    /// @param name the name of the YANG node which should also match the map
+    /// key in the JSON configuration
+    /// @param type the sysrepo node type
+    void checkAndSetDivergingLeaf(isc::data::ConstElementPtr const& from,
+                                  std::string const& xpath,
+                                  std::string const& name,
+                                  std::string const& yang_name,
+                                  libyang::LeafBaseType const type);
+
+    /// @brief Get an element from given ElementPtr node and set it in sysrepo
+    /// at given xpath as a leaf-list.
+    ///
+    /// @param from the parent configuration node from which to take the value
+    /// @param xpath the xpath to the YANG node without the last node
+    /// @param name the name of the YANG node which should also match the map
+    /// key in the JSON configuration
+    /// @param type the sysrepo node type
+    void checkAndSetLeafList(isc::data::ConstElementPtr const& from,
+                             std::string const& xpath,
+                             std::string const& name,
+                             libyang::LeafBaseType const type);
+
+    /// @brief Get an element from given ElementPtr node and set it in sysrepo
+    /// at given xpath.
+    ///
+    /// @param from the parent configuration node from which to take the value
+    /// @param xpath the xpath to the YANG node without the last node
+    /// @param name the name of the YANG node which should also match the map
+    /// key in the JSON configuration
+    /// @param type the sysrepo node type
+    void checkAndSetUserContext(isc::data::ConstElementPtr const& from,
+                                std::string const& xpath);
 
     /// @brief Delete basic value from YANG.
     ///
@@ -163,6 +234,36 @@ public:
         }
     }
 
+    /// @brief Retrieves a child YANG data node identified by name from the
+    /// given parent YANG container node and stores it in the specified storage.
+    ///
+    /// Unlike @ref checkAndGetLeaf, the leaf is expected to be present.
+    ///
+    /// @param storage ElementMap where result will be stored
+    /// @param data_node parent data node of container type
+    /// @param name name of the parameter
+    ///
+    /// @throw MissingNode if leaf is not found
+    void getMandatoryLeaf(isc::data::ElementPtr& storage,
+                          libyang::DataNode const& data_node,
+                          std::string const& name) const;
+
+    /// @brief Retrieves a child YANG data node identified by one name from the
+    /// given parent YANG container node and stores it in the specified storage
+    /// uner a different name.
+    ///
+    /// Unlike @ref checkAndGetLeaf, the leaf is expected to be present.
+    ///
+    /// @param storage ElementMap where result will be stored
+    /// @param data_node parent data node of container type
+    /// @param name name of the parameter
+    ///
+    /// @throw MissingNode if leaf is not found
+    void getMandatoryDivergingLeaf(isc::data::ElementPtr& storage,
+                                   libyang::DataNode const& data_node,
+                                   std::string const& name,
+                                   std::string const& yang_name) const;
+
     /// @brief Translate and set basic value from JSON to YANG.
     ///
     /// @param xpath The xpath of the basic value.
@@ -171,6 +272,33 @@ public:
     void setItem(const std::string& xpath,
                  isc::data::ConstElementPtr elem,
                  libyang::LeafBaseType type);
+
+    /// @brief Get an element from given ElementPtr node and set it in sysrepo
+    /// at given xpath.
+    ///
+    /// @param from the parent configuration node from which to take the value
+    /// @param xpath the xpath to the YANG node without the last node
+    /// @param name the name of the YANG node which should also match the map
+    /// key in the JSON configuration
+    /// @param type the sysrepo node type
+    void setMandatoryLeaf(isc::data::ConstElementPtr const& from,
+                          std::string const& xpath,
+                          std::string const& name,
+                          libyang::LeafBaseType const type);
+
+    /// @brief Get an element from given ElementPtr node and set it in sysrepo
+    /// at given xpath.
+    ///
+    /// @param from the parent configuration node from which to take the value
+    /// @param xpath the xpath to the YANG node without the last node
+    /// @param name the name of the YANG node which should also match the map
+    /// key in the JSON configuration
+    /// @param type the sysrepo node type
+    void setMandatoryDivergingLeaf(isc::data::ConstElementPtr const& from,
+                                   std::string const& xpath,
+                                   std::string const& name,
+                                   std::string const& yang_name,
+                                   libyang::LeafBaseType const type);
 
     /// @brief Translate basic value from the given YANG data node to JSON element.
     ///

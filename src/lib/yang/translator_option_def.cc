@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <yang/adaptor.h>
 #include <yang/translator_option_def.h>
 #include <yang/yang_models.h>
 
@@ -52,39 +51,20 @@ TranslatorOptionDef::getOptionDefFromAbsoluteXpath(string const& xpath) {
 
 ElementPtr
 TranslatorOptionDef::getOptionDefKea(DataNode const& data_node) {
-    ConstElementPtr code = getItem(data_node, "code");
-    ConstElementPtr name = getItem(data_node, "name");
-    ConstElementPtr type = getItem(data_node, "type");
-    ConstElementPtr space = getItem(data_node, "space");
-    if (!code || !space) {
-        // Can't happen as code and space are the keys.
-        isc_throw(Unexpected, "getOptionDefKea requires code and space");
-    }
-    if (!name || !type) {
-        isc_throw(BadValue, "getOptionDefKea requires name and type");
-    }
     ElementPtr result = Element::createMap();
-    result->set("code", code);
-    result->set("name", name);
-    result->set("type", type);
-    result->set("space", getItem(data_node, "space"));
-    ConstElementPtr record = getItem(data_node, "record-types");
-    if (record) {
-        result->set("record-types", record);
-    }
-    ConstElementPtr array = getItem(data_node, "array");
-    if (array) {
-        result->set("array", array);
-    }
-    ConstElementPtr encapsulate = getItem(data_node, "encapsulate");
-    if (encapsulate) {
-        result->set("encapsulate", encapsulate);
-    }
-    ConstElementPtr context = getItem(data_node, "user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    getMandatoryLeaf(result, data_node, "code");
+    getMandatoryLeaf(result, data_node, "name");
+    getMandatoryLeaf(result, data_node, "space");
+    getMandatoryLeaf(result, data_node, "type");
+
+    checkAndGetLeaf(result, data_node, "array");
+    checkAndGetLeaf(result, data_node, "encapsulate");
+    checkAndGetLeaf(result, data_node, "record-types");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
@@ -108,34 +88,16 @@ TranslatorOptionDef::setOptionDef(string const& xpath, ConstElementPtr elem) {
 void
 TranslatorOptionDef::setOptionDefKea(string const& xpath,
                                      ConstElementPtr elem) {
-    // Skip code and space as they are the keys.
-    ConstElementPtr name = elem->get("name");
-    if (!name) {
-        isc_throw(BadValue, "option definition with name: " << elem->str());
-    }
-    setItem(xpath + "/name", name, LeafBaseType::String);
-    ConstElementPtr type = elem->get("type");
-    if (!type) {
-        isc_throw(BadValue, "option definition with type: " << elem->str());
-    }
-    setItem(xpath + "/type", type, LeafBaseType::String);
-    ConstElementPtr record = elem->get("record-types");
-    if (record) {
-        setItem(xpath + "/record-types", record, LeafBaseType::String);
-    }
-    ConstElementPtr array = elem->get("array");
-    if (array) {
-        setItem(xpath + "/array", array, LeafBaseType::Bool);
-    }
-    ConstElementPtr encapsulate = elem->get("encapsulate");
-    if (encapsulate) {
-        setItem(xpath + "/encapsulate", encapsulate, LeafBaseType::String);
-    }
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                LeafBaseType::String);
-    }
+    // Skip keys "code" and "space".
+
+    setMandatoryLeaf(elem, xpath, "name", LeafBaseType::String);
+    setMandatoryLeaf(elem, xpath, "type", LeafBaseType::String);
+
+    checkAndSetLeaf(elem, xpath, "array", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "encapsulate", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "record-types", LeafBaseType::String);
+
+    checkAndSetUserContext(elem, xpath);
 }
 
 TranslatorOptionDefList::TranslatorOptionDefList(Session session,

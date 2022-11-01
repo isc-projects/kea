@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <yang/adaptor.h>
 #include <yang/translator_database.h>
 #include <yang/yang_models.h>
 
@@ -50,34 +49,31 @@ TranslatorDatabase::getDatabaseFromAbsoluteXpath(string const& xpath) {
 
 ElementPtr
 TranslatorDatabase::getDatabaseKea(DataNode const& data_node) {
-    ConstElementPtr type = getItem(data_node, "database-type");
-    if (!type) {
-        return (ElementPtr());
-    }
     ElementPtr result = Element::createMap();
-    result->set("type", type);
-    checkAndGetLeaf(result, data_node, "user");
-    checkAndGetLeaf(result, data_node, "password");
-    checkAndGetLeaf(result, data_node, "host");
-    checkAndGetLeaf(result, data_node, "name");
-    checkAndGetLeaf(result, data_node, "persist");
-    checkAndGetLeaf(result, data_node, "port");
-    checkAndGetLeaf(result, data_node, "lfc-interval");
-    checkAndGetLeaf(result, data_node, "readonly");
-    checkAndGetLeaf(result, data_node, "trust-anchor");
+
+    getMandatoryDivergingLeaf(result, data_node, "type", "database-type");
+
     checkAndGetLeaf(result, data_node, "cert-file");
-    checkAndGetLeaf(result, data_node, "key-file");
     checkAndGetLeaf(result, data_node, "cipher-list");
     checkAndGetLeaf(result, data_node, "connect-timeout");
+    checkAndGetLeaf(result, data_node, "host");
+    checkAndGetLeaf(result, data_node, "key-file");
+    checkAndGetLeaf(result, data_node, "lfc-interval");
     checkAndGetLeaf(result, data_node, "max-reconnect-tries");
-    checkAndGetLeaf(result, data_node, "reconnect-wait-time");
     checkAndGetLeaf(result, data_node, "max-row-errors");
+    checkAndGetLeaf(result, data_node, "name");
     checkAndGetLeaf(result, data_node, "on-fail");
-    ConstElementPtr context = getItem(data_node, "user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+    checkAndGetLeaf(result, data_node, "password");
+    checkAndGetLeaf(result, data_node, "persist");
+    checkAndGetLeaf(result, data_node, "port");
+    checkAndGetLeaf(result, data_node, "readonly");
+    checkAndGetLeaf(result, data_node, "reconnect-wait-time");
+    checkAndGetLeaf(result, data_node, "trust-anchor");
+    checkAndGetLeaf(result, data_node, "user");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
@@ -107,35 +103,29 @@ TranslatorDatabase::setDatabaseKea(string const& xpath,
         deleteItem(xpath);
         return;
     }
-    if (!skip) {
-        ConstElementPtr type = elem->get("type");
-        if (!type) {
-            isc_throw(BadValue, "setDatabase requires database type: "
-                      << elem->str());
-        }
-        setItem(xpath + "/database-type", type, LeafBaseType::String);
-    }
-    checkAndSetLeaf(elem, xpath, "user", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "password", LeafBaseType::String);
+
+    checkAndSetLeaf(elem, xpath, "connect-timeout", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "cipher-list", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "host", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "key-file", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "lfc-interval", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "max-reconnect-tries", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "max-row-errors", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "name", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "on-fail", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "password", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "persist", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "port", LeafBaseType::Uint16);
-    checkAndSetLeaf(elem, xpath, "lfc-interval", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "readonly", LeafBaseType::Bool);
-    checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "key-file", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "cipher-list", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "connect-timeout", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "max-reconnect-tries", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "reconnect-wait-time", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "max-row-errors", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "on-fail", LeafBaseType::String);
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "user", LeafBaseType::String);
+
+    checkAndSetUserContext(elem, xpath);
+
+    if (!skip) {
+        setMandatoryDivergingLeaf(elem, xpath, "type", "database-type", LeafBaseType::String);
     }
 }
 

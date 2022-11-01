@@ -554,7 +554,7 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
     }
 
     OptionCodes codes;
-    initCodes(codes, space);;
+    initCodes(codes, space);
     ConstElementPtr defs = dhcp->get("option-def");
     if (defs) {
         if (!defs->empty()) {

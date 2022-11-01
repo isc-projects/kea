@@ -9,6 +9,7 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/std_option_defs.h>
 #include <yang/adaptor_option.h>
+#include <yang/netconf_error.h>
 
 using namespace std;
 using namespace isc::data;

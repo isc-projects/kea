@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <yang/adaptor.h>
 #include <yang/translator_host.h>
 #include <yang/yang_models.h>
 
@@ -56,57 +55,32 @@ TranslatorHost::getHostKea(DataNode const& data_node) {
     ConstElementPtr id_type = getItem(data_node, "identifier-type");
     ConstElementPtr id = getItem(data_node, "identifier");
     if (!id_type || !id) {
-        isc_throw(Unexpected, "getHostKea requires both identifier and "
-                  "identifier-type");
+        isc_throw(MissingNode, "getHostKea requires both identifier and identifier-type");
     }
     ElementPtr result = Element::createMap();
     result->set(id_type->stringValue(), id);
-    ConstElementPtr hostname = getItem(data_node, "hostname");
-    if (hostname) {
-        result->set("hostname", hostname);
-    }
-    if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr address = getItem(data_node, "ip-address");
-        if (address) {
-            result->set("ip-address", address);
-        }
-    } else {
-        ConstElementPtr addresses = getItem(data_node, "ip-addresses");
-        if (addresses && (addresses->size() > 0)) {
-            result->set("ip-addresses", addresses);
-        }
-        ConstElementPtr prefixes = getItem(data_node, "prefixes");
-        if (prefixes && (prefixes->size() > 0)) {
-            result->set("prefixes", prefixes);
-        }
-    }
+
+    checkAndGetLeaf(result, data_node, "client-classes");
+    checkAndGetLeaf(result, data_node, "hostname");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
     ConstElementPtr options = getOptionDataList(data_node);
-    if (options && (options->size() > 0)) {
+    if (options) {
         result->set("option-data", options);
     }
-    ConstElementPtr classes = getItem(data_node, "client-classes");
-    if (classes) {
-        result->set("client-classes", classes);
-    }
+
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr next = getItem(data_node, "next-server");
-        if (next) {
-            result->set("next-server", next);
-        }
-        ConstElementPtr server_hostname = getItem(data_node, "server-hostname");
-        if (server_hostname) {
-            result->set("server-hostname", server_hostname);
-        }
-        ConstElementPtr boot = getItem(data_node, "boot-file-name");
-        if (boot) {
-            result->set("boot-file-name", boot);
-        }
+        checkAndGetLeaf(result, data_node, "boot-file-name");
+        checkAndGetLeaf(result, data_node, "ip-address");
+        checkAndGetLeaf(result, data_node, "next-server");
+        checkAndGetLeaf(result, data_node, "server-hostname");
+    } else {
+        checkAndGetLeaf(result, data_node, "ip-addresses");
+        checkAndGetLeaf(result, data_node, "prefixes");
     }
-    ConstElementPtr context = getItem(data_node, "user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
@@ -128,63 +102,29 @@ TranslatorHost::setHost(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorHost::setHostKea(string const& xpath, ConstElementPtr elem) {
-    ConstElementPtr hostname = elem->get("hostname");
-    // Skip identifier and identifier type as they are keys.
-    if (hostname) {
-        setItem(xpath + "/hostname", hostname, LeafBaseType::String);
-    }
-    if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr address = elem->get("ip-address");
-        if (address) {
-            setItem(xpath + "/ip-address", address, LeafBaseType::String);
-        }
-    } else {
-        ConstElementPtr addresses = elem->get("ip-addresses");
-        if (addresses && (addresses->size() > 0)) {
-            for (ConstElementPtr address : addresses->listValue()) {
-                setItem(xpath + "/ip-addresses", address, LeafBaseType::String);
-            }
-        }
-        ConstElementPtr prefixes = elem->get("prefixes");
-        if (prefixes && (prefixes->size() > 0)) {
-            for (ConstElementPtr prefix : prefixes->listValue()) {
-                setItem(xpath + "/prefixes", prefix, LeafBaseType::String);
-            }
-        }
-    }
+    // Skip keys "identifier" and "identifier-type".
+
+    checkAndSetLeaf(elem, xpath, "hostname", LeafBaseType::String);
+
+    checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
+
     ConstElementPtr options = elem->get("option-data");
-    if (options && (options->size() > 0)) {
+    if (options && !options->empty()) {
         setOptionDataList(xpath, options);
     }
-    ConstElementPtr classes = elem->get("client-classes");
-    if (classes && (classes->size() > 0)) {
-        for (ConstElementPtr cclass : classes->listValue()) {
-            setItem(xpath + "/client-classes", cclass, LeafBaseType::String);
-        }
-    }
 
-    // These are DHCPv4-specific parameters.
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr next = elem->get("next-server");
-        if (next) {
-            setItem(xpath + "/next-server", next, LeafBaseType::String);
-        }
-        ConstElementPtr server_hostname = elem->get("server-hostname");
-        if (server_hostname) {
-            setItem(xpath + "/server-hostname", server_hostname, LeafBaseType::String);
-        }
-        ConstElementPtr boot = elem->get("boot-file-name");
-        if (boot) {
-            setItem(xpath + "/boot-file-name", boot, LeafBaseType::String);
-        }
+        checkAndSetLeaf(elem, xpath, "boot-file-name", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "ip-address", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
+    } else {
+        checkAndSetLeafList(elem, xpath, "ip-addresses", LeafBaseType::String);
+        checkAndSetLeafList(elem, xpath, "prefixes", LeafBaseType::String);
     }
 
     // User context is supported in both kea-dhcp4-server and kea-dhcp6-server.
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                LeafBaseType::String);
-    }
+    checkAndSetUserContext(elem, xpath);
 }
 
 TranslatorHosts::TranslatorHosts(Session session, const string& model)

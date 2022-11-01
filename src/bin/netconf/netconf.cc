@@ -547,7 +547,7 @@ NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
             .arg(server)
             .arg(msg.str());
-        return (sysrepo::ErrorCode::ValidationFailed);;
+        return (sysrepo::ErrorCode::ValidationFailed);
     }
     ControlSocketBasePtr comm;
     try {

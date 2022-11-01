@@ -8,7 +8,6 @@
 
 #include <asiolink/addr_utilities.h>
 #include <asiolink/io_address.h>
-#include <yang/adaptor.h>
 #include <yang/translator_pool.h>
 #include <yang/yang_models.h>
 
@@ -61,42 +60,25 @@ TranslatorPool::getPoolFromAbsoluteXpath(string const& xpath) {
 ElementPtr
 TranslatorPool::getPoolIetf6(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
+
+    getMandatoryDivergingLeaf(result, data_node, "pool", "pool-prefix");
+
+    checkAndGetLeaf(result, data_node, "client-class");
+    checkAndGetLeaf(result, data_node, "preferred-lifetime");
+    checkAndGetLeaf(result, data_node, "valid-lifetime");
+
+    checkAndGetDivergingLeaf(result, data_node, "rebind-timer", "rebind-time");
+    checkAndGetDivergingLeaf(result, data_node, "renew-timer", "renew-time");
+
+    // Skip max-addr-count.
     // Skip pool-id which exists but is not used.
-    ConstElementPtr pool = getItem(data_node, "pool-prefix");
-    if (!pool) {
-        isc_throw(BadValue, "getPoolIetf6 requires pool prefix");
-    }
-    result->set("pool", pool);
-    // Ignore start-address - end-address as prefix form is mandatory?
-    ConstElementPtr guard = getItem(data_node, "client-class");
-    if (guard) {
-        result->set("client-class", guard);
-    }
-    ConstElementPtr valid_lifetime = getItem(data_node, "valid-lifetime");
-    if (valid_lifetime) {
-        result->set("valid-lifetime", valid_lifetime);
-    }
-    ConstElementPtr preferred_lifetime =
-        getItem(data_node, "preferred-lifetime");
-    if (preferred_lifetime) {
-        result->set("preferred-lifetime", preferred_lifetime);
-    }
-    ConstElementPtr renew_time = getItem(data_node, "renew-time");
-    if (renew_time) {
-        result->set("renew-timer", renew_time);
-    }
-    ConstElementPtr rebind_time = getItem(data_node, "rebind-time");
-    if (rebind_time) {
-        result->set("rebind-timer", rebind_time);
-    }
-    // Skip max-addr-count
-    // @todo: option-data
-    /// no require-client-classes nor user-context.
     // Skip rapid-commit.
-    if (result->empty()) {
-        return ElementPtr();
-    }
-    return (result);
+    // Skip start-address - end-address as prefix form is mandatory?
+    // @todo: option-data
+    // No require-client-classes.
+    // No user-context.
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 ElementPtr
@@ -109,7 +91,7 @@ TranslatorPool::getPoolKea(DataNode const& data_node) {
         ConstElementPtr start_addr = getItem(data_node, "start-address");
         ConstElementPtr end_addr = getItem(data_node, "end-address");
         if (!start_addr || !end_addr) {
-            isc_throw(BadValue, "getPoolKea requires either prefix or "
+            isc_throw(MissingNode, "getPoolKea requires either prefix or "
                       "both start and end addresses");
         }
         ostringstream range;
@@ -118,22 +100,16 @@ TranslatorPool::getPoolKea(DataNode const& data_node) {
         result->set("pool", Element::create(range.str()));
     }
     ConstElementPtr options = getOptionDataList(data_node);
-    if (options && (options->size() > 0)) {
+    if (options) {
         result->set("option-data", options);
     }
-    ConstElementPtr guard = getItem(data_node, "client-class");
-    if (guard) {
-        result->set("client-class", guard);
-    }
-    ConstElementPtr required = getItem(data_node, "require-client-classes");
-    if (required && (required->size() > 0)) {
-        result->set("require-client-classes", required);
-    }
-    ConstElementPtr context = getItem(data_node, "user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    checkAndGetLeaf(result, data_node, "client-class");
+    checkAndGetLeaf(result, data_node, "require-client-classes");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
@@ -178,38 +154,28 @@ TranslatorPool::setPoolIetf6(string const& xpath, ConstElementPtr elem) {
     setItem(xpath + "/end-address",
             Element::create(lastAddrInPrefix(base, plen).toText()),
             LeafBaseType::String);
-    ConstElementPtr valid_lifetime = elem->get("valid-lifetime");
-    if (valid_lifetime) {
-        setItem(xpath + "/valid-lifetime", valid_lifetime, LeafBaseType::Uint32);
-    }
-    ConstElementPtr preferred_lifetime = elem->get("preferred-lifetime");
-    if (preferred_lifetime) {
-        setItem(xpath + "/preferred-lifetime",
-                preferred_lifetime, LeafBaseType::Uint32);
-    }
-    ConstElementPtr renew_timer = elem->get("renew-timer");
-    if (renew_timer) {
-        setItem(xpath + "/renew-time", renew_timer, LeafBaseType::Uint32);
-    }
-    ConstElementPtr rebind_timer = elem->get("rebind-timer");
-    if (rebind_timer) {
-        setItem(xpath + "/rebind-time", rebind_timer, LeafBaseType::Uint32);
-    }
-    // skip rapid-commit
-    ConstElementPtr guard = elem->get("client-class");
-    if (guard) {
-        setItem(xpath + "/client-class", guard, LeafBaseType::String);
-    }
-    // skip max-addr-count
-    // @todo option-data
+
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
+
+    checkAndSetDivergingLeaf(elem, xpath, "rebind-timer", "rebind-time", LeafBaseType::Uint32);
+    checkAndSetDivergingLeaf(elem, xpath, "renew-timer", "renew-time", LeafBaseType::Uint32);
+
     // Set max address count to disabled.
     setItem(xpath + "/max-address-count",
             Element::create(string("disabled")),
             LeafBaseType::Enum);
+
+    // Skip max-addr-count.
+    // Skip rapid-commit.
+    // @todo: option-data
 }
 
 void
 TranslatorPool::setPoolKea(string const& xpath, ConstElementPtr elem) {
+    // Skip keys "start-address" and "end-address".
+
     ConstElementPtr pool = elem->get("pool");
     if (!pool) {
         isc_throw(BadValue, "setPoolKea requires pool: " << elem->str());
@@ -218,6 +184,12 @@ TranslatorPool::setPoolKea(string const& xpath, ConstElementPtr elem) {
     // Keys are set by setting the list itself.
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
+
+    checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
+
+    checkAndSetUserContext(elem, xpath);
+
     string prefix = pool->stringValue();
     string start_addr;
     string end_addr;
@@ -225,25 +197,9 @@ TranslatorPool::setPoolKea(string const& xpath, ConstElementPtr elem) {
     if (prefix.find("/") != string::npos) {
         setItem(xpath + "/prefix", pool, LeafBaseType::String);
     }
-    // Skip start-address and end-address as are the keys.
     ConstElementPtr options = elem->get("option-data");
-    if (options && (options->size() > 0)) {
+    if (options && !options->empty()) {
         setOptionDataList(xpath, options);
-    }
-    ConstElementPtr guard = elem->get("client-class");
-    if (guard) {
-        setItem(xpath + "/client-class", guard, LeafBaseType::String);
-    }
-    ConstElementPtr required = elem->get("require-client-classes");
-    if (required && (required->size() > 0)) {
-        for (ConstElementPtr rclass : required->listValue()) {
-            setItem(xpath + "/require-client-classes", rclass, LeafBaseType::String);
-        }
-    }
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                LeafBaseType::String);
     }
 }
 

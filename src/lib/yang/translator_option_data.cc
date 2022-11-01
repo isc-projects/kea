@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <yang/adaptor.h>
 #include <yang/translator_option_data.h>
 #include <yang/yang_models.h>
 
@@ -52,36 +51,19 @@ TranslatorOptionData::getOptionDataFromAbsoluteXpath(string const& xpath) {
 
 ElementPtr
 TranslatorOptionData::getOptionDataKea(DataNode const& data_node) {
-    ConstElementPtr code = getItem(data_node, "code");
-    ConstElementPtr space = getItem(data_node, "space");
-    if (!code || !space) {
-        // Can't happen as code and space are the keys.
-        isc_throw(Unexpected, "getOptionDataKea requires code and space");
-    }
     ElementPtr result = Element::createMap();
-    result->set("code", code);
-    result->set("space", space);
-    ConstElementPtr name = getItem(data_node, "name");
-    if (name) {
-        result->set("name", name);
-    }
-    ConstElementPtr data = getItem(data_node, "data");
-    if (data) {
-        result->set("data", data);
-    }
-    ConstElementPtr format = getItem(data_node, "csv-format");
-    if (format) {
-        result->set("csv-format", format);
-    }
-    ConstElementPtr send = getItem(data_node, "always-send");
-    if (send) {
-        result->set("always-send", send);
-    }
-    ConstElementPtr context = getItem(data_node, "user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    getMandatoryLeaf(result, data_node, "code");
+    getMandatoryLeaf(result, data_node, "space");
+
+    checkAndGetLeaf(result, data_node, "always-send");
+    checkAndGetLeaf(result, data_node, "csv-format");
+    checkAndGetLeaf(result, data_node, "data");
+    checkAndGetLeaf(result, data_node, "name");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
@@ -106,28 +88,14 @@ TranslatorOptionData::setOptionData(string const& xpath,
 void
 TranslatorOptionData::setOptionDataKea(string const& xpath,
                                        ConstElementPtr elem) {
-    // Skip keys code and space.
-    ConstElementPtr name = elem->get("name");
-    if (name) {
-        setItem(xpath + "/name", name, LeafBaseType::String);
-    }
-    ConstElementPtr data = elem->get("data");
-    if (data) {
-        setItem(xpath + "/data", data, LeafBaseType::String);
-    }
-    ConstElementPtr format = elem->get("csv-format");
-    if (format) {
-        setItem(xpath + "/csv-format", format, LeafBaseType::Bool);
-    }
-    ConstElementPtr send = elem->get("always-send");
-    if (send) {
-        setItem(xpath + "/always-send", send, LeafBaseType::Bool);
-    }
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                LeafBaseType::String);
-    }
+    // Skip keys "code" and "space".
+
+    checkAndSetLeaf(elem, xpath, "always-send", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "csv-format", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "data", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "name", LeafBaseType::String);
+
+    checkAndSetUserContext(elem, xpath);
 }
 
 TranslatorOptionDataList::TranslatorOptionDataList(Session session,

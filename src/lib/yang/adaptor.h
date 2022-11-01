@@ -13,14 +13,6 @@
 namespace isc {
 namespace yang {
 
-/// @brief Missing key error.
-class MissingKey : public isc::Exception {
-public:
-    MissingKey(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what)
-    {}
-};  // MissingKey
-
 /// @brief JSON adaptor between canonical Kea and YANG models.
 ///
 /// An adaptor slightly modifies a JSON configuration between canonical Kea

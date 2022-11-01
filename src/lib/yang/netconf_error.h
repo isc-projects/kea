@@ -12,11 +12,24 @@
 namespace isc {
 namespace yang {
 
-/// @brief Sysrepo error.
-class NetconfError : public isc::Exception {
-public:
+/// @brief Missing node error
+struct MissingNode : public Exception {
+    MissingNode(const char* file, size_t line, const char* what) :
+        Exception(file, line, what)
+    {}
+};  // MissingNode
+
+/// @brief Missing key error
+struct MissingKey : public MissingNode {
+    MissingKey(const char* file, size_t line, const char* what) :
+        MissingNode(file, line, what)
+    {}
+};  // MissingKey
+
+/// @brief Generic NETCONF error
+struct NetconfError : public Exception {
     NetconfError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what)
+        Exception(file, line, what)
     {}
 };  // NetconfError
 

@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <yang/adaptor.h>
 #include <yang/translator_logger.h>
 #include <yang/yang_models.h>
 
@@ -43,58 +42,35 @@ TranslatorLogger::getLogger(DataNode const& data_node) {
 
 ElementPtr
 TranslatorLogger::getLoggerKea(DataNode const& data_node) {
-    ConstElementPtr name = getItem(data_node, "name");
-    if (!name) {
-        // Can't happen as name is the key.
-        isc_throw(Unexpected, "getLoggerKea requires name: ");
-    }
     ElementPtr result = Element::createMap();
-    result->set("name", name);
+
+    getMandatoryLeaf(result, data_node, "name");
+
+    checkAndGetLeaf(result, data_node, "debuglevel");
+    checkAndGetLeaf(result, data_node, "severity");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
     ConstElementPtr options = getOutputOptions(data_node);
-    if (options && (options->size() > 0)) {
+    if (options) {
         result->set("output_options", options);
     }
-    ConstElementPtr severity = getItem(data_node, "severity");
-    if (severity) {
-        result->set("severity", severity);
-    }
-    ConstElementPtr debuglevel = getItem(data_node, "debuglevel");
-    if (debuglevel) {
-        result->set("debuglevel", debuglevel);
-    }
-    ConstElementPtr context = getItem(data_node, "user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 ElementPtr
 TranslatorLogger::getOutputOption(DataNode const& data_node) {
-    ConstElementPtr output = getItem(data_node, "output");
-    if (!output) {
-        // Can't happen as output is the key.
-        isc_throw(Unexpected, "getOutputOption requires (!output): ");
-    }
     ElementPtr result = Element::createMap();
-    result->set("output", output);
-    ConstElementPtr maxver = getItem(data_node, "maxver");
-    if (maxver) {
-        result->set("maxver", maxver);
-    }
-    ConstElementPtr maxsize = getItem(data_node, "maxsize");
-    if (maxsize) {
-        result->set("maxsize", maxsize);
-    }
-    ConstElementPtr flush = getItem(data_node, "flush");
-    if (flush) {
-        result->set("flush", flush);
-    }
-    ConstElementPtr pattern = getItem(data_node, "pattern");
-    if (pattern) {
-        result->set("pattern", pattern);
-    }
-    return (result);
+
+    getMandatoryLeaf(result, data_node, "output");
+
+    checkAndGetLeaf(result, data_node, "flush");
+    checkAndGetLeaf(result, data_node, "maxsize");
+    checkAndGetLeaf(result, data_node, "maxver");
+    checkAndGetLeaf(result, data_node, "pattern");
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 ElementPtr
@@ -124,23 +100,15 @@ TranslatorLogger::setLogger(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorLogger::setLoggerKea(string const& xpath, ConstElementPtr elem) {
-    // Skip name as it is the key.
+    // Skip key "name".
+
+    checkAndSetLeaf(elem, xpath, "debuglevel", LeafBaseType::Uint8);
+    checkAndSetLeaf(elem, xpath, "severity", LeafBaseType::Enum);
+    checkAndSetUserContext(elem, xpath);
+
     ConstElementPtr options = elem->get("output_options");
-    if (options && (options->size() > 0)) {
+    if (options && !options->empty()) {
         setOutputOptions(xpath, options);
-    }
-    ConstElementPtr debuglevel = elem->get("debuglevel");
-    if (debuglevel) {
-        setItem(xpath + "/debuglevel", debuglevel, LeafBaseType::Uint8);
-    }
-    ConstElementPtr severity = elem->get("severity");
-    if (severity) {
-        setItem(xpath + "/severity", severity, LeafBaseType::Enum);
-    }
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                LeafBaseType::String);
     }
 }
 
@@ -149,22 +117,10 @@ TranslatorLogger::setOutputOption(string const& xpath, ConstElementPtr elem) {
     // Keys are set by setting the list itself.
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
-    ConstElementPtr maxver = elem->get("maxver");
-    if (maxver) {
-        setItem(xpath + "/maxver", maxver, LeafBaseType::Uint32);
-    }
-    ConstElementPtr maxsize = elem->get("maxsize");
-    if (maxsize) {
-        setItem(xpath + "/maxsize", maxsize, LeafBaseType::Uint32);
-    }
-    ConstElementPtr flush = elem->get("flush");
-    if (flush) {
-        setItem(xpath + "/flush", flush, LeafBaseType::Bool);
-    }
-    ConstElementPtr pattern = elem->get("pattern");
-    if (pattern) {
-        setItem(xpath + "/pattern", pattern, LeafBaseType::String);
-    }
+    checkAndSetLeaf(elem, xpath, "flush", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "maxsize", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "maxver", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "pattern", LeafBaseType::String);
 }
 
 void

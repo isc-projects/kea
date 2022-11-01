@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <util/encode/base64.h>
+#include <yang/adaptor.h>
 #include <yang/translator.h>
 
 #include <sysrepo-cpp/utils/exception.hpp>
@@ -30,10 +31,42 @@ TranslatorBasic::TranslatorBasic(Session session, const string& model)
 void
 TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
                                  DataNode const& data_node,
-                                 string const& name) {
-    ConstElementPtr x = getItem(data_node, name);
+                                 string const& name) const {
+    ElementPtr const& x(getItem(data_node, name));
     if (x) {
         storage->set(name, x);
+    }
+}
+
+void
+TranslatorBasic::checkAndGetDivergingLeaf(ElementPtr& storage,
+                                          DataNode const& data_node,
+                                          string const& name,
+                                          string const& yang_name) const {
+    ElementPtr const& x(getItem(data_node, yang_name));
+    if (x) {
+        storage->set(name, x);
+    }
+}
+
+void
+TranslatorBasic::checkAndGetAndJsonifyLeaf(ElementPtr& storage,
+                                           DataNode const& data_node,
+                                           string const& name) const {
+    ElementPtr const& x(getItem(data_node, name));
+    if (x) {
+        storage->set(name, Element::fromJSON(x->stringValue()));
+    }
+}
+
+void
+TranslatorBasic::checkAndJsonifyAndSetLeaf(ConstElementPtr const& from,
+                                           string const& xpath,
+                                           string const& name) {
+    ConstElementPtr const& x(from->get(name));
+    if (x) {
+        ElementPtr const& json(Element::create(x->str()));
+        setItem(xpath + "/" + name, json, LeafBaseType::String);
     }
 }
 
@@ -44,6 +77,38 @@ void TranslatorBasic::checkAndSetLeaf(ConstElementPtr const& from,
     ConstElementPtr const& x(from->get(name));
     if (x) {
         setItem(xpath + "/" + name, x, type);
+    }
+}
+
+void TranslatorBasic::checkAndSetDivergingLeaf(ConstElementPtr const& from,
+                                      string const& xpath,
+                                      string const& name,
+                                      string const& yang_name,
+                                      LeafBaseType const type) {
+    ConstElementPtr const& x(from->get(name));
+    if (x) {
+        setItem(xpath + "/" + yang_name, x, type);
+    }
+}
+
+void TranslatorBasic::checkAndSetLeafList(ConstElementPtr const& from,
+                                          string const& xpath,
+                                          string const& name,
+                                          LeafBaseType const type) {
+    ConstElementPtr const& leaf_list(from->get(name));
+    if (leaf_list && !leaf_list->empty()) {
+        for (ElementPtr const& leaf : leaf_list->listValue()) {
+            setItem(xpath + "/" + name, leaf, type);
+        }
+    }
+}
+
+void TranslatorBasic::checkAndSetUserContext(ConstElementPtr const& from,
+                                             string const& xpath) {
+    ConstElementPtr const& user_context(Adaptor::getContext(from));
+    if (user_context) {
+        setItem(xpath + "/user-context", Element::create(user_context->str()),
+                LeafBaseType::String);
     }
 }
 
@@ -173,6 +238,30 @@ TranslatorBasic::getItemFromAbsoluteXpath(string const& xpath) const {
 }
 
 void
+TranslatorBasic::getMandatoryLeaf(ElementPtr& storage,
+                                  DataNode const& data_node,
+                                  string const& name) const {
+    ElementPtr const& x(getItem(data_node, name));
+    if (!x) {
+        isc_throw(MissingNode, name);
+    }
+    storage->set(name, x);
+}
+
+
+void
+TranslatorBasic::getMandatoryDivergingLeaf(ElementPtr& storage,
+                                           DataNode const& data_node,
+                                           string const& name,
+                                           string const& yang_name) const {
+    ElementPtr const& x(getItem(data_node, yang_name));
+    if (!x) {
+        isc_throw(MissingNode, yang_name);
+    }
+    storage->set(name, x);
+}
+
+void
 TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
                          LeafBaseType type) {
     optional<string> const value(translateToYang(elem, type));
@@ -183,6 +272,31 @@ TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
                                 << "' at '" << xpath << "': " << ex.what());
     }
     session_.applyChanges();
+}
+
+void
+TranslatorBasic::setMandatoryLeaf(ConstElementPtr const& from,
+                                  string const& xpath,
+                                  string const& name,
+                                  LeafBaseType const type) {
+    ConstElementPtr const& x(from->get(name));
+    if (!x) {
+        isc_throw(MissingNode, "xpath: " << xpath << ", name: " << name);
+    }
+    setItem(xpath + "/" + name, x, type);
+}
+
+void
+TranslatorBasic::setMandatoryDivergingLeaf(ConstElementPtr const& from,
+                                           string const& xpath,
+                                           string const& name,
+                                           string const& yang_name,
+                                           LeafBaseType const type) {
+    ConstElementPtr const& x(from->get(name));
+    if (!x) {
+        isc_throw(MissingNode, "xpath: " << xpath << ", name: " << name);
+    }
+    setItem(xpath + "/" + yang_name, x, type);
 }
 
 ElementPtr

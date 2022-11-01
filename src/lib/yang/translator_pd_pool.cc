@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <yang/adaptor.h>
 #include <yang/translator_pd_pool.h>
 #include <yang/yang_models.h>
 
@@ -57,54 +56,40 @@ TranslatorPdPool::getPdPoolFromAbsoluteXpath(string const& xpath) {
 ElementPtr
 TranslatorPdPool::getPdPoolIetf6(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
+
     ConstElementPtr pref = getItem(data_node, "prefix");
     if (!pref) {
-        isc_throw(BadValue, "getPdPoolIetf6: prefix is required");
+        isc_throw(MissingNode, "getPdPoolIetf6: prefix is required");
     }
     const string& prefix = pref->stringValue();
     size_t slash = prefix.find("/");
     if (slash == string::npos) {
-        isc_throw(BadValue,
+        isc_throw(MissingNode,
                   "getPdPoolIetf6: no '/' in prefix '" << prefix << "'");
     }
     const string& address = prefix.substr(0, slash);
     if (address.empty()) {
-        isc_throw(BadValue,
+        isc_throw(MissingNode,
                   "getPdPoolIetf6: malformed prefix '" << prefix << "'");
     }
     result->set("prefix", Element::create(address));
+
     // Silly: the prefix length is specified twice...
-    ConstElementPtr preflen = getItem(data_node, "prefix-length");
-    if (!preflen) {
-        isc_throw(BadValue, "getPdPoolIetf6: prefix length is required");
-    }
-    result->set("prefix-len", preflen);
-    ConstElementPtr valid_lifetime = getItem(data_node, "valid-lifetime");
-    if (valid_lifetime) {
-        result->set("valid-lifetime", valid_lifetime);
-    }
-    ConstElementPtr preferred_lifetime =
-        getItem(data_node, "preferred-lifetime");
-    if (preferred_lifetime) {
-        result->set("preferred-lifetime", preferred_lifetime);
-    }
-    ConstElementPtr renew_time = getItem(data_node, "renew-time");
-    if (renew_time) {
-        result->set("renew-timer", renew_time);
-    }
-    ConstElementPtr rebind_time = getItem(data_node, "rebind-time");
-    if (rebind_time) {
-        result->set("rebind-timer", rebind_time);
-    }
-    // Skip rapid-commit.
-    ConstElementPtr guard = getItem(data_node, "client-class");
-    if (guard) {
-        result->set("client-class", guard);
-    }
+    getMandatoryDivergingLeaf(result, data_node, "prefix-len", "prefix-length");
+
+    checkAndGetLeaf(result, data_node, "preferred-lifetime");
+    checkAndGetLeaf(result, data_node, "client-class");
+    checkAndGetLeaf(result, data_node, "valid-lifetime");
+
+    checkAndGetDivergingLeaf(result, data_node, "rebind-timer", "rebind-time");
+    checkAndGetDivergingLeaf(result, data_node, "renew-timer", "renew-time");
+
     // no require-client-classes nor user-context.
     // Skip max-pd-space-utilization.
-    // @todo option-data.
-    return (result);
+    // Skip rapid-commit.
+    // @todo: option-data
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 ElementPtr
@@ -112,7 +97,7 @@ TranslatorPdPool::getPdPoolKea(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
     ConstElementPtr pref = getItem(data_node, "prefix");
     if (!pref) {
-        isc_throw(BadValue, "getPdPoolKea: no prefix defined");
+        isc_throw(MissingNode, "getPdPoolKea: no prefix defined");
     }
     const string& prefix = pref->stringValue();
     size_t slash = prefix.find("/");
@@ -134,7 +119,6 @@ TranslatorPdPool::getPdPoolKea(DataNode const& data_node) {
         isc_throw(BadValue,
                   "getPdPoolKea: bad prefix length in '" << prefix << "'");
     }
-
     ConstElementPtr xpref = getItem(data_node, "excluded-prefix");
     if (xpref) {
         const string& xprefix = xpref->stringValue();
@@ -163,27 +147,18 @@ TranslatorPdPool::getPdPoolKea(DataNode const& data_node) {
         }
     }
 
-    ConstElementPtr delegated = getItem(data_node, "delegated-len");
-    if (delegated) {
-        result->set("delegated-len", delegated);
-    }
+    checkAndGetLeaf(result, data_node, "client-class");
+    checkAndGetLeaf(result, data_node, "delegated-len");
+    checkAndGetLeaf(result, data_node, "require-client-classes");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
     ConstElementPtr options = getOptionDataList(data_node);
-    if (options && (options->size() > 0)) {
+    if (options) {
         result->set("option-data", options);
     }
-    ConstElementPtr guard = getItem(data_node, "client-class");
-    if (guard) {
-        result->set("client-class", guard);
-    }
-    ConstElementPtr required = getItem(data_node, "require-client-classes");
-    if (required && (required->size() > 0)) {
-        result->set("require-client-classes", required);
-    }
-    ConstElementPtr context = getItem(data_node, "user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
@@ -217,33 +192,20 @@ TranslatorPdPool::setPdPoolIetf6(string const& xpath, ConstElementPtr elem) {
     prefix << base->stringValue() << "/" << length->intValue();
     setItem(xpath + "/prefix", Element::create(prefix.str()), LeafBaseType::String);
     setItem(xpath + "/prefix-length", length, LeafBaseType::Uint8);
-    ConstElementPtr valid_lifetime = elem->get("valid-lifetime");
-    if (valid_lifetime) {
-        setItem(xpath + "/valid-lifetime", valid_lifetime, LeafBaseType::Uint32);
-    }
-    ConstElementPtr preferred_lifetime = elem->get("preferred-lifetime");
-    if (preferred_lifetime) {
-        setItem(xpath + "/preferred-lifetime",
-                preferred_lifetime, LeafBaseType::Uint32);
-    }
-    ConstElementPtr renew_timer = elem->get("renew-timer");
-    if (renew_timer) {
-        setItem(xpath + "/renew-time", renew_timer, LeafBaseType::Uint32);
-    }
-    ConstElementPtr rebind_timer = elem->get("rebind-timer");
-    if (rebind_timer) {
-        setItem(xpath + "/rebind-time", rebind_timer, LeafBaseType::Uint32);
-    }
-    // Skip rapid-commit.
-    ConstElementPtr guard = elem->get("client-class");
-    if (guard) {
-        setItem(xpath + "/client-class", guard, LeafBaseType::String);
-    }
+
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
+
+    checkAndSetDivergingLeaf(elem, xpath, "rebind-timer", "rebind-time", LeafBaseType::Uint32);
+    checkAndSetDivergingLeaf(elem, xpath, "renew-timer", "renew-time", LeafBaseType::Uint32);
+
     // Set max pd space utilization to disabled.
-    setItem(xpath + "/max-pd-space-utilization",
-            Element::create(string("disabled")),
+    setItem(xpath + "/max-pd-space-utilization", Element::create(string("disabled")),
             LeafBaseType::Enum);
-    // @todo option-data.
+
+    // Skip rapid-commit.
+    // @todo: option-data
 }
 
 void
@@ -251,36 +213,23 @@ TranslatorPdPool::setPdPoolKea(string const& xpath, ConstElementPtr elem) {
     // Keys are set by setting the list itself.
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
-    ConstElementPtr delegated = elem->get("delegated-len");
-    if (delegated) {
-        setItem(xpath + "/delegated-len", delegated, LeafBaseType::Uint8);
-    }
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "delegated-len", LeafBaseType::Uint8);
+
+    checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
+
+    checkAndSetUserContext(elem, xpath);
+
     ConstElementPtr xprefix = elem->get("excluded-prefix");
     ConstElementPtr xlen = elem->get("excluded-prefix-len");
     if (xprefix && xlen) {
         ostringstream xpref;
         xpref << xprefix->stringValue() << "/" << xlen->intValue();
-        setItem(xpath + "/excluded-prefix", Element::create(xpref.str()),
-                LeafBaseType::String);
+        setItem(xpath + "/excluded-prefix", Element::create(xpref.str()), LeafBaseType::String);
     }
     ConstElementPtr options = elem->get("option-data");
-    if (options && (options->size() > 0)) {
+    if (options && !options->empty()) {
         setOptionDataList(xpath, options);
-    }
-    ConstElementPtr guard = elem->get("client-class");
-    if (guard) {
-        setItem(xpath + "/client-class", guard, LeafBaseType::String);
-    }
-    ConstElementPtr required = elem->get("require-client-classes");
-    if (required && (required->size() > 0)) {
-        for (ConstElementPtr rclass : required->listValue()) {
-            setItem(xpath + "/require-client-classes", rclass, LeafBaseType::String);
-        }
-    }
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                LeafBaseType::String);
     }
 }
 

@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <yang/adaptor.h>
 #include <yang/translator_control_socket.h>
 #include <yang/yang_models.h>
 
@@ -44,20 +43,11 @@ TranslatorControlSocket::getControlSocket(DataNode const& data_node) {
 
 ElementPtr
 TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
-    ConstElementPtr name = getItem(data_node, "socket-name");
-    ConstElementPtr type = getItem(data_node, "socket-type");
-    if (name && type) {
-        ElementPtr result = Element::createMap();
-        result->set("socket-name", name);
-        result->set("socket-type", type);
-        ConstElementPtr context = getItem(data_node, "user-context");
-        if (context) {
-            result->set("user-context",
-                        Element::fromJSON(context->stringValue()));
-        }
-        return (result);
-    }
-    return (ElementPtr());
+    ElementPtr result(Element::createMap());
+    getMandatoryLeaf(result, data_node, "socket-name");
+    getMandatoryLeaf(result, data_node, "socket-type");
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+    return (result->empty() ? ElementPtr() : result);
 }
 
 ElementPtr
@@ -97,21 +87,10 @@ TranslatorControlSocket::setControlSocketKea(string const& xpath,
         deleteItem(xpath);
         return;
     }
-    ConstElementPtr name = elem->get("socket-name");
-    if (!name) {
-        isc_throw(BadValue, "setControlSocket missing socket name");
-    }
-    ConstElementPtr type = elem->get("socket-type");
-    if (!type) {
-        isc_throw(BadValue, "setControlSocket missing socket type");
-    }
-    setItem(xpath + "/socket-name", name, LeafBaseType::String);
-    setItem(xpath + "/socket-type", type, LeafBaseType::Enum);
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                LeafBaseType::String);
-    }
+
+    setMandatoryLeaf(elem, xpath, "socket-name", LeafBaseType::String);
+    setMandatoryLeaf(elem, xpath, "socket-type", LeafBaseType::Enum);
+    checkAndSetUserContext(elem, xpath);
 }
 
 }  // namespace yang

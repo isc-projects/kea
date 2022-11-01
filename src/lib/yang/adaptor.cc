@@ -17,8 +17,7 @@ namespace isc {
 namespace yang {
 
 ConstElementPtr
-Adaptor::getContext(ConstElementPtr parent)
-{
+Adaptor::getContext(ConstElementPtr parent) {
     ConstElementPtr context = parent->get("user-context");
     ConstElementPtr comment = parent->get("comment");
     if (!comment) {

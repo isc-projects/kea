@@ -14,6 +14,7 @@
 #include <dhcp/option_space.h>
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor_option.h>
+#include <yang/netconf_error.h>
 
 using namespace std;
 using namespace isc;
