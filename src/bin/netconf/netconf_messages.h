@@ -24,6 +24,7 @@ extern const isc::log::MessageID NETCONF_MODULE_MISSING_WARN;
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_ERR;
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_WARN;
 extern const isc::log::MessageID NETCONF_NOTIFICATION_RECEIVED;
+extern const isc::log::MessageID NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS;
 extern const isc::log::MessageID NETCONF_RUN_EXIT;
 extern const isc::log::MessageID NETCONF_SET_CONFIG;
 extern const isc::log::MessageID NETCONF_SET_CONFIG_FAILED;
@@ -32,7 +33,6 @@ extern const isc::log::MessageID NETCONF_STARTED;
 extern const isc::log::MessageID NETCONF_SUBSCRIBE_CONFIG;
 extern const isc::log::MessageID NETCONF_SUBSCRIBE_CONFIG_FAILED;
 extern const isc::log::MessageID NETCONF_SUBSCRIBE_NOTIFICATIONS;
-extern const isc::log::MessageID NETCONF_SUBSCRIBE_NOTIFICATIONS_FAILED;
 extern const isc::log::MessageID NETCONF_UPDATE_CONFIG;
 extern const isc::log::MessageID NETCONF_UPDATE_CONFIG_COMPLETED;
 extern const isc::log::MessageID NETCONF_UPDATE_CONFIG_FAILED;
@@ -43,7 +43,7 @@ extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_FAILED;
 extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_REJECTED;
 extern const isc::log::MessageID NETCONF_VALIDATE_CONFIG_STARTED;
 
-}  // namespace netconf
-}  // namespace isc
+} // namespace netconf
+} // namespace isc
 
 #endif // NETCONF_MESSAGES_H

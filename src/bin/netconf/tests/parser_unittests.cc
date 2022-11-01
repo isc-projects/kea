@@ -918,7 +918,7 @@ public:
     ///
     /// @param loc Location of the trailing comma.
     void addLog(const string& loc) {
-        string log = "NETCONF_CONFIG_SYNTAX_WARNING Netconf ";
+        string log = "NETCONF_CONFIG_SYNTAX_WARNING NETCONF ";
         log += "configuration syntax warning: " + loc;
         log += ": Extraneous comma. ";
         log += "A piece of configuration may have been omitted.";

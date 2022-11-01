@@ -494,7 +494,7 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "event notification subscription for model " << model <<
             " failed with: " << ex.what();
-        LOG_ERROR(netconf_logger, NETCONF_SUBSCRIBE_NOTIFICATIONS_FAILED)
+        LOG_WARN(netconf_logger, NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS)
             .arg(server)
             .arg(configuration->getModel())
             .arg(msg.str());
