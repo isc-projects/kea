@@ -141,7 +141,7 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
     CfgControlSocket::Type type;
     try {
         type = CfgControlSocket::stringToType(type_str);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ConfigError, ex.what() << " '" << type_str << "' ("
                   << getPosition("socket-type", ctrl_sock_config)  << ")");
     }
@@ -157,7 +157,7 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
     // Create the control socket.
     try {
         result.reset(new CfgControlSocket(type, name, url));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ConfigError, ex.what() << " ("
                   << ctrl_sock_config->getPosition() << ")");
     }
@@ -185,7 +185,7 @@ ServerConfigParser::parse(ConstElementPtr server_config) {
     }
     try {
         result.reset(new CfgServer(model, ctrl_sock));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ConfigError, ex.what() << " ("
                   << server_config->getPosition() << ")");
     }

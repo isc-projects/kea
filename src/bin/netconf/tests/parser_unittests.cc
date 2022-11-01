@@ -908,7 +908,7 @@ TEST(ParserTest, duplicateMapEntries) {
         };
     size_t cnt = 0;
     test(sample_json, sample_json, cnt);
-    cout << "checked " << cnt << " duplicated map entries\n";
+    cout << "Checked " << cnt << " duplicated map entries.\n";
 }
 
 /// @brief Test fixture for trailing commas.

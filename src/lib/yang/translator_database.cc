@@ -161,7 +161,7 @@ TranslatorDatabases::getDatabasesFromAbsoluteXpath(string const& xpath) {
 }
 
 ElementPtr
-TranslatorDatabases::getDatabasesKea(DataNode const& data_node, std::string const& xpath) {
+TranslatorDatabases::getDatabasesKea(DataNode const& data_node, string const& xpath) {
     return getList<TranslatorDatabase>(data_node, xpath, *this,
                                        &TranslatorDatabase::getDatabase);
 }

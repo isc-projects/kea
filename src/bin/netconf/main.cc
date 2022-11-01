@@ -15,6 +15,8 @@
 using namespace isc::netconf;
 using namespace isc::process;
 
+using namespace std;
+
 int main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
 
@@ -27,21 +29,21 @@ int main(int argc, char* argv[]) {
         // 'false' value disables test mode.
         controller->launch(argc, argv, false);
     } catch (const VersionMessage& ex) {
-        std::string msg(ex.what());
+        string msg(ex.what());
         if (!msg.empty()) {
-            std::cout << msg << std::endl;
+            cout << msg << endl;
         }
     } catch (const InvalidUsage& ex) {
-        std::string msg(ex.what());
+        string msg(ex.what());
         if (!msg.empty()) {
-            std::cerr << msg << std::endl;
+            cerr << msg << endl;
         }
         ret = EXIT_FAILURE;
-    } catch (const std::exception& ex) {
-        std::cerr << "Service failed: " << ex.what() << std::endl;
+    } catch (exception const& ex) {
+        cerr << "Service failed: " << ex.what() << endl;
         ret = EXIT_FAILURE;
     } catch (...) {
-        std::cerr << "Service failed" << std::endl;
+        cerr << "Service failed" << endl;
         ret = EXIT_FAILURE;
     }
 

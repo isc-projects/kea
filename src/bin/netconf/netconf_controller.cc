@@ -54,7 +54,7 @@ NetconfController::createProcess() {
 }
 
 isc::data::ConstElementPtr
-NetconfController::parseFile(const std::string& name) {
+NetconfController::parseFile(string const& name) {
     ParserContext parser;
     return (parser.parseFile(name, ParserContext::PARSER_NETCONF));
 }

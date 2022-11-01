@@ -62,7 +62,7 @@ TranslatorSharedNetwork::getSharedNetworkFromAbsoluteXpath(string const& xpath) 
 
 ElementPtr
 TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
-                                             const std::string& subsel) {
+                                             string const& subsel) {
     ElementPtr result = Element::createMap();
 
     getMandatoryLeaf(result, data_node, "name");
@@ -157,7 +157,7 @@ TranslatorSharedNetwork::setSharedNetwork(string const& xpath,
 void
 TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
                                              ConstElementPtr elem,
-                                             const std::string& subsel) {
+                                             string const& subsel) {
     // Skip key "name".
 
     checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);

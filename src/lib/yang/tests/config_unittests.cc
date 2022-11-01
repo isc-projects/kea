@@ -326,7 +326,7 @@ TEST_F(ConfigTestKeaV4, examples4) {
     for (string file : examples) {
         resetSession();
         string path = string(CFG_EXAMPLES) + "/kea4/" + file;
-        cout << "Testing file " << path << endl;
+        SCOPED_TRACE("\n* Tested file: " + path);
         ConstElementPtr json;
         ASSERT_NO_THROW_LOG(json = loadFile(path));
         json = isc::test::moveComments(json);
@@ -368,7 +368,7 @@ TEST_F(ConfigTestKeaV6, examples6) {
     for (string file : examples) {
         resetSession();
         string path = string(CFG_EXAMPLES) + "/kea6/" + file;
-        cout << "Testing file " << path << endl;
+        SCOPED_TRACE("\n* Tested file: " + path);
         ConstElementPtr json;
         ASSERT_NO_THROW_LOG(json = loadFile(path));
         json = isc::test::moveComments(json);

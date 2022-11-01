@@ -21,6 +21,8 @@ using namespace isc::dhcp;
 using namespace isc::process;
 using namespace isc::data;
 
+using namespace std;
+
 namespace isc {
 namespace netconf {
 
@@ -41,7 +43,7 @@ NetconfConfig::extractConfiguredGlobals(ConstElementPtr config) {
                   "extractConfiguredGlobals must be given a map element");
     }
 
-    const std::map<std::string, ConstElementPtr>& values = config->mapValue();
+    const map<string, ConstElementPtr>& values = config->mapValue();
     for (auto value = values.begin(); value != values.end(); ++value) {
         if (value->second->getType() != Element::list &&
             value->second->getType() != Element::map) {
@@ -54,13 +56,13 @@ NetconfCfgMgr::NetconfCfgMgr()
     : DCfgMgrBase(ConfigPtr(new NetconfConfig())) {
 }
 
-std::string
+string
 NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
     NetconfConfigPtr ctx = getNetconfConfig();
 
     // No globals to print.
-    std::ostringstream s;
+    ostringstream s;
 
     // Then print managed servers.
     for (auto serv : *ctx->getCfgServersMap()) {
@@ -109,7 +111,7 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
 
     // And parse the configuration.
     ConstElementPtr answer;
-    std::string excuse;
+    string excuse;
     try {
         // Do the actual parsing
         NetconfSimpleParser parser;
@@ -165,9 +167,9 @@ NetconfConfig::toElement() const {
     return (result);
 }
 
-std::list<std::list<std::string>>
+list<list<string>>
 NetconfCfgMgr::jsonPathsToRedact() const {
-    static std::list<std::list<std::string>> const list({
+    static list<list<string>> const list({
         {"hooks-libraries", "[]", "parameters", "*"},
     });
     return list;

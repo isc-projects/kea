@@ -48,7 +48,7 @@ AdaptorOption::collect(ConstElementPtr option, OptionCodes& codes) {
         ConstElementPtr code = option->get("code");
         string index = space->stringValue() + "@" + name->stringValue();
         uint16_t val = static_cast<uint16_t>(code->intValue());
-        codes.insert(std::pair<string, uint16_t>(index, val));
+        codes.insert(pair<string, uint16_t>(index, val));
     }
 }
 
@@ -115,7 +115,7 @@ AdaptorOption::initCodesInternal(OptionCodes& codes, const string& space,
                                  size_t params_size) {
     for (size_t i = 0; i < params_size; ++i) {
         string index = space + "@" + params[i].name;
-        codes.insert(std::pair<string, uint16_t>(index, params[i].code));
+        codes.insert(pair<string, uint16_t>(index, params[i].code));
     }
 }
 

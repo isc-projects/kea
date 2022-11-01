@@ -846,7 +846,7 @@ TEST_F(HttpControlSocketTest, partial) {
     ConstElementPtr json = Element::fromJSON("{ \"want-partial\": true }");
 
     // Warn this makes time.
-    cout << "this test waits for 2 seconds" << endl;
+    cout << "Waiting 2s..." << endl;
 
     // Try configSet: it should get a communication error,
     try {

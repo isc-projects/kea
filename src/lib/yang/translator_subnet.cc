@@ -375,7 +375,7 @@ TranslatorSubnets::getSubnetsFromAbsoluteXpath(string const& xpath) {
 
 ElementPtr
 TranslatorSubnets::getSubnetsCommon(DataNode const& data_node,
-                                    const std::string& subsel) {
+                                    string const& subsel) {
     return getList<TranslatorSubnet>(data_node, subsel, *this,
                                      &TranslatorSubnet::getSubnet);
 }
@@ -417,7 +417,7 @@ TranslatorSubnets::setSubnetsIetf6(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorSubnets::setSubnetsKea(string const& xpath, ConstElementPtr elem,
-                                 const std::string& subsel) {
+                                 string const& subsel) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr subnet = elem->get(i);
         if (!subnet->contains("id")) {

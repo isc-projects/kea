@@ -197,7 +197,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     ControlSocketBasePtr comm;
     try {
         comm = controlSocketFactory(ctrl_sock);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
@@ -213,7 +213,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     try {
         answer = comm->configGet(server);
         config = parseAnswer(rcode, answer);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "config-get command failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
@@ -248,7 +248,7 @@ NetconfAgent::initSysrepo() {
         running_sess_->switchDatastore(Datastore::Running);
         startup_sess_ = Connection{}.sessionStart();
         startup_sess_->switchDatastore(Datastore::Startup);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(Unexpected, "Can't establish a sysrepo session: "
                   << ex.what());
     }
@@ -374,7 +374,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
                 .arg(server)
                 .arg(prettyPrint(config));
         }
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
@@ -386,7 +386,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
     ControlSocketBasePtr comm;
     try {
         comm = controlSocketFactory(ctrl_sock);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "control socket creation failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
@@ -399,7 +399,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
     try {
         answer = comm->configSet(config, server);
         parseAnswer(rcode, answer);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "config-set command failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
@@ -448,9 +448,9 @@ NetconfAgent::subscribeToDataChanges(const CfgServersMapPair& service_pair) {
             options = options | SubscribeOptions::DoneOnly;
         }
         Subscription subscription(
-            running_sess_->onModuleChange(model, callback, std::nullopt, 0, options));
+            running_sess_->onModuleChange(model, callback, nullopt, 0, options));
         subscriptions_.emplace(server, forward<Subscription>(subscription));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "module change subscribe failed with " << ex.what();
         msg << "change subscription for model " << model <<
@@ -490,7 +490,7 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
     try {
         Subscription subscription(running_sess_->onNotification(model, callback));
         subscriptions_.emplace(server, forward<Subscription>(subscription));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "event notification subscription for model " << model <<
             " failed with: " << ex.what();
@@ -540,7 +540,7 @@ NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
                 .arg(server)
                 .arg(prettyPrint(config));
         }
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
@@ -552,7 +552,7 @@ NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
     ControlSocketBasePtr comm;
     try {
         comm = controlSocketFactory(ctrl_sock);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
@@ -565,7 +565,7 @@ NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
     try {
         answer = comm->configTest(config, server);
         parseAnswer(rcode, answer);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         stringstream msg;
         msg << "configTest failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
@@ -626,7 +626,7 @@ NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
                 .arg(server)
                 .arg(prettyPrint(config));
         }
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
@@ -641,7 +641,7 @@ NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
     ControlSocketBasePtr comm;
     try {
         comm = controlSocketFactory(ctrl_sock);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
@@ -656,7 +656,7 @@ NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
     try {
         answer = comm->configSet(config, server);
         parseAnswer(rcode, answer);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         stringstream msg;
         msg << "configSet failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
@@ -683,7 +683,7 @@ void
 NetconfAgent::logChanges(Session sess, string_view const& model) {
     ostringstream stream;
     stream << "/" << model << ":*//.";
-    std::string const xpath(stream.str());
+    string const xpath(stream.str());
     ChangeCollection const changes(sess.getChanges(xpath));
     for (Change const& change : changes) {
         ostringstream msg;

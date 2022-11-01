@@ -42,7 +42,7 @@ TranslatorHost::getHost(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorHost::getHostFromAbsoluteXpath(std::string const& xpath) {
+TranslatorHost::getHostFromAbsoluteXpath(string const& xpath) {
     try {
         return getHost(findXPath(xpath));
     } catch(NetconfError const&) {
@@ -141,7 +141,7 @@ TranslatorHosts::getHosts(DataNode const& data_node) {
 }
 
 ElementPtr
-TranslatorHosts::getHostsFromAbsoluteXpath(std::string const& xpath) {
+TranslatorHosts::getHostsFromAbsoluteXpath(string const& xpath) {
     try {
         return getHosts(findXPath(xpath));
     } catch(NetconfError const&) {

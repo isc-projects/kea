@@ -228,7 +228,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< string > (YY_MOVE (that.value));
         break;
 
       default:
@@ -265,7 +265,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.move< std::string > (YY_MOVE (that.value));
+        value.move< string > (YY_MOVE (that.value));
         break;
 
       default:
@@ -302,7 +302,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.copy< std::string > (that.value);
+        value.copy< string > (that.value);
         break;
 
       default:
@@ -338,7 +338,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.move< std::string > (that.value);
+        value.move< string > (that.value);
         break;
 
       default:
@@ -379,7 +379,7 @@ namespace isc { namespace netconf {
     {
       case symbol_kind::S_STRING: // "constant string"
 #line 110 "netconf_parser.yy"
-                 { yyoutput << yysym.value.template as < std::string > (); }
+                 { yyoutput << yysym.value.template as < string > (); }
 #line 384 "netconf_parser.cc"
         break;
 
@@ -665,7 +665,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        yylhs.value.emplace< std::string > ();
+        yylhs.value.emplace< string > ();
         break;
 
       default:
@@ -753,7 +753,7 @@ namespace isc { namespace netconf {
 
   case 14: // value: "constant string"
 #line 151 "netconf_parser.yy"
-              { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
+              { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location))); }
 #line 758 "netconf_parser.cc"
     break;
 
@@ -806,8 +806,8 @@ namespace isc { namespace netconf {
 #line 183 "netconf_parser.yy"
                                   {
                   // map containing a single entry
-                  ctx.unique(yystack_[2].value.as < std::string > (), ctx.loc2pos(yystack_[2].location));
-                  ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
+                  ctx.unique(yystack_[2].value.as < string > (), ctx.loc2pos(yystack_[2].location));
+                  ctx.stack_.back()->set(yystack_[2].value.as < string > (), yystack_[0].value.as < ElementPtr > ());
                   }
 #line 813 "netconf_parser.cc"
     break;
@@ -817,8 +817,8 @@ namespace isc { namespace netconf {
                                                       {
                   // map consisting of a shorter map followed by
                   // comma and string:value
-                  ctx.unique(yystack_[2].value.as < std::string > (), ctx.loc2pos(yystack_[2].location));
-                  ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
+                  ctx.unique(yystack_[2].value.as < string > (), ctx.loc2pos(yystack_[2].location));
+                  ctx.stack_.back()->set(yystack_[2].value.as < string > (), yystack_[0].value.as < ElementPtr > ());
                   }
 #line 824 "netconf_parser.cc"
     break;
@@ -876,8 +876,8 @@ namespace isc { namespace netconf {
   case 33: // unknown_map_entry: "constant string" ":"
 #line 229 "netconf_parser.yy"
                                 {
-    const std::string& where = ctx.contextName();
-    const std::string& keyword = yystack_[1].value.as < std::string > ();
+    const string& where = ctx.contextName();
+    const string& keyword = yystack_[1].value.as < string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
@@ -999,7 +999,7 @@ namespace isc { namespace netconf {
     if (old) {
         // Check if it was a comment or a duplicate
         if ((old->size() != 1) || !old->contains("comment")) {
-            std::stringstream msg;
+            stringstream msg;
             msg << "duplicate user-context entries (previous at "
                 << old->getPosition().str() << ")";
             error(yystack_[3].location, msg.str());
@@ -1028,7 +1028,7 @@ namespace isc { namespace netconf {
                {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
-    ElementPtr comment(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr comment(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     user_context->set("comment", comment);
 
     // Handle already existing user context
@@ -1036,7 +1036,7 @@ namespace isc { namespace netconf {
     if (old) {
         // Check for duplicate comment
         if (old->contains("comment")) {
-            std::stringstream msg;
+            stringstream msg;
             msg << "duplicate user-context/comment entries (previous at "
                 << old->getPosition().str() << ")";
             error(yystack_[3].location, msg.str());
@@ -1119,7 +1119,7 @@ namespace isc { namespace netconf {
   case 77: // library: "library" $@13 ":" "constant string"
 #line 415 "netconf_parser.yy"
                {
-    ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr lib(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
@@ -1277,7 +1277,7 @@ namespace isc { namespace netconf {
   case 112: // model: "model" $@20 ":" "constant string"
 #line 535 "netconf_parser.yy"
                {
-    ElementPtr model(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr model(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("model", model);
     ctx.leave();
 }
@@ -1361,7 +1361,7 @@ namespace isc { namespace netconf {
   case 130: // socket_name: "socket-name" $@23 ":" "constant string"
 #line 586 "netconf_parser.yy"
                {
-    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
@@ -1380,7 +1380,7 @@ namespace isc { namespace netconf {
   case 132: // socket_url: "socket-url" $@24 ":" "constant string"
 #line 596 "netconf_parser.yy"
                {
-    ElementPtr url(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr url(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-url", url);
     ctx.leave();
 }
@@ -1454,7 +1454,7 @@ namespace isc { namespace netconf {
   case 151: // name: "name" $@27 ":" "constant string"
 #line 654 "netconf_parser.yy"
                {
-    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
@@ -1483,7 +1483,7 @@ namespace isc { namespace netconf {
   case 154: // severity: "severity" $@28 ":" "constant string"
 #line 669 "netconf_parser.yy"
                {
-    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
@@ -1557,7 +1557,7 @@ namespace isc { namespace netconf {
   case 171: // output: "output" $@31 ":" "constant string"
 #line 718 "netconf_parser.yy"
                {
-    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
@@ -1606,7 +1606,7 @@ namespace isc { namespace netconf {
   case 176: // pattern: "pattern" $@32 ":" "constant string"
 #line 745 "netconf_parser.yy"
                {
-    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
@@ -2306,7 +2306,6 @@ namespace isc { namespace netconf {
 
 void
 isc::netconf::NetconfParser::error(const location_type& loc,
-                               const std::string& what)
-{
+                                   const string& what) {
     ctx.error(loc, what);
 }

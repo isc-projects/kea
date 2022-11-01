@@ -442,7 +442,7 @@ namespace isc { namespace netconf {
       char dummy4[sizeof (int64_t)];
 
       // "constant string"
-      char dummy5[sizeof (std::string)];
+      char dummy5[sizeof (string)];
     };
 
     /// The size of the largest semantic type.
@@ -763,7 +763,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.move< std::string > (std::move (that.value));
+        value.move< string > (std::move (that.value));
         break;
 
       default:
@@ -846,13 +846,13 @@ namespace isc { namespace netconf {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, string&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const string& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -902,7 +902,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.template destroy< std::string > ();
+        value.template destroy< string > ();
         break;
 
       default:
@@ -1043,10 +1043,10 @@ switch (yykind)
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
-      symbol_type (int tok, std::string v, location_type l)
+      symbol_type (int tok, string v, location_type l)
         : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
-      symbol_type (int tok, const std::string& v, const location_type& l)
+      symbol_type (int tok, const string& v, const location_type& l)
         : super_type (token_kind_type (tok), v, l)
 #endif
       {
@@ -1780,14 +1780,14 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_STRING (std::string v, location_type l)
+      make_STRING (string v, location_type l)
       {
         return symbol_type (token::TOKEN_STRING, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_STRING (const std::string& v, const location_type& l)
+      make_STRING (const string& v, const location_type& l)
       {
         return symbol_type (token::TOKEN_STRING, v, l);
       }
@@ -2259,7 +2259,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.copy< std::string > (YY_MOVE (that.value));
+        value.copy< string > (YY_MOVE (that.value));
         break;
 
       default:
@@ -2312,7 +2312,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.move< std::string > (YY_MOVE (s.value));
+        value.move< string > (YY_MOVE (s.value));
         break;
 
       default:

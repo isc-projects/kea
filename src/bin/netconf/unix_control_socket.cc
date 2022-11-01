@@ -88,7 +88,7 @@ UnixControlSocket::sendCommand(ConstElementPtr command) {
 
     try {
         return (received_feed->toElement());
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ControlSocketError, "unparsable response: " << ex.what());
     }
 }

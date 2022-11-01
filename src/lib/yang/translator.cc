@@ -123,7 +123,7 @@ TranslatorBasic::decode64(string const& input) {
 }
 
 void
-TranslatorBasic::deleteItem(const std::string& xpath) {
+TranslatorBasic::deleteItem(string const& xpath) {
     /// @todo: Remove this if convenient. It is not strictly required and only done to detect
     /// missing schema nodes and throw an exception to keep old behavior.
     try {
@@ -328,7 +328,7 @@ TranslatorBasic::translateToYang(ConstElementPtr const& element,
         // A null ElementPtr is how we signal that this item requires no value.
         // Useful when setting YANG lists which is the only way to set their
         // keys in sysrepo since setting the key itself results in an error.
-        return std::nullopt;
+        return nullopt;
     } else if (element->getType() == Element::map) {
         /// @todo: implement
         isc_throw(NotImplemented, "TranslatorBasic::value(): map element");

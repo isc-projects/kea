@@ -73,7 +73,7 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     request->setBodyAsJson(command);
     try {
         request->finalize();
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ControlSocketError, "failed to create request: "
                   << ex.what());
     }
@@ -120,7 +120,7 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
 
     try {
         return (response->getBodyAsJson());
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ControlSocketError, "unparsable response: " << ex.what());
     }
 }
