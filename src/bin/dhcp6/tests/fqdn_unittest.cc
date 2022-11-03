@@ -439,7 +439,7 @@ public:
 
         // Create the configuration and configure the server
         char config_buf[1024];
-        sprintf(config_buf, config_template, mode);
+        snprintf(config_buf, 1024, config_template, mode);
         configure(config_buf, *srv_);
 
         // Build our client packet
