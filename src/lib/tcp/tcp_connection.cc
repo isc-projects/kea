@@ -393,11 +393,6 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
                   TCP_CLIENT_REQUEST_RECEIVED)
                 .arg(getRemoteEndpointAddressAsText());
 
-        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                  TCP_CLIENT_REQUEST_RECEIVED_DETAILS)
-                .arg(getRemoteEndpointAddressAsText())
-                .arg(request->logFormatRequest(MAX_LOGGED_MESSAGE_SIZE));
-
         // Request complete, stop the timer.
         HERE("Cancel idleTimer while we handle complete request");
         idle_timer_.cancel();
@@ -405,14 +400,9 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
         // Process the completed request.
         requestReceived(request);
     } catch (const std::exception& ex) {
-        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
-                  TCP_BAD_CLIENT_REQUEST_RECEIVED)
+        LOG_ERROR(tcp_logger, TCP_REQUEST_RECEIVED_FAILED)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(ex.what());
-        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                  TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS)
-                .arg(getRemoteEndpointAddressAsText())
-                .arg(request->logFormatRequest(MAX_LOGGED_MESSAGE_SIZE));
     }
 
     // Create a new, empty request.

@@ -4,33 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-$NAMESPACE isc::asiolink
-
-% TCP_BAD_CLIENT_REQUEST_RECEIVED bad request received from %1: %2
-This debug message is issued when an TCP client sends malformed request to
-the server. This includes TCP requests using unexpected content types,
-including malformed JSON etc. The first argument specifies an address of
-the remote endpoint which sent the request. The second argument provides
-a detailed error message.
+$NAMESPACE isc::tcp
 
 % TCP_CLIENT_REQUEST_RECEIVED received TCP request from %1
 This debug message is issued when the server finished receiving a TCP
 request from the remote endpoint. The address of the remote endpoint is
 specified as an argument.
-
-% TCP_CLIENT_REQUEST_RECEIVED_DETAILS detailed information about well-formed request received from %1:\n%2
-This debug message is issued when the TCP server receives a well-formed
-request. It includes detailed information about the received request. The
-first argument specifies an address of the remote endpoint which sent the
-request. The second argument provides the request in the textual format.
-The request is truncated by the logger if it is too large to be printed.
-
-% TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS detailed information about malformed request received from %1:\n%2
-This debug message is issued when the TCP server receives a malformed
-request. It includes detailed information about the received request. The
-first argument specifies an address of the remote endpoint which sent the
-request. The second argument provides the request in the textual format.
-The request is truncated by the logger if it is too large to be printed.
 
 % TCP_CONNECTION_CLOSE_CALLBACK_FAILED Connection close callback threw an exception
 This is an error message emitted when the close connection callback
@@ -87,6 +66,13 @@ This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
+
+% TCP_REQUEST_RECEIVED_FAILED An unexpected error occurred processing a request from %1, error: %2
+This error message is issued when an unexpected error occurred while the
+server attempted to process a received request. The first argument specifies
+the address of the remote endpoint. The second argument describes the nature
+error.
+
 
 % TCP_SERVER_RESPONSE_SEND sending TCP response %1 to %2
 This debug message is issued when the server is starting to send a TCP
