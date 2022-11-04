@@ -212,18 +212,16 @@ public:
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
     /// @param callback Callback invoked when new connection is accepted.
-    /// @param request_timeout Configured timeout for a TCP request.
     /// @param idle_timeout Timeout after which a TCP connection is
     /// closed by the server.
     /// @param read_max maximum size of a single socket read.  Defaults to 32K.
     TcpConnection(asiolink::IOService& io_service,
-                   const TcpConnectionAcceptorPtr& acceptor,
-                   const asiolink::TlsContextPtr& tls_context,
-                   TcpConnectionPool& connection_pool,
-                   const TcpConnectionAcceptorCallback& callback,
-                   const long request_timeout,
-                   const long idle_timeout,
-                   const size_t read_max = 32768);
+                  const TcpConnectionAcceptorPtr& acceptor,
+                  const asiolink::TlsContextPtr& tls_context,
+                  TcpConnectionPool& connection_pool,
+                  const TcpConnectionAcceptorCallback& callback,
+                  const long idle_timeout,
+                  const size_t read_max = 32768);
 
     /// @brief Destructor.
     ///
@@ -375,21 +373,8 @@ protected:
     /// @param ec Error code (ignored).
     void shutdownCallback(const boost::system::error_code& ec);
 
-    /// @brief Reset timer for detecting request timeouts.
-    //
-    /// @param request Pointer to the request to be guarded by the timeout.
-    void setupRequestTimer(TcpRequestPtr request = TcpRequestPtr());
-
     /// @brief Reset timer for detecting idle timeout in connections.
     void setupIdleTimer();
-
-    /// @brief Callback invoked when the TCP Request Timeout occurs.
-    ///
-    /// This callback creates TCP response with Request Timeout error code
-    /// and sends it to the client.
-    ///
-    /// @param request Pointer to the request for which timeout occurs.
-    void requestTimeoutCallback(TcpRequestPtr request);
 
     /// @brief Callback invoked when the client has been idle.
     void idleTimeoutCallback();
@@ -421,18 +406,15 @@ protected:
         return (input_buf_.size());
     }
 
-    /// @brief Timer used to detect Request Timeout.
-    asiolink::IntervalTimer request_timer_;
-
-    /// @brief Configured Request Timeout in milliseconds.
-    long request_timeout_;
-
     /// @brief TLS context.
     asiolink::TlsContextPtr tls_context_;
 
     /// @brief Timeout after which the a TCP connection is shut
     /// down by the server.
     long idle_timeout_;
+
+    /// @brief Timer used to detect idle Timeout.
+    asiolink::IntervalTimer idle_timer_;
 
     /// @brief TCP socket used by this connection.
     std::unique_ptr<asiolink::TCPSocket<SocketCallback> > tcp_socket_;

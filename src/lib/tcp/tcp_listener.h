@@ -28,17 +28,6 @@ public:
 /// that each connection does its client's work on it's own thread.
 class TcpListener {
 public:
-    /// @brief TCP request timeout value.
-    struct RequestTimeout {
-        /// @brief Constructor.
-        ///
-        /// @param value Request timeout value in milliseconds.
-        explicit RequestTimeout(long value)
-            : value_(value) {
-        }
-        long value_; ///< Request timeout value specified.
-    };
-
     /// @brief Idle connection timeout.
     struct IdleTimeout {
         /// @brief Constructor.
@@ -62,8 +51,6 @@ public:
     /// @param server_address Address on which the TCP service should run.
     /// @param server_port Port number on which the TCP service should run.
     /// @param tls_context TLS context.
-    /// @param request_timeout Timeout maximum amount of time allotted for
-    /// a request to be processed.
     /// @param idle_timeout Timeout after which an idle TCP connection is
     /// closed by the server.
     ///
@@ -73,7 +60,6 @@ public:
                 const asiolink::IOAddress& server_address,
                 const unsigned short server_port,
                 const asiolink::TlsContextPtr& tls_context,
-                const RequestTimeout& request_timeout,
                 const IdleTimeout& idle_timeout);
 
     /// @brief Virtual destructor.
@@ -142,9 +128,6 @@ protected:
 
     /// @brief Pool of active connections.
     TcpConnectionPool connections_;
-
-    /// @brief Maximum amount of time request to be processed.
-    long request_timeout_;
 
     /// @brief Timeout after which idle connection is closed by
     /// the server.

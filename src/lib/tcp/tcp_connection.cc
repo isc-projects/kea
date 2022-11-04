@@ -49,17 +49,15 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
 }
 
 TcpConnection::TcpConnection(asiolink::IOService& io_service,
-                               const TcpConnectionAcceptorPtr& acceptor,
-                               const TlsContextPtr& tls_context,
-                               TcpConnectionPool& connection_pool,
-                               const TcpConnectionAcceptorCallback& callback,
-                               const long request_timeout,
-                               const long idle_timeout,
-                               const size_t read_max /* = 32768 */)
-    : request_timer_(io_service),
-      request_timeout_(request_timeout),
-      tls_context_(tls_context),
+                             const TcpConnectionAcceptorPtr& acceptor,
+                             const TlsContextPtr& tls_context,
+                             TcpConnectionPool& connection_pool,
+                             const TcpConnectionAcceptorCallback& callback,
+                             const long idle_timeout,
+                             const size_t read_max /* = 32768 */)
+    : tls_context_(tls_context),
       idle_timeout_(idle_timeout),
+      idle_timer_(io_service),
       tcp_socket_(),
       tls_socket_(),
       acceptor_(acceptor),
@@ -87,7 +85,7 @@ TcpConnection::shutdownCallback(const boost::system::error_code&) {
 
 void
 TcpConnection::shutdown() {
-    request_timer_.cancel();
+    idle_timer_.cancel();
     if (tcp_socket_) {
         tcp_socket_->close();
         return;
@@ -108,7 +106,7 @@ TcpConnection::shutdown() {
 
 void
 TcpConnection::close() {
-    request_timer_.cancel();
+    idle_timer_.cancel();
     if (tcp_socket_) {
         tcp_socket_->close();
         return;
@@ -180,10 +178,12 @@ TcpConnection::doHandshake() {
     // Skip the handshake if the socket is not a TLS one.
     if (!tls_socket_) {
         HERE("");
-        setupIdleTimer();
         doRead();
         return;
     }
+
+    HERE("setupIdleTimer");
+    setupIdleTimer();
 
     // Create instance of the callback. It is safe to pass the local instance
     // of the callback, because the underlying boost functions make copies
@@ -206,14 +206,13 @@ TcpConnection::doRead(TcpRequestPtr request) {
         HERE("");
         TCPEndpoint endpoint;
 
+        HERE("setup Idle timer");
+        setupIdleTimer();
+
         // Request hasn't been created if we are starting to read the
         // new request.
         if (!request) {
-            HERE("new read start - setup Idle timer");
-            setupIdleTimer();
             request = createRequest();
-        } else {
-            setupRequestTimer();
         }
 
         // Create instance of the callback. It is safe to pass the local instance
@@ -268,8 +267,7 @@ TcpConnection::doWrite(TcpResponsePtr response) {
                 return;
             }
         } else {
-            // The connection remains open and we are done sending
-            // the response. Start listening for the next requests.
+            // The connection remains open and we are done sending the response.
             HERE("setupIdleTimer - write finsihed");
             setupIdleTimer();
         }
@@ -302,16 +300,14 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
             LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       TCP_REQUEST_RECEIVE_START)
                 .arg(getRemoteEndpointAddressAsText())
-                .arg(static_cast<unsigned>(request_timeout_/1000));
+                .arg(static_cast<unsigned>(idle_timeout_/1000));
         } else {
             LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       TCP_CONNECTION_HANDSHAKE_START)
                 .arg(getRemoteEndpointAddressAsText())
-                .arg(static_cast<unsigned>(request_timeout_/1000));
+                .arg(static_cast<unsigned>(idle_timeout_/1000));
         }
 
-        HERE("setupIdleTimer");
-        setupIdleTimer();
         doHandshake();
     }
 }
@@ -358,8 +354,8 @@ TcpConnection::socketReadCallback(TcpRequestPtr request,
     }
 
     // Data received, Restart the request timer.
-    HERE("setupRequestTimer - data recevied, post it")
-    setupRequestTimer(request);
+    HERE("setupIdleTimer - data recevied, post it")
+    setupIdleTimer();
 
     TcpRequestPtr next_request = request;
     if (length) {
@@ -387,9 +383,8 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
     }
 
     if (request->needData()) {
-        // Current request is incomplete and we're out of data. Restart the timer
-        // and return the incomplete request.
-        setupRequestTimer();
+        // Current request is incomplete and we're out of data
+        // return the incomplete request and we'll read again.
         return (request);
     }
 
@@ -404,8 +399,8 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
                 .arg(request->logFormatRequest(MAX_LOGGED_MESSAGE_SIZE));
 
         // Request complete, stop the timer.
-        HERE("Cancel requestTimer to handle complete request");
-        request_timer_.cancel();
+        HERE("Cancel idleTimer while we handle complete request");
+        idle_timer_.cancel();
 
         // Process the completed request.
         requestReceived(request);
@@ -426,13 +421,6 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
         // The input buffer spanned messages. Recurse to post the remainder to the
         // new request.
         request = postData(request, input_data);
-        // Restart the request timer.
-        HERE("spanning read, start request timer");
-        setupRequestTimer();
-    } else {
-        // No incomplete requests, start the idle timer.
-        HERE("no waiting requests, start idle timer");
-        setupIdleTimer();
     }
 
     return (request);
@@ -478,34 +466,10 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
 }
 
 void
-TcpConnection::setupRequestTimer(TcpRequestPtr request) {
-    // Pass raw pointer rather than shared_ptr to this object,
-    // because IntervalTimer already passes shared pointer to the
-    // IntervalTimerImpl to make sure that the callback remains
-    // valid.
-    request_timer_.setup(std::bind(&TcpConnection::requestTimeoutCallback, this, request),
-                         request_timeout_, IntervalTimer::ONE_SHOT);
-}
-
-void
 TcpConnection::setupIdleTimer() {
-    request_timer_.setup(std::bind(&TcpConnection::idleTimeoutCallback, this),
-                         idle_timeout_, IntervalTimer::ONE_SHOT);
-}
-
-void
-TcpConnection::requestTimeoutCallback(TcpRequestPtr /* request */) {
-    LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
-              TCP_CLIENT_REQUEST_TIMEOUT_OCCURRED)
-        .arg(getRemoteEndpointAddressAsText());
-    /// @todo Not sure what is meaningful to do here.  If client
-    /// comes back and finishes sending we'll use the first bytes
-    /// as length, but they'll be meaningless.  How would one
-    /// get back on track?  Seems like the safest thing would be
-    /// to disconnect them, like idle timeout.
-    /// need a handler here that can be overridden - maybe BLQ should
-    /// send back a mal-formed error?
-    HERE("Request timeout! Discarding partial request");
+    std::cout << "idle timeout: " << idle_timeout_ << std::endl;
+    idle_timer_.setup(std::bind(&TcpConnection::idleTimeoutCallback, this),
+                      idle_timeout_, IntervalTimer::ONE_SHOT);
 }
 
 void

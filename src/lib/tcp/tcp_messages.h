@@ -12,7 +12,6 @@ extern const isc::log::MessageID TCP_BAD_CLIENT_REQUEST_RECEIVED;
 extern const isc::log::MessageID TCP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS;
 extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED;
 extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED_DETAILS;
-extern const isc::log::MessageID TCP_CLIENT_REQUEST_TIMEOUT_OCCURRED;
 extern const isc::log::MessageID TCP_CONNECTION_CLOSE_CALLBACK_FAILED;
 extern const isc::log::MessageID TCP_CONNECTION_HANDSHAKE_FAILED;
 extern const isc::log::MessageID TCP_CONNECTION_HANDSHAKE_START;

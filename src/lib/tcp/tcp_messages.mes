@@ -72,9 +72,6 @@ of the request. The first argument specifies the amount of received data.
 The second argument specifies an address of the remote endpoint which
 produced the data.
 
-% TCP_CLIENT_REQUEST_TIMEOUT_OCCURRED Timeout occurred while receiving a client request
-This debug message is issued when a timeout occurs during the reception of request
-
 % TCP_IDLE_CONNECTION_TIMEOUT_OCCURRED closing connection with %1 as a result of a timeout
 This debug message is issued when the TCP connection is being closed as a
 result of being idle.
