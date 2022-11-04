@@ -151,7 +151,8 @@ public:
     ///
     /// Starts test timer which detects timeouts.
     TcpListenerTest()
-        : io_service_(), test_timer_(io_service_), run_io_service_timer_(io_service_), clients_() {
+        : io_service_(), test_timer_(io_service_), run_io_service_timer_(io_service_),
+         clients_(), clients_done_(0) {
         test_timer_.setup(std::bind(&TcpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
@@ -172,7 +173,8 @@ public:
     /// list.
     ///
     TcpTestClientPtr connectClient() {
-        TcpTestClientPtr client(new TcpTestClient(io_service_));
+        TcpTestClientPtr client(new TcpTestClient(io_service_,
+                                    std::bind(&TcpListenerTest::clientDone, this)));
         clients_.push_back(client);
         client->connect();
         return(client);
@@ -185,7 +187,8 @@ public:
     ///
     /// @param request String containing the HTTP request to be sent.
     void startRequest(const std::string& request) {
-        TcpTestClientPtr client(new TcpTestClient(io_service_));
+        TcpTestClientPtr client(new TcpTestClient(io_service_,
+                                    std::bind(&TcpListenerTest::clientDone, this)));
         clients_.push_back(client);
         clients_.back()->startRequest(request);
     }
@@ -200,6 +203,19 @@ public:
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
         io_service_.stop();
+    }
+
+    /// @brief Callback function each client invokes when done.
+    ///
+    /// It stops the IO service when all clients are done.
+    ///
+    /// @param fail_on_timeout Specifies if test failure should be reported.
+    void clientDone() {
+        ++clients_done_;
+        if (clients_done_ >= clients_.size()) {
+            // They're all done or dead. Stop the service.
+            io_service_.stop();
+        }
     }
 
     /// @brief Runs IO service with optional timeout.
@@ -231,6 +247,9 @@ public:
 
     /// @brief List of client connections.
     std::list<TcpTestClientPtr> clients_;
+
+    /// @brief Counts the number of clients that have reported as done.
+    size_t clients_done_;
 };
 
 // This test verifies that A TCP connection can be established and used to
@@ -308,5 +327,32 @@ TEST_F(TcpListenerTest, idleTimeoutTest) {
     listener.stop();
     io_service_.poll();
 }
+
+TEST_F(TcpListenerTest, multipleClientsListen) {
+    const std::string request = "I am done";
+
+    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
+    ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
+    size_t num_clients = 5;
+    for ( auto i = 0; i < num_clients; ++i ) {
+        ASSERT_NO_THROW(startRequest(request));
+    }
+
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(num_clients, clients_.size());
+
+    for (auto client = clients_.begin(); client != clients_.end(); ++client) {
+        EXPECT_TRUE((*client)->receiveDone());
+        EXPECT_FALSE((*client)->expectedEof());
+    }
+
+    listener.stop();
+    io_service_.poll();
+}
+
 
 }

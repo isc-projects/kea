@@ -31,11 +31,12 @@ public:
     /// @param server_address string containing the IP address of the server.
     /// @param port port number of the server.
     explicit TcpTestClient(IOService& io_service,
+                           std::function<void()> done_callback,
                            const std::string& server_address = "127.0.0.1",
                            uint16_t port = 18123)
-        : io_service_(io_service.get_io_service()), socket_(io_service_),
-          buf_(), response_(), server_address_(server_address),
-          server_port_(port), receive_done_(false), expected_eof_(true) {
+        : io_service_(io_service.get_io_service()), socket_(io_service_), buf_(),
+         response_(), done_callback_(done_callback), server_address_(server_address),
+         server_port_(port), receive_done_(false), expected_eof_(true) {
     }
 
     /// @brief Destructor.
@@ -65,7 +66,7 @@ public:
                 if (ec.value() != boost::asio::error::in_progress) {
                     ADD_FAILURE() << "error occurred while connecting: "
                                   << ec.message();
-                    io_service_.stop();
+                    done_callback_();
                     return;
                 }
             }
@@ -92,7 +93,7 @@ public:
                 if (ec.value() != boost::asio::error::in_progress) {
                     ADD_FAILURE() << "error occurred while connecting: "
                                   << ec.message();
-                    io_service_.stop();
+                    done_callback_();
                     return;
                 }
             }
@@ -157,7 +158,7 @@ public:
                 } else {
                     ADD_FAILURE() << "error occurred while connecting: "
                                   << ec.message();
-                    io_service_.stop();
+                    done_callback_();
                     return;
                 }
             }
@@ -196,12 +197,12 @@ public:
                     bytes_transferred = 0;
                 } else if (ec.value() == boost::asio::error::eof && expect_eof)  {
                     expected_eof_ = true;
-                    io_service_.stop();
+                    done_callback_();
                 } else {
                     // Error occurred, bail...
                     ADD_FAILURE() << "error occurred while receiving TCP"
                         " response from the server: " << ec.message();
-                    io_service_.stop();
+                    done_callback_();
                 }
             }
 
@@ -214,7 +215,7 @@ public:
             // expecting.
             if (response_.find("good bye", 0) != std::string::npos) {
                 receive_done_ = true;
-                io_service_.stop();
+                done_callback_();
             } else {
                 receivePartialResponse();
             }
@@ -322,11 +323,16 @@ private:
     /// @brief Response in the textual format.
     std::string response_;
 
+    /// @brief Callback to invoke when the client has finished its work or
+    /// failed.
+    std::function<void()> done_callback_;
+
     /// @brief IP address of the server.
     std::string server_address_;
 
     /// @brief IP port of the server.
     uint16_t server_port_;
+
 
     /// @brief Set to true when the receive has completed successfully.
     bool receive_done_;
@@ -335,6 +341,7 @@ private:
     /// words, the server closed the connection while we were reading as we
     /// expected it to do.
     bool expected_eof_;
+
 };
 
 /// @brief Pointer to the TcpTestClient.
