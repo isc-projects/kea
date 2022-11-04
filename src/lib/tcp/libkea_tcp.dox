@@ -12,4 +12,8 @@
 This is a library of classes (in the isc::kea_tcp namespace) that provide
 the ability to accept connections, listen for and respond to TCP messages.
 
+@section tcpMTConsiderations Multi-Threading Consideration for TCP Library
+
+This library is thread safe.
+
 */

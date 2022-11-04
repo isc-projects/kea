@@ -448,6 +448,20 @@ StringSanitizer::scrub(const std::string& original) {
     return (impl_->scrub(original));
 }
 
+std::string dumpAsHex(const uint8_t* data, size_t len) {
+    std::stringstream output;
+    for (unsigned int i = 0; i < len; i++) {
+        if (i) {
+            output << ":";
+        }
+
+        output << std::setfill('0') << std::setw(2) << std::hex
+               << static_cast<unsigned short>(data[i]);
+    }
+
+    return (output.str());
+}
+
 } // namespace str
 } // namespace util
 } // namespace isc

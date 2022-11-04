@@ -28,15 +28,47 @@ namespace tcp {
 #if 1
 #define HERE(a) std::cout << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << a << std::endl << std::flush;
 #else
-#define HERE(a) 
+#define HERE(a)
 #endif
 
 /// @brief Defines a data structure for storing raw bytes of data on the wire.
 typedef std::vector<uint8_t> WireData;
 typedef boost::shared_ptr<WireData> WireDataPtr;
 
+/// @brief Base class for TCP messages.
+class TcpMessage {
+public:
+    /// @brief Constructor
+    TcpMessage(){
+    };
+
+    /// @brief Destructor
+    virtual ~TcpMessage(){
+    };
+
+    /// @brief Returns pointer to the first byte of the wire data.
+    /// @throw InvalidOperation if wire data is empty (i.e. getWireDataSize() == 0).
+    /// @return Constant raw pointer to the data.
+    const uint8_t* getWireData() const {
+        if (wire_data_.empty()) {
+            isc_throw(InvalidOperation, "TcpMessage::geWireData() - cannot access empty wire data");
+        }
+
+        return (wire_data_.data());
+    }
+
+    /// @brief Returns current size of the wire data.
+    size_t getWireDataSize() const {
+        return (wire_data_.size());
+    }
+
+protected:
+    /// @brief Buffer used for data in wire format data.
+    WireData wire_data_;
+};
+
 /// @brief Abstract class used to receive an inbound message.
-class TcpRequest {
+class TcpRequest : public TcpMessage{
 public:
     /// @brief Constructor.
     TcpRequest(){};
@@ -66,23 +98,6 @@ public:
     /// @brief Unpacks wire data once the message has been completely received.
     virtual void unpack() = 0;
 
-    /// @brief Returns pointer to the first byte of the wire data.
-    const uint8_t* getWireData() const {
-        return (wire_data_.data());
-    }
-
-    /// @brief Returns current size of the wire data.
-    size_t getWireDataSize() const {
-        return (wire_data_.size());
-    }
-
-    /// @brief Dumps a buffer of bytes as a string of hexadecimal digits
-    ///
-    /// @param data pointer to the data to dump 
-    /// @param length number of bytes to dump. Caller should ensure the length
-    /// does not exceed the buffer.
-    static std::string dumpAsHex(const uint8_t* data, size_t length);
-
 private:
 
     /// @brief Exception safe wrapper around logForamteRequest
@@ -91,17 +106,13 @@ private:
     /// the length of the output is unlimited.
     /// @return Textual representation of the input buffer.
     std::string logFormatRequestSafe(const size_t limit = 0) const;
-
-protected:
-    /// @brief Buffer for the  accumulated request data.
-    WireData wire_data_;
 };
 
 /// @brief Defines a smart pointer to a TcpRequest.
 typedef boost::shared_ptr<TcpRequest> TcpRequestPtr;
 
 /// @brief Abstract class used to create and send an outbound response.
-class TcpResponse {
+class TcpResponse : public TcpMessage{
 public:
     /// @brief Constructor
     TcpResponse()
@@ -119,16 +130,6 @@ public:
         return (!wire_data_.empty());
     }
 
-    /// @brief Returns pointer to the first byte of the wire data.
-    const uint8_t* getWireData() const {
-        return (wire_data_.data());
-    }
-
-    /// @brief Returns current size of the wire data.
-    size_t getWireDataSize() const {
-        return (wire_data_.size());
-    }
-
     /// @brief Prepares the wire data content for writing.
     virtual void pack() = 0;
 
@@ -140,10 +141,6 @@ public:
     bool sendInProgress() {
         return(send_in_progress_);
     }
-
-protected:
-    /// @brief Buffer used for outbound data.
-    WireData wire_data_;
 
 private:
     /// @brief Returns true once wire data consumption has begun.
@@ -270,7 +267,7 @@ public:
     /// The input data is passed into the current request's postBuffer method.
     /// If the request is still incomplete, we return it and wait for more
     /// data to post.  Otherwise, the request is complete and it is passed into
-    /// @ref TcpConnection::requestReceived() to be processed.  Upon return from 
+    /// @ref TcpConnection::requestReceived() to be processed.  Upon return from
     /// that, a new request is created and returned to be used for the next
     /// read cycle.
     ///
@@ -281,7 +278,7 @@ public:
     TcpRequestPtr postData(TcpRequestPtr request, WireData& input_data);
 
     /// @brief Processes a request once it has been completely received.
-    /// 
+    ///
     /// This function is called by @c postData() if the post results
     /// in a completion (i.e. request's needData() returns false).
     virtual void requestReceived(TcpRequestPtr request) = 0;
@@ -289,7 +286,7 @@ public:
     /// @brief Creates a new, empty request.
     ///
     /// This function is called by @c postData(), following the completion
-    /// of the current request, to create a new request for accepting the 
+    /// of the current request, to create a new request for accepting the
     /// next data read.
     ///
     /// @return Pointer to the new request.
@@ -452,7 +449,7 @@ protected:
     /// @brief Maximum bytes to write in a single socket write.
     size_t write_max_;
 
-    /// @brief Buffer for a single socket read.  
+    /// @brief Buffer for a single socket read.
     WireData input_buf_;
 };
 

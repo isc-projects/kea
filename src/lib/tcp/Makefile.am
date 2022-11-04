@@ -4,7 +4,7 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
-EXTRA_DIST = # tcp.dox
+EXTRA_DIST = tcp.dox
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST += tcp_messages.mes
@@ -23,7 +23,7 @@ libkea_tcp_la_SOURCES += tcp_stream.cc tcp_stream.h
 libkea_tcp_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_tcp_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_tcp_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_tcp_la_LDFLAGS += -no-undefined -version-info 52:0:0
+libkea_tcp_la_LDFLAGS += -no-undefined -version-info 1:0:0
 
 libkea_tcp_la_LIBADD  =
 libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
@@ -70,8 +70,10 @@ endif
 # Specify the headers for copying into the installation directory tree.
 libkea_tcp_includedir = $(pkgincludedir)/tcp
 libkea_tcp_include_HEADERS = \
-	tcp_messages.h \
-	tcp_connection.h \
-	tcp_connection_pool.h \
-	tcp_listener.h \
-	tcp_log.h
+    tcp_connection_acceptor.h \
+    tcp_connection.h \
+    tcp_connection_pool.h \
+    tcp_listener.h \
+    tcp_log.h \
+    tcp_messages.h \
+    tcp_stream.h

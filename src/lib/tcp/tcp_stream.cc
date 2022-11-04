@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <tcp/tcp_stream.h>
+#include <util/strutil.h>
 
 #include <iomanip>
 #include <sstream>
@@ -45,7 +46,7 @@ TcpStreamRequest::logFormatRequest(const size_t limit) const {
         size_t max = (limit && (limit < wire_data_.size()) ? limit : wire_data_.size());
         output << "expected_size_: " << expected_size_ << ", current size: " << wire_data_.size() 
                << ", data: " 
-               << dumpAsHex(wire_data_.data(), max);
+               << isc::util::str::dumpAsHex(wire_data_.data(), max);
     } catch (const std::exception& ex) {
         std::stringstream output;
         output << "logFormatRequest error: " << ex.what();

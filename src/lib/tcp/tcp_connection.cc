@@ -11,6 +11,7 @@
 #include <tcp/tcp_connection_pool.h>
 #include <tcp/tcp_log.h>
 #include <tcp/tcp_messages.h>
+#include <util/strutil.h>
 #include <boost/make_shared.hpp>
 
 #include <iomanip>
@@ -32,22 +33,7 @@ constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
 namespace isc {
 namespace tcp {
 
-std::string 
-TcpRequest::dumpAsHex(const uint8_t* data, size_t len) {
-    std::stringstream output;
-    for (unsigned int i = 0; i < len; i++) {
-        if (i) {
-            output << ":";
-        }
-
-        output << std::setfill('0') << std::setw(2) << std::hex
-               << static_cast<unsigned short>(data[i]);
-    }
-
-    return (output.str());
-}
-
-void 
+void
 TcpResponse::consumeWireData(const size_t length) {
     send_in_progress_ = true;
     wire_data_.erase(wire_data_.begin(), wire_data_.begin() + length);
@@ -260,7 +246,7 @@ void
 TcpConnection::doWrite(TcpResponsePtr response) {
     try {
         if (response->wireDataAvail()) {
-            HERE("send:" << TcpRequest::dumpAsHex(response->getWireData(), response->getWireDataSize()));
+            HERE("send:" << isc::util::str::dumpAsHex(response->getWireData(), response->getWireDataSize()));
             // Create instance of the callback. It is safe to pass the local instance
             // of the callback, because the underlying std functions make copies
             // as needed.
@@ -396,7 +382,7 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
         // Add data to the current request.
         size_t bytes_used = request->postBuffer(static_cast<void*>(input_data.data()), length);
         // Remove bytes used.
-        bytes_left = length - bytes_used; 
+        bytes_left = length - bytes_used;
         input_data.erase(input_data.begin(), input_data.begin() + length);
     }
 
@@ -438,7 +424,7 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
     request = createRequest();
     if (bytes_left) {
         // The input buffer spanned messages. Recurse to post the remainder to the
-        // new request. 
+        // new request.
         request = postData(request, input_data);
         // Restart the request timer.
         HERE("spanning read, start request timer");
@@ -447,7 +433,7 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
         // No incomplete requests, start the idle timer.
         HERE("no waiting requests, start idle timer");
         setupIdleTimer();
-    }  
+    }
 
     return (request);
 }
@@ -551,7 +537,7 @@ TcpConnection::getRemoteEndpointAddressAsText() const {
     return ("(unknown address)");
 }
 
-void 
+void
 TcpConnection::setReadMax(const size_t read_max) {
     if (!read_max) {
         isc_throw(BadValue, "TcpConnection read_max must be > 0");

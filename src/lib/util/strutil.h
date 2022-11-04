@@ -11,6 +11,7 @@
 #include <cctype>
 #include <stdint.h>
 #include <string>
+#include <iomanip>
 #include <sstream>
 #include <vector>
 #include <exceptions/exceptions.h>
@@ -386,6 +387,14 @@ isPrintable(const std::vector<uint8_t>& content) {
     }
     return (true);
 }
+
+
+/// @brief Dumps a buffer of bytes as a string of hexadecimal digits
+///
+/// @param data pointer to the data to dump
+/// @param length number of bytes to dump. Caller should ensure the length
+/// does not exceed the buffer.
+std::string dumpAsHex(const uint8_t* data, size_t len);
 
 } // namespace str
 } // namespace util
