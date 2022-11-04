@@ -23,10 +23,10 @@ namespace ph = std::placeholders;
 
 namespace {
 
-/// @brief Maximum size of the HTTP message that can be logged.
+/// @brief Maximum size of a message that can be logged.
 ///
-/// The part of the HTTP message beyond this value is truncated.
-constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
+/// The part of the message beyond this value is truncated.
+const size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
 
 }
 
@@ -153,7 +153,7 @@ TcpConnection::asyncAccept() {
     // of the callback, because the underlying boost functions make copies
     // as needed.
     TcpConnectionAcceptorCallback cb = std::bind(&TcpConnection::acceptorCallback,
-                                                 shared_from_this(), ph::_1); // error
+                                                 shared_from_this(), ph::_1);
     try {
         TlsConnectionAcceptorPtr tls_acceptor =
             boost::dynamic_pointer_cast<TlsConnectionAcceptor>(acceptor_);

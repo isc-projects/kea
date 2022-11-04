@@ -45,9 +45,9 @@ TcpListener::TcpListener(IOService& io_service,
                   << request_timeout_);
     }
 
-    // Idle persistent connection timeout is signed and must be greater than 0.
+    // Idle connection timeout is signed and must be greater than 0.
     if (idle_timeout_ <= 0) {
-        isc_throw(TcpListenerError, "Invalid desired TCP idle persistent connection"
+        isc_throw(TcpListenerError, "Invalid desired TCP idle connection"
                   " timeout " << idle_timeout_);
     }
 }

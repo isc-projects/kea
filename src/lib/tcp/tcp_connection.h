@@ -213,7 +213,7 @@ public:
     /// stored.
     /// @param callback Callback invoked when new connection is accepted.
     /// @param request_timeout Configured timeout for a TCP request.
-    /// @param idle_timeout Timeout after which persistent TCP connection is
+    /// @param idle_timeout Timeout after which a TCP connection is
     /// closed by the server.
     /// @param read_max maximum size of a single socket read.  Defaults to 32K.
     TcpConnection(asiolink::IOService& io_service,
@@ -380,7 +380,7 @@ protected:
     /// @param request Pointer to the request to be guarded by the timeout.
     void setupRequestTimer(TcpRequestPtr request = TcpRequestPtr());
 
-    /// @brief Reset timer for detecting idle timeout in persistent connections.
+    /// @brief Reset timer for detecting idle timeout in connections.
     void setupIdleTimer();
 
     /// @brief Callback invoked when the TCP Request Timeout occurs.
@@ -406,7 +406,13 @@ protected:
     std::string getRemoteEndpointAddressAsText() const;
 
     /// @brief Returns pointer to the first byte of the input buffer.
+    ///
+    /// @throw InvalidOperation if called when the buffer is empty.
     unsigned char* getInputBufData() {
+        if (input_buf_.empty()) {
+            isc_throw(InvalidOperation, "TcpConnection::getInputBufData() - cannot access empty buffer");
+       }
+
         return (input_buf_.data());
     }
 
@@ -424,7 +430,7 @@ protected:
     /// @brief TLS context.
     asiolink::TlsContextPtr tls_context_;
 
-    /// @brief Timeout after which the persistent TCP connection is shut
+    /// @brief Timeout after which the a TCP connection is shut
     /// down by the server.
     long idle_timeout_;
 

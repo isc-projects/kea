@@ -33,19 +33,19 @@ TcpStreamRequest::postBuffer(const void* buf,  const size_t nbytes) {
             uint16_t len = ((unsigned int)(cp[0])) << 8;
             len |= ((unsigned int)(cp[1]));
             expected_size_ = len + sizeof(len);
-        } 
+        }
     }
 
     return (nbytes);
 }
 
-std::string 
+std::string
 TcpStreamRequest::logFormatRequest(const size_t limit) const {
     std::stringstream output;
     try {
         size_t max = (limit && (limit < wire_data_.size()) ? limit : wire_data_.size());
-        output << "expected_size_: " << expected_size_ << ", current size: " << wire_data_.size() 
-               << ", data: " 
+        output << "expected_size_: " << expected_size_ << ", current size: " << wire_data_.size()
+               << ", data: "
                << isc::util::str::dumpAsHex(wire_data_.data(), max);
     } catch (const std::exception& ex) {
         std::stringstream output;
@@ -67,17 +67,17 @@ void TcpStreamRequest::unpack() {
     request_ = std::string(wire_data_.begin() + sizeof(uint16_t) , wire_data_.end());
 }
 
-void 
+void
 TcpStreamResponse::setResponseData(const std::string& response) {
     response_ = response;
 }
 
-void 
+void
 TcpStreamResponse::appendResponseData(const std::string& response) {
     response_ += response;
 }
 
-void 
+void
 TcpStreamResponse::pack() {
     wire_data_.clear();
     // Prepend the length of the request.

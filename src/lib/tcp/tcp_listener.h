@@ -23,7 +23,9 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief ementation of the @ref TcpListener.
+/// @brief Implements a class that listens for, accepts, and manages
+/// TCP connections.  It uses a multi-threaded connection pool, such
+/// that each connection does its client's work on it's own thread.
 class TcpListener {
 public:
     /// @brief TCP request timeout value.
@@ -62,8 +64,8 @@ public:
     /// @param tls_context TLS context.
     /// @param request_timeout Timeout maximum amount of time allotted for
     /// a request to be processed.
-    /// @param idle_timeout Timeout after which an idle persistent TCP
-    /// connection is closed by the server.
+    /// @param idle_timeout Timeout after which an idle TCP connection is
+    /// closed by the server.
     ///
     /// @throw TcpListenerError when any of the specified parameters is
     /// invalid.
@@ -144,7 +146,7 @@ protected:
     /// @brief Maximum amount of time request to be processed.
     long request_timeout_;
 
-    /// @brief Timeout after which idle persistent connection is closed by
+    /// @brief Timeout after which idle connection is closed by
     /// the server.
     long idle_timeout_;
 };
