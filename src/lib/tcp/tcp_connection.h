@@ -25,7 +25,7 @@ namespace isc {
 namespace tcp {
 
 /// @todo Take this out, it's just for dev coding
-#if 0
+#if 1
 #define HERE(a) std::cout << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << a << std::endl << std::flush;
 #else
 #define HERE(a) 
@@ -164,12 +164,6 @@ public:
 /// This declaration is needed because we don't include the header file
 /// declaring @ref TcpConnectionPool to avoid circular inclusion.
 class TcpConnectionPool;
-
-#if 0
-class TcpConnection;
-/// @brief Pointer to the @ref TcpConnection.
-typedef boost::shared_ptr<TcpConnection> TcpConnectionPtr;
-#endif
 
 /// @brief Accepts and handles a single TCP connection.
 class TcpConnection : public boost::enable_shared_from_this<TcpConnection> {
@@ -384,17 +378,14 @@ protected:
     /// @param ec Error code (ignored).
     void shutdownCallback(const boost::system::error_code& ec);
 
-#if 0
     /// @brief Reset timer for detecting request timeouts.
     //
     /// @param request Pointer to the request to be guarded by the timeout.
     void setupRequestTimer(TcpRequestPtr request = TcpRequestPtr());
-#endif
 
     /// @brief Reset timer for detecting idle timeout in persistent connections.
     void setupIdleTimer();
 
-#if 0
     /// @brief Callback invoked when the TCP Request Timeout occurs.
     ///
     /// This callback creates TCP response with Request Timeout error code
@@ -402,7 +393,6 @@ protected:
     ///
     /// @param request Pointer to the request for which timeout occurs.
     void requestTimeoutCallback(TcpRequestPtr request);
-#endif
 
     /// @brief Callback invoked when the client has been idle.
     void idleTimeoutCallback();

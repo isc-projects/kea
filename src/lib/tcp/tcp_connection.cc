@@ -94,39 +94,6 @@ TcpConnection::~TcpConnection() {
     close();
 }
 
-#if 0
-void
-TcpConnection::recordParameters(const TcpRequestPtr& request) const {
-    if (!request) {
-        // Should never happen.
-        return;
-    }
-
-    // Record the remote address.
-    request->setRemote(getRemoteEndpointAddressAsText());
-
-    // Record TLS parameters.
-    if (!tls_socket_) {
-        return;
-    }
-
-    // The connection uses HTTPS aka HTTP over TLS.
-    request->setTls(true);
-
-    // Record the first commonName of the subjectName of the client
-    // certificate when wanted.
-    if (TcpRequest::recordSubject_) {
-        request->setSubject(tls_socket_->getTlsStream().getSubject());
-    }
-
-    // Record the first commonName of the issuerName of the client
-    // certificate when wanted.
-    if (TcpRequest::recordIssuer_) {
-        request->setIssuer(tls_socket_->getTlsStream().getIssuer());
-    }
-}
-#endif
-
 void
 TcpConnection::shutdownCallback(const boost::system::error_code&) {
     tls_socket_->close();
@@ -227,6 +194,7 @@ TcpConnection::doHandshake() {
     // Skip the handshake if the socket is not a TLS one.
     if (!tls_socket_) {
         HERE("");
+        setupIdleTimer();
         doRead();
         return;
     }
@@ -255,11 +223,11 @@ TcpConnection::doRead(TcpRequestPtr request) {
         // Request hasn't been created if we are starting to read the
         // new request.
         if (!request) {
-            HERE("");
+            HERE("new read start - setup Idle timer");
+            setupIdleTimer();
             request = createRequest();
-#if 0
-            recordParameters(transaction->getRequest());
-#endif
+        } else {
+            setupRequestTimer();
         }
 
         // Create instance of the callback. It is safe to pass the local instance
@@ -314,9 +282,9 @@ TcpConnection::doWrite(TcpResponsePtr response) {
                 return;
             }
         } else {
-            // The connection is persistent and we are done sending
-            // the previous response. Start listening for the next
-            // requests.
+            // The connection remains open and we are done sending
+            // the response. Start listening for the next requests.
+            HERE("setupIdleTimer - write finsihed");
             setupIdleTimer();
         }
     } catch (...) {
@@ -333,7 +301,6 @@ TcpConnection::asyncSendResponse(TcpResponsePtr response) {
 
 void
 TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
-    HERE("");
     if (!acceptor_->isOpen()) {
         return;
     }
@@ -357,9 +324,8 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
                 .arg(static_cast<unsigned>(request_timeout_/1000));
         }
 
-#if 0
-        setupRequestTimer();
-#endif
+        HERE("setupIdleTimer");
+        setupIdleTimer();
         doHandshake();
     }
 }
@@ -405,11 +371,9 @@ TcpConnection::socketReadCallback(TcpRequestPtr request,
         }
     }
 
-#if 0
-    // Receiving is in progress, so push back the timeout.
-    // Not sure this makes sense anymore
-    setupRequestTimer(transaction);
-#endif
+    // Data received, Restart the request timer.
+    HERE("setupRequestTimer - data recevied, post it")
+    setupRequestTimer(request);
 
     TcpRequestPtr next_request = request;
     if (length) {
@@ -419,11 +383,6 @@ TcpConnection::socketReadCallback(TcpRequestPtr request,
         WireData input_data(input_buf_.begin(), input_buf_.begin() + length);
         next_request = postData(request, input_data);
     }
-
-#if 0
-    // Data processed. Activate the timer again.
-    setupRequestTimer(transaction);
-#endif
 
     // Start next read.
     doRead(next_request);
@@ -442,7 +401,9 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
     }
 
     if (request->needData()) {
-        // Current request is incomplete and we're out of data.
+        // Current request is incomplete and we're out of data. Restart the timer
+        // and return the incomplete request.
+        setupRequestTimer();
         return (request);
     }
 
@@ -455,6 +416,12 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
                   TCP_CLIENT_REQUEST_RECEIVED_DETAILS)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(request->logFormatRequest(MAX_LOGGED_MESSAGE_SIZE));
+
+        // Request complete, stop the timer.
+        HERE("Cancel requestTimer to handle complete request");
+        request_timer_.cancel();
+
+        // Process the completed request.
         requestReceived(request);
     } catch (const std::exception& ex) {
         LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
@@ -467,12 +434,19 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
                 .arg(request->logFormatRequest(MAX_LOGGED_MESSAGE_SIZE));
     }
 
-    // Start a new request.
+    // Create a new, empty request.
     request = createRequest();
     if (bytes_left) {
         // The input buffer spanned messages. Recurse to post the remainder to the
-        // new request.
+        // new request. 
         request = postData(request, input_data);
+        // Restart the request timer.
+        HERE("spanning read, start request timer");
+        setupRequestTimer();
+    } else {
+        // No incomplete requests, start the idle timer.
+        HERE("no waiting requests, start idle timer");
+        setupIdleTimer();
     }  
 
     return (request);
@@ -497,10 +471,6 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
         // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
         // read something from the socket on the next attempt.
         } else {
-#if 0
-            // Sending is in progress, so push back the timeout.
-            setupRequestTimer(transaction);
-#endif
             doWrite(response);
         }
     }
@@ -513,13 +483,6 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
         length = response->getWireDataSize();
     }
 
-    if (length <= response->getWireDataSize()) {
-#if 0
-        // Sending is in progress, so push back the timeout.
-        setupRequestTimer(transaction);
-#endif
-    }
-
     // Eat the 'length' number of bytes from the output buffer and only
     // leave the part of the response that hasn't been sent.
     response->consumeWireData(length);
@@ -528,69 +491,43 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
     doWrite(response);
 }
 
-#if 0
 void
-TcpConnection::setupRequestTimer(TransactionPtr transaction) {
+TcpConnection::setupRequestTimer(TcpRequestPtr request) {
     // Pass raw pointer rather than shared_ptr to this object,
     // because IntervalTimer already passes shared pointer to the
     // IntervalTimerImpl to make sure that the callback remains
     // valid.
-    request_timer_.setup(std::bind(&TcpConnection::requestTimeoutCallback,
-                                   this, transaction),
+    request_timer_.setup(std::bind(&TcpConnection::requestTimeoutCallback, this, request),
                          request_timeout_, IntervalTimer::ONE_SHOT);
 }
-#endif
 
 void
 TcpConnection::setupIdleTimer() {
-    request_timer_.setup(std::bind(&TcpConnection::idleTimeoutCallback,
-                                   this),
+    request_timer_.setup(std::bind(&TcpConnection::idleTimeoutCallback, this),
                          idle_timeout_, IntervalTimer::ONE_SHOT);
 }
 
-#if 0
 void
-TcpConnection::requestTimeoutCallback(TransactionPtr transaction) {
+TcpConnection::requestTimeoutCallback(TcpRequestPtr /* request */) {
     LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
               TCP_CLIENT_REQUEST_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
-
-    // We need to differentiate the transactions between a normal response and the
-    // timeout. We create new transaction from the current transaction. It is
-    // to preserve the request we're responding to.
-    auto spawned_transaction = Transaction::spawn(response_creator_, transaction);
-
-    // The new transaction inherits the request from the original transaction
-    // if such transaction exists.
-    auto request = spawned_transaction->getRequest();
-
-    // Depending on when the timeout occurred, the TCP version of the request
-    // may or may not be available. Therefore we check if the HTTP version is
-    // set in the request. If it is not available, we need to create a dummy
-    // request with the default HTTP/1.0 version. This version will be used
-    // in the response.
-    if (request->context()->http_version_major_ == 0) {
-        request.reset(new TcpRequest(TcpRequest::Method::HTTP_POST, "/",
-                                      TcpVersion::HTTP_10(),
-                                      HostTcpHeader("dummy")));
-        request->finalize();
-    }
-
-    // Create the timeout response.
-    TcpResponsePtr response =
-        response_creator_->createStockTcpResponse(request,
-                                                   TcpStatusCode::REQUEST_TIMEOUT);
-
-    // Send the HTTP 408 status.
-    asyncSendResponse(response, spawned_transaction);
+    /// @todo Not sure what is meaningful to do here.  If client
+    /// comes back and finishes sending we'll use the first bytes
+    /// as length, but they'll be meaningless.  How would one
+    /// get back on track?  Seems like the safest thing would be
+    /// to disconnect them, like idle timeout.
+    /// need a handler here that can be overridden - maybe BLQ should
+    /// send back a mal-formed error?
+    HERE("Request timeout! Discarding partial request");
 }
-#endif
 
 void
 TcpConnection::idleTimeoutCallback() {
     LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
               TCP_IDLE_CONNECTION_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
+    HERE("idle timeout! shutting down");
     // In theory we should shutdown first and stop/close after but
     // it is better to put the connection management responsibility
     // on the client... so simply drop idle connections.

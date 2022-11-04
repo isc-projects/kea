@@ -35,7 +35,7 @@ public:
                            uint16_t port = 18123)
         : io_service_(io_service.get_io_service()), socket_(io_service_),
           buf_(), response_(), server_address_(server_address),
-          server_port_(port), receive_done_(false) {
+          server_port_(port), receive_done_(false), expected_eof_(true) {
     }
 
     /// @brief Destructor.
@@ -45,14 +45,15 @@ public:
         close();
     }
 
-    /// @brief Send HTTP request specified in textual format.
+    /// @brief Connect to the listener.
     ///
     /// @param request HTTP request in the textual format.
-    void startRequest(const std::string& request) {
+    void connect() {
         tcp::endpoint endpoint(address::from_string(server_address_), server_port_);
         socket_.async_connect(endpoint,
-        [this, request](const boost::system::error_code& ec) {
+        [this](const boost::system::error_code& ec) {
             receive_done_ = false;
+            expected_eof_ = false;
             if (ec) {
                 // One would expect that async_connect wouldn't return
                 // EINPROGRESS error code, but simply wait for the connection
@@ -68,28 +69,79 @@ public:
                     return;
                 }
             }
-            sendRequest(request);
+        });
+    }
+
+    /// @brief Send HTTP request specified in textual format.
+    ///
+    /// @param request HTTP request in the textual format.
+    void startRequest(const std::string& request) {
+        tcp::endpoint endpoint(address::from_string(server_address_), server_port_);
+        socket_.async_connect(endpoint,
+        [this, request](const boost::system::error_code& ec) {
+            receive_done_ = false;
+            expected_eof_ = false;
+            if (ec) {
+                // One would expect that async_connect wouldn't return
+                // EINPROGRESS error code, but simply wait for the connection
+                // to get established before the handler is invoked. It turns out,
+                // however, that on some OSes the connect handler may receive this
+                // error code which doesn't necessarily indicate a problem.
+                // Making an attempt to write and read from this socket will
+                // typically succeed. So, we ignore this error.
+                if (ec.value() != boost::asio::error::in_progress) {
+                    ADD_FAILURE() << "error occurred while connecting: "
+                                  << ec.message();
+                    io_service_.stop();
+                    return;
+                }
+            }
+
+            if (request.empty()) {
+                waitForEof();
+            } else {
+                sendRequest(request);
+            }
         });
     }
 
     /// @brief Send a stream request.
     ///
     /// @param request request data to send textual format.
-    void sendRequest(const std::string& request) {
+    /// @param send_length  number of bytes to send.  If not zero, can be used
+    /// to truncate the amount of data sent.
+    void sendRequest(const std::string& request, const size_t send_length = 0) {
         // Prepend the length of the request.
         uint16_t size = static_cast<uint16_t>(request.size());
         WireData wire_request;
-        wire_request.push_back(static_cast<uint8_t>((size & 0xff00U) >> 8));
-        wire_request.push_back(static_cast<uint8_t>(size & 0x00ffU));
-        wire_request.insert(wire_request.end(), request.begin(), request.end());
-        sendPartialRequest(wire_request);
+        if (!request.empty()) {
+            wire_request.push_back(static_cast<uint8_t>((size & 0xff00U) >> 8));
+            wire_request.push_back(static_cast<uint8_t>(size & 0x00ffU));
+            wire_request.insert(wire_request.end(), request.begin(), request.end());
+        }
+
+        sendPartialRequest(wire_request, send_length);
+    }
+
+    /// @brief Wait for a server to close the connection.
+    void waitForEof() {
+        receivePartialResponse(true);
     }
 
     /// @brief Send part of the HTTP request.
     ///
-    /// @param request part of the HTTP request to be sent.
-    void sendPartialRequest(WireData& wire_request) {
-        socket_.async_send(boost::asio::buffer(wire_request.data(), wire_request.size()),
+    /// @param request part of the request to be sent.
+    /// @param send_length  number of bytes to send.  If not zero, can be used
+    /// to truncate the amount of data sent.
+    void sendPartialRequest(WireData& wire_request, size_t send_length = 0) {
+        if (!send_length) {
+            send_length = wire_request.size();
+        } else {
+            ASSERT_LE(send_length, wire_request.size())
+                      << "broken test, send_length exceeds wire size";
+        }
+
+        socket_.async_send(boost::asio::buffer(wire_request.data(), send_length),
                            [this, wire_request](const boost::system::error_code& ec,
                                                 std::size_t bytes_transferred) mutable {
             if (ec) {
@@ -112,7 +164,6 @@ public:
 
             // Remove the part of the request which has been sent.
             if (bytes_transferred > 0 && (wire_request.size() <= bytes_transferred)) {
-                std::cout << "wrote: " << TcpRequest::dumpAsHex(wire_request.data(), bytes_transferred) << std::endl;
                 wire_request.erase(wire_request.begin(), wire_request.begin() + bytes_transferred);
             }
 
@@ -129,9 +180,9 @@ public:
     }
 
     /// @brief Receive response from the server.
-    void receivePartialResponse() {
+    void receivePartialResponse(bool expect_eof = false) {
         socket_.async_read_some(boost::asio::buffer(buf_.data(), buf_.size()),
-                                [this](const boost::system::error_code& ec,
+                                [this, expect_eof](const boost::system::error_code& ec,
                                        std::size_t bytes_transferred) {
             if (ec) {
                 // IO service stopped so simply return.
@@ -143,7 +194,9 @@ public:
                     // If we should try again, make sure that there is no garbage
                     // in the bytes_transferred.
                     bytes_transferred = 0;
-
+                } else if (ec.value() == boost::asio::error::eof && expect_eof)  {
+                    expected_eof_ = true;
+                    io_service_.stop();
                 } else {
                     // Error occurred, bail...
                     ADD_FAILURE() << "error occurred while receiving TCP"
@@ -160,7 +213,6 @@ public:
             // Two consecutive new lines end the part of the response we're
             // expecting.
             if (response_.find("good bye", 0) != std::string::npos) {
-                std::cout << "I'm done:[" << response_ << "]" << std::endl;
                 receive_done_ = true;
                 io_service_.stop();
             } else {
@@ -249,6 +301,13 @@ public:
         return (receive_done_);
     }
 
+    /// @brief Returns true if the receive ended with expected EOF
+    ///
+    /// @return True if the receive ended with EOF, false otherwise
+    bool expectedEof() {
+        return (expected_eof_);
+    }
+
 private:
 
     /// @brief Holds reference to the IO service.
@@ -271,6 +330,11 @@ private:
 
     /// @brief Set to true when the receive has completed successfully.
     bool receive_done_;
+
+    /// @brief Set to true when the receive ended in EOF as expected.  In other
+    /// words, the server closed the connection while we were reading as we
+    /// expected it to do.
+    bool expected_eof_;
 };
 
 /// @brief Pointer to the TcpTestClient.

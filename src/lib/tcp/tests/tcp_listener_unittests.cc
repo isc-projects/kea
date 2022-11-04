@@ -49,10 +49,14 @@ const unsigned short SERVER_PORT = 18123;
 /// @brief Request Timeout used in most of the tests (ms).
 const long REQUEST_TIMEOUT = 10000;
 
-/// @brief Persistent connection idle timeout used in most of the tests (ms).
+/// @brief Connection idle timeout used in tests where idle connections
+/// are tested (ms).
+const long SHORT_REQUEST_TIMEOUT = 200;
+
+/// @brief Connection idle timeout used in most of the tests (ms).
 const long IDLE_TIMEOUT = 10000;
 
-/// @brief Persistent connection idle timeout used in tests where idle connections
+/// @brief Connection idle timeout used in tests where idle connections
 /// are tested (ms).
 const long SHORT_IDLE_TIMEOUT = 200;
 
@@ -80,17 +84,17 @@ public:
         TcpStreamRequestPtr req = boost::dynamic_pointer_cast<TcpStreamRequest>(request);
         if (!req) {
             isc_throw(isc::Unexpected, "request not a TcpStreamRequest");
-        } 
+        }
 
         req->unpack();
         auto request_str = req->getRequest();
-        std::cout << "request_str: [" << request_str << "]" << std::endl; 
+        std::cout << "request_str: [" << request_str << "]" << std::endl;
         std::ostringstream os;
         if (request_str == "I am done") {
             os << "good bye";
         } else {
             os << "echo " << request_str;
-        } 
+        }
 
         std::cout << "send client this: [" << os.str() << "]" << std::endl;
         TcpStreamResponsePtr resp(new TcpStreamResponse());
@@ -112,9 +116,9 @@ public:
                     const TlsContextPtr& tls_context,
                     const RequestTimeout& request_timeout,
                     const IdleTimeout& idle_timeout,
-                    const size_t read_max = 0)
+                    const size_t read_max = 32 * 1024)
         : TcpListener(io_service, server_address, server_port,
-                      tls_context, request_timeout, idle_timeout), 
+                      tls_context, request_timeout, idle_timeout),
                       read_max_(read_max) {
     }
 
@@ -165,6 +169,18 @@ public:
     }
 
     /// @brief Connect to the endpoint.
+    ///
+    /// This method creates TcpTestClient instance and retains it in the clients_
+    /// list.
+    ///
+    TcpTestClientPtr connectClient() {
+        TcpTestClientPtr client(new TcpTestClient(io_service_));
+        clients_.push_back(client);
+        client->connect();
+        return(client);
+    }
+
+    /// @brief Connect to the endpoint and send a request.
     ///
     /// This method creates TcpTestClient instance and retains it in the clients_
     /// list.
@@ -224,6 +240,31 @@ public:
 TEST_F(TcpListenerTest, listen) {
     const std::string request = "I am done";
 
+    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                             TlsContextPtr(), TcpListener::RequestTimeout(REQUEST_TIMEOUT),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
+    ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(1, clients_.size());
+    TcpTestClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_TRUE(client->receiveDone());
+    EXPECT_FALSE(client->expectedEof());
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// This test verifies that A TCP connection can receive a complete
+// message that spans multiple socket reads.
+TEST_F(TcpListenerTest, splitReads) {
+    const std::string request = "I am done";
+
+    // Read at most one byte at a time.
     size_t read_max = 1;
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
                              TlsContextPtr(), TcpListener::RequestTimeout(REQUEST_TIMEOUT),
@@ -234,9 +275,71 @@ TEST_F(TcpListenerTest, listen) {
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
+
+    // Fetch the client.
     ASSERT_EQ(1, clients_.size());
     TcpTestClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
+    EXPECT_TRUE(client->receiveDone());
+    EXPECT_FALSE(client->expectedEof());
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// This test verifies that A TCP connection can be established and used to
+// transmit a streamed request and receive a streamed response.
+TEST_F(TcpListenerTest, idleTimeoutTest) {
+    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                             TlsContextPtr(), TcpListener::RequestTimeout(REQUEST_TIMEOUT),
+                             TcpListener::IdleTimeout(SHORT_IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
+    ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
+    ASSERT_NO_THROW(connectClient());
+    ASSERT_EQ(1, clients_.size());
+    TcpTestClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+
+    // Tell the client expecting readingo to fail with an EOF.
+    ASSERT_NO_THROW(client->waitForEof());
+
+    // Run until idle timer expires.
+    ASSERT_NO_THROW(runIOService());
+    EXPECT_FALSE(client->receiveDone());
+    EXPECT_TRUE(client->expectedEof());
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// @todo TKM - Disabled until request timeout handler mechanism is established.
+// In it's current form the request timeout occurs correctly but without a server
+// reaction (such as close or error response) the test timeout expires.
+// This test verifies that A TCP request can time out if not received
+// completely.
+TEST_F(TcpListenerTest, DISABLED_requestTimeoutTest) {
+    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                             TlsContextPtr(), TcpListener::RequestTimeout(SHORT_REQUEST_TIMEOUT),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
+    ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
+    ASSERT_NO_THROW(connectClient());
+    ASSERT_EQ(1, clients_.size());
+    TcpTestClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+
+    // Send part of a request.
+    const std::string request = "I am done";
+    ASSERT_NO_THROW(client->sendRequest(request, (request.size()/2)));
+
+    // Run until idle timer expires.
+    ASSERT_NO_THROW(runIOService());
+    EXPECT_FALSE(client->receiveDone());
+    EXPECT_FALSE(client->expectedEof());
 
     listener.stop();
     io_service_.poll();
