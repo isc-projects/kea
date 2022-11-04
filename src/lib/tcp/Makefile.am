@@ -4,7 +4,7 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
-EXTRA_DIST = tcp.dox
+EXTRA_DIST = libkea_tcp.dox
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST += tcp_messages.mes
