@@ -17,16 +17,16 @@ namespace isc {
 namespace yang {
 
 /// @brief Between YANG and JSON translator class for basic values.
-class TranslatorBasic {
+class Translator {
 public:
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name (used and shared by derived classes).
-    TranslatorBasic(sysrepo::Session session, const std::string& model);
+    Translator(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorBasic() = default;
+    virtual ~Translator() = default;
 
     /// @brief Retrieves a child YANG data node identified by name from the
     /// given parent YANG container node and stores it in the specified storage.
@@ -337,7 +337,7 @@ protected:
 
     /// @brief The model.
     std::string model_;
-};  // TranslatorBasic
+};  // Translator
 
 }  // namespace yang
 }  // namespace isc

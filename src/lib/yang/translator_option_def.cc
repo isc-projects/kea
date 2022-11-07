@@ -21,7 +21,7 @@ namespace yang {
 
 TranslatorOptionDef::TranslatorOptionDef(Session session,
                                          const string& model)
-    : TranslatorBasic(session, model) {
+    : Translator(session, model) {
 }
 
 ElementPtr
@@ -102,7 +102,7 @@ TranslatorOptionDef::setOptionDefKea(string const& xpath,
 
 TranslatorOptionDefList::TranslatorOptionDefList(Session session,
                                                  const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionDef(session, model) {
 }
 

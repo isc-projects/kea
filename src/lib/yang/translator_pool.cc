@@ -25,7 +25,7 @@ namespace isc {
 namespace yang {
 
 TranslatorPool::TranslatorPool(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model) {
 }
@@ -225,7 +225,7 @@ TranslatorPool::getAddresses(const string& prefix,
 }
 
 TranslatorPools::TranslatorPools(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model) {

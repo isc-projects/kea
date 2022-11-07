@@ -72,7 +72,7 @@ namespace yang {
 /// YANG and JSON.
 ///
 /// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
-class TranslatorOptionData : virtual public TranslatorBasic {
+class TranslatorOptionData : virtual public Translator {
 public:
     /// @brief Constructor.
     ///

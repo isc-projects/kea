@@ -713,8 +713,8 @@ NetconfAgent::logChanges(Session sess, string_view const& model) {
             msg << " (list)";
         } else {
             optional<string> const str(
-                TranslatorBasic::translateToYang(TranslatorBasic::translateFromYang(change.node),
-                                                 LeafBaseType::Unknown));
+                Translator::translateToYang(Translator::translateFromYang(change.node),
+                                            LeafBaseType::Unknown));
             if (str) {
                 msg << " = " << *str;
             }

@@ -62,7 +62,7 @@ public:
     virtual ~ConfigTest() = default;
 
     void SetUp() override {
-        translator_.reset(new TranslatorBasic(session_, model_));
+        translator_.reset(new Translator(session_, model_));
         cleanModelData();
     }
 
@@ -181,7 +181,7 @@ public:
     /// @brief The sysrepo session.
     Session session_;
 
-    std::unique_ptr<TranslatorBasic> translator_;
+    std::unique_ptr<Translator> translator_;
 };  // ConfigTest
 
 struct ConfigTestKeaV4 : ConfigTest {

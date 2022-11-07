@@ -20,7 +20,7 @@ using namespace isc::yang::test;
 using namespace libyang;
 using namespace sysrepo;
 
-struct TranslatorBasicTest : ::testing::Test {
+struct TranslatorTest : ::testing::Test {
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
         cleanUp();
@@ -42,27 +42,27 @@ private:
         session.deleteItem("/keatest-module:presence-container");
         session.applyChanges();
     }
-};  // TranslatorBasicTest
+};  // TranslatorTest
 
 namespace {
 
 // Test constructor.
-TEST_F(TranslatorBasicTest, constructor) {
+TEST_F(TranslatorTest, constructor) {
     // Get a session.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
     // Get a translator object.
-    std::unique_ptr<TranslatorBasic> t_obj;
-    EXPECT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
+    std::unique_ptr<Translator> t_obj;
+    EXPECT_NO_THROW_LOG(t_obj.reset(new Translator(sess, "")));
 }
 
 // Test basic YANG to JSON value conversion using sysrepo test models.
-TEST_F(TranslatorBasicTest, getItem) {
+TEST_F(TranslatorTest, getItem) {
     // Get a translator object to play with.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
-    std::unique_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
+    std::unique_ptr<Translator> t_obj;
+    ASSERT_NO_THROW_LOG(t_obj.reset(new Translator(sess, "")));
     string value;
     ConstElementPtr elem;
     string xpath;
@@ -237,100 +237,100 @@ TEST_F(TranslatorBasicTest, getItem) {
 }
 
 // Test JSON to basic YANG value conversion using the static method.
-TEST_F(TranslatorBasicTest, valueTo) {
+TEST_F(TranslatorTest, valueTo) {
     optional<string> value;
 
     // Null.
     ConstElementPtr elem;
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::String));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::String));
     EXPECT_EQ(nullopt, value);
     EXPECT_FALSE(elem);
 
     // Container.
     elem = Element::createMap();
-    EXPECT_THROW_MSG(TranslatorBasic::translateToYang(elem, LeafBaseType::Unknown), NotImplemented,
-                     "TranslatorBasic::value(): map element");
+    EXPECT_THROW_MSG(Translator::translateToYang(elem, LeafBaseType::Unknown), NotImplemented,
+                     "Translator::value(): map element");
 
     // List.
     elem = Element::createList();
-    EXPECT_THROW_MSG(TranslatorBasic::translateToYang(elem, LeafBaseType::Unknown), NotImplemented,
-                     "TranslatorBasic::value(): list element");
+    EXPECT_THROW_MSG(Translator::translateToYang(elem, LeafBaseType::Unknown), NotImplemented,
+                     "Translator::value(): list element");
 
     // String.
     string str("foo");
     elem = Element::create(str);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::String));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::String));
     EXPECT_EQ(elem->stringValue(), value);
 
     // Bool.
     elem = Element::create(false);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Bool));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Bool));
     EXPECT_EQ(elem->str(), value);
 
     // Unsigned 8 bit integer.
     elem = Element::create(123);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Uint8));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Uint8));
     EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Unsigned 16 bit integer.
     elem = Element::create(12345);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Uint16));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Uint16));
     EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Unsigned 32 bit integer.
     elem = Element::create(123456789);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Uint32));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Uint32));
     EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Signed 8 bit integer.
     elem = Element::create(-123);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Int8));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Int8));
     EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Signed 16 bit integer.
     elem = Element::create(-12345);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Int16));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Int16));
     EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Signed 32 bit integer.
     elem = Element::create(-123456789);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Int32));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Int32));
     EXPECT_EQ(elem->str(), value);
     elem.reset();
 
     // Identity reference.
     elem = Element::create(str);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::IdentityRef));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::IdentityRef));
     EXPECT_EQ(elem->stringValue(), value);
 
     // Enumeration item.
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Enum));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Enum));
     EXPECT_EQ(elem->stringValue(), value);
 
     // Binary.
     elem = Element::create(string("foobar"));
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Binary));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Binary));
     EXPECT_EQ("Zm9vYmFy", value);
 
     // Decimal 64.
     double d64(.1234);
     elem = Element::create(d64);
-    EXPECT_NO_THROW_LOG(value = TranslatorBasic::translateToYang(elem, LeafBaseType::Dec64));
+    EXPECT_NO_THROW_LOG(value = Translator::translateToYang(elem, LeafBaseType::Dec64));
     EXPECT_EQ(elem->str(), value);
 }
 
 // Test JSON to basic YANG value conversion using sysrepo test models.
-TEST_F(TranslatorBasicTest, setItem) {
+TEST_F(TranslatorTest, setItem) {
     // Get a translator object to play with.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
-    std::unique_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
+    std::unique_ptr<Translator> t_obj;
+    ASSERT_NO_THROW_LOG(t_obj.reset(new Translator(sess, "")));
 
     ElementPtr elem;
     string xpath;
@@ -519,12 +519,12 @@ TEST_F(TranslatorBasicTest, setItem) {
 }
 
 // Test YANG list item retrieval.
-TEST_F(TranslatorBasicTest, list) {
+TEST_F(TranslatorTest, list) {
     // Get a translator object to play with.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
-    std::unique_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW_LOG(t_obj.reset(new TranslatorBasic(sess, "")));
+    std::unique_ptr<Translator> t_obj;
+    ASSERT_NO_THROW_LOG(t_obj.reset(new Translator(sess, "")));
     string xpath;
 
     // Empty list.

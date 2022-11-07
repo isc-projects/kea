@@ -22,7 +22,7 @@ namespace isc {
 namespace yang {
 
 TranslatorPdPool::TranslatorPdPool(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model) {
 }
@@ -234,7 +234,7 @@ TranslatorPdPool::setPdPoolKea(string const& xpath, ConstElementPtr elem) {
 }
 
 TranslatorPdPools::TranslatorPdPools(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPdPool(session, model) {

@@ -21,7 +21,7 @@ namespace isc {
 namespace yang {
 
 TranslatorSubnet::TranslatorSubnet(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -333,7 +333,7 @@ TranslatorSubnet::setSubnetKea(string const& xpath, ConstElementPtr elem) {
 }
 
 TranslatorSubnets::TranslatorSubnets(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),

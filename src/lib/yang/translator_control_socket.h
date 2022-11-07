@@ -65,7 +65,7 @@ namespace yang {
 /// - kea-dhcp6-server
 /// - kea-dhcp-ddns
 /// - kea-ctrl-agent
-class TranslatorControlSocket : virtual public TranslatorBasic {
+class TranslatorControlSocket : virtual public Translator {
 public:
     /// @brief Constructor.
     ///

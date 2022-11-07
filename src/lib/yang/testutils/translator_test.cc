@@ -99,7 +99,7 @@ YangRepr::YangReprItem::get(const string& xpath, Session session) {
             // Get the underlying type.
             type = data_node->schema().asLeaf().valueType().asLeafRef().resolvedType().base();
         }
-        value = TranslatorBasic::translateToYang(TranslatorBasic::translateFromYang(data_node),
+        value = Translator::translateToYang(Translator::translateFromYang(data_node),
                                                  type);
         val_xpath = string(data_node->path());
     } catch (Error const& ex) {
@@ -113,7 +113,7 @@ YangRepr::Tree
 YangRepr::get(Session session) const {
     Tree result;
     try {
-        TranslatorBasic tb(session, model_);
+        Translator tb(session, model_);
         string const xpath0("/" + model_ + ":*//.");
         tb.forAll(xpath0, [&](libyang::DataNode const& node) {
             string const& xpath(node.path());

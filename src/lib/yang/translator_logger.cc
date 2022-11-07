@@ -20,7 +20,7 @@ namespace isc {
 namespace yang {
 
 TranslatorLogger::TranslatorLogger(Session session, const string& model)
-    : TranslatorBasic(session, model) {
+    : Translator(session, model) {
 }
 
 ElementPtr
@@ -139,7 +139,7 @@ TranslatorLogger::setOutputOptions(string const& xpath, ConstElementPtr elem) {
 }
 
 TranslatorLoggers::TranslatorLoggers(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorLogger(session, model) {
 }
 

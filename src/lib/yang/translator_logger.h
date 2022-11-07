@@ -90,7 +90,7 @@ namespace yang {
 /// - kea-dhcp6-server
 /// - kea-dhcp-ddns
 /// - kea-ctrl-agent
-class TranslatorLogger : virtual public TranslatorBasic {
+class TranslatorLogger : virtual public Translator {
 public:
     /// @brief Constructor.
     ///

@@ -240,7 +240,7 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
     sess.switchDatastore(sysrepo::Datastore::Candidate);
 
     // Cleanup.
-    TranslatorBasic translator(sess, model);
+    Translator translator(sess, model);
     if (model == "keatest-module") {
         translator.deleteItem("/keatest-module:container");
         translator.deleteItem("/keatest-module:kernel-modules");

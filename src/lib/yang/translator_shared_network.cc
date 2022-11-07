@@ -21,7 +21,7 @@ namespace yang {
 
 TranslatorSharedNetwork::TranslatorSharedNetwork(Session session,
                                                  const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -232,7 +232,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
 
 TranslatorSharedNetworks::TranslatorSharedNetworks(Session session,
                                                    const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),

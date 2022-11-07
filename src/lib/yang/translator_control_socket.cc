@@ -21,7 +21,7 @@ namespace yang {
 
 TranslatorControlSocket::TranslatorControlSocket(Session session,
                                                  const string& model)
-    : TranslatorBasic(session, model) {
+    : Translator(session, model) {
 }
 
 ElementPtr

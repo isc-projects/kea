@@ -76,7 +76,7 @@ namespace yang {
 ///
 /// Currently supports kea-dhcp[46]-server models.
 /// @todo: Support for ietf-dhcpv6-server model.
-class TranslatorOptionDef : virtual public TranslatorBasic {
+class TranslatorOptionDef : virtual public Translator {
 public:
     /// @brief Constructor.
     ///

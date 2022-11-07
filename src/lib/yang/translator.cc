@@ -24,14 +24,14 @@ using namespace sysrepo;
 namespace isc {
 namespace yang {
 
-TranslatorBasic::TranslatorBasic(Session session, const string& model)
+Translator::Translator(Session session, const string& model)
     : session_(session), model_(model) {
 }
 
 void
-TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
-                                 DataNode const& data_node,
-                                 string const& name) const {
+Translator::checkAndGetLeaf(ElementPtr& storage,
+                            DataNode const& data_node,
+                            string const& name) const {
     ElementPtr const& x(getItem(data_node, name));
     if (x) {
         storage->set(name, x);
@@ -39,10 +39,10 @@ TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
 }
 
 void
-TranslatorBasic::checkAndGetDivergingLeaf(ElementPtr& storage,
-                                          DataNode const& data_node,
-                                          string const& name,
-                                          string const& yang_name) const {
+Translator::checkAndGetDivergingLeaf(ElementPtr& storage,
+                                     DataNode const& data_node,
+                                     string const& name,
+                                     string const& yang_name) const {
     ElementPtr const& x(getItem(data_node, yang_name));
     if (x) {
         storage->set(name, x);
@@ -50,9 +50,9 @@ TranslatorBasic::checkAndGetDivergingLeaf(ElementPtr& storage,
 }
 
 void
-TranslatorBasic::checkAndGetAndJsonifyLeaf(ElementPtr& storage,
-                                           DataNode const& data_node,
-                                           string const& name) const {
+Translator::checkAndGetAndJsonifyLeaf(ElementPtr& storage,
+                                      DataNode const& data_node,
+                                      string const& name) const {
     ElementPtr const& x(getItem(data_node, name));
     if (x) {
         storage->set(name, Element::fromJSON(x->stringValue()));
@@ -60,9 +60,9 @@ TranslatorBasic::checkAndGetAndJsonifyLeaf(ElementPtr& storage,
 }
 
 void
-TranslatorBasic::checkAndJsonifyAndSetLeaf(ConstElementPtr const& from,
-                                           string const& xpath,
-                                           string const& name) {
+Translator::checkAndJsonifyAndSetLeaf(ConstElementPtr const& from,
+                                      string const& xpath,
+                                      string const& name) {
     ConstElementPtr const& x(from->get(name));
     if (x) {
         ElementPtr const& json(Element::create(x->str()));
@@ -70,31 +70,31 @@ TranslatorBasic::checkAndJsonifyAndSetLeaf(ConstElementPtr const& from,
     }
 }
 
-void TranslatorBasic::checkAndSetLeaf(ConstElementPtr const& from,
-                                      string const& xpath,
-                                      string const& name,
-                                      LeafBaseType const type) {
+void Translator::checkAndSetLeaf(ConstElementPtr const& from,
+                                 string const& xpath,
+                                 string const& name,
+                                 LeafBaseType const type) {
     ConstElementPtr const& x(from->get(name));
     if (x) {
         setItem(xpath + "/" + name, x, type);
     }
 }
 
-void TranslatorBasic::checkAndSetDivergingLeaf(ConstElementPtr const& from,
-                                      string const& xpath,
-                                      string const& name,
-                                      string const& yang_name,
-                                      LeafBaseType const type) {
+void Translator::checkAndSetDivergingLeaf(ConstElementPtr const& from,
+                                          string const& xpath,
+                                          string const& name,
+                                          string const& yang_name,
+                                          LeafBaseType const type) {
     ConstElementPtr const& x(from->get(name));
     if (x) {
         setItem(xpath + "/" + yang_name, x, type);
     }
 }
 
-void TranslatorBasic::checkAndSetLeafList(ConstElementPtr const& from,
-                                          string const& xpath,
-                                          string const& name,
-                                          LeafBaseType const type) {
+void Translator::checkAndSetLeafList(ConstElementPtr const& from,
+                                     string const& xpath,
+                                     string const& name,
+                                     LeafBaseType const type) {
     ConstElementPtr const& leaf_list(from->get(name));
     if (leaf_list && !leaf_list->empty()) {
         for (ElementPtr const& leaf : leaf_list->listValue()) {
@@ -103,8 +103,8 @@ void TranslatorBasic::checkAndSetLeafList(ConstElementPtr const& from,
     }
 }
 
-void TranslatorBasic::checkAndSetUserContext(ConstElementPtr const& from,
-                                             string const& xpath) {
+void Translator::checkAndSetUserContext(ConstElementPtr const& from,
+                                        string const& xpath) {
     ConstElementPtr const& user_context(Adaptor::getContext(from));
     if (user_context) {
         setItem(xpath + "/user-context", Element::create(user_context->str()),
@@ -113,7 +113,7 @@ void TranslatorBasic::checkAndSetUserContext(ConstElementPtr const& from,
 }
 
 string
-TranslatorBasic::decode64(string const& input) {
+Translator::decode64(string const& input) {
     vector<uint8_t> binary;
     decodeBase64(input, binary);
     string result;
@@ -123,7 +123,7 @@ TranslatorBasic::decode64(string const& input) {
 }
 
 void
-TranslatorBasic::deleteItem(string const& xpath) {
+Translator::deleteItem(string const& xpath) {
     /// @todo: Remove this if convenient. It is not strictly required and only done to detect
     /// missing schema nodes and throw an exception to keep old behavior.
     try {
@@ -148,7 +148,7 @@ TranslatorBasic::deleteItem(string const& xpath) {
 
 
 string
-TranslatorBasic::encode64(string const& input) {
+Translator::encode64(string const& input) {
     vector<uint8_t> binary;
     binary.resize(input.size());
     memmove(&binary[0], input.c_str(), binary.size());
@@ -156,7 +156,7 @@ TranslatorBasic::encode64(string const& input) {
 }
 
 DataNode
-TranslatorBasic::findXPath(string const& xpath) {
+Translator::findXPath(string const& xpath) {
     optional<DataNode> const& data_node(getData(xpath));
     if (!data_node) {
         isc_throw(NetconfError, "no data");
@@ -169,7 +169,7 @@ TranslatorBasic::findXPath(string const& xpath) {
 }
 
 optional<DataNode>
-TranslatorBasic::getData(string const& xpath) const {
+Translator::getData(string const& xpath) const {
     /// @todo: Remove this if convenient. It is not strictly required and only done to detect
     /// missing schema nodes and throw an exception to keep old behavior.
     try {
@@ -192,7 +192,8 @@ TranslatorBasic::getData(string const& xpath) const {
 }
 
 ElementPtr
-TranslatorBasic::getItem(DataNode const& data_node, string const& xpath) const {
+Translator::getItem(DataNode const& data_node,
+                    string const& xpath) const {
     try {
         Set<DataNode> const& nodes(data_node.findXPath(xpath));
         if (nodes.empty()) {
@@ -227,7 +228,7 @@ TranslatorBasic::getItem(DataNode const& data_node, string const& xpath) const {
 }
 
 ElementPtr
-TranslatorBasic::getItemFromAbsoluteXpath(string const& xpath) const {
+Translator::getItemFromAbsoluteXpath(string const& xpath) const {
     optional<DataNode> const& data_node(getData(xpath));
     if (!data_node) {
         /// @todo:
@@ -238,9 +239,9 @@ TranslatorBasic::getItemFromAbsoluteXpath(string const& xpath) const {
 }
 
 void
-TranslatorBasic::getMandatoryLeaf(ElementPtr& storage,
-                                  DataNode const& data_node,
-                                  string const& name) const {
+Translator::getMandatoryLeaf(ElementPtr& storage,
+                             DataNode const& data_node,
+                             string const& name) const {
     ElementPtr const& x(getItem(data_node, name));
     if (!x) {
         isc_throw(MissingNode, name);
@@ -250,10 +251,10 @@ TranslatorBasic::getMandatoryLeaf(ElementPtr& storage,
 
 
 void
-TranslatorBasic::getMandatoryDivergingLeaf(ElementPtr& storage,
-                                           DataNode const& data_node,
-                                           string const& name,
-                                           string const& yang_name) const {
+Translator::getMandatoryDivergingLeaf(ElementPtr& storage,
+                                      DataNode const& data_node,
+                                      string const& name,
+                                      string const& yang_name) const {
     ElementPtr const& x(getItem(data_node, yang_name));
     if (!x) {
         isc_throw(MissingNode, yang_name);
@@ -262,7 +263,7 @@ TranslatorBasic::getMandatoryDivergingLeaf(ElementPtr& storage,
 }
 
 void
-TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
+Translator::setItem(const string& xpath, ConstElementPtr elem,
                          LeafBaseType type) {
     optional<string> const value(translateToYang(elem, type));
     try {
@@ -275,10 +276,10 @@ TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
 }
 
 void
-TranslatorBasic::setMandatoryLeaf(ConstElementPtr const& from,
-                                  string const& xpath,
-                                  string const& name,
-                                  LeafBaseType const type) {
+Translator::setMandatoryLeaf(ConstElementPtr const& from,
+                             string const& xpath,
+                             string const& name,
+                             LeafBaseType const type) {
     ConstElementPtr const& x(from->get(name));
     if (!x) {
         isc_throw(MissingNode, "xpath: " << xpath << ", name: " << name);
@@ -287,11 +288,11 @@ TranslatorBasic::setMandatoryLeaf(ConstElementPtr const& from,
 }
 
 void
-TranslatorBasic::setMandatoryDivergingLeaf(ConstElementPtr const& from,
-                                           string const& xpath,
-                                           string const& name,
-                                           string const& yang_name,
-                                           LeafBaseType const type) {
+Translator::setMandatoryDivergingLeaf(ConstElementPtr const& from,
+                                      string const& xpath,
+                                      string const& name,
+                                      string const& yang_name,
+                                      LeafBaseType const type) {
     ConstElementPtr const& x(from->get(name));
     if (!x) {
         isc_throw(MissingNode, "xpath: " << xpath << ", name: " << name);
@@ -300,7 +301,7 @@ TranslatorBasic::setMandatoryDivergingLeaf(ConstElementPtr const& from,
 }
 
 ElementPtr
-TranslatorBasic::translateFromYang(optional<DataNode> data_node) {
+Translator::translateFromYang(optional<DataNode> data_node) {
     NodeType const node_type(data_node->schema().nodeType());
     if (node_type == NodeType::Leaf || node_type == NodeType::Leaflist) {
         DataNodeTerm const& leaf(data_node->asTerm());
@@ -322,8 +323,8 @@ TranslatorBasic::translateFromYang(optional<DataNode> data_node) {
 }
 
 optional<string>
-TranslatorBasic::translateToYang(ConstElementPtr const& element,
-                                 LeafBaseType const type) {
+Translator::translateToYang(ConstElementPtr const& element,
+                            LeafBaseType const type) {
     if (!element) {
         // A null ElementPtr is how we signal that this item requires no value.
         // Useful when setting YANG lists which is the only way to set their
@@ -331,10 +332,10 @@ TranslatorBasic::translateToYang(ConstElementPtr const& element,
         return nullopt;
     } else if (element->getType() == Element::map) {
         /// @todo: implement
-        isc_throw(NotImplemented, "TranslatorBasic::value(): map element");
+        isc_throw(NotImplemented, "Translator::value(): map element");
     } else if (element->getType() == Element::list) {
         /// @todo: implement
-        isc_throw(NotImplemented, "TranslatorBasic::value(): list element");
+        isc_throw(NotImplemented, "Translator::value(): list element");
     }
     if (type == LeafBaseType::Enum ||
         type == LeafBaseType::String ||

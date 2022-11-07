@@ -20,7 +20,7 @@ namespace isc {
 namespace yang {
 
 TranslatorHost::TranslatorHost(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model) {
 }
@@ -128,7 +128,7 @@ TranslatorHost::setHostKea(string const& xpath, ConstElementPtr elem) {
 }
 
 TranslatorHosts::TranslatorHosts(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorHost(session, model) {

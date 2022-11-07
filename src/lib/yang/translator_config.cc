@@ -21,7 +21,7 @@ namespace isc {
 namespace yang {
 
 TranslatorConfig::TranslatorConfig(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorControlSocket(session, model),
       TranslatorDatabase(session, model),
       TranslatorDatabases(session, model),

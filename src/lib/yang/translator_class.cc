@@ -20,7 +20,7 @@ namespace isc {
 namespace yang {
 
 TranslatorClass::TranslatorClass(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorOptionDef(session, model),
@@ -142,7 +142,7 @@ TranslatorClass::setClassKea(string const& xpath, ConstElementPtr elem) {
 }
 
 TranslatorClasses::TranslatorClasses(Session session, const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorOptionDef(session, model),

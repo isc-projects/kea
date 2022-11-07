@@ -16,7 +16,7 @@ data between YANG and JSON that is understandable by Kea.
 An essential concept is the idea of translator. It is a primitive that is able
 to convert certain data structure between YANG and JSON. It is envisaged
 that more complex translators will use other translators to handle more
-complex data structures. For details, see @ref isc::yang::TranslatorBasic.
+complex data structures. For details, see @ref isc::yang::Translator.
 It is also envisioned that translators could do the translation automatically by
 relying on capabilities of iterating through data, retrieving data type
 information and value information from nodes through the libyang and sysrepo
@@ -43,24 +43,24 @@ All translators take a Session pointer (a structure provided by Sysrepo that
 is responsible for maintaining a connection) in constructors and derive from
 the basic / base class and recursively from translators for embedded parts.
 
-@c isc::yang::TranslatorBasic provides some methods:
-  - @c isc::yang::TranslatorBasic::checkAndGetLeaf() is a convenience wrapper
-    over @c isc::yang::TranslatorBasic::getItem().
-  - @c isc::yang::TranslatorBasic::checkAndSetLeaf() is a convenience wrapper
-    over @c isc::yang::TranslatorBasic::setItem().
-  - @c isc::yang::TranslatorBasic::deleteItem() deletes the data node found at
+@c isc::yang::Translator provides some methods:
+  - @c isc::yang::Translator::checkAndGetLeaf() is a convenience wrapper
+    over @c isc::yang::Translator::getItem().
+  - @c isc::yang::Translator::checkAndSetLeaf() is a convenience wrapper
+    over @c isc::yang::Translator::setItem().
+  - @c isc::yang::Translator::deleteItem() deletes the data node found at
     given xpth.
-  - @c isc::yang::TranslatorBasic::forAll() iterates over the node found at
+  - @c isc::yang::Translator::forAll() iterates over the node found at
     given xpath and all its descendants and calls the given function.
-  - @c isc::yang::TranslatorBasic::getItem() retrieves and translates a leaf
+  - @c isc::yang::Translator::getItem() retrieves and translates a leaf
     from YANG to JSON.
-  - @c isc::yang::TranslatorBasic::getList() retrieves a list from Sysrepo and
+  - @c isc::yang::Translator::getList() retrieves a list from Sysrepo and
     translates it form YANG to JSON.
-  - @c isc::yang::TranslatorBasic::setItem() translates a leaf from JSON to
+  - @c isc::yang::Translator::setItem() translates a leaf from JSON to
     YANG and sets it in Sysrepo.
-  - @c isc::yang::TranslatorBasic::translateFromYang(optional<DataNode>, string) translates a YANG
+  - @c isc::yang::Translator::translateFromYang(optional<DataNode>, string) translates a YANG
     leaf to a JSON node.
-  - @c isc::yang::TranslatorBasic::translateToYang(ConstElementPtr, LeafBaseType)
+  - @c isc::yang::Translator::translateToYang(ConstElementPtr, LeafBaseType)
     translates a JSON leaf to a string.
 
 @section yangTranslatorPool Pool translator
@@ -78,7 +78,7 @@ Note pools show two shortcomings in IETF modules:
  - prefix and start - end forms of pool ranges are both mandatory.
   (reported to authors' so should be fixed in the next version).
 
-All structure translators depend on @c isc::yang::TranslatorBasic and
+All structure translators depend on @c isc::yang::Translator and
 some of them depend on other structures, for instance
 @c isc::yang::TranslatorPool depends on
 @c isc::yang::TranslatorOptionDataList which itself, as all list translators,

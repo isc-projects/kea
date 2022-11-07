@@ -101,7 +101,7 @@ namespace yang {
 /// Supports the following models:
 /// - kea-dhcp4-server
 /// - kea-dhcp6-server
-class TranslatorDatabase : virtual public TranslatorBasic {
+class TranslatorDatabase : virtual public Translator {
 public:
     /// @brief Constructor.
     ///

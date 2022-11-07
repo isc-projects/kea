@@ -20,7 +20,7 @@ namespace isc {
 namespace yang {
 
 TranslatorDatabase::TranslatorDatabase(Session session, const string& model)
-    : TranslatorBasic(session, model) {
+    : Translator(session, model) {
 }
 
 ElementPtr
@@ -131,7 +131,7 @@ TranslatorDatabase::setDatabaseKea(string const& xpath,
 
 TranslatorDatabases::TranslatorDatabases(Session session,
                                          const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorDatabase(session, model) {
 }
 
