@@ -332,6 +332,28 @@ protected:
     /// @return the encoded string
     static std::string encode64(std::string const& input);
 
+    /// @brief Maps YANG types to functions that transform a YANG type into an ElementPtr.
+    using Deserializer =
+        std::unordered_map<libyang::LeafBaseType,
+                           std::function<isc::data::ElementPtr const(std::string const&)>>;
+
+    /// @brief Initializes the deserializer which is used to translate a YANG node to an ElementPtr.
+    ///
+    /// @return a copy of the deserializer
+    static Deserializer initializeDeserializer();
+
+    /// @brief Maps YANG types to functions that transform the string representation of an
+    /// Element into a string that can be passed into Session::setItem().
+    using Serializer =
+        std::unordered_map<libyang::LeafBaseType,
+                           std::function<std::string const(std::string const&)>>;
+
+    /// @brief Initializes the serializer which is used to translate the string value of an Element
+    /// to a string that can be passed into Session::setItem().
+    ///
+    /// @return a copy of the serializer
+    static Serializer initializeSerializer();
+
     /// @brief The sysrepo session.
     sysrepo::Session session_;
 

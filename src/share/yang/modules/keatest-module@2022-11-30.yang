@@ -10,6 +10,11 @@ module keatest-module {
   contact
     "kea-dev@lists.isc.org";
 
+  revision 2022-11-30 {
+    description
+      "Added leafrefs and empty leaf.";
+  }
+
   revision 2018-11-20 {
     description "Initial revision";
     reference "";
@@ -104,6 +109,29 @@ module keatest-module {
     leaf instance_id {
       type instance-identifier;
     }
+    leaf union {
+      type union {
+          type uint8;
+          type enumeration {
+              enum "infinity";
+          }
+      }
+    }
+    leaf leafref-i8 {
+      type leafref {
+        path "/main/i8";
+      }
+    }
+    leaf leafref-raw {
+      type leafref {
+        path "/main/raw";
+      }
+    }
+    leaf leafref-string {
+      type leafref {
+        path "/main/string";
+      }
+    }
     anyxml xml-data;
     anydata any-data;
   }
@@ -131,13 +159,8 @@ module keatest-module {
     leaf instance_id {
        type instance-identifier;
     }
-    leaf union {
-      type union {
-          type uint8;
-          type enumeration {
-              enum "infinity";
-          }
-      }
+    leaf empty {
+      type empty;
     }
   }
 

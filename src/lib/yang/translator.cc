@@ -262,6 +262,59 @@ Translator::getMandatoryDivergingLeaf(ElementPtr& storage,
     storage->set(name, x);
 }
 
+Translator::Deserializer
+Translator::initializeDeserializer() {
+    Deserializer result;
+
+    result.emplace(LeafBaseType::Binary, [](string const& value) -> ElementPtr const {
+        return Element::create(decode64(value));
+    });
+
+    for (LeafBaseType const& i :
+         {LeafBaseType::Bool, LeafBaseType::Dec64, LeafBaseType::Int8, LeafBaseType::Int16,
+          LeafBaseType::Int32, LeafBaseType::Int64, LeafBaseType::Uint8, LeafBaseType::Uint16,
+          LeafBaseType::Uint32, LeafBaseType::Uint64}) {
+        result.emplace(i, [](string const& value) -> ElementPtr const {
+            return Element::fromJSON(value);
+        });
+    }
+
+    // The rest of YANG values can be expressed as strings.
+    for (LeafBaseType const& i :
+         {LeafBaseType::Bits, LeafBaseType::Empty, LeafBaseType::Enum, LeafBaseType::IdentityRef,
+          LeafBaseType::InstanceIdentifier, LeafBaseType::Leafref, LeafBaseType::String,
+          LeafBaseType::Union, LeafBaseType::Unknown}) {
+        result.emplace(i, [](string const& value) -> ElementPtr const {
+            return Element::create(value);
+        });
+    }
+
+    return result;
+}
+
+Translator::Serializer
+Translator::initializeSerializer() {
+    Serializer result;
+
+    result.emplace(LeafBaseType::Binary, [](string const& value) -> string const {
+        return encode64(value);
+    });
+
+    // The rest of YANG values can be expressed directly.
+    for (LeafBaseType const& i :
+         {LeafBaseType::Bits, LeafBaseType::Bool, LeafBaseType::Dec64, LeafBaseType::Empty,
+          LeafBaseType::Enum, LeafBaseType::IdentityRef, LeafBaseType::InstanceIdentifier,
+          LeafBaseType::Int8, LeafBaseType::Int16, LeafBaseType::Int32, LeafBaseType::Int64,
+          LeafBaseType::Leafref, LeafBaseType::String, LeafBaseType::Uint8, LeafBaseType::Uint16,
+          LeafBaseType::Uint32, LeafBaseType::Uint64, LeafBaseType::Union, LeafBaseType::Unknown}) {
+        result.emplace(i, [](string const& value) -> string const {
+            return value;
+        });
+    }
+
+    return result;
+}
+
 void
 Translator::setItem(const string& xpath, ConstElementPtr elem,
                          LeafBaseType type) {
@@ -305,26 +358,23 @@ Translator::translateFromYang(optional<DataNode> data_node) {
     NodeType const node_type(data_node->schema().nodeType());
     if (node_type == NodeType::Leaf || node_type == NodeType::Leaflist) {
         DataNodeTerm const& leaf(data_node->asTerm());
-        Value const& v(leaf.value());
-        if (holds_alternative<string>(v) ||
-            holds_alternative<Enum>(v) ||
-            holds_alternative<IdentityRef>(v)) {
-            // Should be a string. Call create(). Should be slightly faster
-            // than wrapping value in double quotes and calling fromJSON().
-            return Element::create(string(leaf.valueStr()));
-        } else if (holds_alternative<Binary>(v)) {
-            return Element::create(decode64(string(leaf.valueStr())));
+        LeafBaseType type;
+        if (node_type == NodeType::Leaf) {
+            type = leaf.schema().asLeaf().valueType().base();
         } else {
-            // This can be various types so defer to fromJSON().
-            return Element::fromJSON(string(leaf.valueStr()));
+            type = leaf.schema().asLeafList().valueType().base();
         }
+
+        static Deserializer deserializer(initializeDeserializer());
+        return deserializer.at(type)(string(leaf.valueStr()));
     }
     return ElementPtr();
 }
 
 optional<string>
 Translator::translateToYang(ConstElementPtr const& element,
-                            LeafBaseType const type) {
+                           libyang::LeafBaseType const type) {
+    string string_representation;
     if (!element) {
         // A null ElementPtr is how we signal that this item requires no value.
         // Useful when setting YANG lists which is the only way to set their
@@ -336,28 +386,16 @@ Translator::translateToYang(ConstElementPtr const& element,
     } else if (element->getType() == Element::list) {
         /// @todo: implement
         isc_throw(NotImplemented, "Translator::value(): list element");
-    }
-    if (type == LeafBaseType::Enum ||
-        type == LeafBaseType::String ||
-        type == LeafBaseType::Union ||
-        type == LeafBaseType::IdentityRef) {
-        // These types are usually strings in ElementPtr, but are accepted
-        // without the double quotes in sysrepo, so get the stringValue().
-        if (element->getType() == Element::string) {
-            return element->stringValue();
-        } else {
-            // Except for some nodes which are maps e.g. user-context. And also Unions and
-            // IdentityRefs can very well have underlying types that are different than strings.
-            // Use the generic str() for those.
-            return element->str();
-        }
-    } else if (type == LeafBaseType::Binary) {
-        return encode64(element->stringValue());
+    } else if (element->getType() == Element::string) {
+        // If it's a string, get the variant wthout quotes.
+        string_representation = element->stringValue();
     } else {
-        // The rest of YANG values can be expressed using the
-        // general string representation of ElementPtr.
-        return element->str();
+        // If it's not a string, also get the variant without quotes, but it's a different method.
+        string_representation = element->str();
     }
+
+    static Serializer serializer(initializeSerializer());
+    return serializer.at(type)(string_representation);
 }
 
 }  // namespace yang

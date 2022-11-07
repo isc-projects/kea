@@ -233,7 +233,7 @@ The installation should look similar to the following:
     $ ./src/share/yang/modules/utils/reinstall.sh
     [INF] Connection 2 created.
     [INF] Module "keatest-module" was installed.
-    [INF] File "keatest-module@2018-11-20.yang" was installed.
+    [INF] File "keatest-module@2022-11-30.yang" was installed.
     [INF] No datastore changes to apply.
     [INF] Connection 4 created.
     [ERR] Module "ietf-interfaces@2018-02-20" already installed.
@@ -314,7 +314,7 @@ The list of currently installed YANG modules should be similar to this:
     kea-dhcp4-server           | 2022-11-30 | I     | user:user | 600           |            |
     kea-dhcp6-server           | 2022-11-30 | I     | user:user | 600           |            |
     kea-types                  | 2019-08-12 | I     | user:user | 600           |            |
-    keatest-module             | 2018-11-20 | I     | user:user | 600           |            |
+    keatest-module             | 2022-11-30 | I     | user:user | 600           |            |
     sysrepo-monitoring         | 2022-04-08 | I     | user:user | 600           |            |
     sysrepo-plugind            | 2022-03-10 | I     | user:user | 644           |            |
     yang                       | 2022-06-16 | I     | user:user | 444           |            |

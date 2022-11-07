@@ -16,7 +16,7 @@ namespace yang {
 // Table of module name / revision.
 static const std::unordered_map<std::string, std::string> YANG_REVISIONS = {
 #ifdef KEATEST_MODULE
-    { "keatest-module", "2018-11-20" },
+    { "keatest-module", "2022-11-30" },
 #endif  // KEATEST_MODULE
     { "ietf-dhcpv6-types", "2018-09-04" },
     { "ietf-dhcpv6-options", "2018-09-04" },

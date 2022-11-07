@@ -17,7 +17,7 @@ yangmodules_list += kea-dhcp-types@2022-11-30.yang
 yangmodules_list += kea-dhcp4-server@2022-11-30.yang
 yangmodules_list += kea-dhcp6-server@2022-11-30.yang
 yangmodules_list += kea-types@2019-08-12.yang
-yangmodules_list += keatest-module@2018-11-20.yang
+yangmodules_list += keatest-module@2022-11-30.yang
 
 EXTRA_DIST = hashes ${yangmodules_list}
 

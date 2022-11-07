@@ -493,7 +493,7 @@ TEST_F(NetconfAgentLogTest, logChanges) {
     addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
               "created: /kea-dhcp4-server:config/subnet4[id='2']/id = 2");
     addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: created: "
-              "/kea-dhcp4-server:config/subnet4[id='2']/subnet = \"10.0.2.0/24\"");
+              "/kea-dhcp4-server:config/subnet4[id='2']/subnet = 10.0.2.0/24");
     addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: created: "
               "/kea-dhcp4-server:config/subnet4[id='2']/relay (container)");
 
@@ -557,7 +557,7 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
               "deleted: /kea-dhcp4-server:config/subnet4[id='1']/id = 1");
     addString(
         "NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: deleted: "
-        "/kea-dhcp4-server:config/subnet4[id='1']/subnet = \"10.0.1.0/24\"");
+        "/kea-dhcp4-server:config/subnet4[id='1']/subnet = 10.0.1.0/24");
     addString(
         "NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: deleted: "
         "/kea-dhcp4-server:config/subnet4[id='1']/relay (container)");
