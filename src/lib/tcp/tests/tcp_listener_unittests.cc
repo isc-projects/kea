@@ -37,13 +37,13 @@ namespace ph = std::placeholders;
 
 namespace {
 
-/// @brief IP address to which HTTP service is bound.
+/// @brief IP address to which service is bound.
 const std::string SERVER_ADDRESS = "127.0.0.1";
 
-/// @brief IPv6 address to whch HTTP service is bound.
+/// @brief IPv6 address to whch service is bound.
 const std::string IPV6_SERVER_ADDRESS = "::1";
 
-/// @brief Port number to which HTTP service is bound.
+/// @brief Port number to which service is bound.
 const unsigned short SERVER_PORT = 18123;
 
 /// @brief Request Timeout used in most of the tests (ms).
@@ -87,7 +87,6 @@ public:
 
         req->unpack();
         auto request_str = req->getRequest();
-        std::cout << "request_str: [" << request_str << "]" << std::endl;
         std::ostringstream os;
         if (request_str == "I am done") {
             os << "good bye";
@@ -95,7 +94,6 @@ public:
             os << "echo " << request_str;
         }
 
-        std::cout << "send client this: [" << os.str() << "]" << std::endl;
         TcpStreamResponsePtr resp(new TcpStreamResponse());
         resp->setResponseData(os.str());
         resp->pack();
@@ -159,7 +157,7 @@ public:
 
     /// @brief Destructor.
     ///
-    /// Removes active HTTP clients.
+    /// Removes active clients.
     virtual ~TcpListenerTest() {
         for (auto client = clients_.begin(); client != clients_.end();
              ++client) {
@@ -185,12 +183,19 @@ public:
     /// This method creates TcpTestClient instance and retains it in the clients_
     /// list.
     ///
-    /// @param request String containing the HTTP request to be sent.
+    /// @param request String containing the request to be sent.
     void startRequest(const std::string& request) {
         TcpTestClientPtr client(new TcpTestClient(io_service_,
                                     std::bind(&TcpListenerTest::clientDone, this)));
         clients_.push_back(client);
         clients_.back()->startRequest(request);
+    }
+
+    void startRequests(const std::list<std::string>& requests) {
+        TcpTestClientPtr client(new TcpTestClient(io_service_,
+                                    std::bind(&TcpListenerTest::clientDone, this)));
+        clients_.push_back(client);
+        clients_.back()->startRequests(requests);
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -354,5 +359,32 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
     io_service_.poll();
 }
 
+TEST_F(TcpListenerTest, multipleRequetsPerClients) {
+    std::list<std::string>requests{ "one", "two", "three", "I am done"};
+
+    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
+    ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
+    size_t num_clients = 5;
+    for ( auto i = 0; i < num_clients; ++i ) {
+        ASSERT_NO_THROW(startRequests(requests));
+    }
+
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(num_clients, clients_.size());
+
+    std::list<std::string>expected_responses{ "echo one", "echo two", "echo three", "good bye"};
+    for (auto client = clients_.begin(); client != clients_.end(); ++client) {
+        EXPECT_TRUE((*client)->receiveDone());
+        EXPECT_FALSE((*client)->expectedEof());
+        EXPECT_EQ(expected_responses, (*client)->getResponses());
+    }
+
+    listener.stop();
+    io_service_.poll();
+}
 
 }

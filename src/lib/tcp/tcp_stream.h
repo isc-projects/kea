@@ -17,6 +17,11 @@
 namespace isc {
 namespace tcp {
 
+/// @brief Implement a simple length:data input stream message.
+///
+/// This class can be used to receive a single message from a TCP
+/// stream where the message consists of a 16-bit unsigned length (in
+/// network order), followed by that number of bytes of data.
 class TcpStreamRequest : public TcpRequest {
 public:
     /// @brief Constructor.
@@ -40,18 +45,21 @@ public:
 
     /// @brief Returns request contents formatted for log output
     ///
-    /// @param limit Maximum length of the buffer to be output. If the limit 
+    /// @param limit Maximum length of the buffer to be output. If the limit
     /// is 0, the length of the output is unlimited.
     /// @return Textual representation of the input buffer.
     virtual std::string logFormatRequest(const size_t limit = 0) const;
 
+    /// @brief Unpacks the wire data into a string request.
     virtual void unpack();
 
+    /// @brief Fetches the unpacked string request.
     std::string getRequest() const {
         return(request_);
     };
 
 protected:
+    /// @brief Unpacked request string.
     std::string request_;
 
 private:
@@ -59,8 +67,14 @@ private:
     size_t expected_size_;
 };
 
+/// @brief Pointer to a TcpStreamRequest.
 typedef boost::shared_ptr<TcpStreamRequest> TcpStreamRequestPtr;
 
+/// @brief Implements a simple length:data output stream message.
+///
+/// This class can be used to send a single message on a TCP
+/// stream where the message consists of a 16-bit unsigned length (in
+/// network order), followed by that number of bytes of data.
 class TcpStreamResponse : public TcpResponse {
 public:
     /// @brief Constructor.
@@ -83,9 +97,11 @@ public:
     virtual void pack();
 
 private:
+    /// @brief Unpacked response data to send.
     std::string response_;
 };
 
+/// @brief Pointer to a TcpStreamResponse.
 typedef boost::shared_ptr<TcpStreamResponse> TcpStreamResponsePtr;
 
 } // end of namespace isc::tcp

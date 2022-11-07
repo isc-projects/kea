@@ -25,7 +25,7 @@ namespace isc {
 namespace tcp {
 
 /// @todo Take this out, it's just for dev coding
-#if 1
+#if 0
 #define HERE(a) std::cout << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << a << std::endl << std::flush;
 #else
 #define HERE(a)

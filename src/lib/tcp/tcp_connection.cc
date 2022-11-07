@@ -457,7 +457,6 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
 
 void
 TcpConnection::setupIdleTimer() {
-    std::cout << "idle timeout: " << idle_timeout_ << std::endl;
     idle_timer_.setup(std::bind(&TcpConnection::idleTimeoutCallback, this),
                       idle_timeout_, IntervalTimer::ONE_SHOT);
 }

@@ -48,7 +48,7 @@ public:
 
     /// @brief Connect to the listener.
     ///
-    /// @param request HTTP request in the textual format.
+    /// @param request request string to send.
     void connect() {
         tcp::endpoint endpoint(address::from_string(server_address_), server_port_);
         socket_.async_connect(endpoint,
@@ -73,9 +73,9 @@ public:
         });
     }
 
-    /// @brief Send HTTP request specified in textual format.
+    /// @brief Send request specified in textual format.
     ///
-    /// @param request HTTP request in the textual format.
+    /// @param request request in the textual format.
     void startRequest(const std::string& request) {
         tcp::endpoint endpoint(address::from_string(server_address_), server_port_);
         socket_.async_connect(endpoint,
@@ -106,6 +106,47 @@ public:
         });
     }
 
+    /// @brief Send request specified in textual format.
+    ///
+    /// @param request request in the textual format.
+    void startRequests(const std::list<std::string>& requests) {
+        requests_to_send_ = requests;
+
+        tcp::endpoint endpoint(address::from_string(server_address_), server_port_);
+        socket_.async_connect(endpoint,
+        [this](const boost::system::error_code& ec) {
+            receive_done_ = false;
+            expected_eof_ = false;
+            if (ec) {
+                // One would expect that async_connect wouldn't return
+                // EINPROGRESS error code, but simply wait for the connection
+                // to get established before the handler is invoked. It turns out,
+                // however, that on some OSes the connect handler may receive this
+                // error code which doesn't necessarily indicate a problem.
+                // Making an attempt to write and read from this socket will
+                // typically succeed. So, we ignore this error.
+                if (ec.value() != boost::asio::error::in_progress) {
+                    ADD_FAILURE() << "error occurred while connecting: "
+                                  << ec.message();
+                    done_callback_();
+                    return;
+                }
+            }
+
+            sendNextRequest();
+        });
+    }
+
+    /// @brief Sends the next request from the list of requests to send.
+    void sendNextRequest() {
+        // If there are any requests left to send, send them.
+        if (!requests_to_send_.empty()) {
+            std::string request = requests_to_send_.front();
+            requests_to_send_.pop_front();
+            sendRequest(request);
+        }
+    }
+
     /// @brief Send a stream request.
     ///
     /// @param request request data to send textual format.
@@ -126,6 +167,7 @@ public:
 
     /// @brief Wait for a server to close the connection.
     void waitForEof() {
+        stream_response_.reset(new TcpStreamRequest());
         receivePartialResponse(true);
     }
 
@@ -174,7 +216,6 @@ public:
                 sendPartialRequest(wire_request);
             } else {
                 // Request has been sent. Start receiving response.
-                response_.clear();
                 receivePartialResponse();
             }
        });
@@ -185,11 +226,14 @@ public:
         socket_.async_read_some(boost::asio::buffer(buf_.data(), buf_.size()),
                                 [this, expect_eof](const boost::system::error_code& ec,
                                        std::size_t bytes_transferred) {
+            if (!stream_response_) {
+                stream_response_.reset(new TcpStreamRequest());
+            }
+
             if (ec) {
                 // IO service stopped so simply return.
                 if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
-
                 } else if ((ec.value() == boost::asio::error::try_again) ||
                            (ec.value() == boost::asio::error::would_block)) {
                     // If we should try again, make sure that there is no garbage
@@ -206,20 +250,37 @@ public:
                 }
             }
 
+            // Post received data to the current response.
             if (bytes_transferred > 0) {
-                response_.insert(response_.end(), buf_.data(),
-                                 buf_.data() + bytes_transferred);
+                stream_response_->postBuffer(buf_.data(), bytes_transferred);
             }
 
-            // Two consecutive new lines end the part of the response we're
-            // expecting.
-            if (response_.find("good bye", 0) != std::string::npos) {
-                receive_done_ = true;
-                done_callback_();
-            } else {
+            if (stream_response_->needData()) {
+                // Response is incomplete, keep reading.
                 receivePartialResponse();
+            } else {
+                // Response is complete, process it.
+                responseReceived();
             }
         });
+    }
+
+    /// @brief Process a completed response received from the server.
+    void responseReceived() {
+        /// Unpack wire data into a string.
+        ASSERT_NO_THROW(stream_response_->unpack());
+        std::string response = stream_response_->getRequest();
+        responses_received_.push_back(response);
+
+        // Quit if server tells us "good bye".
+        if (response.find("good bye", 0) != std::string::npos) {
+            receive_done_ = true;
+            done_callback_();
+        }
+
+        // Clear out for the next one.
+        stream_response_.reset();
+        sendNextRequest();
     }
 
     /// @brief Checks if the TCP connection is still open.
@@ -287,13 +348,6 @@ public:
         socket_.close();
     }
 
-    /// @brief Returns the HTTP response string.
-    ///
-    /// @return string containing the response.
-    std::string getResponse() const {
-        return (response_);
-    }
-
     /// @brief Returns true if the receive completed without error.
     ///
     /// @return True if the receive completed successfully, false
@@ -307,6 +361,13 @@ public:
     /// @return True if the receive ended with EOF, false otherwise
     bool expectedEof() {
         return (expected_eof_);
+    }
+
+    /// @brief Returns the list of received responses.
+    ///
+    /// @return list of string responses.
+    const std::list<std::string>& getResponses() {
+        return (responses_received_);
     }
 
 private:
@@ -333,7 +394,6 @@ private:
     /// @brief IP port of the server.
     uint16_t server_port_;
 
-
     /// @brief Set to true when the receive has completed successfully.
     bool receive_done_;
 
@@ -342,6 +402,14 @@ private:
     /// expected it to do.
     bool expected_eof_;
 
+    /// @brief Pointer to the server response currently being received.
+    TcpStreamRequestPtr stream_response_;
+
+    /// @brief List of string requests to send.
+    std::list<std::string> requests_to_send_;
+
+    /// @brief List of string responses received.
+    std::list<std::string> responses_received_;
 };
 
 /// @brief Pointer to the TcpTestClient.
