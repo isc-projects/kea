@@ -24,8 +24,7 @@ public:
 };
 
 /// @brief Implements a class that listens for, accepts, and manages
-/// TCP connections.  It uses a multi-threaded connection pool, such
-/// that each connection does its client's work on it's own thread.
+/// TCP connections.
 class TcpListener {
 public:
     /// @brief Idle connection timeout.
