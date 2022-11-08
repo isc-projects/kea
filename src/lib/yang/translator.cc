@@ -293,7 +293,7 @@ Translator::translateToYang(ConstElementPtr const& element,
     } else if (element->getType() == Element::list) {
         isc_throw(NotImplemented, "Translator::value(): list element");
     } else if (element->getType() == Element::string) {
-        // If it's a string, get the variant wthout quotes.
+        // If it's a string, get the variant without quotes.
         string_representation = element->stringValue();
     } else {
         // If it's not a string, also get the variant without quotes, but it's a different method.

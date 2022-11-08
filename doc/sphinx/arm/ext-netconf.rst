@@ -1114,7 +1114,7 @@ are done at the same configuration state and no change happens between exporting
 .. note::
 
     Sysrepo v0 does not support import/export of all YANG modules. This capability was added in
-    Sysrepo v1. Users that are migrating from Sysreo v0 will need to do per-module backups. This has
+    Sysrepo v1. Users that are migrating from Sysrepo v0 will need to do per-module backups. This has
     the added benefit of isolating potential failures and preventing them from affecting all
     modules. The command is the same except it has the module name added to it at the end.
 

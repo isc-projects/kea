@@ -303,7 +303,7 @@ public:
 
     /// @brief Retrieves a child YANG data node identified by one name from the
     /// given parent YANG container node and stores it in the specified storage
-    /// uner a different name.
+    /// under a different name.
     ///
     /// Unlike @ref checkAndGetLeaf, the leaf is expected to be present.
     ///

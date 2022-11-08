@@ -84,7 +84,7 @@ public:
         ///
         /// @param value the value obtained from the union node with ->asTerm().value()
         ///
-        /// @return the underylying type
+        /// @return the underlying type
         static libyang::LeafBaseType getUnionType(libyang::Value const& value);
     };  // YangReprItem
 
