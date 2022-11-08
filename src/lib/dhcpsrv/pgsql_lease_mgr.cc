@@ -2571,22 +2571,14 @@ PgSqlLeaseMgr::deleteExtendedInfo6(const IOAddress& /* addr */) {
 
 void
 PgSqlLeaseMgr::addRelayId6(const IOAddress& /* lease_addr */,
-                           const IOAddress& /* link_addr */,
                            const vector<uint8_t>& /* relay_id */) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::addRelayId6 not implemented");
 }
 
 void
 PgSqlLeaseMgr::addRemoteId6(const IOAddress& /* lease_addr */,
-                            const IOAddress& /* link_addr */,
                             const vector<uint8_t>& /* remote_id */) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::addRemoteId6 not implemented");
-}
-
-void
-PgSqlLeaseMgr::addLinkAddr6(const IOAddress& /* lease_addr */,
-                            const IOAddress& /* link_addr */) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::addLinkAddr6 not implemented");
 }
 
 Lease4Collection
@@ -2610,6 +2602,7 @@ PgSqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
 Lease6Collection
 PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
                                    const IOAddress& /* link_addr */,
+                                   uint8_t /* link_len */,
                                    const IOAddress& /* lower_bound_address */,
                                    const LeasePageSize& /* page_size */) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByRelayId not implemented");
@@ -2618,6 +2611,7 @@ PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
 Lease6Collection
 PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
                                     const IOAddress& /* link_addr */,
+                                    uint8_t /* link_len */,
                                     const IOAddress& /* lower_bound_address */,
                                     const LeasePageSize& /* page_size*/) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByRemoteId not implemented");
@@ -2625,6 +2619,7 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
+                                uint8_t /* link_len */,
                                 const IOAddress& /* lower_bound_address */,
                                 const LeasePageSize& /* page_size */) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByLink not implemented");

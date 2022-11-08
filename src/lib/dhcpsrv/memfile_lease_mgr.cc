@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/addr_utilities.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
@@ -2510,13 +2511,18 @@ Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer&,
 Lease6Collection
 Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
                                       const IOAddress& link_addr,
+                                      uint8_t link_len,
                                       const IOAddress& lower_bound_address,
                                       const LeasePageSize& page_size) {
-    // Expecting IPv6 addresses.
+    // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
                   "retrieving leases from the lease database, got "
                   << link_addr);
+    }
+    if (link_len > 128) {
+        isc_throw(OutOfRange, "invalid IPv6 prefix length "
+                  << static_cast<unsigned>(link_len));
     }
     if (!lower_bound_address.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -2529,17 +2535,20 @@ Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
         .arg(relay_id.toText())
-        .arg(link_addr.toText());
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         return (getLeases6ByRelayIdInternal(relay_id,
                                             link_addr,
+                                            link_len,
                                             lower_bound_address,
                                             page_size));
     } else {
         return (getLeases6ByRelayIdInternal(relay_id,
                                             link_addr,
+                                            link_len,
                                             lower_bound_address,
                                             page_size));
     }
@@ -2548,12 +2557,13 @@ Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
 Lease6Collection
 Memfile_LeaseMgr::getLeases6ByRelayIdInternal(const DUID& relay_id,
                                               const IOAddress& link_addr,
+                                              uint8_t link_len,
                                               const IOAddress& lower_bound_address,
                                               const LeasePageSize& page_size) {
     const std::vector<uint8_t>& relay_id_data = relay_id.getDuid();
     Lease6Collection collection;
-    if (link_addr.isV6Zero()) {
-        const RelayIdIndex& idx = relay_id6_.get<RelayIdIndexTag>();
+    const RelayIdIndex& idx = relay_id6_.get<RelayIdIndexTag>();
+    if (!link_len) {
         RelayIdIndex::const_iterator lb =
             idx.lower_bound(boost::make_tuple(relay_id_data,
                                               lower_bound_address));
@@ -2579,30 +2589,24 @@ Memfile_LeaseMgr::getLeases6ByRelayIdInternal(const DUID& relay_id,
             }
         }
     } else {
-        const RelayIdLinkAddressIndex& idx =
-            relay_id6_.get<RelayIdLinkAddressIndexTag>();
-        RelayIdLinkAddressIndex::const_iterator lb =
-            idx.lower_bound(boost::make_tuple(relay_id_data,
-                                              link_addr,
-                                              lower_bound_address));
+        const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
+        const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
+        const IOAddress& start_addr =
+            (lower_bound_address < first_addr ? first_addr : lower_bound_address);
+        RelayIdIndex::const_iterator lb =
+            idx.lower_bound(boost::make_tuple(relay_id_data, start_addr));
+        RelayIdIndex::const_iterator ub =
+            idx.upper_bound(boost::make_tuple(relay_id_data, last_addr));
 
         // Return all leases being within the page size.
-        IOAddress last_addr = lower_bound_address;
-        for (; lb != idx.end(); ++lb) {
-            if ((*lb)->lease_addr_ == last_addr) {
+        IOAddress last_seen_addr = lower_bound_address;
+        for (auto it = lb; it != ub; ++it) {
+            if ((*it)->lease_addr_ == last_seen_addr) {
                 // Already seen: skip it.
                 continue;
             }
-            if ((*lb)->link_addr_ != link_addr) {
-                // Gone after the link address.
-                break;
-            }
-            if ((*lb)->id_ != relay_id_data) {
-                // Gone after the relay id index.
-                break;
-            }
-            last_addr = (*lb)->lease_addr_;
-            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_addr);
+            last_seen_addr = (*it)->lease_addr_;
+            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_seen_addr);
             if (lease) {
                 collection.push_back(lease);
                 if (collection.size() >= page_size.page_size_) {
@@ -2617,13 +2621,18 @@ Memfile_LeaseMgr::getLeases6ByRelayIdInternal(const DUID& relay_id,
 Lease6Collection
 Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
                                        const IOAddress& link_addr,
+                                       uint8_t link_len,
                                        const IOAddress& lower_bound_address,
                                        const LeasePageSize& page_size) {
-    // Expecting IPv6 addresses.
+    // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
                   "retrieving leases from the lease database, got "
                   << link_addr);
+    }
+    if (link_len > 128) {
+        isc_throw(OutOfRange, "invalid IPv6 prefix length "
+                  << static_cast<unsigned>(link_len));
     }
     if (!lower_bound_address.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -2636,17 +2645,20 @@ Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
         .arg(idtoText(remote_id))
-        .arg(link_addr.toText());
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         return (getLeases6ByRemoteIdInternal(remote_id,
                                              link_addr,
+                                             link_len,
                                              lower_bound_address,
                                              page_size));
     } else {
         return (getLeases6ByRemoteIdInternal(remote_id,
                                              link_addr,
+                                             link_len,
                                              lower_bound_address,
                                              page_size));
     }
@@ -2655,14 +2667,14 @@ Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
 Lease6Collection
 Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
                                                const IOAddress& link_addr,
+                                               uint8_t link_len,
                                                const IOAddress& lower_bound_address,
                                                const LeasePageSize& page_size) {
     Lease6Collection collection;
     std::set<IOAddress> sorted;
-    if (link_addr.isV6Zero()) {
-        const RemoteIdIndex& idx = remote_id6_.get<RemoteIdIndexTag>();
-        RemoteIdIndexRange er = idx.equal_range(remote_id);
-
+    const RemoteIdIndex& idx = remote_id6_.get<RemoteIdIndexTag>();
+    RemoteIdIndexRange er = idx.equal_range(remote_id);
+    if (!link_len) {
         // Store all addresses greater than lower_bound_address.
         for (auto it = er.first; it != er.second; ++it) {
             const IOAddress& addr = (*it)->lease_addr_;
@@ -2683,15 +2695,16 @@ Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
             }
         }
     } else {
-        const RemoteIdLinkAddressIndex& idx =
-            remote_id6_.get<RemoteIdLinkAddressIndexTag>();
-        RemoteIdLinkAddressRange er =
-            idx.equal_range(boost::make_tuple(remote_id, link_addr));
+        const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
+        const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
 
-        // Store all addresses greater than lower_bound_address.
+        // Store all addresses greater than lower_bound_address in the link.
         for (auto it = er.first; it != er.second; ++it) {
             const IOAddress& addr = (*it)->lease_addr_;
             if (addr <= lower_bound_address) {
+                continue;
+            }
+            if ((addr < first_addr) || (last_addr < addr)) {
                 continue;
             }
             static_cast<void>(sorted.insert(addr));
@@ -2713,13 +2726,18 @@ Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
 
 Lease6Collection
 Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
+                                   uint8_t link_len,
                                    const IOAddress& lower_bound_address,
                                    const LeasePageSize& page_size) {
-    // Expecting IPv6 addresses.
+    // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
                   "retrieving leases from the lease database, got "
                   << link_addr);
+    }
+    if ((link_len == 0) || (link_len > 128)) {
+        isc_throw(OutOfRange, "invalid IPv6 prefix length "
+                  << static_cast<unsigned>(link_len));
     }
     if (!lower_bound_address.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -2731,15 +2749,18 @@ Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
               DHCPSRV_MEMFILE_GET_LINKADDR6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(link_addr.toText());
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         return (getLeases6ByLinkInternal(link_addr,
+                                         link_len,
                                          lower_bound_address,
                                          page_size));
     } else {
         return (getLeases6ByLinkInternal(link_addr,
+                                         link_len,
                                          lower_bound_address,
                                          page_size));
     }
@@ -2747,26 +2768,27 @@ Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
 
 Lease6Collection
 Memfile_LeaseMgr::getLeases6ByLinkInternal(const IOAddress& link_addr,
+                                           uint8_t link_len,
                                            const IOAddress& lower_bound_address,
                                            const LeasePageSize& page_size) {
+    const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
+    const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
+    const IOAddress& start_addr =
+        (lower_bound_address < first_addr ? first_addr : lower_bound_address);
     Lease6Collection collection;
-    const LinkAddressIndex& idx = link_addr6_.get<LinkAddressIndexTag>();
-    LinkAddressIndex::const_iterator lb =
-        idx.lower_bound(boost::make_tuple(link_addr, lower_bound_address));
+    const Lease6StorageAddressIndex& idx = storage6_.get<AddressIndexTag>();
+    Lease6StorageAddressIndex::const_iterator lb = idx.lower_bound(start_addr);
+    Lease6StorageAddressIndex::const_iterator eb = idx.upper_bound(last_addr);
 
     // Return all leases being within the page size.
-    IOAddress last_addr = lower_bound_address;
-    for (; lb != idx.end(); ++lb) {
-        if ((*lb)->lease_addr_ == last_addr) {
+    IOAddress last_seen_addr = lower_bound_address;
+    for (auto it = lb; it != eb; ++it) {
+        if ((*it)->addr_ == last_seen_addr) {
             // Already seen: skip it.
             continue;
         }
-        if ((*lb)->link_addr_ != link_addr) {
-            // Gone after the link address.
-            break;
-        }
-        last_addr = (*lb)->lease_addr_;
-        Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_addr);
+        last_seen_addr = (*it)->addr_;
+        Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_seen_addr);
         if (lease) {
             collection.push_back(lease);
             if (collection.size() >= page_size.page_size_) {
@@ -2785,35 +2807,22 @@ Memfile_LeaseMgr::deleteExtendedInfo6(const IOAddress& addr) {
     LeaseAddressRemoteIdIndex& remote_id_idx =
         remote_id6_.get<LeaseAddressIndexTag>();
     static_cast<void>(remote_id_idx.erase(addr));
-    LeaseAddressLinkAddressIndex& link_addr_idx =
-        link_addr6_.get<LeaseAddressIndexTag>();
-    static_cast<void>(link_addr_idx.erase(addr));
 }
 
 void
 Memfile_LeaseMgr::addRelayId6(const IOAddress& lease_addr,
-                              const IOAddress& link_addr,
                               const std::vector<uint8_t>& relay_id) {
     Lease6ExtendedInfoPtr ex_info;
-    ex_info.reset(new Lease6ExtendedInfo(lease_addr, link_addr, relay_id));
+    ex_info.reset(new Lease6ExtendedInfo(lease_addr, relay_id));
     relay_id6_.insert(ex_info);
 }
 
 void
 Memfile_LeaseMgr::addRemoteId6(const IOAddress& lease_addr,
-                               const IOAddress& link_addr,
                                const std::vector<uint8_t>& remote_id) {
     Lease6ExtendedInfoPtr ex_info;
-    ex_info.reset(new Lease6ExtendedInfo(lease_addr, link_addr, remote_id));
+    ex_info.reset(new Lease6ExtendedInfo(lease_addr, remote_id));
     remote_id6_.insert(ex_info);
-}
-
-void
-Memfile_LeaseMgr::addLinkAddr6(const IOAddress& lease_addr,
-                               const IOAddress& link_addr) {
-    Lease6SimpleExtendedInfoPtr ex_info;
-    ex_info.reset(new Lease6SimpleExtendedInfo(lease_addr, link_addr));
-    link_addr6_.insert(ex_info);
 }
 
 void

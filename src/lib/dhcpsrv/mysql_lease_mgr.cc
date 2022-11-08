@@ -3377,22 +3377,14 @@ MySqlLeaseMgr::deleteExtendedInfo6(const IOAddress& /* addr */) {
 
 void
 MySqlLeaseMgr::addRelayId6(const IOAddress& /* lease_addr */,
-                           const IOAddress& /* link_addr */,
                            const vector<uint8_t>& /* relay_id */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::addRelayId6 not implemented");
 }
 
 void
 MySqlLeaseMgr::addRemoteId6(const IOAddress& /* lease_addr */,
-                            const IOAddress& /* link_addr */,
                             const vector<uint8_t>& /* remote_id */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::addRemoteId6 not implemented");
-}
-
-void
-MySqlLeaseMgr::addLinkAddr6(const IOAddress& /* lease_addr */,
-                            const IOAddress& /* link_addr */) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::addLinkAddr6 not implemented");
 }
 
 Lease4Collection
@@ -3416,6 +3408,7 @@ MySqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
 Lease6Collection
 MySqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
                                    const IOAddress& /* link_addr */,
+                                   uint8_t /* link_len */,
                                    const IOAddress& /* lower_bound_address */,
                                    const LeasePageSize& /* page_size */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::getLeases6ByRelayId not implemented");
@@ -3424,6 +3417,7 @@ MySqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
 Lease6Collection
 MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
                                     const IOAddress& /* link_addr */,
+                                    uint8_t /* link_len */,
                                     const IOAddress& /* lower_bound_address */,
                                     const LeasePageSize& /* page_size*/) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::getLeases6ByRemoteId not implemented");
@@ -3431,6 +3425,7 @@ MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
 
 Lease6Collection
 MySqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
+                                uint8_t /* link_len */,
                                 const IOAddress& /* lower_bound_address */,
                                 const LeasePageSize& /* page_size */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::getLeases6ByLink not implemented");

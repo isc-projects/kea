@@ -292,19 +292,14 @@ public:
     /// @brief Constructor.
     ///
     /// @param lease_addr Lease address.
-    /// @param link_addr Link address.
     /// @param id Identifier.
     Lease6ExtendedInfo(const isc::asiolink::IOAddress& lease_addr,
-                       const isc::asiolink::IOAddress& link_addr,
                        const std::vector<uint8_t>& id)
-        : lease_addr_(lease_addr), link_addr_(link_addr), id_(id) {
+        : lease_addr_(lease_addr), id_(id) {
     }
 
     /// @brief Lease address.
     isc::asiolink::IOAddress lease_addr_;
-
-    /// @brief Link address.
-    isc::asiolink::IOAddress link_addr_;
 
     /// @brief Remote or relay opaque identifier.
     std::vector<uint8_t> id_;
@@ -316,14 +311,8 @@ typedef boost::shared_ptr<Lease6ExtendedInfo> Lease6ExtendedInfoPtr;
 /// @brief Tag for indexes by lease address.
 struct LeaseAddressIndexTag { };
 
-/// @brief Tag for indexes by relay id and link address.
-struct RelayIdLinkAddressIndexTag { };
-
 /// @brief Tag for index using relay id.
 struct RelayIdIndexTag { };
-
-/// @brief Tag for indexes by remote id and link address.
-struct RemoteIdLinkAddressIndexTag { };
 
 /// @brief Tag for index using remote id.
 struct RemoteIdIndexTag { };
@@ -331,8 +320,6 @@ struct RemoteIdIndexTag { };
 /// @brief A multi index container holding lease6 extended info for by relay id.
 ///
 /// The lease6 extended info may be accessed using different indexes:
-/// - using a composite index: relay id and link address, and lease address
-///   for getting lower bounds.
 /// - using relay id, and lease address for getting lower bounds.
 /// - using lease address for deletes.
 ///
@@ -346,24 +333,7 @@ typedef boost::multi_index_container<
     // It holds pointers to lease6 extended info.
     Lease6ExtendedInfoPtr,
     boost::multi_index::indexed_by<
-        // First index is by relay id, link and lease addresses.
-        boost::multi_index::ordered_non_unique<
-            boost::multi_index::tag<RelayIdLinkAddressIndexTag>,
-            boost::multi_index::composite_key<
-                Lease6ExtendedInfo,
-                boost::multi_index::member<Lease6ExtendedInfo,
-                                           std::vector<uint8_t>,
-                                           &Lease6ExtendedInfo::id_>,
-                boost::multi_index::member<Lease6ExtendedInfo,
-                                           isc::asiolink::IOAddress,
-                                           &Lease6ExtendedInfo::link_addr_>,
-                boost::multi_index::member<Lease6ExtendedInfo,
-                                           isc::asiolink::IOAddress,
-                                           &Lease6ExtendedInfo::lease_addr_>
-            >
-        >,
-
-        // Second index is by relay id and lease address.
+        // First index is by relay id and lease address.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<RelayIdIndexTag>,
             boost::multi_index::composite_key<
@@ -390,7 +360,6 @@ typedef boost::multi_index_container<
 /// @brief A multi index container holding lease6 extended info for by remote id.
 ///
 /// The lease6 extended info may be accessed using different indexes:
-/// - using a composite index: remote id and link address.
 /// - using remote id.
 /// - using lease address for deletes.
 ///
@@ -405,21 +374,7 @@ typedef boost::multi_index_container<
     // It holds pointers to lease6 extended info.
     Lease6ExtendedInfoPtr,
     boost::multi_index::indexed_by<
-        // First index is by remote id and link address.
-        boost::multi_index::hashed_non_unique<
-            boost::multi_index::tag<RemoteIdLinkAddressIndexTag>,
-            boost::multi_index::composite_key<
-                Lease6ExtendedInfo,
-                boost::multi_index::member<Lease6ExtendedInfo,
-                                           std::vector<uint8_t>,
-                                           &Lease6ExtendedInfo::id_>,
-                boost::multi_index::member<Lease6ExtendedInfo,
-                                           isc::asiolink::IOAddress,
-                                           &Lease6ExtendedInfo::link_addr_>
-            >
-        >,
-
-        // Second index is by remote id.
+        // First index is by remote id.
         boost::multi_index::hashed_non_unique<
             boost::multi_index::tag<RemoteIdIndexTag>,
             boost::multi_index::member<Lease6ExtendedInfo,
@@ -437,10 +392,6 @@ typedef boost::multi_index_container<
     >
 > Lease6ExtendedInfoRemoteIdTable;
 
-/// @brief Lease6 extended information by relay id and link address index.
-typedef Lease6ExtendedInfoRelayIdTable::index<RelayIdLinkAddressIndexTag>::type
-    RelayIdLinkAddressIndex;
-
 /// @brief Lease6 extended information by relay id index.
 typedef Lease6ExtendedInfoRelayIdTable::index<RelayIdIndexTag>::type
     RelayIdIndex;
@@ -449,18 +400,9 @@ typedef Lease6ExtendedInfoRelayIdTable::index<RelayIdIndexTag>::type
 typedef Lease6ExtendedInfoRelayIdTable::index<LeaseAddressIndexTag>::type
     LeaseAddressRelayIdIndex;
 
-/// @brief Lease6 extended information by remote id and link address index.
-typedef Lease6ExtendedInfoRemoteIdTable::index<RemoteIdLinkAddressIndexTag>::type
-    RemoteIdLinkAddressIndex;
-
 /// @brief Lease6 extended information by remote id index.
 typedef Lease6ExtendedInfoRemoteIdTable::index<RemoteIdIndexTag>::type
     RemoteIdIndex;
-
-/// @brief Lease6 extended information by remote id and link address range.
-typedef std::pair<RemoteIdLinkAddressIndex::const_iterator,
-                  RemoteIdLinkAddressIndex::const_iterator>
-    RemoteIdLinkAddressRange;
 
 /// @brief Lease6 extended information by remote id range.
 typedef std::pair<RemoteIdIndex::const_iterator, RemoteIdIndex::const_iterator>
@@ -469,82 +411,6 @@ typedef std::pair<RemoteIdIndex::const_iterator, RemoteIdIndex::const_iterator>
 /// @brief Lease6 extended information by lease address index of by remote id table.
 typedef Lease6ExtendedInfoRemoteIdTable::index<LeaseAddressIndexTag>::type
     LeaseAddressRemoteIdIndex;
-
-/// @brief Lease6 extended informations for Bulk Lease Query,
-/// simpler version (2 fields vs 3) for by link address table.
-class Lease6SimpleExtendedInfo {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param lease_addr Lease address.
-    /// @param link_addr Link address.
-    Lease6SimpleExtendedInfo(const isc::asiolink::IOAddress& lease_addr,
-                             const isc::asiolink::IOAddress& link_addr)
-        : lease_addr_(lease_addr), link_addr_(link_addr) {
-    }
-
-    /// @brief Lease address.
-    isc::asiolink::IOAddress lease_addr_;
-
-    /// @brief Link address.
-    isc::asiolink::IOAddress link_addr_;
-};
-
-/// @brief Pointer to a Lease6SimpleExtendedInfo object.
-typedef boost::shared_ptr<Lease6SimpleExtendedInfo> Lease6SimpleExtendedInfoPtr;
-
-/// @brief Tag for indexes by link address.
-struct LinkAddressIndexTag { };
-
-/// @brief A multi index container holding lease6 extended info
-/// for by link address.
-///
-/// The lease6 extended info may be accessed using different indexes:
-/// - using a composite index: link and lease addresses, the second for
-///   getting lower bounds.
-/// - using lease address for deletes.
-///
-/// The choice of a binary tree was governed by the fact no hypothesis can
-/// be done on the number of clients.
-///
-/// Indexes can be accessed using the index number (from 0 to 5) or a
-/// name tag. It is recommended to use the tags to access indexes as
-/// they do not depend on the order of indexes in the container.
-typedef boost::multi_index_container<
-    // It holds pointers to lease6 extended info.
-    Lease6SimpleExtendedInfoPtr,
-    boost::multi_index::indexed_by<
-        // First index is by link and lease addresses.
-        boost::multi_index::ordered_non_unique<
-            boost::multi_index::tag<LinkAddressIndexTag>,
-            boost::multi_index::composite_key<
-                Lease6SimpleExtendedInfo,
-                boost::multi_index::member<Lease6SimpleExtendedInfo,
-                                           isc::asiolink::IOAddress,
-                                           &Lease6SimpleExtendedInfo::link_addr_>,
-                boost::multi_index::member<Lease6SimpleExtendedInfo,
-                                           isc::asiolink::IOAddress,
-                                           &Lease6SimpleExtendedInfo::lease_addr_>
-            >
-        >,
-
-        // Last index is by lease address.
-        boost::multi_index::hashed_non_unique<
-            boost::multi_index::tag<LeaseAddressIndexTag>,
-            boost::multi_index::member<Lease6SimpleExtendedInfo,
-                                       isc::asiolink::IOAddress,
-                                       &Lease6SimpleExtendedInfo::lease_addr_>
-        >
-    >
-> Lease6SimpleExtendedInfoLinkAddrTable;
-
-/// @brief Lease6 extended information by link address.
-typedef Lease6SimpleExtendedInfoLinkAddrTable::index<LinkAddressIndexTag>::type
-    LinkAddressIndex;
-
-/// @brief Lease6 extended information by lease address index of by link address table.
-typedef Lease6SimpleExtendedInfoLinkAddrTable::index<LeaseAddressIndexTag>::type
-    LeaseAddressLinkAddressIndex;
 
 //@}
 

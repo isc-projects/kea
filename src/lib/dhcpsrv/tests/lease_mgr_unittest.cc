@@ -406,7 +406,6 @@ public:
     /// @brief Stub implementation.
     void
     addRelayId6(const IOAddress& /* lease_addr */,
-                const IOAddress& /* link_addr */,
                 const vector<uint8_t>& /* relay_id */) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::addRelayId6 not implemented");
     }
@@ -414,16 +413,8 @@ public:
     /// @brief Stub implementation.
     void
     addRemoteId6(const IOAddress& /* lease_addr */,
-                 const IOAddress& /* link_addr */,
                  const vector<uint8_t>& /* remote_id */) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::addRemoteId6 not implemented");
-    }
-
-    /// @brief Stub implementation.
-    void
-    addLinkAddr6(const IOAddress& /* lease_addr */,
-                 const IOAddress& /* link_addr */) override {
-        isc_throw(NotImplemented, "ConcreteLeaseMgr::addLinkAddr6 not implemented");
     }
 
     /// @brief Stub implementation.
@@ -450,6 +441,7 @@ public:
     Lease6Collection
     getLeases6ByRelayId(const DUID& /* relay_id */,
                         const IOAddress& /* link_addr */,
+                        uint8_t /* link_len */,
                         const IOAddress& /* lower_bound_address */,
                         const LeasePageSize& /* page_size */) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByRelayId not implemented");
@@ -459,6 +451,7 @@ public:
     Lease6Collection
     getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
                          const IOAddress& /* link_addr */,
+                         uint8_t /* link_len */,
                          const IOAddress& /* lower_bound_address */,
                          const LeasePageSize& /* page_size*/) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByRemoteId not implemented");
@@ -467,6 +460,7 @@ public:
     /// @brief Stub implementation.
     Lease6Collection
     getLeases6ByLink(const IOAddress& /* link_addr */,
+                     uint8_t /* link_len */,
                      const IOAddress& /* lower_bound_address */,
                      const LeasePageSize& /* page_size */) override {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByLink not implemented");

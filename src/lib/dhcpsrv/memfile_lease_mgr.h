@@ -1073,9 +1073,6 @@ protected:
     /// @brief stores IPv6 by-remote-id cross-reference table
     Lease6ExtendedInfoRemoteIdTable remote_id6_;
 
-    /// @brief stores IPv6 by-link-addr cross-reference table
-    Lease6SimpleExtendedInfoLinkAddrTable link_addr6_;
-
     /// @brief Holds the pointer to the DHCPv4 lease file IO.
     boost::shared_ptr<CSVLeaseFile4> lease_file4_;
 
@@ -1326,8 +1323,9 @@ public:
 
     /// @brief Returns existing IPv6 leases with a given relay-id.
     ///
-    /// @param relay_id DUID for relay_id of interest
-    /// @param link_addr limit results to leases on this link when not ::
+    /// @param relay_id DUID for relay_id of interest.
+    /// @param link_addr limit results to leases on this link (prefix).
+    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1336,13 +1334,15 @@ public:
     virtual Lease6Collection
     getLeases6ByRelayId(const DUID& relay_id,
                         const asiolink::IOAddress& link_addr,
+                        uint8_t link_len,
                         const asiolink::IOAddress& lower_bound_address,
                         const LeasePageSize& page_size) override;
 
     /// @brief Returns existing IPv6 leases with a given remote-id.
     ///
     /// @param remote_id remote-id option data of interest
-    /// @param link_addr limit results to leases on this link when not ::
+    /// @param link_addr limit results to leases on this link (prefix).
+    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1351,12 +1351,14 @@ public:
     virtual Lease6Collection
     getLeases6ByRemoteId(const OptionBuffer& remote_id,
                          const asiolink::IOAddress& link_addr,
+                         uint8_t link_len,
                          const asiolink::IOAddress& lower_bound_address,
                          const LeasePageSize& page_size) override;
 
     /// @brief Returns existing IPv6 leases with on a given link.
     ///
-    /// @param link_addr limit results to leases on this link.
+    /// @param link_addr limit results to leases on this link (prefix).
+    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1364,6 +1366,7 @@ public:
     /// @return collection of IPv6 leases
     virtual Lease6Collection
     getLeases6ByLink(const asiolink::IOAddress& link_addr,
+                     uint8_t link_len,
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
 
@@ -1409,8 +1412,9 @@ private:
 
     /// @brief Returns existing IPv6 leases with a given relay-id.
     ///
-    /// @param relay_id DUID for relay_id of interest
-    /// @param link_addr limit results to leases on this link when not ::
+    /// @param relay_id DUID for relay_id of interest.
+    /// @param link_addr limit results to leases on this link (prefix).
+    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1419,13 +1423,15 @@ private:
     Lease6Collection
     getLeases6ByRelayIdInternal(const DUID& relay_id,
                                 const asiolink::IOAddress& link_addr,
+                                uint8_t link_len,
                                 const asiolink::IOAddress& lower_bound_address,
                                 const LeasePageSize& page_size);
 
     /// @brief Returns existing IPv6 leases with a given remote-id.
     ///
-    /// @param remote_id remote-id option data of interest
-    /// @param link_addr limit results to leases on this link when not ::
+    /// @param remote_id remote-id option data of interest.
+    /// @param link_addr limit results to leases on this link (prefix).
+    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1434,12 +1440,14 @@ private:
     Lease6Collection
     getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
                                  const asiolink::IOAddress& link_addr,
+                                 uint8_t link_len,
                                  const asiolink::IOAddress& lower_bound_address,
                                  const LeasePageSize& page_size);
 
     /// @brief Returns existing IPv6 leases with on a given link.
     ///
-    /// @param link_addr limit results to leases on this link.
+    /// @param link_addr limit results to leases on this link (prefix).
+    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1447,6 +1455,7 @@ private:
     /// @return collection of IPv6 leases
     Lease6Collection
     getLeases6ByLinkInternal(const asiolink::IOAddress& link_addr,
+                             uint8_t link_len,
                              const asiolink::IOAddress& lower_bound_address,
                              const LeasePageSize& page_size);
 
@@ -1474,27 +1483,16 @@ protected:
     /// @brief Add lease6 extended info into by-relay-id table.
     ///
     /// @param lease_addr The address of the lease.
-    /// @param link_addr The link address from the relay header.
     /// @param relay_id The relay id from the relay header options.
     virtual void addRelayId6(const isc::asiolink::IOAddress& lease_addr,
-                             const isc::asiolink::IOAddress& link_addr,
                              const std::vector<uint8_t>& relay_id) override;
 
     /// @brief Add lease6 extended info into by-remote-id table.
     ///
     /// @param lease_addr The address of the lease.
-    /// @param link_addr The link address from the remote header.
     /// @param remote_id The remote id from the relay header options.
     virtual void addRemoteId6(const isc::asiolink::IOAddress& lease_addr,
-                              const isc::asiolink::IOAddress& link_addr,
                               const std::vector<uint8_t>& remote_id) override;
-
-    /// @brief Add lease6 extended info into by-link-addr table.
-    ///
-    /// @param lease_addr The address of the lease.
-    /// @param link_addr The link address from the remote header.
-    virtual void addLinkAddr6(const isc::asiolink::IOAddress& lease_addr,
-                              const isc::asiolink::IOAddress& link_addr) override;
 
 private:
     /// @brief Write V4 leases to a file.
