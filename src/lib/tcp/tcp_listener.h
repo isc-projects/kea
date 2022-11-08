@@ -61,7 +61,7 @@ public:
                 const unsigned short server_port,
                 const asiolink::TlsContextPtr& tls_context,
                 const IdleTimeout& idle_timeout,
-                const TcpConnectionFilterCallback& connection_filter);
+                const TcpConnectionFilterCallback& connection_filter = 0);
 
     /// @brief Virtual destructor.
     virtual ~TcpListener() {

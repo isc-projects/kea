@@ -113,7 +113,7 @@ public:
                     const unsigned short server_port,
                     const TlsContextPtr& tls_context,
                     const IdleTimeout& idle_timeout,
-                    const TcpConnectionFilterCallback& filter_callback,
+                    const TcpConnectionFilterCallback& filter_callback = 0,
                     const size_t read_max = 32 * 1024)
         : TcpListener(io_service, server_address, server_port,
                       tls_context, idle_timeout, filter_callback),
@@ -243,11 +243,6 @@ public:
         io_service_.poll();
     }
 
-    /// @brief Pass through filter that allows all connections.
-    bool noFilter(const std::string& /* remote_endpoint_address */) {
-        return(true);
-    }
-
     /// @brief Filter that denies every other connection.
     ///
     /// @param remote_endpoint_address ip address of the remote end of
@@ -288,8 +283,7 @@ TEST_F(TcpListenerTest, listen) {
     const std::string request = "I am done";
 
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
-                             std::bind(&TcpListenerTest::noFilter, this, ph::_1));
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -314,8 +308,7 @@ TEST_F(TcpListenerTest, splitReads) {
     // Read at most one byte at a time.
     size_t read_max = 1;
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
-                             std::bind(&TcpListenerTest::noFilter, this, ph::_1),
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT), 0,
                              read_max);
 
     ASSERT_NO_THROW(listener.start());
@@ -339,8 +332,7 @@ TEST_F(TcpListenerTest, splitReads) {
 // transmit a streamed request and receive a streamed response.
 TEST_F(TcpListenerTest, idleTimeoutTest) {
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(SHORT_IDLE_TIMEOUT),
-                             std::bind(&TcpListenerTest::noFilter, this, ph::_1));
+                             TlsContextPtr(), TcpListener::IdleTimeout(SHORT_IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -366,8 +358,7 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
     const std::string request = "I am done";
 
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
-                             std::bind(&TcpListenerTest::noFilter, this, ph::_1));
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -395,8 +386,7 @@ TEST_F(TcpListenerTest, multipleRequetsPerClients) {
     std::list<std::string>requests{ "one", "two", "three", "I am done"};
 
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
-                             std::bind(&TcpListenerTest::noFilter, this, ph::_1));
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());

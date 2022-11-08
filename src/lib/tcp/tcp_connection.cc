@@ -288,7 +288,7 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
     acceptor_callback_(ec);
 
     if (!ec) {
-        if (!(connection_filter_(getRemoteEndpointAddressAsText()))) {
+        if (connection_filter_ && !(connection_filter_(getRemoteEndpointAddressAsText()))) {
             LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       TCP_CONNECTION_REJECTED_BY_FILTER)
                       .arg(getRemoteEndpointAddressAsText());
