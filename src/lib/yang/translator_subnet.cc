@@ -65,21 +65,15 @@ TranslatorSubnet::getSubnetIetf6(DataNode const& data_node) {
     getMandatoryDivergingLeaf(result, data_node, "subnet", "network-prefix");
     getMandatoryDivergingLeaf(result, data_node, "id", "network-range-id");
 
-    Set<DataNode> const& address_pools(data_node.findXPath("address-pools"));
-    if (!address_pools.empty()) {
-        ConstElementPtr const& pools(getPools(address_pools.front()));
-        if (pools && !pools->empty()) {
-            result->set("pools", pools);
-        }
-    }
+    checkAndGetDiverging(result, data_node, "pools", "address-pools",
+                         [&](DataNode const& node) -> ElementPtr const {
+                            return getPools(node);
+                         });
 
-    Set<DataNode> const& yang_pd_pools(data_node.findXPath("pd-pools"));
-    if (!yang_pd_pools.empty()) {
-        ConstElementPtr const& pd_pools(getPdPools(yang_pd_pools.front()));
-        if (pd_pools && !pd_pools->empty()) {
-            result->set("pd-pools", pd_pools);
-        }
-    }
+    checkAndGet(result, data_node, "pd-pools",
+                [&](DataNode const& node) -> ElementPtr const {
+                    return getPdPools(node);
+                });
 
     ConstElementPtr description = getItem(data_node, "network-description");
     if (description) {
@@ -147,14 +141,12 @@ TranslatorSubnet::getSubnetKea(DataNode const& data_node) {
         result->set("pools", pools);
     }
 
-    Set<DataNode> const& yang_relay(data_node.findXPath("relay"));
-    if (!yang_relay.empty()) {
-        ElementPtr relay_map(Element::createMap());
-        checkAndGetLeaf(relay_map, yang_relay.front(), "ip-addresses");
-        if (!relay_map->empty()) {
-            result->set("relay", relay_map);
-        }
-    }
+    checkAndGet(result, data_node, "relay",
+                [&](DataNode const& node) -> ElementPtr const {
+                    ElementPtr relay(Element::createMap());
+                    checkAndGetLeaf(relay, node, "ip-addresses");
+                    return relay;
+                });
 
     ConstElementPtr hosts = getHosts(data_node);
     if (hosts) {

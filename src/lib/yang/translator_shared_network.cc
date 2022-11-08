@@ -108,14 +108,12 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
         result->set(subsel, subnets);
     }
 
-    Set<DataNode> const& yang_relay(data_node.findXPath("relay"));
-    if (!yang_relay.empty()) {
-        ElementPtr relay_map(Element::createMap());
-        checkAndGetLeaf(relay_map, yang_relay.front(), "ip-addresses");
-        if (!relay_map->empty()) {
-            result->set("relay", relay_map);
-        }
-    }
+    checkAndGet(result, data_node, "relay",
+                [&](DataNode const& node) -> ElementPtr const {
+                    ElementPtr relay(Element::createMap());
+                    checkAndGetLeaf(relay, node, "ip-addresses");
+                    return relay;
+                });
 
     if (subsel == "subnet6") {
         checkAndGetLeaf(result, data_node, "interface-id");

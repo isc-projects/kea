@@ -130,9 +130,7 @@ Translator::deleteItem(string const& xpath) {
             session_.deleteItem(xpath);
         }
     } catch (sysrepo::Error const& ex) {
-        isc_throw(NetconfError,
-                  "deleting item at '"
-                  << xpath << "': " << ex.what());
+        isc_throw(NetconfError, "deleting item at '" << xpath << "': " << ex.what());
     }
     session_.applyChanges();
 }
@@ -150,11 +148,11 @@ DataNode
 Translator::findXPath(string const& xpath) {
     optional<DataNode> const& data_node(getData(xpath));
     if (!data_node) {
-        isc_throw(NetconfError, "no data");
+        isc_throw(NetconfError, "no data at xpath " << xpath);
     }
     Set<DataNode> at_path(data_node->findXPath(xpath));
     if (at_path.empty()) {
-        isc_throw(NetconfError, "no data");
+        isc_throw(NetconfError, "no data at xpath " << xpath);
     }
     return at_path.front();
 }
@@ -165,8 +163,7 @@ Translator::getData(string const& xpath) const {
     try {
         data_node = session_.getData(xpath);
     } catch (sysrepo::Error const& ex) {
-        isc_throw(NetconfError, "getting item at '" << xpath
-                  << "': " << ex.what());
+        isc_throw(NetconfError, "getting item at '" << xpath << "': " << ex.what());
     }
 
     return data_node;
@@ -199,8 +196,7 @@ Translator::getItem(DataNode const& data_node,
         }
 
     } catch (sysrepo::Error const& ex) {
-        isc_throw(NetconfError, "getting item at '" << xpath
-                  << "': " << ex.what());
+        isc_throw(NetconfError, "getting item at '" << xpath << "': " << ex.what());
     }
 }
 
@@ -291,7 +287,7 @@ Translator::initializeSerializer() {
 }
 
 
-bool Translator::schemaNodeExists(std::string const& xpath) {
+bool Translator::schemaNodeExists(string const& xpath) {
     Context const& context(session_.getContext());
     try {
         context.findPath(xpath);
@@ -302,8 +298,7 @@ bool Translator::schemaNodeExists(std::string const& xpath) {
 }
 
 void
-Translator::setItem(const string& xpath, ConstElementPtr elem,
-                         LeafBaseType type) {
+Translator::setItem(const string& xpath, ConstElementPtr elem, LeafBaseType type) {
     optional<string> const value(translateToYang(elem, type));
     try {
         session_.setItem(xpath, value);
@@ -359,7 +354,7 @@ Translator::translateFromYang(optional<DataNode> data_node) {
 
 optional<string>
 Translator::translateToYang(ConstElementPtr const& element,
-                           libyang::LeafBaseType const type) {
+                            libyang::LeafBaseType const type) {
     string string_representation;
     if (!element) {
         // A null ElementPtr is how we signal that this item requires no value.

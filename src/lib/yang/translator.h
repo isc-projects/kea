@@ -28,6 +28,58 @@ public:
     /// @brief Destructor.
     virtual ~Translator() = default;
 
+    /// @brief Calls {translate} for the element found at {xpath} relative to
+    /// {data_node} and sets the result in {storage} with the {xpath} key.
+    ///
+    /// @tparam T typename of the function to be called
+    ///
+    /// @param storage ElementMap where result will be stored
+    /// @param data_node parent data node of container type
+    /// @param key where to set the result in the {storage} map
+    /// @param xpath relative xpath to search by
+    /// @param translate function to be called to translate a data node to an element pointer
+    template <typename T>
+    void checkAndGet(isc::data::ElementPtr const& storage,
+                     libyang::DataNode const& data_node,
+                     std::string const& xpath,
+                     T translate) {
+        libyang::Set<libyang::DataNode> const& nodes(data_node.findXPath(xpath));
+        if (!nodes.empty()) {
+            isc::data::ElementPtr const& element(translate(nodes.front()));
+            if (element && !element->empty()) {
+                storage->set(xpath, element);
+            }
+        }
+    }
+
+    /// @brief Calls {translate} for the element found at {xpath} relative to
+    /// {data_node} and sets the result in {storage} with the {key} key.
+    ///
+    /// It's the counterpart for @ref checkAndGet, but when the YANG xpath
+    /// and the JSON key diverge.
+    ///
+    /// @tparam T typename of the function to be called
+    ///
+    /// @param storage ElementMap where result will be stored
+    /// @param data_node parent data node of container type
+    /// @param key where to set the result in the {storage} map
+    /// @param xpath relative xpath to search by
+    /// @param translate function to be called to translate a data node to an element pointer
+    template <typename T>
+    void checkAndGetDiverging(isc::data::ElementPtr const& storage,
+                              libyang::DataNode const& data_node,
+                              std::string const& key,
+                              std::string const& xpath,
+                              T translate) {
+        libyang::Set<libyang::DataNode> const& nodes(data_node.findXPath(xpath));
+        if (!nodes.empty()) {
+            isc::data::ElementPtr const& element(translate(nodes.front()));
+            if (element && !element->empty()) {
+                storage->set(key, element);
+            }
+        }
+    }
+
     /// @brief Retrieves a child YANG data node identified by name from the
     /// given parent YANG container node and stores it in the specified storage.
     ///
@@ -40,6 +92,9 @@ public:
 
     /// @brief Retrieves a child YANG data node identified by name from the
     /// given parent YANG container node and stores it in the specified storage.
+    ///
+    /// It's the counterpart for @ref checkAndGetLeaf, but when the YANG xpath
+    /// and the JSON key diverge.
     ///
     /// @param storage ElementMap where result will be stored
     /// @param data_node parent data node of container type
@@ -86,6 +141,9 @@ public:
 
     /// @brief Get an element from given ElementPtr node and set it in sysrepo
     /// at given xpath.
+    ///
+    /// It's the counterpart for @ref checkAndSetLeaf, but when the YANG xpath
+    /// and the JSON key diverge.
     ///
     /// @param from the parent configuration node from which to take the value
     /// @param xpath the xpath to the YANG node without the last node

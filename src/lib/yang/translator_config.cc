@@ -75,13 +75,10 @@ TranslatorConfig::getConfigIetf6() {
         return result;
     }
 
-    Set<DataNode> const& nodes(config->findXPath("server-config/network-ranges"));
-    if (!nodes.empty()) {
-        ConstElementPtr ranges = getSubnets(nodes.front());
-        if (ranges && !ranges->empty()) {
-            dhcp6->set("subnet6", ranges);
-        }
-    }
+    checkAndGetDiverging(dhcp6, *config, "subnet6", "server-config/network-ranges",
+                         [&](DataNode const& data_node) -> ElementPtr const {
+                             return getSubnets(data_node);
+                         });
 
     // Skip everything else.
     return (result);
@@ -234,48 +231,33 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
         result->set("client-classes", classes);
     }
 
-    Set<DataNode> const& yang_compatibility(data_node.findXPath("compatibility"));
-    if (!yang_compatibility.empty()) {
-        ElementPtr compatibility(Element::createMap());
-        checkAndGetLeaf(compatibility, yang_compatibility.front(), "ignore-rai-link-selection");
-        checkAndGetLeaf(compatibility, yang_compatibility.front(), "lenient-option-parsing");
-        if (!compatibility->empty()) {
-            result->set("compatibility", compatibility);
-        }
-    }
+    checkAndGet(result, data_node, "compatibility",
+                [&](DataNode const& node) -> ElementPtr const {
+                    ElementPtr compatibility(Element::createMap());
+                    checkAndGetLeaf(compatibility, node, "ignore-rai-link-selection");
+                    checkAndGetLeaf(compatibility, node, "lenient-option-parsing");
+                    return compatibility;
+                });
 
-    Set<DataNode> const& yang_config_control(data_node.findXPath("config-control"));
-    if (!yang_config_control.empty()) {
-        ConstElementPtr const& config_control(getConfigControlKea(yang_config_control.front()));
-        if (config_control) {
-            result->set("config-control", config_control);
-        }
-    }
+    checkAndGet(result, data_node, "config-control",
+                [&](DataNode const& node) -> ElementPtr const {
+                    return getConfigControlKea(node);
+                });
 
-    Set<DataNode> const& yang_control_socket(data_node.findXPath("control-socket"));
-    if (!yang_control_socket.empty()) {
-        ConstElementPtr const& control_socket(getControlSocket(yang_control_socket.front()));
-        if (control_socket) {
-            result->set("control-socket", control_socket);
-        }
-    }
+    checkAndGet(result, data_node, "control-socket",
+                [&](DataNode const& node) -> ElementPtr const {
+                    return getControlSocket(node);
+                });
 
-    Set<DataNode> const& yang_dhcp_ddns(data_node.findXPath("dhcp-ddns"));
-    if (!yang_dhcp_ddns.empty()) {
-        ConstElementPtr const& dhcp_ddns(getDdnsKea(yang_dhcp_ddns.front()));
-        if (dhcp_ddns) {
-            result->set("dhcp-ddns", dhcp_ddns);
-        }
-    }
+    checkAndGet(result, data_node, "dhcp-ddns",
+                [&](DataNode const& node) -> ElementPtr const {
+                    return getDdnsKea(node);
+                });
 
-    Set<DataNode> const& yang_expired_leases_processing(
-        data_node.findXPath("expired-leases-processing"));
-    if (!yang_expired_leases_processing.empty()) {
-        ConstElementPtr const& expired_leases_processing(getExpiredKea(yang_expired_leases_processing.front()));
-        if (expired_leases_processing) {
-            result->set("expired-leases-processing", expired_leases_processing);
-        }
-    }
+    checkAndGet(result, data_node, "expired-leases-processing",
+                [&](DataNode const& node) -> ElementPtr const {
+                    return getExpiredKea(node);
+                });
 
     ConstElementPtr hooks = getHooksKea(data_node);
     if (hooks && !hooks->empty()) {
@@ -287,30 +269,24 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
         result->set("hosts-databases", hosts_databases);
     }
 
-    Set<DataNode> const& yang_lease_database(data_node.findXPath("lease-database"));
-    if (!yang_lease_database.empty()) {
-        ConstElementPtr const& lease_database(getDatabase(yang_lease_database.front()));
-        if (lease_database && !lease_database->empty()) {
-            result->set("lease-database", lease_database);
-        }
-    }
+    checkAndGet(result, data_node, "lease-database",
+                [&](DataNode const& node) -> ElementPtr const {
+                    return getDatabase(node);
+                });
 
     ConstElementPtr loggers = getLoggers(data_node);
     if (loggers && !loggers->empty()) {
         result->set("loggers", loggers);
     }
 
-    Set<DataNode> const& yang_multi_threading(data_node.findXPath("multi-threading"));
-    if (!yang_multi_threading.empty()) {
-        DataNode const& mt(yang_multi_threading.front());
-        ElementPtr multi_threading(Element::createMap());
-        checkAndGetLeaf(multi_threading, mt, "enable-multi-threading");
-        checkAndGetLeaf(multi_threading, mt, "packet-queue-size");
-        checkAndGetLeaf(multi_threading, mt, "thread-pool-size");
-        if (!multi_threading->empty()) {
-            result->set("multi-threading", multi_threading);
-        }
-    }
+    checkAndGet(result, data_node, "multi-threading",
+                [&](DataNode const& node) -> ElementPtr const {
+                    ElementPtr multi_threading(Element::createMap());
+                    checkAndGetLeaf(multi_threading, node, "enable-multi-threading");
+                    checkAndGetLeaf(multi_threading, node, "packet-queue-size");
+                    checkAndGetLeaf(multi_threading, node, "thread-pool-size");
+                    return multi_threading;
+                });
 
     ConstElementPtr options = getOptionDataList(data_node);
     if (options && !options->empty()) {
@@ -332,15 +308,13 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
         result->set("shared-networks", networks);
     }
 
-    Set<DataNode> const& yang_sanity_checks(data_node.findXPath("sanity-checks"));
-    if (!yang_sanity_checks.empty()) {
-        ElementPtr sanity_checks = Element::createMap();
-        checkAndGetLeaf(sanity_checks, yang_sanity_checks.front(), "extended-info-checks");
-        checkAndGetLeaf(sanity_checks, yang_sanity_checks.front(), "lease-checks");
-        if (!sanity_checks->empty()) {
-            result->set("sanity-checks", sanity_checks);
-        }
-    }
+    checkAndGet(result, data_node, "sanity-checks",
+                [&](DataNode const& node) -> ElementPtr const {
+                    ElementPtr sanity_checks = Element::createMap();
+                    checkAndGetLeaf(sanity_checks, node, "extended-info-checks");
+                    checkAndGetLeaf(sanity_checks, node, "lease-checks");
+                    return sanity_checks;
+                });
 
     return (result);
 }
