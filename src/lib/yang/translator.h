@@ -121,9 +121,9 @@ public:
     /// @param xpath the xpath to the YANG node without the last node
     /// @param name the name of the YANG node which should also match the map
     /// key in the JSON configuration
-    void checkAndJsonifyAndSetLeaf(isc::data::ConstElementPtr const& from,
-                                   std::string const& xpath,
-                                   std::string const& name);
+    void checkAndStringifyAndSetLeaf(isc::data::ConstElementPtr const& from,
+                                     std::string const& xpath,
+                                     std::string const& name);
 
     /// @brief Get an element from given ElementPtr node and set it in sysrepo
     /// at given xpath.
@@ -132,7 +132,7 @@ public:
     /// @param xpath the xpath to the YANG node without the last node
     /// @param name the name of the YANG node which should also match the map
     /// key in the JSON configuration
-    /// @param type the sysrepo node type
+    /// @param type the YANG node type
     void checkAndSetLeaf(isc::data::ConstElementPtr const& from,
                          std::string const& xpath,
                          std::string const& name,
@@ -148,7 +148,7 @@ public:
     /// @param xpath the xpath to the YANG node without the last node
     /// @param name the name of the parameter to be set in storage
     /// @param yang_name the name by which to find the parameter in the YANG data node
-    /// @param type the sysrepo node type
+    /// @param type the YANG node type
     void checkAndSetDivergingLeaf(isc::data::ConstElementPtr const& from,
                                   std::string const& xpath,
                                   std::string const& name,
@@ -158,10 +158,10 @@ public:
     /// @brief Get an element from given ElementPtr node and set it in sysrepo
     /// at given xpath as a leaf-list.
     ///
-    /// @param from the parent configuration node from which to take the value
+    /// @param from the parent configuration node from which to take the values
     /// @param xpath the xpath to the YANG node without the last node
     /// @param name the name of the parameter to be set in storage
-    /// @param type the sysrepo node type
+    /// @param type the YANG node type of the underlying leaf-list nodes
     void checkAndSetLeafList(isc::data::ConstElementPtr const& from,
                              std::string const& xpath,
                              std::string const& name,
@@ -217,13 +217,6 @@ public:
             }
         }
     }
-
-    /// @brief Checks whether a YANG node exists in the schema.
-    ///
-    /// @param xpath the xpath to be checked
-    ///
-    /// @return true if the YANG node exists in the schema, false otherwise
-    bool schemaNodeExists(std::string const& xpath) const;
 
     /// @brief Get a YANG data node found at the given absolute xpath.
     ///
@@ -325,6 +318,13 @@ public:
                                    std::string const& name,
                                    std::string const& yang_name) const;
 
+    /// @brief Checks whether a YANG node exists in the schema.
+    ///
+    /// @param xpath the xpath to be checked
+    ///
+    /// @return true if the YANG node exists in the schema, false otherwise
+    bool schemaNodeExists(std::string const& xpath) const;
+
     /// @brief Translate and set basic value from JSON to YANG.
     ///
     /// @param xpath The xpath of the basic value.
@@ -341,7 +341,7 @@ public:
     /// @param xpath the xpath to the YANG node without the last node
     /// @param name the name of the YANG node which should also match the map
     /// key in the JSON configuration
-    /// @param type the sysrepo node type
+    /// @param type the YANG node type
     void setMandatoryLeaf(isc::data::ConstElementPtr const& from,
                           std::string const& xpath,
                           std::string const& name,
@@ -355,7 +355,7 @@ public:
     /// @param name the name of the YANG node which should also match the map
     /// key in the JSON configuration
     /// @param yang_name the name by which to find the parameter in the YANG data node
-    /// @param type the sysrepo node type
+    /// @param type the YANG node type
     void setMandatoryDivergingLeaf(isc::data::ConstElementPtr const& from,
                                    std::string const& xpath,
                                    std::string const& name,

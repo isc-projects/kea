@@ -43,25 +43,75 @@ All translators take a Session pointer (a structure provided by Sysrepo that
 is responsible for maintaining a connection) in constructors and derive from
 the basic / base class and recursively from translators for embedded parts.
 
-@c isc::yang::Translator provides some methods:
+@c isc::yang::Translator provides several public methods:
+
+  - @c isc::yang::Translator::checkAndGet() is able to retrieve a YANG node that
+    can be retrieved through complex logic which is abstracted through a lambda.
+
   - @c isc::yang::Translator::checkAndGetLeaf() is a convenience wrapper
     over @c isc::yang::Translator::getItem().
+
+  - @c isc::yang::Translator::checkAndGetAndJsonifyLeaf() retrieves elements
+    that are strings in the YANG schema, but that require passing through
+    @c isc::data::Element::fromJSON() when translating to ElementPtr.
+
+  - @c isc::yang::Translator::checkAndStringifyAndSetLeaf() does the opposite of
+    @c isc::yang::Translator::checkAndGetAndJsonifyLeaf(). It takes an arbitrary
+    Element and sets it as a YANG string in sysrepo.
+
   - @c isc::yang::Translator::checkAndSetLeaf() is a convenience wrapper
     over @c isc::yang::Translator::setItem().
+
+  - @c isc::yang::Translator::checkAndSetLeafList() is able to push multiple
+    leaf list nodes to the same xpath to form a leaf list.
+
+  - @c isc::yang::Translator::checkAndSetUserContext() is specifically tailored
+    for setting user context in sysrepo. It's use is frequent enough to have
+    earned its own function.
+
   - @c isc::yang::Translator::deleteItem() deletes the data node found at
-    given xpth.
+    given xpath.
+
+  - @c isc::yang::Translator::findXPath() retrieves any data node found at any
+    xpath. It is computationally intensive. Use sparingly.
+
   - @c isc::yang::Translator::forAll() iterates over the node found at
     given xpath and all its descendants and calls the given function.
+
+  - @c isc::yang::Translator::getData() retrieves any data node found at any
+    xpath. The difference from @c isc::yang::Translator::findXPath() is that it
+    does not throw if the data node is not found and instead returns nullopt.
+
   - @c isc::yang::Translator::getItem() retrieves and translates a leaf
-    from YANG to JSON.
+    from YANG to Element.
+
   - @c isc::yang::Translator::getList() retrieves a list from Sysrepo and
-    translates it form YANG to JSON.
-  - @c isc::yang::Translator::setItem() translates a leaf from JSON to
+    translates it form YANG to Element.
+
+  - @c isc::yang::Translator::getMandatoryLeaf() fetches a leaf that is expected
+    to be present in the YANG data node, most of the time a YANG key.
+
+  - @c isc::yang::Translator::schemaNodeExists() checks if an xpath is valid
+    from the YANG schema point of view. Not used anywhere, but it's here to
+    substitute logic that had been previously removed.
+
+  - @c isc::yang::Translator::setItem() translates a leaf from Element to
     YANG and sets it in Sysrepo.
-  - @c isc::yang::Translator::translateFromYang(optional<DataNode>, string) translates a YANG
-    leaf to a JSON node.
+
+  - @c isc::yang::Translator::setMandatoryLeaf() sets a leaf that is expected
+    to be present in the Element node, most of the time a YANG key.
+
+  - @c isc::yang::Translator::translateFromYang(optional<DataNode>, string)
+    translates a YANG leaf to an Element node based on YANG type.
+    All YANG types are explicitly handled.
+
   - @c isc::yang::Translator::translateToYang(ConstElementPtr, LeafBaseType)
-    translates a JSON leaf to a string.
+    translates an Element leaf to a string based on the YANG type.
+    All YANG types are explicitly handled.
+
+Some of these methods have a counterpart that have "Diverging" in their name.
+They are exceptionally used in the case where YANG xpath and Element map key are
+different. This facilitates identifying these diverging nodes.
 
 @section yangTranslatorPool Pool translator
 
@@ -85,8 +135,8 @@ some of them depend on other structures, for instance
 depends on the corresponding list item translator
 @c isc::yang::TranslatorOptionData. This multiple inheritance forms
 a graph with the basic and the configuration translators at the two ends.
-Multiple inheritance and its "diamond" issue are handled by C++ with
-the "virtual" inheritance: depending classes must be virtually inherited
+Multiple inheritance and its diamond issue are handled by C++ with
+the virtual inheritance: depending classes must be virtually inherited
 and explicitly constructed.
 
 @section yangTranslatorSubnet Subnet translator

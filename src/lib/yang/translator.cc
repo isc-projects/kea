@@ -60,9 +60,9 @@ Translator::checkAndGetAndJsonifyLeaf(ElementPtr& storage,
 }
 
 void
-Translator::checkAndJsonifyAndSetLeaf(ConstElementPtr const& from,
-                                      string const& xpath,
-                                      string const& name) {
+Translator::checkAndStringifyAndSetLeaf(ConstElementPtr const& from,
+                                        string const& xpath,
+                                        string const& name) {
     ConstElementPtr const& x(from->get(name));
     if (x) {
         ElementPtr const& json(Element::create(x->str()));
@@ -112,16 +112,6 @@ void Translator::checkAndSetUserContext(ConstElementPtr const& from,
     }
 }
 
-string
-Translator::decode64(string const& input) {
-    vector<uint8_t> binary;
-    decodeBase64(input, binary);
-    string result;
-    result.resize(binary.size());
-    memmove(&result[0], &binary[0], result.size());
-    return (result);
-}
-
 void
 Translator::deleteItem(string const& xpath) {
 
@@ -133,15 +123,6 @@ Translator::deleteItem(string const& xpath) {
         isc_throw(NetconfError, "deleting item at '" << xpath << "': " << ex.what());
     }
     session_.applyChanges();
-}
-
-
-string
-Translator::encode64(string const& input) {
-    vector<uint8_t> binary;
-    binary.resize(input.size());
-    memmove(&binary[0], input.c_str(), binary.size());
-    return (encodeBase64(binary));
 }
 
 DataNode
@@ -233,60 +214,6 @@ Translator::getMandatoryDivergingLeaf(ElementPtr& storage,
     storage->set(name, x);
 }
 
-Translator::Deserializer
-Translator::initializeDeserializer() {
-    Deserializer result;
-
-    result.emplace(LeafBaseType::Binary, [](string const& value) -> ElementPtr const {
-        return Element::create(decode64(value));
-    });
-
-    for (LeafBaseType const& i :
-         {LeafBaseType::Bool, LeafBaseType::Dec64, LeafBaseType::Int8, LeafBaseType::Int16,
-          LeafBaseType::Int32, LeafBaseType::Int64, LeafBaseType::Uint8, LeafBaseType::Uint16,
-          LeafBaseType::Uint32, LeafBaseType::Uint64}) {
-        result.emplace(i, [](string const& value) -> ElementPtr const {
-            return Element::fromJSON(value);
-        });
-    }
-
-    // The rest of YANG values can be expressed as strings.
-    for (LeafBaseType const& i :
-         {LeafBaseType::Bits, LeafBaseType::Empty, LeafBaseType::Enum, LeafBaseType::IdentityRef,
-          LeafBaseType::InstanceIdentifier, LeafBaseType::Leafref, LeafBaseType::String,
-          LeafBaseType::Union, LeafBaseType::Unknown}) {
-        result.emplace(i, [](string const& value) -> ElementPtr const {
-            return Element::create(value);
-        });
-    }
-
-    return result;
-}
-
-Translator::Serializer
-Translator::initializeSerializer() {
-    Serializer result;
-
-    result.emplace(LeafBaseType::Binary, [](string const& value) -> string const {
-        return encode64(value);
-    });
-
-    // The rest of YANG values can be expressed directly.
-    for (LeafBaseType const& i :
-         {LeafBaseType::Bits, LeafBaseType::Bool, LeafBaseType::Dec64, LeafBaseType::Empty,
-          LeafBaseType::Enum, LeafBaseType::IdentityRef, LeafBaseType::InstanceIdentifier,
-          LeafBaseType::Int8, LeafBaseType::Int16, LeafBaseType::Int32, LeafBaseType::Int64,
-          LeafBaseType::Leafref, LeafBaseType::String, LeafBaseType::Uint8, LeafBaseType::Uint16,
-          LeafBaseType::Uint32, LeafBaseType::Uint64, LeafBaseType::Union, LeafBaseType::Unknown}) {
-        result.emplace(i, [](string const& value) -> string const {
-            return value;
-        });
-    }
-
-    return result;
-}
-
-
 bool Translator::schemaNodeExists(string const& xpath) const {
     Context const& context(session_.getContext());
     try {
@@ -375,6 +302,77 @@ Translator::translateToYang(ConstElementPtr const& element,
 
     static Serializer serializer(initializeSerializer());
     return serializer.at(type)(string_representation);
+}
+
+string
+Translator::decode64(string const& input) {
+    vector<uint8_t> binary;
+    decodeBase64(input, binary);
+    string result;
+    result.resize(binary.size());
+    memmove(&result[0], &binary[0], result.size());
+    return (result);
+}
+
+string
+Translator::encode64(string const& input) {
+    vector<uint8_t> binary;
+    binary.resize(input.size());
+    memmove(&binary[0], input.c_str(), binary.size());
+    return (encodeBase64(binary));
+}
+
+Translator::Deserializer
+Translator::initializeDeserializer() {
+    Deserializer result;
+
+    result.emplace(LeafBaseType::Binary, [](string const& value) -> ElementPtr const {
+        return Element::create(decode64(value));
+    });
+
+    for (LeafBaseType const& i :
+         {LeafBaseType::Bool, LeafBaseType::Dec64, LeafBaseType::Int8, LeafBaseType::Int16,
+          LeafBaseType::Int32, LeafBaseType::Int64, LeafBaseType::Uint8, LeafBaseType::Uint16,
+          LeafBaseType::Uint32, LeafBaseType::Uint64}) {
+        result.emplace(i, [](string const& value) -> ElementPtr const {
+            return Element::fromJSON(value);
+        });
+    }
+
+    // The rest of YANG values can be expressed as strings.
+    for (LeafBaseType const& i :
+         {LeafBaseType::Bits, LeafBaseType::Empty, LeafBaseType::Enum, LeafBaseType::IdentityRef,
+          LeafBaseType::InstanceIdentifier, LeafBaseType::Leafref, LeafBaseType::String,
+          LeafBaseType::Union, LeafBaseType::Unknown}) {
+        result.emplace(i, [](string const& value) -> ElementPtr const {
+            return Element::create(value);
+        });
+    }
+
+    return result;
+}
+
+Translator::Serializer
+Translator::initializeSerializer() {
+    Serializer result;
+
+    result.emplace(LeafBaseType::Binary, [](string const& value) -> string const {
+        return encode64(value);
+    });
+
+    // The rest of YANG values can be expressed directly.
+    for (LeafBaseType const& i :
+         {LeafBaseType::Bits, LeafBaseType::Bool, LeafBaseType::Dec64, LeafBaseType::Empty,
+          LeafBaseType::Enum, LeafBaseType::IdentityRef, LeafBaseType::InstanceIdentifier,
+          LeafBaseType::Int8, LeafBaseType::Int16, LeafBaseType::Int32, LeafBaseType::Int64,
+          LeafBaseType::Leafref, LeafBaseType::String, LeafBaseType::Uint8, LeafBaseType::Uint16,
+          LeafBaseType::Uint32, LeafBaseType::Uint64, LeafBaseType::Union, LeafBaseType::Unknown}) {
+        result.emplace(i, [](string const& value) -> string const {
+            return value;
+        });
+    }
+
+    return result;
 }
 
 }  // namespace yang

@@ -523,7 +523,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
 
     checkAndSetLeafList(elem, xpath, "host-reservation-identifiers", LeafBaseType::Enum);
 
-    checkAndJsonifyAndSetLeaf(elem, xpath, "dhcp-queue-control");
+    checkAndStringifyAndSetLeaf(elem, xpath, "dhcp-queue-control");
 
     checkAndSetUserContext(elem, xpath);
 
@@ -596,7 +596,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
                      << name->stringValue() << "']";
             string const hook_xpath(hook_lib.str());
             setItem(hook_xpath, ElementPtr(), LeafBaseType::Unknown);
-            checkAndJsonifyAndSetLeaf(lib, hook_xpath, "parameters");
+            checkAndStringifyAndSetLeaf(lib, hook_xpath, "parameters");
         }
     }
 
