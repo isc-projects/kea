@@ -83,7 +83,7 @@ public:
     /// @param service The target service (used by http).
     /// @return The JSON element answer of config-test.
     /// @throw ControlSocketError when a communication error occurs.
-    virtual data::ConstElementPtr configTest(data::ConstElementPtr config,
+    virtual data::ConstElementPtr configTest(data::ElementPtr config,
                                              const std::string& service) = 0;
 
     /// @brief Set configuration.
@@ -94,7 +94,7 @@ public:
     /// @param service The target service (used by http).
     /// @return The JSON element answer of config-set.
     /// @throw ControlSocketError when a communication error occurs.
-    virtual data::ConstElementPtr configSet(data::ConstElementPtr config,
+    virtual data::ConstElementPtr configSet(data::ElementPtr config,
                                             const std::string& service) = 0;
 
     /// @brief The control socket configuration.

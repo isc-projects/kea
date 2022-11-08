@@ -41,13 +41,13 @@ StdoutControlSocket::configGet(const string& /*service*/) {
 }
 
 ConstElementPtr
-StdoutControlSocket::configTest(ConstElementPtr /*config*/,
+StdoutControlSocket::configTest(ElementPtr /*config*/,
                                 const string& /*service*/) {
     return (createAnswer());
 }
 
 ConstElementPtr
-StdoutControlSocket::configSet(ConstElementPtr config,
+StdoutControlSocket::configSet(ElementPtr config,
                                const string& /*service*/) {
     prettyPrint(config, output_);
     output_ << endl;

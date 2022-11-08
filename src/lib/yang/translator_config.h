@@ -427,7 +427,7 @@ public:
     /// Null elem argument removes the config containers.
     ///
     /// @param elem The JSON element.
-    void setConfig(isc::data::ConstElementPtr elem);
+    void setConfig(isc::data::ElementPtr elem);
 
 protected:
     /// @brief getConfig for ietf-dhcpv6-server.

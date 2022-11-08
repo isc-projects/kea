@@ -192,7 +192,7 @@ TranslatorDatabases::setDatabasesKea(string const& xpath,
         return;
     }
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr database = elem->get(i);
+        ElementPtr database = elem->getNonConst(i);
         if (!database->contains("type")) {
             isc_throw(BadValue, "database without type: " << database->str());
         }

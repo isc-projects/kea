@@ -144,7 +144,7 @@ public:
     bool
     executeConfiguration(const string& config, const char* operation) {
         // try JSON parser
-        ConstElementPtr json;
+        ElementPtr json;
         try {
             json = parseJSON(config, true);
         } catch (exception const& ex) {
@@ -245,7 +245,7 @@ TEST_F(NetconfGetCfgTest, simple) {
 
     // unparse it
     NetconfConfigPtr context = srv_->getNetconfConfig();
-    ConstElementPtr unparsed;
+    ElementPtr unparsed;
     ASSERT_NO_THROW_LOG(unparsed = context->toElement());
 
     // dump if wanted else check
@@ -284,7 +284,7 @@ TEST_F(NetconfGetCfgTest, simple) {
 
     // is it a fixed point?
     NetconfConfigPtr context2 = srv_->getNetconfConfig();
-    ConstElementPtr unparsed2;
+    ElementPtr unparsed2;
     ASSERT_NO_THROW_LOG(unparsed2 = context2->toElement());
     ASSERT_TRUE(unparsed2);
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));

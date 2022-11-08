@@ -285,7 +285,7 @@ TranslatorSubnet::setSubnetKea(string const& xpath, ConstElementPtr elem) {
         if (address) {
             setItem(xpath + "/relay/ip-addresses", address, LeafBaseType::String);
         } else if (addresses && !addresses->empty()) {
-            for (ConstElementPtr addr : addresses->listValue()) {
+            for (ElementPtr const& addr : addresses->listValue()) {
                 setItem(xpath + "/relay/ip-addresses", addr, LeafBaseType::String);
             }
         }
@@ -395,7 +395,7 @@ TranslatorSubnets::setSubnets(string const& xpath, ConstElementPtr elem) {
 void
 TranslatorSubnets::setSubnetsIetf6(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr subnet = elem->get(i);
+        ElementPtr subnet = elem->getNonConst(i);
         ostringstream range;
         range << xpath << "/network-range[network-range-id='";
         ConstElementPtr id = subnet->get("id");
@@ -411,7 +411,7 @@ void
 TranslatorSubnets::setSubnetsKea(string const& xpath, ConstElementPtr elem,
                                  string const& subsel) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr subnet = elem->get(i);
+        ElementPtr subnet = elem->getNonConst(i);
         if (!subnet->contains("id")) {
             isc_throw(BadValue, "subnet without id: " << subnet->str());
         }

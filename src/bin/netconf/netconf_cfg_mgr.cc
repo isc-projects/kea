@@ -20,6 +20,7 @@ using namespace isc::config;
 using namespace isc::dhcp;
 using namespace isc::process;
 using namespace isc::data;
+using namespace isc::hooks;
 
 using namespace std;
 
@@ -43,11 +44,10 @@ NetconfConfig::extractConfiguredGlobals(ConstElementPtr config) {
                   "extractConfiguredGlobals must be given a map element");
     }
 
-    const map<string, ConstElementPtr>& values = config->mapValue();
-    for (auto value = values.begin(); value != values.end(); ++value) {
-        if (value->second->getType() != Element::list &&
-            value->second->getType() != Element::map) {
-            addConfiguredGlobal(value->first, value->second);
+    for (auto const& value : config->mapValue()) {
+        if (value.second->getType() != Element::list &&
+            value.second->getType() != Element::map) {
+            addConfiguredGlobal(value.first, value.second);
         }
     }
 }
@@ -77,10 +77,10 @@ NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     }
 
     // Finally, print the hook libraries names
-    const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
+    const HookLibsCollection libs = ctx->getHooksConfig().get();
     s << ", " << libs.size() << " lib(s):";
-    for (auto lib = libs.begin(); lib != libs.end(); ++lib) {
-        s << lib->first << " ";
+    for (HookLibInfo const& lib : libs) {
+        s << lib.first << " ";
     }
 
     return (s.str());
@@ -105,7 +105,7 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
     ctx->extractConfiguredGlobals(config_set);
 
     // Set the defaults and derive parameters.
-    ElementPtr cfg = boost::const_pointer_cast<Element>(config_set);
+    ElementPtr cfg = copy(config_set, 0);
     NetconfSimpleParser::setAllDefaults(cfg);
     NetconfSimpleParser::deriveParameters(cfg);
 
@@ -157,7 +157,7 @@ NetconfConfig::toElement() const {
     // Set managed-servers
     ElementPtr servers = Element::createMap();
     for (auto serv : *servers_map_) {
-        ConstElementPtr server = serv.second->toElement();
+        ElementPtr server = serv.second->toElement();
         servers->set(serv.first, server);
     }
     netconf->set("managed-servers", servers);

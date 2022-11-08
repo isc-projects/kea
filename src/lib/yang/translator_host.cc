@@ -170,7 +170,7 @@ void
 TranslatorHosts::setHostsKea(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         string id_type = "unknown";
-        ConstElementPtr host = elem->get(i);
+        ElementPtr host = elem->getNonConst(i);
         ConstElementPtr id = host->get("hw-address");
         if (id) {
             id_type = "hw-address";

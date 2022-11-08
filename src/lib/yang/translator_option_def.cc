@@ -160,7 +160,7 @@ void
 TranslatorOptionDefList::setOptionDefListKea(string const& xpath,
                                              ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr def = elem->get(i);
+        ElementPtr def = elem->getNonConst(i);
         if (!def->contains("code")) {
             isc_throw(BadValue,
                       "option definition without code: " << def->str());

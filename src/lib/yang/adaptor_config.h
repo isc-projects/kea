@@ -34,7 +34,7 @@ public:
     /// @throw MissingKey when a required key is missing.
     /// @throw BadValue when null or not a map or deprecated Logging present.
     /// @note Does nothing if "Dhcp4" is not present in the map.
-    static void preProcess4(isc::data::ConstElementPtr config);
+    static void preProcess4(isc::data::ElementPtr config);
 
     /// @brief Pre process a DHCPv6 configuration.
     ///
@@ -46,7 +46,7 @@ public:
     /// @throw MissingKey when a required key is missing.
     /// @throw BadValue when null or not a map or deprecated Logging present.
     /// @note Does nothing if "Dhcp6" is not present in the map.
-    static void preProcess6(isc::data::ConstElementPtr config);
+    static void preProcess6(isc::data::ElementPtr config);
 
 protected:
     /// @brief Collects subnet-ids on all subnets.
@@ -256,14 +256,14 @@ protected:
     /// Force the use of hosts-databases vs. hosts-database.
     ///
     /// @param dhcp The DHCP server.
-    static void sanitizeDatabase(isc::data::ConstElementPtr dhcp);
+    static void sanitizeDatabase(isc::data::ElementPtr dhcp);
 
     /// @brief Update relay supplied options.
     ///
     /// Remove empty relay supplied option list.
     ///
     /// @param dhcp The DHCPv6 server.
-    static void sanitizeRelaySuppliedOptions(isc::data::ConstElementPtr dhcp);
+    static void sanitizeRelaySuppliedOptions(isc::data::ElementPtr dhcp);
 
     /// @brief Pre process a configuration.
     ///

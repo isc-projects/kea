@@ -899,8 +899,8 @@ TEST(ParserTest, duplicateMapEntries) {
                     ++cnt;
 
                     // Recursive call.
-                    ElementPtr mutable_json =
-                        boost::const_pointer_cast<Element>(elem.second);
+                    ElementPtr mutable_json(copy(elem.second, 0));
+                    json->set(elem.first, mutable_json);
                     ASSERT_TRUE(mutable_json);
                     test(config, mutable_json, cnt);
                 }

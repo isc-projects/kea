@@ -102,7 +102,7 @@ TEST(StdoutControlSocketTest, configTest) {
     StdoutControlSocketPtr scs(new StdoutControlSocket(cfg));
     ASSERT_TRUE(scs);
     ConstElementPtr answer;
-    ASSERT_NO_THROW_LOG(answer = scs->configTest(ConstElementPtr(), "foo"));
+    ASSERT_NO_THROW_LOG(answer = scs->configTest(ElementPtr(), "foo"));
 
     // Check answer.
     ASSERT_TRUE(answer);
@@ -119,7 +119,7 @@ TEST(StdoutControlSocketTest, configSet) {
     ostringstream os;
     TestStdoutControlSocketPtr tscs(new TestStdoutControlSocket(cfg, os));
     ASSERT_TRUE(tscs);
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
     ConstElementPtr answer;
     ASSERT_NO_THROW_LOG(answer = tscs->configSet(json, "foo"));
 
@@ -343,7 +343,7 @@ TEST_F(UnixControlSocketTest, configTest) {
     waitReady();
 
     // Prepare a config to test.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     ConstElementPtr reflected;
     EXPECT_NO_THROW_LOG(reflected = ucs->configTest(json, "foo"));
@@ -370,7 +370,7 @@ TEST_F(UnixControlSocketTest, configSet) {
     waitReady();
 
     // Prepare a config to set.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     ConstElementPtr reflected;
     EXPECT_NO_THROW_LOG(reflected = ucs->configSet(json, "foo"));
@@ -698,7 +698,7 @@ TEST_F(HttpControlSocketTest, configTest) {
     start();
 
     // Prepare a config to test.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     // Try configTest.
     ConstElementPtr reflected;
@@ -730,7 +730,7 @@ TEST_F(HttpControlSocketTest, configTestCA) {
     start();
 
     // Prepare a config to test.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     // Try configTest.
     ConstElementPtr reflected;
@@ -760,7 +760,7 @@ TEST_F(HttpControlSocketTest, configSet) {
     start();
 
     // Prepare a config to set.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     // Try configSet.
     ConstElementPtr reflected;
@@ -792,7 +792,7 @@ TEST_F(HttpControlSocketTest, configSetCA) {
     start();
 
     // Prepare a config to set.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     // Try configSet.
     ConstElementPtr reflected;
@@ -842,7 +842,7 @@ TEST_F(HttpControlSocketTest, partial) {
     start();
 
     // Prepare a special config to set.
-    ConstElementPtr json = Element::fromJSON("{ \"want-partial\": true }");
+    ElementPtr json = Element::fromJSON("{ \"want-partial\": true }");
 
     // Warn this makes time.
     cout << "Waiting 2s..." << endl;

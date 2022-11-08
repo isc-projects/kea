@@ -292,7 +292,7 @@ TranslatorPools::setPools(string const& xpath, ConstElementPtr elem) {
 void
 TranslatorPools::setPoolsById(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr pool = elem->get(i);
+        ElementPtr pool = elem->getNonConst(i);
         ostringstream prefix;
         prefix << xpath << "/address-pool[pool-id='" << i << "']";
         setPool(prefix.str(), pool);
@@ -303,7 +303,7 @@ void
 TranslatorPools::setPoolsByAddresses(string const& xpath,
                                      ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr pool = elem->get(i);
+        ElementPtr pool = elem->getNonConst(i);
         if (!pool->contains("pool")) {
             isc_throw(BadValue, "setPoolsByAddresses: missing required pool: "
                       << pool->str());

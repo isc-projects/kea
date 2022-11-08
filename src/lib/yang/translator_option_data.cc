@@ -158,7 +158,7 @@ void
 TranslatorOptionDataList::setOptionDataListKea(string const& xpath,
                                                ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr option = elem->get(i);
+        ElementPtr option = elem->getNonConst(i);
         if (!option->contains("code")) {
             isc_throw(BadValue, "option data without code: " << option->str());
         }

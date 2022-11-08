@@ -91,11 +91,18 @@ void clearYang(NakedNetconfAgentPtr agent) {
 // Empirically the requested subnets have sometimes returned in decreasing
 // order of subnet ID. To avoid flaky test failures, sort them before
 // comparing.
-void sortSubnets(ConstElementPtr const& map) {
-    boost::dynamic_pointer_cast<ListElement>(
-        boost::const_pointer_cast<Element>(
-            map->get("arguments")->get("Dhcp4")->get("subnet4")))
-        ->sort("id");
+ElementPtr sortSubnets(ElementPtr const& map) {
+    ElementPtr arguments(copy(map->get("arguments"), 0));
+    ElementPtr dhcp4(copy(arguments->get("Dhcp4"), 0));
+    ElementPtr subnet4(copy(dhcp4->get("subnet4")));
+
+    boost::dynamic_pointer_cast<ListElement>(subnet4)->sort("id");
+
+    ElementPtr result(copy(map));
+    result->set("arguments", arguments);
+    arguments->set("Dhcp4", dhcp4);
+    dhcp4->set("subnet4", subnet4);
+    return result;
 }
 
 /// @brief Test fixture class for netconf agent.
@@ -304,11 +311,11 @@ NetconfAgentTest::fakeServer() {
     ASSERT_FALSE(ec);
     rbuf.resize(received);
     requests_.push_back(rbuf);
-    ConstElementPtr json;
+    ElementPtr json;
     EXPECT_NO_THROW_LOG(json = Element::fromJSON(rbuf));
     EXPECT_TRUE(json);
     string command;
-    ConstElementPtr config;
+    ElementPtr config;
     if (json) {
         ConstElementPtr arg;
         EXPECT_NO_THROW_LOG(command = parseCommand(arg, json));
@@ -593,7 +600,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     ASSERT_EQ(Element::map, json->getType());
     ConstElementPtr netconf_json = json->get("Netconf");
     ASSERT_TRUE(netconf_json);
-    json = boost::const_pointer_cast<Element>(netconf_json);
+    json = copy(netconf_json, 0);
     ASSERT_TRUE(json);
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
@@ -621,12 +628,12 @@ TEST_F(NetconfAgentTest, keaConfig) {
     // Check request.
     ASSERT_EQ(1, requests_.size());
     const string& request_str = requests_[0];
-    ConstElementPtr request;
+    ElementPtr request;
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     string expected_str = "{\n"
         "\"command\": \"config-get\"\n"
         "}";
-    ConstElementPtr expected;
+    ElementPtr expected;
     ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
     EXPECT_TRUE(expected->equals(*request));
     // Alternative showing more for debugging...
@@ -635,7 +642,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     // Check response.
     ASSERT_EQ(1, responses_.size());
     const string& response_str = responses_[0];
-    ConstElementPtr response;
+    ElementPtr response;
     ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0,\n"
@@ -690,7 +697,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     ASSERT_EQ(Element::map, json->getType());
     ConstElementPtr netconf_json = json->get("Netconf");
     ASSERT_TRUE(netconf_json);
-    json = boost::const_pointer_cast<Element>(netconf_json);
+    json = copy(netconf_json, 0);
     ASSERT_TRUE(json);
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
@@ -718,7 +725,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     // Check request.
     ASSERT_EQ(1, requests_.size());
     const string& request_str = requests_[0];
-    ConstElementPtr request;
+    ElementPtr request;
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     string expected_str = "{\n"
         "\"command\": \"config-set\",\n"
@@ -737,17 +744,17 @@ TEST_F(NetconfAgentTest, yangConfig) {
         "    }\n"
         "  }\n"
         "}";
-    ConstElementPtr expected;
+    ElementPtr expected;
     ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
 
-    sortSubnets(expected);
-    sortSubnets(request);
+    expected = sortSubnets(expected);
+    request = sortSubnets(request);
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check response.
     ASSERT_EQ(1, responses_.size());
     const string& response_str = responses_[0];
-    ConstElementPtr response;
+    ElementPtr response;
     ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0\n"
@@ -782,7 +789,7 @@ TEST_F(NetconfAgentTest, subscribeToDataChanges) {
     ASSERT_EQ(Element::map, json->getType());
     ConstElementPtr netconf_json = json->get("Netconf");
     ASSERT_TRUE(netconf_json);
-    json = boost::const_pointer_cast<Element>(netconf_json);
+    json = copy(netconf_json, 0);
     ASSERT_TRUE(json);
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
@@ -851,7 +858,7 @@ TEST_F(NetconfAgentTest, update) {
     ASSERT_EQ(Element::map, json->getType());
     ConstElementPtr netconf_json = json->get("Netconf");
     ASSERT_TRUE(netconf_json);
-    json = boost::const_pointer_cast<Element>(netconf_json);
+    json = copy(netconf_json, 0);
     ASSERT_TRUE(json);
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
@@ -894,7 +901,7 @@ TEST_F(NetconfAgentTest, update) {
     // Check request.
     ASSERT_EQ(1, requests_.size());
     const string& request_str = requests_[0];
-    ConstElementPtr request;
+    ElementPtr request;
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     string expected_str = "{\n"
         "\"command\": \"config-set\",\n"
@@ -913,17 +920,17 @@ TEST_F(NetconfAgentTest, update) {
         "    }\n"
         "  }\n"
         "}";
-    ConstElementPtr expected;
+    ElementPtr expected;
     ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
 
-    sortSubnets(expected);
-    sortSubnets(request);
+    expected = sortSubnets(expected);
+    request = sortSubnets(request);
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check response.
     ASSERT_EQ(1, responses_.size());
     const string& response_str = responses_[0];
-    ConstElementPtr response;
+    ElementPtr response;
     ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0\n"
@@ -976,7 +983,7 @@ TEST_F(NetconfAgentTest, validate) {
     ASSERT_EQ(Element::map, json->getType());
     ConstElementPtr netconf_json = json->get("Netconf");
     ASSERT_TRUE(netconf_json);
-    json = boost::const_pointer_cast<Element>(netconf_json);
+    json = copy(netconf_json, 0);
     ASSERT_TRUE(json);
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);
@@ -1023,7 +1030,7 @@ TEST_F(NetconfAgentTest, validate) {
     // Check that the fake server received the first request.
     ASSERT_LE(1, requests_.size());
     string request_str = requests_[0];
-    ConstElementPtr request;
+    ElementPtr request;
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     string expected_str = "{\n"
         "\"command\": \"config-test\",\n"
@@ -1042,11 +1049,11 @@ TEST_F(NetconfAgentTest, validate) {
         "    }\n"
         "  }\n"
         "}";
-    ConstElementPtr expected;
+    ElementPtr expected;
     ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
 
-    sortSubnets(expected);
-    sortSubnets(request);
+    expected = sortSubnets(expected);
+    request = sortSubnets(request);
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check that the fake server received the second request.
@@ -1072,14 +1079,14 @@ TEST_F(NetconfAgentTest, validate) {
         "}";
     ASSERT_NO_THROW_LOG(expected = Element::fromJSON(expected_str));
 
-    sortSubnets(expected);
-    sortSubnets(request);
+    expected = sortSubnets(expected);
+    request = sortSubnets(request);
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check responses.
     ASSERT_EQ(2, responses_.size());
     string response_str = responses_[0];
-    ConstElementPtr response;
+    ElementPtr response;
     ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
     expected_str = "{\n"
         "\"result\": 0\n"
@@ -1134,7 +1141,7 @@ TEST_F(NetconfAgentTest, noValidate) {
     ASSERT_EQ(Element::map, json->getType());
     ConstElementPtr netconf_json = json->get("Netconf");
     ASSERT_TRUE(netconf_json);
-    json = boost::const_pointer_cast<Element>(netconf_json);
+    json = copy(netconf_json, 0);
     ASSERT_TRUE(json);
     NetconfSimpleParser::setAllDefaults(json);
     NetconfSimpleParser::deriveParameters(json);

@@ -40,13 +40,13 @@ UnixControlSocket::configGet(const string& /*service*/) {
 }
 
 ConstElementPtr
-UnixControlSocket::configTest(ConstElementPtr config,
+UnixControlSocket::configTest(ElementPtr config,
                               const string& /*service*/) {
     return (sendCommand(createCommand("config-test", config)));
 }
 
 ConstElementPtr
-UnixControlSocket::configSet(ConstElementPtr config,
+UnixControlSocket::configSet(ElementPtr config,
                              const string& /*service*/) {
     return (sendCommand(createCommand("config-set", config)));
 }

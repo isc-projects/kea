@@ -49,7 +49,7 @@ public:
     /// @param config The configuration to test (ignored).
     /// @param service The target service (ignored).
     /// @return The JSON element answer of config-test (fixed answer).
-    data::ConstElementPtr configTest(data::ConstElementPtr config,
+    data::ConstElementPtr configTest(data::ElementPtr config,
                                      const std::string& service) override final;
 
     /// @brief Set configuration.
@@ -59,7 +59,7 @@ public:
     /// @param config The configuration to set.
     /// @param service The target service.
     /// @return The JSON element answer of config-set (fixed answer).
-    data::ConstElementPtr configSet(data::ConstElementPtr config,
+    data::ConstElementPtr configSet(data::ElementPtr config,
                                     const std::string& service) override final;
 
 protected:

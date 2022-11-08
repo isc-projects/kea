@@ -197,7 +197,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
         if (address) {
             setItem(xpath + "/relay/ip-addresses", address, LeafBaseType::String);
         } else if (addresses && !addresses->empty()) {
-            for (ConstElementPtr addr : addresses->listValue()) {
+            for (ElementPtr const& addr : addresses->listValue()) {
                 setItem(xpath + "/relay/ip-addresses", addr, LeafBaseType::String);
             }
         }
@@ -282,7 +282,7 @@ void
 TranslatorSharedNetworks::setSharedNetworksKea(string const& xpath,
                                                ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr network = elem->get(i);
+        ElementPtr network = elem->getNonConst(i);
         if (!network->contains("name")) {
             isc_throw(BadValue, "setSharedNetworksKea requires name: "
                       << network->str());

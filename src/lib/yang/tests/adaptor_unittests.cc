@@ -24,7 +24,7 @@ TEST(AdaptorTest, getContext) {
     // Empty.
     string config = "{\n"
         "}\n";
-    ConstElementPtr json = Element::fromJSON(config);
+    ElementPtr json = Element::fromJSON(config);
     ConstElementPtr context;
     ASSERT_NO_THROW_LOG(context = Adaptor::getContext(json));
     EXPECT_FALSE(context);
@@ -98,7 +98,7 @@ TEST(AdaptorTest, fromParent) {
         " ]\n"
         "}\n";
 
-    ConstElementPtr json = Element::fromJSON(config);
+    ElementPtr json = Element::fromJSON(config);
     EXPECT_NO_THROW_LOG(Adaptor::fromParent("param1", json, json->get("list")));
     EXPECT_NO_THROW_LOG(Adaptor::fromParent("param2", json, json->get("list")));
     EXPECT_NO_THROW_LOG(Adaptor::fromParent("param3", json, json->get("list")));

@@ -354,7 +354,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
 
     LOG_INFO(netconf_logger, NETCONF_SET_CONFIG_STARTED)
         .arg(server);
-    ConstElementPtr config;
+    ElementPtr config;
     try {
         // Retrieve configuration from Sysrepo.
         TranslatorConfig tc(*startup_sess_, configuration->getModel());
@@ -521,7 +521,7 @@ NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
     }
     LOG_INFO(netconf_logger, NETCONF_VALIDATE_CONFIG_STARTED)
         .arg(server);
-    ConstElementPtr config;
+    ElementPtr config;
     try {
         TranslatorConfig tc(sess, configuration->getModel());
         config = tc.getConfig();
@@ -607,7 +607,7 @@ NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
         .arg(server);
 
     // Retrieve the configuration from SYSREPO first.
-    ConstElementPtr config;
+    ElementPtr config;
     try {
         TranslatorConfig tc(sess, configuration->getModel());
         config = tc.getConfig();

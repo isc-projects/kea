@@ -36,7 +36,7 @@ public:
 
     /// @brief Callback that will invoke shutdown method.
     void genShutdownCallback() {
-        shutdown(isc::data::ConstElementPtr());
+        shutdown(isc::data::ElementPtr());
     }
 };  // NetconfProcessTest
 

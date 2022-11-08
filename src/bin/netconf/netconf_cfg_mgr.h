@@ -37,8 +37,8 @@ public:
     /// @brief Returns pointer to configured global parameters.
     ///
     /// @todo revisit this at the toElement first use.
-    isc::data::ConstElementPtr getConfiguredGlobals() const {
-        return (isc::data::ConstElementPtr(configured_globals_));
+    isc::data::ElementPtr getConfiguredGlobals() const {
+        return (isc::data::ElementPtr(configured_globals_));
     }
 
     /// @brief Saves scalar elements from the global scope of a configuration.

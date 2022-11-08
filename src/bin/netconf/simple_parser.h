@@ -36,7 +36,7 @@ public:
     /// - derives global parameters to managed servers (flags for now)
     /// @param global scope to be modified if needed
     /// @return number of default values derived
-    static size_t deriveParameters(isc::data::ConstElementPtr global);
+    static size_t deriveParameters(isc::data::ElementPtr global);
 
     /// @brief Adds default values to a Managed server entry.
     ///
@@ -46,7 +46,7 @@ public:
     /// @param server server element / entry value
     /// @return returns the number of default values added
     static size_t setServerDefaults(const std::string name,
-                                    isc::data::ConstElementPtr server);
+                                    isc::data::ElementPtr server);
 
     /// @brief Parses the netconf configuration
     ///
@@ -56,7 +56,7 @@ public:
     ///
     /// @throw ConfigError if any issues are encountered.
     void parse(const NetconfConfigPtr& ctx,
-               const isc::data::ConstElementPtr& config,
+               const isc::data::ElementPtr& config,
                bool check_only);
 
     // see simple_parser.cc for comments for those parameters

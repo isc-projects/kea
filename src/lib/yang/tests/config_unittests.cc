@@ -96,7 +96,7 @@ public:
     /// @brief Loads JSON configuration from specified Element tree.
     ///
     /// @param json The JSON tree to load.
-    void load(ConstElementPtr json) {
+    void load(ElementPtr json) {
         TranslatorConfig tc(session_, model_);
         tc.setConfig(json);
     }
@@ -115,7 +115,7 @@ public:
     /// @param filename The name of the JSON file to load,
     ConstElementPtr loadFile(const string& filename) {
         string decommented = isc::test::decommentJSONfile(filename);
-        ConstElementPtr json = Element::fromJSONFile(decommented, true);
+        ElementPtr json = Element::fromJSONFile(decommented, true);
         ::remove(decommented.c_str());
         load(json);
         return (json);
@@ -206,7 +206,7 @@ TEST_F(ConfigTestIetfV6, emptyIetf6) {
     ASSERT_NO_THROW_LOG(load(tree));
     EXPECT_TRUE(verify(tree));
 
-    ConstElementPtr json = Element::fromJSON(emptyJson6);
+    ElementPtr json = Element::fromJSON(emptyJson6);
     EXPECT_TRUE(verify(json));
     ASSERT_NO_THROW_LOG(load(json));
     EXPECT_TRUE(verify(emptyJson6));
@@ -219,7 +219,7 @@ TEST_F(ConfigTestKeaV4, emptyKeaDhcp4) {
     ASSERT_NO_THROW_LOG(load(tree));
     EXPECT_TRUE(verify(emptyTreeKeaDhcp4));
 
-    ConstElementPtr json = Element::fromJSON(emptyJson4);
+    ElementPtr json = Element::fromJSON(emptyJson4);
     EXPECT_TRUE(verify(json));
     ASSERT_NO_THROW_LOG(load(json));
     EXPECT_TRUE(verify(emptyJson4));
@@ -232,7 +232,7 @@ TEST_F(ConfigTestKeaV6, emptyKeaDhcp6) {
     ASSERT_NO_THROW_LOG(load(tree));
     EXPECT_TRUE(verify(emptyTreeKeaDhcp6));
 
-    ConstElementPtr json = Element::fromJSON(emptyJson6);
+    ElementPtr json = Element::fromJSON(emptyJson6);
     EXPECT_TRUE(verify(json));
     ASSERT_NO_THROW_LOG(load(json));
     EXPECT_TRUE(verify(emptyJson6));

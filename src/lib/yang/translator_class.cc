@@ -201,7 +201,7 @@ TranslatorClasses::setClasses(string const& xpath, ConstElementPtr elem) {
 void
 TranslatorClasses::setClassesKea(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr cclass = elem->get(i);
+        ElementPtr cclass = elem->getNonConst(i);
         if (!cclass->contains("name")) {
             isc_throw(BadValue, "client class without name: " << elem->str());
         }

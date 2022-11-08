@@ -292,7 +292,7 @@ TranslatorPdPools::setPdPools(string const& xpath, ConstElementPtr elem) {
 void
 TranslatorPdPools::setPdPoolsId(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr pool = elem->get(i);
+        ElementPtr pool = elem->getNonConst(i);
         ostringstream prefix;
         prefix << xpath << "/pd-pool[pool-id='" << i << "']";
         setPdPool(prefix.str(), pool);
@@ -303,7 +303,7 @@ void
 TranslatorPdPools::setPdPoolsPrefix(string const& xpath,
                                     ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr pool = elem->get(i);
+        ElementPtr pool = elem->getNonConst(i);
         if (!pool->contains("prefix") || !pool->contains("prefix-len")) {
             isc_throw(BadValue, "pd-pool requires prefix and prefix length: "
                       << pool->str());

@@ -129,7 +129,7 @@ TEST(NetconfCfgMgr, contextHookParams) {
     HooksConfig& libs = ctx.getHooksConfig();
     EXPECT_TRUE(libs.get().empty());
 
-    libs.add("libone.so", ConstElementPtr());
+    libs.add("libone.so", ElementPtr());
     libs.add("libtwo.so", Element::fromJSON("{\"foo\": true}"));
     libs.add("libthree.so", Element::fromJSON("{\"bar\": 42}"));
 
@@ -144,7 +144,7 @@ TEST(NetconfCfgMgr, contextGlobals) {
     NetconfConfig ctx;
 
     // By default there should be no globals.
-    ConstElementPtr globals = ctx.getConfiguredGlobals();
+    ElementPtr globals = ctx.getConfiguredGlobals();
     ASSERT_TRUE(globals);
     ASSERT_EQ(Element::map, globals->getType());
     EXPECT_EQ(0, globals->mapValue().size());
@@ -156,7 +156,7 @@ TEST(NetconfCfgMgr, contextGlobals) {
     // Now let's create a configuration from which to extract global scalars.
     // Extraction (currently) has no business logic, so the elements we use
     // can be arbitrary.
-    ConstElementPtr global_cfg;
+    ElementPtr global_cfg;
     string global_cfg_str =
     "{\n"
     " \"astring\": \"okay\",\n"
@@ -360,7 +360,7 @@ const char* NETCONF_CONFIGS[] = {
 // Tests the handling of bad socket type. Can't use the fixture class
 // because the Netconf parser does not allow bad socket types.
 TEST(NetconfParser, badSocketType) {
-    ConstElementPtr json;
+    ElementPtr json;
     ParserContext parser;
     EXPECT_NO_THROW_LOG(json = parser.parseString(NETCONF_CONFIGS[10],
                                               ParserContext::PARSER_JSON));
@@ -384,7 +384,7 @@ public:
     /// @param expected_answer expected result of configuration (0 = success)
     void configParse(const char* config, int expected_answer) {
         isc::netconf::ParserContext parser;
-        ConstElementPtr json = parser.parseString(config, ParserContext::PARSER_SUB_NETCONF);
+        ElementPtr json = parser.parseString(config, ParserContext::PARSER_SUB_NETCONF);
 
         EXPECT_NO_THROW_LOG(answer_ = cfg_mgr_.parse(json, false));
         EXPECT_TRUE(checkAnswer(expected_answer));

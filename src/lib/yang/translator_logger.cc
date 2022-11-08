@@ -126,7 +126,7 @@ TranslatorLogger::setOutputOption(string const& xpath, ConstElementPtr elem) {
 void
 TranslatorLogger::setOutputOptions(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr option = elem->get(i);
+        ElementPtr option = elem->getNonConst(i);
         if (!option->contains("output")) {
             isc_throw(BadValue, "output-option without output: "
                       << option->str());
@@ -197,7 +197,7 @@ TranslatorLoggers::setLoggers(string const& xpath, ConstElementPtr elem) {
 void
 TranslatorLoggers::setLoggersKea(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr logger = elem->get(i);
+        ElementPtr logger = elem->getNonConst(i);
         if (!logger->contains("name")) {
             isc_throw(BadValue, "logger without name: " << logger->str());
         }

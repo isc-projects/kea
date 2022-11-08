@@ -407,7 +407,7 @@ TranslatorConfig::getServerKeaDhcp6() {
 }
 
 void
-TranslatorConfig::setConfig(ConstElementPtr elem) {
+TranslatorConfig::setConfig(ElementPtr elem) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
             if (elem) {
@@ -586,7 +586,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
 
     ConstElementPtr hook_libs = elem->get("hooks-libraries");
     if (hook_libs) {
-        for (ConstElementPtr lib : hook_libs->listValue()) {
+        for (ElementPtr const& lib : hook_libs->listValue()) {
             ConstElementPtr name = lib->get("library");
             if (!name) {
                 continue;

@@ -47,7 +47,7 @@ HttpControlSocket::configGet(const string& service) {
 }
 
 ConstElementPtr
-HttpControlSocket::configTest(ConstElementPtr config, const string& service) {
+HttpControlSocket::configTest(ElementPtr config, const string& service) {
     if (service == "ca") {
         return (sendCommand(createCommand("config-test", config)));
     } else {
@@ -56,7 +56,7 @@ HttpControlSocket::configTest(ConstElementPtr config, const string& service) {
 }
 
 ConstElementPtr
-HttpControlSocket::configSet(ConstElementPtr config, const string& service) {
+HttpControlSocket::configSet(ElementPtr config, const string& service) {
     if (service == "ca") {
         return (sendCommand(createCommand("config-set", config)));
     } else {

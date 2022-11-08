@@ -49,7 +49,7 @@ public:
     /// @param name name of the text file to be parsed
     /// @return Element tree structure representing parsed configuration
     isc::data::ConstElementPtr
-    parseFile(const std::string& name);
+    parseFile(const std::string& name) override final;
 
     /// @brief Redefined application-level signal processing method.
     ///

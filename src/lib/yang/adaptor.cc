@@ -167,7 +167,7 @@ void applyDelete(ConstElementPtr key, ElementPtr scope) {
                 return;
             }
             for (int i = 0; i < scope->size(); ++i) {
-                ConstElementPtr item = scope->get(i);
+                ElementPtr item = scope->getNonConst(i);
                 if (!item || (item->getType() != Element::map)) {
                     continue;
                 }
@@ -244,9 +244,11 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
         if (name.empty() || !scope->contains(name)) {
             return;
         }
-        ElementPtr down = boost::const_pointer_cast<Element>(scope->get(name));
+        ConstElementPtr down(scope->get(name));
         if (down) {
-            applyDown(path, actions, down, next);
+            ElementPtr mutable_down(copy(down, 0));
+            applyDown(path, actions, mutable_down, next);
+            scope->set(name, mutable_down);
         }
     } else if (scope->getType() == Element::list) {
         if (!step) {

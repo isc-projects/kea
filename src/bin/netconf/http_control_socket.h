@@ -47,7 +47,7 @@ public:
     /// @param service The target service.
     /// @return The JSON element answer of config-test.
     /// @throw ControlSocketError when a communication error occurs.
-    data::ConstElementPtr configTest(data::ConstElementPtr config,
+    data::ConstElementPtr configTest(data::ElementPtr config,
                                      const std::string& service) override final;
 
     /// @brief Set configuration.
@@ -58,7 +58,7 @@ public:
     /// @param service The target service.
     /// @return The JSON element answer of config-set.
     /// @throw ControlSocketError when a communication error occurs.
-    data::ConstElementPtr configSet(data::ConstElementPtr config,
+    data::ConstElementPtr configSet(data::ElementPtr config,
                                     const std::string& service) override final;
 
 private:

@@ -94,27 +94,33 @@ size_t NetconfSimpleParser::setAllDefaults(const ElementPtr& global) {
 
     ConstElementPtr servers = global->get("managed-servers");
     if (servers) {
-        for (auto it : servers->mapValue()) {
-            cnt += setServerDefaults(it.first, it.second);
+        ElementPtr mutable_servers(copy(servers, 0));
+        for (auto it : mutable_servers->mapValue()) {
+            ElementPtr server(copy(it.second, 0));
+            cnt += setServerDefaults(it.first, server);
+            mutable_servers->set(it.first, server);
         }
+        global->set("managed-servers", mutable_servers);
     }
 
     return (cnt);
 }
 
-size_t NetconfSimpleParser::deriveParameters(ConstElementPtr global) {
+size_t NetconfSimpleParser::deriveParameters(ElementPtr global) {
     size_t cnt = 0;
 
     // Now derive global parameters into managed-servers.
     ConstElementPtr servers = global->get("managed-servers");
     if (servers) {
-        for (auto it : servers->mapValue()) {
-            ElementPtr mutable_server =
-                boost::const_pointer_cast<Element>(it.second);
+        ElementPtr mutable_servers(copy(servers, 0));
+        for (auto it : mutable_servers->mapValue()) {
+            ElementPtr mutable_server = copy(it.second, 0);
             cnt += SimpleParser::deriveParams(global,
                                               mutable_server,
                                               INHERIT_TO_SERVERS);
+            mutable_servers->set(it.first, mutable_server);
         }
+        global->set("managed-servers", mutable_servers);
     }
 
     return (cnt);
@@ -122,35 +128,33 @@ size_t NetconfSimpleParser::deriveParameters(ConstElementPtr global) {
 
 size_t
 NetconfSimpleParser::setServerDefaults(const std::string name,
-                                       ConstElementPtr server) {
+                                       ElementPtr server) {
     size_t cnt = 0;
 
-    ElementPtr mutable_server =
-        boost::const_pointer_cast<Element>(server);
     if (name == "dhcp4") {
-        cnt += setDefaults(mutable_server, DHCP4_DEFAULTS);
+        cnt += setDefaults(server, DHCP4_DEFAULTS);
     } else if (name == "dhcp6") {
-        cnt += setDefaults(mutable_server, DHCP6_DEFAULTS);
+        cnt += setDefaults(server, DHCP6_DEFAULTS);
     } else if (name == "d2") {
-        cnt += setDefaults(mutable_server, D2_DEFAULTS);
+        cnt += setDefaults(server, D2_DEFAULTS);
     } else if (name == "ca") {
-        cnt += setDefaults(mutable_server, CA_DEFAULTS);
+        cnt += setDefaults(server, CA_DEFAULTS);
     }
 
     ConstElementPtr ctrl_sock = server->get("control-socket");
     if (!ctrl_sock) {
         return (cnt);
     }
-    ElementPtr mutable_ctrl_sock =
-        boost::const_pointer_cast<Element>(ctrl_sock);
+    ElementPtr mutable_ctrl_sock(copy(ctrl_sock, 0));
     cnt += setDefaults(mutable_ctrl_sock, CTRL_SOCK_DEFAULTS);
+    server->set("control-socket", mutable_ctrl_sock);
 
     return (cnt);
 }
 
 void
 NetconfSimpleParser::parse(const NetconfConfigPtr& ctx,
-                           const ConstElementPtr& config,
+                           const ElementPtr& config,
                            bool check_only) {
 
     // User context can be done at anytime.
