@@ -1,7 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
-TEST_CA_DIR = $(abs_srcdir)/../testutils/ca
-AM_CPPFLAGS += -DTEST_CA_DIR=\"$(TEST_CA_DIR)\"
+AM_CPPFLAGS += -DTEST_CA_DIR=\"$(abs_srcdir)/../../asiolink/testutils/ca\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
