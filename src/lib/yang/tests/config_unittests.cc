@@ -39,16 +39,16 @@ namespace {
 /// @param right right string
 /// @return the unified diff between left and right
 #ifdef HAVE_CREATE_UNIFIED_DIFF
-std::string generateDiff(std::string left, std::string right) {
-    std::vector<std::string> left_lines;
+string generateDiff(string left, string right) {
+    vector<string> left_lines;
     boost::split(left_lines, left, boost::is_any_of("\n"));
-    std::vector<std::string> right_lines;
+    vector<string> right_lines;
     boost::split(right_lines, right, boost::is_any_of("\n"));
     using namespace testing::internal;
     return (edit_distance::CreateUnifiedDiff(left_lines, right_lines));
 }
 #else
-std::string generateDiff(std::string, std::string) {
+string generateDiff(string, string) {
     return ("");
 }
 #endif
@@ -73,7 +73,7 @@ public:
     }
 
     void cleanModelData() {
-        std::string toplevel_node("config");
+        string toplevel_node("config");
         if (model_ == IETF_DHCPV6_SERVER) {
             toplevel_node = "server";
         }
@@ -181,7 +181,7 @@ public:
     /// @brief The sysrepo session.
     Session session_;
 
-    std::unique_ptr<Translator> translator_;
+    unique_ptr<Translator> translator_;
 };  // ConfigTest
 
 struct ConfigTestKeaV4 : ConfigTest {

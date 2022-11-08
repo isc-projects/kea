@@ -53,7 +53,7 @@ void compareJSON(ConstElementPtr a, ConstElementPtr b) {
 /// @param txt text to be compared
 /// @param parser_type bison parser type to be instantiated
 /// @param compare whether to compare the output with legacy JSON parser
-void testParser(const std::string& txt, ParserContext::ParserType parser_type,
+void testParser(const string& txt, ParserContext::ParserType parser_type,
     bool compare = true) {
     SCOPED_TRACE("\n* Tested config: \n---\n" + txt + "\n---");
 
@@ -62,7 +62,7 @@ void testParser(const std::string& txt, ParserContext::ParserType parser_type,
             try {
                 ParserContext ctx;
                 test_json = ctx.parseString(txt, parser_type);
-            } catch (const std::exception &e) {
+            } catch (exception const &e) {
                 cout << "EXCEPTION: " << e.what() << endl;
                 throw;
             }
@@ -349,7 +349,7 @@ TEST(ParserTest, embbededComments) {
 /// to legacy parser (as legacy support for comments is very limited).
 ///
 /// @param fname name of the file to be loaded
-void testFile(const std::string& fname) {
+void testFile(const string& fname) {
     ElementPtr json;
     ElementPtr reference_json;
     ConstElementPtr test_json;
@@ -368,7 +368,7 @@ void testFile(const std::string& fname) {
     try {
         ParserContext ctx;
         test_json = ctx.parseFile(fname, ParserContext::PARSER_NETCONF);
-    } catch (const std::exception &x) {
+    } catch (exception const &x) {
         cout << "EXCEPTION: " << x.what() << endl;
         throw;
     });
@@ -399,9 +399,9 @@ TEST(ParserTest, file) {
 /// @param txt text to be parsed
 /// @param parser_type type of the parser to be used in the test
 /// @param msg expected content of the exception
-void testError(const std::string& txt,
+void testError(const string& txt,
                ParserContext::ParserType parser_type,
-               const std::string& msg) {
+               const string& msg) {
     SCOPED_TRACE("\n* Tested config: \n---\n" + txt + "\n---");
 
     ParserContext ctx;
@@ -731,7 +731,7 @@ TEST(ParserTest, unicodeEscapes) {
         try {
             ParserContext ctx;
             result = ctx.parseString(json, ParserContext::PARSER_JSON);
-        } catch (const std::exception &x) {
+        } catch (exception const &x) {
             cout << "EXCEPTION: " << x.what() << endl;
             throw;
         });
@@ -749,7 +749,7 @@ TEST(ParserTest, unicodeSlash) {
     try {
         ParserContext ctx;
         result = ctx.parseString(json, ParserContext::PARSER_JSON);
-    } catch (const std::exception &x) {
+    } catch (exception const &x) {
         cout << "EXCEPTION: " << x.what() << endl;
         throw;
     });

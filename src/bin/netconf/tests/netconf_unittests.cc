@@ -55,7 +55,7 @@ namespace {
 const string TEST_SOCKET = "test-socket";
 
 /// @brief Type definition for the pointer to Thread objects.
-using ThreadPtr = std::shared_ptr<thread>;
+using ThreadPtr = shared_ptr<thread>;
 
 /// @brief Test version of the NetconfAgent class.
 class NakedNetconfAgent : public NetconfAgent {
@@ -74,7 +74,7 @@ public:
 };  // NakedNetconfAgent
 
 /// @brief Type definition for the pointer to NakedNetconfAgent objects.
-using NakedNetconfAgentPtr = std::shared_ptr<NakedNetconfAgent>;
+using NakedNetconfAgentPtr = shared_ptr<NakedNetconfAgent>;
 
 /// @brief Clear YANG configuration.
 ///
@@ -137,10 +137,10 @@ public:
     /// socket file is created in the location pointed to by this variable.
     /// Otherwise, it is created in the build directory.
     string unixSocketFilePath() {
-        std::string socket_path;
+        string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            socket_path = std::string(env) + "/test-socket";
+            socket_path = string(env) + "/test-socket";
         } else {
             socket_path = sandbox.join("test-socket");
         }
@@ -231,12 +231,12 @@ public:
             if (timeout < duration) {
                 FAIL() << "Timeout of 2s expired while waiting for callback.";
             }
-            std::this_thread::sleep_for(1ms);
+            this_thread::sleep_for(1ms);
         }
     }
 
     /// @brief To know when the callback was called.
-    std::atomic<bool> finished_;
+    atomic<bool> finished_;
 
     /// @brief IOService object.
     IOServicePtr io_service_;
@@ -470,7 +470,7 @@ TEST_F(NetconfAgentLogTest, logChanges) {
     SubscribeOptions const options(SubscribeOptions::Default | SubscribeOptions::DoneOnly);
     optional<Subscription> subscription;
     EXPECT_NO_THROW_LOG(subscription = agent_->running_sess_->onModuleChange(KEA_DHCP4_SERVER, cb,
-                                                                             std::nullopt, 0,
+                                                                             nullopt, 0,
                                                                              options));
     thread_.reset(new thread([this]() { io_service_->run(); }));
 
@@ -530,7 +530,7 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
     SubscribeOptions const options(SubscribeOptions::Default | SubscribeOptions::DoneOnly);
     optional<Subscription> subscription;
     EXPECT_NO_THROW_LOG(subscription = agent_->running_sess_->onModuleChange(KEA_DHCP4_SERVER, cb,
-                                                                             std::nullopt, 0,
+                                                                             nullopt, 0,
                                                                              options));
     thread_.reset(new thread([this]() { io_service_->run(); }));
 

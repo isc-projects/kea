@@ -43,7 +43,7 @@ using isc::yang::test::SysrepoSetup;
 namespace {
 
 /// @brief Type definition for the pointer to Thread objects.
-using ThreadPtr = std::shared_ptr<thread>;
+using ThreadPtr = shared_ptr<thread>;
 
 //////////////////////////////// STDOUT ////////////////////////////////
 
@@ -62,7 +62,7 @@ public:
 };  // TestStdoutControlSocket
 
 /// @brief Type definition for the pointer to the @c TestStdoutControlSocket.
-using TestStdoutControlSocketPtr = std::shared_ptr<TestStdoutControlSocket>;
+using TestStdoutControlSocketPtr = shared_ptr<TestStdoutControlSocket>;
 
 // Verifies that the createControlSocket template can create a stdout
 // control socket.
@@ -75,7 +75,7 @@ TEST(StdoutControlSocketTest, createControlSocket) {
     ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     StdoutControlSocketPtr scs =
-        std::dynamic_pointer_cast<StdoutControlSocket>(cs);
+        dynamic_pointer_cast<StdoutControlSocket>(cs);
     EXPECT_TRUE(scs);
 }
 
@@ -171,10 +171,10 @@ public:
     /// socket file is created in the location pointed to by this variable.
     /// Otherwise, it is created in the build directory.
     string unixSocketFilePath() {
-        std::string socket_path;
+        string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            socket_path = std::string(env) + "/test-socket";
+            socket_path = string(env) + "/test-socket";
         } else {
             socket_path = sandbox.join("test-socket");
         }
@@ -302,7 +302,7 @@ TEST_F(UnixControlSocketTest, createControlSocket) {
     ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     UnixControlSocketPtr ucs =
-        std::dynamic_pointer_cast<UnixControlSocket>(cs);
+        dynamic_pointer_cast<UnixControlSocket>(cs);
     EXPECT_TRUE(ucs);
 }
 
@@ -629,7 +629,7 @@ TEST_F(HttpControlSocketTest, createControlSocket) {
     ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     HttpControlSocketPtr hcs =
-        std::dynamic_pointer_cast<HttpControlSocket>(cs);
+        dynamic_pointer_cast<HttpControlSocket>(cs);
     EXPECT_TRUE(hcs);
 }
 
@@ -824,7 +824,7 @@ TEST_F(HttpControlSocketTest, connectionRefused) {
     } catch (const ControlSocketError& ex) {
         EXPECT_EQ("communication error (code): Connection refused",
                   string(ex.what()));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         FAIL() << "unexpected exception: " << ex.what();
     } catch (...) {
         FAIL() << "unexpected exception";
@@ -854,7 +854,7 @@ TEST_F(HttpControlSocketTest, partial) {
     } catch (const ControlSocketError& ex) {
         EXPECT_EQ("communication error (code): End of file",
                   string(ex.what()));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         FAIL() << "unexpected exception: " << ex.what();
     } catch (...) {
         FAIL() << "unexpected exception";

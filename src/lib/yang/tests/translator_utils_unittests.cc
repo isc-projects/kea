@@ -232,7 +232,7 @@ TEST(YangReprTest, setTest) {
 ///
 /// @param model name of the model to be verified against.
 /// @param tree tree to be verified.
-void sanityCheckConfig(const std::string& model, const YRTree& tree) {
+void sanityCheckConfig(const string& model, const YRTree& tree) {
     SCOPED_TRACE("\n* Tested model: " + model);
     SysrepoSetup::cleanSharedMemory();
 
@@ -249,7 +249,7 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
         translator.deleteItem("/keatest-module:main");
         translator.deleteItem("/keatest-module:presence-container");
     } else {
-        std::string toplevel_node("config");
+        string toplevel_node("config");
         if (model == IETF_DHCPV6_SERVER) {
             toplevel_node = "server";
         }

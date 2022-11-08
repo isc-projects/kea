@@ -20,7 +20,6 @@ using namespace isc::netconf;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
-using namespace boost::posix_time;
 using namespace std;
 
 namespace {

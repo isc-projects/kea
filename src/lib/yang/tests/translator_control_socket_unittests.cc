@@ -116,7 +116,7 @@ TEST_F(TranslatorControlSocketTestCtrlAgent, set) {
     sock->set("comment", Element::create("a comment"));
     try {
         translator_->setControlSocket(xpath, sock);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         cerr << "setControlSocket fail with " << ex.what() << endl;
     }
     ASSERT_NO_THROW_LOG(translator_->setControlSocket(xpath, sock));

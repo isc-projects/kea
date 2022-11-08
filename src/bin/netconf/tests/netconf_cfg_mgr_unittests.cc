@@ -39,7 +39,7 @@ public:
 
 // Tests construction of NetconfCfgMgr class.
 TEST(NetconfCfgMgr, construction) {
-    std::unique_ptr<NetconfCfgMgr> cfg_mgr;
+    unique_ptr<NetconfCfgMgr> cfg_mgr;
 
     // Verify that configuration manager constructions without error.
     ASSERT_NO_THROW_LOG(cfg_mgr.reset(new NetconfCfgMgr()));

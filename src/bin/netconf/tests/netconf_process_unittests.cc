@@ -17,7 +17,6 @@
 
 #include <functional>
 
-using namespace boost::posix_time;
 using namespace isc;
 using namespace isc::netconf;
 using namespace isc::asiolink;

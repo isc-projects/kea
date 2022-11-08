@@ -33,7 +33,7 @@ public:
 /// @param fname name of the file (expected to be a valid JSON config)
 /// @param v6 - false=v4, true=v6
 /// @param result - JSON converted by a AdaptorConfig::preprocess[4/6]
-void testFile(const std::string& fname, bool v6, ElementPtr& result) {
+void testFile(const string& fname, bool v6, ElementPtr& result) {
     ElementPtr json;
     ElementPtr reference_json;
 

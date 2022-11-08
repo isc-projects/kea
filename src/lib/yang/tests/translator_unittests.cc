@@ -52,7 +52,7 @@ TEST_F(TranslatorTest, constructor) {
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
     // Get a translator object.
-    std::unique_ptr<Translator> translator;
+    unique_ptr<Translator> translator;
     EXPECT_NO_THROW_LOG(translator.reset(new Translator(sess, "")));
 }
 
@@ -61,7 +61,7 @@ TEST_F(TranslatorTest, getItem) {
     // Get a translator object to play with.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
-    std::unique_ptr<Translator> translator;
+    unique_ptr<Translator> translator;
     ASSERT_NO_THROW_LOG(translator.reset(new Translator(sess, "")));
     string value;
     ConstElementPtr element;
@@ -518,7 +518,7 @@ TEST_F(TranslatorTest, setItem) {
     // Get a translator object to play with.
     Session sess(Connection{}.sessionStart());
     sess.switchDatastore(sysrepo::Datastore::Candidate);
-    std::unique_ptr<Translator> translator;
+    unique_ptr<Translator> translator;
     ASSERT_NO_THROW_LOG(translator.reset(new Translator(sess, "keatest-module")));
 
     ElementPtr element;
