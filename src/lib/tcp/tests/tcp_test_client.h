@@ -271,7 +271,7 @@ public:
     void responseReceived() {
         /// Unpack wire data into a string.
         ASSERT_NO_THROW(stream_response_->unpack());
-        std::string response = stream_response_->getRequest();
+        std::string response = stream_response_->getRequestString();
         responses_received_.push_back(response);
 
         // Quit if server tells us "good bye".

@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef TCP_STREAM_H
-#define TCP_STREAM_H
+#ifndef TCP_STREAM_MSG_H
+#define TCP_STREAM_MSG_H
 
 #include <tcp/tcp_connection.h>
 #include <boost/shared_ptr.hpp>
@@ -53,14 +53,34 @@ public:
     /// @brief Unpacks the wire data into a string request.
     virtual void unpack();
 
-    /// @brief Fetches the unpacked string request.
-    std::string getRequest() const {
-        return(request_);
+    /// @brief Returns size of the unpacked request.
+    size_t getRequestSize() const {
+        return (request_.size());
+    }
+
+    /// @brief Returns pointer to the first byte of the unpacked request data.
+    ///
+    /// @return Constant raw pointer to the data.
+    /// @throw InvalidOperation if request data is empty (i.e. getRequestSize() == 0).
+    const uint8_t* getRequest() const {
+        if (request_.empty()) {
+            isc_throw(InvalidOperation, "TcpStreamRequest::getRequest()"
+                                        " - cannot access empty request");
+        }
+
+        return (request_.data());
+    }
+
+    /// @brief Fetches the unpacked request as a string.
+    ///
+    /// @return String containing the unpacked contents.
+    std::string getRequestString() const {
+        return (std::string(request_.begin(), request_.end()));
     };
 
 protected:
-    /// @brief Unpacked request string.
-    std::string request_;
+    /// @brief Unpacked request content
+    std::vector<uint8_t> request_;
 
 private:
     /// @brief Expected size of the current message.
@@ -83,22 +103,35 @@ public:
     /// @brief Destructor.
     virtual ~TcpStreamResponse() {};
 
-    /// @brief Replaces the response content.
+    /// @brief Replaces the response content .
     ///
-    /// @param response New contents for the output buffer.
-    virtual void setResponseData(const std::string& response);
+    /// @param data New contents for the output buffer.
+    /// @param length Length of the contents to add.
+    virtual void setResponseData(const uint8_t* data, size_t length);
 
-    /// @brief Appends data to the response content.
+    /// @brief Appends a data to the response content.
     ///
-    /// @param response New contents for the output buffer.
-    virtual void appendResponseData(const std::string& response);
+    /// @param data Data to append to the response.
+    /// @param length Length of the contents to add.
+    virtual void appendResponseData(const uint8_t* data, size_t length);
+
+    /// @brief Replaces the response content from a string.
+    ///
+    /// @param str New contents for the output buffer.
+    virtual void setResponseData(const std::string& str);
+
+    /// @brief Appends a string to the response content.
+    ///
+    /// @param str contents to add to the output buffer.
+    virtual void appendResponseData(const std::string& str);
 
     /// @brief Packs the response content into wire data buffer.
     virtual void pack();
 
 private:
     /// @brief Unpacked response data to send.
-    std::string response_;
+    std::vector<uint8_t> response_;
+
 };
 
 /// @brief Pointer to a TcpStreamResponse.
@@ -107,4 +140,4 @@ typedef boost::shared_ptr<TcpStreamResponse> TcpStreamResponsePtr;
 } // end of namespace isc::tcp
 } // end of namespace isc
 
-#endif  // TCP_STREAM_H
+#endif  // TCP_STREAM_MSG_H

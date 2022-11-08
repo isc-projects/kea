@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <tcp/tcp_stream.h>
+#include <tcp/tcp_stream_msg.h>
 #include <util/strutil.h>
 
 #include <iomanip>
@@ -62,17 +62,27 @@ void TcpStreamRequest::unpack() {
         isc_throw(Unexpected, "Request is malformed, too short");
     }
 
-    request_ = std::string(wire_data_.begin() + sizeof(uint16_t) , wire_data_.end());
+    request_ = std::vector<uint8_t>(wire_data_.begin() + sizeof(uint16_t) , wire_data_.end());
 }
 
 void
-TcpStreamResponse::setResponseData(const std::string& response) {
-    response_ = response;
+TcpStreamResponse::setResponseData(const uint8_t* data, size_t length) {
+    response_.assign(data, data + length);
 }
 
 void
-TcpStreamResponse::appendResponseData(const std::string& response) {
-    response_ += response;
+TcpStreamResponse::appendResponseData(const uint8_t* data, size_t length) {
+    response_.insert(response_.end(), data, data + length);
+}
+
+void
+TcpStreamResponse::setResponseData(const std::string& str) {
+    response_.assign(str.begin(), str.end());
+}
+
+void
+TcpStreamResponse::appendResponseData(const std::string& str) {
+    response_.insert(response_.end(), str.begin(), str.end());
 }
 
 void

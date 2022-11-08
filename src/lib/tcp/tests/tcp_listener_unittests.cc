@@ -11,7 +11,7 @@
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include <tcp/tcp_stream.h>
+#include <tcp/tcp_stream_msg.h>
 #include <tcp/tcp_listener.h>
 #include <tcp_test_client.h>
 #include <util/multi_threading_mgr.h>
@@ -87,7 +87,7 @@ public:
         }
 
         req->unpack();
-        auto request_str = req->getRequest();
+        auto request_str = req->getRequestString();
         std::ostringstream os;
         if (request_str == "I am done") {
             os << "good bye";
