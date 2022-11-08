@@ -69,10 +69,11 @@ public:
                       const TcpConnectionAcceptorPtr& acceptor,
                       const TlsContextPtr& tls_context,
                       TcpConnectionPool& connection_pool,
-                      const TcpConnectionAcceptorCallback& callback,
+                      const TcpConnectionAcceptorCallback& acceptor_callback,
+                      const TcpConnectionFilterCallback& filter_callback,
                       const long idle_timeout)
-     : TcpConnection(io_service, acceptor, tls_context, connection_pool, callback,
-                     idle_timeout) {
+     : TcpConnection(io_service, acceptor, tls_context, connection_pool,
+                     acceptor_callback, filter_callback, idle_timeout) {
     }
 
     virtual TcpRequestPtr createRequest() {
@@ -112,9 +113,10 @@ public:
                     const unsigned short server_port,
                     const TlsContextPtr& tls_context,
                     const IdleTimeout& idle_timeout,
+                    const TcpConnectionFilterCallback& filter_callback,
                     const size_t read_max = 32 * 1024)
         : TcpListener(io_service, server_address, server_port,
-                      tls_context, idle_timeout),
+                      tls_context, idle_timeout, filter_callback),
                       read_max_(read_max) {
     }
 
@@ -127,18 +129,19 @@ protected:
     ///
     /// @param callback Callback invoked when new connection is accepted.
     /// @return Pointer to the created connection.
-    virtual TcpConnectionPtr createConnection(const TcpConnectionAcceptorCallback& callback) {
-        TcpConnectionPtr
-            conn(new TcpTestConnection(io_service_, acceptor_,
-                                       tls_context_, connections_,
-                                       callback, idle_timeout_));
-            conn->setReadMax(read_max_);
+    virtual TcpConnectionPtr createConnection(
+            const TcpConnectionAcceptorCallback& acceptor_callback,
+            const TcpConnectionFilterCallback& connection_filter) {
+        TcpConnectionPtr conn(new TcpTestConnection(io_service_, acceptor_,
+                                                    tls_context_, connections_,
+                                                    acceptor_callback, connection_filter,
+                                                    idle_timeout_));
+        conn->setReadMax(read_max_);
         return (conn);
     }
 
     /// @brief Maximum size of a single socket read
     size_t read_max_;
-
 };
 
 /// @brief Test fixture class for @ref TcpListener.
@@ -240,6 +243,28 @@ public:
         io_service_.poll();
     }
 
+    /// @brief Pass through filter that allows all connections.
+    bool noFilter(const std::string& /* remote_endpoint_address */) {
+        return(true);
+    }
+
+    /// @brief Filter that denies every other connection.
+    ///
+    /// @param remote_endpoint_address ip address of the remote end of
+    /// a connection.
+    bool connectionFilter(const std::string& remote_endpoint_address) {
+        static size_t count = 0;
+        // If the address doesn't match, something hinky is going on, so
+        // we'll reject them all.  If it does match, then cool, it works
+        // as expected.
+        if ((count++ % 2) || (remote_endpoint_address != SERVER_ADDRESS)) {
+            // Reject every other connection;
+            return (false);
+        }
+
+        return (true);
+    }
+
     /// @brief IO service used in the tests.
     IOService io_service_;
 
@@ -263,7 +288,8 @@ TEST_F(TcpListenerTest, listen) {
     const std::string request = "I am done";
 
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
+                             std::bind(&TcpListenerTest::noFilter, this, ph::_1));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -288,7 +314,9 @@ TEST_F(TcpListenerTest, splitReads) {
     // Read at most one byte at a time.
     size_t read_max = 1;
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT), read_max);
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
+                             std::bind(&TcpListenerTest::noFilter, this, ph::_1),
+                             read_max);
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -311,7 +339,8 @@ TEST_F(TcpListenerTest, splitReads) {
 // transmit a streamed request and receive a streamed response.
 TEST_F(TcpListenerTest, idleTimeoutTest) {
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(SHORT_IDLE_TIMEOUT));
+                             TlsContextPtr(), TcpListener::IdleTimeout(SHORT_IDLE_TIMEOUT),
+                             std::bind(&TcpListenerTest::noFilter, this, ph::_1));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -337,7 +366,8 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
     const std::string request = "I am done";
 
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
+                             std::bind(&TcpListenerTest::noFilter, this, ph::_1));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -359,11 +389,14 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
     io_service_.poll();
 }
 
+// Verify that the listener handles multiple requests for multiple
+// clients.
 TEST_F(TcpListenerTest, multipleRequetsPerClients) {
     std::list<std::string>requests{ "one", "two", "three", "I am done"};
 
     TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
+                             std::bind(&TcpListenerTest::noFilter, this, ph::_1));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -381,6 +414,50 @@ TEST_F(TcpListenerTest, multipleRequetsPerClients) {
         EXPECT_TRUE((*client)->receiveDone());
         EXPECT_FALSE((*client)->expectedEof());
         EXPECT_EQ(expected_responses, (*client)->getResponses());
+    }
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// Verify that connection filtering can eliminate specific connections.
+TEST_F(TcpListenerTest, filterClientsTest) {
+    const std::string request = "I am done";
+
+    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
+                             std::bind(&TcpListenerTest::connectionFilter, this, ph::_1));
+
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
+    ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
+    size_t num_clients = 5;
+    for ( auto i = 0; i < num_clients; ++i ) {
+        // Every other client sends nothing (i.e. waits for EOF) as
+        // we expect the filter to reject them.
+        if (i % 2 == 0) {
+            ASSERT_NO_THROW(startRequest("I am done"));
+        } else {
+            ASSERT_NO_THROW(startRequest(""));
+        }
+    }
+
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(num_clients, clients_.size());
+
+    size_t i = 0;
+    for (auto client = clients_.begin(); client != clients_.end(); ++client) {
+        if (i % 2 == 0) {
+            // These clients should have been accepted and received responses.
+            EXPECT_TRUE((*client)->receiveDone());
+            EXPECT_FALSE((*client)->expectedEof());
+        } else {
+            // These clients should have been rejected and gotten EOF'd.
+            EXPECT_FALSE((*client)->receiveDone());
+            EXPECT_TRUE((*client)->expectedEof());
+        }
+
+        ++i;
     }
 
     listener.stop();

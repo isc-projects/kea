@@ -11,6 +11,7 @@ extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED = "TCP_CLIENT_REQUE
 extern const isc::log::MessageID TCP_CONNECTION_CLOSE_CALLBACK_FAILED = "TCP_CONNECTION_CLOSE_CALLBACK_FAILED";
 extern const isc::log::MessageID TCP_CONNECTION_HANDSHAKE_FAILED = "TCP_CONNECTION_HANDSHAKE_FAILED";
 extern const isc::log::MessageID TCP_CONNECTION_HANDSHAKE_START = "TCP_CONNECTION_HANDSHAKE_START";
+extern const isc::log::MessageID TCP_CONNECTION_REJECTED_BY_FILTER = "TCP_CONNECTION_REJECTED_BY_FILTER";
 extern const isc::log::MessageID TCP_CONNECTION_SHUTDOWN = "TCP_CONNECTION_SHUTDOWN";
 extern const isc::log::MessageID TCP_CONNECTION_SHUTDOWN_FAILED = "TCP_CONNECTION_SHUTDOWN_FAILED";
 extern const isc::log::MessageID TCP_CONNECTION_STOP = "TCP_CONNECTION_STOP";
@@ -33,6 +34,7 @@ const char* values[] = {
     "TCP_CONNECTION_CLOSE_CALLBACK_FAILED", "Connection close callback threw an exception",
     "TCP_CONNECTION_HANDSHAKE_FAILED", "TLS handshake with %1 failed with %2",
     "TCP_CONNECTION_HANDSHAKE_START", "start TLS handshake with %1 with timeout %2",
+    "TCP_CONNECTION_REJECTED_BY_FILTER", "connection from %1 has been denied by the connection filter.",
     "TCP_CONNECTION_SHUTDOWN", "shutting down TCP connection from %1",
     "TCP_CONNECTION_SHUTDOWN_FAILED", "shutting down TCP connection failed",
     "TCP_CONNECTION_STOP", "stopping TCP connection from %1",

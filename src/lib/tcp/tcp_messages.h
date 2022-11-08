@@ -12,6 +12,7 @@ extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED;
 extern const isc::log::MessageID TCP_CONNECTION_CLOSE_CALLBACK_FAILED;
 extern const isc::log::MessageID TCP_CONNECTION_HANDSHAKE_FAILED;
 extern const isc::log::MessageID TCP_CONNECTION_HANDSHAKE_START;
+extern const isc::log::MessageID TCP_CONNECTION_REJECTED_BY_FILTER;
 extern const isc::log::MessageID TCP_CONNECTION_SHUTDOWN;
 extern const isc::log::MessageID TCP_CONNECTION_SHUTDOWN_FAILED;
 extern const isc::log::MessageID TCP_CONNECTION_STOP;

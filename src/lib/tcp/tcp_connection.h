@@ -158,6 +158,9 @@ public:
 /// declaring @ref TcpConnectionPool to avoid circular inclusion.
 class TcpConnectionPool;
 
+/// @brief Type of the callback for filtering new connections by ip address.
+typedef std::function<bool(const std::string& remote_endpoint_address)> TcpConnectionFilterCallback;
+
 /// @brief Accepts and handles a single TCP connection.
 class TcpConnection : public boost::enable_shared_from_this<TcpConnection> {
 private:
@@ -207,7 +210,9 @@ public:
     /// @param tls_context TLS context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
-    /// @param callback Callback invoked when new connection is accepted.
+    /// @param acceptor_callback Callback invoked when new connection is accepted.
+    /// @param connection_filter Callback invoked prior to handshake which can be
+    /// used to qualify and reject connections
     /// @param idle_timeout Timeout after which a TCP connection is
     /// closed by the server.
     /// @param read_max maximum size of a single socket read.  Defaults to 32K.
@@ -215,7 +220,8 @@ public:
                   const TcpConnectionAcceptorPtr& acceptor,
                   const asiolink::TlsContextPtr& tls_context,
                   TcpConnectionPool& connection_pool,
-                  const TcpConnectionAcceptorCallback& callback,
+                  const TcpConnectionAcceptorCallback& acceptor_callback,
+                  const TcpConnectionFilterCallback& connection_filter,
                   const long idle_timeout,
                   const size_t read_max = 32768);
 
@@ -426,6 +432,9 @@ protected:
 
     /// @brief External TCP acceptor callback.
     TcpConnectionAcceptorCallback acceptor_callback_;
+
+    /// @brief External callback for filtering connections by IP address.
+    TcpConnectionFilterCallback connection_filter_;
 
     /// @brief Maximum bytes to read in a single socket read.
     size_t read_max_;

@@ -61,6 +61,10 @@ transaction. This is proven to occur when the system clock is moved manually
 or as a result of synchronization with a time server. Any ongoing transactions
 will be interrupted. New transactions should be conducted normally.
 
+% TCP_CONNECTION_REJECTED_BY_FILTER connection from %1 has been denied by the connection filter.
+This debug message is issued when the server's connection filter rejects
+a new connection based on the client's ip address.
+
 % TCP_REQUEST_RECEIVE_START start receiving request from %1 with timeout %2
 This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
@@ -72,7 +76,6 @@ This error message is issued when an unexpected error occurred while the
 server attempted to process a received request. The first argument specifies
 the address of the remote endpoint. The second argument describes the nature
 error.
-
 
 % TCP_SERVER_RESPONSE_SEND sending TCP response %1 to %2
 This debug message is issued when the server is starting to send a TCP

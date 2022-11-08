@@ -245,7 +245,7 @@ public:
                     return;
                 } else {
                     // Error occurred, bail...
-                    ADD_FAILURE() << "error occurred while receiving TCP"
+                    ADD_FAILURE() << "client: " << this << " error occurred while receiving TCP"
                         " response from the server: " << ec.message();
                     done_callback_();
                     return;

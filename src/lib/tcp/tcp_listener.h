@@ -51,7 +51,8 @@ public:
     /// @param server_port Port number on which the TCP service should run.
     /// @param tls_context TLS context.
     /// @param idle_timeout Timeout after which an idle TCP connection is
-    /// closed by the server.
+    /// @param connection_filter Callback invoked during connection acceptance
+    /// that can allow or deny connections based on the remote endpoint.
     ///
     /// @throw TcpListenerError when any of the specified parameters is
     /// invalid.
@@ -59,7 +60,8 @@ public:
                 const asiolink::IOAddress& server_address,
                 const unsigned short server_port,
                 const asiolink::TlsContextPtr& tls_context,
-                const IdleTimeout& idle_timeout);
+                const IdleTimeout& idle_timeout,
+                const TcpConnectionFilterCallback& connection_filter);
 
     /// @brief Virtual destructor.
     virtual ~TcpListener() {
@@ -109,8 +111,13 @@ protected:
     /// This method is virtual so as it can be overridden when customized
     /// connections are to be used, e.g. in case of unit testing.
     ///
+    /// @param acceptor_callback Callback invoked when new connection is accepted.
+    /// @param connection_filter Callback invoked during acceptance which may
+    /// allow of deny connections based on their remote address.
     /// @return Pointer to the created connection.
-    virtual TcpConnectionPtr createConnection(const TcpConnectionAcceptorCallback& callback);
+    virtual TcpConnectionPtr createConnection(
+        const TcpConnectionAcceptorCallback& acceptor_callback,
+        const TcpConnectionFilterCallback& connection_filter);
 
     /// @brief Reference to the IO service.
     asiolink::IOService& io_service_;
@@ -131,6 +138,10 @@ protected:
     /// @brief Timeout after which idle connection is closed by
     /// the server.
     long idle_timeout_;
+
+    /// @brief Callback invoked during acceptance which may
+    /// reject connections.
+    TcpConnectionFilterCallback connection_filter_;
 };
 
 } // end of namespace isc::asiolink

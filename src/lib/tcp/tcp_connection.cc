@@ -52,7 +52,8 @@ TcpConnection::TcpConnection(asiolink::IOService& io_service,
                              const TcpConnectionAcceptorPtr& acceptor,
                              const TlsContextPtr& tls_context,
                              TcpConnectionPool& connection_pool,
-                             const TcpConnectionAcceptorCallback& callback,
+                             const TcpConnectionAcceptorCallback& acceptor_callback,
+                             const TcpConnectionFilterCallback& connection_filter,
                              const long idle_timeout,
                              const size_t read_max /* = 32768 */)
     : tls_context_(tls_context),
@@ -62,7 +63,8 @@ TcpConnection::TcpConnection(asiolink::IOService& io_service,
       tls_socket_(),
       acceptor_(acceptor),
       connection_pool_(connection_pool),
-      acceptor_callback_(callback),
+      acceptor_callback_(acceptor_callback),
+      connection_filter_(connection_filter),
       input_buf_(read_max) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
@@ -282,9 +284,18 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
         stopThisConnection();
     }
 
+    // Stage a new connection to listen for next client.
     acceptor_callback_(ec);
 
     if (!ec) {
+        if (!(connection_filter_(getRemoteEndpointAddressAsText()))) {
+            LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                      TCP_CONNECTION_REJECTED_BY_FILTER)
+                      .arg(getRemoteEndpointAddressAsText());
+            stopThisConnection();
+            return;
+        }
+
         if (!tls_context_) {
             LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       TCP_REQUEST_RECEIVE_START)
