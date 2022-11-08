@@ -1,3 +1,10 @@
+2077.	[func]		andrei
+	YANG modules have been updated with three configuration nodes:
+	extended-info-checks, ignore-rai-link-selection, template-test.
+	keatest-module has also gained empty, leafref and union nodes for
+	proper testing of all YANG leaf types.
+	(Gitlab #2601)
+
 2076.	[doc]		razvan
 	Add documentation for template classes and the new parameter
 	'template-test' which evaluates to a string value. This indicates
@@ -79,7 +86,7 @@ Kea 2.3.2 (development) released on October 26, 2022
 
 2066.	[bug]		fdupont
 	Fixed lease reuse process to clear the user context
-	when the lease expied and was reclaimed.
+	when the lease expired and was reclaimed.
 	(Gitlab #2588)
 
 2065.	[func]		djt
