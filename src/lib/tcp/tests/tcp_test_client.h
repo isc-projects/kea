@@ -242,11 +242,13 @@ public:
                 } else if (ec.value() == boost::asio::error::eof && expect_eof)  {
                     expected_eof_ = true;
                     done_callback_();
+                    return;
                 } else {
                     // Error occurred, bail...
                     ADD_FAILURE() << "error occurred while receiving TCP"
                         " response from the server: " << ec.message();
                     done_callback_();
+                    return;
                 }
             }
 
@@ -276,6 +278,7 @@ public:
         if (response.find("good bye", 0) != std::string::npos) {
             receive_done_ = true;
             done_callback_();
+            return;
         }
 
         // Clear out for the next one.

@@ -18,13 +18,11 @@ namespace tcp {
 
 bool
 TcpStreamRequest::needData() const {
-    HERE("");
     return (!expected_size_ || (wire_data_.size() < expected_size_));
 }
 
 size_t
 TcpStreamRequest::postBuffer(const void* buf,  const size_t nbytes) {
-    HERE("");
     if (nbytes) {
         const char* bufptr = static_cast<const char*>(buf);
         wire_data_.insert(wire_data_.end(), bufptr, bufptr + nbytes);

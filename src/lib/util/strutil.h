@@ -394,7 +394,7 @@ isPrintable(const std::vector<uint8_t>& content) {
 /// @param data pointer to the data to dump
 /// @param length number of bytes to dump. Caller should ensure the length
 /// does not exceed the buffer.
-std::string dumpAsHex(const uint8_t* data, size_t len);
+std::string dumpAsHex(const uint8_t* data, size_t length);
 
 } // namespace str
 } // namespace util

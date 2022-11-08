@@ -65,7 +65,6 @@ TcpConnection::TcpConnection(asiolink::IOService& io_service,
       acceptor_callback_(callback),
       input_buf_(read_max) {
     if (!tls_context) {
-        HERE("");
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
         tls_socket_.reset(new asiolink::TLSSocket<SocketCallback>(io_service,
@@ -74,7 +73,6 @@ TcpConnection::TcpConnection(asiolink::IOService& io_service,
 }
 
 TcpConnection::~TcpConnection() {
-    HERE("");
     close();
 }
 
@@ -151,7 +149,8 @@ TcpConnection::asyncAccept() {
     // of the callback, because the underlying boost functions make copies
     // as needed.
     TcpConnectionAcceptorCallback cb = std::bind(&TcpConnection::acceptorCallback,
-                                                 shared_from_this(), ph::_1);
+                                                 shared_from_this(),
+                                                 ph::_1);
     try {
         TlsConnectionAcceptorPtr tls_acceptor =
             boost::dynamic_pointer_cast<TlsConnectionAcceptor>(acceptor_);
@@ -159,7 +158,6 @@ TcpConnection::asyncAccept() {
             if (!tcp_socket_) {
                 isc_throw(Unexpected, "internal error: TCP socket is null");
             }
-            HERE("");
             acceptor_->asyncAccept(*tcp_socket_, cb);
         } else {
             if (!tls_socket_) {
@@ -177,12 +175,10 @@ void
 TcpConnection::doHandshake() {
     // Skip the handshake if the socket is not a TLS one.
     if (!tls_socket_) {
-        HERE("");
         doRead();
         return;
     }
 
-    HERE("setupIdleTimer");
     setupIdleTimer();
 
     // Create instance of the callback. It is safe to pass the local instance
@@ -203,10 +199,8 @@ TcpConnection::doHandshake() {
 void
 TcpConnection::doRead(TcpRequestPtr request) {
     try {
-        HERE("");
         TCPEndpoint endpoint;
 
-        HERE("setup Idle timer");
         setupIdleTimer();
 
         // Request hasn't been created if we are starting to read the
@@ -224,14 +218,12 @@ TcpConnection::doRead(TcpRequestPtr request) {
                                     ph::_1,   // error
                                     ph::_2)); // bytes_transferred
         if (tcp_socket_) {
-            HERE("tcp_socket read max bytes:" << getInputBufSize());
             tcp_socket_->asyncReceive(static_cast<void*>(getInputBufData()),
                                       getInputBufSize(), 0, &endpoint, cb);
             return;
         }
 
         if (tls_socket_) {
-            HERE("tls_socket read max bytes:" << getInputBufSize());
             tls_socket_->asyncReceive(static_cast<void*>(getInputBufData()),
                                       getInputBufSize(), 0, &endpoint, cb);
             return;
@@ -245,7 +237,6 @@ void
 TcpConnection::doWrite(TcpResponsePtr response) {
     try {
         if (response->wireDataAvail()) {
-            HERE("send:" << isc::util::str::dumpAsHex(response->getWireData(), response->getWireDataSize()));
             // Create instance of the callback. It is safe to pass the local instance
             // of the callback, because the underlying std functions make copies
             // as needed.
@@ -268,7 +259,6 @@ TcpConnection::doWrite(TcpResponsePtr response) {
             }
         } else {
             // The connection remains open and we are done sending the response.
-            HERE("setupIdleTimer - write finsihed");
             setupIdleTimer();
         }
     } catch (...) {
@@ -278,7 +268,6 @@ TcpConnection::doWrite(TcpResponsePtr response) {
 
 void
 TcpConnection::asyncSendResponse(TcpResponsePtr response) {
-    HERE("");
     doWrite(response);
 }
 
@@ -324,7 +313,6 @@ TcpConnection::handshakeCallback(const boost::system::error_code& ec) {
                   TCP_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText());
 
-        HERE("");
         doRead();
     }
 }
@@ -354,7 +342,6 @@ TcpConnection::socketReadCallback(TcpRequestPtr request,
     }
 
     // Data received, Restart the request timer.
-    HERE("setupIdleTimer - data recevied, post it")
     setupIdleTimer();
 
     TcpRequestPtr next_request = request;
@@ -394,7 +381,6 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
                 .arg(getRemoteEndpointAddressAsText());
 
         // Request complete, stop the timer.
-        HERE("Cancel idleTimer while we handle complete request");
         idle_timer_.cancel();
 
         // Process the completed request.
@@ -466,7 +452,6 @@ TcpConnection::idleTimeoutCallback() {
     LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
               TCP_IDLE_CONNECTION_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
-    HERE("idle timeout! shutting down");
     // In theory we should shutdown first and stop/close after but
     // it is better to put the connection management responsibility
     // on the client... so simply drop idle connections.

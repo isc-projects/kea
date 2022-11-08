@@ -24,6 +24,7 @@ run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += tcp_listener_unittests.cc
 run_unittests_SOURCES += tcp_test_client.h
 
+# @todo These tests will be needed. These are here as a reminder.
 #if HAVE_OPENSSL
 #run_unittests_SOURCES += tls_unittest.cc
 #run_unittests_SOURCES += tls_acceptor_unittest.cc

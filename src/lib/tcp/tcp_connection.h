@@ -25,11 +25,7 @@ namespace isc {
 namespace tcp {
 
 /// @todo Take this out, it's just for dev coding
-#if 0
 #define HERE(a) std::cout << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << a << std::endl << std::flush;
-#else
-#define HERE(a)
-#endif
 
 /// @brief Defines a data structure for storing raw bytes of data on the wire.
 typedef std::vector<uint8_t> WireData;
@@ -51,7 +47,7 @@ public:
     /// @return Constant raw pointer to the data.
     const uint8_t* getWireData() const {
         if (wire_data_.empty()) {
-            isc_throw(InvalidOperation, "TcpMessage::geWireData() - cannot access empty wire data");
+            isc_throw(InvalidOperation, "TcpMessage::getWireData() - cannot access empty wire data");
         }
 
         return (wire_data_.data());
@@ -68,7 +64,7 @@ protected:
 };
 
 /// @brief Abstract class used to receive an inbound message.
-class TcpRequest : public TcpMessage{
+class TcpRequest : public TcpMessage {
 public:
     /// @brief Constructor.
     TcpRequest(){};
@@ -112,7 +108,7 @@ private:
 typedef boost::shared_ptr<TcpRequest> TcpRequestPtr;
 
 /// @brief Abstract class used to create and send an outbound response.
-class TcpResponse : public TcpMessage{
+class TcpResponse : public TcpMessage {
 public:
     /// @brief Constructor
     TcpResponse()

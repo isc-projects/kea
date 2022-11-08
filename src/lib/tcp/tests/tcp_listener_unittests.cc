@@ -321,7 +321,7 @@ TEST_F(TcpListenerTest, idleTimeoutTest) {
     TcpTestClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
 
-    // Tell the client expecting readingo to fail with an EOF.
+    // Tell the client expecting reading to fail with an EOF.
     ASSERT_NO_THROW(client->waitForEof());
 
     // Run until idle timer expires.
