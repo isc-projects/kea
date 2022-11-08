@@ -56,7 +56,7 @@ TranslatorConfig::getConfig() {
             return (getConfigKea6());
         }
     } catch (Error const& ex) {
-        isc_throw(NetconfError, "sysrepo error getting config: " << ex.what());
+        isc_throw(NetconfError, "getting config: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getConfig not implemented for the model: " << model_);
@@ -462,7 +462,7 @@ TranslatorConfig::setConfig(ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting config '" << elem->str()
+                  "setting config '" << elem->str()
                   << "': " << ex.what());
     }
 }

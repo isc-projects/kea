@@ -21,4 +21,4 @@ static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbasic.so";
 
 }  // anonymous namespace
 
-#endif // TEST_LIBRARIES_H
+#endif  // TEST_LIBRARIES_H

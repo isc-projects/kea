@@ -51,4 +51,4 @@ extern isc::log::Logger netconf_logger;
 }  // namespace netconf
 }  // namespace isc
 
-#endif // NETCONF_LOG_H
+#endif  // NETCONF_LOG_H

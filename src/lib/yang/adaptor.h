@@ -118,4 +118,4 @@ public:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_ADAPTOR_H
+#endif  // ISC_ADAPTOR_H

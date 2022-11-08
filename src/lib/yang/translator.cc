@@ -124,15 +124,6 @@ Translator::decode64(string const& input) {
 
 void
 Translator::deleteItem(string const& xpath) {
-    /// @todo: Remove this if convenient. It is not strictly required and only done to detect
-    /// missing schema nodes and throw an exception to keep old behavior.
-    try {
-        Context const& context(session_.getContext());
-        context.findPath(xpath);
-    } catch (libyang::Error const& ex) {
-        isc_throw(NetconfError, "sysrepo error getting item at '" << xpath
-                  << "': " << ex.what());
-    }
 
     try {
         if (session_.getData(xpath)) {
@@ -140,7 +131,7 @@ Translator::deleteItem(string const& xpath) {
         }
     } catch (sysrepo::Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error deleting item at '"
+                  "deleting item at '"
                   << xpath << "': " << ex.what());
     }
     session_.applyChanges();
@@ -170,21 +161,11 @@ Translator::findXPath(string const& xpath) {
 
 optional<DataNode>
 Translator::getData(string const& xpath) const {
-    /// @todo: Remove this if convenient. It is not strictly required and only done to detect
-    /// missing schema nodes and throw an exception to keep old behavior.
-    try {
-        Context const& context(session_.getContext());
-        context.findPath(xpath);
-    } catch (libyang::Error const& ex) {
-        isc_throw(NetconfError, "sysrepo error getting item at '" << xpath
-                  << "': " << ex.what());
-    }
-
     optional<DataNode> data_node;
     try {
         data_node = session_.getData(xpath);
     } catch (sysrepo::Error const& ex) {
-        isc_throw(NetconfError, "sysrepo error getting item at '" << xpath
+        isc_throw(NetconfError, "getting item at '" << xpath
                   << "': " << ex.what());
     }
 
@@ -202,27 +183,23 @@ Translator::getItem(DataNode const& data_node,
         DataNode const& front(nodes.front());
         NodeType const node_type(front.schema().nodeType());
 
-        // Leaf-list
-        if (node_type == NodeType::Leaflist) {
+        // Leaf
+        if (node_type == NodeType::Leaf) {
+            return translateFromYang(front);
+        } else if (node_type == NodeType::Leaflist) {
             ElementPtr result(Element::createList());
             for (DataNode const& i : nodes) {
                 result->add(translateFromYang(i));
             }
             return result;
-        } else if (node_type == NodeType::Container) {
-            /// @todo:
-            /// isc_throw(NetconfError, "getting containers not supported, xpath is '" << xpath << "'");
-            return ElementPtr();
-        } else if (node_type == NodeType::List) {
-            /// @todo:
-            /// isc_throw(NetconfError, "getting lists not supported, xpath is '" << xpath << "'");
-            return ElementPtr();
+        } else {
+            isc_throw(NotImplemented, "getting node of type "
+                                          << int(node_type) << " not supported, xpath is '" << xpath
+                                          << "'");
         }
 
-        // Leaf
-        return translateFromYang(front);
     } catch (sysrepo::Error const& ex) {
-        isc_throw(NetconfError, "sysrepo error getting item at '" << xpath
+        isc_throw(NetconfError, "getting item at '" << xpath
                   << "': " << ex.what());
     }
 }
@@ -231,8 +208,6 @@ ElementPtr
 Translator::getItemFromAbsoluteXpath(string const& xpath) const {
     optional<DataNode> const& data_node(getData(xpath));
     if (!data_node) {
-        /// @todo:
-        /// isc_throw(NetconfError, "no data ");
         return ElementPtr();
     }
     return getItem(*data_node, xpath);
@@ -315,6 +290,17 @@ Translator::initializeSerializer() {
     return result;
 }
 
+
+bool Translator::schemaNodeExists(std::string const& xpath) {
+    Context const& context(session_.getContext());
+    try {
+        context.findPath(xpath);
+    } catch (libyang::Error const& ex) {
+        return false;
+    }
+    return true;
+}
+
 void
 Translator::setItem(const string& xpath, ConstElementPtr elem,
                          LeafBaseType type) {
@@ -322,7 +308,7 @@ Translator::setItem(const string& xpath, ConstElementPtr elem,
     try {
         session_.setItem(xpath, value);
     } catch (sysrepo::Error const& ex) {
-        isc_throw(NetconfError, "sysrepo error setting item '" << (elem ? elem->str() : "nullopt")
+        isc_throw(NetconfError, "setting item '" << (elem ? elem->str() : "nullopt")
                                 << "' at '" << xpath << "': " << ex.what());
     }
     session_.applyChanges();
@@ -381,10 +367,8 @@ Translator::translateToYang(ConstElementPtr const& element,
         // keys in sysrepo since setting the key itself results in an error.
         return nullopt;
     } else if (element->getType() == Element::map) {
-        /// @todo: implement
         isc_throw(NotImplemented, "Translator::value(): map element");
     } else if (element->getType() == Element::list) {
-        /// @todo: implement
         isc_throw(NotImplemented, "Translator::value(): list element");
     } else if (element->getType() == Element::string) {
         // If it's a string, get the variant wthout quotes.

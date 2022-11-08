@@ -241,4 +241,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_DATABASE_H
+#endif  // ISC_TRANSLATOR_DATABASE_H

@@ -44,7 +44,7 @@ TranslatorSharedNetwork::getSharedNetwork(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting shared network:"
+                  "getting shared network:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -149,7 +149,7 @@ TranslatorSharedNetwork::setSharedNetwork(string const& xpath,
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting shared network '" << elem->str()
+                  "setting shared network '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -275,7 +275,7 @@ TranslatorSharedNetworks::setSharedNetworks(string const& xpath,
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting shared networks '" << elem->str()
+                  "setting shared networks '" << elem->str()
                   << "' : " << ex.what());
     }
 }

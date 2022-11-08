@@ -99,4 +99,4 @@ protected:
 }  //namespace yang
 }  // namespace isc
 
-#endif // ISC_ADAPTOR_OPTION_H
+#endif  // ISC_ADAPTOR_OPTION_H

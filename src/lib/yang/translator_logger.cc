@@ -34,7 +34,7 @@ TranslatorLogger::getLogger(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting logger: " << ex.what());
+                  "getting logger: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getLogger not implemented for the model: " << model_);
@@ -93,7 +93,7 @@ TranslatorLogger::setLogger(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting logger '" << elem->str()
+                  "setting logger '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -154,7 +154,7 @@ TranslatorLoggers::getLoggers(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting loggers: " << ex.what());
+                  "getting loggers: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getLoggers not implemented for the model: " << model_);
@@ -189,7 +189,7 @@ TranslatorLoggers::setLoggers(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting loggers '" << elem->str()
+                  "setting loggers '" << elem->str()
                   << "' : " << ex.what());
     }
 }

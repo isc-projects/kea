@@ -53,7 +53,7 @@ TEST_F(TranslatorHostsTestv6, getEmpty) {
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6[id='111']";
     ConstElementPtr hosts;
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(hosts = translator_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(hosts);
 }
 
@@ -79,19 +79,19 @@ TEST_F(TranslatorHostsTestv6, get) {
 
     // Get the host.
     ConstElementPtr host;
-    EXPECT_NO_THROW_LOG(host = t_obj_->getHostFromAbsoluteXpath(shost.str()));
+    EXPECT_NO_THROW_LOG(host = translator_->getHostFromAbsoluteXpath(shost.str()));
     ASSERT_TRUE(host);
     ElementPtr expected = Element::createMap();
     ElementPtr addresses = Element::createList();
-    addresses->add(Element::create(string("2001:db8::1")));
-    expected->set("hw-address", Element::create(string("00:01:02:03:04:05")));
+    addresses->add(Element::create("2001:db8::1"));
+    expected->set("hw-address", Element::create("00:01:02:03:04:05"));
     expected->set("ip-addresses", addresses);
     EXPECT_TRUE(expected->equals(*host));
 
     // Get the host reservation list and check if the host reservation
     // is in it.
     ConstElementPtr hosts;
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(hosts = translator_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
     ASSERT_EQ(1, hosts->size());
@@ -111,11 +111,11 @@ TEST_F(TranslatorHostsTestv6, setEmpty) {
 
     // Set empty list.
     ConstElementPtr hosts = Element::createList();
-    EXPECT_NO_THROW_LOG(t_obj_->setHosts(xpath, hosts));
+    EXPECT_NO_THROW_LOG(translator_->setHosts(xpath, hosts));
 
     // Get it back.
     hosts.reset();
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(hosts = translator_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_FALSE(hosts);
 }
 
@@ -133,15 +133,15 @@ TEST_F(TranslatorHostsTestv4, set) {
     // Set one host.
     ElementPtr hosts = Element::createList();
     ElementPtr host = Element::createMap();
-    host->set("flex-id", Element::create(string("00:ff")));
-    host->set("ip-address", Element::create(string("10.0.0.1")));
-    host->set("hostname", Element::create(string("foo")));
+    host->set("flex-id", Element::create("00:ff"));
+    host->set("ip-address", Element::create("10.0.0.1"));
+    host->set("hostname", Element::create("foo"));
     hosts->add(host);
-    EXPECT_NO_THROW_LOG(t_obj_->setHosts(xpath, hosts));
+    EXPECT_NO_THROW_LOG(translator_->setHosts(xpath, hosts));
 
     // Get it back.
     hosts.reset();
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(hosts = translator_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
     ASSERT_EQ(1, hosts->size());
@@ -179,7 +179,7 @@ TEST_F(TranslatorHostsTestv6, getMany) {
 
     // Get the host.
     ConstElementPtr hosts;
-    EXPECT_NO_THROW_LOG(hosts = t_obj_->getHostsFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(hosts = translator_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(hosts);
 
     EXPECT_EQ(hosts->str(),

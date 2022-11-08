@@ -49,7 +49,7 @@ TEST_F(TranslatorLoggersTestv4, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr loggers;
-    EXPECT_NO_THROW_LOG(loggers = t_obj_->getLoggersFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(loggers = translator_->getLoggersFromAbsoluteXpath(xpath));
     ASSERT_FALSE(loggers);
 }
 
@@ -71,7 +71,7 @@ TEST_F(TranslatorLoggersTestv6, get) {
 
     // Get empty.
     ConstElementPtr loggers;
-    EXPECT_NO_THROW_LOG(loggers = t_obj_->getLoggersFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(loggers = translator_->getLoggersFromAbsoluteXpath(xpath));
     ASSERT_TRUE(loggers);
     ASSERT_EQ(1, loggers->size());
     ConstElementPtr logger = loggers->get(0);
@@ -107,21 +107,21 @@ TEST_F(TranslatorLoggersTestv4, set) {
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr option = Element::createMap();
-    option->set("output", Element::create(string("/bar")));
+    option->set("output", Element::create("/bar"));
     option->set("maxver", Element::create(10));
     ElementPtr options = Element::createList();
     options->add(option);
     ElementPtr logger = Element::createMap();
-    logger->set("name", Element::create(string("foo")));
-    logger->set("severity", Element::create(string("WARN")));
+    logger->set("name", Element::create("foo"));
+    logger->set("severity", Element::create("WARN"));
     logger->set("output_options", options);
     ElementPtr loggers = Element::createList();
     loggers->add(logger);
-    ASSERT_NO_THROW_LOG(t_obj_->setLoggers(xpath, loggers));
+    ASSERT_NO_THROW_LOG(translator_->setLoggers(xpath, loggers));
 
     // Get it back.
     ConstElementPtr gots;
-    EXPECT_NO_THROW_LOG(gots = t_obj_->getLoggersFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(gots = translator_->getLoggersFromAbsoluteXpath(xpath));
     ASSERT_TRUE(gots);
     ASSERT_EQ(1, gots->size());
     ConstElementPtr got = gots->get(0);

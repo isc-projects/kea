@@ -41,7 +41,7 @@ TranslatorPool::getPool(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting pool:"
+                  "getting pool:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -126,7 +126,7 @@ TranslatorPool::setPool(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting pool '" << elem->str()
+                  "setting pool '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -164,7 +164,7 @@ TranslatorPool::setPoolIetf6(string const& xpath, ConstElementPtr elem) {
 
     // Set max address count to disabled.
     setItem(xpath + "/max-address-count",
-            Element::create(string("disabled")),
+            Element::create("disabled"),
             LeafBaseType::Enum);
 
     // Skip max-addr-count.
@@ -242,7 +242,7 @@ TranslatorPools::getPools(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting pools:"
+                  "getting pools:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -284,7 +284,7 @@ TranslatorPools::setPools(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting pools '" << elem->str()
+                  "setting pools '" << elem->str()
                   << "' : " << ex.what());
     }
 }

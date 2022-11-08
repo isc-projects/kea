@@ -553,4 +553,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_CONFIG_H
+#endif  // ISC_TRANSLATOR_CONFIG_H

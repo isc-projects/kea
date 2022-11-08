@@ -37,7 +37,7 @@ TranslatorPdPool::getPdPool(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting pd-pool:"
+                  "getting pd-pool:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -174,7 +174,7 @@ TranslatorPdPool::setPdPool(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting pd-pool '" << elem->str()
+                  "setting pd-pool '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -201,7 +201,7 @@ TranslatorPdPool::setPdPoolIetf6(string const& xpath, ConstElementPtr elem) {
     checkAndSetDivergingLeaf(elem, xpath, "renew-timer", "renew-time", LeafBaseType::Uint32);
 
     // Set max pd space utilization to disabled.
-    setItem(xpath + "/max-pd-space-utilization", Element::create(string("disabled")),
+    setItem(xpath + "/max-pd-space-utilization", Element::create("disabled"),
             LeafBaseType::Enum);
 
     // Skip rapid-commit.
@@ -249,7 +249,7 @@ TranslatorPdPools::getPdPools(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting pd-pools:"
+                  "getting pd-pools:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -284,7 +284,7 @@ TranslatorPdPools::setPdPools(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting pools '" << elem->str()
+                  "setting pools '" << elem->str()
                   << "' : " << ex.what());
     }
 }

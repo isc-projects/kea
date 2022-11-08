@@ -51,7 +51,7 @@ TEST_F(TranslatorDatabaseTestv4, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     ConstElementPtr database;
-    EXPECT_NO_THROW_LOG(database = t_obj_->getDatabaseFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(database = translator_->getDatabaseFromAbsoluteXpath(xpath));
     EXPECT_FALSE(database);
 }
 
@@ -71,7 +71,7 @@ TEST_F(TranslatorDatabaseTestv4, get) {
 
     // Get empty.
     ConstElementPtr database;
-    EXPECT_NO_THROW_LOG(database = t_obj_->getDatabaseFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(database = translator_->getDatabaseFromAbsoluteXpath(xpath));
     ASSERT_TRUE(database);
     EXPECT_EQ(2, database->size());
     ConstElementPtr type = database->get("type");
@@ -90,13 +90,13 @@ TEST_F(TranslatorDatabaseTestv4, set) {
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     ElementPtr database = Element::createMap();
-    database->set("type", Element::create(string("memfile")));
+    database->set("type", Element::create("memfile"));
     database->set("lfc-interval", Element::create(3600));
-    ASSERT_NO_THROW_LOG(t_obj_->setDatabase(xpath, database));
+    ASSERT_NO_THROW_LOG(translator_->setDatabase(xpath, database));
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW_LOG(got = t_obj_->getDatabaseFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(got = translator_->getDatabaseFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::map, got->getType());
     EXPECT_EQ(2, got->size());
@@ -125,11 +125,11 @@ TEST_F(TranslatorDatabaseTestv4, setEmpty) {
     sess_->applyChanges();
 
     // Reset to empty.
-    ASSERT_NO_THROW_LOG(t_obj_->setDatabase(xpath, ConstElementPtr()));
+    ASSERT_NO_THROW_LOG(translator_->setDatabase(xpath, ConstElementPtr()));
 
     // Get it back.
     ConstElementPtr database;
-    EXPECT_NO_THROW_LOG(database = t_obj_->getDatabaseFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(database = translator_->getDatabaseFromAbsoluteXpath(xpath));
     EXPECT_FALSE(database);
 }
 
@@ -161,7 +161,7 @@ TEST_F(TranslatorDatabasesTestv6, getEmpty) {
     // Get empty.
     const string& xpath = "/kea-dhcp6-server:config/hosts-database";
     ConstElementPtr databases;
-    EXPECT_NO_THROW_LOG(databases = t_obj_->getDatabasesFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(databases = translator_->getDatabasesFromAbsoluteXpath(xpath));
     EXPECT_FALSE(databases);
 }
 
@@ -191,7 +191,7 @@ TEST_F(TranslatorDatabasesTestv4, get) {
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW_LOG(databases = t_obj_->getDatabasesFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(databases = translator_->getDatabasesFromAbsoluteXpath(xpath));
     ASSERT_TRUE(databases);
     ASSERT_EQ(1, databases->size());
     ConstElementPtr database = databases->get(0);
@@ -229,15 +229,15 @@ TEST_F(TranslatorDatabasesTestv6, set) {
     // Set a value.
     const string& xpath = "/kea-dhcp6-server:config/hosts-database";
     ElementPtr database = Element::createMap();
-    database->set("type", Element::create(string("memfile")));
+    database->set("type", Element::create("memfile"));
     database->set("lfc-interval", Element::create(3600));
     ElementPtr databases = Element::createList();
     databases->add(database);
-    ASSERT_NO_THROW_LOG(t_obj_->setDatabases(xpath, databases));
+    ASSERT_NO_THROW_LOG(translator_->setDatabases(xpath, databases));
 
     // Get it back.
     ConstElementPtr gots;
-    EXPECT_NO_THROW_LOG(gots = t_obj_->getDatabasesFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(gots = translator_->getDatabasesFromAbsoluteXpath(xpath));
     ASSERT_TRUE(gots);
     ASSERT_EQ(Element::list, gots->getType());
     ASSERT_EQ(1, gots->size());
@@ -280,11 +280,11 @@ TEST_F(TranslatorDatabasesTestv4, setEmpty) {
     sess_->applyChanges();
 
     // Reset to empty.
-    EXPECT_NO_THROW_LOG(t_obj_->setDatabase(xdatabase, ConstElementPtr()));
+    EXPECT_NO_THROW_LOG(translator_->setDatabase(xdatabase, ConstElementPtr()));
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW_LOG(databases = t_obj_->getDatabasesFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(databases = translator_->getDatabasesFromAbsoluteXpath(xpath));
     EXPECT_FALSE(databases);
 }
 
@@ -313,11 +313,11 @@ TEST_F(TranslatorDatabasesTestv4, setEmpties) {
     sess_->applyChanges();
 
     // Reset to empty.
-    EXPECT_NO_THROW_LOG(t_obj_->setDatabases(xdatabase, ConstElementPtr()));
+    EXPECT_NO_THROW_LOG(translator_->setDatabases(xdatabase, ConstElementPtr()));
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW_LOG(databases = t_obj_->getDatabasesFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(databases = translator_->getDatabasesFromAbsoluteXpath(xpath));
     EXPECT_FALSE(databases);
 }
 

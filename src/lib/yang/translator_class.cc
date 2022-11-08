@@ -36,7 +36,7 @@ TranslatorClass::getClass(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting client class:"
+                  "getting client class:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -101,7 +101,7 @@ TranslatorClass::setClass(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting client class '" << elem->str()
+                  "setting client class '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -159,7 +159,7 @@ TranslatorClasses::getClasses(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting client classes:"
+                  "getting client classes:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -193,7 +193,7 @@ TranslatorClasses::setClasses(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting client classes '" << elem->str()
+                  "setting client classes '" << elem->str()
                   << "' : " << ex.what());
     }
 }

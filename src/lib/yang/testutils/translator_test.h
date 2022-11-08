@@ -159,4 +159,4 @@ std::ostream& operator<<(std::ostream& os, const YRTree& tree);
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_TEST_H
+#endif  // ISC_TRANSLATOR_TEST_H

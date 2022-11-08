@@ -85,4 +85,4 @@ createControlSocket<CfgControlSocket::Type::HTTP>(CfgControlSocketPtr ctrl_sock)
 }  // namespace netconf
 }  // namespace isc
 
-#endif // HTTP_CONTROL_SOCKET_H
+#endif  // HTTP_CONTROL_SOCKET_H

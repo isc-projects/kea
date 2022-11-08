@@ -63,13 +63,13 @@ public:
         SysrepoSetup::cleanSharedMemory();
         sess_ = sysrepo::Connection{}.sessionStart();
         sess_->switchDatastore(sysrepo::Datastore::Candidate);
-        t_obj_.reset(new translator_t(*sess_, model_));
+        translator_.reset(new translator_t(*sess_, model_));
         cleanModelData();
     }
 
     void TearDown() override {
         cleanModelData();
-        t_obj_.reset();
+        translator_.reset();
         SysrepoSetup::cleanSharedMemory();
     }
 
@@ -78,14 +78,14 @@ public:
         if (model_ == IETF_DHCPV6_SERVER) {
             toplevel_node = "server";
         }
-        t_obj_->deleteItem("/" + model_ + ":" + toplevel_node);
+        translator_->deleteItem("/" + model_ + ":" + toplevel_node);
     }
 
     /// @brief Sysrepo session.
     std::optional<sysrepo::Session> sess_;
 
     /// @brief Shared pointer to the transaction object.
-    std::shared_ptr<translator_t> t_obj_;
+    std::shared_ptr<translator_t> translator_;
     std::string model_;
 };  // GenericTranslatorTest
 
@@ -93,4 +93,4 @@ public:
 }  // namespace yang
 }  // namespace isc
 
-#endif // SYSREPO_SETUP_H
+#endif  // SYSREPO_SETUP_H

@@ -278,4 +278,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_SHARED_NETWORK_H
+#endif  // ISC_TRANSLATOR_SHARED_NETWORK_H

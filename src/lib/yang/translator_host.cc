@@ -34,7 +34,7 @@ TranslatorHost::getHost(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting host reservation:"
+                  "getting host reservation:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -95,7 +95,7 @@ TranslatorHost::setHost(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting host reservation '" << elem->str()
+                  "setting host reservation '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -161,7 +161,7 @@ TranslatorHosts::setHosts(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting host reservations '" << elem->str()
+                  "setting host reservations '" << elem->str()
                   << "' : " << ex.what());
     }
 }

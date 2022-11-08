@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -171,4 +171,4 @@ const std::string designExampleJson =
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_JSON_CONFIGS_H
+#endif  // ISC_JSON_CONFIGS_H

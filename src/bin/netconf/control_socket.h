@@ -126,4 +126,4 @@ controlSocketFactory(CfgControlSocketPtr ctrl_sock);
 }  // namespace netconf
 }  // namespace isc
 
-#endif // CONTROL_SOCKET_H
+#endif  // CONTROL_SOCKET_H

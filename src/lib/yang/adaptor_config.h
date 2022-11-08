@@ -281,4 +281,4 @@ protected:
 }  //namespace yang
 }  // namespace isc
 
-#endif // ISC_ADAPTOR_CONFIG_H
+#endif  // ISC_ADAPTOR_CONFIG_H

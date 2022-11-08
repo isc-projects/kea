@@ -43,7 +43,7 @@ TranslatorSubnet::getSubnet(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting subnet:"
+                  "getting subnet:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -201,7 +201,7 @@ TranslatorSubnet::setSubnet(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting subnet '" << elem->str()
+                  "setting subnet '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -357,7 +357,7 @@ TranslatorSubnets::getSubnets(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting subnets:"
+                  "getting subnets:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -395,7 +395,7 @@ TranslatorSubnets::setSubnets(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting subnets '" << elem->str()
+                  "setting subnets '" << elem->str()
                   << "' : " << ex.what());
     }
 }

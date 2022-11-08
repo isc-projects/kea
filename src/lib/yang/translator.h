@@ -165,6 +165,13 @@ public:
         }
     }
 
+    /// @brief Checks whether a YANG node exists in the schema.
+    ///
+    /// @param xpath the xpath to be checked
+    ///
+    /// @return true if the YANG node exists in the schema, false otherwise
+    bool schemaNodeExists(std::string const& xpath);
+
     /// @brief Get a YANG data node found at the given absolute xpath.
     ///
     /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
@@ -230,7 +237,7 @@ public:
             }
             return result;
         } catch (libyang::Error const& ex) {
-            isc_throw(NetconfError, "sysrepo error getting item: " << ex.what());
+            isc_throw(NetconfError, "getting item: " << ex.what());
         }
     }
 
@@ -364,4 +371,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_H
+#endif  // ISC_TRANSLATOR_H

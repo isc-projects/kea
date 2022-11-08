@@ -196,4 +196,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_OPTION_DEF_H
+#endif  // ISC_TRANSLATOR_OPTION_DEF_H

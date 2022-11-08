@@ -32,4 +32,4 @@ static const std::unordered_map<std::string, std::string> YANG_REVISIONS = {
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_YANG_REVISIONS_H
+#endif  // ISC_YANG_REVISIONS_H

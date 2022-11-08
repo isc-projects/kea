@@ -104,7 +104,7 @@ YangRepr::YangReprItem::get(const string& xpath, Session session) {
         val_xpath = string(data_node->path());
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error in YangReprItem: " << ex.what());
+                  "in YangReprItem: " << ex.what());
     }
     return (YangReprItem(val_xpath, value, type, settable));
 }
@@ -121,7 +121,7 @@ YangRepr::get(Session session) const {
         });
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error in YangRepr::getTree: " << ex.what());
+                  "in YangRepr::getTree: " << ex.what());
     }
     return (result);
 }
@@ -186,7 +186,7 @@ YangRepr::set(const Tree& tree, Session session) const {
             }
         } catch (Error const& ex) {
             isc_throw(NetconfError,
-                      "sysrepo error in YangRepr::set for " << item
+                      "in YangRepr::set for " << item
                       << ", error: " << ex.what());
         }
     }

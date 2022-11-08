@@ -90,4 +90,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_ADAPTOR_POOL_H
+#endif  // ISC_ADAPTOR_POOL_H

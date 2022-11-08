@@ -253,4 +253,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_PD_POOL_H
+#endif  // ISC_TRANSLATOR_PD_POOL_H

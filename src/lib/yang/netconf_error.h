@@ -36,4 +36,4 @@ struct NetconfError : public Exception {
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_SYSREPO_ERROR_H
+#endif  // ISC_SYSREPO_ERROR_H

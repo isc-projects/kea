@@ -641,4 +641,4 @@ const std::vector<std::pair<std::string, YRTree> > TEST_CONFIGS =
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_YANG_CONFIGS_H
+#endif  // ISC_YANG_CONFIGS_H

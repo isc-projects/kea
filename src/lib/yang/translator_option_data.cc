@@ -33,7 +33,7 @@ TranslatorOptionData::getOptionData(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting option data:"
+                  "getting option data:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -80,7 +80,7 @@ TranslatorOptionData::setOptionData(string const& xpath,
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting option data '" << elem->str()
+                  "setting option data '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -113,7 +113,7 @@ TranslatorOptionDataList::getOptionDataList(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting option data list:"
+                  "getting option data list:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -149,7 +149,7 @@ TranslatorOptionDataList::setOptionDataList(string const& xpath,
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting option data list '" << elem->str()
+                  "setting option data list '" << elem->str()
                   << "' : " << ex.what());
     }
 }

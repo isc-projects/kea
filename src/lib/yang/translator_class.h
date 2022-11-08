@@ -200,4 +200,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_CLASS_H
+#endif  // ISC_TRANSLATOR_CLASS_H

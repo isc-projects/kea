@@ -33,7 +33,7 @@ TranslatorOptionDef::getOptionDef(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting option definition:"
+                  "getting option definition:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -80,7 +80,7 @@ TranslatorOptionDef::setOptionDef(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting option definition '" << elem->str()
+                  "setting option definition '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -115,7 +115,7 @@ TranslatorOptionDefList::getOptionDefList(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting option definition list:"
+                  "getting option definition list:"
                   << ex.what());
     }
     isc_throw(NotImplemented,
@@ -151,7 +151,7 @@ TranslatorOptionDefList::setOptionDefList(string const& xpath,
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting option definition list '"
+                  "setting option definition list '"
                   << elem->str() << "' : " << ex.what());
     }
 }

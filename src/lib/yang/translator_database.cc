@@ -32,7 +32,7 @@ TranslatorDatabase::getDatabase(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting database access: " << ex.what());
+                  "getting database access: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getDatabase not implemented for the model: " << model_);
@@ -90,7 +90,7 @@ TranslatorDatabase::setDatabase(string const& xpath,
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting database access '" << elem->str()
+                  "setting database access '" << elem->str()
                   << "' : " << ex.what());
     }
 }
@@ -145,7 +145,7 @@ TranslatorDatabases::getDatabases(DataNode const& data_node,
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting database accesses: " << ex.what());
+                  "getting database accesses: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getDatabases not implemented for the model: " << model_);
@@ -179,7 +179,7 @@ TranslatorDatabases::setDatabases(string const& xpath, ConstElementPtr elem) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting database accesses '" << elem->str()
+                  "setting database accesses '" << elem->str()
                   << "' : " << ex.what());
     }
 }

@@ -103,4 +103,4 @@ using NetconfProcessPtr = boost::shared_ptr<NetconfProcess>;
 }  // namespace netconf
 }  // namespace isc
 
-#endif // NETCONF_PROCESS_H
+#endif  // NETCONF_PROCESS_H

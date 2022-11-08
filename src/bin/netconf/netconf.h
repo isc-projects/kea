@@ -177,4 +177,4 @@ protected:
 }  // namespace netconf
 }  // namespace isc
 
-#endif // NETCONF_H
+#endif  // NETCONF_H

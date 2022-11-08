@@ -86,4 +86,4 @@ createControlSocket<CfgControlSocket::Type::STDOUT>(CfgControlSocketPtr ctrl_soc
 }  // namespace netconf
 }  // namespace isc
 
-#endif // STDOUT_CONTROL_SOCKET_H
+#endif  // STDOUT_CONTROL_SOCKET_H

@@ -41,4 +41,4 @@ public:
 }  //namespace yang
 }  // namespace isc
 
-#endif // ISC_ADAPTOR_HOST_H
+#endif  // ISC_ADAPTOR_HOST_H

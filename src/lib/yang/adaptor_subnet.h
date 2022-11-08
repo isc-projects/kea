@@ -60,4 +60,4 @@ public:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_ADAPTOR_SUBNET_H
+#endif  // ISC_ADAPTOR_SUBNET_H

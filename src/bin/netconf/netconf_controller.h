@@ -82,4 +82,4 @@ using NetconfControllerPtr = std::shared_ptr<NetconfController>;
 }  // namespace netconf
 }  // namespace isc
 
-#endif // NETCONF_CONTROLLER_H
+#endif  // NETCONF_CONTROLLER_H

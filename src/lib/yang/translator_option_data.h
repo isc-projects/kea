@@ -187,4 +187,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_OPTION_DATA_H
+#endif  // ISC_TRANSLATOR_OPTION_DATA_H

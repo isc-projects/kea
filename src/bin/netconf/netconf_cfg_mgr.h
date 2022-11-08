@@ -181,4 +181,4 @@ using NetconfCfgMgrPtr = boost::shared_ptr<NetconfCfgMgr>;
 }  // namespace netconf
 }  // namespace isc
 
-#endif // NETCONF_CFG_MGR_H
+#endif  // NETCONF_CFG_MGR_H

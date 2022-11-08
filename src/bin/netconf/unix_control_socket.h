@@ -85,4 +85,4 @@ createControlSocket<CfgControlSocket::Type::UNIX>(CfgControlSocketPtr ctrl_sock)
 }  // namespace netconf
 }  // namespace isc
 
-#endif // UNIX_CONTROL_SOCKET_H
+#endif  // UNIX_CONTROL_SOCKET_H

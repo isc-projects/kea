@@ -408,4 +408,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_SUBNET_H
+#endif  // ISC_TRANSLATOR_SUBNET_H

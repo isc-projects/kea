@@ -230,4 +230,4 @@ protected:
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_LOGGER_H
+#endif  // ISC_TRANSLATOR_LOGGER_H

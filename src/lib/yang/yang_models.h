@@ -34,4 +34,4 @@ static const std::string KEA_CTRL_AGENT = "kea-ctrl-agent";
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_YANG_MODELS_H
+#endif  // ISC_YANG_MODELS_H

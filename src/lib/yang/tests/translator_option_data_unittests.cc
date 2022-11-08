@@ -49,7 +49,7 @@ TEST_F(TranslatorOptionDataListTestv4, getEmpty) {
     // Get the option data list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr options;
-    EXPECT_NO_THROW_LOG(options = t_obj_->getOptionDataListFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(options = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_FALSE(options);
 }
 
@@ -71,7 +71,7 @@ TEST_F(TranslatorOptionDataListTestv6, get) {
 
     // Get the option data.
     ConstElementPtr option;
-    EXPECT_NO_THROW_LOG(option = t_obj_->getOptionDataFromAbsoluteXpath(xoption));
+    EXPECT_NO_THROW_LOG(option = translator_->getOptionDataFromAbsoluteXpath(xoption));
     ASSERT_TRUE(option);
     EXPECT_EQ("{"
               " \"always-send\": false,"
@@ -84,7 +84,7 @@ TEST_F(TranslatorOptionDataListTestv6, get) {
 
     // Get the option data list.
     ConstElementPtr options;
-    EXPECT_NO_THROW_LOG(options = t_obj_->getOptionDataListFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(options = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(options);
     ASSERT_EQ(Element::list, options->getType());
     EXPECT_EQ(1, options->size());
@@ -97,11 +97,11 @@ TEST_F(TranslatorOptionDataListTestv4, setEmpty) {
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr options = Element::createList();
-    EXPECT_NO_THROW_LOG(t_obj_->setOptionDataList(xpath, options));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDataList(xpath, options));
 
     // Get it back.
     options.reset();
-    EXPECT_NO_THROW_LOG(options = t_obj_->getOptionDataListFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(options = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_FALSE(options);
 }
 
@@ -113,16 +113,16 @@ TEST_F(TranslatorOptionDataListTestv6, set) {
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     option->set("code", Element::create(100));
-    option->set("space", Element::create(string("dns")));
+    option->set("space", Element::create("dns"));
     option->set("csv-format", Element::create(false));
-    option->set("data", Element::create(string("12121212")));
+    option->set("data", Element::create("12121212"));
     option->set("always-send", Element::create(false));
     options->add(option);
-    EXPECT_NO_THROW_LOG(t_obj_->setOptionDataList(xpath, options));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDataList(xpath, options));
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW_LOG(got = t_obj_->getOptionDataListFromAbsoluteXpath(xpath));
+    EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(1, got->size());
     EXPECT_TRUE(option->equals(*got->get(0)));

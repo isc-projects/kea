@@ -325,4 +325,4 @@ public:
 }  // namespace netconf
 }  // namespace isc
 
-#endif // NETCONF_CONFIG_H
+#endif  // NETCONF_CONFIG_H

@@ -35,7 +35,7 @@ TranslatorControlSocket::getControlSocket(DataNode const& data_node) {
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error getting control socket: " << ex.what());
+                  "getting control socket: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getControlSocket not implemented for the model: " << model_);
@@ -75,7 +75,7 @@ TranslatorControlSocket::setControlSocket(string const& xpath,
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
-                  "sysrepo error setting control socket '" << elem->str()
+                  "setting control socket '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
     }
 }

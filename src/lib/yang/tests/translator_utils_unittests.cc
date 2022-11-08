@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <testutils/gtest_utils.h>
+#include <yang/testutils/translator_test.h>
 #include <yang/tests/sysrepo_setup.h>
 #include <yang/tests/yang_configs.h>
 
