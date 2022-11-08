@@ -262,7 +262,7 @@ The installation should look similar to the following:
     [INF] No datastore changes to apply.
     [INF] Connection 23 created.
     [INF] Module "kea-dhcp-types" was installed.
-    [INF] File "kea-dhcp-types@2022-07-27.yang" was installed.
+    [INF] File "kea-dhcp-types@2022-11-30.yang" was installed.
     [INF] No datastore changes to apply.
     [INF] Connection 25 created.
     [INF] Module "kea-dhcp-ddns" was installed.
@@ -274,11 +274,11 @@ The installation should look similar to the following:
     [INF] No datastore changes to apply.
     [INF] Connection 29 created.
     [INF] Module "kea-dhcp4-server" was installed.
-    [INF] File "kea-dhcp4-server@2022-07-27.yang" was installed.
+    [INF] File "kea-dhcp4-server@2022-11-30.yang" was installed.
     [INF] No datastore changes to apply.
     [INF] Connection 31 created.
     [INF] Module "kea-dhcp6-server" was installed.
-    [INF] File "kea-dhcp6-server@2022-07-27.yang" was installed.
+    [INF] File "kea-dhcp6-server@2022-11-30.yang" was installed.
     [INF] No datastore changes to apply.
 
 It is possible to confirm whether the modules are imported correctly.
@@ -310,9 +310,9 @@ The list of currently installed YANG modules should be similar to this:
     ietf-yang-types            | 2013-07-15 | I     | user:user | 444           |            |
     kea-ctrl-agent             | 2019-08-12 | I     | user:user | 600           |            |
     kea-dhcp-ddns              | 2022-07-27 | I     | user:user | 600           |            |
-    kea-dhcp-types             | 2022-07-27 | I     | user:user | 600           |            |
-    kea-dhcp4-server           | 2022-07-27 | I     | user:user | 600           |            |
-    kea-dhcp6-server           | 2022-07-27 | I     | user:user | 600           |            |
+    kea-dhcp-types             | 2022-11-30 | I     | user:user | 600           |            |
+    kea-dhcp4-server           | 2022-11-30 | I     | user:user | 600           |            |
+    kea-dhcp6-server           | 2022-11-30 | I     | user:user | 600           |            |
     kea-types                  | 2019-08-12 | I     | user:user | 600           |            |
     keatest-module             | 2018-11-20 | I     | user:user | 600           |            |
     sysrepo-monitoring         | 2022-04-08 | I     | user:user | 600           |            |

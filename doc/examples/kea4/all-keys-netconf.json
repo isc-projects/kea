@@ -96,13 +96,23 @@
                 "only-if-required": true,
 
                 // Class selection expression.
-                "test": "member('ALL')"
+                "test": "member('ALL')",
+
+                // Template class flag.
+                "template-test": ""
             }
         ],
 
         // Parameters for triggering behaviors compatible with broken or
         // non-compliant clients, relays or other agents
         "compatibility": {
+            // Ignore Relay Agent Information Link Selection suboption if set
+            // to true. Enabling this will cause Kea use normal subnet
+            // selection logic instead of attempting to use the subnet
+            // specified in the suboption. This config option defaults to
+            // false, as enabling it breaks RFC compliance.
+            "ignore-rai-link-selection": false,
+
             // Parse options more leniently where fields can be deduced
             // deterministically even if against RFC or common practice.
             "lenient-option-parsing": true
@@ -357,24 +367,7 @@
                 "type": "postgresql",
 
                 // User name to be used to access the database.
-                "user": "keatest",
-
-                // Connection reconnect wait time.
-                // This parameter governs how long Kea waits before attempting
-                // to reconnect. Expressed in milliseconds. The default is 0
-                // (disabled) for MySQL and PostgreSQL.
-                "reconnect-wait-time": 3000,
-
-                // Connection maximum reconnect tries.
-                "max-reconnect-tries": 3,
-
-                // Action to take when connection recovery fails.
-                // Supported values: stop-retry-exit, serve-retry-exit,
-                // serve-retry-continue
-                "on-fail": "stop-retry-exit",
-
-                // Connection connect timeout.
-                "connect-timeout": 100
+                "user": "keatest"
             }
         ],
 
@@ -647,7 +640,17 @@
             // to "fix" but delete the lease if no suitable subnet found),
             // "del" (delete the lease if the lease has invalid subnet
             // identifier value).
-            "lease-checks": "warn"
+            "lease-checks": "warn",
+
+            // Specifies how Kea DHCPv4 server should behave when invalid
+            // extended info is read for a lease from the lease file, or
+            // whether to upgrade from old format. The following values
+            // are supported "none" (don't attempt to correct or upgrade
+            // the extended info), "fix" (fix common inconsistencies and
+            // upgrade from old format, this is the default), "strict"
+            // (fix inconsistencies with an impact on Lease Query),
+            // "pedantic" (enforce full Kea code format).
+            "extended-info-checks": "fix"
         },
 
         // List of shared networks used by Kea DHCPv4 server. The shared

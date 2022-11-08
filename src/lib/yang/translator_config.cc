@@ -237,6 +237,7 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     Set<DataNode> const& yang_compatibility(data_node.findXPath("compatibility"));
     if (!yang_compatibility.empty()) {
         ElementPtr compatibility(Element::createMap());
+        checkAndGetLeaf(compatibility, yang_compatibility.front(), "ignore-rai-link-selection");
         checkAndGetLeaf(compatibility, yang_compatibility.front(), "lenient-option-parsing");
         if (!compatibility->empty()) {
             result->set("compatibility", compatibility);
@@ -334,6 +335,7 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     Set<DataNode> const& yang_sanity_checks(data_node.findXPath("sanity-checks"));
     if (!yang_sanity_checks.empty()) {
         ElementPtr sanity_checks = Element::createMap();
+        checkAndGetLeaf(sanity_checks, yang_sanity_checks.front(), "extended-info-checks");
         checkAndGetLeaf(sanity_checks, yang_sanity_checks.front(), "lease-checks");
         if (!sanity_checks->empty()) {
             result->set("sanity-checks", sanity_checks);
@@ -558,6 +560,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
 
     ConstElementPtr compatibility(elem->get("compatibility"));
     if (compatibility) {
+        checkAndSetLeaf(compatibility, xpath + "/compatibility", "ignore-rai-link-selection", LeafBaseType::Bool);
         checkAndSetLeaf(compatibility, xpath + "/compatibility", "lenient-option-parsing", LeafBaseType::Bool);
     }
 
@@ -663,6 +666,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
 
     ConstElementPtr sanity = elem->get("sanity-checks");
     if (sanity) {
+        checkAndSetLeaf(sanity, xpath + "/sanity-checks", "extended-info-checks", LeafBaseType::Enum);
         checkAndSetLeaf(sanity, xpath + "/sanity-checks", "lease-checks", LeafBaseType::Enum);
     }
 

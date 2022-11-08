@@ -106,15 +106,16 @@
         // Parameters for triggering behaviors compatible with broken or
         // non-compliant clients, relays or other agents
         "compatibility": {
-            // Parse options more leniently where fields can be deduced
-            // deterministically even if against RFC or common practice.
-            "lenient-option-parsing": true,
             // Ignore Relay Agent Information Link Selection suboption if set
             // to true. Enabling this will cause Kea use normal subnet
             // selection logic instead of attempting to use the subnet
             // specified in the suboption. This config option defaults to
             // false, as enabling it breaks RFC compliance.
-            "ignore-rai-link-selection": false
+            "ignore-rai-link-selection": false,
+
+            // Parse options more leniently where fields can be deduced
+            // deterministically even if against RFC or common practice.
+            "lenient-option-parsing": true
         },
 
         // Command control socket configuration parameters for Kea DHCPv4 server.

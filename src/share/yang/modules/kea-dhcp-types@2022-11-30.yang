@@ -16,6 +16,10 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2022-11-30 {
+    description "Added the extended-info-checks and the ignore-rai-link-selection nodes.";
+  }
+
   revision 2022-07-27 {
     description "Added TLS parameters for database connections: trust-anchor,
                  cert-file, key-file, cipher-list. Added parameters which govern
@@ -465,34 +469,64 @@ module kea-dhcp-types {
       }
     }
   }
-
   grouping sanity-checks {
-    description "Sanity checks grouping.";
+    description
+      "Sanity checks grouping.";
     container sanity-checks {
-      description "Sanity checks container.";
+      description
+        "Sanity checks container.";
+      leaf extended-info-checks {
+        type enumeration {
+          enum "none" {
+            description
+              "Don't attempt to correct or upgrade the extended info.";
+          }
+          enum "fix" {
+            description
+              "Fix common inconsistencies and upgrade from old format. This is the default.";
+          }
+          enum "pedantic" {
+            description
+              "Enforce full Kea code formatting.";
+          }
+          enum "strict" {
+            description
+              "Fix inconsistencies with an impact on lease query.";
+          }
+        }
+        description
+          "Specifies how Kea DHCPv4 server should behave when
+           invalid extended info is read from a lease.";
+      }
       leaf lease-checks {
         type enumeration {
           enum "none" {
-            description "No checks.";
+            description
+              "No checks.";
           }
           enum "warn" {
-            description "When a check fails print a warning and accept the
-                         lease.";
+            description
+              "When a check fails print a warning and accept the
+               lease.";
           }
           enum "fix" {
-            description "When a check fails try to fix it and accept the
-                         lease.";
+            description
+              "When a check fails try to fix it and accept the
+               lease.";
           }
           enum "fix-del" {
-            description "When a check fails try to fix it and reject the
-                         lease if still bad.";
+            description
+              "When a check fails try to fix it and reject the
+               lease if still bad.";
           }
           enum "del" {
-            description "When a check fails reject the lease.";
+            description
+              "When a check fails reject the lease.";
           }
         }
-        description "Lease checks: verify subnet-id consistency on memfile
-                     loading.";
+        description
+          "Lease checks: verify subnet-id consistency on memfile
+           loading.";
       }
     }
   }
@@ -708,6 +742,14 @@ module kea-dhcp-types {
       type string;
       description "Defines an expression that evaluates every incoming
                    packet.";
+    }
+  }
+
+  grouping template-test {
+    leaf template-test {
+      type string;
+      description
+        "The test expression for a template class.";
     }
   }
 
@@ -948,10 +990,15 @@ module kea-dhcp-types {
       description
         "parameters for triggering behaviors compatible with broken or
          non-compliant clients, relays or other agents";
+      leaf ignore-rai-link-selection {
+        type boolean;
+        description
+          "Ignore the link selection RAI suboption.";
+      }
       leaf lenient-option-parsing {
         type boolean;
         description
-          "enable more lenient option parsing";
+          "Enable more lenient option parsing.";
       }
     }
   }

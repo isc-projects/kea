@@ -61,6 +61,7 @@ TranslatorClass::getClassKea(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "max-valid-lifetime");
     checkAndGetLeaf(result, data_node, "min-valid-lifetime");
     checkAndGetLeaf(result, data_node, "only-if-required");
+    checkAndGetLeaf(result, data_node, "template-test");
     checkAndGetLeaf(result, data_node, "test");
     checkAndGetLeaf(result, data_node, "valid-lifetime");
 
@@ -113,6 +114,7 @@ TranslatorClass::setClassKea(string const& xpath, ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "max-valid-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "min-valid-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "only-if-required", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "template-test", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "test", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
 
