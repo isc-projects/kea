@@ -145,7 +145,7 @@ Translator::encode64(string const& input) {
 }
 
 DataNode
-Translator::findXPath(string const& xpath) {
+Translator::findXPath(string const& xpath) const {
     optional<DataNode> const& data_node(getData(xpath));
     if (!data_node) {
         isc_throw(NetconfError, "no data at xpath " << xpath);
@@ -287,7 +287,7 @@ Translator::initializeSerializer() {
 }
 
 
-bool Translator::schemaNodeExists(string const& xpath) {
+bool Translator::schemaNodeExists(string const& xpath) const {
     Context const& context(session_.getContext());
     try {
         context.findPath(xpath);

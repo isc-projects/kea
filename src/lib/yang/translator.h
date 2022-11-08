@@ -35,14 +35,13 @@ public:
     ///
     /// @param storage ElementMap where result will be stored
     /// @param data_node parent data node of container type
-    /// @param key where to set the result in the {storage} map
     /// @param xpath relative xpath to search by
     /// @param translate function to be called to translate a data node to an element pointer
     template <typename T>
     void checkAndGet(isc::data::ElementPtr const& storage,
                      libyang::DataNode const& data_node,
                      std::string const& xpath,
-                     T translate) {
+                     T translate) const {
         libyang::Set<libyang::DataNode> const& nodes(data_node.findXPath(xpath));
         if (!nodes.empty()) {
             isc::data::ElementPtr const& element(translate(nodes.front()));
@@ -70,7 +69,7 @@ public:
                               libyang::DataNode const& data_node,
                               std::string const& key,
                               std::string const& xpath,
-                              T translate) {
+                              T translate) const {
         libyang::Set<libyang::DataNode> const& nodes(data_node.findXPath(xpath));
         if (!nodes.empty()) {
             isc::data::ElementPtr const& element(translate(nodes.front()));
@@ -85,7 +84,7 @@ public:
     ///
     /// @param storage ElementMap where result will be stored
     /// @param data_node parent data node of container type
-    /// @param name name of the parameter
+    /// @param name the name of the parameter to be set in storage
     void checkAndGetLeaf(isc::data::ElementPtr& storage,
                          libyang::DataNode const& data_node,
                          std::string const& name) const;
@@ -98,7 +97,8 @@ public:
     ///
     /// @param storage ElementMap where result will be stored
     /// @param data_node parent data node of container type
-    /// @param name name of the parameter
+    /// @param name the name of the parameter to be set in storage
+    /// @param yang_name the name by which to find the parameter in the YANG data node
     void checkAndGetDivergingLeaf(isc::data::ElementPtr& storage,
                                   libyang::DataNode const& data_node,
                                   std::string const& name,
@@ -109,7 +109,7 @@ public:
     ///
     /// @param storage ElementMap where result will be stored
     /// @param data_node parent data node of container type
-    /// @param name name of the parameter
+    /// @param name the name of the parameter to be set in storage
     void checkAndGetAndJsonifyLeaf(isc::data::ElementPtr& storage,
                                    libyang::DataNode const& data_node,
                                    const std::string& name) const;
@@ -121,7 +121,6 @@ public:
     /// @param xpath the xpath to the YANG node without the last node
     /// @param name the name of the YANG node which should also match the map
     /// key in the JSON configuration
-    /// @param type the sysrepo node type
     void checkAndJsonifyAndSetLeaf(isc::data::ConstElementPtr const& from,
                                    std::string const& xpath,
                                    std::string const& name);
@@ -147,8 +146,8 @@ public:
     ///
     /// @param from the parent configuration node from which to take the value
     /// @param xpath the xpath to the YANG node without the last node
-    /// @param name the name of the YANG node which should also match the map
-    /// key in the JSON configuration
+    /// @param name the name of the parameter to be set in storage
+    /// @param yang_name the name by which to find the parameter in the YANG data node
     /// @param type the sysrepo node type
     void checkAndSetDivergingLeaf(isc::data::ConstElementPtr const& from,
                                   std::string const& xpath,
@@ -161,8 +160,7 @@ public:
     ///
     /// @param from the parent configuration node from which to take the value
     /// @param xpath the xpath to the YANG node without the last node
-    /// @param name the name of the YANG node which should also match the map
-    /// key in the JSON configuration
+    /// @param name the name of the parameter to be set in storage
     /// @param type the sysrepo node type
     void checkAndSetLeafList(isc::data::ConstElementPtr const& from,
                              std::string const& xpath,
@@ -174,9 +172,6 @@ public:
     ///
     /// @param from the parent configuration node from which to take the value
     /// @param xpath the xpath to the YANG node without the last node
-    /// @param name the name of the YANG node which should also match the map
-    /// key in the JSON configuration
-    /// @param type the sysrepo node type
     void checkAndSetUserContext(isc::data::ConstElementPtr const& from,
                                 std::string const& xpath);
 
@@ -196,7 +191,7 @@ public:
     /// @return the requested YANG data node
     ///
     /// @throw NetconfError if no YANG data node was found
-    libyang::DataNode findXPath(std::string const& xpath);
+    libyang::DataNode findXPath(std::string const& xpath) const;
 
     /// @brief Run a function for a node and all its children.
     ///
@@ -210,7 +205,7 @@ public:
     /// @param f the function to be called on the node itself and each
     /// descendant
     template <typename functor_t>
-    void forAll(std::string const& xpath, functor_t f) {
+    void forAll(std::string const& xpath, functor_t f) const {
         std::optional<libyang::DataNode> const& data_node(session_.getData(xpath));
         if (!data_node) {
             return;
@@ -228,7 +223,7 @@ public:
     /// @param xpath the xpath to be checked
     ///
     /// @return true if the YANG node exists in the schema, false otherwise
-    bool schemaNodeExists(std::string const& xpath);
+    bool schemaNodeExists(std::string const& xpath) const;
 
     /// @brief Get a YANG data node found at the given absolute xpath.
     ///
@@ -283,7 +278,7 @@ public:
     isc::data::ElementPtr getList(libyang::DataNode const& data_node,
                                   std::string const& xpath,
                                   T& t,
-                                  isc::data::ElementPtr (T::*f)(libyang::DataNode const&)) {
+                                  isc::data::ElementPtr (T::*f)(libyang::DataNode const&)) const {
         try {
             libyang::Set<libyang::DataNode> const& nodes(data_node.findXPath(xpath));
             if (nodes.empty()) {
@@ -322,6 +317,7 @@ public:
     /// @param storage ElementMap where result will be stored
     /// @param data_node parent data node of container type
     /// @param name name of the parameter
+    /// @param yang_name the name by which to find the parameter in the YANG data node
     ///
     /// @throw MissingNode if leaf is not found
     void getMandatoryDivergingLeaf(isc::data::ElementPtr& storage,
@@ -358,6 +354,7 @@ public:
     /// @param xpath the xpath to the YANG node without the last node
     /// @param name the name of the YANG node which should also match the map
     /// key in the JSON configuration
+    /// @param yang_name the name by which to find the parameter in the YANG data node
     /// @param type the sysrepo node type
     void setMandatoryDivergingLeaf(isc::data::ConstElementPtr const& from,
                                    std::string const& xpath,

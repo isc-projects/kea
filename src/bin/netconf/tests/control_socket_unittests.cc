@@ -428,8 +428,7 @@ public:
     /// @brief Create a new request.
     ///
     /// @return Pointer to the new instance of the HttpRequest.
-    virtual HttpRequestPtr
-        createNewHttpRequest() const {
+    HttpRequestPtr createNewHttpRequest() const  override final {
         return (HttpRequestPtr(new PostHttpRequestJson()));
     }
 
@@ -438,9 +437,9 @@ protected:
     ///
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP response.
-    virtual HttpResponsePtr
+    HttpResponsePtr
     createStockHttpResponse(const HttpRequestPtr& request,
-                            const HttpStatusCode& status_code) const {
+                            const HttpStatusCode& status_code) const override final {
         // Data is in the request context.
         HttpVersion http_version(request->context()->http_version_major_,
                                  request->context()->http_version_minor_);
@@ -504,7 +503,7 @@ class TestHttpResponseCreatorFactory : public HttpResponseCreatorFactory {
 public:
 
     /// @brief Creates @ref TestHttpResponseCreator instance.
-    virtual HttpResponseCreatorPtr create() const {
+    HttpResponseCreatorPtr create() const override final {
         HttpResponseCreatorPtr response_creator(new TestHttpResponseCreator());
         return (response_creator);
     }

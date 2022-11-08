@@ -90,7 +90,7 @@ public:
     ///
     /// @return a pointer to a configuration which can be parsed into
     /// the initial configuration object
-    virtual isc::data::ElementPtr toElement() const;
+    isc::data::ElementPtr toElement() const override final;
 
 private:
 
@@ -142,25 +142,24 @@ public:
     /// to be returned. This parameter is ignored for Netconf.
     ///
     /// @return Summary of the configuration in the textual format.
-    virtual std::string getConfigSummary(const uint32_t selection);
+    std::string getConfigSummary(const uint32_t selection) override final;
 
     /// @brief Return a list of all paths that contain passwords or secrets for
     /// kea-netconf.
     ///
     /// @return the list of lists of sequential JSON map keys needed to reach
     /// the passwords and secrets.
-    std::list<std::list<std::string>> jsonPathsToRedact() const;
+    std::list<std::list<std::string>> jsonPathsToRedact() const override final;
 
 protected:
-
     /// @brief Parses configuration of Netconf.
     ///
     /// @param config Pointer to a configuration specified for netconf.
     /// @param check_only Boolean flag indicating if this method should
     /// only verify correctness of the provided configuration.
     /// @return Pointer to a result of configuration parsing.
-    virtual isc::data::ConstElementPtr
-    parse(isc::data::ConstElementPtr config, bool check_only);
+    isc::data::ConstElementPtr
+    parse(isc::data::ConstElementPtr config, bool check_only) override final;
 
     /// @brief Creates a new, blank NetconfConfig context.
     ///
@@ -172,7 +171,7 @@ protected:
     /// error.
     ///
     /// @return Returns a ConfigPtr to the new context instance.
-    virtual process::ConfigPtr createNewContext();
+    process::ConfigPtr createNewContext() override final;
 };  // NetconfCfgMgr
 
 /// @brief Defines a shared pointer to NetconfCfgMgr.

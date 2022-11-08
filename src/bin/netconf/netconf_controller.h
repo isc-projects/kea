@@ -56,7 +56,7 @@ public:
     /// This method ignores SIGHUP as configuration reloading is not yet
     /// supported.
     /// @param signum signal number to process.
-    virtual void processSignal(int signum);
+    void processSignal(int signum) override final;
 
 private:
 
@@ -69,7 +69,7 @@ private:
     /// Note the caller is responsible for destructing the process. This
     /// is handled by the base class, which wraps this pointer with a smart
     /// pointer.
-    virtual process::DProcessBase* createProcess();
+    process::DProcessBase* createProcess() override final;
 
     /// @brief Constructor is declared private to maintain the integrity of
     /// the singleton instance.

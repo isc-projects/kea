@@ -127,7 +127,7 @@ public:
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
-    virtual isc::data::ElementPtr toElement() const;
+    isc::data::ElementPtr toElement() const override final;
 
 private:
     /// @brief The socket type.
@@ -234,7 +234,7 @@ public:
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
-    virtual isc::data::ElementPtr toElement() const;
+    isc::data::ElementPtr toElement() const override final;
 
 private:
     /// @brief The model name.

@@ -42,12 +42,12 @@ public:
     /// as a place to perform any derivation-specific initialization steps
     /// that are inappropriate for the constructor but necessary prior to
     /// launch.
-    virtual void init();
+    void init() override final;
 
     /// @brief Implements the process's event loop.
     ///
     /// @throw DProcessBaseError if an operational error is encountered.
-    virtual void run();
+    void run() override final;
 
     /// @brief Initiates the process's shutdown process.
     ///
@@ -62,8 +62,8 @@ public:
     /// non-zero means failure), and a string explanation of the outcome.
     ///
     /// @throw DProcessBaseError if an operational error is encountered.
-    virtual isc::data::ConstElementPtr
-    shutdown(isc::data::ConstElementPtr args);
+    isc::data::ConstElementPtr
+    shutdown(isc::data::ConstElementPtr args) override final;
 
     /// @brief Processes the given configuration.
     ///
@@ -78,9 +78,9 @@ public:
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr
+    isc::data::ConstElementPtr
     configure(isc::data::ConstElementPtr config_set,
-              bool check_only = false);
+              bool check_only = false) override final;
 
     /// @brief Returns a pointer to the configuration manager.
     NetconfCfgMgrPtr getNetconfCfgMgr();

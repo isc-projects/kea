@@ -40,7 +40,7 @@ public:
     /// @param service The target service (ignored).
     /// @return The JSON element answer of config-get.
     /// @throw NotImplemented
-    virtual data::ConstElementPtr configGet(const std::string& service);
+    data::ConstElementPtr configGet(const std::string& service) override final;
 
     /// @brief Test configuration.
     ///
@@ -49,8 +49,8 @@ public:
     /// @param config The configuration to test (ignored).
     /// @param service The target service (ignored).
     /// @return The JSON element answer of config-test (fixed answer).
-    virtual data::ConstElementPtr configTest(data::ConstElementPtr config,
-                                             const std::string& service);
+    data::ConstElementPtr configTest(data::ConstElementPtr config,
+                                     const std::string& service) override final;
 
     /// @brief Set configuration.
     ///
@@ -59,8 +59,8 @@ public:
     /// @param config The configuration to set.
     /// @param service The target service.
     /// @return The JSON element answer of config-set (fixed answer).
-    virtual data::ConstElementPtr configSet(data::ConstElementPtr config,
-                                            const std::string& service);
+    data::ConstElementPtr configSet(data::ConstElementPtr config,
+                                    const std::string& service) override final;
 
 protected:
     /// @brief Alternative constructor for tests.
