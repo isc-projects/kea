@@ -62,7 +62,7 @@ void TcpStreamRequest::unpack() {
         isc_throw(Unexpected, "Request is malformed, too short");
     }
 
-    request_ = std::vector<uint8_t>(wire_data_.begin() + sizeof(uint16_t) , wire_data_.end());
+    request_ = std::vector<uint8_t>(wire_data_.begin() + sizeof(uint16_t), wire_data_.end());
 }
 
 void

@@ -450,7 +450,7 @@ StringSanitizer::scrub(const std::string& original) {
 
 std::string dumpAsHex(const uint8_t* data, size_t length) {
     std::stringstream output;
-    for (unsigned int i = 0; i < len; i++) {
+    for (unsigned int i = 0; i < length; i++) {
         if (i) {
             output << ":";
         }
