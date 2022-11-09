@@ -2870,7 +2870,6 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
     if (enabled) {
         relay_id6_.clear();
         remote_id6_.clear();
-        link_addr6_.clear();
     }
 
     size_t leases = 0;

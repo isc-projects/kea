@@ -422,14 +422,6 @@ public:
                 ++remote_id_it;
             }
         }
-        auto link_addr_it = link_addr6_.begin();
-        while (link_addr_it != link_addr6_.end()) {
-            if ((*link_addr_it)->lease_addr_ == addr) {
-                link_addr_it = link_addr6_.erase(link_addr_it);
-            } else {
-                ++link_addr_it;
-            }
-        }
     }
 
     /// @brief Add lease6 extended info into by-relay-id table.
@@ -569,7 +561,6 @@ public:
     // List supports easier erase.
     list<Lease6ExtendedInfoPtr> relay_id6_;
     list<Lease6ExtendedInfoPtr> remote_id6_;
-    list<Lease6SimpleExtendedInfoPtr> link_addr6_;
 };
 
 class LeaseMgrTest : public GenericLeaseMgrTest {
@@ -1238,11 +1229,9 @@ TEST(Lease6ExtendedInfoTest, invalidSetExtendedInfoTablesEnabled) {
         lease->setContext(user_context);
         mgr->relay_id6_.clear();
         mgr->remote_id6_.clear();
-        mgr->link_addr6_.clear();
         EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
         EXPECT_TRUE(mgr->relay_id6_.empty());
         EXPECT_TRUE(mgr->remote_id6_.empty());
-        EXPECT_TRUE(mgr->link_addr6_.empty());
     }
 }
 
@@ -1265,11 +1254,6 @@ TEST(Lease6ExtendedInfoTest, noIdSetExtendedInfoTablesEnabled) {
     EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
     EXPECT_TRUE(mgr->relay_id6_.empty());
     EXPECT_TRUE(mgr->remote_id6_.empty());
-    ASSERT_EQ(1, mgr->link_addr6_.size());
-    Lease6SimpleExtendedInfoPtr sex_info = mgr->link_addr6_.front();
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ("2001:db8::1", sex_info->link_addr_.toText());
-    EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
 }
 
 /// Verify setExtendedInfoTablesEnabled with one relay with ids.
@@ -1295,7 +1279,6 @@ TEST(Lease6ExtendedInfoTest, idsSetExtendedInfoTablesEnabled) {
     EXPECT_EQ(1, mgr->relay_id6_.size());
     Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
     ASSERT_TRUE(ex_info);
-    EXPECT_EQ("2001:db8::5", ex_info->link_addr_.toText());
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
     const vector<uint8_t>& relay_id = ex_info->id_;
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
@@ -1304,17 +1287,10 @@ TEST(Lease6ExtendedInfoTest, idsSetExtendedInfoTablesEnabled) {
     EXPECT_EQ(1, mgr->remote_id6_.size());
     ex_info = mgr->remote_id6_.front();
     ASSERT_TRUE(ex_info);
-    EXPECT_EQ("2001:db8::5", ex_info->link_addr_.toText());
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
     const vector<uint8_t>& remote_id = ex_info->id_;
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, remote_id);
-
-    ASSERT_EQ(1, mgr->link_addr6_.size());
-    Lease6SimpleExtendedInfoPtr sex_info = mgr->link_addr6_.front();
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ("2001:db8::5", sex_info->link_addr_.toText());
-    EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
 }
 
 /// Verify setExtendedInfoTablesEnabled with one relay with ids but
@@ -1341,7 +1317,6 @@ TEST(Lease6ExtendedInfoTest, linkZeroSetExtendedInfoTablesEnabled) {
     EXPECT_EQ(1, mgr->relay_id6_.size());
     Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
     ASSERT_TRUE(ex_info);
-    EXPECT_EQ("::", ex_info->link_addr_.toText());
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
     const vector<uint8_t>& relay_id = ex_info->id_;
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
@@ -1350,13 +1325,10 @@ TEST(Lease6ExtendedInfoTest, linkZeroSetExtendedInfoTablesEnabled) {
     EXPECT_EQ(1, mgr->remote_id6_.size());
     ex_info = mgr->remote_id6_.front();
     ASSERT_TRUE(ex_info);
-    EXPECT_EQ("::", ex_info->link_addr_.toText());
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
     const vector<uint8_t>& remote_id = ex_info->id_;
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, remote_id);
-
-    EXPECT_TRUE(mgr->link_addr6_.empty());
 }
 
 /// Verify setExtendedInfoTablesEnabled with two relays.
@@ -1384,7 +1356,6 @@ TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoTablesEnabled) {
     EXPECT_EQ(1, mgr->relay_id6_.size());
     Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
     ASSERT_TRUE(ex_info);
-    EXPECT_EQ("2001:db8::5", ex_info->link_addr_.toText());
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
     const vector<uint8_t>& relay_id = ex_info->id_;
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
@@ -1393,21 +1364,10 @@ TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoTablesEnabled) {
     EXPECT_EQ(1, mgr->remote_id6_.size());
     ex_info = mgr->remote_id6_.front();
     ASSERT_TRUE(ex_info);
-    EXPECT_EQ("2001:db8::5", ex_info->link_addr_.toText());
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
     const vector<uint8_t>& remote_id = ex_info->id_;
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, remote_id);
-
-    ASSERT_EQ(2, mgr->link_addr6_.size());
-    Lease6SimpleExtendedInfoPtr sex_info = mgr->link_addr6_.front();
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ("2001:db8::1", sex_info->link_addr_.toText());
-    EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
-    sex_info = mgr->link_addr6_.back();
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ("2001:db8::5", sex_info->link_addr_.toText());
-    EXPECT_EQ("2001:db8::100", sex_info->lease_addr_.toText());
 }
 
 // There's no point in calling any other methods in LeaseMgr, as they

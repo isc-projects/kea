@@ -1046,18 +1046,15 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
 
     // Create parameter values.
     IOAddress lease_addr(ADDRESS6[0]);
-    IOAddress link_addr(ADDRESS6[1]);
     vector<uint8_t> relay_id = createFromString(DUID6[0]);
     vector<uint8_t> remote_id = createFromString(DUID6[1]);
 
     // Fill the table.
-    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, link_addr, relay_id));
-    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, link_addr, remote_id));
-    EXPECT_NO_THROW(lease_mgr_->addLinkAddr6(lease_addr, link_addr));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, relay_id));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, remote_id));
 
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
 
     // Delete the second lease: no side effect on tables.
     Lease6Ptr lease = leases6[1];
@@ -1070,7 +1067,6 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
 
     // Delete the first lease: tables are cleared.
     lease = leases6[0];
@@ -1080,7 +1076,6 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     EXPECT_TRUE(ret);
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
 }
 
 /// @brief Verifies that v6 deleteLease does not touch extended info tables
@@ -1092,18 +1087,15 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
 
     // Create parameter values.
     IOAddress lease_addr(ADDRESS6[0]);
-    IOAddress link_addr(ADDRESS6[1]);
     vector<uint8_t> relay_id = createFromString(DUID6[0]);
     vector<uint8_t> remote_id = createFromString(DUID6[1]);
 
     // Fill the table.
-    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, link_addr, relay_id));
-    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, link_addr, remote_id));
-    EXPECT_NO_THROW(lease_mgr_->addLinkAddr6(lease_addr, link_addr));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, relay_id));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, remote_id));
 
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
 
     // Delete the first lease: tables are no longer cleared.
     Lease6Ptr lease = leases6[0];
@@ -1116,7 +1108,6 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
     EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
 }
 
 /// @brief Verifies that v6 addLease adds references to extended info tables.
@@ -1125,12 +1116,10 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
 
     // Create parameter values.
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
-    IOAddress link_addr(ADDRESS6[2]);
     vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
@@ -1157,7 +1146,6 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
     const vector<uint8_t>& relay_id = ex_info->id_;
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
@@ -1168,18 +1156,9 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     ex_info = *remote_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
     const vector<uint8_t>& remote_id = ex_info->id_;
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, remote_id);
-
-    ASSERT_EQ(1, lease_mgr_->link_addr6_.size());
-    auto link_addr_it = lease_mgr_->link_addr6_.cbegin();
-    ASSERT_NE(link_addr_it, lease_mgr_->link_addr6_.cend());
-    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ(ADDRESS6[1], sex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], sex_info->link_addr_.toText());
 }
 
 /// @brief Verifies that v6 addLease does not touch extended info tables
@@ -1191,7 +1170,6 @@ TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
     // Create parameter values.
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
-    IOAddress link_addr(ADDRESS6[2]);
     vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
@@ -1212,7 +1190,6 @@ TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
     EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
 }
 
 /// @brief Verifies that updateLease6 does not references to extended
@@ -1224,7 +1201,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
     // Create parameter values.
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
-    IOAddress link_addr(ADDRESS6[2]);
     vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
@@ -1255,7 +1231,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
     // Tables were not touched.
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
 
     // Note that with persist when the database is reloaded the user context
     // is still there so tables will be updated: the ACTION_IGNORE setting
@@ -1272,7 +1247,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
     // Create parameter values.
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
-    IOAddress link_addr(ADDRESS6[2]);
     vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
@@ -1293,7 +1267,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
     EXPECT_TRUE(ret);
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
 
     // Set action and call updateLease6.
     lease.reset(new Lease6(*lease));
@@ -1304,7 +1277,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
     // Tables were cleared.
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
 }
 
 /// @brief Verifies that updateLease6 does not clears references from extended
@@ -1316,7 +1288,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     // Create parameter values.
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
-    IOAddress link_addr(ADDRESS6[2]);
     vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
@@ -1337,7 +1308,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     EXPECT_TRUE(ret);
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
 
     // Disable on the fly extended info tables.
     // Note it is a priori an illegal operation so this could have to be
@@ -1353,7 +1323,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     // Tables were not touched.
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->link_addr6_.size());
 }
 
 /// @brief Verifies that updateLease6 adds references to extended
@@ -1365,7 +1334,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     // Create parameter values.
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
-    IOAddress link_addr(ADDRESS6[2]);
     vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
@@ -1377,7 +1345,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     EXPECT_TRUE(ret);
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
 
     // Set user context.
     lease.reset(new Lease6(*lease));
@@ -1403,7 +1370,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
     const vector<uint8_t>& relay_id = ex_info->id_;
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
@@ -1414,18 +1380,9 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     ex_info = *remote_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
     const vector<uint8_t>& remote_id = ex_info->id_;
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, remote_id);
-
-    ASSERT_EQ(1, lease_mgr_->link_addr6_.size());
-    auto link_addr_it = lease_mgr_->link_addr6_.cbegin();
-    ASSERT_NE(link_addr_it, lease_mgr_->link_addr6_.cend());
-    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ(ADDRESS6[1], sex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], sex_info->link_addr_.toText());
 }
 
 /// @brief Verifies that updateLease6 does not add references to extended
@@ -1437,7 +1394,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6updateDisabled) {
     // Create parameter values.
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
-    IOAddress link_addr(ADDRESS6[2]);
     vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
@@ -1468,7 +1424,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6updateDisabled) {
     // Tables were not touched.
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr_->link_addr6_.empty());
 }
 
 /// @brief Verifies that updateLease6 modifies references to extended
@@ -1481,7 +1436,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     // Create parameter values.
     Lease6Ptr lease;
     IOAddress lease_addr(ADDRESS6[1]);
-    IOAddress link_addr(ADDRESS6[2]);
     vector<uint8_t> duid_data = createFromString(DUID6[0]);
     DuidPtr duid(new DUID(duid_data));
     ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, lease_addr, duid,
@@ -1509,7 +1463,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
     const vector<uint8_t>& relay_id = ex_info->id_;
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
@@ -1520,21 +1473,11 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     ex_info = *remote_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], ex_info->link_addr_.toText());
     const vector<uint8_t>& remote_id = ex_info->id_;
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, remote_id);
 
-    ASSERT_EQ(1, lease_mgr_->link_addr6_.size());
-    auto link_addr_it = lease_mgr_->link_addr6_.cbegin();
-    ASSERT_NE(link_addr_it, lease_mgr_->link_addr6_.cend());
-    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ(ADDRESS6[1], sex_info->lease_addr_.toText());
-    EXPECT_EQ(ADDRESS6[2], sex_info->link_addr_.toText());
-
     // Change the user context.
-    IOAddress link_addr2(ADDRESS6[4]);
     user_context_txt =
         "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44,"
         " \"link\": \"2001:db8::4\",  \"peer\": \"2001:db8::5\","
@@ -1557,8 +1500,6 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     ex_info = *relay_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
-    EXPECT_NE(ADDRESS6[2], ex_info->link_addr_.toText());
-    EXPECT_EQ(ADDRESS6[4], ex_info->link_addr_.toText());
     const vector<uint8_t>& relay_id2 = ex_info->id_;
     const vector<uint8_t>& exp_relay_id2 = vector<uint8_t>(8, 0x65);
     EXPECT_NE(exp_relay_id, relay_id2);
@@ -1570,21 +1511,10 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     ex_info = *remote_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ(ADDRESS6[1], ex_info->lease_addr_.toText());
-    EXPECT_NE(ADDRESS6[2], ex_info->link_addr_.toText());
-    EXPECT_EQ(ADDRESS6[4], ex_info->link_addr_.toText());
     const vector<uint8_t>& remote_id2 = ex_info->id_;
     const vector<uint8_t>& exp_remote_id2 = { 1, 2, 3, 4, 5, 7 };
     EXPECT_NE(exp_remote_id, remote_id2);
     EXPECT_EQ(exp_remote_id2, remote_id2);
-
-    ASSERT_EQ(1, lease_mgr_->link_addr6_.size());
-    link_addr_it = lease_mgr_->link_addr6_.cbegin();
-    ASSERT_NE(link_addr_it, lease_mgr_->link_addr6_.cend());
-    sex_info = *link_addr_it;
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ(ADDRESS6[1], sex_info->lease_addr_.toText());
-    EXPECT_NE(ADDRESS6[2], sex_info->link_addr_.toText());
-    EXPECT_EQ(ADDRESS6[4], sex_info->link_addr_.toText());
 }
 
 }  // namespace

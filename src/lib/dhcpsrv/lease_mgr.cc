@@ -992,19 +992,6 @@ LeaseMgr::addExtendedInfo6(const Lease6Ptr& lease) {
             continue;
         }
         try {
-            ConstElementPtr link = relay->get("link");
-            if (!link || (link->getType() != Element::string)) {
-                continue;
-            }
-            IOAddress link_addr(link->stringValue());
-            if (!link_addr.isV6()) {
-                continue;
-            }
-            if (!link_addr.isV6Zero()) {
-                addLinkAddr6(lease->addr_, link_addr);
-                added = true;
-            }
-
             ConstElementPtr relay_id = relay->get("relay-id");
             if (relay_id) {
                 string relay_id_hex = relay_id->stringValue();
@@ -1013,7 +1000,7 @@ LeaseMgr::addExtendedInfo6(const Lease6Ptr& lease) {
                 if (relay_id_data.empty()) {
                     continue;
                 }
-                addRelayId6(lease->addr_, link_addr, relay_id_data);
+                addRelayId6(lease->addr_, relay_id_data);
                 added = true;
             }
 
@@ -1025,7 +1012,7 @@ LeaseMgr::addExtendedInfo6(const Lease6Ptr& lease) {
                 if (remote_id_data.empty()) {
                     continue;
                 }
-                addRemoteId6(lease->addr_, link_addr, remote_id_data);
+                addRemoteId6(lease->addr_, remote_id_data);
                 added = true;
             }
         } catch (const exception&) {

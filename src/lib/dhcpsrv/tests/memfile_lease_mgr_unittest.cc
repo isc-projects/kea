@@ -100,7 +100,6 @@ public:
     using Memfile_LeaseMgr::setExtendedInfoTablesEnabled;
     using Memfile_LeaseMgr::relay_id6_;
     using Memfile_LeaseMgr::remote_id6_;
-    using Memfile_LeaseMgr::link_addr6_;
 };
 
 /// @brief Test fixture class for @c Memfile_LeaseMgr
@@ -3602,7 +3601,6 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6) {
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, ex_info->id_);
 
@@ -3612,17 +3610,8 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6) {
     ex_info = *remote_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, ex_info->id_);
-
-    ASSERT_EQ(1, lease_mgr->link_addr6_.size());
-    auto link_addr_it = lease_mgr->link_addr6_.cbegin();
-    ASSERT_NE(link_addr_it, lease_mgr->link_addr6_.cend());
-    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ("2001:db8:1::2", sex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", sex_info->link_addr_.toText());
 }
 
 /// @brief Checks that buildExtendedInfoTables6 does not update
@@ -3685,7 +3674,6 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6noSanitize) {
     // Check that extended info tables were not updated.
     EXPECT_TRUE(lease_mgr->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr->link_addr6_.empty());
 }
 
 /// @brief Checks that buildExtendedInfoTables6 adds extended info to tables
@@ -3744,7 +3732,6 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6enabled) {
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, ex_info->id_);
 
@@ -3754,17 +3741,8 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6enabled) {
     ex_info = *remote_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, ex_info->id_);
-
-    ASSERT_EQ(1, lease_mgr->link_addr6_.size());
-    auto link_addr_it = lease_mgr->link_addr6_.cbegin();
-    ASSERT_NE(link_addr_it, lease_mgr->link_addr6_.cend());
-    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ("2001:db8:1::2", sex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", sex_info->link_addr_.toText());
 }
 
 /// @brief Checks that buildExtendedInfoTables6 does not add extended info
@@ -3811,7 +3789,6 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6disabled) {
     // Check that extended info tables were not updated.
     EXPECT_TRUE(lease_mgr->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr->remote_id6_.empty());
-    EXPECT_TRUE(lease_mgr->link_addr6_.empty());
 }
 
 /// @brief Checks that buildExtendedInfoTables6 updates when explicitly
@@ -3953,27 +3930,21 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
     // Check that extended info tables were updated.
     EXPECT_EQ(1, lease_mgr->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr->remote_id6_.size());
-    EXPECT_EQ(1, lease_mgr->link_addr6_.size());
 
     // Add a junk entry in each table.
     IOAddress lease_addr("2001:db8:1::10");
-    IOAddress link_addr("2001:db8::11");
     const vector<uint8_t>& relay_id = vector<uint8_t>(10, 0x65);
     Lease6ExtendedInfoPtr relay;
-    relay.reset(new Lease6ExtendedInfo(lease_addr, link_addr, relay_id));
+    relay.reset(new Lease6ExtendedInfo(lease_addr, relay_id));
     lease_mgr->relay_id6_.insert(relay);
     const vector<uint8_t>& remote_id = { 10, 11, 12, 13, 14, 15, 16 };
     Lease6ExtendedInfoPtr remote;
-    remote.reset(new Lease6ExtendedInfo(lease_addr, link_addr, remote_id));
+    remote.reset(new Lease6ExtendedInfo(lease_addr, remote_id));
     lease_mgr->remote_id6_.insert(remote);
-    Lease6SimpleExtendedInfoPtr link;
-    link.reset(new Lease6SimpleExtendedInfo(lease_addr, link_addr));
-    lease_mgr->link_addr6_.insert(link);
 
     // Check that tables grown.
     EXPECT_EQ(2, lease_mgr->relay_id6_.size());
     EXPECT_EQ(2, lease_mgr->remote_id6_.size());
-    EXPECT_EQ(2, lease_mgr->link_addr6_.size());
 
     // Rebuild the tables.
     size_t updated = 0;
@@ -3987,7 +3958,6 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, ex_info->id_);
 
@@ -3997,17 +3967,8 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
     ex_info = *remote_id_it;
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", ex_info->link_addr_.toText());
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, ex_info->id_);
-
-    ASSERT_EQ(1, lease_mgr->link_addr6_.size());
-    auto link_addr_it = lease_mgr->link_addr6_.cbegin();
-    ASSERT_NE(link_addr_it, lease_mgr->link_addr6_.cend());
-    Lease6SimpleExtendedInfoPtr sex_info = *link_addr_it;
-    ASSERT_TRUE(sex_info);
-    EXPECT_EQ("2001:db8:1::2", sex_info->lease_addr_.toText());
-    EXPECT_EQ("2001:db8::4", sex_info->link_addr_.toText());
 }
 
 }  // namespace
