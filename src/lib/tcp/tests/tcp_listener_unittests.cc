@@ -77,7 +77,7 @@ public:
     }
 
     virtual TcpRequestPtr createRequest() {
-        return(TcpStreamRequestPtr(new TcpStreamRequest()));
+        return (TcpStreamRequestPtr(new TcpStreamRequest()));
     }
 
     virtual void requestReceived(TcpRequestPtr request) {
@@ -178,7 +178,7 @@ public:
                                     std::bind(&TcpListenerTest::clientDone, this)));
         clients_.push_back(client);
         client->connect();
-        return(client);
+        return (client);
     }
 
     /// @brief Connect to the endpoint and send a request.
@@ -247,12 +247,12 @@ public:
     ///
     /// @param remote_endpoint_address ip address of the remote end of
     /// a connection.
-    bool connectionFilter(const std::string& remote_endpoint_address) {
+    bool connectionFilter(const boost::asio::ip::tcp::endpoint& remote_endpoint) {
         static size_t count = 0;
         // If the address doesn't match, something hinky is going on, so
         // we'll reject them all.  If it does match, then cool, it works
         // as expected.
-        if ((count++ % 2) || (remote_endpoint_address != SERVER_ADDRESS)) {
+        if ((count++ % 2) || (remote_endpoint.address().to_string() != SERVER_ADDRESS)) {
             // Reject every other connection;
             return (false);
         }

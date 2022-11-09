@@ -34,10 +34,6 @@ typedef boost::shared_ptr<WireData> WireDataPtr;
 /// @brief Base class for TCP messages.
 class TcpMessage {
 public:
-    /// @brief Constructor
-    TcpMessage(){
-    };
-
     /// @brief Destructor
     virtual ~TcpMessage(){
     };
@@ -66,9 +62,6 @@ protected:
 /// @brief Abstract class used to receive an inbound message.
 class TcpRequest : public TcpMessage {
 public:
-    /// @brief Constructor.
-    TcpRequest(){};
-
     /// @brief Destructor
     virtual ~TcpRequest(){};
 
@@ -135,7 +128,7 @@ public:
     virtual void consumeWireData(const size_t length);
 
     bool sendInProgress() {
-        return(send_in_progress_);
+        return (send_in_progress_);
     }
 
 private:
@@ -159,7 +152,7 @@ public:
 class TcpConnectionPool;
 
 /// @brief Type of the callback for filtering new connections by ip address.
-typedef std::function<bool(const std::string& remote_endpoint_address)> TcpConnectionFilterCallback;
+typedef std::function<bool(const boost::asio::ip::tcp::endpoint&)> TcpConnectionFilterCallback;
 
 /// @brief Accepts and handles a single TCP connection.
 class TcpConnection : public boost::enable_shared_from_this<TcpConnection> {
@@ -296,7 +289,7 @@ public:
     /// read.
     /// @return Maximum number of bytes to read.
     size_t getReadMax() const {
-        return(read_max_);
+        return (read_max_);
     }
 
     /// @brief Sets the maxium number of bytes read during single socket read.
@@ -304,6 +297,20 @@ public:
     /// @param read_max maximum number of bytes to read.
     /// @throw BadValue if the parameter is not greater than zero.
     void setReadMax(const size_t read_max);
+
+    /// @brief Returns an empty end point.
+    ///
+    /// @return an unitialized endpoint.
+    static const boost::asio::ip::tcp::endpoint& NO_ENDPOINT() {
+        static boost::asio::ip::tcp::endpoint endpoint;
+        return (endpoint);
+    }
+
+    /// @brief Fetches the remote endpoint for the connection's socket.
+    ///
+    /// @return A reference to the endpoint if the socket is open, otherwise
+    /// NO_ENDPOINT.
+    const boost::asio::ip::tcp::endpoint getRemoteEndpoint() const;
 
 protected:
 
