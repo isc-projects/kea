@@ -898,7 +898,7 @@ public:
     /// @param relay_id DUID for relay_id of interest.
     /// @param link_addr limit results to leases on this link (prefix).
     /// @param link_len limit results to leases on this link (length).
-    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// @param lower_bound_address IPv6 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
     ///
@@ -915,7 +915,7 @@ public:
     /// @param remote_id remote-id option data of interest.
     /// @param link_addr limit results to leases on this link (prefix).
     /// @param link_len limit results to leases on this link (length).
-    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// @param lower_bound_address IPv6 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
     ///
@@ -931,7 +931,7 @@ public:
     ///
     /// @param link_addr limit results to leases on this link (prefix).
     /// @param link_len limit results to leases on this link (length).
-    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// @param lower_bound_address IPv6 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
     ///
