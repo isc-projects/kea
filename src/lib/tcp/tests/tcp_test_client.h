@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <tcp/tcp_connection.h>
+#include <tcp/tcp_stream_msg.h>
 #include <boost/asio/read.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
