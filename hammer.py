@@ -1082,7 +1082,7 @@ def _install_libyang_from_sources(ignore_errors = False):
             log.info(f'libyang is already installed at {libyang_so}.')
             return
 
-    version='56d4e07ef1cdeab3eb2e6700247f83ec9148edcc'
+    version='v2.1.4'
 
     execute('rm -rf /tmp/libyang')
     try:
@@ -1113,7 +1113,7 @@ def _install_sysrepo_from_sources(ignore_errors = False):
             log.info(f'sysrepo is already installed at {sysrepo_so}.')
             return
 
-    version='v2.1.84'
+    version='v2.2.12'
 
     # Create repository for YANG modules and change ownership to current user.
     execute('sudo mkdir -p /etc/sysrepo')
@@ -1148,7 +1148,7 @@ def _install_libyang_cpp_from_sources(ignore_errors = False):
             log.info(f'libyang-cpp is already installed at {libyang_cpp_so}.')
             return
 
-    version='7824d9a862f2dc1d8ad4f6a90ab6cee9200f7c81'
+    version='ae7d649ea75da081725c119dd553b2ef3121a6f8'
 
     execute('rm -rf /tmp/libyang')
     try:
@@ -1179,7 +1179,7 @@ def _install_sysrepo_cpp_from_sources(ignore_errors = False):
             log.info(f'sysrepo-cpp is already installed at {sysrepo_cpp_so}.')
             return
 
-    version='e66b2f0c53a428eeb743d355cf86fb30e8e491f1'
+    version='02634174ffc60568301c3d9b9b7cf710cff6a586'
 
     execute('rm -rf /tmp/libyang')
     try:

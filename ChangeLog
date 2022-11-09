@@ -3,6 +3,8 @@
 	extended-info-checks, ignore-rai-link-selection, template-test.
 	keatest-module has also gained empty, leafref and union nodes for
 	proper testing of all YANG leaf types.
+	Additionally, stable libyang and sysrepo versions are recommended
+	for use in the ARM in place of the previous development versions.
 	(Gitlab #2601)
 
 2076.	[doc]		razvan

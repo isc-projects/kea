@@ -19,14 +19,25 @@ support for a YANG/NETCONF interface with the ``kea-netconf`` agent.
 Installing NETCONF
 ------------------
 
-To get its NETCONF capabilities, Kea roughly requires the v2 versions of
-libyang and sysrepo. This can span several versions. The versions that were
-thoroughly tested with Kea are:
+To get its NETCONF capabilities, Kea requires the v2 versions of libyang and
+sysrepo. The specific versions that were thoroughly tested with Kea are:
 
-* libyang v2.0.256 (56d4e07ef1cdeab3eb2e6700247f83ec9148edcc)
-* sysrepo v2.1.84
-* libyang-cpp v1.1.0 (7824d9a862f2dc1d8ad4f6a90ab6cee9200f7c81)
-* sysrepo-cpp v1.1.0 (e66b2f0c53a428eeb743d355cf86fb30e8e491f1)
+* libyang v2.1.4
+* sysrepo v2.2.12
+* libyang-cpp v1.1.0 (ae7d649ea75da081725c119dd553b2ef3121a6f8)
+* sysrepo-cpp v1.1.0 (02634174ffc60568301c3d9b9b7cf710cff6a586)
+
+.. note::
+
+    If, for whatever reason, an older version is desired, the versions below
+    are the furthest back one can go. Backtracking even further has resulted
+    either in compilation failure or in improper functioning in ISC internal
+    testing, depending on which component is reverted.
+
+    * libyang v2.0.256 (56d4e07ef1cdeab3eb2e6700247f83ec9148edcc)
+    * sysrepo v2.1.84
+    * libyang-cpp v1.1.0 (7824d9a862f2dc1d8ad4f6a90ab6cee9200f7c81)
+    * sysrepo-cpp v1.1.0 (e66b2f0c53a428eeb743d355cf86fb30e8e491f1)
 
 .. note::
 
@@ -45,7 +56,7 @@ Installing ``libyang`` From Sources
 
     $ git clone https://github.com/CESNET/libyang.git
     $ cd libyang
-    $ git checkout 56d4e07ef1cdeab3eb2e6700247f83ec9148edcc
+    $ git checkout v2.1.4
     $ mkdir build
     $ cd build
     $ cmake ..
@@ -61,7 +72,7 @@ Installing ``sysrepo`` From Sources
 
     $ git clone https://github.com/sysrepo/sysrepo.git
     $ cd sysrepo
-    $ git checkout v2.1.84
+    $ git checkout v2.2.12
     $ mkdir build
     $ cd build
     $ cmake -DREPO_PATH=/etc/sysrepo ..
@@ -77,7 +88,7 @@ Installing ``libyang-cpp`` From Sources
 
     $ git clone https://github.com/CESNET/libyang-cpp.git
     $ cd libyang-cpp
-    $ git checkout 7824d9a862f2dc1d8ad4f6a90ab6cee9200f7c81
+    $ git checkout ae7d649ea75da081725c119dd553b2ef3121a6f8
     $ mkdir build
     $ cd build
     $ cmake -DBUILD_TESTING=OFF ..
@@ -93,7 +104,7 @@ Installing ``sysrepo-cpp`` From Sources
 
     $ git clone https://github.com/sysrepo/sysrepo-cpp.git
     $ cd sysrepo-cpp
-    $ git checkout e66b2f0c53a428eeb743d355cf86fb30e8e491f1
+    $ git checkout 02634174ffc60568301c3d9b9b7cf710cff6a586
     $ mkdir build
     $ cd build
     $ cmake -DBUILD_TESTING=OFF ..
@@ -134,32 +145,32 @@ Compiling With NETCONF
       libyang:
         LIBYANG_CPPFLAGS:
         LIBYANG_INCLUDEDIR:    -I/usr/local/include
-        LIBYANG_LIBS:          -L/usr/local/lib64 -lyang -Wl,-R/usr/local/lib64 -lyang
+        LIBYANG_LIBS:          -L/usr/local/lib -lyang -Wl,-R/usr/local/lib -lyang
         LIBYANG_PREFIX:        /usr/local
-        LIBYANG_VERSION:       2.0.256
+        LIBYANG_VERSION:       2.1.4
 
       libyang-cpp:
         LIBYANGCPP_CPPFLAGS:
         LIBYANGCPP_INCLUDEDIR: -I/usr/local/include
-        LIBYANGCPP_LIBS:       -L/usr/local/lib64 -lyang-cpp -Wl,-R/usr/local/lib64 -lyang-cpp
+        LIBYANGCPP_LIBS:       -L/usr/local/lib -lyang-cpp -Wl,-R/usr/local/lib -lyang-cpp
         LIBYANGCPP_PREFIX:     /usr/local
         LIBYANGCPP_VERSION:    1.1.0
 
       sysrepo:
         SYSREPO_CPPFLAGS:
         SYSREPO_INCLUDEDIR:    -I/usr/local/include
-        SYSREPO_LIBS:          -L/usr/local/lib64 -lsysrepo -Wl,-R/usr/local/lib64 -lsysrepo
+        SYSREPO_LIBS:          -L/usr/local/lib -lsysrepo -Wl,-R/usr/local/lib -lsysrepo
         SYSREPO_PREFIX:        /usr/local
-        SYSREPO_VERSION:       2.1.84
+        SYSREPO_VERSION:       2.2.12
 
         SR_REPO_PATH:          /etc/sysrepo
-        SR_PLUGINS_PATH:       /usr/local/lib64/sysrepo/plugins
-        SRPD_PLUGINS_PATH:     /usr/local/lib64/sysrepo-plugind/plugins
+        SR_PLUGINS_PATH:       /usr/local/lib/sysrepo/plugins
+        SRPD_PLUGINS_PATH:     /usr/local/lib/sysrepo-plugind/plugins
 
       sysrepo-cpp:
         SYSREPOCPP_CPPFLAGS:
         SYSREPOCPP_INCLUDEDIR: -I/usr/local/include
-        SYSREPOCPP_LIBS:       -L/usr/local/lib64 -lsysrepo-cpp -Wl,-R/usr/local/lib64 -lsysrepo-cpp
+        SYSREPOCPP_LIBS:       -L/usr/local/lib -lsysrepo-cpp -Wl,-R/usr/local/lib -lsysrepo-cpp
         SYSREPOCPP_PREFIX :    /usr/local
         SYSREPOCPP_VERSION:    1.1.0
 
