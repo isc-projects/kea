@@ -1,3 +1,9 @@
+2074.	[func]		tmark
+	Added a new library, libkea_tcp, that provides support for a
+	generic TCP listener.  Initially, this library will be used
+	for Bulk LeaseQuery
+	(Gitlab #2583)
+
 Kea 2.3.2 (development) released on October 26, 2022
 
 2073.	[build]		razvan
