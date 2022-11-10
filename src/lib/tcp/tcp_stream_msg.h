@@ -128,6 +128,13 @@ public:
     /// @brief Packs the response content into wire data buffer.
     virtual void pack();
 
+    /// @brief Fetches the unpacked response as a string.
+    ///
+    /// @return String containing the unpacked contents.
+    std::string getResponseString() const {
+        return (std::string(response_.begin(), response_.end()));
+    };
+
 private:
     /// @brief Unpacked response data to send.
     std::vector<uint8_t> response_;

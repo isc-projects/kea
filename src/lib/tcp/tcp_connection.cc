@@ -261,7 +261,11 @@ TcpConnection::doWrite(TcpResponsePtr response) {
             }
         } else {
             // The connection remains open and we are done sending the response.
-            setupIdleTimer();
+            // If the response sent handler returns true then we should start the
+            // idle timer.
+            if (responseSent(response)) {
+                setupIdleTimer();
+            }
         }
     } catch (...) {
         stopThisConnection();

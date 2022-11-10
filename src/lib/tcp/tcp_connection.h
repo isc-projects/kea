@@ -298,6 +298,12 @@ public:
     /// @throw BadValue if the parameter is not greater than zero.
     void setReadMax(const size_t read_max);
 
+    /// @brief Determines behavior after a response has been sent.
+    ///
+    /// @param response Pointer to the response sent.
+    /// @return True if the idle timer should be started.
+    virtual bool responseSent(TcpResponsePtr response) = 0;
+
     /// @brief Returns an empty end point.
     ///
     /// @return an unitialized endpoint.
