@@ -172,7 +172,7 @@ enum DHCPv6StatusCode {
    STATUS_MalformedQuery             = 8,
    STATUS_NotConfigured              = 9,
    STATUS_NotAllowed                 = 10,
-// STATUS_QueryTerminated            = 11,
+   STATUS_QueryTerminated            = 11,
 /* RFC7653 */
 // STATUS_DataMissing                = 12,
 // STATUS_CatchUpComplete            = 13,
@@ -335,9 +335,9 @@ static const uint16_t DHCP6_SERVER_PORT = 547;
 
 #define LQ6QT_BY_ADDRESS        1
 #define LQ6QT_BY_CLIENTID       2
-//#define LQ6QT_BY_RELAY_ID       3
-//#define LQ6QT_BY_LINK_ADDRESS   4
-//#define LQ6QT_BY_REMOTE_ID      5
+#define LQ6QT_BY_RELAY_ID       3
+#define LQ6QT_BY_LINK_ADDRESS   4
+#define LQ6QT_BY_REMOTE_ID      5
 
 /*
  * DUID time starts 2000-01-01.
