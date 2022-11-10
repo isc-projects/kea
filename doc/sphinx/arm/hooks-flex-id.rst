@@ -36,8 +36,8 @@ be host reservations that are tied to specific values of the flexible
 identifier.
 
 The library can be loaded similarly to other hook libraries. It
-takes a mandatory parameter ``identifier-expression`` and an optional boolean
-parameter ``replace-client-id``:
+takes a mandatory parameter ``identifier-expression`` and some optional boolean
+parameters like ``replace-client-id`` and ``ignore-iaid``:
 
 ::
 
@@ -47,7 +47,8 @@ parameter ``replace-client-id``:
                "library": "/path/libdhcp_flex_id.so",
                "parameters": {
                    "identifier-expression": "expression",
-                   "replace-client-id": false
+                   "replace-client-id": false,
+                   "ignore-iaid": false
                }
            },
            ...
@@ -223,3 +224,17 @@ In DHCPv6, the corresponding query looks something like this:
            "subnet-id": 10
        }
    }
+
+When ``ignore-iaid`` is set to ``true`` (default setting is false), the
+``flex-id`` hooks library will make the Kea DHCPv6 server ignore IAID value
+from incomming IPv6 packets. This parameter is ignored by the Kea DHCPv4 server.
+
+.. note::
+
+   This functionality breaks RFC compliance and should be enabled only if
+   required. It will effectively make the Kea DHCPv6 server accept packets
+   which contain at most one IANA and one IAPD options.
+   When enabled, a warning message is issued at configure time.
+   If the incomming packet contains more than one IANA or IAPD option, the
+   packet will be dropped and a debug log message will indicate this event in
+   the hooks library logs.
