@@ -1048,25 +1048,30 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     IOAddress lease_addr(ADDRESS6[0]);
     vector<uint8_t> relay_id = createFromString(DUID6[0]);
     vector<uint8_t> remote_id = createFromString(DUID6[1]);
+    vector<uint8_t> relay_id2 = createFromString(DUID6[2]);
+    vector<uint8_t> remote_id2 = createFromString(DUID6[3]);
 
     // Fill the table.
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, relay_id));
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, remote_id));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, relay_id2));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, remote_id2));
 
-    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(2, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(2, lease_mgr_->remote_id6_.size());
 
     // Delete the second lease: no side effect on tables.
     Lease6Ptr lease = leases6[1];
     ASSERT_TRUE(lease);
     EXPECT_NE(lease_addr, lease->addr_);
+    // Put a value different of the expected one.
     lease->extended_info_action_ = Lease::ACTION_UPDATE;
     bool ret;
     EXPECT_NO_THROW(ret = lease_mgr_->deleteLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
-    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(2, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(2, lease_mgr_->remote_id6_.size());
 
     // Delete the first lease: tables are cleared.
     lease = leases6[0];
@@ -1101,7 +1106,8 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
     Lease6Ptr lease = leases6[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr, lease->addr_);
-    lease->extended_info_action_ = Lease::ACTION_DELETE;
+    // Put a value different from the expected one.
+    lease->extended_info_action_ = Lease::ACTION_UPDATE;
     bool ret;
     EXPECT_NO_THROW(ret = lease_mgr_->deleteLease(lease));
     EXPECT_TRUE(ret);
@@ -1133,6 +1139,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     ElementPtr user_context;
     ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
     lease->setContext(user_context);
+    // Put a value different of the expected one.
     lease->extended_info_action_ = Lease::ACTION_DELETE;
     bool ret;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
@@ -1192,7 +1199,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
 }
 
-/// @brief Verifies that updateLease6 does not references to extended
+/// @brief Verifies that updateLease6 does not touch references to extended
 /// info tables when the action is ACTION_IGNORE.
 TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
     start(Memfile_LeaseMgr::V6);
