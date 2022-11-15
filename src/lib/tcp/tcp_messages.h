@@ -8,6 +8,9 @@
 namespace isc {
 namespace tcp {
 
+extern const isc::log::MessageID MT_TCP_LISTENER_MGR_STARTED;
+extern const isc::log::MessageID MT_TCP_LISTENER_MGR_STOPPED;
+extern const isc::log::MessageID MT_TCP_LISTENER_MGR_STOPPING;
 extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED;
 extern const isc::log::MessageID TCP_CONNECTION_CLOSE_CALLBACK_FAILED;
 extern const isc::log::MessageID TCP_CONNECTION_HANDSHAKE_FAILED;

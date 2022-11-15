@@ -90,3 +90,17 @@ first argument specifies an address of the remote endpoint to which the
 response is being sent. The second argument provides a response in the
 textual form. The response is truncated by the logger if it is too large
 to be printed.
+
+% MT_TCP_LISTENER_MGR_STARTED MtTcpListenerMgr started with %1 threads, listening on %2:%3, use TLS: %4
+This debug messages is issued when an MtTcpListenerMgr has been started to
+accept connections.  Arguments detail the number of threads that the listener
+is using, the address and port at which it is listening,
+and if MT_TCPS/TLS is used or not.
+
+% MT_TCP_LISTENER_MGR_STOPPED MtTcpListenerMgr for %1:%2 stopped.
+This debug messages is issued when the MtTcpListenerMgr, listening
+at the given address and port, has completed shutdown.
+
+% MT_TCP_LISTENER_MGR_STOPPING Stopping MtTcpListenerMgr for %1:%2
+This debug messages is issued when the MtTcpListenerMgr, listening
+at the given address and port, has begun to shutdown.

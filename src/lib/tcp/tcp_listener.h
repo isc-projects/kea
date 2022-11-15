@@ -144,6 +144,9 @@ protected:
     TcpConnectionFilterCallback connection_filter_;
 };
 
+/// @brief Pointer to a TcpListener.
+typedef boost::shared_ptr<TcpListener> TcpListenerPtr;
+
 } // end of namespace isc::asiolink
 } // end of namespace isc
 

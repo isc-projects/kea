@@ -7,33 +7,25 @@
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
-#include <asiolink/tls_acceptor.h>
 #include <asiolink/io_service.h>
-#include <cc/data.h>
-#include <exceptions/exceptions.h>
-#include <tcp/tcp_stream_msg.h>
-#include <tcp/tcp_listener.h>
+#include <tcp_test_listener.h>
 #include <tcp_test_client.h>
-#include <util/multi_threading_mgr.h>
 
-
-#include <boost/asio/buffer.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
-
-#include <functional>
-#include <list>
-#include <sstream>
-#include <string>
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
-using namespace isc::data;
 using namespace isc::tcp;
-using namespace isc::util;
 
 namespace ph = std::placeholders;
+
+std::ostream&
+operator<<(std::ostream& os, const AuditEntry& entry) {
+    os << "{ " << entry.connection_id_ << ", "
+       << (entry.direction_ == AuditEntry::INBOUND ? "I" : "O") << ", "
+       << entry.data_ << " }";
+    return (os);
+}
 
 namespace {
 
@@ -62,222 +54,6 @@ const long SHORT_IDLE_TIMEOUT = 200;
 
 /// @brief Test timeout (ms).
 const long TEST_TIMEOUT = 10000;
-
-/// @brief Describes stream message sent over a connection.
-class AuditEntry {
-public:
-    enum Direction {
-        INBOUND,  // data received
-        OUTBOUND  // data sent
-    };
-
-    /// @brief Constructor
-    ///
-    /// @param connection_id Id of the client to whom the entry pertains
-    /// @param direction INBOUND for data received, OUTBOUND for data sent
-    /// @param data string form of the data involved
-    AuditEntry(size_t connection_id, const AuditEntry::Direction& direction, const std::string& data)
-        : connection_id_(connection_id), direction_(direction), data_(data) {
-    }
-
-    /// @brief Equality operator.
-    ///
-    /// @param other value to be compared.
-    bool operator==(const AuditEntry& other) const {
-        return ((connection_id_ == other.connection_id_) &&
-                (direction_ == other.direction_) &&
-                (data_ == other.data_));
-    }
-
-    /// @brief Unique client identifier.
-    size_t connection_id_;
-
-    /// @brief Indicates which direction the data traveled
-    Direction direction_;
-
-    /// @brief Contains the data sent or received.
-    std::string data_;
-};
-
-std::ostream&
-operator<<(std::ostream& os, const AuditEntry& entry) {
-    os << "{ " << entry.connection_id_ << ", "
-       << (entry.direction_ == AuditEntry::INBOUND ? "I" : "O") << ", "
-       << entry.data_ << " }";
-    return (os);
-}
-
-/// @brief Contains the data receipt/transmission history for an arbitrary number
-/// of connections.
-class AuditTrail {
-public:
-    /// @brief Adds an entry to the audit trail.
-    ///
-    /// @param connection_id Id of the client to whom the entry pertains
-    /// @param direction INBOUND for data received, OUTBOUND for data sent
-    /// @param data string form of the data involved
-    void addEntry(size_t connection_id, const AuditEntry::Direction& direction, const std::string& data) {
-        // will need a mutex
-        entries_.push_back(AuditEntry(connection_id, direction, data));
-    }
-
-    /// @brief Returns a list of AuditEntry(s) for a given connection.
-    ///
-    /// @param connection_id Id of the desired connection
-    /// @return A list of entries for the connection or an empty list if none are found.
-    std::list<AuditEntry> getConnectionTrail(size_t connection_id) {
-        std::list<AuditEntry> conn_entries;
-        for (auto entry_it = entries_.begin(); entry_it != entries_.end(); ++entry_it) {
-            if ((*entry_it).connection_id_ == connection_id) {
-                conn_entries.push_back(*entry_it);
-            }
-        }
-
-        return (conn_entries);
-    }
-
-    /// @brief Dumps the audit trail as a string.
-    std::string dump() {
-        std::stringstream ss;
-        for (auto entry_it = entries_.begin(); entry_it != entries_.end(); ++entry_it) {
-            ss << (*entry_it) << std::endl;
-        }
-
-        return (ss.str());
-    }
-
-    /// @brief Contains the audit entries.
-    std::list<AuditEntry> entries_;
-};
-
-/// @brief Defines a pointer to an AuditTrail
-typedef boost::shared_ptr<AuditTrail> AuditTrailPtr;
-
-/// @brief Derivation of TcpConnection used for testing.
-class TcpTestConnection : public TcpConnection {
-public:
-    /// @brief Constructor
-    TcpTestConnection(IOService& io_service,
-                      const TcpConnectionAcceptorPtr& acceptor,
-                      const TlsContextPtr& tls_context,
-                      TcpConnectionPool& connection_pool,
-                      const TcpConnectionAcceptorCallback& acceptor_callback,
-                      const TcpConnectionFilterCallback& filter_callback,
-                      const long idle_timeout,
-                      size_t connection_id,
-                      AuditTrailPtr audit_trail)
-     : TcpConnection(io_service, acceptor, tls_context, connection_pool,
-                     acceptor_callback, filter_callback, idle_timeout),
-                     connection_id_(connection_id), audit_trail_(audit_trail) {
-    }
-
-    /// @brief Creats a new empty request ready to receive data.
-    virtual TcpRequestPtr createRequest() {
-        return (TcpStreamRequestPtr(new TcpStreamRequest()));
-    }
-
-    /// @brief Processes a completely received request.
-    ///
-    /// Adds the request to the audit trail, then forms and sends a response.
-    /// If the request is "I am done", the response is "good bye" which should instruct
-    /// the client to disconnect.
-    ///
-    /// @param request Request to process.
-    virtual void requestReceived(TcpRequestPtr request) {
-        TcpStreamRequestPtr req = boost::dynamic_pointer_cast<TcpStreamRequest>(request);
-        if (!req) {
-            isc_throw(isc::Unexpected, "request not a TcpStreamRequest");
-        }
-
-        req->unpack();
-        auto request_str = req->getRequestString();
-        audit_trail_->addEntry(connection_id_, AuditEntry::INBOUND, request_str);
-
-        std::ostringstream os;
-        if (request_str == "I am done") {
-            os << "good bye";
-        } else {
-            os << "echo " << request_str;
-        }
-
-        TcpStreamResponsePtr resp(new TcpStreamResponse());
-        resp->setResponseData(os.str());
-        resp->pack();
-        asyncSendResponse(resp);
-    }
-
-    /// @brief Processes a response once it has been sent.
-    ///
-    /// Adds the response to the audit trail and returns true, signifying
-    /// that the connection should start the idle timer.
-    ///
-    /// @param response Response that was sent to the remote endpoint.
-    virtual bool responseSent(TcpResponsePtr response) {
-        TcpStreamResponsePtr resp = boost::dynamic_pointer_cast<TcpStreamResponse>(response);
-        if (!resp) {
-            isc_throw(isc::Unexpected, "resp not a TcpStreamResponse");
-        }
-
-        audit_trail_->addEntry(connection_id_, AuditEntry::OUTBOUND, resp->getResponseString());
-        return (true);
-    }
-
-private:
-    /// @brief Id of this connection.
-    size_t connection_id_;
-
-    /// @brief Provides request/response history.
-    AuditTrailPtr audit_trail_;
-};
-
-/// @brief Implementation of the TCPListener used in tests.
-///
-/// Implements simple stream in/out listener.
-class TcpTestListener : public TcpListener {
-public:
-    /// @brief Constructor
-    TcpTestListener(IOService& io_service,
-                    const IOAddress& server_address,
-                    const unsigned short server_port,
-                    const TlsContextPtr& tls_context,
-                    const IdleTimeout& idle_timeout,
-                    const TcpConnectionFilterCallback& filter_callback = 0,
-                    const size_t read_max = 32 * 1024)
-        : TcpListener(io_service, server_address, server_port,
-                      tls_context, idle_timeout, filter_callback),
-                      read_max_(read_max), next_connection_id_(0),
-                      audit_trail_(new AuditTrail()) {
-    }
-
-protected:
-
-    /// @brief Creates an instance of the @c TcpConnection.
-    ///
-    /// This method is virtual so as it can be overridden when customized
-    /// connections are to be used, e.g. in case of unit testing.
-    ///
-    /// @param callback Callback invoked when new connection is accepted.
-    /// @return Pointer to the created connection.
-    virtual TcpConnectionPtr createConnection(
-            const TcpConnectionAcceptorCallback& acceptor_callback,
-            const TcpConnectionFilterCallback& connection_filter) {
-        TcpConnectionPtr conn(new TcpTestConnection(io_service_, acceptor_, tls_context_,
-                                                    connections_, acceptor_callback,
-                                                    connection_filter, idle_timeout_,
-                                                    ++next_connection_id_,  audit_trail_));
-        conn->setReadMax(read_max_);
-        return (conn);
-    }
-
-    /// @brief Maximum size of a single socket read
-    size_t read_max_;
-
-    /// @brief Id to use for the next connection.
-    size_t next_connection_id_;
-
-public:
-    AuditTrailPtr audit_trail_;
-};
 
 /// @brief Test fixture class for @ref TcpListener.
 class TcpListenerTest : public ::testing::Test {

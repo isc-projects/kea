@@ -7,6 +7,9 @@
 namespace isc {
 namespace tcp {
 
+extern const isc::log::MessageID MT_TCP_LISTENER_MGR_STARTED = "MT_TCP_LISTENER_MGR_STARTED";
+extern const isc::log::MessageID MT_TCP_LISTENER_MGR_STOPPED = "MT_TCP_LISTENER_MGR_STOPPED";
+extern const isc::log::MessageID MT_TCP_LISTENER_MGR_STOPPING = "MT_TCP_LISTENER_MGR_STOPPING";
 extern const isc::log::MessageID TCP_CLIENT_REQUEST_RECEIVED = "TCP_CLIENT_REQUEST_RECEIVED";
 extern const isc::log::MessageID TCP_CONNECTION_CLOSE_CALLBACK_FAILED = "TCP_CONNECTION_CLOSE_CALLBACK_FAILED";
 extern const isc::log::MessageID TCP_CONNECTION_HANDSHAKE_FAILED = "TCP_CONNECTION_HANDSHAKE_FAILED";
@@ -30,6 +33,9 @@ extern const isc::log::MessageID TCP_SERVER_RESPONSE_SEND_DETAILS = "TCP_SERVER_
 namespace {
 
 const char* values[] = {
+    "MT_TCP_LISTENER_MGR_STARTED", "MtTcpListenerMgr started with %1 threads, listening on %2:%3, use TLS: %4",
+    "MT_TCP_LISTENER_MGR_STOPPED", "MtTcpListenerMgr for %1:%2 stopped.",
+    "MT_TCP_LISTENER_MGR_STOPPING", "Stopping MtTcpListenerMgr for %1:%2",
     "TCP_CLIENT_REQUEST_RECEIVED", "received TCP request from %1",
     "TCP_CONNECTION_CLOSE_CALLBACK_FAILED", "Connection close callback threw an exception",
     "TCP_CONNECTION_HANDSHAKE_FAILED", "TLS handshake with %1 failed with %2",

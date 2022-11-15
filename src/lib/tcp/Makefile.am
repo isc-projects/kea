@@ -16,6 +16,7 @@ lib_LTLIBRARIES = libkea-tcp.la
 libkea_tcp_la_SOURCES = tcp_connection.cc tcp_connection.h
 libkea_tcp_la_SOURCES += tcp_connection_pool.cc tcp_connection_pool.h
 libkea_tcp_la_SOURCES += tcp_listener.cc tcp_listener.h
+libkea_tcp_la_SOURCES += mt_tcp_listener_mgr.cc mt_tcp_listener_mgr.h
 libkea_tcp_la_SOURCES += tcp_log.cc tcp_log.h
 libkea_tcp_la_SOURCES += tcp_messages.cc tcp_messages.h
 libkea_tcp_la_SOURCES += tcp_stream_msg.cc tcp_stream_msg.h
@@ -70,6 +71,7 @@ endif
 # Specify the headers for copying into the installation directory tree.
 libkea_tcp_includedir = $(pkgincludedir)/tcp
 libkea_tcp_include_HEADERS = \
+    mt_tcp_listener_mgr.h \
     tcp_connection_acceptor.h \
     tcp_connection.h \
     tcp_connection_pool.h \

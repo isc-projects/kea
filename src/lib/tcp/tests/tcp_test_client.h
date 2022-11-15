@@ -43,7 +43,7 @@ public:
     /// @brief Destructor.
     ///
     /// Closes the underlying socket if it is open.
-    ~TcpTestClient() {
+    virtual ~TcpTestClient() {
         close();
     }
 
@@ -269,7 +269,7 @@ public:
     }
 
     /// @brief Process a completed response received from the server.
-    void responseReceived() {
+    virtual void responseReceived() {
         /// Unpack wire data into a string.
         ASSERT_NO_THROW(stream_response_->unpack());
         std::string response = stream_response_->getRequestString();
