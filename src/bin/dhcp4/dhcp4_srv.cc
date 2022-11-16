@@ -564,7 +564,7 @@ void Dhcpv4Exchange::classifyByVendor(const Pkt4Ptr& pkt) {
 }
 
 void Dhcpv4Exchange::classifyPacket(const Pkt4Ptr& pkt) {
-    // All packets belongs to ALL.
+    // All packets belong to ALL.
     pkt->addClass("ALL");
 
     // First: built-in vendor class processing.
@@ -1134,6 +1134,9 @@ Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr& query) {
 
 void
 Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
+    // All packets belong to ALL.
+    query->addClass("ALL");
+
     // Log reception of the packet. We need to increase it early, as any
     // failures in unpacking will cause the packet to be dropped. We
     // will increase type specific statistic further down the road.

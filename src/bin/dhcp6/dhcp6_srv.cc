@@ -726,6 +726,9 @@ Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr& query) {
 
 void
 Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    // All packets belong to ALL.
+    query->addClass("ALL");
+
     bool skip_unpack = false;
 
     // The packet has just been received so contains the uninterpreted wire
@@ -4055,7 +4058,7 @@ void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt) {
 }
 
 void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
-    // All packets belongs to ALL
+    // All packets belong to ALL.
     pkt->addClass("ALL");
 
     // First: built-in vendor class processing
