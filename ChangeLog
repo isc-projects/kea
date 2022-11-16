@@ -1,3 +1,8 @@
+2075.	[bug]		razvan
+	The builtin client class ALL can now be used again to apply lease
+	limits and rate limits.
+	(Gitlab #2615)
+
 2074.	[func]		tmark
 	Added a new library, libkea_tcp, that provides support for a
 	generic TCP listener.  Initially, this library will be used
