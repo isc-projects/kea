@@ -34,7 +34,9 @@ public:
     /// @param connection_id Id of the client to whom the entry pertains
     /// @param direction INBOUND for data received, OUTBOUND for data sent
     /// @param data string form of the data involved
-    AuditEntry(size_t connection_id, const AuditEntry::Direction& direction, const std::string& data)
+    AuditEntry(size_t connection_id,
+               const AuditEntry::Direction& direction,
+               const std::string& data)
         : connection_id_(connection_id), direction_(direction), data_(data) {
     }
 
@@ -60,8 +62,8 @@ public:
 std::ostream&
 operator<<(std::ostream& os, const AuditEntry& entry);
 
-/// @brief Contains the data receipt/transmission history for an arbitrary number
-/// of connections.
+/// @brief Contains the data receipt/transmission history for an arbitrary
+/// number of connections.
 class AuditTrail {
 public:
     /// @brief Adds an entry to the audit trail.
@@ -69,7 +71,9 @@ public:
     /// @param connection_id Id of the client to whom the entry pertains
     /// @param direction INBOUND for data received, OUTBOUND for data sent
     /// @param data string form of the data involved
-    void addEntry(size_t connection_id, const AuditEntry::Direction& direction, const std::string& data) {
+    void addEntry(size_t connection_id,
+                  const AuditEntry::Direction& direction,
+                  const std::string& data) {
         std::unique_lock<std::mutex> lck(mutex_);
         entries_.push_back(AuditEntry(connection_id, direction, data));
     }
@@ -81,9 +85,9 @@ public:
     std::list<AuditEntry> getConnectionTrail(size_t connection_id) {
         std::unique_lock<std::mutex> lck(mutex_);
         std::list<AuditEntry> conn_entries;
-        for (auto entry_it = entries_.begin(); entry_it != entries_.end(); ++entry_it) {
-            if ((*entry_it).connection_id_ == connection_id) {
-                conn_entries.push_back(*entry_it);
+        for (auto entry : entries_) {
+            if (entry.connection_id_ == connection_id) {
+                conn_entries.push_back(entry);
             }
         }
 
@@ -94,8 +98,8 @@ public:
     std::string dump() {
         std::unique_lock<std::mutex> lck(mutex_);
         std::stringstream ss;
-        for (auto entry_it = entries_.begin(); entry_it != entries_.end(); ++entry_it) {
-            ss << (*entry_it) << std::endl;
+        for (auto entry : entries_) {
+            ss << entry << std::endl;
         }
 
         return (ss.str());
@@ -141,8 +145,8 @@ public:
     /// @brief Processes a completely received request.
     ///
     /// Adds the request to the audit trail, then forms and sends a response.
-    /// If the request is "I am done", the response is "good bye" which should instruct
-    /// the client to disconnect.
+    /// If the request is "I am done", the response is "good bye" which should
+    /// instruct the client to disconnect.
     ///
     /// @param request Request to process.
     virtual void requestReceived(TcpRequestPtr request) {
@@ -215,6 +219,7 @@ private:
     /// @brief Provides request/response history.
     AuditTrailPtr audit_trail_;
 
+    /// @brief Reponse handler to pass into each connection.
     ResponseHandler response_handler_;
 };
 
@@ -265,10 +270,15 @@ protected:
             const TcpConnectionAcceptorCallback& acceptor_callback,
             const TcpConnectionFilterCallback& connection_filter,
             TcpTestConnection::ResponseHandler response_handler) {
-        TcpTestConnectionPtr conn(new TcpTestConnection(io_service_, acceptor_, tls_context_,
-                                                        connections_, acceptor_callback,
-                                                        connection_filter, idle_timeout_,
-                                                        ++next_connection_id_,  audit_trail_,
+        TcpTestConnectionPtr conn(new TcpTestConnection(io_service_,
+                                                        acceptor_,
+                                                        tls_context_,
+                                                        connections_,
+                                                        acceptor_callback,
+                                                        connection_filter,
+                                                        idle_timeout_,
+                                                        ++next_connection_id_,
+                                                        audit_trail_,
                                                         response_handler));
         conn->setReadMax(read_max_);
         return (conn);

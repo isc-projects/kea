@@ -64,7 +64,7 @@ public:
 
     /// @brief Destructor.
     ///
-    /// Removes TCP clients, unregisters commands, disables MT.
+    /// Removes TCP clients and disables MT.
     virtual ~MtTcpListenerMgrTest() {
         // Wipe out the listener.
         mt_listener_mgr_.reset();
@@ -118,8 +118,12 @@ public:
                                    const asiolink::TlsContextPtr& tls_context,
                                    const TcpListener::IdleTimeout& idle_timeout,
                                    const TcpConnectionFilterCallback& connection_filter) {
-        TcpTestListenerPtr listener(new TcpTestListener(io_service, server_address, server_port,
-                                                       tls_context, idle_timeout, connection_filter));
+        TcpTestListenerPtr listener(new TcpTestListener(io_service,
+                                                        server_address,
+                                                        server_port,
+                                                        tls_context,
+                                                        idle_timeout,
+                                                        connection_filter));
         // Set the response handler the listener will pass into each connection.
         listener->setResponseHandler(response_handler_);
         return (listener);
@@ -320,7 +324,7 @@ public:
         EXPECT_THROW(mt_listener_mgr_->stop(), MultiThreadingInvalidOperation);
 
         // We're done, ship it!
-        std::string str=createAnswerString(CONTROL_RESULT_SUCCESS, arguments);
+        std::string str = createAnswerString(CONTROL_RESULT_SUCCESS, arguments);
         return (str);
     }
 
@@ -343,7 +347,8 @@ public:
     /// @param arguments Element tree of response arguments
     ///
     /// @return JSON text containing the response
-    std::string createAnswerString(const int status_code, ConstElementPtr arguments) {
+    std::string createAnswerString(const int status_code,
+                                   ConstElementPtr arguments) {
         ConstElementPtr answer = createAnswer(status_code, arguments);
         std::stringstream os;
         answer->toJSON(os);
@@ -383,7 +388,7 @@ public:
         arguments->set("sign-off", Element::create("good bye"));
 
         // We're done, ship it!
-        std::string str=createAnswerString(CONTROL_RESULT_SUCCESS, arguments);
+        std::string str = createAnswerString(CONTROL_RESULT_SUCCESS, arguments);
         return (str);
     }
 
@@ -434,7 +439,7 @@ public:
 
         // Initiate the prescribed number of command requests.
         num_in_progress_ = 0;
-        for (auto i = 0; clients_.size() < num_clients; ++i) {
+        while (clients_.size() < num_clients) {
             ASSERT_NO_THROW_LOG(startThreadCommand("I am done"));
         }
 
@@ -570,7 +575,7 @@ public:
 
         // Initiate the prescribed number of command requests.
         num_in_progress_ = 0;
-        for (auto i = 0; clients_.size() < num_clients; ++i) {
+        while (clients_.size() < num_clients) {
             ASSERT_NO_THROW_LOG(startThreadCommand("I am done"));
         }
 

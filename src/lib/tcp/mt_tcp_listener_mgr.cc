@@ -17,14 +17,14 @@
 
 using namespace isc::asiolink;
 using namespace isc::tcp;
-using namespace isc::tcp;
 using namespace isc::util;
 
 namespace isc {
 namespace tcp {
 
 MtTcpListenerMgr::MtTcpListenerMgr(TcpListenerFactory listener_factory,
-                                   const IOAddress& address, const uint16_t port,
+                                   const IOAddress& address,
+                                   const uint16_t port,
                                    const uint16_t thread_pool_size /* = 1 */,
                                    TlsContextPtr context /* = () */,
                                    TcpConnectionFilterCallback connection_filter /* = 0 */)
@@ -75,7 +75,7 @@ MtTcpListenerMgr::start() {
             .arg(port_)
             .arg(tls_context_ ? "true" : "false");
     } catch (const std::exception& ex) {
-        isc_throw(Unexpected, "MtTcpListenerMgr::run failed:" << ex.what());
+        isc_throw(Unexpected, "MtTcpListenerMgr::start failed:" << ex.what());
     }
 }
 

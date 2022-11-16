@@ -401,7 +401,7 @@ public:
 
         // Initiate the prescribed number of command requests.
         num_in_progress_ = 0;
-        for (auto i = 0; clients_.size() < num_clients; ++i) {
+        while (clients_.size() < num_clients) {
             ASSERT_NO_THROW_LOG(startThreadCommand());
         }
 
@@ -550,7 +550,7 @@ public:
 
         // Initiate the prescribed number of command requests.
         num_in_progress_ = 0;
-        for (auto i = 0; clients_.size() < num_clients; ++i) {
+        while (clients_.size() < num_clients) {
             ASSERT_NO_THROW_LOG(startThreadCommand());
         }
 

@@ -44,16 +44,20 @@ class MtTcpListenerMgr {
 public:
     /// @brief Constructor
     ///
-    /// @param listener_factory Function for instantiating the internal TcpListener
+    /// @param listener_factory Function for instantiating the internal
+    /// TcpListener
     /// @param address Ip address to listen on for connections
     /// @param port Ip port to listen on for connections
-    /// @param thread_pool_size Maximum Number of threads in the thread pool.  This
-    /// implicit dictates the maximum number of connections.
-    /// @param context TLS context for authenticating connections. Defaults to empty.
-    /// @param connection_filter Callback connections may use to filter connections by
-    /// their remote endpoint characteristics (e.g. ip address)
-    MtTcpListenerMgr(TcpListenerFactory listener_factory, const asiolink::IOAddress& address,
-                     const uint16_t port, const uint16_t thread_pool_size = 1,
+    /// @param thread_pool_size Maximum Number of threads in the thread pool.
+    /// This implicit dictates the maximum number of connections.
+    /// @param context TLS context for authenticating connections. Defaults
+    /// to empty.
+    /// @param connection_filter Callback connections may use to filter
+    /// connections by their remote endpoint characteristics (e.g. ip address)
+    MtTcpListenerMgr(TcpListenerFactory listener_factory,
+                     const asiolink::IOAddress& address,
+                     const uint16_t port,
+                     const uint16_t thread_pool_size = 1,
                      asiolink::TlsContextPtr context = asiolink::TlsContextPtr(),
                      TcpConnectionFilterCallback connection_filter = 0);
 
@@ -181,12 +185,12 @@ private:
 
     /// @brief Callback the listener may use to reject connections during acceptance.
     TcpConnectionFilterCallback connection_filter_;
-    };
+};
 
-    /// @brief Defines a shared pointer to MtTcpListenerMgr.
-    typedef boost::shared_ptr<MtTcpListenerMgr> MtTcpListenerMgrPtr;
+/// @brief Defines a shared pointer to MtTcpListenerMgr.
+typedef boost::shared_ptr<MtTcpListenerMgr> MtTcpListenerMgrPtr;
 
-} // namespace isc::config
+} // namespace isc::tcp
 } // namespace isc
 
 #endif // MT_TCP_LISTENER_MGR_H

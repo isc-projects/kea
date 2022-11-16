@@ -172,7 +172,7 @@ public:
         receivePartialResponse(true);
     }
 
-    /// @brief Send part of the HTTP request.
+    /// @brief Send part of the request.
     ///
     /// @param request part of the request to be sent.
     /// @param send_length  number of bytes to send.  If not zero, can be used
