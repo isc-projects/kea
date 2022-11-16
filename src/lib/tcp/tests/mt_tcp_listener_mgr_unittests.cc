@@ -959,4 +959,27 @@ TEST_F(MtTcpListenerMgrTest, tls) {
     EXPECT_TRUE(mt_listener_mgr_->isStopped());
 }
 
+/// Verifies that idle timeout can be passed down to the internal listener.
+TEST_F(MtTcpListenerMgrTest, idleTimeout) {
+    // Create an  MtTcpListenerMgr.
+    createMtTcpListenerMgr(1, std::bind(&MtTcpListenerMgrTest::synchronizedCommandHandler,
+                                        this, ph::_1));
+    // Verify the defualt timeout value.
+    EXPECT_EQ(TCP_IDLE_CONNECTION_TIMEOUT, mt_listener_mgr_->getIdleTimeout());
+
+    // Set a new timeout value.
+    mt_listener_mgr_->setIdleTimeout(200);
+    EXPECT_EQ(200, mt_listener_mgr_->getIdleTimeout());
+
+    // Start the listener, which should instantiate the internal listener.
+    ASSERT_NO_THROW_LOG(mt_listener_mgr_->start());
+    ASSERT_TRUE(mt_listener_mgr_->isRunning());
+
+    // Verify the internal listener's timeout value.
+    auto tcp_listener = mt_listener_mgr_->getTcpListener();
+    ASSERT_TRUE(tcp_listener);
+    EXPECT_EQ(200, tcp_listener->getIdleTimeout());
+}
+
+
 } // end of anonymous namespace

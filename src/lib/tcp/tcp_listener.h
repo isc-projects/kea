@@ -90,6 +90,11 @@ public:
     /// @brief Returns local port on which server is listening.
     uint16_t getLocalPort() const;
 
+    /// @brief Returns the idle timeout (in milliseconds).
+    long getIdleTimeout() const {
+        return (idle_timeout_);
+    }
+
 protected:
 
     /// @brief Creates @ref TcpConnection instance and adds it to the

@@ -31,7 +31,8 @@ MtTcpListenerMgr::MtTcpListenerMgr(TcpListenerFactory listener_factory,
     : listener_factory_(listener_factory),
       address_(address), port_(port), thread_io_service_(), tcp_listener_(),
       thread_pool_size_(thread_pool_size), thread_pool_(),
-      tls_context_(context), connection_filter_(connection_filter) {
+      tls_context_(context), connection_filter_(connection_filter),
+      idle_timeout_(TCP_IDLE_CONNECTION_TIMEOUT) {
 }
 
 MtTcpListenerMgr::~MtTcpListenerMgr() {
@@ -56,9 +57,11 @@ MtTcpListenerMgr::start() {
         thread_io_service_.reset(new IOService());
 
         // Create a new TCPListener derivation using the factory.
-        tcp_listener_ = listener_factory_(*thread_io_service_, address_,
-                                          port_, tls_context_,
-                                          TcpListener::IdleTimeout(TCP_IDLE_CONNECTION_TIMEOUT),
+        tcp_listener_ = listener_factory_(*thread_io_service_,
+                                          address_,
+                                          port_,
+                                          tls_context_,
+                                          idle_timeout_,
                                           connection_filter_);
 
         // Create the thread pool with immediate start.

@@ -18,7 +18,7 @@ namespace isc {
 namespace tcp {
 
 /// @brief Default connection idle timeout in milliseconds.
-const long TCP_IDLE_CONNECTION_TIMEOUT = 10000;
+const long TCP_IDLE_CONNECTION_TIMEOUT = 300 * 1000;
 
 /// @brief Defines a factory function for creating TcpListeners.
 typedef std::function<
@@ -158,6 +158,17 @@ public:
         return(tcp_listener_);
     }
 
+    /// @brief Sets the idle time per connection.
+    ///
+    /// @param timeout Amount of time in milliseconds
+    void setIdleTimeout(long milliseconds) {
+        idle_timeout_ = TcpListener::IdleTimeout(milliseconds);
+    }
+
+    long getIdleTimeout() {
+        return (idle_timeout_.value_);
+    }
+
 private:
     /// @brief Factory for creating TcpListener instances.
     TcpListenerFactory listener_factory_;
@@ -185,6 +196,10 @@ private:
 
     /// @brief Callback the listener may use to reject connections during acceptance.
     TcpConnectionFilterCallback connection_filter_;
+
+    /// @brief Time in milliseconds that a connection can remain idle before
+    /// it is closed.
+    TcpListener::IdleTimeout idle_timeout_;
 };
 
 /// @brief Defines a shared pointer to MtTcpListenerMgr.
