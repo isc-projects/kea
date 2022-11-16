@@ -2021,11 +2021,8 @@ TEST_F(Dhcpv6SrvTest, pdRenewCache) {
 // - lease is actually removed from LeaseMgr
 // - assigned-nas stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
-    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
-    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
-
     testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
-                     IOAddress("2001:db8:1:1::cafe:babe"));
+                     IOAddress("2001:db8:1:1::cafe:babe"), LEASE_AFFINITY_DISABLED);
 }
 
 // This test verifies that incoming (positive) RELEASE with address can be
@@ -2040,7 +2037,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
 // - assigned-nas stats counter is unchanged
 TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDelete) {
     testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
-                     IOAddress("2001:db8:1:1::cafe:babe"), false);
+                     IOAddress("2001:db8:1:1::cafe:babe"), LEASE_AFFINITY_ENABLED);
 }
 
 // This test verifies that incoming (positive) RELEASE with prefix can be
@@ -2054,11 +2051,8 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDelete) {
 // - lease is actually removed from LeaseMgr
 // - assigned-pds stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
-    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
-    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
-
     testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
-                     IOAddress("2001:db8:1:2::"));
+                     IOAddress("2001:db8:1:2::"), LEASE_AFFINITY_DISABLED);
 }
 
 // This test verifies that incoming (positive) RELEASE with prefix can be
@@ -2073,7 +2067,7 @@ TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
 // - assigned-pds stats counter is unchanged
 TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDelete) {
     testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
-                     IOAddress("2001:db8:1:2::"), false);
+                     IOAddress("2001:db8:1:2::"), LEASE_AFFINITY_ENABLED);
 }
 
 // This test verifies that incoming (invalid) RELEASE with an address

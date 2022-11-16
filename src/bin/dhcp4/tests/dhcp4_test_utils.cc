@@ -802,9 +802,9 @@ Dhcpv4SrvTest::configure(const std::string& config,
                          const bool open_sockets,
                          const bool create_managers,
                          const bool test,
-                         const bool disable_affinity) {
+                         const LeaseAffinity lease_affinity) {
     configure(config, srv_, commit, open_sockets, create_managers, test,
-              disable_affinity);
+              lease_affinity);
 }
 
 void
@@ -814,7 +814,7 @@ Dhcpv4SrvTest::configure(const std::string& config,
                          const bool open_sockets,
                          const bool create_managers,
                          const bool test,
-                         const bool disable_affinity) {
+                         const LeaseAffinity lease_affinity) {
     setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
     MultiThreadingCriticalSection cs;
     ConstElementPtr json;
@@ -852,7 +852,7 @@ Dhcpv4SrvTest::configure(const std::string& config,
         } );
     }
 
-    if (disable_affinity) {
+    if (lease_affinity == LEASE_AFFINITY_DISABLED) {
         auto expiration_cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
         expiration_cfg->setFlushReclaimedTimerWaitTime(0);
         expiration_cfg->setHoldReclaimedTime(0);

@@ -88,14 +88,14 @@ public:
     /// be successfully released and expired, SHOULD_PASS_DELETED if the lease
     /// is expected to be successfully released and deleted, or SHOULD_FAIL if
     /// the lease is expected to not be released.
-    /// @param disable_affinity A boolean flag which indicates if lease affinity
-    /// should be disabled.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void acquireAndRelease(const std::string& hw_address_1,
                            const std::string& client_id_1,
                            const std::string& hw_address_2,
                            const std::string& client_id_2,
                            ExpectedResult expected_result,
-                           const bool disable_affinity = true);
+                           const LeaseAffinity lease_affinity);
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -127,11 +127,11 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
                                const std::string& hw_address_2,
                                const std::string& client_id_2,
                                ExpectedResult expected_result,
-                               const bool disable_affinity) {
+                               const LeaseAffinity lease_affinity) {
     CfgMgr::instance().clear();
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
-    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, disable_affinity);
+    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, lease_affinity);
     // Explicitly set the client id.
     client.includeClientId(client_id_1);
     // Explicitly set the HW address.
@@ -199,14 +199,14 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
 TEST_F(ReleaseTest, releaseNoIdentifierChange) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
-                      SHOULD_PASS_DELETED);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
 }
 
 // This test checks that the client can acquire and release the lease.
 TEST_F(ReleaseTest, releaseNoDeleteNoIdentifierChange) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
-                      SHOULD_PASS_EXPIRED, false);
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -217,7 +217,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNoIdentifierChange) {
 TEST_F(ReleaseTest, releaseHWAddressOnly) {
     acquireAndRelease("01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "",
-                      SHOULD_PASS_DELETED);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -228,7 +228,7 @@ TEST_F(ReleaseTest, releaseHWAddressOnly) {
 TEST_F(ReleaseTest, releaseNoDeleteHWAddressOnly) {
     acquireAndRelease("01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "",
-                      SHOULD_PASS_EXPIRED, false);
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -239,7 +239,7 @@ TEST_F(ReleaseTest, releaseNoDeleteHWAddressOnly) {
 TEST_F(ReleaseTest, releaseNoClientId) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "",
-                      SHOULD_PASS_DELETED);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -250,7 +250,7 @@ TEST_F(ReleaseTest, releaseNoClientId) {
 TEST_F(ReleaseTest, releaseNoDeleteNoClientId) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "",
-                      SHOULD_PASS_EXPIRED, false);
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -262,7 +262,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNoClientId) {
 TEST_F(ReleaseTest, releaseNoClientId2) {
     acquireAndRelease("01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "12:14",
-                      SHOULD_PASS_DELETED);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -274,7 +274,7 @@ TEST_F(ReleaseTest, releaseNoClientId2) {
 TEST_F(ReleaseTest, releaseNoDeleteNoClientId2) {
     acquireAndRelease("01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "12:14",
-                      SHOULD_PASS_EXPIRED, false);
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test checks the server's behavior in the following case:
@@ -285,7 +285,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNoClientId2) {
 TEST_F(ReleaseTest, releaseNonMatchingClientId) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:15:16",
-                      SHOULD_FAIL);
+                      SHOULD_FAIL, LEASE_AFFINITY_DISABLED);
 }
 
 // This test checks the server's behavior in the following case:
@@ -297,7 +297,7 @@ TEST_F(ReleaseTest, releaseNonMatchingClientId) {
 TEST_F(ReleaseTest, releaseNonMatchingHWAddress) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "06:06:06:06:06:06", "12:14",
-                      SHOULD_PASS_DELETED);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
 }
 
 // This test checks the server's behavior in the following case:
@@ -309,7 +309,7 @@ TEST_F(ReleaseTest, releaseNonMatchingHWAddress) {
 TEST_F(ReleaseTest, releaseNoDeleteNonMatchingHWAddress) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "06:06:06:06:06:06", "12:14",
-                      SHOULD_PASS_EXPIRED, false);
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test checks the server's behavior in the following case:
@@ -348,7 +348,7 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
 TEST_F(ReleaseTest, releaseNoDeleteNonMatchingIPAddress) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
-    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, false);
+    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
     // Perform 4-way exchange to obtain a new lease.
     acquireLease(client);
 
@@ -394,7 +394,7 @@ TEST_F(ReleaseTest, releaseNoSubnet) {
 TEST_F(ReleaseTest, releaseNoDeleteNoSubnet) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
-    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, false);
+    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
     // Perform 4-way exchange to obtain a new lease.
     acquireLease(client);
 

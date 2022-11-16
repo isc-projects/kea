@@ -329,10 +329,16 @@ private:
 
 class Dhcpv4SrvTest : public BaseServerTest {
 public:
-
+    /// @brief Specifies expected outcome
     enum ExpectedResult {
         SHOULD_PASS, // pass = accept decline, move lease to declined state.
         SHOULD_FAIL  // fail = reject the decline
+    };
+
+    /// @brief Specifies if lease affinity is enabled or disabled
+    enum LeaseAffinity {
+        LEASE_AFFINITY_ENABLED,
+        LEASE_AFFINITY_DISABLED
     };
 
     class Dhcpv4SrvMTTestGuard {
@@ -559,16 +565,16 @@ public:
     /// @param create_managers A boolean flag indicating if managers should be
     /// recreated.
     /// @param test A boolean flag which indicates if only testing config.
-    /// @param disable_affinity A boolean flag which indicates if lease affinity
-    /// should be disabled.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void configure(const std::string& config,
                    const bool commit = true,
                    const bool open_sockets = true,
                    const bool create_managers = true,
                    const bool test = false,
-                   const bool disable_affinity = true);
+                   const LeaseAffinity lease_affinity = LEASE_AFFINITY_DISABLED);
 
-    /// @brief Configure specified DHCP server using JSON string.
+    /// @brief Configure the DHCPv4 server using the JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
     /// @param srv Instance of the server to be configured.
@@ -579,15 +585,15 @@ public:
     /// @param create_managers A boolean flag indicating if managers should be
     /// recreated.
     /// @param test A boolean flag which indicates if only testing config.
-    /// @param disable_affinity A boolean flag which indicates if lease affinity
-    /// should be disabled.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void configure(const std::string& config,
                    NakedDhcpv4Srv& srv,
                    const bool commit = true,
                    const bool open_sockets = true,
                    const bool create_managers = true,
                    const bool test = false,
-                   const bool disable_affinity = true);
+                   const LeaseAffinity lease_affinity = LEASE_AFFINITY_DISABLED);
 
     /// @brief Configure specified DHCP server using JSON string.
     ///

@@ -559,7 +559,12 @@ Dhcpv6SrvTest::testRenewSomeoneElsesLease(Lease::Type type, const IOAddress& add
 void
 Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
                                 const IOAddress& release_addr,
-                                const bool disable_affinity) {
+                                const LeaseAffinity lease_affinity) {
+    if (lease_affinity == LEASE_AFFINITY_DISABLED) {
+        auto expiration_cfg = CfgMgr::instance().getCurrentCfg()->getCfgExpiration();
+        expiration_cfg->setFlushReclaimedTimerWaitTime(0);
+        expiration_cfg->setHoldReclaimedTime(0);
+    }
     NakedDhcpv6Srv srv(0);
 
     const uint32_t iaid = 234;
@@ -631,7 +636,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     checkServerId(reply, srv.getServerID());
     checkClientId(reply, clientid);
 
-    if (disable_affinity) {
+    if (lease_affinity == LEASE_AFFINITY_DISABLED) {
         // Check that the lease is really gone in the database
         // get lease by address
         l = LeaseMgrFactory::instance().getLease6(type, release_addr);
@@ -844,9 +849,9 @@ Dhcpv6SrvTest::configure(const std::string& config,
                          const bool open_sockets,
                          const bool create_managers,
                          const bool test,
-                         const bool disable_affinity) {
+                         const LeaseAffinity lease_affinity) {
     configure(config, srv_, commit, open_sockets, create_managers, test,
-              disable_affinity);
+              lease_affinity);
 }
 
 void
@@ -856,7 +861,7 @@ Dhcpv6SrvTest::configure(const std::string& config,
                          const bool open_sockets,
                          const bool create_managers,
                          const bool test,
-                         const bool disable_affinity) {
+                         const LeaseAffinity lease_affinity) {
     setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
     MultiThreadingCriticalSection cs;
     ConstElementPtr json;
@@ -894,7 +899,7 @@ Dhcpv6SrvTest::configure(const std::string& config,
         } );
     }
 
-    if (disable_affinity) {
+    if (lease_affinity == LEASE_AFFINITY_DISABLED) {
         auto expiration_cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
         expiration_cfg->setFlushReclaimedTimerWaitTime(0);
         expiration_cfg->setHoldReclaimedTime(0);

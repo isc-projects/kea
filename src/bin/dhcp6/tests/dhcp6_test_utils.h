@@ -543,6 +543,12 @@ public:
         NO_IA       // Client will not send IA_NA at all
     };
 
+    /// @brief Specifies if lease affinity is enabled or disabled
+    enum LeaseAffinity {
+        LEASE_AFFINITY_ENABLED,
+        LEASE_AFFINITY_DISABLED
+    };
+
     class Dhcpv6SrvMTTestGuard {
     public:
         Dhcpv6SrvMTTestGuard(Dhcpv6SrvTest& test, bool mt_enabled) : test_(test) {
@@ -575,14 +581,14 @@ public:
     /// @param create_managers A boolean flag indicating if managers should be
     /// recreated.
     /// @param test A boolean flag which indicates if only testing config.
-    /// @param disable_affinity A boolean flag which indicates if lease affinity
-    /// should be disabled.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void configure(const std::string& config,
                    const bool commit = true,
                    const bool open_sockets = false,
                    const bool create_managers = true,
                    const bool test = false,
-                   const bool disable_affinity = true);
+                   const LeaseAffinity lease_affinity = LEASE_AFFINITY_DISABLED);
 
     /// @brief Configure the DHCPv6 server using the JSON string.
     ///
@@ -595,15 +601,15 @@ public:
     /// @param create_managers A boolean flag indicating if managers should be
     /// recreated.
     /// @param test A boolean flag which indicates if only testing config.
-    /// @param disable_affinity A boolean flag which indicates if lease affinity
-    /// should be disabled.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void configure(const std::string& config,
                    NakedDhcpv6Srv& srv,
                    const bool commit = true,
                    const bool open_sockets = false,
                    const bool create_managers = true,
                    const bool test = false,
-                   const bool disable_affinity = true);
+                   const LeaseAffinity lease_affinity = LEASE_AFFINITY_DISABLED);
 
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_NA option
@@ -820,13 +826,13 @@ public:
     /// @param type type (TYPE_NA or TYPE_PD)
     /// @param existing address to be preinserted into the database
     /// @param release_addr address being sent in RELEASE
-    /// @param disable_affinity A boolean flag which indicates if lease affinity
-    /// should be disabled.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void
     testReleaseBasic(isc::dhcp::Lease::Type type,
                      const isc::asiolink::IOAddress& existing,
                      const isc::asiolink::IOAddress& release_addr,
-                     const bool disable_affinity = true);
+                     const LeaseAffinity lease_affinity);
 
     /// @brief Performs negative RELEASE test
     ///
