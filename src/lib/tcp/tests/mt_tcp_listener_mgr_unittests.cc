@@ -964,7 +964,7 @@ TEST_F(MtTcpListenerMgrTest, idleTimeout) {
     // Create an  MtTcpListenerMgr.
     createMtTcpListenerMgr(1, std::bind(&MtTcpListenerMgrTest::synchronizedCommandHandler,
                                         this, ph::_1));
-    // Verify the defualt timeout value.
+    // Verify the default timeout value.
     EXPECT_EQ(TCP_IDLE_CONNECTION_TIMEOUT, mt_listener_mgr_->getIdleTimeout());
 
     // Set a new timeout value.
