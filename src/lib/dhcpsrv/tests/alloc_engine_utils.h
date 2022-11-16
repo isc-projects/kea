@@ -76,9 +76,8 @@ class NakedAllocEngine : public AllocEngine {
 public:
     /// @brief the sole constructor
     /// @param attempts number of lease selection attempts before giving up
-    /// @param ipv6 specifies if the engine is IPv6 or IPv4
-    NakedAllocEngine(unsigned int attempts, bool ipv6 = true)
-        : AllocEngine(attempts, ipv6) {
+    NakedAllocEngine(unsigned int attempts)
+        : AllocEngine(attempts) {
     }
 
     // Expose internal classes for testing purposes

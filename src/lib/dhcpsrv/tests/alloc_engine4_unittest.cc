@@ -48,7 +48,7 @@ TEST_F(AllocEngine4Test, constructor) {
 
     // Create V4 (ipv6=false) Allocation Engine that will try at most
     // 100 attempts to pick up a lease
-    ASSERT_NO_THROW(x.reset(new AllocEngine(100, false)));
+    ASSERT_NO_THROW(x.reset(new AllocEngine(100)));
 }
 
 // This test checks if two simple IPv4 allocations succeed and that the
@@ -63,7 +63,7 @@ TEST_F(AllocEngine4Test, constructor) {
 // not interfere with the allocation.
 TEST_F(AllocEngine4Test, simpleAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Assigned addresses should be zero.
@@ -149,7 +149,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
 // This test checks that simple allocation uses the default valid lifetime.
 TEST_F(AllocEngine4Test, defaultAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -181,7 +181,7 @@ TEST_F(AllocEngine4Test, defaultAlloc4) {
 // This test checks that simple allocation uses the specified valid lifetime.
 TEST_F(AllocEngine4Test, hintAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -217,7 +217,7 @@ TEST_F(AllocEngine4Test, hintAlloc4) {
 // This test checks that simple allocation uses the min valid lifetime.
 TEST_F(AllocEngine4Test, minAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -254,7 +254,7 @@ TEST_F(AllocEngine4Test, minAlloc4) {
 // This test checks that simple allocation uses the max valid lifetime.
 TEST_F(AllocEngine4Test, maxAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -291,7 +291,7 @@ TEST_F(AllocEngine4Test, maxAlloc4) {
 // This test checks that simple allocation handles BOOTP queries.
 TEST_F(AllocEngine4Test, bootpAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -333,7 +333,7 @@ TEST_F(AllocEngine4Test, bootpAlloc4) {
 // This test checks if the fake allocation (for DHCPDISCOVER) can succeed
 TEST_F(AllocEngine4Test, fakeAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Assigned addresses should be zero.
@@ -375,7 +375,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
 // in pool and free) can succeed
 TEST_F(AllocEngine4Test, allocWithValidHint4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -408,7 +408,7 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
 // in pool, but is currently used can succeed
 TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Let's create a lease and put it in the LeaseMgr
@@ -453,7 +453,7 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
 // can succeed. The invalid hint should be ignored completely.
 TEST_F(AllocEngine4Test, allocBogusHint4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Client would like to get a 10.1.1.1 lease, which does not belong to any
@@ -484,7 +484,7 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
 // This test checks that NULL values are handled properly
 TEST_F(AllocEngine4Test, allocateLease4Nulls) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Allocations without subnet are not allowed
@@ -557,7 +557,7 @@ TEST_F(AllocEngine4Test, allocateLease4Nulls) {
 // an existing lease and assigned-leases increments accordingly
 TEST_F(AllocEngine4Test, simpleRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
@@ -606,7 +606,7 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
 // This test checks simple renewal uses the default valid lifetime.
 TEST_F(AllocEngine4Test, defaultRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -643,7 +643,7 @@ TEST_F(AllocEngine4Test, defaultRenew4) {
 // This test checks simple renewal uses the specified valid lifetime.
 TEST_F(AllocEngine4Test, hintRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -684,7 +684,7 @@ TEST_F(AllocEngine4Test, hintRenew4) {
 // This test checks simple renewal uses the min valid lifetime.
 TEST_F(AllocEngine4Test, minRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -726,7 +726,7 @@ TEST_F(AllocEngine4Test, minRenew4) {
 // This test checks simple renewal uses the max valid lifetime.
 TEST_F(AllocEngine4Test, maxRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -768,7 +768,7 @@ TEST_F(AllocEngine4Test, maxRenew4) {
 // This test checks simple renewal handles BOOTP queries.
 TEST_F(AllocEngine4Test, bootpRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -825,7 +825,7 @@ TEST_F(AllocEngine4Test, bootpRenew4) {
 // This test checks if really small pools are working
 TEST_F(AllocEngine4Test, smallPool4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.17");
@@ -869,7 +869,7 @@ TEST_F(AllocEngine4Test, smallPool4) {
 // to find out a new lease fails.
 TEST_F(AllocEngine4Test, outOfAddresses4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.17");
@@ -929,7 +929,7 @@ public:
 
     /// @brief Initializes configuration (2 subnets, 1 shared network)
     SharedNetworkAlloc4Test()
-        :engine_(0, false) {
+        :engine_(0) {
         // Create two subnets, each with a single address pool. The first subnet
         // has only one address in its address pool to make it easier to simulate
         // address exhaustion.
@@ -1583,7 +1583,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservationsNoColl) {
 // allocation)
 TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.15");
@@ -1651,7 +1651,7 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.105");
@@ -1720,7 +1720,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 // to DHCPDISCOVER (fake allocation)
 TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0, false));
+    AllocEnginePtr engine(new AllocEngine(                                          0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1757,7 +1757,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
 TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 
     // Now prepare for DISCOVER processing
-    AllocEnginePtr engine(new AllocEngine(                                          0, false));
+    AllocEnginePtr engine(new AllocEngine(                                          0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1797,7 +1797,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 // to REQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0, false));
+    AllocEnginePtr engine(new AllocEngine(                                          0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1832,7 +1832,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 // is reused when responding to DHCPREQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0, false));
+    AllocEnginePtr engine(new AllocEngine(                                          0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1882,7 +1882,7 @@ TEST_F(AllocEngine4Test, identifyClientLease) {
                                100, time(NULL), subnet_->getID()));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(),
                                     false, false, "", true);
@@ -1961,7 +1961,7 @@ TEST_F(AllocEngine4Test, requestOtherClientLease) {
     LeaseMgrFactory::instance().addLease(lease);
     LeaseMgrFactory::instance().addLease(lease2);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // First client requests the lease which belongs to the second client.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("192.0.2.102"),
@@ -2011,7 +2011,7 @@ TEST_F(AllocEngine4Test, reservedAddressNoHint) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Try to allocate a lease without specifying a hint. This is actually
     // incorrect behavior of the client to not send an address it wants to
@@ -2050,7 +2050,7 @@ TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -2091,7 +2091,7 @@ TEST_F(AllocEngine4Test, reservedAddressHint) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
                                      IOAddress("192.0.2.234"), false, false,
@@ -2152,7 +2152,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintFakeAllocation) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Query the allocation engine for the lease to be assigned to the client
     // and specify a hint being a different address than the reserved one.
@@ -2200,7 +2200,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLease) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Request allocation of the reserved address.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -2249,7 +2249,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Try to allocate the reserved lease to client B.
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
@@ -2330,7 +2330,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Query allocation engine for the lease to be allocated to the client B.
     // The allocation engine is not able to allocate the lease to the client
@@ -2389,7 +2389,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Try to allocate a lease and specify a different address than reserved
     // and different from the one that client is currently using.
@@ -2469,7 +2469,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Try to allocate a lease and use a completely different address
     // as a hint.
@@ -2534,7 +2534,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Try to allocate a lease with providing no hint.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -2586,7 +2586,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Query the allocation engine for the lease to be allocated for the
     // client.
@@ -2648,7 +2648,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Client B sends a DHCPREQUEST to allocate a reserved lease. The
     // allocation engine can't allocate a reserved lease for this client
@@ -2754,7 +2754,7 @@ TEST_F(AllocEngine4Test, reservedAddressVsDynamicPool) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Different client tries to allocate a lease. Note, that we're using
     // an iterative allocator which would pick the first address from the
@@ -2786,7 +2786,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Different client is requesting this address.
     AllocEngine::ClientContext4 ctx1(subnet_, ClientIdPtr(), hwaddr_,
@@ -2829,7 +2829,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
 // address when the pool is exhausted, and the only available
 // address is reserved for a different client.
 TEST_F(AllocEngine4Test, reservedAddressShortPool) {
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Create short pool with only one address.
     initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.100"));
@@ -2883,7 +2883,7 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
 // dynamic pool if the client's reservation is made for a hostname but
 // not for an address.
 TEST_F(AllocEngine4Test, reservedHostname) {
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Create a reservation for a hostname. Address is set to 0 which
     // indicates that there is no reservation.
@@ -2918,7 +2918,7 @@ TEST_F(AllocEngine4Test, reservedHostname) {
 // the value of NULL in the host_ field of the client context.
 TEST_F(AllocEngine4Test, findReservation) {
     // Create the instance of the allocation engine.
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Context is required to call the AllocEngine::findReservation.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -2997,7 +2997,7 @@ TEST_F(AllocEngine4Test, findReservation) {
 // statistic for allocated addresses is increased appropriately.
 TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -3034,7 +3034,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
 // and that it doesn't increase allocated-addresses statistic.
 TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(100, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -3088,7 +3088,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Let's pretend 100 addresses were allocated already
     string name = StatsMgr::generateName("subnet", subnet_->getID(),
@@ -3140,7 +3140,7 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressDiscover) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     subnet_->setReservationsGlobal(true);
 
@@ -3188,7 +3188,7 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressRequest) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     subnet_->setReservationsGlobal(true);
 
@@ -3240,7 +3240,7 @@ TEST_F(AllocEngine4Test, globalReservationDynamicDiscover) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     subnet_->setReservationsGlobal(true);
 
@@ -3289,7 +3289,7 @@ TEST_F(AllocEngine4Test, globalReservationDynamicRequest) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     subnet_->setReservationsGlobal(true);
 
@@ -3341,7 +3341,7 @@ TEST_F(AllocEngine4Test, mixedReservationReservedAddressDiscover) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     subnet_->setReservationsGlobal(true);
     subnet_->setReservationsInSubnet(true);
@@ -3391,7 +3391,7 @@ TEST_F(AllocEngine4Test, mixedReservationReservedAddressRequest) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     subnet_->setReservationsGlobal(true);
     subnet_->setReservationsInSubnet(true);
@@ -3448,7 +3448,7 @@ TEST_F(AllocEngine4Test, bothReservationReservedAddressDiscover) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     subnet_->setReservationsGlobal(true);
     subnet_->setReservationsInSubnet(true);
@@ -3502,7 +3502,7 @@ TEST_F(AllocEngine4Test, bothReservationReservedAddressRequest) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     subnet_->setReservationsGlobal(true);
     subnet_->setReservationsInSubnet(true);
@@ -3648,7 +3648,7 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
     }};
 
     // Create the allocation engine, context and lease.
-    NakedAllocEngine engine(0, false);
+    NakedAllocEngine engine(0);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(),
@@ -3792,7 +3792,7 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
     }};
 
     // Create the allocation engine, context and lease.
-    NakedAllocEngine engine(0, false);
+    NakedAllocEngine engine(0);
 
     // All of the scenarios require storage to be enabled.
     subnet_->setStoreExtendedInfo(true);
@@ -3897,7 +3897,7 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
     }};
 
     // Create the allocation engine, context and lease.
-    NakedAllocEngine engine(0, false);
+    NakedAllocEngine engine(0);
 
     // All of the scenarios require storage to be disabled.
     subnet_->setStoreExtendedInfo(false);
@@ -3946,7 +3946,7 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
 // using cache threshold.
 TEST_F(AllocEngine4Test, discoverCacheThreshold4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -3991,7 +3991,7 @@ TEST_F(AllocEngine4Test, discoverCacheThreshold4) {
 // using cache threshold.
 TEST_F(AllocEngine4Test, requestCacheThreshold4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -4047,7 +4047,7 @@ TEST_F(AllocEngine4Test, requestCacheThreshold4) {
 // using cache max age.
 TEST_F(AllocEngine4Test, discoverCacheMaxAge4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -4092,7 +4092,7 @@ TEST_F(AllocEngine4Test, discoverCacheMaxAge4) {
 // using both cache threshold and max age.
 TEST_F(AllocEngine4Test, requestCacheBoth4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -4148,7 +4148,7 @@ TEST_F(AllocEngine4Test, requestCacheBoth4) {
 // using too small cache threshold.
 TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -4183,7 +4183,7 @@ TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
 // using too small cache max age.
 TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -4226,7 +4226,7 @@ TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
 // when the valid lifetime was reduced.
 TEST_F(AllocEngine4Test, discoverCacheReducedValid4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 200.
@@ -4261,7 +4261,7 @@ TEST_F(AllocEngine4Test, discoverCacheReducedValid4) {
 // when DDNS parameter changed.
 TEST_F(AllocEngine4Test, requestCacheFwdDDNS4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -4301,7 +4301,7 @@ TEST_F(AllocEngine4Test, requestCacheFwdDDNS4) {
 // when DDNS parameter changed.
 TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -4339,7 +4339,7 @@ TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
 // when hostname changed.
 TEST_F(AllocEngine4Test, requestCacheHostname4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     // Set valid lifetime to 500.
@@ -4380,7 +4380,7 @@ TEST_F(AllocEngine4Test, requestCacheHostname4) {
 // Verifies that AllocEngine::getValidLft(ctx4) returns the appropriate
 // lifetime value based on the context content.
 TEST_F(AllocEngine4Test, getValidLft4) {
-    AllocEngine engine(0, false);
+    AllocEngine engine(0);
 
     // Let's make three classes, two with valid-lifetime and one without,
     // and add them to the dictionary.
@@ -4514,7 +4514,7 @@ TEST_F(AllocEngine4Test, getValidLft4) {
 // Verifies that AllocEngine::getValidLft(ctx4) returns the appropriate
 // lifetime value based on the context content.
 TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
+    AllocEngine engine(0);
 
     // Let's make three classes, two with valid-lifetime and one without,
     // and add them to the dictionary.
@@ -4666,7 +4666,7 @@ TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {
 // This test checks that deleteRelease handles BOOTP leases.
 TEST_F(AllocEngine4Test, bootpDelete) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -4732,7 +4732,7 @@ public:
 // This test checks that simple allocation handles BOOTP queries.
 TEST_F(MySqlAllocEngine4Test, bootpAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -4776,7 +4776,7 @@ TEST_F(MySqlAllocEngine4Test, bootpAlloc4) {
 // This test checks simple renewal handles BOOTP queries.
 TEST_F(MySqlAllocEngine4Test, bootpRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -4833,7 +4833,7 @@ TEST_F(MySqlAllocEngine4Test, bootpRenew4) {
 // This test checks that deleteRelease handles BOOTP leases.
 TEST_F(MySqlAllocEngine4Test, bootpDelete) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -4900,7 +4900,7 @@ public:
 // This test checks that simple allocation handles BOOTP queries.
 TEST_F(PgSqlAllocEngine4Test, bootpAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -4944,7 +4944,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpAlloc4) {
 // This test checks simple renewal handles BOOTP queries.
 TEST_F(PgSqlAllocEngine4Test, bootpRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
@@ -5001,7 +5001,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpRenew4) {
 // This test checks that deleteRelease handles BOOTP leases.
 TEST_F(PgSqlAllocEngine4Test, bootpDelete) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(0, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),

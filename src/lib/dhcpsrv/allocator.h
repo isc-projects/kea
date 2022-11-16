@@ -68,8 +68,7 @@ public:
     }
 
     /// @brief Virtual destructor
-    virtual ~Allocator() {
-    }
+    virtual ~Allocator() = default;
 
     /// @brief Picks an address or a delegated prefix.
     ///
@@ -98,12 +97,8 @@ public:
     pickAddress(const ClientClasses& client_classes,
                 const DuidPtr& duid,
                 const asiolink::IOAddress& hint) {
-        if (util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return pickAddressInternal(client_classes, duid, hint);
-        } else {
-            return pickAddressInternal(client_classes, duid, hint);
-        }
+        util::MultiThreadingLock lock(mutex_);
+        return (pickAddressInternal(client_classes, duid, hint));
     }
 
 private:

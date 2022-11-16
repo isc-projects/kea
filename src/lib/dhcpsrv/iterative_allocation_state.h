@@ -53,29 +53,13 @@ public:
     /// @return last allocated address or prefix of a given type.
     asiolink::IOAddress getLastAllocated(Lease::Type type) const;
 
-    /// @brief Sets last alocated address or prefix.
+    /// @brief Sets last allocated address or prefix.
     ///
     /// @param type type of the last allocated lease set.
     /// @param address an address or prefix last allocated.
     void setLastAllocated(Lease::Type type, const asiolink::IOAddress& address);
 
 private:
-
-    /// @brief Returns last allocated address or prefix.
-    ///
-    /// It must be called in the thread-safe context.
-    ///
-    /// @param type type of the last allocated lease to be returned.
-    /// @return last allocated address or prefix of a given type.
-    asiolink::IOAddress getLastAllocatedInternal(Lease::Type type) const;
-
-    /// @brief Sets last alocated address or prefix.
-    ///
-    /// It must be called in the thread-safe context.
-    ///
-    /// @param type type of the last allocated lease set.
-    /// @param address an address or prefix last allocated.
-    void setLastAllocatedInternal(Lease::Type type, const asiolink::IOAddress& address);
 
     /// @brief Last allocated address.
     ///
@@ -85,16 +69,16 @@ private:
     /// removing a pool, restarting or changing allocation algorithms. For
     /// that purpose it should be only considered a help that should not be
     /// fully trusted.
-    asiolink::IOAddress last_allocated_ia_;
+    asiolink::IOAddress last_allocated_address_;
 
     /// @brief Last allocated temporary address.
     ///
-    /// See @ref last_allocated_ia_ for details.
+    /// See @ref last_allocated_address_ for details.
     asiolink::IOAddress last_allocated_ta_;
 
     /// @brief Last allocated IPv6 prefix.
     ///
-    /// See @ref last_allocated_ia_ for details.
+    /// See @ref last_allocated_address_ for details.
     asiolink::IOAddress last_allocated_pd_;
 };
 

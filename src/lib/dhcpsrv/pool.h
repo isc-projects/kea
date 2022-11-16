@@ -229,14 +229,6 @@ protected:
     /// @brief Holds pool-specific allocation state.
     AllocationStatePtr allocation_state_;
 
-    /// @brief Last allocated address
-    /// See @ref isc::dhcp::Subnet::last_allocated_ia_
-    /// Initialized and reset to first
-    isc::asiolink::IOAddress last_allocated_;
-
-    /// @brief Status of last allocated address
-    bool last_allocated_valid_;
-
     /// @brief Pointer to the permutation object.
     ///
     /// It may be initialized for some pools to provide address

@@ -498,7 +498,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(100, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
@@ -572,7 +572,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(100, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
@@ -621,7 +621,7 @@ TEST_F(HookAllocEngine4Test, skip_lease4_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(100, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager

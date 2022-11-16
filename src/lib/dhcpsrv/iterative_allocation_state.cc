@@ -26,53 +26,34 @@ SubnetIterativeAllocationState::create(const SubnetPtr& subnet) {
 SubnetIterativeAllocationState::SubnetIterativeAllocationState(const IOAddress& prefix,
                                                                const uint8_t prefix_length)
     : SubnetAllocationState(),
-      last_allocated_ia_(lastAddrInPrefix(prefix, prefix_length)),
+      last_allocated_address_(lastAddrInPrefix(prefix, prefix_length)),
       last_allocated_ta_(lastAddrInPrefix(prefix, prefix_length)),
       last_allocated_pd_(lastAddrInPrefix(prefix, prefix_length)) {
 }
 
 IOAddress
 SubnetIterativeAllocationState::getLastAllocated(Lease::Type type) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLastAllocatedInternal(type));
-    } else {
-        return (getLastAllocatedInternal(type));
-    }
-}
-
-void
-SubnetIterativeAllocationState::setLastAllocated(Lease::Type type, const IOAddress& address) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        setLastAllocatedInternal(type, address);
-    } else {
-        setLastAllocatedInternal(type, address);
-    }
-}
-
-IOAddress
-SubnetIterativeAllocationState::getLastAllocatedInternal(Lease::Type type) const {
+    MultiThreadingLock lock(*mutex_);
     switch (type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
-        return last_allocated_ia_;
+        return (last_allocated_address_);
     case Lease::TYPE_TA:
-        return last_allocated_ta_;
+        return (last_allocated_ta_);
     case Lease::TYPE_PD:
-        return last_allocated_pd_;
+        return (last_allocated_pd_);
     default:
         isc_throw(BadValue, "pool type " << type << " not supported");
     }
 }
 
 void
-SubnetIterativeAllocationState::setLastAllocatedInternal(Lease::Type type,
-                                                         const IOAddress& address) {
+SubnetIterativeAllocationState::setLastAllocated(Lease::Type type, const IOAddress& address) {
+    MultiThreadingLock lock(*mutex_);
     switch (type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
-        last_allocated_ia_ = address;
+        last_allocated_address_ = address;
         break;
     case Lease::TYPE_TA:
         last_allocated_ta_ = address;

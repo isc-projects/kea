@@ -56,8 +56,7 @@ public:
     ///
     /// @param attempts number of attempts for each lease allocation before
     ///        we give up (0 means unlimited)
-    /// @param ipv6 specifies if the engine should work for IPv4 or IPv6
-    AllocEngine(uint64_t attempts, bool ipv6 = true);
+    AllocEngine(uint64_t attempts);
 
     /// @brief Destructor.
     virtual ~AllocEngine() { }

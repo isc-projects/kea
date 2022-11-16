@@ -57,7 +57,7 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated4MultiThreading) {
 
 // Checks if last allocated address/prefix is stored/retrieved properly.
 TEST(IterativeAllocationStateTest, subnetLastAllocated6) {
-    IOAddress ia("2001:db8:1::1");
+    IOAddress na("2001:db8:1::1");
     IOAddress ta("2001:db8:1::abcd");
     IOAddress pd("2001:db8:1::1234:5678");
 
@@ -72,8 +72,8 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated6) {
     EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
 
     // Now set last allocated for IA
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_NA, ia));
-    EXPECT_EQ(ia.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_NA, na));
+    EXPECT_EQ(na.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
 
     // TA and PD should be unchanged
     EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
@@ -83,7 +83,7 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated6) {
     EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_TA, ta));
     EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_PD, pd));
 
-    EXPECT_EQ(ia.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_EQ(na.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
     EXPECT_EQ(ta.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
     EXPECT_EQ(pd.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
 }
@@ -92,7 +92,7 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated6) {
 // multi threading is turned on.
 TEST(IterativeAllocationStateTest, subnetLastAllocated6MultiThreading) {
     MultiThreadingTest mt(true);
-    IOAddress ia("2001:db8:1::1");
+    IOAddress na("2001:db8:1::1");
     IOAddress ta("2001:db8:1::abcd");
     IOAddress pd("2001:db8:1::1234:5678");
 
@@ -107,8 +107,8 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated6MultiThreading) {
     EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
 
     // Now set last allocated for IA
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_NA, ia));
-    EXPECT_EQ(ia.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_NA, na));
+    EXPECT_EQ(na.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
 
     // TA and PD should be unchanged
     EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
@@ -118,7 +118,7 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated6MultiThreading) {
     EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_TA, ta));
     EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_PD, pd));
 
-    EXPECT_EQ(ia.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_EQ(na.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
     EXPECT_EQ(ta.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
     EXPECT_EQ(pd.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
 }
@@ -147,7 +147,7 @@ TEST(IterativeAllocationStateTest, poolLastAllocated4) {
     EXPECT_FALSE(state->isLastAllocatedValid());
 }
 
-// Checks that last allocated IOv6 lease is stored in the pool-specific
+// Checks that last allocated IPv6 lease is stored in the pool-specific
 // allocation state.
 TEST(IterativeAllocationStateTest, poolLastAllocated6) {
     // Create a pool.

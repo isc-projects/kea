@@ -60,7 +60,7 @@ TEST(ClientContext6Test, addAllocatedResource) {
 TEST_F(AllocEngine6Test, constructor) {
     boost::scoped_ptr<AllocEngine> x;
 
-    ASSERT_NO_THROW(x.reset(new AllocEngine(100, true)));
+    ASSERT_NO_THROW(x.reset(new AllocEngine(100)));
 }
 
 // This test checks if two simple IPv6 allocations succeed and that the
@@ -1525,7 +1525,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitNoHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), true);
     ASSERT_TRUE(lease);
@@ -1547,7 +1547,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestNoHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1585,7 +1585,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitValidHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1624,7 +1624,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestValidHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1665,7 +1665,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitMatchingHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1704,7 +1704,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestMatchingHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1745,7 +1745,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitNoHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8::abcd"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1781,7 +1781,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestNoHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8::abcd"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1817,7 +1817,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitValidHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8::abcd"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1856,7 +1856,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestValidHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8::abcd"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1895,7 +1895,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitMatchingHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8::abcd"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1934,7 +1934,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8::abcd"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -1966,7 +1966,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
 //    Check that he is assigned a new lease for B
 // - verify that the number of assigned address behaves as expected
 TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -2045,7 +2045,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
 //    Check that his existing lease for lease A is removed
 //    Check that he is assigned a new lease
 TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -2130,7 +2130,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
 // we run out of addresses and remaining 14 clients will get nothing.
 // Finally, we check that client A still can get his reserved address.
 TEST_F(AllocEngine6Test, reservedAddress) {
-    AllocEngine engine(100, true);
+    AllocEngine engine(100);
 
     // Create reservation for the client. This is in-pool reservation,
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
@@ -2198,7 +2198,7 @@ TEST_F(AllocEngine6Test, reservedAddress) {
 
 // Checks if the allocateLeases throws exceptions for invalid input data.
 TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
-    AllocEngine engine(100, true);
+    AllocEngine engine(100);
 
     // That looks like a valid context.
     AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
@@ -2543,7 +2543,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolSolicitNoHint) {
     createHost6HWAddr(true, IPv6Resrv::TYPE_NA, hwaddr_,
                       IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), true);
     ASSERT_TRUE(lease);
@@ -2566,7 +2566,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestNoHint) {
     createHost6HWAddr(true, IPv6Resrv::TYPE_NA, hwaddr_,
                       IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(lease);
@@ -2589,7 +2589,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolSolicitValidHint) {
     createHost6HWAddr(true, IPv6Resrv::TYPE_NA, hwaddr_,
                       IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true);
@@ -2615,7 +2615,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
     createHost6HWAddr(true, IPv6Resrv::TYPE_NA, hwaddr_,
                       IOAddress("2001:db8:1::1c"), 128);
 
-    AllocEngine engine(100, false);
+    AllocEngine engine(100);
 
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false);
@@ -2768,7 +2768,7 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6) {
 // to REQUEST (actual allocation)
 TEST_F(AllocEngine6Test, requestReuseDeclinedLease6) {
 
-    AllocEnginePtr engine(new AllocEngine(100, true));
+    AllocEnginePtr engine(new AllocEngine(100));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -2801,7 +2801,7 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6) {
 TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
 
     // Now prepare for SOLICIT processing
-    AllocEnginePtr engine(new AllocEngine(100, true));
+    AllocEnginePtr engine(new AllocEngine(100));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -2846,7 +2846,7 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
 TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
 
     // Prepare for REQUEST processing.
-    AllocEnginePtr engine(new AllocEngine(100, true));
+    AllocEnginePtr engine(new AllocEngine(100));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -4033,7 +4033,7 @@ class AllocEngine6ExtendedInfoTest : public AllocEngine6Test {
 public:
     /// @brief Constructor
     AllocEngine6ExtendedInfoTest()
-        : engine_(100, true),
+        : engine_(100),
           duid1_(), duid2_(), duid3_(), relay1_(), relay2_(), relay3_(),
           duid1_addr_("::"), duid2_addr_("::") {
         duid1_.reset(new DUID(std::vector<uint8_t>(8, 0x84)));
@@ -4076,7 +4076,7 @@ public:
         duid2_addr_ = IOAddress("2001:db8:1::11");
 
         // Create the allocation engine, context and lease.
-        NakedAllocEngine engine(100, true);
+        NakedAllocEngine engine(100);
     }
 
     /// Configuration elements. These are initialized in the constructor
@@ -5539,7 +5539,7 @@ TEST_F(AllocEngine6Test, getValidLifetime) {
 // valid lifetime value based on the context content.
 TEST_F(AllocEngine6Test, getTemplateClassValidLifetime) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Let's make three classes, two with valid-lifetime and one without,
@@ -5807,7 +5807,7 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
 // preferred lifetime value based on the context content.
 TEST_F(AllocEngine6Test, getTemplateClassPreferredLifetime) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Let's make three classes, two with preferred-lifetime and one without,

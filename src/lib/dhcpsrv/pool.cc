@@ -22,7 +22,6 @@ Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     :id_(getNextID()), first_(first), last_(last), type_(type),
      capacity_(0), cfg_option_(new CfgOption()), client_class_(""),
-     last_allocated_(first), last_allocated_valid_(false),
      permutation_() {
 }
 

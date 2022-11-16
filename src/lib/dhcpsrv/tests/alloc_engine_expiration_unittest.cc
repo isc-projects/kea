@@ -188,7 +188,7 @@ public:
         LeaseMgrFactory::create(lease_mgr_params);
 
         // Create allocation engine instance.
-        engine_.reset(new AllocEngine(100, true));
+        engine_.reset(new AllocEngine(100));
     }
 
     /// @brief Destructor

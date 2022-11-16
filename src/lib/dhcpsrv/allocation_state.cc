@@ -25,12 +25,8 @@ SubnetAllocationState::SubnetAllocationState()
 
 boost::posix_time::ptime
 SubnetAllocationState::getLastAllocatedTime(Lease::Type type) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLastAllocatedTimeInternal(type));
-    } else {
-        return (getLastAllocatedTimeInternal(type));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (getLastAllocatedTimeInternal(type));
 }
 
 boost::posix_time::ptime

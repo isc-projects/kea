@@ -32,7 +32,7 @@ class AllocationState {
 public:
 
     /// @brief Virtual destructor.
-    virtual ~AllocationState() {}
+    virtual ~AllocationState() = default;
 };
 
 /// @brief Type of the pointer to the @c AllocationState.
