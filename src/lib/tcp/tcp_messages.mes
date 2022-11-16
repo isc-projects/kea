@@ -94,8 +94,8 @@ to be printed.
 % MT_TCP_LISTENER_MGR_STARTED MtTcpListenerMgr started with %1 threads, listening on %2:%3, use TLS: %4
 This debug messages is issued when an MtTcpListenerMgr has been started to
 accept connections.  Arguments detail the number of threads that the listener
-is using, the address and port at which it is listening,
-and if MT_TCPS/TLS is used or not.
+is using, the address and port at which it is listening, and if TLS is used
+or not.
 
 % MT_TCP_LISTENER_MGR_STOPPED MtTcpListenerMgr for %1:%2 stopped.
 This debug messages is issued when the MtTcpListenerMgr, listening

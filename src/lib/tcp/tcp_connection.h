@@ -21,10 +21,11 @@
 #include <string>
 #include <iostream>
 
+#include <mutex>
+
 namespace isc {
 namespace tcp {
 
-/// @todo Take this out, it's just for dev coding
 #define HERE(a) std::cout << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << a << std::endl << std::flush;
 
 /// @brief Defines a data structure for storing raw bytes of data on the wire.
@@ -285,14 +286,14 @@ public:
     /// @return Pointer to the new request.
     virtual TcpRequestPtr createRequest() = 0;
 
-    /// @brief Fetches the maxium number of bytes read during single socket
+    /// @brief Fetches the maximum number of bytes read during single socket
     /// read.
     /// @return Maximum number of bytes to read.
     size_t getReadMax() const {
         return (read_max_);
     }
 
-    /// @brief Sets the maxium number of bytes read during single socket read.
+    /// @brief Sets the maximum number of bytes read during single socket read.
     ///
     /// @param read_max maximum number of bytes to read.
     /// @throw BadValue if the parameter is not greater than zero.

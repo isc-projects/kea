@@ -111,7 +111,7 @@ public:
         return (listener->audit_trail_);
     }
 
-    /// @brief TcpListener factory for MtTcpListener to instantite new listeners.
+    /// @brief TcpListener factory for MtTcpListener to instantiate new listeners.
     TcpListenerPtr listenerFactory(asiolink::IOService& io_service,
                                    const asiolink::IOAddress& server_address,
                                    const unsigned short server_port,
@@ -127,15 +127,11 @@ public:
 
     /// @brief Callback function each client invokes when done.
     ///
-    /// It stops the IO service when all clients are done.
+    /// It stops the IO service
     ///
     /// @param fail_on_timeout Specifies if test failure should be reported.
     void clientDone() {
-        ++clients_done_;
-        if (clients_done_ >= clients_.size()) {
-            // They're all done or dead. Stop the service.
-            io_service_.stop();
-        }
+        io_service_.stop();
     }
 
     /// @brief Initiates a command via a new TCP client.
@@ -333,7 +329,7 @@ public:
     /// @param status_code Indicates outcome of the command
     /// @param arguments Element tree of response arguments
     ///
-    /// @return JSON text containing the reponse
+    /// @return JSON text containing the response
     std::string createAnswerString(const int status_code, std::string text) {
         ConstElementPtr answer = createAnswer(status_code, text);
         std::stringstream os;
@@ -346,7 +342,7 @@ public:
     /// @param status_code Indicates outcome of the command
     /// @param arguments Element tree of response arguments
     ///
-    /// @return JSON text containing the reponse
+    /// @return JSON text containing the response
     std::string createAnswerString(const int status_code, ConstElementPtr arguments) {
         ConstElementPtr answer = createAnswer(status_code, arguments);
         std::stringstream os;
@@ -535,7 +531,7 @@ public:
     /// @brief Pauses and resumes a MtTcpListener while it processes command
     /// requests.
     ///
-    /// This function command will create a MtTcpListener
+    /// This function command will create a MtTcpListenerMgr
     /// with the given number of threads, initiates the given
     /// number of clients, each requesting the "thread" command,
     /// and then iteratively runs the test's IOService until all
@@ -919,8 +915,6 @@ TEST_F(MtTcpListenerMgrTest, pauseAndResume) {
     workPauseAndResume(num_threads, num_clients, num_pauses);
 }
 
-#if 0
-
 // Check if a TLS listener can be created.
 TEST_F(MtTcpListenerMgrTest, tls) {
     IOAddress address(SERVER_ADDRESS);
@@ -929,7 +923,14 @@ TEST_F(MtTcpListenerMgrTest, tls) {
     configServer(context);
 
     // Make sure we can create the listener.
-    ASSERT_NO_THROW_LOG(mt_listener_.reset(new MtTcpListener(address, port, 1, context)));
+    ASSERT_NO_THROW_LOG(
+        mt_listener_mgr_.reset(new MtTcpListenerMgr(
+            std::bind(&MtTcpListenerMgrTest::listenerFactory,
+                      this,
+                      ph::_1, ph::_2, ph::_3, ph::_4, ph::_5, ph::_6),
+        IOAddress(SERVER_ADDRESS), SERVER_PORT, 1, context))
+    );
+
     EXPECT_EQ(mt_listener_mgr_->getAddress(), address);
     EXPECT_EQ(mt_listener_mgr_->getPort(), port);
     EXPECT_EQ(mt_listener_mgr_->getThreadPoolSize(), 1);
@@ -952,6 +953,5 @@ TEST_F(MtTcpListenerMgrTest, tls) {
     ASSERT_FALSE(mt_listener_mgr_->getThreadIOService());
     EXPECT_TRUE(mt_listener_mgr_->isStopped());
 }
-#endif
 
 } // end of anonymous namespace

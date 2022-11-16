@@ -133,7 +133,7 @@ public:
                      response_handler_(response_handler) {
     }
 
-    /// @brief Creats a new empty request ready to receive data.
+    /// @brief Creates a new empty request ready to receive data.
     virtual TcpRequestPtr createRequest() {
         return (TcpStreamRequestPtr(new TcpStreamRequest()));
     }

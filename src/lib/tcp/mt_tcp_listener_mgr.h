@@ -46,9 +46,9 @@ public:
     ///
     /// @param listener_factory Function for instantiating the internal TcpListener
     /// @param address Ip address to listen on for connections
-    /// @param port Ip port to lisent on for connections
+    /// @param port Ip port to listen on for connections
     /// @param thread_pool_size Maximum Number of threads in the thread pool.  This
-    /// implicit dictates the maxium number of connections.
+    /// implicit dictates the maximum number of connections.
     /// @param context TLS context for authenticating connections. Defaults to empty.
     /// @param connection_filter Callback connections may use to filter connections by
     /// their remote endpoint characteristics (e.g. ip address)
