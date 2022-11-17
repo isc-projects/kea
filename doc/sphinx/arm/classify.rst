@@ -735,15 +735,18 @@ A valid configuration contains at most one of ``test`` or ``template-test``
 parameters. The ``template-test`` parameter also indicates if the class is a
 template class. If both are provided, the configuration is rejected.
 
-..code-block:: json
+::
 
    "Dhcp4": {
        "client-classes": [
            {
                "name": "Client-ID",
                "template-test": "substring(option[61].hex,0,3)",
-           }
-       ]
+               ...
+           },
+           ...
+       ],
+       ...
    }
 
 If the received DHCPv4 packet contains option 61, then the first 3 bytes represent
@@ -761,19 +764,23 @@ the packet.
 
    SPAWN_<template-class-name-used-to-activate-this-regular-class>_<evaluated-value-filtering-this-regular-class>
 
-..code-block:: json
+::
 
    "Dhcp6": {
        "client-classes": [
            {
                "name": "SPAWN_Client-ID_foobar",
                "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
+               ...
            },
            {
                "name": "Client-ID",
                "template-test": "substring(option[1].hex,0,6)",
-           }
-       ]
+               ...
+           },
+           ...
+       ],
+       ...
    }
 
 If the received DHCPv6 packet contains option 1 (client identifier) with hex
@@ -809,15 +816,18 @@ is not mandatory that the flag be set to ``true``.
    classes, so that they are created only when needed by using the `ifelse`
    instruction.
 
-..code-block:: json
+::
 
    "Dhcp4": {
        "client-classes": [
            {
                "name": "Client-ID",
                "template-test": "ifelse(substring(option[61].hex,4,3) == 'foo', substring(option[12].hex,0,12), '')",
-           }
-       ]
+               ...
+           },
+           ...
+       ],
+       ...
    }
 
 .. note ::
@@ -834,7 +844,7 @@ is not mandatory that the flag be set to ``true``.
    other packets that have the first three hextets different than `foo` are put
    in separate rate limiting buckets.
 
-..code-block:: json
+::
 
    "Dhcp6": {
        "client-classes": [
@@ -843,11 +853,14 @@ is not mandatory that the flag be set to ``true``.
                "template-test": "substring(option[1].hex,0,3)",
                "user-context" : {
                    "limits": {
-                      "rate-limit": "60 packets per day"
+                       "rate-limit": "60 packets per day"
                    }
-               }
-           }
-       ]
+               },
+               ...
+           },
+           ...
+       ],
+       ...
    }
 
 In the following example, the class named ``Client_foo`` is defined. It is

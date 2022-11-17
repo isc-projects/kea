@@ -1,3 +1,12 @@
+2076.	[doc]		razvan
+	Add documentation for template classes and the new parameter
+	'template-test' which evaluates to a string value. This indicates
+	if the class is spaning classes with the name containing the
+	evaluated value: 'SPAWN_<template-class-name>_<evaluated-value>'
+	only if the value is not empty string. This will also add the
+	packet to the <template-class-name> class.
+	(Gitlab #2606)
+
 2075.	[bug]		razvan
 	The builtin client class ALL can now be used again to apply lease
 	limits and rate limits.
