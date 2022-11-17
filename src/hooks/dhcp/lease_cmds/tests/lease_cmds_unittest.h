@@ -389,7 +389,12 @@ public:
     void initLeaseMgr(bool v6, bool insert_lease, bool declined = false) {
         isc::dhcp::LeaseMgrFactory::destroy();
         std::ostringstream s;
-        s << "type=memfile persist=false " << (v6 ? "universe=6" : "universe=4");
+        s << "type=memfile persist=false ";
+        if (v6) {
+            s << "universe=6 extended-info-tables=true";
+        } else {
+            s <<  "universe=4";
+        }
         isc::dhcp::LeaseMgrFactory::create(s.str());
 
         lmptr_ = &(isc::dhcp::LeaseMgrFactory::instance());
