@@ -10,6 +10,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_consistency.h>
+#include <dhcpsrv/lease_mgr.h>
 #include <lease_cmds_exceptions.h>
 #include <lease_parser.h>
 
@@ -169,6 +170,12 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                            fqdn_fwd, fqdn_rev, hostname));
     l->state_ = state;
     l->setContext(ctx);
+
+    // Sanitize extended info.
+    if (ctx) {
+        auto check = cfg->getConsistency()->getExtendedInfoSanityCheck();
+        LeaseMgr::upgradeLease4ExtendedInfo(l, check);
+    }
 
     // Retrieve the optional flag indicating if the lease must be created when it
     // doesn't exist during the update.
@@ -369,6 +376,12 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     l->cltt_ = cltt;
     l->state_ = state;
     l->setContext(ctx);
+
+    // Sanitize extended info.
+    if (ctx) {
+        auto check = cfg->getConsistency()->getExtendedInfoSanityCheck();
+        LeaseMgr::upgradeLease6ExtendedInfo(l, check);
+    }
 
     // Retrieve the optional flag indicating if the lease must be created when it
     // doesn't exist during the update.

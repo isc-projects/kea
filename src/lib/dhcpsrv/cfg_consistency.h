@@ -102,6 +102,9 @@ class CfgConsistency : public isc::data::UserContext, public isc::data::CfgToEle
 /// @brief Type used to for pointing to CfgConsistency structure
 typedef boost::shared_ptr<CfgConsistency> CfgConsistencyPtr;
 
+/// @brief Type used to for pointing to const CfgConsistency structure
+typedef boost::shared_ptr<const CfgConsistency> ConstCfgConsistencyPtr;
+
 } // namespace isc::dhcp
 } // namespace isc
 

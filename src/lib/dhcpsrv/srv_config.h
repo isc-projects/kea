@@ -491,10 +491,17 @@ public:
         return (cfg_host_operations6_);
     }
 
+    /// @brief Returns non-const pointer to object holding sanity checks flags
+    ///
+    /// @return Pointer to object holding sanity checks flags
+    CfgConsistencyPtr getConsistency() {
+        return (cfg_consist_);
+    }
+
     /// @brief Returns const pointer to object holding sanity checks flags
     ///
     /// @return Const pointer to object holding sanity checks flags
-    CfgConsistencyPtr getConsistency() {
+    ConstCfgConsistencyPtr getConsistency() const {
         return (cfg_consist_);
     }
 

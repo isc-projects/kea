@@ -456,6 +456,22 @@ public:
     ///
     /// @return true if lease has been successfully added, false otherwise.
     static bool addOrUpdate6(Lease6Ptr lease, bool force_create);
+
+    /// @brief Get DHCPv6 extended info.
+    ///
+    /// @param lease The lease to get extended info from.
+    /// @return The extended info or null.
+    inline static ConstElementPtr getExtendedInfo6(const Lease6Ptr& lease) {
+        ConstElementPtr user_context = lease->getContext();
+        if (!user_context || (user_context->getType() != Element::map)) {
+            return (ConstElementPtr());
+        }
+        ConstElementPtr isc = user_context->get("ISC");
+        if (!isc || (isc->getType() != Element::map)) {
+            return (ConstElementPtr());
+        }
+        return (isc->get("relay-info"));
+    }
 };
 
 void
@@ -702,6 +718,17 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
         // database. Some database backends reject operations on the lease if
         // the current expiration time value does not match what is stored.
         Lease::syncCurrentExpirationTime(*existing, *lease);
+
+        // Check what is the action about extended info.
+        ConstElementPtr old_extended_info = getExtendedInfo6(existing);
+        ConstElementPtr extended_info = getExtendedInfo6(lease);
+        if ((!old_extended_info && !extended_info) ||
+            (old_extended_info && extended_info &&
+             (*old_extended_info == *extended_info))) {
+            lease->extended_info_action_ = Lease::ACTION_IGNORE;
+        } else {
+            lease->extended_info_action_ = Lease::ACTION_UPDATE;
+        }
     }
     try {
         LeaseMgrFactory::instance().updateLease6(lease);
