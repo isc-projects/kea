@@ -20,8 +20,8 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
+run_unittests_SOURCES += tcp_test_client.h tcp_test_listener.h
 run_unittests_SOURCES += tcp_listener_unittests.cc
-run_unittests_SOURCES += tcp_test_client.h
 run_unittests_SOURCES += mt_tcp_listener_mgr_unittests.cc
 
 # @todo These tests will be needed. These are here as a reminder.

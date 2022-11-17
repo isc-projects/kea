@@ -194,7 +194,8 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
             isc_throw(BadValue, "'" << space << "' is not a valid space name");
         }
     }
-    uint16_t code;
+    // The code is always set below but some compilers can't see that...
+    uint16_t code = 0;
     if (code_elem) {
         int64_t value = code_elem->intValue();
         int64_t max_code;
