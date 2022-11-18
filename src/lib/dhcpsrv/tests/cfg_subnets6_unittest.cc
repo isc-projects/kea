@@ -2005,4 +2005,86 @@ TEST(CfgSubnets6Test, hostPD) {
     CfgMgr::instance().clear();
 }
 
+// This test verifies that the getLinks tool works as expected.
+TEST(CfgSubnets6Test, getLinks) {
+    CfgSubnets6 cfg;
+
+    // Create 3 subnets.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4,
+                                   SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 64, 1, 2, 3, 4,
+                                   SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 64, 1, 2, 3, 4,
+                                   SubnetID(3)));
+
+    // Add all subnets to the configuration.
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+
+    // No 2001:db8:4:: subnet.
+    SubnetIDSet links;
+    uint8_t link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:4::"), link_len));
+    EXPECT_TRUE(links.empty());
+    EXPECT_EQ(111, link_len);
+
+    // A 2001:db8:2::/64 subnet.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::"), link_len));
+    SubnetIDSet expected = { 2 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(64, link_len);
+
+    // Check that any address in the subnet works.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::1234:5678:9abc:def0"),
+                                         link_len));
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(64, link_len);
+
+    // Check that an address outside the subnet does not work.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2:1::"), link_len));
+    EXPECT_TRUE(links.empty());
+    EXPECT_EQ(111, link_len);
+
+    // Add a second 2001:db8:2::/64 subnet.
+    Subnet6Ptr subnet10(new Subnet6(IOAddress("2001:db8:2::10"), 64, 1, 2, 3,
+                                    4, SubnetID(10)));
+    ASSERT_NO_THROW(cfg.add(subnet10));
+
+    // Now we should get 2 subnets.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::"), link_len));
+    expected = { 2, 10 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(64, link_len);
+
+    // Add a larger subnet.
+    Subnet6Ptr subnet20(new Subnet6(IOAddress("2001:db8:2::20"), 56, 1, 2, 3,
+                                    4, SubnetID(20)));
+    ASSERT_NO_THROW(cfg.add(subnet20));
+
+    // Now we should get 3 subnets and a smaller prefix length.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::"), link_len));
+    expected = { 2, 10, 20 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(56, link_len);
+
+    // But only the larger subnet if the address is only in it.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2:1::"), link_len));
+    expected = { 20 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(56, link_len);
+}
+
 } // end of anonymous namespace

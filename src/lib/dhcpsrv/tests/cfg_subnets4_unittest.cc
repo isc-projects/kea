@@ -2084,4 +2084,85 @@ TEST(CfgSubnets4Test, outOfRangeHost) {
     EXPECT_THROW_MSG(parser.parse(elems), DhcpConfigError, msg);
 }
 
+// This test verifies that the getLinks tool works as expected.
+TEST(CfgSubnets4Test, getLinks) {
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.3.0"),
+                                   26, 1, 2, 3, SubnetID(3)));
+
+    // Add all subnets to the configuration.
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+
+    // No 192.0.4.0 subnet.
+    SubnetIDSet links;
+    uint8_t link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.4.0"), link_len));
+    EXPECT_TRUE(links.empty());
+    EXPECT_EQ(111, link_len);
+
+    // A 192.0.2.0/26 subnet.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0"), link_len));
+    SubnetIDSet expected = { 2 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(26, link_len);
+
+    // Check that any address in the subnet works.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.23"), link_len));
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(26, link_len);
+
+    // Check that an address outside the subnet does not work.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.123"), link_len));
+    EXPECT_TRUE(links.empty());
+    EXPECT_EQ(111, link_len);
+
+    // Add a second 192.0.2.0/26 subnet.
+    Subnet4Ptr subnet10(new Subnet4(IOAddress("192.0.2.10"),
+                                    26, 1, 2, 3, SubnetID(10)));
+    ASSERT_NO_THROW(cfg.add(subnet10));
+
+    // Now we should get 2 subnets.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0"), link_len));
+    expected = { 2, 10 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(26, link_len);
+
+    // Add a larger subnet.
+    Subnet4Ptr subnet20(new Subnet4(IOAddress("192.0.2.20"),
+                                    24, 1, 2, 3, SubnetID(20)));
+    ASSERT_NO_THROW(cfg.add(subnet20));
+
+    // Now we should get 3 subnets and a smaller prefix length.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0"), link_len));
+    expected = { 2, 10, 20 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(24, link_len);
+
+    // But only the larger subnet if the address is only in it.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.123"), link_len));
+    expected = { 20 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(24, link_len);
+}
+
 } // end of anonymous namespace
