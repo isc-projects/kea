@@ -488,7 +488,7 @@ Notes:
    +=======================+=========================+=======================+
    | Equal                 | 'foo' == 'bar'          | Compare the two       |
    |                       |                         | values and return     |
-   |                       |                         | `true` or `false`     |
+   |                       |                         | ``true`` or ``false`` |
    +-----------------------+-------------------------+-----------------------+
    | Not                   | not ('foo' == 'bar')    | Logical negation      |
    +-----------------------+-------------------------+-----------------------+
@@ -636,7 +636,7 @@ or:
 Split
 ---------
 
-The Split operator ``split(value, delimiters, field-number)`` accepts a list
+The split operator ``split(value, delimiters, field-number)`` accepts a list
 of characters to use as delimiters and a positive field number of the
 desired field when the value is split into fields separated by the delimiters.
 Adjacent delimiters are not compressed out, rather they result in an empty
@@ -762,7 +762,7 @@ the packet.
    To achieve this, the regular class must also contain the fixed part of the
    spawned class name:
 
-   SPAWN_<template-class-name-used-to-activate-this-regular-class>_<evaluated-value-filtering-this-regular-class>
+   ``SPAWN_<template-class-name-used-to-activate-this-regular-class>_<evaluated-value-filtering-this-regular-class>``
 
 ::
 
@@ -813,7 +813,7 @@ is not mandatory that the flag be set to ``true``.
 .. note ::
 
    The ``template-test`` expression can also be used to filter generated spawned
-   classes, so that they are created only when needed by using the `ifelse`
+   classes, so that they are created only when needed by using the ``ifelse``
    instruction.
 
 ::
@@ -841,7 +841,7 @@ is not mandatory that the flag be set to ``true``.
    For example, using the configuration below, ingress DHCPv6 packets that have
    client ID values (in the format expressed by the Kea evaluator) ``foobar``
    and ``foofoo`` both amount to the same limit of 60 packets per day, while
-   other packets that have the first three hextets different than `foo` are put
+   other packets that have the first three hextets different than ``foo`` are put
    in separate rate limiting buckets.
 
 ::
