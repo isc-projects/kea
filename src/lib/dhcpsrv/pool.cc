@@ -230,7 +230,6 @@ Pool6::Pool6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
 
     // If excluded prefix has been specified.
     if (!excluded_prefix.isV6Zero() && (excluded_prefix_len != 0)) {
-
         // Excluded prefix length must not be greater than 128.
         if (excluded_prefix_len > 128) {
             isc_throw(BadValue, "excluded prefix length "
@@ -300,14 +299,13 @@ Pool6::init(const Lease::Type& type,
                   << static_cast<int>(prefix_len) << ")");
     }
 
-    if ( ( (type == Lease::TYPE_NA) || (type == Lease::TYPE_TA)) &&
-         (delegated_len != 128)) {
+    if (((type == Lease::TYPE_NA) || (type == Lease::TYPE_TA)) && (delegated_len != 128)) {
         isc_throw(BadValue, "For IA or TA pools, delegated prefix length must"
                   << " be 128.");
     }
 
     // excluded_prefix_len == 0 means there's no excluded prefix at all.
-    if (excluded_prefix_len && (excluded_prefix_len < delegated_len)) {
+    if (excluded_prefix_len && (excluded_prefix_len <= delegated_len)) {
         isc_throw(BadValue, "Excluded prefix ("
                                 << static_cast<int>(excluded_prefix_len)
                                 << ") must be longer than or equal to the delegated prefix length ("
@@ -324,6 +322,12 @@ Pool6::init(const Lease::Type& type,
     // For addresses, we could use addrsInRange(prefix, last_), but it's
     // much faster to do calculations on prefix lengths.
     capacity_ = prefixesInRange(prefix_len, delegated_len);
+
+    if (prefixLengthFromRange(prefix, last_) < 0) {
+       // The pool is bad: give up
+       isc_throw(BadValue, "invalid prefix range "
+                 << prefix.toText() << "-" << last_.toText());
+    }
 
     // If user specified an excluded prefix, create an option that will
     // be sent to clients obtaining prefixes from this pool.

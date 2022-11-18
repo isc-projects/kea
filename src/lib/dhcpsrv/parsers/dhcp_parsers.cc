@@ -1048,14 +1048,14 @@ Subnets4ListConfigParser::createSubnetConfigParser() const {
 //**************************** Pool6Parser *********************************
 
 PoolPtr
-Pool6Parser::poolMaker (IOAddress &addr, uint32_t len, int32_t ptype)
+Pool6Parser::poolMaker(IOAddress &addr, uint32_t len, int32_t ptype)
 {
     return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
                               (ptype), addr, len)));
 }
 
 PoolPtr
-Pool6Parser::poolMaker (IOAddress &min, IOAddress &max, int32_t ptype)
+Pool6Parser::poolMaker(IOAddress &min, IOAddress &max, int32_t ptype)
 {
     return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
                               (ptype), min, max)));
@@ -1306,8 +1306,8 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
 
 // Unused?
 void
-Subnet6ConfigParser::duplicate_option_warning(uint32_t code,
-                                              asiolink::IOAddress& addr) {
+Subnet6ConfigParser::duplicateOptionWarning(uint32_t code,
+                                            asiolink::IOAddress& addr) {
     LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_OPTION_DUPLICATE)
         .arg(code).arg(addr.toText());
 }
