@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <typeinfo>
 #include <limits>
+#include <set>
 
 namespace isc {
 namespace dhcp {
@@ -37,6 +38,9 @@ public:
     DuplicateSubnetID(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief Ordered list aka set of subnetIDs.
+typedef std::set<dhcp::SubnetID> SubnetIDSet;
 
 }
 }

@@ -298,6 +298,18 @@ public:
     Subnet4Ptr
     selectSubnet4o6(const SubnetSelector& selector) const;
 
+    /// @brief Convert a link address into a link set.
+    ///
+    /// Given a link address this returns the ordered list aka set of id
+    /// of subnets the address belongs to. It also sets the minimum link
+    /// length when there is at least one subnet.
+    ///
+    /// @param link_addr The link address.
+    /// @param[out] link_len The minimum link length.
+    /// @return The set of subnet ids the link address belongs to.
+    SubnetIDSet getLinks(const asiolink::IOAddress& link_addr,
+                         uint8_t& link_len) const;
+
     /// @brief Updates statistics.
     ///
     /// This method updates statistics that are affected by the newly committed

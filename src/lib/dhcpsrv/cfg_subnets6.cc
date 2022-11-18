@@ -382,6 +382,23 @@ CfgSubnets6::getSubnet(const SubnetID id) const {
     return (Subnet6Ptr());
 }
 
+SubnetIDSet
+CfgSubnets6::getLinks(const IOAddress& link_addr, uint8_t& link_len) const {
+    SubnetIDSet links;
+    bool link_len_set = false;
+    for (auto const& subnet : subnets_) {
+        if (!subnet->inRange(link_addr)) {
+            continue;
+        }
+        uint8_t plen = subnet->get().second;
+        if (!link_len_set || (plen < link_len)) {
+            link_len = plen;
+        }
+        links.insert(subnet->getID());
+    }
+    return (links);
+}
+
 void
 CfgSubnets6::removeStatistics() {
     using namespace isc::stats;
