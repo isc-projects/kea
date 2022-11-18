@@ -18,6 +18,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/iterative_allocator.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
@@ -2805,6 +2806,9 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
 
     EXPECT_TRUE(subnet->getAllocationState());
     EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_V4));
+
+    auto allocator = subnet->getAllocator(Lease::TYPE_V4);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -2902,6 +2906,15 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_NA));
     EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_TA));
     EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_PD));
+
+    auto allocator = subnet->getAllocator(Lease::TYPE_NA);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+
+    allocator = subnet->getAllocator(Lease::TYPE_TA);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network
@@ -2988,6 +3001,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
 
     EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
+
+    EXPECT_TRUE(network->getAllocatorType().unspecified());
+    EXPECT_TRUE(network->getAllocatorType().get().empty());
 }
 
 // This test verifies that it is possible to parse an IPv6 shared network

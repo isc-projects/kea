@@ -28,6 +28,9 @@
 #include <boost/shared_ptr.hpp>
 #include <stats/stats_mgr.h>
 
+#include <set>
+#include <vector>
+
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
@@ -142,6 +145,15 @@ namespace {
 ///   - authoritative flag is set to false, thus the server does not
 ///     respond to requests from unknown clients.
 ///
+/// - Configuration 16:
+///   - Use for testing storing extended info
+///   - Two subnets with one with storing extended info enabled and
+///     one with disabled.
+///
+/// - Configuration 17:
+///   - Selects random allocator.
+///   - One subnet with three distinct pools.
+///   - Random allocator enabled globally.
 const char* DORA_CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -542,6 +554,31 @@ const char* DORA_CONFIGS[] = {
         "        \"interface\": \"eth1\""
         "    }"
         "]"
+    "}",
+
+    // Configuration 17
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"allocator\": \"random\","
+        "\"subnet4\": ["
+        "    {"
+        "        \"subnet\": \"10.0.0.0/24\", "
+        "        \"pools\": ["
+        "            {"
+        "                \"pool\": \"10.0.0.10-10.0.0.20\""
+        "            },"
+        "            {"
+        "                \"pool\": \"10.0.0.30-10.0.0.40\""
+        "            },"
+        "            {"
+        "                \"pool\": \"10.0.0.50-10.0.0.60\""
+        "            }"
+        "         ],"
+        "        \"interface\": \"eth0\""
+        "    }"
+        "]"
     "}"
 };
 
@@ -789,6 +826,10 @@ public:
     /// @brief Verifies that extended info is not stored on the lease when
     ///  store-extended-info is disabled.
     void storeExtendedInfoDisabled();
+
+    /// @brief This test verifies that random allocator is used according
+    /// to the configuration and it allocates random addresses.
+    void randomAllocation();
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -2702,6 +2743,61 @@ TEST_F(DORATest, storeExtendedInfoDisabled) {
 TEST_F(DORATest, storeExtendedInfoDisabledMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     storeExtendedInfoDisabled();
+}
+
+void
+DORATest::randomAllocation() {
+    // Create the base client and server configuration.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    configure(DORA_CONFIGS[17], *client.getServer());
+
+    // Record what addresses have been allocated and in what order.
+    std::set<std::string> allocated_set;
+    std::vector<IOAddress> allocated_list;
+
+    // Simulate allocations from different clients.
+    for (auto i = 0; i < 30; ++i) {
+        // Create a client from the base client.
+        Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
+        // Run 4-way exchange.
+        ASSERT_NO_THROW(next_client.doDORA());
+        // Make sure that the server responded.
+        ASSERT_TRUE(next_client.getContext().response_);
+        auto resp = next_client.getContext().response_;
+        // Make sure that the server has responded with DHCPACK.
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+        // Remember allocated address uniqueness and order.
+        allocated_set.insert(next_client.config_.lease_.addr_.toText());
+        allocated_list.push_back(next_client.config_.lease_.addr_);
+    }
+    // Make sure that we have 30 distinct allocations.
+    ASSERT_EQ(30, allocated_set.size());
+    ASSERT_EQ(30, allocated_list.size());
+
+    // Make sure that the addresses are not allocated iteratively.
+    int consecutives = 0;
+    for (auto i = 1; i < allocated_list.size(); ++i) {
+        // Record the cases when the previously allocated address is
+        // lower by 1 (iterative allocation). Some cases like this are
+        // possible even with the random allocation but they should be
+        // very rare.
+        if (allocated_list[i].toUint32() == allocated_list[i-1].toUint32()+1) {
+            ++consecutives;
+        }
+    }
+    // Make sure we don't have too many allocations when previously
+    // allocated address is the current address minus one.
+    EXPECT_LT(consecutives, 10);
+}
+
+TEST_F(DORATest, randomAllocation) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    randomAllocation();
+}
+
+TEST_F(DORATest, randomAllocationMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    randomAllocation();
 }
 
 // Starting tests which require MySQL backend availability. Those tests

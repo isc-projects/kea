@@ -265,6 +265,10 @@ Network::toElement() const {
         map->set("ddns-use-conflict-resolution", Element::create(ddns_use_conflict_resolution_));
     }
 
+    if (!allocator_type_.unspecified()) {
+        map->set("allocator", Element::create(allocator_type_));
+    }
+
     return (map);
 }
 

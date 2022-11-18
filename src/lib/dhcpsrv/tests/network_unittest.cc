@@ -180,6 +180,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("cache-max-age", Element::create(20));
     globals_->set("ddns-update-on-renew", Element::create(true));
     globals_->set("ddns-use-conflict-resolution", Element::create(true));
+    globals_->set("allocator", Element::create("random"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -351,6 +352,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUseConflictResolution,
                                              &Network4::setDdnsUseConflictResolution,
                                              false, true);
+    }
+    {
+        SCOPED_TRACE("allocator");
+        testNetworkInheritance<TestNetwork4>(&Network4::getAllocatorType,
+                                             &Network4::setAllocatorType,
+                                             "iterative", "random");
     }
 }
 

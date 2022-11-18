@@ -779,6 +779,28 @@ public:
         ddns_use_conflict_resolution_ = ddns_use_conflict_resolution;
     }
 
+    /// @brief Returns allocator type.
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<std::string>
+    getAllocatorType(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getAllocatorType,
+                                     allocator_type_,
+                                     inheritance,
+                                     CfgGlobals::ALLOCATOR));
+    }
+
+    /// @brief Sets new allocator type.
+    ///
+    /// It doesn't set the actual allocator instance. It merely remembers the
+    /// value specified in the configuration, so it can be output in the
+    /// @c toElement call.
+    ///
+    /// @param allocator_type new allocator type to use.
+    void setAllocatorType(const util::Optional<std::string>& allocator_type) {
+        allocator_type_ = allocator_type;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1162,6 +1184,9 @@ protected:
 
     /// @brief Used to to tell kea-dhcp-ddns whether or not to use conflict resolution.
     util::Optional<bool> ddns_use_conflict_resolution_;
+
+    /// @brief Allocator used for IP address allocations.
+    util::Optional<std::string> allocator_type_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

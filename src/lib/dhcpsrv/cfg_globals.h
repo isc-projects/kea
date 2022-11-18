@@ -81,6 +81,7 @@ public:
         NEXT_SERVER,
         SERVER_HOSTNAME,
         BOOT_FILE_NAME,
+        ALLOCATOR,
 
         // DHCPv6 specific parameters.
         DATA_DIRECTORY,

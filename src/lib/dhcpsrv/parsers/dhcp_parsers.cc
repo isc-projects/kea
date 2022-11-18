@@ -12,6 +12,10 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/iterative_allocation_state.h>
+#include <dhcpsrv/iterative_allocator.h>
+#include <dhcpsrv/random_allocation_state.h>
+#include <dhcpsrv/random_allocator.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
@@ -500,10 +504,6 @@ PoolParser::parse(PoolStoragePtr pools,
             pool->requireClientClass((*cclass)->stringValue());
         }
     }
-
-    // Create allocation state for iterative allocator. We're going to
-    // make it configurable.
-    pool->setAllocationState(PoolIterativeAllocationState::create(pool));
 }
 
 boost::shared_ptr<OptionDataListParser>
@@ -633,11 +633,39 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // Call the subclass's method to instantiate the subnet
     initSubnet(params, addr, len);
 
+    std::string allocator_type = (params->contains("allocator") ?
+                                  getString(params, "allocator") : "iterative");
+    subnet_->setAllocatorType(allocator_type);
+    if (allocator_type == "random") {
+        subnet_->setAllocator(Lease::TYPE_V4,
+                              boost::make_shared<RandomAllocator>
+                              (Lease::TYPE_V4, subnet_));
+        subnet_->setAllocationState(SubnetAllocationStatePtr());
+
+    } else if (allocator_type == "iterative") {
+        subnet_->setAllocator(Lease::TYPE_V4,
+                              boost::make_shared<IterativeAllocator>
+                              (Lease::TYPE_V4, subnet_));
+        subnet_->setAllocationState(SubnetIterativeAllocationState::create(subnet_));
+
+    } else {
+        ConstElementPtr error = params->get("allocator");
+        isc_throw(DhcpConfigError, "supported allocators are: iterative and random ("
+                  << error->getPosition() << ")");
+    }
+
+
     // Add pools to it.
     for (PoolStorage::iterator it = pools_->begin(); it != pools_->end();
          ++it) {
         try {
-            subnet_->addPool(*it);
+            auto pool = *it;
+            if (allocator_type == "random") {
+                pool->setAllocationState(PoolRandomAllocationState::create(pool));
+            } else {
+                pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+            }
+            subnet_->addPool(pool);
         } catch (const BadValue& ex) {
             // addPool() can throw BadValue if the pool is overlapping or
             // is out of bounds for the subnet.
@@ -662,10 +690,6 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     subnet_->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
-
-    // Set allocation state for iterative allocator. We will make it
-    // configurable.
-    subnet_->setAllocationState(SubnetIterativeAllocationState::create(subnet_));
 }
 
 boost::shared_ptr<OptionDataListParser>

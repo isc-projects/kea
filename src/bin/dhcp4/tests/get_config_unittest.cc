@@ -1892,6 +1892,36 @@ const char* EXTRACTED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 63
 "{\n"
+"        \"client-classes\": [\n"
+"            {\n"
+"                \"max-valid-lifetime\": 3000,\n"
+"                \"min-valid-lifetime\": 1000,\n"
+"                \"name\": \"one\",\n"
+"                \"template-test\": \"''\",\n"
+"                \"valid-lifetime\": 2000\n"
+"            },\n"
+"            {\n"
+"                \"name\": \"two\",\n"
+"                \"template-test\": \"''\"\n"
+"            }\n"
+"        ],\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.2.0/24\"\n"
+"            }\n"
+"        ]\n"
+"    }\n",
+    // CONFIGURATION 64
+"{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
 "            \"re-detect\": false\n"
@@ -1910,7 +1940,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 64
+    // CONFIGURATION 65
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1931,7 +1961,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 65
+    // CONFIGURATION 66
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1956,7 +1986,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 66
+    // CONFIGURATION 67
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1981,7 +2011,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 67
+    // CONFIGURATION 68
 "{\n"
 "        \"hosts-databases\": [\n"
 "            {\n"
@@ -2005,7 +2035,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 68
+    // CONFIGURATION 69
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -2114,7 +2144,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"comment\": \"A DHCPv4 server\"\n"
 "        }\n"
 "    }\n",
-    // CONFIGURATION 69
+    // CONFIGURATION 70
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2176,7 +2206,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 70
+    // CONFIGURATION 71
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2226,7 +2256,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 71
+    // CONFIGURATION 72
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2256,7 +2286,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 72
+    // CONFIGURATION 73
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2286,7 +2316,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 73
+    // CONFIGURATION 74
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2298,7 +2328,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"statistic-default-sample-count\": 10,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 74
+    // CONFIGURATION 75
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2306,7 +2336,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet4\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 75
+    // CONFIGURATION 76
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2325,6 +2355,7 @@ const char* EXTRACTED_CONFIGS[] = {
 const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -2408,6 +2439,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 1
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -2488,6 +2520,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -2517,6 +2550,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 2
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -2597,6 +2631,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -2626,6 +2661,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 3
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -2709,6 +2745,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 5000,\n"
@@ -2739,6 +2776,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 4
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -2820,6 +2858,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -2847,6 +2886,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -2874,6 +2914,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 3,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -2901,6 +2942,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 4,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -2931,6 +2973,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 5
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -3012,6 +3055,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -3039,6 +3083,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 34,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -3066,6 +3111,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 100,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -3093,6 +3139,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1024,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -3123,6 +3170,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 6
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"bar\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -3204,6 +3252,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -3234,6 +3283,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 7
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -3315,6 +3365,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"boot-file-name\": \"bar\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
@@ -3348,6 +3399,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 8
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"nofile\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -3429,6 +3481,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"boot-file-name\": \"bootfile.efi\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
@@ -3462,6 +3515,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 9
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -3543,6 +3597,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -3573,6 +3628,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 10
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -3654,6 +3710,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -3684,6 +3741,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 11
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -3765,6 +3823,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"match-client-id\": true,\n"
@@ -3793,6 +3852,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"match-client-id\": false,\n"
@@ -3824,6 +3884,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 12
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -3905,6 +3966,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"match-client-id\": false,\n"
@@ -3933,6 +3995,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -3963,6 +4026,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 13
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4044,6 +4108,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"authoritative\": true,\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
@@ -4072,6 +4137,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"authoritative\": false,\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
@@ -4103,6 +4169,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 14
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": true,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4184,6 +4251,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"authoritative\": false,\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
@@ -4212,6 +4280,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -4242,6 +4311,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 15
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4325,6 +4395,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 5,\n"
@@ -4355,6 +4426,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 16
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4436,6 +4508,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -4467,6 +4540,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -4501,6 +4575,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 17
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4582,6 +4657,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -4612,6 +4688,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 18
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4703,6 +4780,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 19
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4794,6 +4872,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 20
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4894,6 +4973,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 21
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -4985,6 +5065,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 22
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -5076,6 +5157,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 23
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -5167,6 +5249,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 24
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -5258,6 +5341,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 25
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -5356,6 +5440,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -5386,6 +5471,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 26
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -5467,6 +5553,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -5514,6 +5601,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 27
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -5622,6 +5710,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -5652,6 +5741,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 28
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -5771,6 +5861,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 29
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -5905,6 +5996,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 3000,\n"
@@ -5935,6 +6027,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 30
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -6025,6 +6118,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -6072,6 +6166,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 31
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -6153,6 +6248,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -6189,6 +6285,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -6228,6 +6325,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 32
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -6309,6 +6407,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -6356,6 +6455,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 33
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -6437,6 +6537,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -6489,6 +6590,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 34
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -6587,6 +6689,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -6617,6 +6720,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 35
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -6736,6 +6840,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 36
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -6861,6 +6966,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 3000,\n"
@@ -6891,6 +6997,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 37
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -6987,6 +7094,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -7017,6 +7125,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 38
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7117,6 +7226,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -7147,6 +7257,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 39
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7230,6 +7341,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 40
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7313,6 +7425,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 41
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7394,6 +7507,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -7424,6 +7538,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 42
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7505,6 +7620,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -7535,6 +7651,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 43
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7616,6 +7733,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -7646,6 +7764,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 44
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7727,6 +7846,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4,\n"
@@ -7757,6 +7877,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 45
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7838,6 +7959,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4,\n"
@@ -7868,6 +7990,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 46
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -7949,6 +8072,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"client-class\": \"alpha\",\n"
 "                \"id\": 1,\n"
@@ -7977,6 +8101,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"client-class\": \"beta\",\n"
 "                \"id\": 2,\n"
@@ -8005,6 +8130,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"client-class\": \"gamma\",\n"
 "                \"id\": 3,\n"
@@ -8033,6 +8159,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 4,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8063,6 +8190,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 47
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -8144,6 +8272,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8189,6 +8318,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 48
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -8270,6 +8400,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 123,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8297,6 +8428,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 234,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8379,6 +8511,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 542,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8457,6 +8590,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 49
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -8548,6 +8682,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 234,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8598,6 +8733,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 50
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -8679,6 +8815,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8709,6 +8846,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8739,6 +8877,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 3,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8768,6 +8907,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 4,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8797,6 +8937,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 5,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8824,6 +8965,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 6,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8854,6 +8996,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 7,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8887,6 +9030,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 51
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -8968,6 +9112,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -8998,6 +9143,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -9028,6 +9174,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 52
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9109,6 +9256,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 53
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9190,6 +9338,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 54
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9271,6 +9420,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 55
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9352,6 +9502,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 56
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9433,6 +9584,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -9463,6 +9615,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 57
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9544,6 +9697,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"2001:db8::123/45\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -9574,6 +9728,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 58
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9655,6 +9810,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"ethX\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -9685,6 +9841,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 59
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9766,6 +9923,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"ethX\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"2001:db8::543/21\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -9796,6 +9954,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 60
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -9877,6 +10036,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"vlan123\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -9907,6 +10067,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 61
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -10014,6 +10175,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -10044,6 +10206,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 62
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -10144,6 +10307,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 7200,\n"
@@ -10172,6 +10336,139 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 63
 "{\n"
+"        \"allocator\": \"iterative\",\n"
+"        \"authoritative\": false,\n"
+"        \"boot-file-name\": \"\",\n"
+"        \"calculate-tee-times\": false,\n"
+"        \"client-classes\": [\n"
+"            {\n"
+"                \"boot-file-name\": \"\",\n"
+"                \"max-valid-lifetime\": 3000,\n"
+"                \"min-valid-lifetime\": 1000,\n"
+"                \"name\": \"one\",\n"
+"                \"next-server\": \"0.0.0.0\",\n"
+"                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
+"                \"server-hostname\": \"\",\n"
+"                \"template-test\": \"''\",\n"
+"                \"valid-lifetime\": 2000\n"
+"            },\n"
+"            {\n"
+"                \"boot-file-name\": \"\",\n"
+"                \"name\": \"two\",\n"
+"                \"next-server\": \"0.0.0.0\",\n"
+"                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
+"                \"server-hostname\": \"\",\n"
+"                \"template-test\": \"''\"\n"
+"            }\n"
+"        ],\n"
+"        \"ddns-generated-prefix\": \"myhost\",\n"
+"        \"ddns-override-client-update\": false,\n"
+"        \"ddns-override-no-update\": false,\n"
+"        \"ddns-qualifying-suffix\": \"\",\n"
+"        \"ddns-replace-client-name\": \"never\",\n"
+"        \"ddns-send-updates\": true,\n"
+"        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
+"        \"decline-probation-period\": 86400,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"enable-updates\": false,\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp-queue-control\": {\n"
+"            \"capacity\": 64,\n"
+"            \"enable-queue\": false,\n"
+"            \"queue-type\": \"kea-ring4\"\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"early-global-reservations-lookup\": false,\n"
+"        \"echo-client-id\": true,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
+"        \"hostname-char-replacement\": \"\",\n"
+"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"ip-reservations-unique\": true,\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"match-client-id\": true,\n"
+"        \"multi-threading\": {\n"
+"            \"enable-multi-threading\": false,\n"
+"            \"packet-queue-size\": 64,\n"
+"            \"thread-pool-size\": 0\n"
+"        },\n"
+"        \"next-server\": \"0.0.0.0\",\n"
+"        \"option-data\": [ ],\n"
+"        \"option-def\": [ ],\n"
+"        \"parked-packet-limit\": 256,\n"
+"        \"reservations-global\": false,\n"
+"        \"reservations-in-subnet\": true,\n"
+"        \"reservations-lookup-first\": false,\n"
+"        \"reservations-out-of-pool\": false,\n"
+"        \"sanity-checks\": {\n"
+"            \"extended-info-checks\": \"fix\",\n"
+"            \"lease-checks\": \"warn\"\n"
+"        },\n"
+"        \"server-hostname\": \"\",\n"
+"        \"server-tag\": \"\",\n"
+"        \"shared-networks\": [ ],\n"
+"        \"statistic-default-sample-age\": 0,\n"
+"        \"statistic-default-sample-count\": 20,\n"
+"        \"store-extended-info\": false,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"4o6-interface\": \"\",\n"
+"                \"4o6-interface-id\": \"\",\n"
+"                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
+"                \"calculate-tee-times\": false,\n"
+"                \"id\": 1,\n"
+"                \"max-valid-lifetime\": 7200,\n"
+"                \"min-valid-lifetime\": 7200,\n"
+"                \"option-data\": [ ],\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"option-data\": [ ],\n"
+"                        \"pool\": \"192.0.2.1-192.0.2.100\"\n"
+"                    }\n"
+"                ],\n"
+"                \"relay\": {\n"
+"                    \"ip-addresses\": [ ]\n"
+"                },\n"
+"                \"reservations\": [ ],\n"
+"                \"store-extended-info\": false,\n"
+"                \"subnet\": \"192.0.2.0/24\",\n"
+"                \"t1-percent\": 0.5,\n"
+"                \"t2-percent\": 0.875,\n"
+"                \"valid-lifetime\": 7200\n"
+"            }\n"
+"        ],\n"
+"        \"t1-percent\": 0.5,\n"
+"        \"t2-percent\": 0.875,\n"
+"        \"valid-lifetime\": 7200\n"
+"    }\n",
+    // CONFIGURATION 64
+"{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -10253,6 +10550,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -10281,8 +10579,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 64
+    // CONFIGURATION 65
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -10364,6 +10663,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -10393,124 +10693,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 65
-"{\n"
-"        \"authoritative\": false,\n"
-"        \"boot-file-name\": \"\",\n"
-"        \"calculate-tee-times\": false,\n"
-"        \"ddns-generated-prefix\": \"myhost\",\n"
-"        \"ddns-override-client-update\": false,\n"
-"        \"ddns-override-no-update\": false,\n"
-"        \"ddns-qualifying-suffix\": \"\",\n"
-"        \"ddns-replace-client-name\": \"never\",\n"
-"        \"ddns-send-updates\": true,\n"
-"        \"ddns-update-on-renew\": false,\n"
-"        \"ddns-use-conflict-resolution\": true,\n"
-"        \"decline-probation-period\": 86400,\n"
-"        \"dhcp-ddns\": {\n"
-"            \"enable-updates\": false,\n"
-"            \"max-queue-size\": 1024,\n"
-"            \"ncr-format\": \"JSON\",\n"
-"            \"ncr-protocol\": \"UDP\",\n"
-"            \"sender-ip\": \"0.0.0.0\",\n"
-"            \"sender-port\": 0,\n"
-"            \"server-ip\": \"127.0.0.1\",\n"
-"            \"server-port\": 53001\n"
-"        },\n"
-"        \"dhcp-queue-control\": {\n"
-"            \"capacity\": 64,\n"
-"            \"enable-queue\": false,\n"
-"            \"queue-type\": \"kea-ring4\"\n"
-"        },\n"
-"        \"dhcp4o6-port\": 0,\n"
-"        \"early-global-reservations-lookup\": false,\n"
-"        \"echo-client-id\": true,\n"
-"        \"expired-leases-processing\": {\n"
-"            \"flush-reclaimed-timer-wait-time\": 25,\n"
-"            \"hold-reclaimed-time\": 3600,\n"
-"            \"max-reclaim-leases\": 100,\n"
-"            \"max-reclaim-time\": 250,\n"
-"            \"reclaim-timer-wait-time\": 10,\n"
-"            \"unwarned-reclaim-cycles\": 5\n"
-"        },\n"
-"        \"hooks-libraries\": [ ],\n"
-"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
-"        \"hostname-char-replacement\": \"\",\n"
-"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"ip-reservations-unique\": true,\n"
-"        \"lease-database\": {\n"
-"            \"type\": \"memfile\"\n"
-"        },\n"
-"        \"match-client-id\": true,\n"
-"        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": false,\n"
-"            \"packet-queue-size\": 64,\n"
-"            \"thread-pool-size\": 0\n"
-"        },\n"
-"        \"next-server\": \"0.0.0.0\",\n"
-"        \"option-data\": [ ],\n"
-"        \"option-def\": [ ],\n"
-"        \"parked-packet-limit\": 256,\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"reservations-global\": false,\n"
-"        \"reservations-in-subnet\": true,\n"
-"        \"reservations-lookup-first\": false,\n"
-"        \"reservations-out-of-pool\": false,\n"
-"        \"sanity-checks\": {\n"
-"            \"extended-info-checks\": \"fix\",\n"
-"            \"lease-checks\": \"warn\"\n"
-"        },\n"
-"        \"server-hostname\": \"\",\n"
-"        \"server-tag\": \"\",\n"
-"        \"shared-networks\": [ ],\n"
-"        \"statistic-default-sample-age\": 0,\n"
-"        \"statistic-default-sample-count\": 20,\n"
-"        \"store-extended-info\": false,\n"
-"        \"subnet4\": [\n"
-"            {\n"
-"                \"4o6-interface\": \"\",\n"
-"                \"4o6-interface-id\": \"\",\n"
-"                \"4o6-subnet\": \"\",\n"
-"                \"calculate-tee-times\": false,\n"
-"                \"id\": 1,\n"
-"                \"max-valid-lifetime\": 4000,\n"
-"                \"min-valid-lifetime\": 4000,\n"
-"                \"option-data\": [ ],\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"option-data\": [ ],\n"
-"                        \"pool\": \"192.0.2.0/28\",\n"
-"                        \"user-context\": {\n"
-"                            \"bool-param\": true,\n"
-"                            \"integer-param\": 42,\n"
-"                            \"string-param\": \"Sagittarius\"\n"
-"                        }\n"
-"                    }\n"
-"                ],\n"
-"                \"rebind-timer\": 2000,\n"
-"                \"relay\": {\n"
-"                    \"ip-addresses\": [ ]\n"
-"                },\n"
-"                \"renew-timer\": 1000,\n"
-"                \"reservations\": [ ],\n"
-"                \"store-extended-info\": false,\n"
-"                \"subnet\": \"192.0.2.0/24\",\n"
-"                \"t1-percent\": 0.5,\n"
-"                \"t2-percent\": 0.875,\n"
-"                \"valid-lifetime\": 4000\n"
-"            }\n"
-"        ],\n"
-"        \"t1-percent\": 0.5,\n"
-"        \"t2-percent\": 0.875,\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
     // CONFIGURATION 66
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -10592,6 +10777,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -10627,6 +10813,125 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 67
 "{\n"
+"        \"allocator\": \"iterative\",\n"
+"        \"authoritative\": false,\n"
+"        \"boot-file-name\": \"\",\n"
+"        \"calculate-tee-times\": false,\n"
+"        \"ddns-generated-prefix\": \"myhost\",\n"
+"        \"ddns-override-client-update\": false,\n"
+"        \"ddns-override-no-update\": false,\n"
+"        \"ddns-qualifying-suffix\": \"\",\n"
+"        \"ddns-replace-client-name\": \"never\",\n"
+"        \"ddns-send-updates\": true,\n"
+"        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
+"        \"decline-probation-period\": 86400,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"enable-updates\": false,\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp-queue-control\": {\n"
+"            \"capacity\": 64,\n"
+"            \"enable-queue\": false,\n"
+"            \"queue-type\": \"kea-ring4\"\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"early-global-reservations-lookup\": false,\n"
+"        \"echo-client-id\": true,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
+"        \"hostname-char-replacement\": \"\",\n"
+"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"ip-reservations-unique\": true,\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"match-client-id\": true,\n"
+"        \"multi-threading\": {\n"
+"            \"enable-multi-threading\": false,\n"
+"            \"packet-queue-size\": 64,\n"
+"            \"thread-pool-size\": 0\n"
+"        },\n"
+"        \"next-server\": \"0.0.0.0\",\n"
+"        \"option-data\": [ ],\n"
+"        \"option-def\": [ ],\n"
+"        \"parked-packet-limit\": 256,\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"reservations-global\": false,\n"
+"        \"reservations-in-subnet\": true,\n"
+"        \"reservations-lookup-first\": false,\n"
+"        \"reservations-out-of-pool\": false,\n"
+"        \"sanity-checks\": {\n"
+"            \"extended-info-checks\": \"fix\",\n"
+"            \"lease-checks\": \"warn\"\n"
+"        },\n"
+"        \"server-hostname\": \"\",\n"
+"        \"server-tag\": \"\",\n"
+"        \"shared-networks\": [ ],\n"
+"        \"statistic-default-sample-age\": 0,\n"
+"        \"statistic-default-sample-count\": 20,\n"
+"        \"store-extended-info\": false,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"4o6-interface\": \"\",\n"
+"                \"4o6-interface-id\": \"\",\n"
+"                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
+"                \"calculate-tee-times\": false,\n"
+"                \"id\": 1,\n"
+"                \"max-valid-lifetime\": 4000,\n"
+"                \"min-valid-lifetime\": 4000,\n"
+"                \"option-data\": [ ],\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"option-data\": [ ],\n"
+"                        \"pool\": \"192.0.2.0/28\",\n"
+"                        \"user-context\": {\n"
+"                            \"bool-param\": true,\n"
+"                            \"integer-param\": 42,\n"
+"                            \"string-param\": \"Sagittarius\"\n"
+"                        }\n"
+"                    }\n"
+"                ],\n"
+"                \"rebind-timer\": 2000,\n"
+"                \"relay\": {\n"
+"                    \"ip-addresses\": [ ]\n"
+"                },\n"
+"                \"renew-timer\": 1000,\n"
+"                \"reservations\": [ ],\n"
+"                \"store-extended-info\": false,\n"
+"                \"subnet\": \"192.0.2.0/24\",\n"
+"                \"t1-percent\": 0.5,\n"
+"                \"t2-percent\": 0.875,\n"
+"                \"valid-lifetime\": 4000\n"
+"            }\n"
+"        ],\n"
+"        \"t1-percent\": 0.5,\n"
+"        \"t2-percent\": 0.875,\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 68
+"{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -10722,8 +11027,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 68
+    // CONFIGURATION 69
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -10882,6 +11188,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"4o6-interface\": \"\",\n"
 "                        \"4o6-interface-id\": \"\",\n"
 "                        \"4o6-subnet\": \"\",\n"
+"                        \"allocator\": \"iterative\",\n"
 "                        \"calculate-tee-times\": false,\n"
 "                        \"id\": 100,\n"
 "                        \"max-valid-lifetime\": 7200,\n"
@@ -10954,8 +11261,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        },\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 69
+    // CONFIGURATION 70
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -11092,6 +11400,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 123,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -11119,6 +11428,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 542,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -11147,8 +11457,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 70
+    // CONFIGURATION 71
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -11235,6 +11546,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"4o6-interface\": \"\",\n"
 "                        \"4o6-interface-id\": \"\",\n"
 "                        \"4o6-subnet\": \"\",\n"
+"                        \"allocator\": \"iterative\",\n"
 "                        \"calculate-tee-times\": false,\n"
 "                        \"id\": 100,\n"
 "                        \"max-valid-lifetime\": 4000,\n"
@@ -11260,6 +11572,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"4o6-interface\": \"\",\n"
 "                        \"4o6-interface-id\": \"\",\n"
 "                        \"4o6-subnet\": \"\",\n"
+"                        \"allocator\": \"iterative\",\n"
 "                        \"calculate-tee-times\": true,\n"
 "                        \"id\": 200,\n"
 "                        \"max-valid-lifetime\": 4000,\n"
@@ -11295,6 +11608,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 300,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -11321,8 +11635,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 71
+    // CONFIGURATION 72
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -11404,6 +11719,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -11431,6 +11747,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -11459,8 +11776,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 72
+    // CONFIGURATION 73
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -11542,6 +11860,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -11569,6 +11888,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"4o6-interface\": \"\",\n"
 "                \"4o6-interface-id\": \"\",\n"
 "                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
 "                \"calculate-tee-times\": false,\n"
 "                \"id\": 2,\n"
 "                \"max-valid-lifetime\": 4000,\n"
@@ -11597,8 +11917,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 73
+    // CONFIGURATION 74
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -11680,8 +12001,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 74
+    // CONFIGURATION 75
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"
@@ -11761,8 +12083,9 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 75
+    // CONFIGURATION 76
 "{\n"
+"        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
 "        \"boot-file-name\": \"\",\n"
 "        \"calculate-tee-times\": false,\n"

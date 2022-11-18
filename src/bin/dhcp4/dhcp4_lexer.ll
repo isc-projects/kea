@@ -708,6 +708,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"allocator\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_ALLOCATOR(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("allocator", driver.loc_);
+    }
+}
+
 \"statistic-default-sample-count\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

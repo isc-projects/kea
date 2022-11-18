@@ -12,6 +12,10 @@
     // Kea DHCPv4 server configuration begins here.
     "Dhcp4": {
 
+        // Global flag selecting an IP address allocation strategy for all
+        // subnets. Use "random" for random allocation strategy.
+        "allocator": "iterative",
+
         // Global authoritative flag to handle requests by clients for
         // unknown IP addresses (ignore if disabled, NAK if enabled).
         "authoritative": false,
@@ -694,6 +698,10 @@
         // networks group subnets together.
         "shared-networks": [
             {
+                // A flag selecting an IP address allocation strategy for all
+                // subnets in this shared network.
+                "allocator": "random",
+
                 // Shared network level authoritative flag.
                 "authoritative": false,
 
@@ -824,6 +832,10 @@
 
                         // Prefix matched against source address. See RFC7341.
                         "4o6-subnet": "2001:db8:1:1::/64",
+
+                        // A flag selecting an IP address allocation strategy for
+                        // the subnet.
+                        "allocator": "iterative",
 
                         // Subnet level authoritative flag.
                         "authoritative": false,

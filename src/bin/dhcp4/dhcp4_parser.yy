@@ -145,6 +145,7 @@ using namespace std;
   ENCAPSULATE "encapsulate"
   ARRAY "array"
   PARKED_PACKET_LIMIT "parked-packet-limit"
+  ALLOCATOR "allocator"
 
   SHARED_NETWORKS "shared-networks"
 
@@ -545,6 +546,7 @@ global_param: valid_lifetime
             | reservations_lookup_first
             | compatibility
             | parked_packet_limit
+            | allocator
             | unknown_map_entry
             ;
 
@@ -627,6 +629,15 @@ parked_packet_limit: PARKED_PACKET_LIMIT COLON INTEGER {
     ctx.unique("parked-packet-limit", ctx.loc2pos(@1));
     ElementPtr ppl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("parked-packet-limit", ppl);
+};
+
+allocator: ALLOCATOR {
+    ctx.unique("allocator", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr al(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("allocator", al);
+    ctx.leave();
 };
 
 echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
@@ -1521,6 +1532,7 @@ subnet4_param: valid_lifetime
              | ddns_use_conflict_resolution
              | hostname_char_set
              | hostname_char_replacement
+             | allocator
              | store_extended_info
              | unknown_map_entry
              ;
@@ -1707,6 +1719,7 @@ shared_network_param: name
                     | ddns_use_conflict_resolution
                     | hostname_char_set
                     | hostname_char_replacement
+                    | allocator
                     | store_extended_info
                     | unknown_map_entry
                     ;
