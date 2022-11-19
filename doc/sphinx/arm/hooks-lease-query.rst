@@ -12,6 +12,9 @@ Leasequery (`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__).
    This library can only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
 
+Kea version 2.3.4 added support for DHCPv6 Bulk Leasequery
+(`RFC 5460  <https://tools.ietf.org/html/rfc5460>`__).
+
 The Leasequery library is only available to ISC customers with a paid support contract.
 
 .. _lease-query-dhcpv4:
@@ -245,7 +248,7 @@ option (12) per the above table.
 
 When a query finds active leases in more than one subnet and the query's ``link-address``
 is empty, then, in addition to the status-code, the ``DHCPV6_LEASEQUERY_REPLY``
-contains an ``lq-client-link`` option (48). The ``lq-client-link`` contains a list of
+contains a ``lq-client-link`` option (48). The ``lq-client-link`` contains a list of
 IPv6 addresses, one for each subnet in which a lease was found (see
 `RFC 5007, Section 4.1.2.5 <https://tools.ietf.org/html/rfc5007#section-4.1.2.5>`__)
 If, however, the query's ``link-address`` is not empty, the list of queries is
@@ -329,3 +332,115 @@ addresses:
 
     For security purposes, there is no way to specify wildcards. Each requester address
     must be explicitly listed.
+
+.. _bulk-lease-query-dhcpv6:
+
+DHCPv6 Bulk Leasequery
+~~~~~~~~~~~~~~~~~~~~~~
+
+DHCPv6 Bulk Leasequery gives a requester the ability to query for
+active lease information over a TCP connection. This allows the server
+to return all active leases matching a query instead of the most recent
+one with links where others belongs to.
+
+New query types are available: ``query-by-relay-id`` (3),
+``query-by-link-address`` (4) and ``query-by-remote-id`` (5).
+
+A new status code was defined: ``STATUS_QueryTerminated`` (11) but it is
+not yet used by the hook library.
+
+The active lease information returned by the hook library is similar to
+the simple Leasequery but instead of using a ``lq-client-link`` option
+for other leases one ``DHCPV6_LEASEQUERY_DATA`` message is sent.
+The first lease (most recent for by client id, lowest address for new
+query type) is sent in the ``DHCPV6_LEASEQUERY_REPLY`` in a
+``client-data`` option (45).
+
+When the ``DHCPV6_LEASEQUERY_REPLY` includes a ``client-data`` option (45)
+a ``DHCPV6_LEASEQUERY_DONE`` message marks the end of retrieved leases.
+
+.. note::
+
+   New query types are supported only with the memfile lease backend.
+
+.. _bulk-lease-query-dhcpv6-config:
+
+Bulk Leasequery Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bulk Leasequery configuration is done with a new map parameter ``advanced``
+with possible entries:
+
+- ``bulk-query-enabled``
+
+    When true, Kea will accept connections from IPs in the requesters
+    list and process received Bulk Leasequeries. Default is false.
+
+- ``active-query-enabled``
+
+    Anticipated parameter: if set must be false.
+
+- ``lease-query-ip``
+
+    IP address upon which to listen for connections. The address must be
+    of the same family as the server, e.g. IPv6 for DHCPv6 server.
+
+- ``lease-query-port``
+
+    Port upon which to listen. Default to 67 for IPv4 and 547 for IPv6,
+    i.e. the same value as for the UDP DHCP service but for TCP.
+
+- ``max-requester-connections``
+
+    Maximum number of concurrent requester connections (default 10, must be
+    greater than 0).
+
+- ``max-concurrent-queries``
+
+    Maximum number of concurrent queries per connection. A value 0
+    leaves the number for Kea to determine and is the default.
+
+- ``max-requester-idle-time``
+
+    Amount time that may elapse between receiving data from a requester
+    before its connection is closed as idle. In seconds with a default
+    of 300 seconds.
+
+- ``max-leases-per-fetch``
+
+    Maximum number of leases to return in a single fetch (default 100).
+
+There should be common TLS parameters when TLS will be supported.
+
+For instance:
+
+::
+
+  :
+     "hooks-libraries": [
+         {
+             "library": "lib/kea/hooks/libdhcp_lease_query.so",
+             "parameters": {
+                 "requesters": [ "2001:db8:1::1", "2001:db8:2::1" ],
+                 "advanced" : {
+                      "bulk-query-enabled" : true,
+                      "active-query-enabled" : false,
+
+                      "lease-query-ip": "::1",
+                      "lease-query-tcp-port": 547,
+
+                      "max-requester-connections" : 10,
+                      "max-concurrent-queries": 4,
+                      "max-requester-idle-time" :  300,
+                      "max-leases-per-fetch" : 100
+                 }
+             }
+         }
+     ],
+ :
+
+.. note::
+
+   Even the configuration syntax is not family dependent only DHCPv6 Bulk
+   Leasequery is supported.
+
