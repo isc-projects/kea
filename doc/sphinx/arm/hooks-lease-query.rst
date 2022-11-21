@@ -380,6 +380,13 @@ with possible entries:
 
     Anticipated parameter: if set must be false.
 
+- ``extended-info-tables-enabled``
+
+    When true the lease backend manages lease extended info (aka relay info)
+    in tables to support by-relay-id and by-remote-id Bulk Leasequery
+    new query types. Default is to use the same value as
+    ``bulk-query-enabled``.
+
 - ``lease-query-ip``
 
     IP address upon which to listen for connections. The address must be
@@ -432,6 +439,8 @@ For instance:
                  "advanced" : {
                       "bulk-query-enabled" : true,
                       "active-query-enabled" : false,
+
+                      "extended-info-tables-enabled": true,
 
                       "lease-query-ip": "::1",
                       "lease-query-tcp-port": 547,
