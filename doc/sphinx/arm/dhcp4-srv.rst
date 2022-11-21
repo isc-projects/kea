@@ -7252,3 +7252,85 @@ and include incorrect Link Selection information.
         }
       }
     }
+
+.. _dhcp4_allocation_strategies:
+
+Address Allocation Strategies in DHCPv4
+=======================================
+
+A DHCP server follows a complicated algorithm to select an IPv4 address for a client.
+It prefers assigning specific addresses requested by the client and the addresses for
+which the client has reservations. If the client requests no particular address,
+has no reservations, or other clients already use these addresses, the server must
+find another available address within the configured pools. A server function called
+"allocator" is responsible in Kea for finding an available address in such a case.
+
+Kea DHCPv4 server provides configuration parameters to select different allocators
+(allocation strategies) at the global, shared network, and subnet levels.
+Consider the following example:
+
+.. code-block:: json
+
+    {
+        "Dhcp4": {
+            "allocator": "random",
+            "subnet4": [
+                {
+                    "id": 1,
+                    "subnet": "10.0.0.0/8",
+                    "allocator": "iterative"
+                },
+                {
+                    "id": 2,
+                    "subnet": "192.0.2.0/24",
+                }
+            ]
+        }
+    }
+
+It overrides the default iterative allocation strategy at the global level and
+selects the random allocation instead. The random allocation will be used
+for the subnet with id 2. The iterative allocation will be used for the subnet
+with id 1.
+
+In the following sections, we describe the supported allocators and recommend
+when to use them.
+
+.. note::
+
+   Allocator selection is currently not supported in the Kea Configuration
+   Backend.
+
+
+Iterative Allocator
+-------------------
+It is the default allocator used by the Kea DHCPv4 server. It remembers the
+last offered address and offers this address increased by 1 to the next client.
+For example, it may offer addresses in this order: ``192.0.2.10``, ``192.0.2.11``,
+``192.0.2.12``, and so on. The time to find and offer the next address is very
+short. Thus, it is the highly performant allocator when the pool utilization
+is low and there is a high probability that the next address is available.
+
+The iterative allocation underperforms when multiple DHCP servers share a lease
+database or are connected to a cluster. The servers tend to offer and allocate
+the same blocks of addresses to different clients independently. It causes many
+allocation conflicts between the servers and retransmissions by clients. A random
+allocation deals with it by dispersing the allocations order.
+
+Random Allocator
+----------------
+
+The random allocator uses a uniform randomization function to select offered
+addresses from the subnet pools. It improves the server's resilience against
+attacks based on allocation predictability. In addition, the random allocation
+is suitable in deployments where multiple servers are connected to a shared
+database or a database cluster. By dispersing the offered addresses, the servers
+minimize the risk of allocating the same address to two different clients at
+the same or nearly the same time.
+
+The random allocator is, however, slightly slower than the iterative allocator.
+Moreover, it increases the server's memory consumption because it must remember
+randomized addresses to avoid offering them repeatedly. Memory consumption grows
+with the number of offered addresses. In other words, larger pools and more
+clients increase memory consumption by random allocation.
+
