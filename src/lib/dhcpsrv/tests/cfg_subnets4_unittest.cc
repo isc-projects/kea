@@ -2088,7 +2088,9 @@ TEST(CfgSubnets4Test, outOfRangeHost) {
 TEST(CfgSubnets4Test, getLinks) {
     CfgSubnets4 cfg;
 
-    // Create 3 subnets.
+    // Create 4 subnets.
+    Subnet4Ptr subnet0(new Subnet4(IOAddress("0.0.0.0"),
+                                   24, 1, 2, 3, SubnetID(111)));
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
                                    26, 1, 2, 3, SubnetID(1)));
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"),
@@ -2097,6 +2099,7 @@ TEST(CfgSubnets4Test, getLinks) {
                                    26, 1, 2, 3, SubnetID(3)));
 
     // Add all subnets to the configuration.
+    ASSERT_NO_THROW(cfg.add(subnet0));
     ASSERT_NO_THROW(cfg.add(subnet1));
     ASSERT_NO_THROW(cfg.add(subnet2));
     ASSERT_NO_THROW(cfg.add(subnet3));
@@ -2161,6 +2164,14 @@ TEST(CfgSubnets4Test, getLinks) {
     link_len = 111;
     EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.123"), link_len));
     expected = { 20 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(24, link_len);
+
+    // Even it is not used for Bulk Leasequery, it works for 0.0.0.0 too.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("0.0.0.0"), link_len));
+    expected = { 111 };
     EXPECT_EQ(expected, links);
     EXPECT_EQ(24, link_len);
 }

@@ -2009,7 +2009,9 @@ TEST(CfgSubnets6Test, hostPD) {
 TEST(CfgSubnets6Test, getLinks) {
     CfgSubnets6 cfg;
 
-    // Create 3 subnets.
+    // Create 4 subnets.
+    Subnet6Ptr subnet0(new Subnet6(IOAddress("::"), 48, 1, 2, 3, 4,
+                                   SubnetID(111)));
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4,
                                    SubnetID(1)));
     Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 64, 1, 2, 3, 4,
@@ -2018,6 +2020,7 @@ TEST(CfgSubnets6Test, getLinks) {
                                    SubnetID(3)));
 
     // Add all subnets to the configuration.
+    ASSERT_NO_THROW(cfg.add(subnet0));
     ASSERT_NO_THROW(cfg.add(subnet1));
     ASSERT_NO_THROW(cfg.add(subnet2));
     ASSERT_NO_THROW(cfg.add(subnet3));
@@ -2085,6 +2088,14 @@ TEST(CfgSubnets6Test, getLinks) {
     expected = { 20 };
     EXPECT_EQ(expected, links);
     EXPECT_EQ(56, link_len);
+
+    // Even it is not used for Bulk Leasequery, it works for :: too.
+    links.clear();
+    link_len = 111;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("::"), link_len));
+    expected = { 111 };
+    EXPECT_EQ(expected, links);
+    EXPECT_EQ(48, link_len);
 }
 
 } // end of anonymous namespace

@@ -100,7 +100,7 @@ public:
     /// not be modified after the call to @c merge because it may affect the
     /// merged configuration.
     ///
-    /// @param cfg_def set of of user-defined option definitions to use
+    /// @param cfg_def set of user-defined option definitions to use
     /// when creating option instances.
     /// @param networks collection of shared networks that to which assignments
     /// should be added. In other words, the list of shared networks that belong
