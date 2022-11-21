@@ -1,3 +1,10 @@
+2079.	[func]		marcin
+	The lease allocation strategy is now configurable. It is possible
+	to select between iterative and random lease selection for the
+	address assignment and prefix delegation, respectively, at the
+	global shared network and subnet level.
+	(Gitlab #2348, #969)
+
 Kea 2.3.3 (development) released on November 30, 2022
 
 2078.	[build]		andrei
