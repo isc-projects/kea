@@ -570,6 +570,12 @@ public:
 
 private:
 
+    /// @brief Deleted copy constructor.
+    Subnet4(const Subnet4&) = delete;
+
+    /// @brief Deleted assignment operator.
+    Subnet4& operator=(const Subnet4&) = delete;
+
     /// @brief Returns default address for pool selection.
     ///
     /// @return ANY IPv4 address
@@ -709,6 +715,12 @@ public:
     parsePrefix(const std::string& prefix);
 
 private:
+
+    /// @brief Deleted copy constructor.
+    Subnet6(const Subnet6&) = delete;
+
+    /// @brief Deleted assignment operator.
+    Subnet6& operator=(const Subnet6&) = delete;
 
     /// @brief Returns default address for pool selection
     /// @return ANY IPv6 address
