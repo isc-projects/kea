@@ -210,6 +210,8 @@ Subnet4::create(const IOAddress& prefix, uint8_t length,
     subnet->setAllocator(Lease::TYPE_V4,
                          boost::make_shared<IterativeAllocator>
                          (Lease::TYPE_V4, subnet));
+    subnet->setAllocationState(Lease::TYPE_V4,
+                               SubnetIterativeAllocationState::create(subnet));
 
     return (subnet);
 }
@@ -314,6 +316,22 @@ Subnet::getAllocator(Lease::Type type) const {
 void
 Subnet::setAllocator(Lease::Type type, const AllocatorPtr& allocator) {
     allocators_[type] = allocator;
+}
+
+SubnetAllocationStatePtr
+Subnet::getAllocationState(Lease::Type type) const {
+    auto state = allocation_states_.find(type);
+
+    if (state == allocation_states_.end()) {
+        isc_throw(BadValue, "no allocation state initialized for pool type "
+                  << Lease::typeToText(type));
+    }
+    return (state->second);
+}
+
+void
+Subnet::setAllocationState(Lease::Type type, const SubnetAllocationStatePtr& allocation_state) {
+    allocation_states_[type] = allocation_state;
 }
 
 const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& hint,
@@ -582,16 +600,24 @@ Subnet6::create(const IOAddress& prefix, uint8_t length,
                 const SubnetID id) {
     Subnet6Ptr subnet = boost::make_shared<Subnet6>
         (prefix, length, t1, t2, preferred_lifetime, valid_lifetime, id);
+    // IA_NA
     subnet->setAllocator(Lease::TYPE_NA,
                          boost::make_shared<IterativeAllocator>
                          (Lease::TYPE_NA, subnet));
+    subnet->setAllocationState(Lease::TYPE_NA,
+                               SubnetIterativeAllocationState::create(subnet));
+    // IA_TA
     subnet->setAllocator(Lease::TYPE_TA,
                          boost::make_shared<IterativeAllocator>
                          (Lease::TYPE_TA, subnet));
+    subnet->setAllocationState(Lease::TYPE_TA,
+                               SubnetIterativeAllocationState::create(subnet));
+    // IA_PD
     subnet->setAllocator(Lease::TYPE_PD,
                          boost::make_shared<IterativeAllocator>
                          (Lease::TYPE_PD, subnet));
-
+    subnet->setAllocationState(Lease::TYPE_PD,
+                               SubnetIterativeAllocationState::create(subnet));
     return (subnet);
 }
 

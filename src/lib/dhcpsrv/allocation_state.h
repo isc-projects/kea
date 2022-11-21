@@ -55,46 +55,26 @@ public:
 
     /// @brief Returns last allocation time for the specified lease type.
     ///
-    /// @param type specifies a lease type for which the last allocation
-    /// time should be returned.
     /// @return Last allocation time for the lease type or
     /// @c boost::posix_time::neg_infin when no leases have been allocated
     /// from this subnet yet.
     boost::posix_time::ptime
-    getLastAllocatedTime(Lease::Type type) const;
+    getLastAllocatedTime() const;
 
 protected:
 
-    /// @brief Sets the last allocation time to current for a lease type.
+    /// @brief Sets the last allocation time to current.
     ///
     /// This function should be called by derived classes. It should be
     /// called in the thread-safe context.
-    ///
-    /// @param type specifies a lease type for which the last allocation
-    /// time should be set to the current time.
-    void setCurrentAllocatedTimeInternal(Lease::Type type);
-
-    /// @brief Returns the last allocation time of a specified lease type.
-    ///
-    /// It should be called in a thread safe context.
-    ///
-    /// @param lease_type Lease type for which last allocation timestamp should
-    /// be returned.
-    ///
-    /// @return time when a lease of a specified type has been allocated from
-    /// this subnet. The negative infinity time is returned if a lease type is
-    /// not recognized (which is unlikely).
-    boost::posix_time::ptime
-    getLastAllocatedTimeInternal(Lease::Type type) const;
+    void setCurrentAllocatedTimeInternal();
 
     /// @brief Mutex used for thread-safe access to the state members.
     boost::scoped_ptr<std::mutex> mutex_;
 
-    /// @brief Timestamp indicating when a lease of a specified type has been
-    /// last allocated from the subnet.
-    ///
-    /// @note: This map is protected by the mutex.
-    std::map<Lease::Type, boost::posix_time::ptime> last_allocated_time_;
+    /// @brief Timestamp indicating when a lease has been last allocated
+    /// from the subnet.
+    boost::posix_time::ptime last_allocated_time_;
 };
 
 typedef boost::shared_ptr<SubnetAllocationState> SubnetAllocationStatePtr;

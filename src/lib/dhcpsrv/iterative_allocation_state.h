@@ -49,37 +49,26 @@ public:
 
     /// @brief Returns last allocated address or prefix.
     ///
-    /// @param type type of the last allocated lease to be returned.
-    /// @return last allocated address or prefix of a given type.
-    asiolink::IOAddress getLastAllocated(Lease::Type type) const;
+    /// @return last allocated address or prefix.
+    asiolink::IOAddress getLastAllocated() const;
 
     /// @brief Sets last allocated address or prefix.
     ///
-    /// @param type type of the last allocated lease set.
     /// @param address an address or prefix last allocated.
-    void setLastAllocated(Lease::Type type, const asiolink::IOAddress& address);
+    void setLastAllocated(const asiolink::IOAddress& address);
 
 private:
 
-    /// @brief Last allocated address.
+    /// @brief Last allocated address or delegated prefix.
     ///
-    /// This is the last allocated address that was previously allocated from
-    /// the particular subnet. It should be noted that although the value
-    /// is usually correct, there are cases when it is invalid, e.g. after
-    /// removing a pool, restarting or changing allocation algorithms. For
-    /// that purpose it should be only considered a help that should not be
-    /// fully trusted.
-    asiolink::IOAddress last_allocated_address_;
-
-    /// @brief Last allocated temporary address.
-    ///
-    /// See @ref last_allocated_address_ for details.
-    asiolink::IOAddress last_allocated_ta_;
-
-    /// @brief Last allocated IPv6 prefix.
-    ///
-    /// See @ref last_allocated_address_ for details.
-    asiolink::IOAddress last_allocated_pd_;
+    /// This is the last allocated address or delegated prefix that was
+    /// previously allocated from the particular subnet. It should be
+    /// noted that although the value is usually correct, there are
+    /// cases when it is invalid, e.g. after removing a pool,
+    /// restarting or changing allocation algorithms. For that purpose
+    /// it should be only considered a help that should not be fully
+    /// trusted.
+    asiolink::IOAddress last_allocated_;
 };
 
 /// @brief Forward declaration of the @c PoolIterativeAllocationState.

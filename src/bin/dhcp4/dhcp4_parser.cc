@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.7.6.
+// A Bison parser, made by GNU Bison 3.8.2.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -160,9 +160,9 @@ namespace isc { namespace dhcp {
   Dhcp4Parser::syntax_error::~syntax_error () YY_NOEXCEPT YY_NOTHROW
   {}
 
-  /*---------------.
-  | symbol kinds.  |
-  `---------------*/
+  /*---------.
+  | symbol.  |
+  `---------*/
 
 
 
@@ -507,7 +507,7 @@ namespace isc { namespace dhcp {
   }
 
   void
-  Dhcp4Parser::yypop_ (int n)
+  Dhcp4Parser::yypop_ (int n) YY_NOEXCEPT
   {
     yystack_.pop (n);
   }
@@ -550,13 +550,13 @@ namespace isc { namespace dhcp {
   }
 
   bool
-  Dhcp4Parser::yy_pact_value_is_default_ (int yyvalue)
+  Dhcp4Parser::yy_pact_value_is_default_ (int yyvalue) YY_NOEXCEPT
   {
     return yyvalue == yypact_ninf_;
   }
 
   bool
-  Dhcp4Parser::yy_table_value_is_error_ (int yyvalue)
+  Dhcp4Parser::yy_table_value_is_error_ (int yyvalue) YY_NOEXCEPT
   {
     return yyvalue == yytable_ninf_;
   }
@@ -4865,16 +4865,16 @@ namespace isc { namespace dhcp {
     // Actual number of expected tokens
     int yycount = 0;
 
-    int yyn = yypact_[+yyparser_.yystack_[0].state];
+    const int yyn = yypact_[+yyparser_.yystack_[0].state];
     if (!yy_pact_value_is_default_ (yyn))
       {
         /* Start YYX at -YYN if negative to avoid negative indexes in
            YYCHECK.  In other words, skip the first -YYN actions for
            this state because they are default actions.  */
-        int yyxbegin = yyn < 0 ? -yyn : 0;
+        const int yyxbegin = yyn < 0 ? -yyn : 0;
         // Stay within bounds of both yycheck and yytname.
-        int yychecklim = yylast_ - yyn + 1;
-        int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+        const int yychecklim = yylast_ - yyn + 1;
+        const int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
         for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
           if (yycheck_[yyx + yyn] == yyx && yyx != symbol_kind::S_YYerror
               && !yy_table_value_is_error_ (yytable_[yyx + yyn]))
@@ -4892,6 +4892,9 @@ namespace isc { namespace dhcp {
       yyarg[0] = symbol_kind::S_YYEMPTY;
     return yycount;
   }
+
+
+
 
 
 
@@ -5141,9 +5144,9 @@ namespace isc { namespace dhcp {
      199,   203,     0,     0,     0,     0,   194,     0,   182,   185,
      186,   187,   188,   189,   190,   191,   192,   193,   420,   422,
      424,   568,   418,   426,     0,   430,   428,   650,   417,   372,
-     373,   374,   375,   376,   400,   401,   402,   403,   404,   415,
+     373,   374,   375,   376,   400,   401,   402,   403,   404,   416,
      390,   391,   405,   406,   407,   408,   409,   410,   411,   412,
-     413,   414,   416,     0,   369,   379,   395,   396,   397,   380,
+     413,   414,   415,     0,   369,   379,   395,   396,   397,   380,
      382,   383,   386,   387,   388,   385,   381,   377,   378,   398,
      399,   384,   392,   393,   394,   389,   589,   588,   584,   585,
      583,     0,   579,   582,   586,   587,   648,   636,   638,   642,
@@ -5224,9 +5227,9 @@ namespace isc { namespace dhcp {
      216,     0,     0,     0,     0,   268,   271,   272,   273,   274,
      275,   276,     0,   282,     0,     0,     0,     0,   236,     0,
      231,     0,   363,     0,   502,     0,   541,   494,   472,   473,
-     474,   457,   458,   477,   478,   479,   480,   481,   492,   460,
+     474,   457,   458,   477,   478,   479,   480,   481,   493,   460,
      461,   482,   483,   484,   485,   486,   487,   488,   489,   490,
-     491,   493,   454,   455,   456,   470,   471,   467,   468,   469,
+     491,   492,   454,   455,   456,   470,   471,   467,   468,   469,
      466,     0,   451,   459,   475,   476,   462,   463,   464,   465,
      447,   294,   682,   684,     0,   677,   678,   679,   680,   681,
      670,   671,   675,   676,   672,   673,   674,     0,   662,   663,
@@ -6265,7 +6268,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp4_parser.yy"
 } } // isc::dhcp
-#line 6269 "dhcp4_parser.cc"
+#line 6272 "dhcp4_parser.cc"
 
 #line 2912 "dhcp4_parser.yy"
 

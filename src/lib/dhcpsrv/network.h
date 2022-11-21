@@ -1400,6 +1400,28 @@ public:
         rapid_commit_ = rapid_commit;
     };
 
+    /// @brief Returns allocator type for prefix delegation.
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<std::string>
+    getPdAllocatorType(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network6>(&Network6::getPdAllocatorType,
+                                      pd_allocator_type_,
+                                      inheritance,
+                                      CfgGlobals::PD_ALLOCATOR));
+    }
+
+    /// @brief Sets new allocator type for prefix delegation.
+    ///
+    /// It doesn't set the actual allocator instance. It merely remembers the
+    /// value specified in the configuration, so it can be output in the
+    /// @c toElement call.
+    ///
+    /// @param allocator_type new allocator type to use.
+    void setPdAllocatorType(const util::Optional<std::string>& allocator_type) {
+        pd_allocator_type_ = allocator_type;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1419,6 +1441,9 @@ private:
     /// It's default value is false, which indicates that the Rapid
     /// Commit is disabled for the subnet.
     util::Optional<bool> rapid_commit_;
+
+    /// @brief Allocator used for prefix delegation.
+    util::Optional<std::string> pd_allocator_type_;
 };
 
 } // end of namespace isc::dhcp

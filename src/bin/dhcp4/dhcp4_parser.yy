@@ -1532,8 +1532,8 @@ subnet4_param: valid_lifetime
              | ddns_use_conflict_resolution
              | hostname_char_set
              | hostname_char_replacement
-             | allocator
              | store_extended_info
+             | allocator
              | unknown_map_entry
              ;
 
@@ -1719,8 +1719,8 @@ shared_network_param: name
                     | ddns_use_conflict_resolution
                     | hostname_char_set
                     | hostname_char_replacement
-                    | allocator
                     | store_extended_info
+                    | allocator
                     | unknown_map_entry
                     ;
 

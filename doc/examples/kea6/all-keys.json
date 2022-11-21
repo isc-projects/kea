@@ -11,6 +11,14 @@
 {
     // Kea DHCPv6 server configuration begins here.
     "Dhcp6": {
+        // Global flag selecting an IP address allocation strategy for all
+        // subnets.
+        "allocator": "iterative",
+
+        // Global flag selecting a delegated prefix allocation strategy
+        // for all subnets.
+        "pd-allocator": "random",
+
         // Ordered list of client classes used by the DHCPv6 server.
         "client-classes": [
             {
@@ -650,6 +658,14 @@
         // networks group subnets together.
         "shared-networks": [
             {
+                // A flag selecting an IP address allocation strategy for all
+                // subnets in this shared network.
+                "allocator": "random",
+
+                // A flag selecting a delegated prefix allocation strategy for
+                // all subnets in this shared network.
+                "pd-allocator": "iterative",
+
                 // Restricts this shared network to allow only clients
                 // that belong to the particular client class. If an
                 // empty string is provided, no restriction is applied.
@@ -773,6 +789,14 @@
                 // List of IPv6 subnets belonging to this shared network.
                 "subnet6": [
                     {
+                        // A flag selecting an IP address allocation strategy for
+                        // the subnet.
+                        "allocator": "iterative",
+
+                        // A flag selecting a delegated prefix allocation strategy
+                        // for the subnet.
+                        "pd-allocator": "iterative",
+
                         // Restricts this subnet to allow only clients that belong
                         // to the particular client class. If an empty string is
                         // provided, no restriction is applied.

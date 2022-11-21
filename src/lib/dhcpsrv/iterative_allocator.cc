@@ -97,7 +97,7 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
-    IOAddress last = getSubnetState()->getLastAllocated(pool_type_);
+    IOAddress last = getSubnetState()->getLastAllocated();
     bool valid = true;
     bool retrying = false;
 
@@ -156,7 +156,7 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
         if (!valid && (last == (*it)->getFirstAddress())) {
             // Pool was (re)initialized
             getPoolState(*it)->setLastAllocated(last);
-            getSubnetState()->setLastAllocated(pool_type_, last);
+            getSubnetState()->setLastAllocated(last);
             return (last);
         }
         // still can be bogus
@@ -186,7 +186,7 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
                 // the next one is in the pool as well, so we haven't hit
                 // pool boundary yet
                 getPoolState(*it)->setLastAllocated(next);
-                getSubnetState()->setLastAllocated(pool_type_, next);
+                getSubnetState()->setLastAllocated(next);
                 return (next);
             }
 
@@ -209,17 +209,17 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
     // ok to access first element directly. We checked that pools is non-empty
     last = getPoolState(*first)->getLastAllocated();
     getPoolState(*first)->setLastAllocated(last);
-    getSubnetState()->setLastAllocated(pool_type_, last);
+    getSubnetState()->setLastAllocated(last);
     return (last);
 }
 
 SubnetIterativeAllocationStatePtr
 IterativeAllocator::getSubnetState() const {
     auto subnet = subnet_.lock();
-    if (!subnet->getAllocationState()) {
-        subnet->setAllocationState(SubnetIterativeAllocationState::create(subnet));
+    if (!subnet->getAllocationState(pool_type_)) {
+        subnet->setAllocationState(pool_type_, SubnetIterativeAllocationState::create(subnet));
     }
-    return (boost::dynamic_pointer_cast<SubnetIterativeAllocationState>(subnet->getAllocationState()));
+    return (boost::dynamic_pointer_cast<SubnetIterativeAllocationState>(subnet->getAllocationState(pool_type_)));
 }
 
 PoolIterativeAllocationStatePtr

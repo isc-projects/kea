@@ -378,6 +378,8 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("store-extended-info", Element::create(true));
     globals_->set("ddns-update-on-renew", Element::create(true));
     globals_->set("ddns-use-conflict-resolution", Element::create(true));
+    globals_->set("allocator", Element::create("random"));
+    globals_->set("pd-allocator", Element::create("random"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -455,6 +457,18 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network6::getDdnsUseConflictResolution,
                                              &Network6::setDdnsUseConflictResolution,
                                              false, true);
+    }
+    {
+        SCOPED_TRACE("allocator");
+        testNetworkInheritance<TestNetwork6>(&Network6::getAllocatorType,
+                                             &Network6::setAllocatorType,
+                                             "iterative", "random");
+    }
+    {
+        SCOPED_TRACE("pd-allocator");
+        testNetworkInheritance<TestNetwork6>(&Network6::getPdAllocatorType,
+                                             &Network6::setPdAllocatorType,
+                                             "iterative", "random");
     }
 
     // Interface-id requires special type of test.

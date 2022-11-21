@@ -2804,7 +2804,7 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 
-    EXPECT_TRUE(subnet->getAllocationState());
+    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_V4));
     EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_V4));
 
     auto allocator = subnet->getAllocator(Lease::TYPE_V4);
@@ -2902,10 +2902,9 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 
-    EXPECT_TRUE(subnet->getAllocationState());
-    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_NA));
-    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_TA));
-    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_PD));
+    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_NA));
+    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_TA));
+    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_PD));
 
     auto allocator = subnet->getAllocator(Lease::TYPE_NA);
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
@@ -3091,6 +3090,12 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
 
     EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
+
+    EXPECT_TRUE(network->getAllocatorType().unspecified());
+    EXPECT_TRUE(network->getAllocatorType().get().empty());
+
+    EXPECT_TRUE(network->getPdAllocatorType().unspecified());
+    EXPECT_TRUE(network->getPdAllocatorType().get().empty());
 }
 
 // This test verifies a negative value for the subnet ID is rejected (v4).

@@ -50,6 +50,7 @@ CfgGlobals::nameToIndex = {
     { "ddns-update-on-renew", DDNS_UPDATE_ON_RENEW },
     { "ddns-use-conflict-resolution", DDNS_USE_CONFLICT_RESOLUTION },
     { "parked-packet-limit", PARKED_PACKET_LIMIT },
+    { "allocator", ALLOCATOR },
 
     // DHCPv4 specific parameters.
     { "echo-client-id", ECHO_CLIENT_ID },
@@ -58,13 +59,13 @@ CfgGlobals::nameToIndex = {
     { "next-server", NEXT_SERVER },
     { "server-hostname", SERVER_HOSTNAME },
     { "boot-file-name", BOOT_FILE_NAME },
-    { "allocator", ALLOCATOR },
 
     // DHCPv6 specific parameters.
     { "data-directory", DATA_DIRECTORY },
     { "preferred-lifetime", PREFERRED_LIFETIME },
     { "min-preferred-lifetime", MIN_PREFERRED_LIFETIME },
-    { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME }
+    { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME },
+    { "pd-allocator", PD_ALLOCATOR }
 };
 
 // Load time sanity check.

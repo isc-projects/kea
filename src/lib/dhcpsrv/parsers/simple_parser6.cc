@@ -100,6 +100,8 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ddns-use-conflict-resolution",     Element::boolean },
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
+    { "allocator",                        Element::string },
+    { "pd-allocator",                     Element::string }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -135,7 +137,9 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "reservations-lookup-first",        Element::boolean, "false" },
     { "ddns-update-on-renew",             Element::boolean, "false" },
     { "ddns-use-conflict-resolution",     Element::boolean, "true" },
-    { "parked-packet-limit",              Element::integer, "256" }
+    { "parked-packet-limit",              Element::integer, "256" },
+    { "allocator",                        Element::string,  "iterative" },
+    { "pd-allocator",                     Element::string,  "iterative" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -243,7 +247,9 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
+    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "allocator",                      Element::string },
+    { "pd-allocator",                   Element::string }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -296,7 +302,9 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "t2-percent",
     "store-extended-info",
     "cache-threshold",
-    "cache-max-age"
+    "cache-max-age",
+    "allocator",
+    "pd-allocator"
 };
 
 /// @brief This table defines all pool parameters.
@@ -378,7 +386,9 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
+    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "allocator",                      Element::string },
+    { "pd-allocator",                   Element::string }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.

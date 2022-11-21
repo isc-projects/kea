@@ -368,6 +368,11 @@ Network6::toElement() const {
         map->set("rapid-commit", Element::create(rapid_commit_.get()));
     }
 
+    // Set pd-allocator
+    if (!pd_allocator_type_.unspecified()) {
+        map->set("pd-allocator", Element::create(pd_allocator_type_));
+    }
+
     return (map);
 }
 

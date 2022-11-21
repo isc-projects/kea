@@ -26,47 +26,21 @@ SubnetIterativeAllocationState::create(const SubnetPtr& subnet) {
 SubnetIterativeAllocationState::SubnetIterativeAllocationState(const IOAddress& prefix,
                                                                const uint8_t prefix_length)
     : SubnetAllocationState(),
-      last_allocated_address_(lastAddrInPrefix(prefix, prefix_length)),
-      last_allocated_ta_(lastAddrInPrefix(prefix, prefix_length)),
-      last_allocated_pd_(lastAddrInPrefix(prefix, prefix_length)) {
+      last_allocated_(lastAddrInPrefix(prefix, prefix_length)) {
 }
 
 IOAddress
-SubnetIterativeAllocationState::getLastAllocated(Lease::Type type) const {
+SubnetIterativeAllocationState::getLastAllocated() const {
     MultiThreadingLock lock(*mutex_);
-    switch (type) {
-    case Lease::TYPE_V4:
-    case Lease::TYPE_NA:
-        return (last_allocated_address_);
-    case Lease::TYPE_TA:
-        return (last_allocated_ta_);
-    case Lease::TYPE_PD:
-        return (last_allocated_pd_);
-    default:
-        isc_throw(BadValue, "pool type " << type << " not supported");
-    }
+    return (last_allocated_);
 }
 
 void
-SubnetIterativeAllocationState::setLastAllocated(Lease::Type type, const IOAddress& address) {
+SubnetIterativeAllocationState::setLastAllocated(const IOAddress& address) {
     MultiThreadingLock lock(*mutex_);
-    switch (type) {
-    case Lease::TYPE_V4:
-    case Lease::TYPE_NA:
-        last_allocated_address_ = address;
-        break;
-    case Lease::TYPE_TA:
-        last_allocated_ta_ = address;
-        break;
-    case Lease::TYPE_PD:
-        last_allocated_pd_ = address;
-        break;
-    default:
-        isc_throw(BadValue, "pool type " << type << " not supported");
-    }
-
-    // Update the timestamp of last allocation.
-    setCurrentAllocatedTimeInternal(type);
+    last_allocated_ = address;
+    // Update the timestamp of the last allocation.
+    setCurrentAllocatedTimeInternal();
 }
 
 PoolIterativeAllocationStatePtr

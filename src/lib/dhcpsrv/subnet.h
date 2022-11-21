@@ -290,17 +290,15 @@ public:
     ///
     /// The actual type of the state depends on the allocator type.
     ///
+    /// @param type lease type for which the allocation state is returned.
     /// @return allocation state.
-    SubnetAllocationStatePtr getAllocationState() const {
-        return (allocation_state_);
-    }
+    SubnetAllocationStatePtr getAllocationState(Lease::Type type) const;
 
     /// @brief Sets subnet-specific allocation state.
     ///
+    /// @param type lease type for which the allocation state is set.
     /// @param allocation_state allocation state instance.
-    void setAllocationState(const SubnetAllocationStatePtr& allocation_state) {
-        allocation_state_ = allocation_state;
-    }
+    void setAllocationState(Lease::Type type, const SubnetAllocationStatePtr& allocation_state);
 
 protected:
 
@@ -423,14 +421,14 @@ protected:
     /// @brief a prefix length of the subnet.
     uint8_t prefix_len_;
 
-    /// @brief Holds subnet-specific allocation state.
-    SubnetAllocationStatePtr allocation_state_;
-
     /// @brief Shared network name.
     std::string shared_network_name_;
 
     /// @brief Lease allocators used by the subnet.
     std::map<Lease::Type, AllocatorPtr> allocators_;
+
+    /// @brief Holds subnet-specific allocation state.
+    std::map<Lease::Type, SubnetAllocationStatePtr> allocation_states_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object

@@ -73,6 +73,7 @@ public:
         DDNS_UPDATE_ON_RENEW,
         DDNS_USE_CONFLICT_RESOLUTION,
         PARKED_PACKET_LIMIT,
+        ALLOCATOR,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,
@@ -81,13 +82,13 @@ public:
         NEXT_SERVER,
         SERVER_HOSTNAME,
         BOOT_FILE_NAME,
-        ALLOCATOR,
 
         // DHCPv6 specific parameters.
         DATA_DIRECTORY,
         PREFERRED_LIFETIME,
         MIN_PREFERRED_LIFETIME,
         MAX_PREFERRED_LIFETIME,
+        PD_ALLOCATOR,
 
         // Size sentinel.
         SIZE

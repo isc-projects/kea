@@ -942,6 +942,28 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"allocator\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_ALLOCATOR(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("allocator", driver.loc_);
+    }
+}
+
+\"pd-allocator\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_PD_ALLOCATOR(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("pd-allocator", driver.loc_);
+    }
+}
+
 \"statistic-default-sample-count\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

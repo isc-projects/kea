@@ -16,34 +16,18 @@ namespace dhcp {
 
 SubnetAllocationState::SubnetAllocationState()
     : AllocationState(), mutex_(new std::mutex) {
-    // Initialize timestamps for each lease type to negative infinity.
-    last_allocated_time_[Lease::TYPE_V4] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_NA] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_TA] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_PD] = boost::posix_time::neg_infin;
+    last_allocated_time_ = boost::posix_time::neg_infin;
 }
 
 boost::posix_time::ptime
-SubnetAllocationState::getLastAllocatedTime(Lease::Type type) const {
+SubnetAllocationState::getLastAllocatedTime() const {
     MultiThreadingLock lock(*mutex_);
-    return (getLastAllocatedTimeInternal(type));
-}
-
-boost::posix_time::ptime
-SubnetAllocationState::getLastAllocatedTimeInternal(Lease::Type type) const {
-    auto t = last_allocated_time_.find(type);
-    if (t != last_allocated_time_.end()) {
-        return (t->second);
-    }
-
-    // This shouldn't happen, because we have initialized the structure
-    // for all lease types.
-    return (boost::posix_time::neg_infin);
+    return (last_allocated_time_);
 }
 
 void
-SubnetAllocationState::setCurrentAllocatedTimeInternal(Lease::Type type) {
-    last_allocated_time_[type] = boost::posix_time::microsec_clock::universal_time();
+SubnetAllocationState::setCurrentAllocatedTimeInternal() {
+    last_allocated_time_ = boost::posix_time::microsec_clock::universal_time();
 }
 
 }

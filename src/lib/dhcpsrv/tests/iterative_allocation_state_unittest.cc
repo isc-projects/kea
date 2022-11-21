@@ -29,11 +29,11 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated4) {
     auto state = SubnetIterativeAllocationState::create(subnet);
 
     // Check initial conditions (all should be set to the last address in range)
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_V4).toText());
+    EXPECT_EQ(last.toText(), state->getLastAllocated().toText());
 
-    // Now set last allocated for IA
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_V4, addr));
-    EXPECT_EQ(addr.toText(), state->getLastAllocated(Lease::TYPE_V4).toText());
+    // Now set last allocated.
+    EXPECT_NO_THROW(state->setLastAllocated(addr));
+    EXPECT_EQ(addr.toText(), state->getLastAllocated().toText());
 }
 
 // Checks that the last allocated IPv4 address is remembered in the
@@ -48,11 +48,11 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated4MultiThreading) {
     auto state = SubnetIterativeAllocationState::create(subnet);
 
     // Check initial conditions (all should be set to the last address in range)
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_V4).toText());
+    EXPECT_EQ(last.toText(), state->getLastAllocated().toText());
 
-    // Now set last allocated for IA
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_V4, addr));
-    EXPECT_EQ(addr.toText(), state->getLastAllocated(Lease::TYPE_V4).toText());
+    // Now set last allocated.
+    EXPECT_NO_THROW(state->setLastAllocated(addr));
+    EXPECT_EQ(addr.toText(), state->getLastAllocated().toText());
 }
 
 // Checks if last allocated address/prefix is stored/retrieved properly.
@@ -63,29 +63,34 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated6) {
 
     IOAddress last("2001:db8:1::ffff:ffff:ffff:ffff");
 
-    auto subnet = boost::make_shared<Subnet6>(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4);
-    auto state = SubnetIterativeAllocationState::create(subnet);
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4);
+    auto state_na = boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+        (subnet->getAllocationState(Lease::TYPE_NA));
+    auto state_ta = boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+        (subnet->getAllocationState(Lease::TYPE_TA));
+    auto state_pd = boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+        (subnet->getAllocationState(Lease::TYPE_PD));
 
     // Check initial conditions (all should be set to the last address in range)
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
+    EXPECT_EQ(last.toText(), state_na->getLastAllocated().toText());
+    EXPECT_EQ(last.toText(), state_ta->getLastAllocated().toText());
+    EXPECT_EQ(last.toText(), state_pd->getLastAllocated().toText());
 
     // Now set last allocated for IA
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_NA, na));
-    EXPECT_EQ(na.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_NO_THROW(state_na->setLastAllocated(na));
+    EXPECT_EQ(na.toText(), state_na->getLastAllocated().toText());
 
     // TA and PD should be unchanged
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
+    EXPECT_EQ(last.toText(), state_ta->getLastAllocated().toText());
+    EXPECT_EQ(last.toText(), state_pd->getLastAllocated().toText());
 
     // Now set TA and PD
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_TA, ta));
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_PD, pd));
+    EXPECT_NO_THROW(state_ta->setLastAllocated(ta));
+    EXPECT_NO_THROW(state_pd->setLastAllocated(pd));
 
-    EXPECT_EQ(na.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
-    EXPECT_EQ(ta.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
-    EXPECT_EQ(pd.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
+    EXPECT_EQ(na.toText(), state_na->getLastAllocated().toText());
+    EXPECT_EQ(ta.toText(), state_ta->getLastAllocated().toText());
+    EXPECT_EQ(pd.toText(), state_pd->getLastAllocated().toText());
 }
 
 // Checks if last allocated address/prefix is stored/retrieved properly when
@@ -98,29 +103,34 @@ TEST(IterativeAllocationStateTest, subnetLastAllocated6MultiThreading) {
 
     IOAddress last("2001:db8:1::ffff:ffff:ffff:ffff");
 
-    auto subnet = boost::make_shared<Subnet6>(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4);
-    auto state = SubnetIterativeAllocationState::create(subnet);
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4);
+    auto state_na = boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+        (subnet->getAllocationState(Lease::TYPE_NA));
+    auto state_ta = boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+        (subnet->getAllocationState(Lease::TYPE_TA));
+    auto state_pd = boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+        (subnet->getAllocationState(Lease::TYPE_PD));
 
     // Check initial conditions (all should be set to the last address in range)
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
+    EXPECT_EQ(last.toText(), state_na->getLastAllocated().toText());
+    EXPECT_EQ(last.toText(), state_ta->getLastAllocated().toText());
+    EXPECT_EQ(last.toText(), state_pd->getLastAllocated().toText());
 
     // Now set last allocated for IA
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_NA, na));
-    EXPECT_EQ(na.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_NO_THROW(state_na->setLastAllocated(na));
+    EXPECT_EQ(na.toText(), state_na->getLastAllocated().toText());
 
     // TA and PD should be unchanged
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
-    EXPECT_EQ(last.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
+    EXPECT_EQ(last.toText(), state_ta->getLastAllocated().toText());
+    EXPECT_EQ(last.toText(), state_pd->getLastAllocated().toText());
 
     // Now set TA and PD
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_TA, ta));
-    EXPECT_NO_THROW(state->setLastAllocated(Lease::TYPE_PD, pd));
+    EXPECT_NO_THROW(state_ta->setLastAllocated(ta));
+    EXPECT_NO_THROW(state_pd->setLastAllocated(pd));
 
-    EXPECT_EQ(na.toText(), state->getLastAllocated(Lease::TYPE_NA).toText());
-    EXPECT_EQ(ta.toText(), state->getLastAllocated(Lease::TYPE_TA).toText());
-    EXPECT_EQ(pd.toText(), state->getLastAllocated(Lease::TYPE_PD).toText());
+    EXPECT_EQ(na.toText(), state_na->getLastAllocated().toText());
+    EXPECT_EQ(ta.toText(), state_ta->getLastAllocated().toText());
+    EXPECT_EQ(pd.toText(), state_pd->getLastAllocated().toText());
 }
 
 // Checks that last allocated IPv4 address is stored in the pool-specific

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,8 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <asiolink/io_address.h>
 #include <stats/stats_mgr.h>
+#include <set>
+#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -60,6 +62,17 @@ namespace {
 ///   - The reservations-in-subnet and reservations-out-of-pool flags are set to
 ///     true to test that only out of pool reservations are honored.
 ///
+/// - Configuration 5:
+///   - Selects random allocator for addresses.
+///   - One subnet with three distinct pools.
+///   - Random allocator enabled globally for addresses.
+///   - Iterative allocator for prefix delegation.
+///
+/// - Configuration 6:
+///   - Selects random allocator for delegated prefixes.
+///   - One subnet with three distinct pools.
+///   - Random allocator enabled globally for delegated prefixes.
+///   - Iterative allocator for address allocation.
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -214,7 +227,65 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         "} ]"
-    "}"
+    "}",
+
+    // Configuration 5
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"allocator\": \"random\","
+        "\"pd-allocator\": \"iterative\","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": ["
+        "    {"
+        "        \"pools\": ["
+        "            {"
+        "                \"pool\": \"3000::20 - 3000::60\""
+        "            }"
+        "        ],"
+        "        \"pd-pools\": ["
+        "            {"
+        "                \"prefix\": \"2001:db8:3::\", "
+        "                \"prefix-len\": 48, "
+        "                \"delegated-len\": 64"
+        "            }"
+        "        ],"
+        "        \"subnet\": \"3000::/32\", "
+        "        \"interface\": \"eth0\""
+        "    }"
+        "],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 6
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"allocator\": \"iterative\","
+        "\"pd-allocator\": \"random\","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": ["
+        "    {"
+        "        \"pools\": ["
+        "            {"
+        "                \"pool\": \"3000::20 - 3000::60\""
+        "            }"
+        "        ],"
+        "        \"pd-pools\": ["
+        "            {"
+        "                \"prefix\": \"2001:db8:3::\", "
+        "                \"prefix-len\": 48, "
+        "                \"delegated-len\": 64"
+        "            }"
+        "        ],"
+        "        \"subnet\": \"3000::/32\", "
+        "        \"interface\": \"eth0\""
+        "    }"
+        "],"
+        "\"valid-lifetime\": 4000 }",
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -298,6 +369,14 @@ public:
     /// to a client not owning this reservation when the
     /// reservations-out-of-pool flag is set to true.
     void reservationIgnoredInOutOfPoolMode();
+
+    /// @brief This test verifies that random allocator is used according
+    /// to the configuration and it allocates random addresses.
+    void randomAddressAllocation();
+
+    /// @brief This test verifies that random allocator is used according
+    /// to the configuration and it allocates random prefixes.
+    void randomPrefixAllocation();
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -872,5 +951,146 @@ TEST_F(SARRTest, reservationIgnoredInOutOfPoolModeMultiThreading) {
     Dhcpv6SrvMTTestGuard guard(*this, true);
     reservationIgnoredInOutOfPoolMode();
 }
+
+void
+SARRTest::randomAddressAllocation() {
+    // Create the base client and server configuration.
+    Dhcp6Client client;
+    configure(CONFIGS[5], *client.getServer());
+
+    // Record what addresses have been allocated and in what order.
+    std::set<std::string> allocated_na_set;
+    std::vector<IOAddress> allocated_na_vector;
+    std::set<std::string> allocated_pd_set;
+    std::vector<IOAddress> allocated_pd_vector;
+    // Simulate allocations from different clients.
+    for (auto i = 0; i < 30; ++i) {
+        // Create a client from the base client.
+        Dhcp6Client next_client(client.getServer());
+        next_client.requestAddress();
+        next_client.requestPrefix();
+        // Run 4-way exchange.
+        ASSERT_NO_THROW(next_client.doSARR());
+        // We should have one IA_NA and one IA_PD.
+        auto leases_na = next_client.getLeasesByType(Lease::TYPE_NA);
+        ASSERT_EQ(1, leases_na.size());
+        auto leases_pd = next_client.getLeasesByType(Lease::TYPE_PD);
+        ASSERT_EQ(1, leases_pd.size());
+        // Remember allocated address and delegated prefix uniqueness
+        // and order.
+        allocated_na_set.insert(leases_na[0].toText());
+        allocated_na_vector.push_back(leases_na[0].addr_);
+        allocated_pd_set.insert(leases_pd[0].toText());
+        allocated_pd_vector.push_back(leases_pd[0].addr_);
+    }
+    // Make sure that we have 30 distinct allocations for each lease type.
+    ASSERT_EQ(30, allocated_na_set.size());
+    ASSERT_EQ(30, allocated_na_vector.size());
+    ASSERT_EQ(30, allocated_pd_set.size());
+    ASSERT_EQ(30, allocated_pd_vector.size());
+
+    // Make sure that the addresses are not allocated iteratively.
+    int consecutives = 0;
+    for (auto i = 1; i < allocated_na_vector.size(); ++i) {
+        // Record the cases when the previously allocated address is
+        // lower by 1 (iterative allocation). Some cases like this are
+        // possible even with the random allocation but they should be
+        // very rare.
+        if (IOAddress::increase(allocated_na_vector[i-1]) == allocated_na_vector[i]) {
+            ++consecutives;
+        }
+    }
+    EXPECT_LT(consecutives, 10);
+
+    // Make sure that delegated prefixes have been allocated iteratively.
+    consecutives = 0;
+    for (auto i = 1; i < allocated_pd_vector.size(); ++i) {
+        if (IOAddress::subtract(allocated_pd_vector[i], allocated_pd_vector[i-1]) == IOAddress("0:0:0:1::")) {
+            ++consecutives;
+        }
+    }
+    EXPECT_EQ(29, consecutives);
+}
+
+TEST_F(SARRTest, randomAddressAllocation) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    randomAddressAllocation();
+}
+
+TEST_F(SARRTest, randomAddressAllocationMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    randomAddressAllocation();
+}
+
+void
+SARRTest::randomPrefixAllocation() {
+    // Create the base client and server configuration.
+    Dhcp6Client client;
+    configure(CONFIGS[6], *client.getServer());
+
+    // Record what addresses have been allocated and in what order.
+    std::set<std::string> allocated_na_set;
+    std::vector<IOAddress> allocated_na_vector;
+    std::set<std::string> allocated_pd_set;
+    std::vector<IOAddress> allocated_pd_vector;
+    // Simulate allocations from different clients.
+    for (auto i = 0; i < 30; ++i) {
+        // Create a client from the base client.
+        Dhcp6Client next_client(client.getServer());
+        next_client.requestAddress();
+        next_client.requestPrefix();
+        // Run 4-way exchange.
+        ASSERT_NO_THROW(next_client.doSARR());
+        // We should have one IA_NA and one IA_PD.
+        auto leases_na = next_client.getLeasesByType(Lease::TYPE_NA);
+        ASSERT_EQ(1, leases_na.size());
+        auto leases_pd = next_client.getLeasesByType(Lease::TYPE_PD);
+        ASSERT_EQ(1, leases_pd.size());
+        // Remember allocated address and delegated prefix uniqueness
+        // and order.
+        allocated_na_set.insert(leases_na[0].toText());
+        allocated_na_vector.push_back(leases_na[0].addr_);
+        allocated_pd_set.insert(leases_pd[0].toText());
+        allocated_pd_vector.push_back(leases_pd[0].addr_);
+    }
+    // Make sure that we have 30 distinct allocations for each lease type.
+    ASSERT_EQ(30, allocated_na_set.size());
+    ASSERT_EQ(30, allocated_na_vector.size());
+    ASSERT_EQ(30, allocated_pd_set.size());
+    ASSERT_EQ(30, allocated_pd_vector.size());
+
+    // Make sure that the addresses have been allocated iteratively.
+    int consecutives = 0;
+    for (auto i = 1; i < allocated_na_vector.size(); ++i) {
+        // Record the cases when the previously allocated address is
+        // lower by 1 (iterative allocation).
+        if (IOAddress::increase(allocated_na_vector[i-1]) == allocated_na_vector[i]) {
+            ++consecutives;
+        }
+    }
+
+    // Make sure that addresses have been allocated iteratively.
+    EXPECT_EQ(29, consecutives);
+
+    // Make sure that delegated prefixes have been allocated randomly.
+    consecutives = 0;
+    for (auto i = 1; i < allocated_pd_vector.size(); ++i) {
+        if (IOAddress::subtract(allocated_pd_vector[i], allocated_pd_vector[i-1]) == IOAddress("0:0:0:1::")) {
+            ++consecutives;
+        }
+    }
+    EXPECT_LT(consecutives, 10);
+}
+
+TEST_F(SARRTest, randomPrefixAllocation) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    randomPrefixAllocation();
+}
+
+TEST_F(SARRTest, randomPrefixAllocationMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    randomPrefixAllocation();
+}
+
 
 } // end of anonymous namespace

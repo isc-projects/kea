@@ -141,7 +141,7 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-update-on-renew",             Element::boolean, "false" },
     { "ddns-use-conflict-resolution",     Element::boolean, "true" },
     { "parked-packet-limit",              Element::integer, "256" },
-    { "allocator",                        Element::string, "iterative" },
+    { "allocator",                        Element::string,  "iterative" },
 };
 
 /// @brief This table defines all option definition parameters.

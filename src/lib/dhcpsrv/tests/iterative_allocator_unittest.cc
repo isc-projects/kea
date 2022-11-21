@@ -293,7 +293,7 @@ TEST_F(IterativeAllocatorTest6, addrStepOutClass) {
 // This test verifies that the allocator picks delegated prefixes from several
 // pools.
 TEST_F(IterativeAllocatorTest6, prefixStep) {
-    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
@@ -372,7 +372,7 @@ TEST_F(IterativeAllocatorTest6, prefixStep) {
 // This test verifies that the allocator picks delegated prefixes from the pools
 // with class guards.
 TEST_F(IterativeAllocatorTest6, prefixStepInClass) {
-    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
@@ -456,7 +456,7 @@ TEST_F(IterativeAllocatorTest6, prefixStepInClass) {
 
 // This test verifies that the allocator omits pools with non-matching client classes.
 TEST_F(IterativeAllocatorTest6, prefixStepOutClass) {
-    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));

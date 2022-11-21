@@ -307,16 +307,16 @@ public:
             if ((*s)->getClientClass().get() != selected_subnet->getClientClass().get()) {
                 continue;
             }
-            auto current_subnet_state = (*s)->getAllocationState();
+            auto current_subnet_state = (*s)->getAllocationState(lease_type);
             if (!current_subnet_state) {
                 continue;
             }
-            auto selected_subnet_state = selected_subnet->getAllocationState();
+            auto selected_subnet_state = selected_subnet->getAllocationState(lease_type);
             if (!selected_subnet_state) {
                 continue;
             }
-            if (current_subnet_state->getLastAllocatedTime(lease_type) >
-                selected_subnet_state->getLastAllocatedTime(lease_type)) {
+            if (current_subnet_state->getLastAllocatedTime() >
+                selected_subnet_state->getLastAllocatedTime()) {
                 preferred_subnet = (*s);
             }
         }
