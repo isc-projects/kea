@@ -633,17 +633,6 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // Call the subclass's method to instantiate the subnet
     initSubnet(params, addr, len);
 
-    std::string allocator_type = "iterative";
-    if (params->contains("allocator")) {
-        allocator_type = getString(params, "allocator");
-        if ((allocator_type != "iterative") && (allocator_type != "random")) {
-            ConstElementPtr error = params->get("allocator");
-            isc_throw(DhcpConfigError, "supported allocators are: iterative and random ("
-                      << error->getPosition() << ")");
-        }
-    }
-    subnet_->setAllocatorType(allocator_type);
-
     // Add pools to it.
     for (PoolStorage::iterator it = pools_->begin(); it != pools_->end();
          ++it) {
@@ -732,26 +721,24 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet) {
         }
     }
 
-    if (subnet_->getAllocatorType() == "random") {
-        subnet_->setAllocator(Lease::TYPE_V4,
+    // Parse allocator specification.
+    auto network4 = boost::dynamic_pointer_cast<Network>(sn4ptr);
+    parseAllocatorParams(subnet, network4);
+
+    if (sn4ptr->getAllocatorType() == "random") {
+        sn4ptr->setAllocator(Lease::TYPE_V4,
                               boost::make_shared<RandomAllocator>
-                              (Lease::TYPE_V4, subnet_));
-        subnet_->setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
+                              (Lease::TYPE_V4, sn4ptr));
+        sn4ptr->setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
 
         for (auto pool : *pools_) {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         }
 
-    } else if (subnet_->getAllocatorType() == "iterative") {
-        subnet_->setAllocator(Lease::TYPE_V4,
-                              boost::make_shared<IterativeAllocator>
-                              (Lease::TYPE_V4, subnet_));
-        subnet_->setAllocationState(Lease::TYPE_V4, SubnetIterativeAllocationState::create(subnet_));
-
+    } else {
         for (auto pool : *pools_) {
             pool->setAllocationState(PoolIterativeAllocationState::create(pool));
         }
-
     }
 
     return (sn4ptr);
@@ -1261,17 +1248,17 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
         }
     }
 
-    std::string allocator_type = "iterative";
-    if (subnet->contains("pd-allocator")) {
-        allocator_type = getString(subnet, "pd-allocator");
-        if ((allocator_type != "iterative") && (allocator_type != "random")) {
-            ConstElementPtr error = subnet->get("pd-allocator");
-            isc_throw(DhcpConfigError, "supported allocators are: iterative and random ("
-                      << error->getPosition() << ")");
-        }
-    }
-    sn6ptr->setPdAllocatorType(allocator_type);
+    // Parse allocator specification.
+    auto network = boost::dynamic_pointer_cast<Network>(sn6ptr);
+    parseAllocatorParams(subnet, network);
 
+    // Parse pd-allocator specification.
+    auto network6 = boost::dynamic_pointer_cast<Network6>(sn6ptr);
+    parsePdAllocatorParams(subnet, network6);
+
+    // If we use the random allocator we need to create its instance and
+    // the state instance for it. There is no need to do it for the iterative
+    // allocator because it is configured by default.
     if (sn6ptr->getAllocatorType() == "random") {
         sn6ptr->setAllocator(Lease::TYPE_NA,
                               boost::make_shared<RandomAllocator>
@@ -1282,30 +1269,18 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
         sn6ptr->setAllocationState(Lease::TYPE_NA, SubnetAllocationStatePtr());
         sn6ptr->setAllocationState(Lease::TYPE_TA, SubnetAllocationStatePtr());
 
-    } else {
-        sn6ptr->setAllocator(Lease::TYPE_NA,
-                              boost::make_shared<IterativeAllocator>
-                              (Lease::TYPE_NA, sn6ptr));
-        sn6ptr->setAllocator(Lease::TYPE_TA,
-                              boost::make_shared<IterativeAllocator>
-                              (Lease::TYPE_TA, sn6ptr));
-        sn6ptr->setAllocationState(Lease::TYPE_NA, SubnetIterativeAllocationState::create(sn6ptr));
-        sn6ptr->setAllocationState(Lease::TYPE_TA, SubnetIterativeAllocationState::create(sn6ptr));
     }
 
+    // Repeat the same for the delegated prefix allocator.
     if (sn6ptr->getPdAllocatorType() == "random") {
         sn6ptr->setAllocator(Lease::TYPE_PD,
                               boost::make_shared<RandomAllocator>
                               (Lease::TYPE_PD, sn6ptr));
         sn6ptr->setAllocationState(Lease::TYPE_PD, SubnetAllocationStatePtr());
 
-    } else {
-        sn6ptr->setAllocator(Lease::TYPE_PD,
-                              boost::make_shared<IterativeAllocator>
-                              (Lease::TYPE_PD, sn6ptr));
-        sn6ptr->setAllocationState(Lease::TYPE_PD, SubnetIterativeAllocationState::create(sn6ptr));
     }
 
+    // Create states for the pools.
     for (auto pool : *pools_) {
         switch (pool->getType()) {
         case Lease::TYPE_V4:

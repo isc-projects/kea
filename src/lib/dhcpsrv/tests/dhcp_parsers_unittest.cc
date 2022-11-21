@@ -19,10 +19,13 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/iterative_allocator.h>
+#include <dhcpsrv/iterative_allocation_state.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <dhcpsrv/random_allocator.h>
+#include <dhcpsrv/random_allocation_state.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>
@@ -3195,6 +3198,178 @@ TEST_F(ParseConfigTest, reservedSubnetId6) {
     expected += "subnet configuration failed: ";
     expected += "The 'id' value (4294967295) is not within expected range: ";
     expected += "(0 - 4294967294)";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
+// This test verifies that random allocator can be selected for
+// a subnet.
+TEST_F(ParseConfigTest, randomSubnetAllocator4) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"random\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
+    auto allocator = subnet->getAllocator(Lease::TYPE_V4);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
+}
+
+// This test verifies that unknown allocator is rejected.
+TEST_F(ParseConfigTest, invalidSubnetAllocator4) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"unsupported\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "supported allocators are: iterative and random";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
+// This test verifies that random allocator can be selected for
+// a subnet.
+TEST_F(ParseConfigTest, randomSubnetAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"random\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
+    auto allocator = subnet->getAllocator(Lease::TYPE_NA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
+    allocator = subnet->getAllocator(Lease::TYPE_TA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
+    // PD allocator should be iterative.
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+}
+
+// This test verifies that unknown allocator is rejected.
+TEST_F(ParseConfigTest, invalidSubnetAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"unsupported\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "supported allocators are: iterative and random";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
+// This test verifies that random allocator can be selected for
+// a subnet.
+TEST_F(ParseConfigTest, randomSubnetPdAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"pd-allocator\": \"random\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("random", subnet->getPdAllocatorType().get());
+
+    // Address allocators should be iterative.
+    auto allocator = subnet->getAllocator(Lease::TYPE_NA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+    allocator = subnet->getAllocator(Lease::TYPE_TA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+    // PD allocator should be random.
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
+}
+
+// This test verifies that unknown prefix delegation allocator is rejected.
+TEST_F(ParseConfigTest, invalidSubnetPdAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"pd-allocator\": \"unsupported\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "supported allocators are: iterative and random";
     EXPECT_EQ(expected, comment->stringValue());
 }
 

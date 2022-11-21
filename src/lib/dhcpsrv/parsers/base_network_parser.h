@@ -87,7 +87,7 @@ protected:
     /// @throw DhcpConfigError if configuration of these parameters is
     /// invalid.
     void parseCacheParams(const data::ConstElementPtr& network_data,
-                     NetworkPtr& network);
+                          NetworkPtr& network);
 
     /// @brief Parses parameters pertaining to DDNS behavior.
     ///
@@ -105,6 +105,31 @@ protected:
     /// to be stored.
     void parseDdnsParams(const data::ConstElementPtr& network_data,
                          NetworkPtr& network);
+
+    /// @brief Parses parameters pertaining to allocator selection.
+    ///
+    /// The parsed parameters are:
+    /// - allocator
+    ///
+    /// @param network_data Data element holding shared network
+    /// configuration to be parsed.
+    /// @param [out] network Pointer to a network in which parsed data is
+    /// to be stored.
+    void parseAllocatorParams(const data::ConstElementPtr& network_data,
+                              NetworkPtr& network);
+
+    /// @brief Parses parameters pertaining to prefix delegation allocator
+    /// selection.
+    ///
+    /// The parsed parameters are:
+    /// - pd-allocator
+    ///
+    /// @param network_data Data element holding shared network
+    /// configuration to be parsed.
+    /// @param [out] network Pointer to a network in which parsed data is
+    /// to be stored.
+    void parsePdAllocatorParams(const data::ConstElementPtr& network_data,
+                                Network6Ptr& network);
 };
 
 } // end of namespace isc::dhcp

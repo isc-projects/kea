@@ -267,5 +267,31 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
     }
 }
 
+void
+BaseNetworkParser::parseAllocatorParams(const data::ConstElementPtr& network_data,
+                                        NetworkPtr& network) {
+    if (network_data->contains("allocator")) {
+        auto allocator_type = getString(network_data, "allocator");
+        if ((allocator_type != "iterative") && (allocator_type != "random")) {
+            // Unsupported allocator type used.
+            isc_throw(DhcpConfigError, "supported allocators are: iterative and random");
+        }
+        network->setAllocatorType(allocator_type);
+    }
+}
+
+void
+BaseNetworkParser::parsePdAllocatorParams(const data::ConstElementPtr& network_data,
+                                          Network6Ptr& network) {
+    if (network_data->contains("pd-allocator")) {
+        auto allocator_type = getString(network_data, "pd-allocator");
+        if ((allocator_type != "iterative") && (allocator_type != "random")) {
+            // Unsupported allocator type used.
+            isc_throw(DhcpConfigError, "supported allocators are: iterative and random");
+        }
+        network->setPdAllocatorType(allocator_type);
+    }
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

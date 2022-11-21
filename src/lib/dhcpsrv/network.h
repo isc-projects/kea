@@ -1333,6 +1333,11 @@ private:
     util::Optional<std::string> filename_;
 };
 
+class Network6;
+
+/// @brief Pointer to the @ref Network6 object.
+typedef boost::shared_ptr<Network6> Network6Ptr;
+
 /// @brief Specialization of the @ref Network object for DHCPv6 case.
 class Network6 : public virtual Network {
 public:

@@ -118,6 +118,7 @@ public:
     /// @return Valid shared network configuration.
     virtual std::string getWorkingConfig() const {
             std::string config = "{"
+                "    \"allocator\": \"iterative\","
                 "    \"authoritative\": true,"
                 "    \"boot-file-name\": \"/dev/null\","
                 "    \"client-class\": \"srv1\","
@@ -186,7 +187,8 @@ public:
                 "            \"t2-percent\": .65,"
                 "            \"hostname-char-set\": \"\","
                 "            \"cache-threshold\": .20,"
-                "            \"cache-max-age\": 50"
+                "            \"cache-max-age\": 50,"
+                "            \"allocator\": \"random\""
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -280,6 +282,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(0.123, network->getCacheThreshold());
     EXPECT_EQ(123, network->getCacheMaxAge().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
+    EXPECT_EQ("iterative", network->getAllocatorType().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -305,6 +308,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(400, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
     EXPECT_EQ("", subnet->getHostnameCharSet().get());
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
 
     // Subnet with id 2
     subnet = network->getSubnet(SubnetID(2));
@@ -315,6 +319,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(30, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
     EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
+    EXPECT_EQ("iterative", subnet->getAllocatorType().get());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();
@@ -577,6 +582,8 @@ public:
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
                 "    \"ddns-update-on-renew\": true,"
+                "    \"allocator\": \"random\","
+                "    \"pd-allocator\": \"iterative\","
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -603,7 +610,9 @@ public:
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
                 "            \"rapid-commit\": false,"
-                "            \"hostname-char-set\": \"\""
+                "            \"hostname-char-set\": \"\","
+                "            \"allocator\": \"iterative\","
+                "            \"pd-allocator\": \"random\""
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -688,6 +697,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(0.123, network->getCacheThreshold());
     EXPECT_EQ(123, network->getCacheMaxAge().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
+    EXPECT_EQ("random", network->getAllocatorType().get());
+    EXPECT_EQ("iterative", network->getPdAllocatorType().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -716,6 +727,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(500, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
     EXPECT_EQ("", subnet->getHostnameCharSet().get());
+    EXPECT_EQ("iterative", subnet->getAllocatorType().get());
+    EXPECT_EQ("random", subnet->getPdAllocatorType().get());
 
     // Subnet with id 2
     subnet = network->getSubnet(SubnetID(2));
@@ -729,6 +742,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(40, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
     EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
+    EXPECT_EQ("iterative", subnet->getPdAllocatorType().get());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();
