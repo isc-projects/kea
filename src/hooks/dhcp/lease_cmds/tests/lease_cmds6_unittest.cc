@@ -2150,6 +2150,8 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_EQ(7654321, l->iaid_);
+
+    // Check the user context / extended info too.
     ConstElementPtr ctx = l->getContext();
     ASSERT_TRUE(ctx);
     string expected = "{ \"ISC\": { \"relay-info\": ";
@@ -2163,11 +2165,14 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
                                           0,
                                           IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
+    // The lease must be retrieved from the remote id table.
     ASSERT_EQ(1, leases.size());
     Lease6Ptr lx = leases[0];
     ASSERT_TRUE(lx);
     EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
     EXPECT_EQ(*l, *lx);
+
+    // The lease must be retrieved from the relay id table.
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          0,
