@@ -32,10 +32,10 @@ public:
 // Tests initialization of the SubnetAllocationState.
 TEST(SubnetAllocationState, constructor) {
     SubnetAllocationState state;
-    EXPECT_EQ(neg_infin, state.getLastAllocatedTime(Lease::TYPE_V4));
-    EXPECT_EQ(neg_infin, state.getLastAllocatedTime(Lease::TYPE_NA));
-    EXPECT_EQ(neg_infin, state.getLastAllocatedTime(Lease::TYPE_TA));
-    EXPECT_EQ(neg_infin, state.getLastAllocatedTime(Lease::TYPE_PD));
+    EXPECT_TRUE(state.getLastAllocatedTime(Lease::TYPE_V4).is_neg_infinity());
+    EXPECT_TRUE(state.getLastAllocatedTime(Lease::TYPE_NA).is_neg_infinity());
+    EXPECT_TRUE(state.getLastAllocatedTime(Lease::TYPE_TA).is_neg_infinity());
+    EXPECT_TRUE(state.getLastAllocatedTime(Lease::TYPE_PD).is_neg_infinity());
 }
 
 // Tests that the explicitly initialized allocation time can be retrieved
