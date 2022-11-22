@@ -13,7 +13,8 @@ Leasequery (`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__).
    ``kea-dhcp6`` process.
 
 Kea version 2.3.4 added support for DHCPv6 Bulk Leasequery
-(`RFC 5460  <https://tools.ietf.org/html/rfc5460>`__).
+(`RFC 5460  <https://tools.ietf.org/html/rfc5460>`__) using the memfile
+lease backend.
 
 The Leasequery library is only available to ISC customers with a paid support contract.
 
@@ -340,24 +341,13 @@ DHCPv6 Bulk Leasequery
 
 DHCPv6 Bulk Leasequery gives a requester the ability to query for
 active lease information over a TCP connection. This allows the server
-to return all active leases matching a query instead of the most recent
-one with links where others belongs to.
+to return all active leases matching a query.
 
 New query types are available: ``query-by-relay-id`` (3),
 ``query-by-link-address`` (4) and ``query-by-remote-id`` (5).
 
 A new status code was defined: ``STATUS_QueryTerminated`` (11) but it is
 not yet used by the hook library.
-
-The active lease information returned by the hook library is similar to
-the simple Leasequery but instead of using a ``lq-client-link`` option
-for other leases one ``DHCPV6_LEASEQUERY_DATA`` message is sent.
-The first lease (most recent for by client id, lowest address for new
-query type) is sent in the ``DHCPV6_LEASEQUERY_REPLY`` in a
-``client-data`` option (45).
-
-When the ``DHCPV6_LEASEQUERY_REPLY` includes a ``client-data`` option (45)
-a ``DHCPV6_LEASEQUERY_DONE`` message marks the end of retrieved leases.
 
 .. note::
 
@@ -458,6 +448,5 @@ For instance:
 
 .. note::
 
-   Even the configuration syntax is not family dependent only DHCPv6 Bulk
-   Leasequery is supported.
-
+   The configuration is same for either DHCPv4 and DHCPv6, although
+   currently only the latter is supported.
