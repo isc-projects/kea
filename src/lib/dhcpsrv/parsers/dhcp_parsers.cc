@@ -8,7 +8,6 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcpsrv/iterative_allocation_state.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
