@@ -7,6 +7,7 @@
 #ifndef ISC_ADAPTOR_CONFIG_H
 #define ISC_ADAPTOR_CONFIG_H 1
 
+#include <dhcpsrv/subnet_id.h>
 #include <yang/adaptor_host.h>
 #include <yang/adaptor_option.h>
 #include <yang/adaptor_pool.h>
@@ -60,7 +61,7 @@ protected:
     /// @param set The reference to the set of assigned IDs.
     /// @return True if all subnets have an ID, false otherwise.
     static bool subnetsCollectID(isc::data::ConstElementPtr subnets,
-                                 SubnetIDSet& set);
+                                 isc::dhcp::SubnetIDSet& set);
 
     /// @brief Collects subnet-ids in all subnets in all shared network list.
     ///
@@ -74,7 +75,7 @@ protected:
     /// @param subsel The subnet list name.
     /// @return True if all subnets have an ID, false otherwise.
     static bool sharedNetworksCollectID(isc::data::ConstElementPtr networks,
-                                        SubnetIDSet& set,
+                                        isc::dhcp::SubnetIDSet& set,
                                         const std::string& subsel);
 
     /// @brief Assigns subnet-id to every subnet in a subnet list.
@@ -86,7 +87,8 @@ protected:
     /// @param set The reference to the set of assigned IDs.
     /// @param next The next ID.
     static void subnetsAssignID(isc::data::ConstElementPtr subnets,
-                                SubnetIDSet& set, isc::dhcp::SubnetID& next);
+                                isc::dhcp::SubnetIDSet& set,
+                                isc::dhcp::SubnetID& next);
 
     /// @brief Assigns subnet-id to every subnet in a shared network list.
     ///
@@ -98,7 +100,7 @@ protected:
     /// @param next The next ID.
     /// @param subsel The subnet list name.
     static void sharedNetworksAssignID(isc::data::ConstElementPtr networks,
-                                       SubnetIDSet& set,
+                                       isc::dhcp::SubnetIDSet& set,
                                        isc::dhcp::SubnetID& next,
                                        const std::string& subsel);
 

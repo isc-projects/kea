@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <dhcpsrv/subnet_id.h>
 #include <yang/adaptor_config.h>
 
 using namespace std;

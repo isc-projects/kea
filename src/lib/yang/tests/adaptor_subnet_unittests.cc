@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <dhcpsrv/subnet_id.h>
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor_subnet.h>
 

@@ -10,13 +10,8 @@
 #include <dhcpsrv/subnet_id.h>
 #include <yang/adaptor.h>
 
-#include <unordered_set>
-
 namespace isc {
 namespace yang {
-
-/// @brief Set of SubnetIDs.
-using SubnetIDSet = std::unordered_set<isc::dhcp::SubnetID>;
 
 /// @brief JSON adaptor for subnets adding IDs and canonizes relays.
 ///
@@ -38,14 +33,16 @@ public:
     /// @param subnet The subnet.
     /// @param set The reference to the set of assigned IDs.
     /// @return True if the subnet has an ID, false otherwise.
-    static bool collectID(isc::data::ConstElementPtr subnet, SubnetIDSet& set);
+    static bool collectID(isc::data::ConstElementPtr subnet,
+                          isc::dhcp::SubnetIDSet& set);
 
     /// @brief Assign subnet ID.
     ///
     /// @param subnet The subnet.
     /// @param set The reference to the set of assigned IDs.
     /// @param next The next ID.
-    static void assignID(isc::data::ElementPtr subnet, SubnetIDSet& set,
+    static void assignID(isc::data::ElementPtr subnet,
+                         isc::dhcp::SubnetIDSet& set,
                          isc::dhcp::SubnetID& next);
 
     /// @brief Update relay.
