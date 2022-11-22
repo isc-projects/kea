@@ -367,7 +367,24 @@
                 "type": "postgresql",
 
                 // User name to be used to access the database.
-                "user": "keatest"
+                "user": "keatest",
+
+                // Connection reconnect wait time.
+                // This parameter governs how long Kea waits before attempting
+                // to reconnect. Expressed in milliseconds. The default is 0
+                // (disabled) for MySQL and PostgreSQL.
+                "reconnect-wait-time": 3000,
+
+                // Connection maximum reconnect tries.
+                "max-reconnect-tries": 3,
+
+                // Action to take when connection recovery fails.
+                // Supported values: stop-retry-exit, serve-retry-exit,
+                // serve-retry-continue
+                "on-fail": "stop-retry-exit",
+
+                // Connection connect timeout.
+                "connect-timeout": 100
             }
         ],
 
