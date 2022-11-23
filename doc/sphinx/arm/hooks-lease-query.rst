@@ -414,7 +414,7 @@ with possible entries:
     that a sent message does not mean that previous messages were received:
     both kernel and network can buffer them.
 
-There should be common TLS parameters when TLS will be supported.
+There should be common TLS parameters once TLS is supported.
 
 For instance:
 
