@@ -143,7 +143,7 @@
                         // When running in MT mode, the dedicated listener is used to handle
                         // lease updates.
                         "http-dedicated-listener": true,
-                        // The number of threads used to handle incomming requests.
+                        // The number of threads used to handle incoming requests.
                         // A value of 0 instructs the server to use the same number of
                         // threads that the Kea core is using for DHCP multi-threading.
                         "http-listener-threads": 0,

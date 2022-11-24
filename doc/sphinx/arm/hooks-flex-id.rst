@@ -225,16 +225,18 @@ In DHCPv6, the corresponding query looks something like this:
        }
    }
 
-When ``ignore-iaid`` is set to ``true`` (default setting is false), the
+When ``ignore-iaid`` is set to ``true`` (default value is ``false``), the
 ``flex-id`` hooks library will make the Kea DHCPv6 server ignore IAID value
-from incomming IPv6 packets. This parameter is ignored by the Kea DHCPv4 server.
+from incoming IPv6 packets. This parameter is ignored by the Kea DHCPv4 server.
 
 .. note::
 
    This functionality breaks RFC compliance and should be enabled only if
-   required. It will effectively make the Kea DHCPv6 server accept packets
-   which contain at most one IANA and one IAPD options.
-   When enabled, a warning message is issued at configure time.
-   If the incomming packet contains more than one IANA or IAPD option, the
-   packet will be dropped and a debug log message will indicate this event in
-   the hooks library logs.
+   required. When enabled, a warning message is issued at configure time.
+   If the incoming packet contains more than one IANA, the IAID value will not
+   be changed on any of the IANAs. Similarly if the incoming packet contains
+   more than one IAPD, the IAID value will not be changed on any of the IAPDs.
+   If the packet contains only one IANA the IAID value will be changed to 0 and
+   stored as such in the lease storage. Similarly if the packet contains only
+   one IAPD the IAID value will be changed to 0 and stored as such in the lease
+   storage.
