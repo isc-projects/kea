@@ -54,7 +54,7 @@ ElementPtr
 TranslatorControlSocket::getControlSocketFromAbsoluteXpath(string const& xpath) {
     try {
         return getControlSocket(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

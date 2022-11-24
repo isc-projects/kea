@@ -9,7 +9,6 @@
 
 #include <yang/translator.h>
 
-
 namespace isc {
 namespace yang {
 

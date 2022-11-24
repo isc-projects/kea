@@ -79,5 +79,5 @@ AdaptorPool::toSubnetIetf6(ElementPtr subnet, ConstElementPtr pools) {
     Adaptor::toParent("rebind-timer", subnet, pools);
 }
 
-}  //namespace yang
+}  // namespace yang
 }  // namespace isc

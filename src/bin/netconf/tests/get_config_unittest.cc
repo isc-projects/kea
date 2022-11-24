@@ -221,9 +221,9 @@ public:
         EXPECT_TRUE(executeConfiguration(config, "reset config"));
     }
 
-    unique_ptr<NakedNetconfCfgMgr> srv_; ///< Netconf server under test
-    int rcode_;                       ///< Return code from element parsing
-    ConstElementPtr comment_;         ///< Reason for parse fail
+    unique_ptr<NakedNetconfCfgMgr> srv_;    ///< Netconf server under test
+    int rcode_;                             ///< Return code from element parsing
+    ConstElementPtr comment_;               ///< Reason for parse fail
 };  // NetconfGetCfgTest
 
 // Test a simple configuration.

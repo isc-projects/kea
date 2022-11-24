@@ -87,7 +87,6 @@ void clearYang(NakedNetconfAgentPtr agent) {
     }
 }
 
-
 // Empirically the requested subnets have sometimes returned in decreasing
 // order of subnet ID. To avoid flaky test failures, sort them before
 // comparing.

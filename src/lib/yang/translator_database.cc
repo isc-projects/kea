@@ -42,7 +42,7 @@ ElementPtr
 TranslatorDatabase::getDatabaseFromAbsoluteXpath(string const& xpath) {
     try {
         return getDatabase(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -155,7 +155,7 @@ ElementPtr
 TranslatorDatabases::getDatabasesFromAbsoluteXpath(string const& xpath) {
     try {
         return getDatabases(findXPath(xpath), xpath);
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

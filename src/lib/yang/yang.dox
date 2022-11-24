@@ -85,7 +85,7 @@ the basic / base class and recursively from translators for embedded parts.
   - @c isc::yang::Translator::getItem() retrieves and translates a leaf
     from YANG to Element.
 
-  - @c isc::yang::Translator::getList() retrieves a list from Sysrepo and
+  - @c isc::yang::Translator::getList() retrieves a list from sysrepo and
     translates it form YANG to Element.
 
   - @c isc::yang::Translator::getMandatoryLeaf() fetches a leaf that is expected
@@ -96,7 +96,7 @@ the basic / base class and recursively from translators for embedded parts.
     substitute logic that had been previously removed.
 
   - @c isc::yang::Translator::setItem() translates a leaf from Element to
-    YANG and sets it in Sysrepo.
+    YANG and sets it in sysrepo.
 
   - @c isc::yang::Translator::setMandatoryLeaf() sets a leaf that is expected
     to be present in the Element node, most of the time a YANG key.
@@ -270,7 +270,7 @@ them.
 @section yangMTConsiderations Multi-Threading Consideration for YANG Utilities
 
 The YANG utilities are not thread-safe. Note as they are used only in a
-configuration context it is not a problem, and the YANG / Sysrepo libraries
+configuration context it is not a problem, and the libyang and sysrepo libraries
 are multi-threaded so their APIs are thread-safe.
 
 */

@@ -463,7 +463,6 @@ NetconfAgent::subscribeToDataChanges(const CfgServersMapPair& service_pair) {
     }
 }
 
-
 void
 NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
     string const& server(service_pair.first);

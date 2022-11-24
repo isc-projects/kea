@@ -83,7 +83,6 @@
                 // class when the given expression evaluates to true.
                 "test": "member('HA_server2')"
             },
-
             {
                 // Third class name.
                 "name": "late",
@@ -96,10 +95,15 @@
                 "only-if-required": true,
 
                 // Class selection expression.
-                "test": "member('ALL')",
+                "test": "member('ALL')"
+            },
+            {
+                // Fourth class name.
+                "name": "my-template-class",
 
-                // Template class flag.
-                "template-test": ""
+                // Template class flag that holds the expression used to generate the names for all
+                // the spawned subclasses. In this case, the classes are named after the client ID.
+                "template-test": "substring(option[61].hex, 0, all)"
             }
         ],
 

@@ -112,6 +112,12 @@ TEST(YangReprTest, getTest) {
     EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
     EXPECT_NO_THROW_LOG(sess.applyChanges());
 
+    xpath = "/keatest-module:main/ui64";
+    uint32_t u64(64);
+    value = to_string(u64);
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
+
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
     value = to_string(s8);
@@ -127,6 +133,12 @@ TEST(YangReprTest, getTest) {
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
     value = to_string(s32);
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    EXPECT_NO_THROW_LOG(sess.applyChanges());
+
+    xpath = "/keatest-module:main/i64";
+    int32_t s64(64);
+    value = to_string(s64);
     EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
     EXPECT_NO_THROW_LOG(sess.applyChanges());
 

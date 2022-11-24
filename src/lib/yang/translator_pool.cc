@@ -52,7 +52,7 @@ ElementPtr
 TranslatorPool::getPoolFromAbsoluteXpath(string const& xpath) {
     try {
         return getPool(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -253,7 +253,7 @@ ElementPtr
 TranslatorPools::getPoolsFromAbsoluteXpath(string const& xpath) {
     try {
         return getPools(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

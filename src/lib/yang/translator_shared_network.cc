@@ -55,7 +55,7 @@ ElementPtr
 TranslatorSharedNetwork::getSharedNetworkFromAbsoluteXpath(string const& xpath) {
     try {
         return getSharedNetwork(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -254,7 +254,7 @@ ElementPtr
 TranslatorSharedNetworks::getSharedNetworksFromAbsoluteXpath(string const& xpath) {
     try {
         return getSharedNetworks(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

@@ -354,7 +354,7 @@ TEST_F(TranslatorTest, getItem) {
     EXPECT_FALSE(element);
 }
 
-
+// Check the Translator::deleteItem function.
 TEST_F(TranslatorTest, deleteItem) {
     ElementPtr got;
     string xpath;
@@ -363,31 +363,31 @@ TEST_F(TranslatorTest, deleteItem) {
     Translator translator(Connection{}.sessionStart(), "keatest-module");
 
     // Missing schema node
-    EXPECT_NO_THROW(translator.deleteItem("/keatest-module:main/no_such_node"));
+    EXPECT_NO_THROW_LOG(translator.deleteItem("/keatest-module:main/no_such_node"));
 
     // Existing schema node, but no data
     xpath = "/keatest-module:main/string";
-    EXPECT_NO_THROW(translator.deleteItem(xpath));
+    EXPECT_NO_THROW_LOG(translator.deleteItem(xpath));
     EXPECT_NO_THROW_LOG(got = translator.getItemFromAbsoluteXpath(xpath));
     EXPECT_FALSE(got);
     got.reset();
 
     // Existing schema node, existing data
     translator.setItem(xpath, Element::create("value"), LeafBaseType::String);
-    EXPECT_NO_THROW(translator.deleteItem(xpath));
+    EXPECT_NO_THROW_LOG(translator.deleteItem(xpath));
     EXPECT_NO_THROW_LOG(got = translator.getItemFromAbsoluteXpath(xpath));
     EXPECT_FALSE(got);
     got.reset();
 
     // Container schema node, no data
-    EXPECT_NO_THROW(translator.deleteItem("/keatest-module:main"));
+    EXPECT_NO_THROW_LOG(translator.deleteItem("/keatest-module:main"));
     EXPECT_NO_THROW_LOG(got = translator.getItemFromAbsoluteXpath(xpath));
     EXPECT_FALSE(got);
     got.reset();
 
     // Container schema node, existing data
     translator.setItem(xpath, Element::create("value"), LeafBaseType::String);
-    EXPECT_NO_THROW(translator.deleteItem("/keatest-module:main"));
+    EXPECT_NO_THROW_LOG(translator.deleteItem("/keatest-module:main"));
     EXPECT_NO_THROW_LOG(got = translator.getItemFromAbsoluteXpath(xpath));
     EXPECT_FALSE(got);
     got.reset();
@@ -466,7 +466,7 @@ TEST_F(TranslatorTest, valueTo) {
     EXPECT_EQ(element->str(), value);
     element.reset();
 
-    // Signed 32 bit integer.
+    // Signed 64 bit integer.
     element = Element::create(int64_t(-1234567890123456));
     EXPECT_NO_THROW_LOG(value = Translator::translateToYang(element, LeafBaseType::Int64));
     EXPECT_EQ("-1234567890123456", value);
@@ -822,8 +822,7 @@ TEST_F(TranslatorTest, container) {
     Translator translator(Connection{}.sessionStart(), "keatest-module");
 
     // Container with no data apparently throws.
-    EXPECT_THROW_MSG(element = translator.getItemFromAbsoluteXpath("/keatest-module:container"),
-                     NotImplemented,
+    EXPECT_THROW_MSG(element = translator.getItemFromAbsoluteXpath("/keatest-module:container"), NotImplemented,
                      "getting node of type 1 not supported, xpath is '/keatest-module:container'");
     EXPECT_FALSE(element);
     element.reset();
@@ -839,13 +838,12 @@ TEST_F(TranslatorTest, container) {
                            element, LeafBaseType::String));
     element.reset();
     EXPECT_THROW_MSG(
-        element = translator.getItemFromAbsoluteXpath("/keatest-module:container"),
-        NotImplemented,
+        element = translator.getItemFromAbsoluteXpath("/keatest-module:container"), NotImplemented,
         "getting node of type 1 not supported, xpath is '/keatest-module:container'");
     EXPECT_FALSE(element);
     element.reset();
-    EXPECT_NO_THROW_LOG(element = translator.getItemFromAbsoluteXpath("/keatest-module:container[key1="
-                                                                   "'key1'][key2='key2']"));
+    EXPECT_NO_THROW_LOG(
+        element = translator.getItemFromAbsoluteXpath("/keatest-module:container[key1='key1'][key2='key2']"));
     EXPECT_FALSE(element);
 }
 
@@ -869,14 +867,12 @@ TEST_F(TranslatorTest, list) {
                            LeafBaseType::String));
     element.reset();
     EXPECT_THROW_MSG(
-        element = translator.getItemFromAbsoluteXpath("/keatest-module:container/list"),
-        NotImplemented,
+        element = translator.getItemFromAbsoluteXpath("/keatest-module:container/list"), NotImplemented,
         "getting node of type 16 not supported, xpath is '/keatest-module:container/list'");
     EXPECT_FALSE(element);
     element.reset();
     EXPECT_THROW_MSG(element = translator.getItemFromAbsoluteXpath(
-                         "/keatest-module:container/list[key1='key1'][key2='key2']"),
-                     NotImplemented,
+                         "/keatest-module:container/list[key1='key1'][key2='key2']"), NotImplemented,
                      "getting node of type 16 not supported, xpath is "
                      "'/keatest-module:container/list[key1='key1'][key2='key2']'");
     EXPECT_FALSE(element);

@@ -104,7 +104,6 @@ TEST_F(NetconfControllerTest, basicInstanceTesting) {
     EXPECT_FALSE(checkProcess());
 }
 
-
 // Tests basic command line processing.
 // Verifies that:
 // 1. Standard command line options are supported.

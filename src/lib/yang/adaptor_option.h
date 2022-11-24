@@ -96,7 +96,7 @@ protected:
                                   size_t params_size);
 };  // AdaptorOption
 
-}  //namespace yang
+}  // namespace yang
 }  // namespace isc
 
 #endif  // ISC_ADAPTOR_OPTION_H

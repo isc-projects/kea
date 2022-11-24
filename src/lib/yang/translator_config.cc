@@ -71,7 +71,7 @@ TranslatorConfig::getConfigIetf6() {
     optional<DataNode> config;
     try {
         config = findXPath(xpath);
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return result;
     }
 
@@ -180,7 +180,7 @@ TranslatorConfig::getInterfacesKea(DataNode const& config) {
 
         checkAndGetAndJsonifyLeaf(result, interfaces_config, "user-context");
     }
-    return result;
+    return (result->empty() ? ElementPtr() : result);
 }
 
 ElementPtr
@@ -289,22 +289,22 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
                 });
 
     ConstElementPtr options = getOptionDataList(data_node);
-    if (options && !options->empty()) {
+    if (options) {
         result->set("option-data", options);
     }
 
     ConstElementPtr defs = getOptionDefList(data_node);
-    if (defs && !defs->empty()) {
+    if (defs) {
         result->set("option-def", defs);
     }
 
     ConstElementPtr hosts = getHosts(data_node);
-    if (hosts && !hosts->empty()) {
+    if (hosts) {
         result->set("reservations", hosts);
     }
 
     ConstElementPtr networks = getSharedNetworks(data_node);
-    if (networks && !networks->empty()) {
+    if (networks) {
         result->set("shared-networks", networks);
     }
 
@@ -325,7 +325,7 @@ TranslatorConfig::getServerKeaDhcp4() {
     optional<DataNode> config_optional;
     try {
         config_optional = findXPath(xpath);
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
     DataNode const config(*config_optional);
@@ -341,13 +341,13 @@ TranslatorConfig::getServerKeaDhcp4() {
 
     // Handle interfaces.
     ElementPtr interfaces_config(getInterfacesKea(config));
-    if (interfaces_config && !interfaces_config->empty()) {
+    if (interfaces_config) {
         result->set("interfaces-config", interfaces_config);
     }
 
     // Handle subnets.
     ConstElementPtr subnets = getSubnets(config);
-    if (subnets && !subnets->empty()) {
+    if (subnets) {
         result->set("subnet4", subnets);
     }
 
@@ -360,7 +360,7 @@ TranslatorConfig::getServerKeaDhcp6() {
     optional<DataNode> config_optional;
     try {
         config_optional = findXPath(xpath);
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
     DataNode const config(*config_optional);
@@ -376,7 +376,7 @@ TranslatorConfig::getServerKeaDhcp6() {
 
     // Handle interfaces.
     ElementPtr interfaces_config(getInterfacesKea(config));
-    if (interfaces_config && !interfaces_config->empty()) {
+    if (interfaces_config) {
         result->set("interfaces-config", interfaces_config);
     }
 
@@ -399,7 +399,7 @@ TranslatorConfig::getServerKeaDhcp6() {
 
     // Handle subnets.
     ConstElementPtr subnets = getSubnets(config);
-    if (subnets && !subnets->empty()) {
+    if (subnets) {
         result->set("subnet6", subnets);
     }
 

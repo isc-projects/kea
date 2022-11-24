@@ -280,7 +280,7 @@ protected:
                            const std::string& space);
 };  // AdaptorConfig
 
-}  //namespace yang
+}  // namespace yang
 }  // namespace isc
 
 #endif  // ISC_ADAPTOR_CONFIG_H

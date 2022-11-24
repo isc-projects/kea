@@ -23,7 +23,6 @@ using namespace isc::yang;
 
 namespace {
 
-
 /// @brief Fixture class that helps testing AdaptorConfig
 class AdaptorConfigTest : public ::testing::Test {
 public:

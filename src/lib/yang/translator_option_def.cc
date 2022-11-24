@@ -44,7 +44,7 @@ ElementPtr
 TranslatorOptionDef::getOptionDefFromAbsoluteXpath(string const& xpath) {
     try {
         return getOptionDef(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -126,7 +126,7 @@ ConstElementPtr
 TranslatorOptionDefList::getOptionDefListFromAbsoluteXpath(string const& xpath) {
     try {
         return getOptionDefList(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

@@ -1,7 +1,3 @@
-
-
-
-
 CLEANFILES = *.gcno *.gcda
 
 TESTS = sysrepo_setup_tests

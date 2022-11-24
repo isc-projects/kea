@@ -164,7 +164,7 @@ ConstElementPtr
 TranslatorLoggers::getLoggersFromAbsoluteXpath(string const& xpath) {
     try {
         return getLoggers(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

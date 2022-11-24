@@ -71,7 +71,6 @@ kea_netconf_LDADD += $(LIBYANGCPP_LIBS)
 kea_netconf_LDADD += $(SYSREPO_LIBS)
 kea_netconf_LDADD += $(SYSREPOCPP_LIBS)
 
-
 kea_netconfdir = $(pkgdatadir)
 
 # If we want to get rid of all generated messages files, we need to use

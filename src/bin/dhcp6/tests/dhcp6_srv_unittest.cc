@@ -292,6 +292,7 @@ Dhcpv6SrvTest::checkConfigFiles() {
     vector<string> examples = {
         "advanced.json",
 #if defined (HAVE_MYSQL) && defined (HAVE_PGSQL)
+        "all-keys.json",
         "all-keys-netconf.json",
         "all-options.json",
 #endif

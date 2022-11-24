@@ -44,7 +44,7 @@ ElementPtr
 TranslatorOptionData::getOptionDataFromAbsoluteXpath(string const& xpath) {
     try {
         return getOptionData(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -124,7 +124,7 @@ ConstElementPtr
 TranslatorOptionDataList::getOptionDataListFromAbsoluteXpath(string const& xpath) {
     try {
         return getOptionDataList(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

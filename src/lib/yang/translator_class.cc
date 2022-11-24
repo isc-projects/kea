@@ -47,7 +47,7 @@ ElementPtr
 TranslatorClass::getClassFromAbsoluteXpath(string const& xpath) {
     try {
         return getClass(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -170,7 +170,7 @@ ElementPtr
 TranslatorClasses::getClassesFromAbsoluteXpath(string const& xpath) {
     try {
         return getClasses(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

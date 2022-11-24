@@ -45,7 +45,7 @@ ElementPtr
 TranslatorHost::getHostFromAbsoluteXpath(string const& xpath) {
     try {
         return getHost(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -144,7 +144,7 @@ ElementPtr
 TranslatorHosts::getHostsFromAbsoluteXpath(string const& xpath) {
     try {
         return getHosts(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

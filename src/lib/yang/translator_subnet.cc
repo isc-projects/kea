@@ -54,7 +54,7 @@ ElementPtr
 TranslatorSubnet::getSubnetFromAbsoluteXpath(string const& xpath) {
     try {
         return getSubnet(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }
@@ -310,11 +310,7 @@ TranslatorSubnet::setSubnetKea(string const& xpath, ConstElementPtr elem) {
         checkAndSetLeaf(elem, xpath, "authoritative", LeafBaseType::Bool);
         checkAndSetLeaf(elem, xpath, "boot-file-name", LeafBaseType::String);
         checkAndSetLeaf(elem, xpath, "match-client-id", LeafBaseType::Bool);
-        checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", LeafBaseType::Uint32);
-        checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", LeafBaseType::Uint32);
         checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
-        checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
-        checkAndSetLeaf(elem, xpath, "rapid-commit", LeafBaseType::Bool);
         checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
 
         checkAndSetDivergingLeaf(elem, xpath, "4o6-interface", "subnet-4o6-interface", LeafBaseType::String);
@@ -360,7 +356,7 @@ ElementPtr
 TranslatorSubnets::getSubnetsFromAbsoluteXpath(string const& xpath) {
     try {
         return getSubnets(findXPath(xpath));
-    } catch(NetconfError const&) {
+    } catch (NetconfError const&) {
         return ElementPtr();
     }
 }

@@ -147,7 +147,6 @@ public:
         : ThreadedTest(), io_service_() {
     }
 
-
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
         removeUnixSocketFile();
@@ -428,7 +427,7 @@ public:
     /// @brief Create a new request.
     ///
     /// @return Pointer to the new instance of the HttpRequest.
-    HttpRequestPtr createNewHttpRequest() const  override final {
+    HttpRequestPtr createNewHttpRequest() const override final {
         return (HttpRequestPtr(new PostHttpRequestJson()));
     }
 

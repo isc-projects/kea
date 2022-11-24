@@ -363,7 +363,7 @@ TEST(NetconfParser, badSocketType) {
     ElementPtr json;
     ParserContext parser;
     EXPECT_NO_THROW_LOG(json = parser.parseString(NETCONF_CONFIGS[10],
-                                              ParserContext::PARSER_JSON));
+                                                  ParserContext::PARSER_JSON));
     ConstElementPtr answer;
     NakedNetconfCfgMgr cfg_mgr;
     EXPECT_NO_THROW_LOG(answer = cfg_mgr.parse(json, false));

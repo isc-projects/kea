@@ -38,7 +38,7 @@ public:
     static void quoteIdentifier(isc::data::ElementPtr host);
 };  // AdaptorHost
 
-}  //namespace yang
+}  // namespace yang
 }  // namespace isc
 
 #endif  // ISC_ADAPTOR_HOST_H

@@ -188,7 +188,7 @@ struct ConfigTestKeaV4 : ConfigTest {
     ConfigTestKeaV4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};  // ConfigTestKeav4
+};  // ConfigTestKeaV4
 struct ConfigTestKeaV6 : ConfigTest {
     ConfigTestKeaV6() {
         model_ = KEA_DHCP6_SERVER;

@@ -59,17 +59,6 @@ Translator::checkAndGetAndJsonifyLeaf(ElementPtr& storage,
     }
 }
 
-void
-Translator::checkAndStringifyAndSetLeaf(ConstElementPtr const& from,
-                                        string const& xpath,
-                                        string const& name) {
-    ConstElementPtr const& x(from->get(name));
-    if (x) {
-        ElementPtr const& json(Element::create(x->str()));
-        setItem(xpath + "/" + name, json, LeafBaseType::String);
-    }
-}
-
 void Translator::checkAndSetLeaf(ConstElementPtr const& from,
                                  string const& xpath,
                                  string const& name,
@@ -113,8 +102,18 @@ void Translator::checkAndSetUserContext(ConstElementPtr const& from,
 }
 
 void
-Translator::deleteItem(string const& xpath) {
+Translator::checkAndStringifyAndSetLeaf(ConstElementPtr const& from,
+                                        string const& xpath,
+                                        string const& name) {
+    ConstElementPtr const& x(from->get(name));
+    if (x) {
+        ElementPtr const& json(Element::create(x->str()));
+        setItem(xpath + "/" + name, json, LeafBaseType::String);
+    }
+}
 
+void
+Translator::deleteItem(string const& xpath) {
     try {
         if (session_.getData(xpath)) {
             session_.deleteItem(xpath);
@@ -200,7 +199,6 @@ Translator::getMandatoryLeaf(ElementPtr& storage,
     }
     storage->set(name, x);
 }
-
 
 void
 Translator::getMandatoryDivergingLeaf(ElementPtr& storage,
@@ -310,7 +308,7 @@ Translator::decode64(string const& input) {
     decodeBase64(input, binary);
     string result;
     result.resize(binary.size());
-    memmove(&result[0], &binary[0], result.size());
+    memcpy(&result[0], &binary[0], result.size());
     return (result);
 }
 
@@ -318,7 +316,7 @@ string
 Translator::encode64(string const& input) {
     vector<uint8_t> binary;
     binary.resize(input.size());
-    memmove(&binary[0], input.c_str(), binary.size());
+    memcpy(&binary[0], input.c_str(), binary.size());
     return (encodeBase64(binary));
 }
 

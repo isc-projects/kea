@@ -119,19 +119,8 @@ public:
     ///
     /// @param from the parent configuration node from which to take the value
     /// @param xpath the xpath to the YANG node without the last node
-    /// @param name the name of the YANG node which should also match the map
-    /// key in the JSON configuration
-    void checkAndStringifyAndSetLeaf(isc::data::ConstElementPtr const& from,
-                                     std::string const& xpath,
-                                     std::string const& name);
-
-    /// @brief Get an element from given ElementPtr node and set it in sysrepo
-    /// at given xpath.
-    ///
-    /// @param from the parent configuration node from which to take the value
-    /// @param xpath the xpath to the YANG node without the last node
-    /// @param name the name of the YANG node which should also match the map
-    /// key in the JSON configuration
+    /// @param name the name of the YANG node which should also match the key
+    /// under which data is set in the MapElement {from}
     /// @param type the YANG node type
     void checkAndSetLeaf(isc::data::ConstElementPtr const& from,
                          std::string const& xpath,
@@ -146,8 +135,8 @@ public:
     ///
     /// @param from the parent configuration node from which to take the value
     /// @param xpath the xpath to the YANG node without the last node
-    /// @param name the name of the parameter to be set in storage
-    /// @param yang_name the name by which to find the parameter in the YANG data node
+    /// @param name the key under which data is set in the MapElement {from}
+    /// @param yang_name the name of the YANG node
     /// @param type the YANG node type
     void checkAndSetDivergingLeaf(isc::data::ConstElementPtr const& from,
                                   std::string const& xpath,
@@ -160,7 +149,8 @@ public:
     ///
     /// @param from the parent configuration node from which to take the values
     /// @param xpath the xpath to the YANG node without the last node
-    /// @param name the name of the parameter to be set in storage
+    /// @param name the name of the YANG node which should also match the key
+    /// under which data is set in the MapElement {from}
     /// @param type the YANG node type of the underlying leaf-list nodes
     void checkAndSetLeafList(isc::data::ConstElementPtr const& from,
                              std::string const& xpath,
@@ -174,6 +164,17 @@ public:
     /// @param xpath the xpath to the YANG node without the last node
     void checkAndSetUserContext(isc::data::ConstElementPtr const& from,
                                 std::string const& xpath);
+
+    /// @brief Get an element from given ElementPtr node and set it in sysrepo
+    /// at given xpath.
+    ///
+    /// @param from the parent configuration node from which to take the value
+    /// @param xpath the xpath to the YANG node without the last node
+    /// @param name the name of the YANG node which should also match the key
+    /// under which data is set in the MapElement {from}
+    void checkAndStringifyAndSetLeaf(isc::data::ConstElementPtr const& from,
+                                     std::string const& xpath,
+                                     std::string const& name);
 
     /// @brief Delete basic value from YANG.
     ///

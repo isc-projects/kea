@@ -99,12 +99,10 @@ YangRepr::YangReprItem::get(const string& xpath, Session session) {
             // Get the underlying type.
             type = data_node->schema().asLeaf().valueType().asLeafRef().resolvedType().base();
         }
-        value = Translator::translateToYang(Translator::translateFromYang(data_node),
-                                                 type);
+        value = Translator::translateToYang(Translator::translateFromYang(data_node), type);
         val_xpath = string(data_node->path());
     } catch (Error const& ex) {
-        isc_throw(NetconfError,
-                  "in YangReprItem: " << ex.what());
+        isc_throw(NetconfError, "in YangReprItem: " << ex.what());
     }
     return (YangReprItem(val_xpath, value, type, settable));
 }
