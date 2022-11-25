@@ -86,7 +86,7 @@ the basic / base class and recursively from translators for embedded parts.
     from YANG to Element.
 
   - @c isc::yang::Translator::getList() retrieves a list from sysrepo and
-    translates it form YANG to Element.
+    translates it from YANG to Element.
 
   - @c isc::yang::Translator::getMandatoryLeaf() fetches a leaf that is expected
     to be present in the YANG data node, most of the time a YANG key.

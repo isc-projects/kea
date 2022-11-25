@@ -127,7 +127,7 @@ TEST_F(TranslatorTest, getItem) {
 
     // Unsigned 64 bit integer.
     xpath = "/keatest-module:main/ui64";
-    uint32_t u64(64);
+    uint64_t u64(64);
     value = to_string(u64);
     EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
     sess.applyChanges();
@@ -186,7 +186,7 @@ TEST_F(TranslatorTest, getItem) {
 
     // Signed 64 bit integer.
     xpath = "/keatest-module:main/i64";
-    int32_t s64(64);
+    int64_t s64(64);
     value = to_string(s64);
     EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
     sess.applyChanges();

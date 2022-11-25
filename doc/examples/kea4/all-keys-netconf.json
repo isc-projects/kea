@@ -103,7 +103,7 @@
 
                 // Template class flag that holds the expression used to generate the names for all
                 // the spawned subclasses. In this case, the classes are named after the client ID.
-                "template-test": "substring(option[1].hex, 0, all)"
+                "template-test": "substring(option[61].hex, 0, all)"
             }
         ],
 

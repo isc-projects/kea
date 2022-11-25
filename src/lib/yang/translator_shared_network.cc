@@ -173,18 +173,18 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "interface", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "rebind-timer", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "renew-timer", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "reservation-mode", LeafBaseType::Enum);
     checkAndSetLeaf(elem, xpath, "reservations-global", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "reservations-in-subnet", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "store-extended-info", LeafBaseType::Bool);
-    checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "rebind-timer", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "renew-timer", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "t1-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "t2-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
 
     checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
 

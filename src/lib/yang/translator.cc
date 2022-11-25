@@ -59,31 +59,34 @@ Translator::checkAndGetAndJsonifyLeaf(ElementPtr& storage,
     }
 }
 
-void Translator::checkAndSetLeaf(ConstElementPtr const& from,
-                                 string const& xpath,
-                                 string const& name,
-                                 LeafBaseType const type) {
+void
+Translator::checkAndSetLeaf(ConstElementPtr const& from,
+                            string const& xpath,
+                            string const& name,
+                            LeafBaseType const type) {
     ConstElementPtr const& x(from->get(name));
     if (x) {
         setItem(xpath + "/" + name, x, type);
     }
 }
 
-void Translator::checkAndSetDivergingLeaf(ConstElementPtr const& from,
-                                          string const& xpath,
-                                          string const& name,
-                                          string const& yang_name,
-                                          LeafBaseType const type) {
+void
+Translator::checkAndSetDivergingLeaf(ConstElementPtr const& from,
+                                     string const& xpath,
+                                     string const& name,
+                                     string const& yang_name,
+                                     LeafBaseType const type) {
     ConstElementPtr const& x(from->get(name));
     if (x) {
         setItem(xpath + "/" + yang_name, x, type);
     }
 }
 
-void Translator::checkAndSetLeafList(ConstElementPtr const& from,
-                                     string const& xpath,
-                                     string const& name,
-                                     LeafBaseType const type) {
+void
+Translator::checkAndSetLeafList(ConstElementPtr const& from,
+                                string const& xpath,
+                                string const& name,
+                                LeafBaseType const type) {
     ConstElementPtr const& leaf_list(from->get(name));
     if (leaf_list && !leaf_list->empty()) {
         for (ElementPtr const& leaf : leaf_list->listValue()) {
@@ -92,8 +95,9 @@ void Translator::checkAndSetLeafList(ConstElementPtr const& from,
     }
 }
 
-void Translator::checkAndSetUserContext(ConstElementPtr const& from,
-                                        string const& xpath) {
+void
+Translator::checkAndSetUserContext(ConstElementPtr const& from,
+                                   string const& xpath) {
     ConstElementPtr const& user_context(Adaptor::getContext(from));
     if (user_context) {
         setItem(xpath + "/user-context", Element::create(user_context->str()),
@@ -212,7 +216,8 @@ Translator::getMandatoryDivergingLeaf(ElementPtr& storage,
     storage->set(name, x);
 }
 
-bool Translator::schemaNodeExists(string const& xpath) const {
+bool
+Translator::schemaNodeExists(string const& xpath) const {
     Context const& context(session_.getContext());
     try {
         context.findPath(xpath);

@@ -295,7 +295,8 @@ public:
     ///
     /// @param storage ElementMap where result will be stored
     /// @param data_node parent data node of container type
-    /// @param name name of the parameter
+    /// @param name the name of the YANG node which should also match the map
+    /// key in the JSON configuration
     ///
     /// @throw MissingNode if leaf is not found
     void getMandatoryLeaf(isc::data::ElementPtr& storage,
@@ -310,9 +311,10 @@ public:
     ///
     /// @param storage ElementMap where result will be stored
     /// @param data_node parent data node of container type
-    /// @param name name of the parameter
+    /// @param name the map key in the JSON configuration
     /// @param yang_name the name by which to find the parameter in the YANG data node
     ///
+
     /// @throw MissingNode if leaf is not found
     void getMandatoryDivergingLeaf(isc::data::ElementPtr& storage,
                                    libyang::DataNode const& data_node,
@@ -353,8 +355,7 @@ public:
     ///
     /// @param from the parent configuration node from which to take the value
     /// @param xpath the xpath to the YANG node without the last node
-    /// @param name the name of the YANG node which should also match the map
-    /// key in the JSON configuration
+    /// @param name the map key in the JSON configuration
     /// @param yang_name the name by which to find the parameter in the YANG data node
     /// @param type the YANG node type
     void setMandatoryDivergingLeaf(isc::data::ConstElementPtr const& from,

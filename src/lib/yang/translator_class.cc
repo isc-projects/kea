@@ -71,15 +71,16 @@ TranslatorClass::getClassKea(DataNode const& data_node) {
     if (options) {
         result->set("option-data", options);
     }
-    ConstElementPtr defs = getOptionDefList(data_node);
-    if (defs) {
-        result->set("option-def", defs);
-    }
 
     if (model_ == KEA_DHCP4_SERVER) {
         checkAndGetLeaf(result, data_node, "boot-file-name");
         checkAndGetLeaf(result, data_node, "next-server");
         checkAndGetLeaf(result, data_node, "server-hostname");
+
+        ConstElementPtr defs = getOptionDefList(data_node);
+        if (defs) {
+            result->set("option-def", defs);
+        }
     } else if (model_ == KEA_DHCP6_SERVER) {
         checkAndGetLeaf(result, data_node, "max-preferred-lifetime");
         checkAndGetLeaf(result, data_node, "min-preferred-lifetime");
