@@ -131,6 +131,9 @@ for non-printable characters and do not require the use of the
        ]
    }
 
+The ``replace-client-id`` Flag
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 When ``replace-client-id`` is set to ``false`` (which is the default setting),
 the ``flex-id`` hook library uses the evaluated flexible identifier solely for
 identifying host reservations, i.e. searching for reservations within a
@@ -225,18 +228,28 @@ In DHCPv6, the corresponding query looks something like this:
        }
    }
 
+The ``ignore-iaid`` Flag
+~~~~~~~~~~~~~~~~~~~~~~~~
+
 When ``ignore-iaid`` is set to ``true`` (default value is ``false``), the
 ``flex-id`` hooks library will make the Kea DHCPv6 server ignore IAID value
 from incoming IPv6 packets. This parameter is ignored by the Kea DHCPv4 server.
 
+If the packet contains only one IA_NA, the IAID value will be changed to ``0``
+and stored as such in the lease storage. Similarly if the packet contains only
+one IA_PD, the IAID value will be changed to ``0`` and stored as such in the
+lease storage. The IAID is restored to its intitial value in the response back
+to the client. The change is visible in the identifier expression if the IAID is
+part of the expression.
+
 .. note::
+
+   To avoid lease conflicts, if the incoming packet contains more than one
+   IA_NA, the IAID value will not be changed on any of the IA_NAs. Similarly,
+   if the incoming packet contains more than one IA_PD, the IAID value will not
+   be changed on any of the IA_PDs.
+
+.. warning::
 
    This functionality breaks RFC compliance and should be enabled only if
    required. When enabled, a warning message is issued at configure time.
-   If the incoming packet contains more than one IANA, the IAID value will not
-   be changed on any of the IANAs. Similarly if the incoming packet contains
-   more than one IAPD, the IAID value will not be changed on any of the IAPDs.
-   If the packet contains only one IANA the IAID value will be changed to 0 and
-   stored as such in the lease storage. Similarly if the packet contains only
-   one IAPD the IAID value will be changed to 0 and stored as such in the lease
-   storage.
