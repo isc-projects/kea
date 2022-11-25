@@ -1,3 +1,8 @@
+2078.	[build]		andrei
+	The library version numbers have been bumped for the Kea 2.3.3
+	development release.
+	(Gitlab #2650)
+
 2077.	[func]		andrei
 	YANG modules have been updated with three configuration nodes:
 	extended-info-checks, ignore-rai-link-selection, template-test.
