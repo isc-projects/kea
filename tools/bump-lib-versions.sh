@@ -147,3 +147,17 @@ if ! ${is_new_tag_stable_release} && ${is_old_tag_stable_release}; then
   done
 fi
 
+if ${is_new_tag_stable_release}; then
+  release='stable'
+else
+  release='development'
+fi
+
+(echo "\
+TODO.	[build]		TODO
+	The library version numbers have been bumped for the Kea ${major}.${middle}.${minor}
+	${release} release.
+	(Gitlab #TODO)
+" && cat ./ChangeLog) > ./ChangeLog.tmp
+mv ./ChangeLog.tmp ./ChangeLog
+
