@@ -284,8 +284,8 @@ public:
                              const std::string& hwaddress,
                              const std::string& expected_address,
                              RenewOutcome renew_outcome,
-                             ReleaseOutcome release_outcome = DOES_RELEASE_DELETE,
-                             const LeaseAffinity lease_affinity = LEASE_AFFINITY_DISABLED);
+                             ReleaseOutcome release_outcome,
+                             const LeaseAffinity lease_affinity);
 
     /// @brief D2 client manager.
     D2ClientMgr& d2_mgr_;
@@ -417,7 +417,8 @@ TEST_F(OutOfRangeTest, dynamicOutOfPool) {
     std::string hwaddress = "";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_NAK);
+    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_NAK,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Verifies that once-valid lease, whose address is no longer
@@ -446,7 +447,8 @@ TEST_F(OutOfRangeTest, dynamicOutOfSubnet) {
     std::string hwaddress = "";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Verifies that once-valid lease whose address is no longer
@@ -474,7 +476,8 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfPool) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_NAK);
+    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_NAK,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Test verifies that once-valid dynamic address host reservation,
@@ -501,7 +504,8 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnet) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Test verifies that once-valid dynamic address host reservation,
@@ -531,7 +535,8 @@ TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_RENEW);
+    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_RENEW,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Test verifies that once-valid dynamic address host reservation,
@@ -564,7 +569,8 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetReservationRemoved) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address, DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Test verifies that once-valid dynamic address host reservation,
@@ -594,7 +600,8 @@ TEST_F(OutOfRangeTest, fixedHostOutOfSubnet) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
     std::string expected_address = "10.0.0.7";
 
-    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Test verifies that once-valid in-subnet fixed-address host reservation,
@@ -621,7 +628,8 @@ TEST_F(OutOfRangeTest, fixedHostDifferentPool) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
     std::string expected_address = "10.0.0.7";
 
-    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_RENEW);
+    oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_RENEW,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Test verifies that once-valid in-subnet fixed-address host reservation,
@@ -648,7 +656,8 @@ TEST_F(OutOfRangeTest, fixedHostReservationRemoved) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
     std::string expected_address = "10.0.0.7";
 
-    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_NOT_NAK);
+    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_NOT_NAK,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 
@@ -676,7 +685,8 @@ TEST_F(OutOfRangeTest, fixedHostOutOfSubnetReservationRemoved) {
     std::string hwaddress = "ff:ff:ff:ff:ff:01";
     std::string expected_address = "10.0.0.7";
 
-    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address, DOES_NOT_RENEW);
+    oorRenewReleaseTest(DIFF_SUBNET_NO_HR, hwaddress, expected_address, DOES_NOT_RENEW,
+                        DOES_RELEASE_DELETE, LEASE_AFFINITY_DISABLED);
 }
 
 // Test verifies that once-valid fixed address host reservation,
