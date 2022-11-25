@@ -564,7 +564,7 @@ Kea sources.
                // This is how kea-netconf can communicate with the DHCPv4 server.
                "dhcp4":
                {
-                   "comment": "DHCP4 server",
+                   "comment": "DHCPv4 server",
                    "model": "kea-dhcp4-server",
                    "control-socket":
                    {

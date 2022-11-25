@@ -238,7 +238,7 @@ from incoming IPv6 packets. This parameter is ignored by the Kea DHCPv4 server.
 If the packet contains only one IA_NA, the IAID value will be changed to ``0``
 and stored as such in the lease storage. Similarly if the packet contains only
 one IA_PD, the IAID value will be changed to ``0`` and stored as such in the
-lease storage. The IAID is restored to its intitial value in the response back
+lease storage. The IAID is restored to its initial value in the response back
 to the client. The change is visible in the identifier expression if the IAID is
 part of the expression.
 

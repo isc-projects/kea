@@ -1241,7 +1241,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
 
     // Note that with persist when the database is reloaded the user context
     // is still there so tables will be updated: the ACTION_IGNORE setting
-    // has no persistent effect: instead clenup the user context before
+    // has no persistent effect: instead cleanup the user context before
     // calling updateLease6...
 }
 

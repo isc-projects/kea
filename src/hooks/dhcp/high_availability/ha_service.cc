@@ -2996,7 +2996,7 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
     // The empty status can occur for the lease6-bulk-apply command. In that
     // case, the response may contain conflicted or erred leases within the
     // arguments, rather than globally. For other error cases let's construct
-    // the error message from tyhe global values.
+    // the error message from the global values.
     if (rcode != CONTROL_RESULT_EMPTY) {
         // Include an error text if available.
         if (args && args->getType() == Element::string) {

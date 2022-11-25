@@ -136,7 +136,7 @@
                     // further. The default value is 60000ms (60 seconds).
                     "sync-timeout": 60000,
                     // To not experience performance degradation when the Kea server is
-                    // processing packets on multiple threads, the High Availablility module
+                    // processing packets on multiple threads, the High Availability module
                     // must have multi-threading enabled.
                     "multi-threading": {
                         "enable-multi-threading": true,

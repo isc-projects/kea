@@ -764,7 +764,6 @@ public:
     /// will be stored.
     /// @param buffer_size size of the output buffer
     /// @param[out] bytes_converted number of bytes converted
-    /// value
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.

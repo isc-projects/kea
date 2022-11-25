@@ -55,7 +55,7 @@ The whole subnet is split into dynamic pools:
 To deploy this setup, follow the steps provided in the power user home setup with the following distinctions:
 
 1. Install CA only if the administrator is planning to manage Kea using RESTful API.
-   Otherwise, the High Availablility Kea server with multi-threading does not require CA to run.
+   Otherwise, the High Availability Kea server with multi-threading does not require CA to run.
 
 2. Alter the following to match the local setup:
 

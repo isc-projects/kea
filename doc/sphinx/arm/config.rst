@@ -195,7 +195,7 @@ User context can be added and edited in structures supported by commands.
 We encourage Kea users to utilize these functions to store information
 used by other systems and custom hooks.
 
-For example, the `subnet4-update` command can be used to add user context data
+For example, the ``subnet4-update`` command can be used to add user context data
 to an existing subnet.
 
 ::
@@ -214,7 +214,7 @@ The same can be done with many other commands like lease6-add etc.
 Kea also uses user context to store non-standard data.
 Currently, only :ref:`dhcp4-store-extended-info` uses this feature.
 
-When enabled, it adds the ISC key in `user-context` to differentiate automatically
+When enabled, it adds the ISC key in ``user-context`` to differentiate automatically
 added content.
 
 Example of relay information stored in a lease:

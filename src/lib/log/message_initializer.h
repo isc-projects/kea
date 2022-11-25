@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,7 @@ typedef boost::shared_ptr<LoggerDuplicatesList> LoggerDuplicatesListPtr;
 /// This is a helper class to add a set of message IDs and associated text to
 /// the global dictionary.
 ///
-/// It should be declared outside an execution unit and initialized with a
+/// It should be declared outside an execution unit and initialized with
 /// an array of values, alternating identifier, associated text and ending with
 /// a NULL, e.g.
 ///

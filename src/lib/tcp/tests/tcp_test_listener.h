@@ -290,7 +290,7 @@ protected:
     /// @brief Id to use for the next connection.
     size_t next_connection_id_;
 
-    /// @brief Callback connection invokes in requestReceived to construct a respsonse.
+    /// @brief Callback connection invokes in requestReceived to construct a response.
     TcpTestConnection::ResponseHandler response_handler_;
 
 public:

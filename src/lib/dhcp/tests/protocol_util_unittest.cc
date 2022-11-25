@@ -278,7 +278,7 @@ TEST(ProtocolUtilTest, writeEthernetHeaderBroadcast) {
     HWAddrPtr remote_hw_addr(new HWAddr(dest_hw_addr, 6, 1));
     ASSERT_NO_THROW(pkt->setRemoteHWAddr(remote_hw_addr));
 
-    // Set the broadcast flasg.
+    // Set the broadcast flags.
     pkt->setFlags(pkt->getFlags() | Pkt4::FLAG_BROADCAST_MASK);
 
     // Construct the ethernet header using HW addresses stored
@@ -331,7 +331,7 @@ TEST(ProtocolUtilTest, writeEthernetHeaderBroadcastRelayed) {
     HWAddrPtr remote_hw_addr(new HWAddr(dest_hw_addr, 6, 1));
     ASSERT_NO_THROW(pkt->setRemoteHWAddr(remote_hw_addr));
 
-    // Set the broadcast flasg.
+    // Set the broadcast flags.
     pkt->setFlags(pkt->getFlags() | Pkt4::FLAG_BROADCAST_MASK);
 
     // Set a gateway address: the broadcast flag is now for

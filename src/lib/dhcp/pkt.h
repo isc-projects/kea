@@ -379,7 +379,7 @@ public:
     /// Kea configuration. To prevent this, option copying should be
     /// enabled prior to passing the pointer to a packet to a hook library.
     ///
-    /// Note that only only does this method causes the server to copy
+    /// Not only does this method cause the server to copy
     /// an option, but the copied option also replaces the original
     /// option within the packet. The option can be then freely modified
     /// and the modifications will only affect the instance of this

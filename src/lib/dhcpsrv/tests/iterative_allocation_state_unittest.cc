@@ -171,4 +171,4 @@ TEST(IterativeAllocationStateTest, poolLastAllocated6) {
     EXPECT_FALSE(state->isLastAllocatedValid());
 }
 
-} // end of anonymouns namespace
+}  // anonymous namespace

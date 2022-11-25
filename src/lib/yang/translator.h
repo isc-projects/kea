@@ -202,9 +202,8 @@ public:
     /// in the sysrepo datastore by calling Session::getData(). It should be
     /// used sparingly in production code. It is primarily meant for unit tests.
     ///
-    /// @param xpath the xpath to be travelled
-    /// @param f the function to be called on the node itself and each
-    /// descendant
+    /// @param xpath the xpath of the root node belonging to the the tree being traversed
+    /// @param f the function to be called on the node itself and each descendant
     template <typename functor_t>
     void forAll(std::string const& xpath, functor_t f) const {
         std::optional<libyang::DataNode> const& data_node(session_.getData(xpath));

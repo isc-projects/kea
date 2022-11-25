@@ -395,13 +395,13 @@ and the fact tables are enabled or disabled are displayed.
 The code has issued a begin transaction call.  For the memory file database, this is
 a no-op.
 
-% DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR building extended info tables got an exception on the lease for %1: %2
-A debug message issued when the server is building extended info tables and
-receives an exception processing a lease.
-
 % DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 building extended info tables saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases were entered into tables
 Extended info tables build was finished. Some statistics are displayed, the
 updated in database is returned to the command interface.
+
+% DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR building extended info tables got an exception on the lease for %1: %2
+A debug message issued when the server is building extended info tables and
+receives an exception processing a lease.
 
 % DHCPSRV_MEMFILE_COMMIT committing to memory file database
 The code has issued a commit call.  For the memory file database, this is

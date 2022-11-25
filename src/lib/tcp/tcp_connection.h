@@ -307,7 +307,7 @@ public:
 
     /// @brief Returns an empty end point.
     ///
-    /// @return an unitialized endpoint.
+    /// @return an uninitialized endpoint.
     static const boost::asio::ip::tcp::endpoint& NO_ENDPOINT() {
         static boost::asio::ip::tcp::endpoint endpoint;
         return (endpoint);

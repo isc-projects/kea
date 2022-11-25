@@ -88,7 +88,7 @@ during upgrade depending on which packages were originally installed:
 
 If your goal is to have the entire Kea software suite installed, it is
 recommended that you simply ``apt install isc-kea`` after upgrading, which
-will install all of the relevent subpackages that make up Kea.
+will install all of the relevant subpackages that make up Kea.
 
 This upgrade path hiccup is not present on RPM and Alpine systems, however
 if you experience issues with upgrading past 2.3.1, please inform us on the

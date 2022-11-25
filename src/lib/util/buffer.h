@@ -282,7 +282,7 @@ protected:
 ///
 /// Note to developers: it may make more sense to introduce an abstract base
 /// class for the \c OutputBuffer and define the simple implementation as a
-/// a concrete derived class.  That way we can provide flexibility for future
+/// concrete derived class.  That way we can provide flexibility for future
 /// extension such as more efficient buffer implementation or allowing users
 /// to have their own customized version without modifying the source code.
 /// We in fact considered that option, but at the moment chose the simpler

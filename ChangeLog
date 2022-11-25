@@ -1,3 +1,5 @@
+Kea 2.3.3 (development) released on November 30, 2022
+
 2078.	[build]		andrei
 	The library version numbers have been bumped for the Kea 2.3.3
 	development release.
@@ -15,7 +17,7 @@
 2076.	[doc]		razvan
 	Add documentation for template classes and the new parameter
 	'template-test' which evaluates to a string value. This indicates
-	if the class is spaning classes with the name containing the
+	if the class is spawning classes with the name containing the
 	evaluated value: 'SPAWN_<template-class-name>_<evaluated-value>'
 	only if the value is not empty string. This will also add the
 	packet to the <template-class-name> class.

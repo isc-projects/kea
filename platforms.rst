@@ -20,10 +20,10 @@ Regularly Tested Platforms
 Kea is officially supported on Alpine, CentOS, Fedora, Ubuntu, Debian,
 and FreeBSD systems. Kea-|release| builds have been tested on:
 
-* Alpine — 3.13, 3.14, 3.15, 3.16
+* Alpine — 3.14, 3.15, 3.16
 * CentOS — 7
 * Debian — 10, 11
-* Fedora — 35, 36
+* Fedora — 36
 * FreeBSD — 12, 13
 * RHEL — 8, 9
 * Ubuntu — 18.04, 20.04, 22.04
@@ -38,29 +38,29 @@ ISC makes every effort to fix bugs on these platforms, but may be unable to
 do so quickly due to lack of hardware, less familiarity on the part of
 engineering staff, and other constraints.
 
-* FreeBSD — 11
-* macOS — 10.15, 11, 12
+* macOS — 11, 12, 13
 
 Community-Maintained
 --------------------
 
-These systems may not all have the required dependencies for building Kea
-easily available, although it is possible in many cases to compile
-those directly from source. The community and interested parties may wish
-to help with maintenance, and we welcome patch contributions, although we
-cannot guarantee that we will accept them. All contributions are
-assessed against the risk of adverse effect on officially supported
-platforms.
+These systems have once been regularly tested, but official support for it has
+been abandoned, usually due to discontinued support on their own part. Older
+versions may not have the required dependencies for building Kea easily
+available, although it is possible in many cases to compile on those directly
+from source. The community and interested parties may wish to help with
+maintenance, and we welcome patch contributions, although we cannot guarantee
+that we will accept them. All contributions are assessed against the risk of
+adverse effect on officially supported platforms.
 
 These include platforms past their respective EOL dates, such as:
 
-* Alpine — 3.10 (1 May 2021), 3.11, 3.12
-* CentOS — 6 (30 November 2020), 8 (31 December 2021)
-* Debian — 8 (30 June 2020), 9 (June 30, 2022)
-* Fedora — 31, 32, 33, 34
-* FreeBSD — 10 (31 October 2018)
-* macOS — 10.13, 10.14
-* Ubuntu — 14.04, 18.10, 19.04, 19.10, 21.04
+* Alpine — 3.10, 3.11, 3.12, 3.13 (EOL 01 November 2022)
+* CentOS — 6, 8 (EOL 31 December 2021)
+* Debian — 8, 9 (EOL 30 June 2022)
+* Fedora — 31, 32, 33, 34, 35 (EOL 13 December 2022)
+* FreeBSD — 10, 11 (EOL 30 September 2021)
+* macOS — 10.13, 10.14, 10.15 (EOL 12 September 2022)
+* Ubuntu — 14.04, 18.10, 19.04, 19.10, 21.04 (EOL 20 January 2022)
 
 Unsupported Platforms
 ---------------------

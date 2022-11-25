@@ -61,7 +61,7 @@
                 },
 
                 // Comment is optional. You can put some notes here.
-                "comment": "Kea DHCP4 server serving network on floor 13"
+                "comment": "Kea DHCPv4 server serving network on floor 13"
             }
 
         },

@@ -2444,8 +2444,9 @@ Memfile_LeaseMgr::getLeaseLimit(ConstElementPtr parent, Lease::Type ltype, size_
 }
 
 namespace {
+
 std::string
-idtoText(const OptionBuffer& id) {
+idToText(const OptionBuffer& id) {
     std::stringstream tmp;
     tmp << std::hex;
     bool delim = false;
@@ -2460,6 +2461,7 @@ idtoText(const OptionBuffer& id) {
     }
     return (tmp.str());
 }
+
 } // anonymous namespace
 
 Lease4Collection
@@ -2479,7 +2481,7 @@ Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
               DHCPSRV_MEMFILE_GET_RELAYID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idtoText(relay_id))
+        .arg(idToText(relay_id))
         .arg(qry_start_time)
         .arg(qry_end_time);
 
@@ -2525,7 +2527,7 @@ Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
               DHCPSRV_MEMFILE_GET_REMOTEID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idtoText(remote_id))
+        .arg(idToText(remote_id))
         .arg(qry_start_time)
         .arg(qry_end_time);
 
@@ -2690,7 +2692,7 @@ Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
               DHCPSRV_MEMFILE_GET_REMOTEID6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idtoText(remote_id))
+        .arg(idToText(remote_id))
         .arg(link_addr.toText())
         .arg(static_cast<unsigned>(link_len));
 

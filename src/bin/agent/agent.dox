@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,7 +122,7 @@ It was eventually decided to not implement the secure layer within Kea for the f
   burden on Kea maintenance.
 
 In the installations where securing command channel is critical (most of the
-installations?), a reverse HTTP proxy can be setup using one of the third
+installations?), a reverse HTTP proxy can be set up using one of the third
 party HTTP server implementations, e.g. Apache, nginx etc.
 
 */

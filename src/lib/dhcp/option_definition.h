@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -345,7 +345,7 @@ public:
     /// @brief Return array type indicator.
     ///
     /// The method returns the bool value to indicate whether the option is a
-    /// a single value or an array of values.
+    /// single value or an array of values.
     ///
     /// @return true if option comprises an array of values.
     bool getArrayType() const { return (array_type_); }

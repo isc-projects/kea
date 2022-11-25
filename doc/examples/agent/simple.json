@@ -84,7 +84,7 @@
             // This is how the Agent can communicate with the DHCPv4 server.
             "dhcp4":
             {
-                "comment": "socket to DHCP4 server",
+                "comment": "socket to DHCPv4 server",
                 "socket-type": "unix",
                 "socket-name": "/tmp/kea4-ctrl-socket"
             },

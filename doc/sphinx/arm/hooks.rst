@@ -22,7 +22,7 @@ to load those libraries.
 
 Hook libraries are loaded by individual Kea processes, not by Kea as a
 whole. This means, among other things, that it is possible to associate one set
-of libraries with the DHCP4 server and a different set with the DHCP6
+of libraries with the DHCPv4 server and a different set with the DHCPv6
 server.
 
 It is also possible for a process to load

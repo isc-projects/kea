@@ -318,7 +318,7 @@ public:
     /// If incoming packet is associated with the template class, the name of
     /// generated spawned class is prepended with this prefix.
     /// For example, a packet that associates with the template class "FOO" by
-    /// evaluating the templeta class expression to BAR will cause the packet to
+    /// evaluating the template class expression to BAR will cause the packet to
     /// be assigned to class SPAWN_FOO_BAR.
     static const std::string SPAWN_CLASS_PREFIX;
 };

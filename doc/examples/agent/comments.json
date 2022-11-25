@@ -41,7 +41,7 @@
         {
             "dhcp4":
             {
-                "comment": "control socket for DHCP4 server",
+                "comment": "control socket for DHCPv4 server",
                 "socket-type": "unix",
                 "socket-name": "/tmp/kea4-ctrl-socket"
             }

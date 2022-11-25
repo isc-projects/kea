@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -266,14 +266,14 @@ typedef boost::shared_ptr<D2Params> D2ParamsPtr;
 class TSIGKeyInfo : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Defines string values for the supported TSIG algorithms
-    //@{
+    /// @{
     static const char* HMAC_MD5_STR;
     static const char* HMAC_SHA1_STR;
     static const char* HMAC_SHA256_STR;
     static const char* HMAC_SHA224_STR;
     static const char* HMAC_SHA384_STR;
     static const char* HMAC_SHA512_STR;
-    //}@
+    /// @}
 
     /// @brief Constructor
     ///

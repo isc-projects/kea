@@ -790,7 +790,7 @@ ASCII, then the spawned class will use the ``SPAWN_Client-ID_foobar`` name
 effectively associating the regular class to the packet. In this second case,
 both ``SPAWN_Client-ID_foobar`` and ``Client-ID`` classes will be associated
 with the packet.
-The ``test`` expression on the regular classs ``SPAWN_Client-ID_foobar`` is not
+The ``test`` expression on the regular class ``SPAWN_Client-ID_foobar`` is not
 mandatory and can be omitted, but it is used here with a different match
 expression for example purposes.
 
@@ -836,7 +836,7 @@ is not mandatory that the flag be set to ``true``.
    options, are associated with the spawned class. This permits configuring
    limits which apply for all packets associated with a class spawned at
    runtime, according to the ``template-test`` expression in the parent template
-   class. For a more detaild description on how to configure limits using the
+   class. For a more detailed description on how to configure limits using the
    limits hooks library see the :ref:`hooks-limits-configuration`.
    For example, using the configuration below, ingress DHCPv6 packets that have
    client ID values (in the format expressed by the Kea evaluator) ``foobar``
