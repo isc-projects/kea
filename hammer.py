@@ -2251,14 +2251,13 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
 
-    freeradius_client_packages = []
-    freeradius_client_packages.append('freeradius-client-1.1.7-{}'.format(frc_version))
-    freeradius_client_packages.append('freeradius-client-devel-1.1.7-{}'.format(frc_version))
+    install_pkgs([
+        f'freeradius-client-1.1.7-{frc_version}',
+        f'freeradius-client-devel-1.1.7-{frc_version}',
+    ], env=env, check_times=check_times)
 
-    install_pkgs(freeradius_client_packages, env=env, check_times=check_times)
-
-    for i in freeradius_client_packages:
-        _append_to_file('freeradius-pkgs.txt', i)
+    _append_to_file('freeradius-pkgs.txt', f'freeradius-client-1.1.7-{frc_version}.x86_64.rpm')
+    _append_to_file('freeradius-pkgs.txt', f'freeradius-client-devel-1.1.7-{frc_version}.x86_64.rpm')
 
     # unpack kea sources tarball
     execute('sudo rm -rf kea-src', dry_run=dry_run)
@@ -2355,14 +2354,13 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
 
-    freeradius_client_packages = []
-    freeradius_client_packages.append('libfreeradius-client=1.1.7-{}'.format(frc_version))
-    freeradius_client_packages.append('libfreeradius-client-dev=1.1.7-{}'.format(frc_version))
+    install_pkgs([
+        f'libfreeradius-client=1.1.7-{frc_version}',
+        f'libfreeradius-client-dev=1.1.7-{frc_version}',
+    ], env=env, check_times=check_times)
 
-    install_pkgs(freeradius_client_packages, env=env, check_times=check_times)
-
-    for i in freeradius_client_packages:
-        _append_to_file('freeradius-pkgs.txt', i)
+    _append_to_file('freeradius-pkgs.txt', f'libfreeradius-client_1.1.7-{frc_version}_amd64.deb')
+    _append_to_file('freeradius-pkgs.txt', f'libfreeradius-client-dev_1.1.7-{frc_version}_amd64.deb')
 
     # unpack tarball
     execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
