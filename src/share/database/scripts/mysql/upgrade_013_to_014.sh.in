@@ -562,7 +562,7 @@ BEGIN
     DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
         RETURN false;
 
-    SELECT JSON_EXTRACT('{ "foo": 1 }', '$.foo') INTO dummy;
+    SELECT JSON_EXTRACT('{ "foo-bar": 1 }', '$."foo-bar"') INTO dummy;
     RETURN true;
 END $$
 DELIMITER ;
