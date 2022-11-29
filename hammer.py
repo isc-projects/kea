@@ -816,14 +816,16 @@ class VagrantEnv(object):
 
         # prepare tarball if needed and upload it to vagrant system
         if not tarball_path:
+            execute('mkdir -p ~/.hammer-tmp')
             name_ver = 'kea-%s' % pkg_version
             cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
             cmd += ' --exclude "*~" --exclude .git --exclude .libs '
             cmd += ' --exclude .deps --exclude \'*.o\'  --exclude \'*.lo\' '
-            cmd += ' -zcf /tmp/%s.tar.gz .' % name_ver
+            cmd += ' -zcf ~/.hammer-tmp/%s.tar.gz .' % name_ver
             execute(cmd)
-            tarball_path = '/tmp/%s.tar.gz' % name_ver
+            tarball_path = '~/.hammer-tmp/%s.tar.gz' % name_ver
         self.upload(tarball_path)
+        execute('rm -rf ~/.hammer-tmp')
 
         log_file_path = os.path.join(self.vagrant_dir, 'build.log')
         log.info('Build log file stored to %s', log_file_path)
@@ -1063,13 +1065,15 @@ def _install_gtest_sources():
             log.info(f'gtest is already installed in {gtest_path}.')
             return
 
-    cmd = 'wget --no-verbose -O /tmp/gtest.tar.gz '
+    execute('mkdir -p ~/.hammer-tmp')
+    cmd = 'wget --no-verbose -O ~/.hammer-tmp/gtest.tar.gz '
     cmd += f'https://github.com/google/googletest/archive/release-{gtest_version}.tar.gz'
     execute(cmd)
     execute('sudo mkdir -p /usr/src')
-    execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
+    execute('sudo tar -C /usr/src -zxf ~/.hammer-tmp/gtest.tar.gz')
     execute(f'sudo ln -sf /usr/src/googletest-release-{gtest_version} /usr/src/googletest')
-    os.unlink('/tmp/gtest.tar.gz')
+    os.unlink('~/.hammer-tmp/gtest.tar.gz')
+    execute('rm -rf ~/.hammer-tmp')
 
 
 def _install_libyang_from_sources(ignore_errors = False):
@@ -1084,14 +1088,15 @@ def _install_libyang_from_sources(ignore_errors = False):
 
     version='v2.1.4'
 
-    execute('rm -rf /tmp/libyang')
+    execute('rm -rf ~/.hammer-tmp')
+    execute('mkdir -p ~/.hammer-tmp')
     try:
-        execute('git clone https://github.com/CESNET/libyang.git /tmp/libyang')
-        execute(f'git checkout {version}', cwd='/tmp/libyang')
-        execute('mkdir /tmp/libyang/build')
-        execute('cmake  ..', cwd='/tmp/libyang/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/libyang/build')
-        execute('sudo make install', cwd='/tmp/libyang/build')
+        execute('git clone https://github.com/CESNET/libyang.git ~/.hammer-tmp/libyang')
+        execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang')
+        execute('mkdir ~/.hammer-tmp/libyang/build')
+        execute('cmake  ..', cwd='~/.hammer-tmp/libyang/build')
+        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang/build')
+        execute('sudo make install', cwd='~/.hammer-tmp/libyang/build')
         system, revision = get_system_revision()
         if system != 'alpine':
             execute('sudo ldconfig')
@@ -1100,7 +1105,7 @@ def _install_libyang_from_sources(ignore_errors = False):
         if not ignore_errors:
             raise e
     finally:
-        execute('rm -rf /tmp/libyang')
+        execute('rm -rf ~/.hammer-tmp')
 
 
 def _install_sysrepo_from_sources(ignore_errors = False):
@@ -1119,14 +1124,15 @@ def _install_sysrepo_from_sources(ignore_errors = False):
     execute('sudo mkdir -p /etc/sysrepo')
     execute('sudo chown -R "${USER}:$(id -gn)" /etc/sysrepo')
 
-    execute('rm -rf /tmp/sysrepo')
+    execute('rm -rf ~/.hammer-tmp')
+    execute('mkdir -p ~/.hammer-tmp')
     try:
-        execute('git clone https://github.com/sysrepo/sysrepo.git /tmp/sysrepo')
-        execute(f'git checkout {version}', cwd='/tmp/sysrepo')
-        execute('mkdir /tmp/sysrepo/build')
-        execute('cmake -DREPO_PATH=/etc/sysrepo ..', cwd='/tmp/sysrepo/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/sysrepo/build')
-        execute('sudo make install', cwd='/tmp/sysrepo/build')
+        execute('git clone https://github.com/sysrepo/sysrepo.git ~/.hammer-tmp/sysrepo')
+        execute(f'git checkout {version}', cwd='~/.hammer-tmp/sysrepo')
+        execute('mkdir ~/.hammer-tmp/sysrepo/build')
+        execute('cmake -DREPO_PATH=/etc/sysrepo ..', cwd='~/.hammer-tmp/sysrepo/build')
+        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/sysrepo/build')
+        execute('sudo make install', cwd='~/.hammer-tmp/sysrepo/build')
         system, revision = get_system_revision()
         if system != 'alpine':
             execute('sudo ldconfig')
@@ -1135,7 +1141,7 @@ def _install_sysrepo_from_sources(ignore_errors = False):
         if not ignore_errors:
             raise e
     finally:
-        execute('rm -rf /tmp/sysrepo')
+        execute('rm -rf ~/.hammer-tmp')
 
 
 def _install_libyang_cpp_from_sources(ignore_errors = False):
@@ -1150,14 +1156,15 @@ def _install_libyang_cpp_from_sources(ignore_errors = False):
 
     version='ae7d649ea75da081725c119dd553b2ef3121a6f8'
 
-    execute('rm -rf /tmp/libyang')
+    execute('rm -rf ~/.hammer-tmp')
+    execute('mkdir -p ~/.hammer-tmp')
     try:
-        execute('git clone https://github.com/CESNET/libyang-cpp.git /tmp/libyang-cpp')
-        execute(f'git checkout {version}', cwd='/tmp/libyang-cpp')
-        execute('mkdir /tmp/libyang-cpp/build')
-        execute('cmake -DBUILD_TESTING=OFF .. ', cwd='/tmp/libyang-cpp/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/libyang-cpp/build')
-        execute('sudo make install', cwd='/tmp/libyang-cpp/build')
+        execute('git clone https://github.com/CESNET/libyang-cpp.git ~/.hammer-tmp/libyang-cpp')
+        execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang-cpp')
+        execute('mkdir ~/.hammer-tmp/libyang-cpp/build')
+        execute('cmake -DBUILD_TESTING=OFF .. ', cwd='~/.hammer-tmp/libyang-cpp/build')
+        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang-cpp/build')
+        execute('sudo make install', cwd='~/.hammer-tmp/libyang-cpp/build')
         system, revision = get_system_revision()
         if system != 'alpine':
             execute('sudo ldconfig')
@@ -1166,7 +1173,7 @@ def _install_libyang_cpp_from_sources(ignore_errors = False):
         if not ignore_errors:
             raise e
     finally:
-        execute('rm -rf /tmp/libyang-cpp')
+        execute('rm -rf ~/.hammer-tmp')
 
 
 def _install_sysrepo_cpp_from_sources(ignore_errors = False):
@@ -1181,14 +1188,15 @@ def _install_sysrepo_cpp_from_sources(ignore_errors = False):
 
     version='02634174ffc60568301c3d9b9b7cf710cff6a586'
 
-    execute('rm -rf /tmp/libyang')
+    execute('rm -rf ~/.hammer-tmp')
+    execute('mkdir -p ~/.hammer-tmp')
     try:
-        execute('git clone https://github.com/sysrepo/sysrepo-cpp.git /tmp/sysrepo-cpp')
-        execute(f'git checkout {version}', cwd='/tmp/sysrepo-cpp')
-        execute('mkdir /tmp/sysrepo-cpp/build')
-        execute('cmake -DBUILD_TESTING=OFF .. ', cwd='/tmp/sysrepo-cpp/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='/tmp/sysrepo-cpp/build')
-        execute('sudo make install', cwd='/tmp/sysrepo-cpp/build')
+        execute('git clone https://github.com/sysrepo/sysrepo-cpp.git ~/.hammer-tmp/sysrepo-cpp')
+        execute(f'git checkout {version}', cwd='~/.hammer-tmp/sysrepo-cpp')
+        execute('mkdir ~/.hammer-tmp/sysrepo-cpp/build')
+        execute('cmake -DBUILD_TESTING=OFF .. ', cwd='~/.hammer-tmp/sysrepo-cpp/build')
+        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/sysrepo-cpp/build')
+        execute('sudo make install', cwd='~/.hammer-tmp/sysrepo-cpp/build')
         system, revision = get_system_revision()
         if system != 'alpine':
             execute('sudo ldconfig')
@@ -1197,7 +1205,7 @@ def _install_sysrepo_cpp_from_sources(ignore_errors = False):
         if not ignore_errors:
             raise e
     finally:
-        execute('rm -rf /tmp/sysrepo-cpp')
+        execute('rm -rf ~/.hammer-tmp')
 
 
 def _install_netconf_libraries_from_sources(ignore_errors = False):
@@ -2472,7 +2480,6 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         raise NotImplementedError('no implementation for %s' % system)
 
     if system in ['ubuntu', 'debian']:
-        # NOTE: /tmp/workspace/kea-dev/pkg/kea-src/
         execute('mv kea-src/isc-kea_* %s' % pkgs_dir)
         execute('mv kea-src/*deb %s' % pkgs_dir)
     elif system in ['fedora', 'centos', 'rhel']:
@@ -2595,21 +2602,25 @@ def _install_vagrant(ver=RECOMMENDED_VAGRANT_VERSION, upgrade=False):
     if system in ['fedora', 'centos', 'rhel']:
         if upgrade:
             execute('sudo yum remove -y vagrant')
+        execute('mkdir -p ~/.hammer-tmp')
         rpm = 'vagrant_%s_x86_64.rpm' % ver
-        cmd = 'wget --no-verbose -O /tmp/%s ' % rpm
+        cmd = 'wget --no-verbose -O ~/.hammer-tmp/%s ' % rpm
         cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, rpm)
         execute(cmd)
-        execute('sudo rpm -i /tmp/%s' % rpm)
-        os.unlink('/tmp/%s' % rpm)
+        execute('sudo rpm -i ~/.hammer-tmp/%s' % rpm)
+        os.unlink('~/.hammer-tmp/%s' % rpm)
+        execute('rm -rf ~/.hammer-tmp')
     elif system in ['debian', 'ubuntu']:
         if upgrade:
             execute('sudo apt-get purge -y vagrant')
+        execute('mkdir -p ~/.hammer-tmp')
         deb = 'vagrant_%s_x86_64.deb' % ver
-        cmd = 'wget --no-verbose -O /tmp/%s ' % deb
+        cmd = 'wget --no-verbose -O ~/.hammer-tmp/%s ' % deb
         cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, deb)
         execute(cmd)
-        execute('sudo dpkg -i /tmp/%s' % deb)
-        os.unlink('/tmp/%s' % deb)
+        execute('sudo dpkg -i ~/.hammer-tmp/%s' % deb)
+        os.unlink('~/.hammer-tmp/%s' % deb)
+        execute('rm -rf ~/.hammer-tmp')
     elif system in ['arch']:
         pass
     else:
