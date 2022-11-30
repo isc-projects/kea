@@ -407,13 +407,6 @@ with possible entries:
 
     Maximum number of leases to return in a single fetch (default 100).
 
-- ``max-send-queue-size``
-
-    Maximum number of messages of the connection send queue before
-    queuing received queries (default 0 which means no limit). Beware
-    that a sent message does not mean that previous messages were received:
-    both kernel and network can buffer them.
-
 There should be common TLS parameters once TLS is supported.
 
 For instance:
@@ -438,8 +431,7 @@ For instance:
                       "max-requester-connections" : 10,
                       "max-concurrent-queries": 4,
                       "max-requester-idle-time" :  300,
-                      "max-leases-per-fetch" : 100,
-                      "max-send-queue-size": 0
+                      "max-leases-per-fetch" : 100
                  }
              }
          }
