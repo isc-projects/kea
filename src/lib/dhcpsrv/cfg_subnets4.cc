@@ -505,6 +505,7 @@ CfgSubnets4::getLinks(const IOAddress& link_addr, uint8_t& link_len) const {
         }
         uint8_t plen = subnet->get().second;
         if (!link_len_set || (plen < link_len)) {
+            link_len_set = true;
             link_len = plen;
         }
         links.insert(subnet->getID());
