@@ -453,9 +453,6 @@ protected:
     /// @brief Maximum bytes to read in a single socket read.
     size_t read_max_;
 
-    /// @brief Maximum bytes to write in a single socket write.
-    size_t write_max_;
-
     /// @brief Buffer for a single socket read.
     WireData input_buf_;
 };
