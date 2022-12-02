@@ -45,6 +45,11 @@ TcpListener::TcpListener(IOService& io_service,
     }
 }
 
+
+TcpListener::~TcpListener() {
+    stop();
+}
+
 const TCPEndpoint&
 TcpListener::getEndpoint() const {
     return (*endpoint_);

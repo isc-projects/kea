@@ -64,8 +64,7 @@ public:
                 const TcpConnectionFilterCallback& connection_filter = 0);
 
     /// @brief Virtual destructor.
-    virtual ~TcpListener() {
-    }
+    virtual ~TcpListener();
 
     /// @brief Returns reference to the current listener endpoint.
     const asiolink::TCPEndpoint& getEndpoint() const;
