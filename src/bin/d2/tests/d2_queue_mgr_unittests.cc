@@ -156,7 +156,7 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
 
         // Verify the peeked entry is the one it should be.
         ASSERT_TRUE(ncr);
-        EXPECT_TRUE (*(ref_msgs[i]) == *ncr);
+        EXPECT_EQ(*(ref_msgs[i]), *ncr);
 
         // Verify that peek did not alter the queue size.
         EXPECT_EQ(VALID_MSG_CNT - i, queue_mgr->getQueueSize());
@@ -181,13 +181,13 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
 
     // Verify that peekAt returns the correct entry.
     EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
-    EXPECT_TRUE (*(ref_msgs[1]) == *ncr);
+    EXPECT_EQ(*(ref_msgs[1]), *ncr);
 
     // Verify that dequeueAt removes the correct entry.
     // Removing it, this should shift the queued entries forward by one.
     EXPECT_NO_THROW(queue_mgr->dequeueAt(1));
     EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
-    EXPECT_TRUE (*(ref_msgs[2]) == *ncr);
+    EXPECT_EQ(*(ref_msgs[2]), *ncr);
 
     // Verify the peekAt and dequeueAt throw when given indexes beyond the end.
     EXPECT_THROW(queue_mgr->peekAt(VALID_MSG_CNT + 1), D2QueueMgrInvalidIndex);

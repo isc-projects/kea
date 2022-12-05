@@ -191,7 +191,7 @@ public:
     /// (This method is principally for testing.)
     ///
     /// \return true if the logger objects are instances of the same logger.
-    bool operator==(const LoggerImpl& other) {
+    bool operator==(const LoggerImpl& other) const {
         return (name_ == other.name_);
     }
 

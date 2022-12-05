@@ -455,7 +455,7 @@ protected:
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to an object representing HTTP response.
     virtual HttpResponsePtr
-    createDynamicHttpResponse(HttpRequestPtr request) {
+    createDynamicHttpResponse(HttpRequestPtr request) override {
         // Request must always be JSON.
         PostHttpRequestJsonPtr request_json =
             boost::dynamic_pointer_cast<PostHttpRequestJson>(request);

@@ -674,7 +674,7 @@ NameChangeRequest::toText() const {
 }
 
 bool
-NameChangeRequest::operator == (const NameChangeRequest& other) {
+NameChangeRequest::operator == (const NameChangeRequest& other) const {
     return ((change_type_ == other.change_type_) &&
             (forward_change_ == other.forward_change_) &&
             (reverse_change_ == other.reverse_change_) &&
@@ -687,7 +687,7 @@ NameChangeRequest::operator == (const NameChangeRequest& other) {
 }
 
 bool
-NameChangeRequest::operator != (const NameChangeRequest& other) {
+NameChangeRequest::operator != (const NameChangeRequest& other) const {
     return (!(*this == other));
 }
 

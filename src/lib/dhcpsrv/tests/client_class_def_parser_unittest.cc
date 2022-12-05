@@ -1968,7 +1968,7 @@ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
             if (scenario.exp_triplet_.unspecified()) {
                 EXPECT_TRUE(class_def->getValid().unspecified());
             } else {
-                EXPECT_EQ(class_def->getValid(), scenario.exp_triplet_);
+                EXPECT_EQ(class_def->getValid().unspecified(), scenario.exp_triplet_.unspecified());
                 EXPECT_EQ(class_def->getValid().getMin(), scenario.exp_triplet_.getMin());
                 EXPECT_EQ(class_def->getValid().get(), scenario.exp_triplet_.get());
                 EXPECT_EQ(class_def->getValid().getMax(), scenario.exp_triplet_.getMax());
@@ -2031,7 +2031,7 @@ TEST_F(ClientClassDefParserTest, preferredLifetimeTests) {
             if (scenario.exp_triplet_.unspecified()) {
                 EXPECT_TRUE(class_def->getPreferred().unspecified());
             } else {
-                EXPECT_EQ(class_def->getPreferred(), scenario.exp_triplet_);
+                EXPECT_EQ(class_def->getPreferred().unspecified(), scenario.exp_triplet_.unspecified());
                 EXPECT_EQ(class_def->getPreferred().getMin(), scenario.exp_triplet_.getMin());
                 EXPECT_EQ(class_def->getPreferred().get(), scenario.exp_triplet_.get());
                 EXPECT_EQ(class_def->getPreferred().getMax(), scenario.exp_triplet_.getMax());

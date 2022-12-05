@@ -454,7 +454,6 @@ public:
 
         // Iterate over the clients, checking their outcomes.
         size_t total_responses = 0;
-        size_t connection_id = 1;
         for (auto const& client : clients_) {
             // Client should have completed its receive successfully.
             ASSERT_TRUE(client->receiveDone());

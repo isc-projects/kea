@@ -304,7 +304,7 @@ public:
 
         auto preferred_subnet = selected_subnet;
         for (auto s = subnets.begin(); s != subnets.end(); ++s) {
-            if ((*s)->getClientClass() != selected_subnet->getClientClass()) {
+            if ((*s)->getClientClass().get() != selected_subnet->getClientClass().get()) {
                 continue;
             }
             auto current_subnet_state = (*s)->getAllocationState();

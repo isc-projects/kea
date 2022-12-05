@@ -36,11 +36,11 @@ bool
 ConfigDbInfo::getParameterValue(const std::string& name, std::string& value) const {
     auto param = access_params_.find(name);
     if (param == access_params_.end()) {
-        return(false);
+        return (false);
     }
 
     value = param->second;
-    return(true);
+    return (true);
 }
 
 //******** ConfigControlInfo ********//
@@ -117,13 +117,13 @@ ConfigControlInfo::toElement() const {
                     Element::create(static_cast<int>(config_fetch_wait_time_)));
     }
 
-    return(result);
+    return (result);
 }
 
 bool
 ConfigControlInfo::equals(const ConfigControlInfo& other) const {
-   return ((db_infos_ == other.db_infos_) &&
-           (config_fetch_wait_time_ == other.config_fetch_wait_time_));
+    return ((db_infos_ == other.db_infos_) &&
+            (config_fetch_wait_time_.get() == other.config_fetch_wait_time_.get()));
 }
 
 } // end of namespace isc::process

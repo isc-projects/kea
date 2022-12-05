@@ -45,7 +45,6 @@ TcpListener::TcpListener(IOService& io_service,
     }
 }
 
-
 TcpListener::~TcpListener() {
     stop();
 }

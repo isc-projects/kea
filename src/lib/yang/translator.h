@@ -13,6 +13,8 @@
 #include <sysrepo-cpp/Connection.hpp>
 #include <sysrepo-cpp/Session.hpp>
 
+#include <unordered_map>
+
 namespace isc {
 namespace yang {
 

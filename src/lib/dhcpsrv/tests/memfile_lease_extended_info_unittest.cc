@@ -1066,7 +1066,7 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     EXPECT_NE(lease_addr, lease->addr_);
     // Put a value different of the expected one.
     lease->extended_info_action_ = Lease::ACTION_UPDATE;
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->deleteLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
@@ -1108,7 +1108,7 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
     EXPECT_EQ(lease_addr, lease->addr_);
     // Put a value different from the expected one.
     lease->extended_info_action_ = Lease::ACTION_UPDATE;
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->deleteLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
@@ -1141,7 +1141,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     lease->setContext(user_context);
     // Put a value different of the expected one.
     lease->extended_info_action_ = Lease::ACTION_DELETE;
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
@@ -1191,7 +1191,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
     ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
     lease->setContext(user_context);
     lease->extended_info_action_ = Lease::ACTION_UPDATE;
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
@@ -1214,7 +1214,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
                                            123, 1000, 2000, 1)));
 
     // Add the lease.
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
 
@@ -1269,7 +1269,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
     lease->setContext(user_context);
 
     // Add the lease.
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
@@ -1310,7 +1310,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     lease->setContext(user_context);
 
     // Add the lease.
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
@@ -1347,7 +1347,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
                                            123, 1000, 2000, 1)));
 
     // Add the lease.
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
@@ -1407,7 +1407,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6updateDisabled) {
                                            123, 1000, 2000, 1)));
 
     // Add the lease.
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
 
@@ -1459,7 +1459,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     lease->setContext(user_context);
 
     // Add the lease.
-    bool ret;
+    bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
 

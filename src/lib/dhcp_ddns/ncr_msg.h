@@ -709,8 +709,8 @@ public:
     /// @return a string containing the text.
     std::string toText() const;
 
-    bool operator == (const NameChangeRequest& b);
-    bool operator != (const NameChangeRequest& b);
+    bool operator == (const NameChangeRequest& b) const;
+    bool operator != (const NameChangeRequest& b) const;
 
 private:
     /// @brief Denotes the type of this change as either an Add or a Remove.
