@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,8 +88,15 @@ struct SectionIteratorImpl;
 /// The template parameter is either \c QuestionPtr (for the question section)
 /// or \c RRsetPtr (for the answer, authority, or additional section).
 template <typename T>
-class SectionIterator : public std::iterator<std::input_iterator_tag, T> {
+class SectionIterator {
 public:
+    // Aliases used to enable iterator behavior on this class
+    using iterator_category = std::input_iterator_tag;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = T*;
+    using reference = T&;
+
     SectionIterator() : impl_(NULL) {}
     SectionIterator(const SectionIteratorImpl<T>& impl);
     ~SectionIterator();
@@ -673,10 +680,8 @@ typedef boost::shared_ptr<const Message> ConstMessagePtr;
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const Message& message);
-}
-}
-#endif  // MESSAGE_H
 
-// Local Variables:
-// mode: c++
-// End:
+}  // namespace dns
+}  // namespace isc
+
+#endif  // MESSAGE_H

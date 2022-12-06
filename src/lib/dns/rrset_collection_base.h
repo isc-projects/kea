@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -153,10 +153,15 @@ public:
     ///
     /// It behaves like a \c std::iterator forward iterator, so please
     /// see its documentation for usage.
-    class Iterator : std::iterator<std::forward_iterator_tag,
-                                   const isc::dns::AbstractRRset>
-    {
+    class Iterator {
     public:
+        // Aliases used to enable iterator behavior on this class
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = isc::dns::AbstractRRset const;
+        using difference_type = std::ptrdiff_t;
+        using pointer = isc::dns::AbstractRRset const*;
+        using reference = isc::dns::AbstractRRset const&;
+
         explicit Iterator(IterPtr iter) :
             iter_(iter)
         {}
@@ -207,7 +212,3 @@ typedef boost::shared_ptr<RRsetCollectionBase> RRsetCollectionPtr;
 } // end of namespace isc
 
 #endif  // RRSET_COLLECTION_BASE_H
-
-// Local Variables:
-// mode: c++
-// End:

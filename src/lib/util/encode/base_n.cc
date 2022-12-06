@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,8 +112,15 @@ const uint8_t BINARY_ZERO_CODE = 0;
 // Note: this class is intended to be used within this implementation file,
 // and assumes "base < base_end" on construction without validating the
 // arguments.  The behavior is undefined if this assumption doesn't hold.
-class EncodeNormalizer : public iterator<input_iterator_tag, uint8_t> {
+class EncodeNormalizer {
 public:
+    // Aliases used to enable iterator behavior on this class
+    using iterator_category = input_iterator_tag;
+    using value_type = uint8_t;
+    using difference_type = ptrdiff_t;
+    using pointer = uint8_t*;
+    using reference = uint8_t&;
+
     EncodeNormalizer(const vector<uint8_t>::const_iterator& base,
                      const vector<uint8_t>::const_iterator& base_end) :
         base_(base), base_end_(base_end), in_pad_(false)
@@ -167,8 +174,15 @@ private:
 // and for simplicity assumes "base < base_beginpad <= base_end" on
 // construction without validating the arguments.  The behavior is undefined
 // if this assumption doesn't hold.
-class DecodeNormalizer : public iterator<input_iterator_tag, char> {
+class DecodeNormalizer {
 public:
+    // Aliases used to enable iterator behavior on this class
+    using iterator_category = input_iterator_tag;
+    using value_type = char;
+    using difference_type = ptrdiff_t;
+    using pointer = char*;
+    using reference = char&;
+
     DecodeNormalizer(const char base_zero_code,
                      const string::const_iterator& base,
                      const string::const_iterator& base_beginpad,
