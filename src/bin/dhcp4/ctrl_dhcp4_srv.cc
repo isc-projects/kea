@@ -917,10 +917,11 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
             std::bind(&ControlledDhcpv4Srv::dbFailedCallback, srv, ph::_1);
 
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
-        cfg_db->setAppendedParameters("universe=4");
+        string params = "universe=4";
         if (cfg_db->getExtendedInfoTablesEnabled()) {
-            cfg_db->setAppendedParameters("extended-info-tables=true");
+            params += " extended-info-tables=true";
         }
+        cfg_db->setAppendedParameters(params);
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
         srv->getNetworkState()->reset(NetworkState::Origin::DB_CONNECTION);
