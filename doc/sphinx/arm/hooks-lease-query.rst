@@ -387,6 +387,13 @@ with possible entries:
     Port upon which to listen. Default to 67 for IPv4 and 547 for IPv6,
     i.e. the same value as for the UDP DHCP service but for TCP.
 
+- ``max-bulk-query-threads``
+
+    Indicates the maximum number of threads the Bulk Lease Query processing
+    should use. A value of 0 instructs the server to use the same number of
+    threads that the Kea core is using for DHCP multi-threading.
+    The default is 0.
+
 - ``max-requester-connections``
 
     Maximum number of concurrent requester connections (default 10, must be
@@ -420,18 +427,19 @@ For instance:
              "parameters": {
                  "requesters": [ "2001:db8:1::1", "2001:db8:2::1" ],
                  "advanced" : {
-                      "bulk-query-enabled" : true,
-                      "active-query-enabled" : false,
+                      "bulk-query-enabled": true,
+                      "active-query-enabled": false,
 
                       "extended-info-tables-enabled": true,
 
                       "lease-query-ip": "::1",
                       "lease-query-tcp-port": 547,
 
-                      "max-requester-connections" : 10,
+                      "max-bulk-query-threads": 0,
+                      "max-requester-connections": 10,
                       "max-concurrent-queries": 4,
-                      "max-requester-idle-time" :  300,
-                      "max-leases-per-fetch" : 100
+                      "max-requester-idle-time": 300,
+                      "max-leases-per-fetch": 100
                  }
              }
          }
