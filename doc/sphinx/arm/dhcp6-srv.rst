@@ -1132,7 +1132,7 @@ and which is delegated a prefix from this pool.
                "pd-pools": [
                    {
                        "prefix": "2001:db8:1:8000::",
-                       "prefix-len": 48,
+                       "prefix-len": 56,
                        "delegated-len": 64,
                        "excluded-prefix": "2001:db8:1:8000:cafe:80::",
                        "excluded-prefix-len": 72
@@ -3718,7 +3718,7 @@ specific hosts:
            "pd-pools": [
                {
                    "prefix": "2001:db8:1:8000::",
-                   "prefix-len": 48,
+                   "prefix-len": 56,
                    "delegated-len": 64
                }
            ],
