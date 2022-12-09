@@ -94,6 +94,11 @@ public:
         return (idle_timeout_);
     }
 
+    /// @brief Returns connections.
+    const TcpConnectionList& getConnections() const {
+        return (connections_.getConnections());
+    }
+
 protected:
 
     /// @brief Creates @ref TcpConnection instance and adds it to the
