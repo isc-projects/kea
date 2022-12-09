@@ -26,8 +26,6 @@
 namespace isc {
 namespace tcp {
 
-#define HERE(a) std::cout << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << " " << a << std::endl << std::flush;
-
 /// @brief Defines a data structure for storing raw bytes of data on the wire.
 typedef std::vector<uint8_t> WireData;
 typedef boost::shared_ptr<WireData> WireDataPtr;

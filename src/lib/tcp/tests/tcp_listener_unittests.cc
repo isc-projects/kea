@@ -63,27 +63,27 @@ public:
     ///
     /// Starts test timer which detects timeouts.
     TcpListenerTest()
-        : io_service_(), test_timer_(io_service_), run_io_service_timer_(io_service_),
-         clients_(), clients_done_(0) {
+        : io_service_(), test_timer_(io_service_),
+          run_io_service_timer_(io_service_),
+          clients_(), clients_done_(0) {
         test_timer_.setup(std::bind(&TcpListenerTest::timeoutHandler, this, true),
-                          TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
+                          TEST_TIMEOUT,
+                          IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Destructor.
     ///
     /// Removes active clients.
     virtual ~TcpListenerTest() {
-        for (auto client = clients_.begin(); client != clients_.end();
-             ++client) {
-            (*client)->close();
+        for (auto client : clients_) {
+            client->close();
         }
     }
 
     /// @brief Connect to the endpoint.
     ///
-    /// This method creates TcpTestClient instance and retains it in the clients_
-    /// list.
-    ///
+    /// This method creates TcpTestClient instance and retains it in
+    /// the clients_ list.
     TcpTestClientPtr connectClient() {
         TcpTestClientPtr client(new TcpTestClient(io_service_,
                                     std::bind(&TcpListenerTest::clientDone, this)));
@@ -94,8 +94,8 @@ public:
 
     /// @brief Connect to the endpoint and send a request.
     ///
-    /// This method creates TcpTestClient instance and retains it in the clients_
-    /// list.
+    /// This method creates TcpTestClient instance and retains it in
+    /// the clients_ list.
     ///
     /// @param request String containing the request to be sent.
     void startRequest(const std::string& request) {
@@ -147,7 +147,8 @@ public:
         if (timeout > 0) {
             run_io_service_timer_.setup(std::bind(&TcpListenerTest::timeoutHandler,
                                                   this, false),
-                                        timeout, IntervalTimer::ONE_SHOT);
+                                        timeout,
+                                        IntervalTimer::ONE_SHOT);
         }
         io_service_.run();
         io_service_.get_io_service().reset();
@@ -163,7 +164,8 @@ public:
         // If the address doesn't match, something hinky is going on, so
         // we'll reject them all.  If it does match, then cool, it works
         // as expected.
-        if ((count++ % 2) || (remote_endpoint.address().to_string() != SERVER_ADDRESS)) {
+        if ((count++ % 2) ||
+            (remote_endpoint.address().to_string() != SERVER_ADDRESS)) {
             // Reject every other connection;
             return (false);
         }
@@ -193,8 +195,11 @@ public:
 TEST_F(TcpListenerTest, listen) {
     const std::string request = "I am done";
 
-    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+    TcpTestListener listener(io_service_,
+                             IOAddress(SERVER_ADDRESS),
+                             SERVER_PORT,
+                             TlsContextPtr(),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -231,8 +236,12 @@ TEST_F(TcpListenerTest, splitReads) {
 
     // Read at most one byte at a time.
     size_t read_max = 1;
-    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT), 0,
+    TcpTestListener listener(io_service_,
+                             IOAddress(SERVER_ADDRESS),
+                             SERVER_PORT,
+                             TlsContextPtr(),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT),
+                             0,
                              read_max);
 
     ASSERT_NO_THROW(listener.start());
@@ -255,8 +264,11 @@ TEST_F(TcpListenerTest, splitReads) {
 // This test verifies that A TCP connection can be established and used to
 // transmit a streamed request and receive a streamed response.
 TEST_F(TcpListenerTest, idleTimeoutTest) {
-    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(SHORT_IDLE_TIMEOUT));
+    TcpTestListener listener(io_service_,
+                             IOAddress(SERVER_ADDRESS),
+                             SERVER_PORT,
+                             TlsContextPtr(),
+                             TcpListener::IdleTimeout(SHORT_IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -281,14 +293,17 @@ TEST_F(TcpListenerTest, idleTimeoutTest) {
 TEST_F(TcpListenerTest, multipleClientsListen) {
     const std::string request = "I am done";
 
-    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+    TcpTestListener listener(io_service_,
+                             IOAddress(SERVER_ADDRESS),
+                             SERVER_PORT,
+                             TlsContextPtr(),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     size_t num_clients = 5;
-    for ( auto i = 0; i < num_clients; ++i ) {
+    for (auto i = 0; i < num_clients; ++i) {
         ASSERT_NO_THROW(startRequest(request));
     }
 
@@ -296,9 +311,9 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
     ASSERT_EQ(num_clients, clients_.size());
 
     size_t connection_id = 1;
-    for (auto client = clients_.begin(); client != clients_.end(); ++client) {
-        EXPECT_TRUE((*client)->receiveDone());
-        EXPECT_FALSE((*client)->expectedEof());
+    for (auto client : clients_) {
+        EXPECT_TRUE(client->receiveDone());
+        EXPECT_FALSE(client->expectedEof());
         // Create the list of expected entries.
         std::list<AuditEntry> expected_entries {
             { connection_id, AuditEntry::INBOUND, "I am done" },
@@ -320,26 +335,30 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
 TEST_F(TcpListenerTest, multipleRequetsPerClients) {
     std::list<std::string>requests{ "one", "two", "three", "I am done"};
 
-    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT));
+    TcpTestListener listener(io_service_,
+                             IOAddress(SERVER_ADDRESS),
+                             SERVER_PORT,
+                             TlsContextPtr(),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     size_t num_clients = 5;
-    for ( auto i = 0; i < num_clients; ++i ) {
+    for (auto i = 0; i < num_clients; ++i) {
         ASSERT_NO_THROW(startRequests(requests));
     }
 
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(num_clients, clients_.size());
 
-    std::list<std::string>expected_responses{ "echo one", "echo two", "echo three", "good bye"};
+    std::list<std::string>expected_responses{ "echo one", "echo two",
+                                              "echo three", "good bye"};
     size_t connection_id = 1;
-    for (auto client = clients_.begin(); client != clients_.end(); ++client) {
-        EXPECT_TRUE((*client)->receiveDone());
-        EXPECT_FALSE((*client)->expectedEof());
-        EXPECT_EQ(expected_responses, (*client)->getResponses());
+    for (auto client : clients_) {
+        EXPECT_TRUE(client->receiveDone());
+        EXPECT_FALSE(client->expectedEof());
+        EXPECT_EQ(expected_responses, client->getResponses());
 
         // Verify the connection's audit trail.
         // Create the list of expected entries.
@@ -368,15 +387,18 @@ TEST_F(TcpListenerTest, multipleRequetsPerClients) {
 TEST_F(TcpListenerTest, filterClientsTest) {
     const std::string request = "I am done";
 
-    TcpTestListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), TcpListener::IdleTimeout(IDLE_TIMEOUT),
+    TcpTestListener listener(io_service_,
+                             IOAddress(SERVER_ADDRESS),
+                             SERVER_PORT,
+                             TlsContextPtr(),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT),
                              std::bind(&TcpListenerTest::connectionFilter, this, ph::_1));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     size_t num_clients = 5;
-    for ( auto i = 0; i < num_clients; ++i ) {
+    for (auto i = 0; i < num_clients; ++i) {
         // Every other client sends nothing (i.e. waits for EOF) as
         // we expect the filter to reject them.
         if (i % 2 == 0) {
@@ -390,11 +412,11 @@ TEST_F(TcpListenerTest, filterClientsTest) {
     ASSERT_EQ(num_clients, clients_.size());
 
     size_t i = 0;
-    for (auto client = clients_.begin(); client != clients_.end(); ++client) {
+    for (auto client : clients_) {
         if (i % 2 == 0) {
             // These clients should have been accepted and received responses.
-            EXPECT_TRUE((*client)->receiveDone());
-            EXPECT_FALSE((*client)->expectedEof());
+            EXPECT_TRUE(client->receiveDone());
+            EXPECT_FALSE(client->expectedEof());
 
             // Now verify the AuditTrail.
             // Create the list of expected entries.
@@ -408,8 +430,8 @@ TEST_F(TcpListenerTest, filterClientsTest) {
 
         } else {
             // These clients should have been rejected and gotten EOF'd.
-            EXPECT_FALSE((*client)->receiveDone());
-            EXPECT_TRUE((*client)->expectedEof());
+            EXPECT_FALSE(client->receiveDone());
+            EXPECT_TRUE(client->expectedEof());
 
             // Verify connection recorded no audit entries.
             auto entries = listener.audit_trail_->getConnectionTrail(i+1);

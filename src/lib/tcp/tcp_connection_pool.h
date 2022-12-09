@@ -15,6 +15,9 @@
 namespace isc {
 namespace tcp {
 
+/// @brief Type of TCP connection pointer list.
+typedef std::list<TcpConnectionPtr> TcpConnectionList;
+
 /// @brief Pool of active TCP connections.
 ///
 /// The TCP server is designed to handle many connections simultaneously.
@@ -40,8 +43,8 @@ public:
 
     /// @brief Removes a connection from the pool and shutdown it.
     ///
-    /// Shutdown is specific to TLS and is a first part of graceful close (note it is
-    /// NOT the same as TCP shutdown system call).
+    /// Shutdown is specific to TLS and is a first part of graceful close
+    /// (note it is NOT the same as TCP shutdown system call).
     ///
     /// @note if the TLS connection stalls e.g. the peer does not try I/O
     /// on it the connection has to be explicitly stopped.
@@ -57,6 +60,11 @@ public:
     /// @brief Stops all connections and removes them from the pool.
     void stopAll();
 
+    /// @brief Returns connections.
+    const TcpConnectionList& getConnections() const {
+        return (connections_);
+    }
+
 protected:
 
     /// @brief Stops all connections and removes them from the pool.
@@ -65,7 +73,7 @@ protected:
     void stopAllInternal();
 
     /// @brief Set of connections.
-    std::list<TcpConnectionPtr> connections_;
+    TcpConnectionList connections_;
 
     /// @brief Mutex to protect the internal state.
     std::mutex mutex_;
@@ -75,4 +83,3 @@ protected:
 }
 
 #endif
-
