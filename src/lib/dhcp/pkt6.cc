@@ -811,6 +811,8 @@ Pkt6::getName(const uint8_t type) {
     static const char* DECLINE = "DECLINE";
     static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";
     static const char* LEASEQUERY = "LEASEQUERY";
+    static const char* LEASEQUERY_DATA = "LEASEQUERY_DATA";
+    static const char* LEASEQUERY_DONE = "LEASEQUERY_DONE";
     static const char* LEASEQUERY_REPLY = "LEASEQUERY_REPLY";
     static const char* REBIND = "REBIND";
     static const char* RECONFIGURE = "RECONFIGURE";
@@ -840,6 +842,12 @@ Pkt6::getName(const uint8_t type) {
 
     case DHCPV6_LEASEQUERY:
         return (LEASEQUERY);
+
+    case DHCPV6_LEASEQUERY_DATA:
+        return (LEASEQUERY_DATA);
+
+    case DHCPV6_LEASEQUERY_DONE:
+        return (LEASEQUERY_DONE);
 
     case DHCPV6_LEASEQUERY_REPLY:
         return (LEASEQUERY_REPLY);
