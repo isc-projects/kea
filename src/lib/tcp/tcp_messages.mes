@@ -30,16 +30,6 @@ This is an error message emitted when the close connection callback
 registered on the connection failed unexpectedly.  This is a programmatic
 error that should be submitted as a bug.
 
-% TCP_CONNECTION_HANDSHAKE_FAILED TLS handshake with %1 failed with %2
-This information message is issued when the TLS handshake failed at the
-server side. The client address and the error message are displayed.
-
-% TCP_CONNECTION_HANDSHAKE_START start TLS handshake with %1 with timeout %2
-This debug message is issued when the server starts the TLS handshake
-with the remote endpoint. The first argument specifies the address
-of the remote endpoint. The second argument specifies request timeout in
-seconds.
-
 % TCP_CONNECTION_REJECTED_BY_FILTER connection from %1 has been denied by the connection filter.
 This debug message is issued when the server's connection filter rejects
 a new connection based on the client's ip address.
@@ -69,6 +59,12 @@ of the request. The first argument specifies the amount of received data.
 The second argument specifies an address of the remote endpoint which
 produced the data.
 
+% TCP_DATA_SENT send %1 bytes to %2
+This debug message is issued when the server sends a chunk of data to
+the remote endpoint. This may include the whole response or only a part
+of the response. The first argument specifies the amount of sent data.
+The second argument specifies an address of the remote endpoint.
+
 % TCP_IDLE_CONNECTION_TIMEOUT_OCCURRED closing connection with %1 as a result of a timeout
 This debug message is issued when the TCP connection is being closed as a
 result of being idle.
@@ -91,11 +87,10 @@ over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
 
-% TCP_SERVER_RESPONSE_SEND sending TCP response %1 to %2
+% TCP_SERVER_RESPONSE_SEND sending TCP response to %1
 This debug message is issued when the server is starting to send a TCP
-response to a remote endpoint. The first argument holds basic information
-about the response (TCP version number and status code). The second
-argument specifies an address of the remote endpoint.
+response to a remote endpoint. The argument specifies an address of
+the remote endpoint.
 
 % TCP_SERVER_RESPONSE_SEND_DETAILS detailed information about response sent to %1:\n%2
 This debug message is issued right before the server sends a TCP response
@@ -104,3 +99,24 @@ first argument specifies an address of the remote endpoint to which the
 response is being sent. The second argument provides a response in the
 textual form. The response is truncated by the logger if it is too large
 to be printed.
+
+% TLS_CONNECTION_HANDSHAKE_FAILED TLS handshake with %1 failed with %2
+This information message is issued when the TLS handshake failed at the
+server side. The client address and the error message are displayed.
+
+% TLS_CONNECTION_HANDSHAKE_START start TLS handshake with %1 with timeout %2
+This debug message is issued when the server starts the TLS handshake
+with the remote endpoint. The first argument specifies the address
+of the remote endpoint. The second argument specifies request timeout in
+seconds.
+
+% TLS_REQUEST_RECEIVE_START start receiving request from %1 with timeout %2
+This debug message is issued when the server starts receiving new request
+over the established connection. The first argument specifies the address
+of the remote endpoint. The second argument specifies request timeout in
+seconds.
+
+% TLS_SERVER_RESPONSE_SEND sending TLS response to %1
+This debug message is issued when the server is starting to send a TLS
+response to a remote endpoint. The argument specifies an address of
+the remote endpoint.

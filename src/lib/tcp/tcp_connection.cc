@@ -239,21 +239,27 @@ void
 TcpConnection::doWrite(TcpResponsePtr response) {
     try {
         if (response->wireDataAvail()) {
-            // Create instance of the callback. It is safe to pass the local instance
-            // of the callback, because the underlying std functions make copies
-            // as needed.
+            // Create instance of the callback. It is safe to pass the
+            // local instance of the callback, because the underlying
+            // std functions make copies as needed.
             SocketCallback cb(std::bind(&TcpConnection::socketWriteCallback,
                                         shared_from_this(),
                                         response,
                                         ph::_1,   // error
                                         ph::_2)); // bytes_transferred
             if (tcp_socket_) {
+                LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
+                          TCP_SERVER_RESPONSE_SEND)
+                    .arg(getRemoteEndpointAddressAsText());
                 tcp_socket_->asyncSend(response->getWireData(),
                                        response->getWireDataSize(),
                                        cb);
                 return;
             }
             if (tls_socket_) {
+                LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
+                          TLS_SERVER_RESPONSE_SEND)
+                    .arg(getRemoteEndpointAddressAsText());
                 tls_socket_->asyncSend(response->getWireData(),
                                        response->getWireDataSize(),
                                        cb);
@@ -312,7 +318,7 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
                 .arg(static_cast<unsigned>(idle_timeout_/1000));
         } else {
             LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                      TCP_CONNECTION_HANDSHAKE_START)
+                      TLS_CONNECTION_HANDSHAKE_START)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(static_cast<unsigned>(idle_timeout_/1000));
         }
@@ -324,13 +330,13 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
 void
 TcpConnection::handshakeCallback(const boost::system::error_code& ec) {
     if (ec) {
-        LOG_INFO(tcp_logger, TCP_CONNECTION_HANDSHAKE_FAILED)
+        LOG_INFO(tcp_logger, TLS_CONNECTION_HANDSHAKE_FAILED)
             .arg(getRemoteEndpointAddressAsText())
             .arg(ec.message());
         stopThisConnection();
     } else {
         LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                  TCP_REQUEST_RECEIVE_START)
+                  TLS_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText());
 
         doRead();
@@ -366,7 +372,8 @@ TcpConnection::socketReadCallback(TcpRequestPtr request,
 
     TcpRequestPtr next_request = request;
     if (length) {
-        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA, TCP_DATA_RECEIVED)
+        LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                  TCP_DATA_RECEIVED)
             .arg(length)
             .arg(getRemoteEndpointAddressAsText());
         WireData input_data(input_buf_.begin(), input_buf_.begin() + length);
@@ -444,6 +451,10 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
             doWrite(response);
         }
     }
+
+    LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA, TCP_DATA_SENT)
+        .arg(length)
+        .arg(getRemoteEndpointAddressAsText());
 
     // Since each response has its own wire data, it is not really
     // possible that the number of bytes written is larger than the size
