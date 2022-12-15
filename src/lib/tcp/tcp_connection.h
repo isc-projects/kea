@@ -229,10 +229,10 @@ public:
     void asyncAccept();
 
     /// @brief Shutdown the socket.
-    void shutdown();
+    virtual void shutdown();
 
     /// @brief Closes the socket.
-    void close();
+    virtual void close();
 
     /// @brief Asynchronously performs TLS handshake.
     ///
