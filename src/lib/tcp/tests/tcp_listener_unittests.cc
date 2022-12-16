@@ -445,4 +445,95 @@ TEST_F(TcpListenerTest, filterClientsTest) {
     io_service_.poll();
 }
 
+// Exercises TcpStreamRequest::postBuffer() through various
+// data permutations.
+TEST(TcpStreamRequst, postBufferTest) {
+    // Struct describing a test scenario.
+    struct Scenario {
+        const std::string desc_;
+        // List of input buffers to submit to post.
+        std::list<std::vector<uint8_t>> input_buffers_;
+        // List of expected "request" strings conveyed.
+        std::list<std::string> expected_strings_;
+    };
+
+    std::list<Scenario> scenarios{
+    {
+        "1. Two complete messages in their own buffers",
+        {
+            { 0x00, 0x04, 0x31, 0x32, 0x33, 0x34 },
+            { 0x00, 0x03, 0x35, 0x36, 0x37 },
+        },
+        { "1234", "567" }
+    },
+    {
+        "2. Three messages: first two are in the same buffer",
+        {
+            { 0x00, 0x04, 0x31, 0x32, 0x33, 0x34, 0x00, 0x02, 0x35, 0x36 },
+            { 0x00, 0x03, 0x37, 0x38, 0x39 },
+        },
+        { "1234", "56", "789" }
+    },
+    {
+        "3. One message across three buffers",
+        {
+            { 0x00, 0x09, 0x31, 0x32, 0x33 },
+            { 0x34, 0x35, 0x36, 0x37 },
+            { 0x38, 0x39 },
+        },
+        { "123456789" }
+
+    },
+    {
+        "4. One message, length and data split across buffers",
+        {
+            { 0x00 },
+            { 0x09, 0x31, 0x32, 0x33 },
+            { 0x34, 0x35, 0x36, 0x37 },
+            { 0x38, 0x39 },
+        },
+        { "123456789" }
+
+    },
+    };
+
+    for (auto scenario : scenarios ) {
+        SCOPED_TRACE(scenario.desc_);
+        std::list<TcpStreamRequestPtr> requests;
+        TcpStreamRequestPtr request;
+        for (auto input_buf : scenario.input_buffers_) {
+            // Copy the input buffer.
+            std::vector<uint8_t> buf = input_buf;
+
+            // While there is data left to use, use it.
+            while (buf.size()) {
+                // If we need a new request make one.
+                if (!request) {
+                    request.reset(new TcpStreamRequest());
+                }
+
+                size_t bytes_used = request->postBuffer(static_cast<void*>(buf.data()), buf.size());
+                if (!request->needData()) {
+                    // Request is complete, save it.
+                    requests.push_back(request);
+                    request.reset();
+                }
+
+                // Consume bytes used.
+                if (bytes_used) {
+                    buf.erase(buf.begin(), buf.begin() + bytes_used);
+                }
+            }
+        }
+
+        ASSERT_EQ(requests.size(), scenario.expected_strings_.size());
+        auto exp_string = scenario.expected_strings_.begin();
+        for (auto recvd_request : requests) {
+            ASSERT_NO_THROW(recvd_request->unpack());
+            EXPECT_EQ(*exp_string++, recvd_request->getRequestString());
+        }
+    }
+}
+
+
 }

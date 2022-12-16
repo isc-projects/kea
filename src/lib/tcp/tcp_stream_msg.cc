@@ -23,10 +23,37 @@ TcpStreamRequest::needData() const {
 
 size_t
 TcpStreamRequest::postBuffer(const void* buf,  const size_t nbytes) {
-    if (nbytes) {
-        const char* bufptr = static_cast<const char*>(buf);
-        wire_data_.insert(wire_data_.end(), bufptr, bufptr + nbytes);
-        if (!expected_size_ && wire_data_.size() >= sizeof(uint16_t)) {
+    if (!nbytes) {
+        // Nothing to do.
+        return (0);
+    }
+
+    const char* bufptr = static_cast<const char*>(buf);
+    size_t bytes_left = nbytes;
+    size_t wire_size = wire_data_.size();
+    size_t bytes_used = 0;
+    while (bytes_left) {
+        if (expected_size_) {
+            // We have the length, copy as much of what we still need as we can.
+            size_t need_bytes = expected_size_ - wire_size;
+            size_t copy_bytes = (need_bytes <= bytes_left ? need_bytes : bytes_left);
+            wire_data_.insert(wire_data_.end(), bufptr, bufptr + copy_bytes);
+            bytes_left -= copy_bytes;
+            bytes_used += copy_bytes;
+            break;
+        }
+
+        // Otherwise we don't know the length yet.
+        while (wire_size < 2 && bytes_left) {
+            wire_data_.push_back(*bufptr);
+            ++bufptr;
+            --bytes_left;
+            ++bytes_used;
+            ++wire_size;
+        }
+
+        // If we have enough to do it, calculate the expected length.
+        if (wire_size == 2 ) {
             const uint8_t* cp = static_cast<const uint8_t*>(wire_data_.data());
             uint16_t len = ((unsigned int)(cp[0])) << 8;
             len |= ((unsigned int)(cp[1]));
@@ -34,7 +61,8 @@ TcpStreamRequest::postBuffer(const void* buf,  const size_t nbytes) {
         }
     }
 
-    return (nbytes);
+    // Return how much we used.
+    return (bytes_used);
 }
 
 std::string
