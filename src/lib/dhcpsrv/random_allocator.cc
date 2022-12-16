@@ -83,6 +83,96 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
     return (IOAddress::IPV4_ZERO_ADDRESS());
 }
 
+IOAddress
+RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
+                                    Pool6Ptr& pool6,
+                                    const DuidPtr&,
+                                    PrefixLenMatchType prefix_length_match,
+                                    const IOAddress&,
+                                    uint8_t hint_prefix_length) {
+    auto subnet = subnet_.lock();
+    auto pools = subnet->getPools(pool_type_);
+
+    // Let's first iterate over the pools and identify the ones that
+    // meet client class criteria. Then, segragate these pools into
+    // the ones that still have available addresses and exhausted
+    // ones.
+    std::vector<uint64_t> available;
+    std::vector<uint64_t> exhausted;
+    for (auto i = 0; i < pools.size(); ++i) {
+        // Check if the pool is allowed for the client's classes.
+        if (pools[i]->clientSupported(client_classes)) {
+            auto pool = boost::dynamic_pointer_cast<Pool6>(pools[i]);
+            if (!pool) {
+                continue;
+            }
+
+            if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
+                pool->getLength() != hint_prefix_length) {
+                continue;
+            }
+
+            if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
+                pool->getLength() >= hint_prefix_length) {
+                continue;
+            }
+
+            if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
+                pool->getLength() <= hint_prefix_length) {
+                continue;
+            }
+            // Get or create the pool state.
+            auto state = getPoolState(pools[i]);
+            if (state->getPermutation()->exhausted()) {
+                // Pool is exhausted. It means that all addresses from
+                // this pool have been offered. It doesn't mean that
+                // leases are allocated for all these addresses. It
+                // only means that all have been picked from the pool.
+                exhausted.push_back(i);
+            } else {
+                // There are still available addresses in this pool. It
+                // means that not all of them have been offered.
+                available.push_back(i);
+            }
+        }
+    }
+    // Find a suitable pool.
+    PoolPtr pool;
+    if (!available.empty()) {
+        // There are pools with available addresses. Let's randomly
+        // pick one of these pools and get next available address.
+        pool = pools[available[getRandomNumber(available.size() - 1)]];
+
+    } else if (!exhausted.empty()) {
+        // All pools have been exhausted. We will start offering the same
+        // addresses from these pools. We need to reset the permutations
+        // of the exhausted pools.
+        for (auto e : exhausted) {
+            getPoolState(pools[e])->getPermutation()->reset();
+        }
+        // Get random pool from those we just reset.
+        pool = pools[exhausted[getRandomNumber(exhausted.size() - 1)]];
+    }
+
+    // If pool has been found, let's get next address.
+    if (pool) {
+        auto done = false;
+        pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
+
+        if (!pool6) {
+            // Something is gravely wrong here
+            isc_throw(Unexpected, "Wrong type of pool: "
+                      << (pool)->toText()
+                      << " is not Pool6");
+        }
+        return (getPoolState(pool)->getPermutation()->next(done));
+    }
+
+    // No pool available. There are no pools or client classes do
+    // not match.
+    return (IOAddress::IPV6_ZERO_ADDRESS());
+}
+
 PoolRandomAllocationStatePtr
 RandomAllocator::getPoolState(const PoolPtr& pool) const {
     if (!pool->getAllocationState()) {

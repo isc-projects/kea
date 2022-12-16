@@ -2441,7 +2441,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
     if (hint_opt) {
         ctx.currentIA().addHint(hint_opt);
     } else {
-        ctx.currentIA().addHint(hint);
+        ctx.currentIA().addHint(hint, 0);
     }
     ctx.currentIA().type_ = Lease::TYPE_PD;
 

@@ -304,6 +304,8 @@ TEST_F(IterativeAllocatorTest6, prefixStep) {
 
     NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
 
+    Pool6Ptr pool;
+
     // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
     // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
     // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
@@ -311,62 +313,62 @@ TEST_F(IterativeAllocatorTest6, prefixStep) {
 
     // First pool check (Let's check over all 16 leases)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     // Second pool (just one lease here)
     EXPECT_EQ("2001:db8:1::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
     EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
         EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+                  alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     }
     EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 }
 
 // This test verifies that the allocator picks delegated prefixes from the pools
@@ -386,6 +388,8 @@ TEST_F(IterativeAllocatorTest6, prefixStepInClass) {
 
     NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
 
+    Pool6Ptr pool;
+
     // Clients are in foo
     cc_.insert("foo");
 
@@ -396,62 +400,62 @@ TEST_F(IterativeAllocatorTest6, prefixStepInClass) {
 
     // First pool check (Let's check over all 16 leases)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     // Second pool (just one lease here)
     EXPECT_EQ("2001:db8:1::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
     EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
         EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+                  alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     }
     EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 }
 
 // This test verifies that the allocator omits pools with non-matching client classes.
@@ -469,6 +473,8 @@ TEST_F(IterativeAllocatorTest6, prefixStepOutClass) {
 
     NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
 
+    Pool6Ptr pool;
+
     // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
     // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
     // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
@@ -476,60 +482,60 @@ TEST_F(IterativeAllocatorTest6, prefixStepOutClass) {
 
     // First pool check (Let's check over all 16 leases)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     // The second pool is skipped
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
     EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
         EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+                  alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     }
     EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0).toText());
 }
 
 // This test verifies that the iterative allocator can step over addresses.

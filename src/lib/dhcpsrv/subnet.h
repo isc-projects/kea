@@ -186,6 +186,22 @@ public:
     uint64_t getPoolCapacity(Lease::Type type,
                              const ClientClasses& client_classes) const;
 
+    /// @brief Returns the number of possible leases for specified lease type
+    /// allowed for a client which belongs to classes and matching selection
+    /// criteria relative to provided hint prefix length.
+    ///
+    /// @param type type of the lease
+    /// @param client_classes list of classes the client belongs to
+    /// @param prefix_length_match type which indicates the selection criteria
+    /// for the pools relative to the provided hint prefix length
+    /// @param hint_prefix_length the hint prefix length that the client
+    /// provided
+    /// @return number of leases matching lease type and classes
+    uint64_t getPoolCapacity(Lease::Type type,
+                             const ClientClasses& client_classes,
+                             Allocator::PrefixLenMatchType prefix_length_match,
+                             uint8_t hint_prefix_length) const;
+
     /// @brief Returns textual representation of the subnet (e.g.
     /// "2001:db8::/64").
     ///
@@ -373,6 +389,21 @@ protected:
     /// @return sum of possible/allowed leases
     uint64_t sumPoolCapacity(const PoolCollection& pools,
                              const ClientClasses& client_classes) const;
+
+    /// @brief Returns a sum of possible leases in all pools allowing classes
+    /// and matching selection criteria relative to provided hint prefix length.
+    ///
+    /// @param pools list of pools
+    /// @param client_classes list of classes
+    /// @param prefix_length_match type which indicates the selection criteria
+    /// for the pools relative to the provided hint prefix length
+    /// @param hint_prefix_length the hint prefix length that the client
+    /// provided
+    /// @return sum of possible/allowed leases
+    uint64_t sumPoolCapacity(const PoolCollection& pools,
+                             const ClientClasses& client_classes,
+                             Allocator::PrefixLenMatchType prefix_length_match,
+                             uint8_t hint_prefix_length) const;
 
     /// @brief Checks if the specified pool overlaps with an existing pool.
     ///

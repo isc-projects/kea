@@ -430,5 +430,5 @@ Pool6::toText() const {
     return (s.str());
 }
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

@@ -90,10 +90,6 @@ IOAddress
 IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
                                         const DuidPtr&,
                                         const IOAddress&) {
-    // Is this prefix allocation?
-    bool prefix = pool_type_ == Lease::TYPE_PD;
-    uint8_t prefix_len = 0;
-
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
@@ -167,21 +163,7 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
         }
 
         if (valid) {
-            // Ok, we have a pool that the last address belonged to, let's use it.
-            if (prefix) {
-                Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
-
-                if (!pool6) {
-                    // Something is gravely wrong here
-                    isc_throw(Unexpected, "Wrong type of pool: "
-                              << (*it)->toText()
-                              << " is not Pool6");
-                }
-                // Get the prefix length
-                prefix_len = pool6->getLength();
-            }
-
-            IOAddress next = increaseAddress(last, prefix, prefix_len);
+            IOAddress next = increaseAddress(last, false, 0);
             if ((*it)->inRange(next)) {
                 // the next one is in the pool as well, so we haven't hit
                 // pool boundary yet
@@ -210,6 +192,207 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
     last = getPoolState(*first)->getLastAllocated();
     getPoolState(*first)->setLastAllocated(last);
     getSubnetState()->setLastAllocated(last);
+    return (last);
+}
+
+IOAddress
+IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
+                                       Pool6Ptr& pool6,
+                                       const DuidPtr&,
+                                       PrefixLenMatchType prefix_length_match,
+                                       const IOAddress&,
+                                       uint8_t hint_prefix_length) {
+    uint8_t prefix_len = 0;
+
+    // Let's get the last allocated address. It is usually set correctly,
+    // but there are times when it won't be (like after removing a pool or
+    // perhaps restarting the server).
+    IOAddress last = getSubnetState()->getLastAllocated();
+    bool valid = true;
+    bool retrying = false;
+
+    const PoolCollection& pools = subnet_.lock()->getPools(pool_type_);
+
+    if (pools.empty()) {
+        isc_throw(AllocFailed, "No pools defined in selected subnet");
+    }
+
+    // first we need to find a pool the last address belongs to.
+    PoolCollection::const_iterator it;
+    PoolCollection::const_iterator first = pools.end();
+    PoolPtr first_pool;
+    for (it = pools.begin(); it != pools.end(); ++it) {
+        if (!(*it)->clientSupported(client_classes)) {
+            continue;
+        }
+        auto pool = boost::dynamic_pointer_cast<Pool6>(*it);
+        if (!pool) {
+            continue;
+        }
+
+        if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
+            pool->getLength() != hint_prefix_length) {
+            continue;
+        }
+
+        if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
+            pool->getLength() >= hint_prefix_length) {
+            continue;
+        }
+
+        if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
+            pool->getLength() <= hint_prefix_length) {
+            continue;
+        }
+        if (first == pools.end()) {
+            first = it;
+        }
+        if ((*it)->inRange(last)) {
+            break;
+        }
+    }
+
+    // Caller checked this cannot happen
+    if (first == pools.end()) {
+        isc_throw(AllocFailed, "No allowed pools defined in selected subnet");
+    }
+
+    // last one was bogus for one of several reasons:
+    // - we just booted up and that's the first address we're allocating
+    // - a subnet was removed or other reconfiguration just completed
+    // - perhaps allocation algorithm was changed
+    // - last pool does not allow this client
+    if (it == pools.end()) {
+        it = first;
+    }
+
+    for (;;) {
+        // Trying next pool
+        if (retrying) {
+            for (; it != pools.end(); ++it) {
+                if ((*it)->clientSupported(client_classes)) {
+                    auto pool = boost::dynamic_pointer_cast<Pool6>(*it);
+                    if (!pool) {
+                        continue;
+                    }
+
+                    if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
+                        pool->getLength() != hint_prefix_length) {
+                        continue;
+                    }
+
+                    if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
+                        pool->getLength() >= hint_prefix_length) {
+                        continue;
+                    }
+
+                    if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
+                        pool->getLength() <= hint_prefix_length) {
+                        continue;
+                    }
+                    break;
+                }
+            }
+            if (it == pools.end()) {
+                // Really out of luck today. That was the last pool.
+                break;
+            }
+        }
+
+        last = getPoolState(*it)->getLastAllocated();
+        valid = getPoolState(*it)->isLastAllocatedValid();
+        if (!valid && (last == (*it)->getFirstAddress())) {
+            // Pool was (re)initialized
+            getPoolState(*it)->setLastAllocated(last);
+            getSubnetState()->setLastAllocated(last);
+
+            pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
+
+            if (!pool6) {
+                // Something is gravely wrong here
+                isc_throw(Unexpected, "Wrong type of pool: "
+                          << (*it)->toText()
+                          << " is not Pool6");
+            }
+
+            return (last);
+        }
+        // still can be bogus
+        if (valid && !(*it)->inRange(last)) {
+            valid = false;
+            getPoolState(*it)->resetLastAllocated();
+            getPoolState(*it)->setLastAllocated((*it)->getFirstAddress());
+        }
+
+        if (valid) {
+            // Ok, we have a pool that the last address belonged to, let's use it.
+            pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
+            if (!pool6) {
+                // Something is gravely wrong here
+                isc_throw(Unexpected, "Wrong type of pool: "
+                          << (*it)->toText()
+                          << " is not Pool6");
+            }
+
+            // Get the prefix length
+            prefix_len = pool6->getLength();
+
+            IOAddress next = increaseAddress(last, true, prefix_len);
+            if ((*it)->inRange(next)) {
+                // the next one is in the pool as well, so we haven't hit
+                // pool boundary yet
+                getPoolState(*it)->setLastAllocated(next);
+                getSubnetState()->setLastAllocated(next);
+                return (next);
+            }
+
+            valid = false;
+            getPoolState(*it)->resetLastAllocated();
+        }
+        // We hit pool boundary, let's try to jump to the next pool and try again
+        ++it;
+        retrying = true;
+    }
+
+    // Let's rewind to the beginning.
+    for (it = first; it != pools.end(); ++it) {
+        if ((*it)->clientSupported(client_classes)) {
+            auto pool = boost::dynamic_pointer_cast<Pool6>(*it);
+            if (!pool) {
+                continue;
+            }
+
+            if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
+                pool->getLength() != hint_prefix_length) {
+                continue;
+            }
+
+            if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
+                pool->getLength() >= hint_prefix_length) {
+                continue;
+            }
+
+            if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
+                pool->getLength() <= hint_prefix_length) {
+                continue;
+            }
+            getPoolState(*it)->setLastAllocated((*it)->getFirstAddress());
+            getPoolState(*it)->resetLastAllocated();
+        }
+    }
+
+    // ok to access first element directly. We checked that pools is non-empty
+    last = getPoolState(*first)->getLastAllocated();
+    getPoolState(*first)->setLastAllocated(last);
+    getSubnetState()->setLastAllocated(last);
+
+    pool6 = boost::dynamic_pointer_cast<Pool6>(*first);
+    if (!pool6) {
+        // Something is gravely wrong here
+        isc_throw(Unexpected, "Wrong type of pool: "
+                  << (*it)->toText()
+                  << " is not Pool6");
+    }
     return (last);
 }
 

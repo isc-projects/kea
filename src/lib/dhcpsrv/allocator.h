@@ -12,6 +12,7 @@
 #include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/pool.h>
 #include <util/multi_threading_mgr.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -55,6 +56,13 @@ public:
 class Allocator {
 public:
 
+    /// @brief Type of preferred PD-pool prefix length selection criteria
+    enum PrefixLenMatchType {
+        PREFIX_LEN_EQUAL,      // select PD-pools with specific prefix length
+        PREFIX_LEN_SMALLER,    // select PD-pools with smaller prefix length
+        PREFIX_LEN_GREATER     // select PD-pools with greater prefix length
+    };
+
     /// @brief Constructor
     ///
     /// Specifies which type of leases this allocator will assign.
@@ -70,21 +78,13 @@ public:
     /// @brief Virtual destructor
     virtual ~Allocator() = default;
 
-    /// @brief Picks an address or a delegated prefix.
+    /// @brief Picks an address.
     ///
     /// This method returns one address from the available pools in the
     /// specified subnet. It should not check if the address is used or
     /// reserved - AllocEngine will check that and will call pickAddress
     /// again if necessary. The number of times this method is called will
     /// increase as the number of available leases will decrease.
-    ///
-    /// This method can also be used to pick a prefix. We should not rename
-    /// it to pickLease(), because at this early stage there is no concept
-    /// of a lease yet. Here it is a matter of selecting one address or
-    /// prefix from the defined pool, without going into details who it is
-    /// for or who uses it. I thought that pickAddress() is less confusing
-    /// than pickResource(), because nobody would immediately know what the
-    /// resource means in this context.
     ///
     /// Pools which are not allowed for client classes are skipped.
     ///
@@ -101,9 +101,42 @@ public:
         return (pickAddressInternal(client_classes, duid, hint));
     }
 
+    /// @brief Picks a delegated prefix.
+    ///
+    /// This method returns one prefix from the available pools in the
+    /// specified subnet. It should not check if the prefix is used or
+    /// reserved - AllocEngine will check that and will call pickPrefix
+    /// again if necessary. The number of times this method is called will
+    /// increase as the number of available leases will decrease.
+    ///
+    /// Pools which are not allowed for client classes are skipped.
+    ///
+    /// @param client_classes list of classes client belongs to
+    /// @param pool the selected pool satisfying all required conditions.
+    /// @param duid Client's DUID
+    /// @param prefix_length_match type which indicates the selection criteria
+    /// for the pools relative to the provided hint prefix length
+    /// @param hint Client's hint
+    /// @param hint_prefix_length the hint prefix length that the client
+    /// provided
+    ///
+    /// @return the next prefix.
+    virtual isc::asiolink::IOAddress
+    pickPrefix(const ClientClasses& client_classes,
+               Pool6Ptr& pool,
+               const DuidPtr& duid,
+               PrefixLenMatchType prefix_length_match,
+               const asiolink::IOAddress& hint,
+               uint8_t hint_prefix_length) {
+        util::MultiThreadingLock lock(mutex_);
+        return (pickPrefixInternal(client_classes, pool, duid,
+                                   prefix_length_match, hint,
+                                   hint_prefix_length));
+    }
+
 private:
 
-    /// @brief Picks an address or delegated prefix.
+    /// @brief Picks an address.
     ///
     /// Internal thread-unsafe implementation of the @c pickAddress.
     /// Derived classes must provide their specific implementations of
@@ -118,6 +151,30 @@ private:
     pickAddressInternal(const ClientClasses& client_classes,
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint) = 0;
+
+    /// @brief Picks a delegated prefix.
+    ///
+    /// Internal thread-unsafe implementation of the @c pickPrefix.
+    /// Derived classes must provide their specific implementations of
+    /// this function.
+    ///
+    /// @param client_classes list of classes client belongs to
+    /// @param pool the selected pool satisfying all required conditions.
+    /// @param duid Client's DUID
+    /// @param prefix_length_match type which indicates the selection criteria
+    /// for the pools relative to the provided hint prefix length
+    /// @param hint Client's hint
+    /// @param hint_prefix_length the hint prefix length that the client
+    /// provided
+    ///
+    /// @return the next prefix.
+    virtual isc::asiolink::IOAddress
+    pickPrefixInternal(const ClientClasses& client_classes,
+                       Pool6Ptr& pool,
+                       const DuidPtr& duid,
+                       PrefixLenMatchType prefix_length_match,
+                       const isc::asiolink::IOAddress& hint,
+                       uint8_t hint_prefix_length) = 0;
 
 protected:
 

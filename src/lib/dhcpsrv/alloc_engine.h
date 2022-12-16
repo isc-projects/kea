@@ -837,6 +837,46 @@ private:
     /// @return collection of newly allocated leases
     Lease6Collection allocateUnreservedLeases6(ClientContext6& ctx);
 
+    /// @brief Allocates a normal, in-pool, unreserved lease from the pool.
+    ///
+    /// @note This function is called by allocateUnreservedLeases6 and it tries
+    /// to allocate a lease matching hint prefix length if explicitly required.
+    ///
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext6 for details.
+    /// @param hint_lease the hint lease that is stored in the database. It is
+    ///        updated according to search_hint_lease flag.
+    /// @param search_hint_lease flag which indicates if hint_lease should be
+    ///        retrieved from the lease storage or if it is already retrieved.
+    /// @param hint the hint address that the client provided.
+    /// @param hint_prefix_length The hint prefix length that the client
+    /// provided.
+    /// @param original_subnet the initial subnet selected for this client
+    /// @param network the shared network selected for this client (if any)
+    /// @param total_attempts the total number of attempt to allocate an address
+    /// for this client.
+    /// @param subnets_with_unavail_leases the number of subnets which have no
+    /// address available for this client
+    /// @param subnets_with_unavail_pools the number of pools which have no
+    /// address available for the client
+    /// @param [out] callout_status callout returned by the lease6_select
+    /// @param prefix_length_match type which indicates the selection criteria
+    /// for the pools relative to the provided hint prefix length.
+    ///
+    /// @return a new allocated address or null pointer if none is available
+    Lease6Ptr allocateBestMatch(ClientContext6& ctx,
+                                Lease6Ptr& hint_lease,
+                                bool& search_hint_lease,
+                                const isc::asiolink::IOAddress& hint,
+                                uint8_t hint_prefix_length,
+                                Subnet6Ptr original_subnet,
+                                SharedNetwork6Ptr& network,
+                                uint64_t& total_attempts,
+                                uint64_t& subnets_with_unavail_leases,
+                                uint64_t& subnets_with_unavail_pools,
+                                hooks::CalloutHandle::CalloutNextStep& callout_status,
+                                Allocator::PrefixLenMatchType prefix_length_match);
+
     /// @brief Creates new leases based on reservations.
     ///
     /// This method allocates new leases, based on host reservations.

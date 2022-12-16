@@ -2096,7 +2096,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
 // to allocate the prefix for high capacity pools is equal to the capacity
 // value. This test verifies that the prefix can be allocated in that
 // case.
-TEST_F(AllocEngine6Test, largePDPool) {
+TEST_F(AllocEngine6Test, largePdPool) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.

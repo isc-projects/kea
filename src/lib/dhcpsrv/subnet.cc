@@ -118,10 +118,30 @@ Subnet::getPoolCapacity(Lease::Type type,
 }
 
 uint64_t
+Subnet::getPoolCapacity(Lease::Type type,
+                        const ClientClasses& client_classes,
+                        Allocator::PrefixLenMatchType prefix_length_match,
+                        uint8_t hint_prefix_length) const {
+    switch (type) {
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
+        return sumPoolCapacity(pools_, client_classes);
+    case Lease::TYPE_TA:
+        return sumPoolCapacity(pools_ta_, client_classes);
+    case Lease::TYPE_PD:
+        return sumPoolCapacity(pools_pd_, client_classes, prefix_length_match,
+                               hint_prefix_length);
+    default:
+        isc_throw(BadValue, "Unsupported pool type: "
+                  << static_cast<int>(type));
+    }
+}
+
+uint64_t
 Subnet::sumPoolCapacity(const PoolCollection& pools) const {
     uint64_t sum = 0;
-    for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
-        uint64_t x = (*p)->getCapacity();
+    for (auto const& p : pools) {
+        uint64_t x = p->getCapacity();
 
         // Check if we can add it. If sum + x > uint64::max, then we would have
         // overflown if we tried to add it.
@@ -139,11 +159,56 @@ uint64_t
 Subnet::sumPoolCapacity(const PoolCollection& pools,
                         const ClientClasses& client_classes) const {
     uint64_t sum = 0;
-    for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
-        if (!(*p)->clientSupported(client_classes)) {
+    for (auto const& p : pools) {
+        if (!p->clientSupported(client_classes)) {
             continue;
         }
-        uint64_t x = (*p)->getCapacity();
+        uint64_t x = p->getCapacity();
+
+        // Check if we can add it. If sum + x > uint64::max, then we would have
+        // overflown if we tried to add it.
+        if (x > std::numeric_limits<uint64_t>::max() - sum) {
+            return (std::numeric_limits<uint64_t>::max());
+        }
+
+        sum += x;
+    }
+
+    return (sum);
+}
+
+uint64_t
+Subnet::sumPoolCapacity(const PoolCollection& pools,
+                        const ClientClasses& client_classes,
+                        Allocator::PrefixLenMatchType prefix_length_match,
+                        uint8_t hint_prefix_length) const {
+    uint64_t sum = 0;
+    for (auto const& p : pools) {
+        if (!p->clientSupported(client_classes)) {
+            continue;
+        }
+
+        auto pool = boost::dynamic_pointer_cast<Pool6>(p);
+        if (!pool) {
+            continue;
+        }
+
+        if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
+            pool->getLength() != hint_prefix_length) {
+            continue;
+        }
+
+        if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
+            pool->getLength() >= hint_prefix_length) {
+            continue;
+        }
+
+        if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
+            pool->getLength() <= hint_prefix_length) {
+            continue;
+        }
+
+        uint64_t x = p->getCapacity();
 
         // Check if we can add it. If sum + x > uint64::max, then we would have
         // overflown if we tried to add it.
@@ -471,9 +536,8 @@ Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 
     const PoolCollection& pools = getPools(type);
 
-    for (PoolCollection::const_iterator pool = pools.begin();
-         pool != pools.end(); ++pool) {
-        if ((*pool)->inRange(addr)) {
+    for (auto const& pool : pools) {
+        if (pool->inRange(addr)) {
             return (true);
         }
     }
@@ -493,12 +557,11 @@ Subnet::inPool(Lease::Type type,
 
     const PoolCollection& pools = getPools(type);
 
-    for (PoolCollection::const_iterator pool = pools.begin();
-         pool != pools.end(); ++pool) {
-        if (!(*pool)->clientSupported(client_classes)) {
+    for (auto const& pool : pools) {
+        if (!pool->clientSupported(client_classes)) {
             continue;
         }
-        if ((*pool)->inRange(addr)) {
+        if (pool->inRange(addr)) {
             return (true);
         }
     }
@@ -533,16 +596,20 @@ Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
         std::upper_bound(pools.begin(), pools.end(), pool->getFirstAddress(),
                          prefixLessThanFirstAddress);
 
-    // upper_bound returns a first pool which first address is greater than the
-    // address F2. However, it is also possible that there is a pool which first
-    // address is equal to F2. Such pool is also in conflict with a new pool.
-    // If the returned value is pools.begin() it means that all pools have greater
-    // first address than F2, thus none of the pools can have first address equal
-    // to F2. Otherwise, we'd need to check them for equality.
+    // The upper_bound function returns a first pool which first address is
+    // greater than the address F2. However, it is also possible that there is a
+    // pool which first address is equal to F2. Such pool is also in conflict
+    // with a new pool. If the returned value is pools.begin() it means that all
+    // pools have greater first address than F2, thus none of the pools can have
+    // first address equal to F2. Otherwise, we'd need to check them for
+    // equality. However any pool has first address <= last address, so checking
+    // that the new pool first address is greater than the pool before pool3
+    // last address is enough. We now have to find the pool1. This pool should
+    // be right before the pool3 if there is any pool before pool3.
     if (pool3_it != pools.begin()) {
-        // Go back one pool and check if addresses are equal.
-        PoolPtr pool3 = *(pool3_it - 1);
-        if (pool3->getFirstAddress() == pool->getFirstAddress()) {
+        PoolPtr pool1 = *(pool3_it - 1);
+        // F2 must be greater than L1, otherwise pools will overlap.
+        if (pool->getFirstAddress() <= pool1->getLastAddress()) {
             return (true);
         }
     }
@@ -558,19 +625,8 @@ Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
         }
     }
 
-    // If L2 is ok, we now have to find the pool1. This pool should be
-    // right before the pool3 if there is any pool before pool3.
-    if (pool3_it != pools.begin()) {
-        PoolPtr pool1 = *(pool3_it - 1);
-        // F2 must be greater than L1.
-        if (pool->getFirstAddress() <= pool1->getLastAddress()) {
-            return (true);
-        }
-    }
-
     return (false);
 }
-
 
 Subnet6::Subnet6(const IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
@@ -622,8 +678,7 @@ Subnet6::create(const IOAddress& prefix, uint8_t length,
 }
 
 void Subnet6::checkType(Lease::Type type) const {
-    if ( (type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) &&
-         (type != Lease::TYPE_PD)) {
+    if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) && (type != Lease::TYPE_PD)) {
         isc_throw(BadValue, "Invalid Pool type: " << Lease::typeToText(type)
                   << "(" << static_cast<int>(type)
                   << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
@@ -711,10 +766,9 @@ Subnet4::toElement() const {
     // Set pools
     const PoolCollection& pools = getPools(Lease::TYPE_V4);
     ElementPtr pool_list = Element::createList();
-    for (PoolCollection::const_iterator pool = pools.cbegin();
-         pool != pools.cend(); ++pool) {
-        // Add the elementized pool to the list
-        pool_list->add((*pool)->toElement());
+    for (auto const& pool : pools) {
+        // Add the formated pool to the list
+        pool_list->add(pool->toElement());
     }
     map->set("pools", pool_list);
 
@@ -742,20 +796,18 @@ Subnet6::toElement() const {
     // Set pools
     const PoolCollection& pools = getPools(Lease::TYPE_NA);
     ElementPtr pool_list = Element::createList();
-    for (PoolCollection::const_iterator pool = pools.cbegin();
-         pool != pools.cend(); ++pool) {
-        // Add the elementized pool to the list
-        pool_list->add((*pool)->toElement());
+    for (auto const& pool : pools) {
+        // Add the formated pool to the list
+        pool_list->add(pool->toElement());
     }
     map->set("pools", pool_list);
 
     // Set pd-pools
     const PoolCollection& pdpools = getPools(Lease::TYPE_PD);
     ElementPtr pdpool_list = Element::createList();
-    for (PoolCollection::const_iterator pool = pdpools.cbegin();
-         pool != pdpools.cend(); ++pool) {
-        // Add the elementized pool to the list
-        pdpool_list->add((*pool)->toElement());
+    for (auto const& pool : pdpools) {
+        // Add the formated pool to the list
+        pdpool_list->add(pool->toElement());
     }
     map->set("pd-pools", pdpool_list);
 
@@ -772,5 +824,5 @@ Subnet6::parsePrefix(const std::string& prefix) {
     return (parsed);
 }
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
