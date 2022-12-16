@@ -635,6 +635,14 @@ TEST_F(Pkt6Test, getName) {
             EXPECT_STREQ("LEASEQUERY", Pkt6::getName(type));
             break;
 
+        case DHCPV6_LEASEQUERY_DATA:
+            EXPECT_STREQ("LEASEQUERY_DATA", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_LEASEQUERY_DONE:
+            EXPECT_STREQ("LEASEQUERY_DONE", Pkt6::getName(type));
+            break;
+
         case DHCPV6_LEASEQUERY_REPLY:
             EXPECT_STREQ("LEASEQUERY_REPLY", Pkt6::getName(type));
             break;
