@@ -307,6 +307,7 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
                           TCP_CONNECTION_REJECTED_BY_FILTER)
                           .arg(getRemoteEndpointAddressAsText());
                 stopThisConnection();
+                TcpConnectionPool::rejected_counter_ += 1;
                 return;
             }
         }

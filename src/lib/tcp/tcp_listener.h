@@ -95,7 +95,7 @@ public:
     }
 
     /// @brief Returns connections.
-    const TcpConnectionList& getConnections() const {
+    TcpConnectionList getConnections() {
         return (connections_.getConnections());
     }
 

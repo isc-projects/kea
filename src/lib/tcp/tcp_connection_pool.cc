@@ -13,13 +13,24 @@
 namespace isc {
 namespace tcp {
 
+std::atomic<uint64_t>
+TcpConnectionPool::started_counter_(0);
+
+std::atomic<uint64_t>
+TcpConnectionPool::stopped_counter_(0);
+
+std::atomic<uint64_t>
+TcpConnectionPool::rejected_counter_(0);
+
 void
 TcpConnectionPool::start(const TcpConnectionPtr& connection) {
     if (util::MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(mutex_);
         connections_.insert(connections_.end(), connection);
+        started_counter_ += 1;
     } else {
         connections_.insert(connections_.end(), connection);
+        started_counter_ += 1;
     }
 
     connection->asyncAccept();
@@ -29,9 +40,15 @@ void
 TcpConnectionPool::stop(const TcpConnectionPtr& connection) {
     if (util::MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(mutex_);
+        size_t before = connections_.size();
         connections_.remove(connection);
+        size_t after = connections_.size();
+        stopped_counter_ += before - after;
     } else {
+        size_t before = connections_.size();
         connections_.remove(connection);
+        size_t after = connections_.size();
+        stopped_counter_ += before - after;
     }
 
     connection->close();
@@ -41,9 +58,15 @@ void
 TcpConnectionPool::shutdown(const TcpConnectionPtr& connection) {
     if (util::MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(mutex_);
+        size_t before = connections_.size();
         connections_.remove(connection);
+        size_t after = connections_.size();
+        stopped_counter_ += before - after;
     } else {
+        size_t before = connections_.size();
         connections_.remove(connection);
+        size_t after = connections_.size();
+        stopped_counter_ += before - after;
     }
 
     connection->shutdown();
@@ -67,7 +90,19 @@ TcpConnectionPool::stopAllInternal() {
         (*connection)->close();
     }
 
+    size_t cnt = connections_.size();
     connections_.clear();
+    stopped_counter_ += cnt;
+}
+
+TcpConnectionList
+TcpConnectionPool::getConnections() {
+    if (util::MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        return (connections_);
+    } else {
+        return (connections_);
+    }
 }
 
 }

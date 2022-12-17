@@ -61,9 +61,16 @@ public:
     void stopAll();
 
     /// @brief Returns connections.
-    const TcpConnectionList& getConnections() const {
-        return (connections_);
-    }
+    TcpConnectionList getConnections();
+
+    /// @brief Class/static started (i.e. added to pool) connection counter.
+    static std::atomic<uint64_t> started_counter_;
+
+    /// @brief Class/static stopped (i.e. removed from pool) connection counter.
+    static std::atomic<uint64_t> stopped_counter_;
+
+    /// @brief Class/static rejected (by the accept filter) connection counter.
+    static std::atomic<uint64_t> rejected_counter_;
 
 protected:
 
