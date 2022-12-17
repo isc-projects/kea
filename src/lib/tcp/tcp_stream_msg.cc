@@ -22,7 +22,7 @@ TcpStreamRequest::needData() const {
 }
 
 size_t
-TcpStreamRequest::postBuffer(const void* buf,  const size_t nbytes) {
+TcpStreamRequest::postBuffer(const void* buf, const size_t nbytes) {
     if (!nbytes) {
         // Nothing to do.
         return (0);
@@ -55,8 +55,8 @@ TcpStreamRequest::postBuffer(const void* buf,  const size_t nbytes) {
         // If we have enough to do it, calculate the expected length.
         if (wire_size == 2 ) {
             const uint8_t* cp = static_cast<const uint8_t*>(wire_data_.data());
-            uint16_t len = ((unsigned int)(cp[0])) << 8;
-            len |= ((unsigned int)(cp[1]));
+            uint16_t len = static_cast<unsigned int>(cp[0]) << 8;
+            len |= static_cast<unsigned int>(cp[1]);
             expected_size_ = len + sizeof(len);
         }
     }

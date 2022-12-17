@@ -25,11 +25,12 @@ namespace tcp {
 class TcpStreamRequest : public TcpRequest {
 public:
     /// @brief Constructor.
-    TcpStreamRequest()
-     : expected_size_(0) {};
+    TcpStreamRequest() : expected_size_(0) {
+    }
 
     /// @brief Destructor
-    virtual ~TcpStreamRequest(){};
+    virtual ~TcpStreamRequest() {
+    }
 
     /// @brief Adds data to an incomplete request
     ///

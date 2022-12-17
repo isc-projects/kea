@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+#include <sstream>
+
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
 using namespace isc::tcp;
@@ -493,9 +495,65 @@ TEST(TcpStreamRequst, postBufferTest) {
             { 0x38, 0x39 },
         },
         { "123456789" }
-
-    },
+    }
     };
+
+    // Extend the second case with 3 messages to all possible splits
+    // into one to four chuncks.
+    std::string desc = "N. Three messages";
+    std::vector<uint8_t> buffer = {
+         0x00, 0x04, 0x31, 0x32, 0x33, 0x34,
+         0x00, 0x02, 0x35, 0x36,
+         0x00, 0x03, 0x37, 0x38, 0x39
+    };
+    std::list<std::string> expected = { "1234", "56", "789" };
+    // No cut.
+    scenarios.push_back(Scenario{ desc, { buffer }, expected });
+    // One cut.
+    for (size_t i = 1; i < buffer.size() - 1; ++i) {
+        std::ostringstream sdesc;
+        sdesc << desc << " cut at " << i;
+        std::list<std::vector<uint8_t>> buffers;
+        buffers.push_back(std::vector<uint8_t>(buffer.cbegin(),
+                                               buffer.cbegin() + i));
+        buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + i,
+                                               buffer.cend()));
+        scenarios.push_back(Scenario{ sdesc.str(), buffers, expected });
+    }
+    // Two cuts.
+    for (size_t i = 1; i < buffer.size() - 2; ++i) {
+        for (size_t j = i + 1; j < buffer.size() - 1; ++j) {
+            std::ostringstream sdesc;
+            sdesc << desc << " cut at " << i << " and " << j;
+            std::list<std::vector<uint8_t>> buffers;
+            buffers.push_back(std::vector<uint8_t>(buffer.cbegin(),
+                                               buffer.cbegin() + i));
+            buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + i,
+                                                   buffer.cbegin() + j));
+            buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + j,
+                                                   buffer.cend()));
+            scenarios.push_back(Scenario{ sdesc.str(), buffers, expected });
+        }
+    }
+    // Three cuts.
+    for (size_t i = 1; i < buffer.size() - 3; ++i) {
+        for (size_t j = i + 1; j < buffer.size() - 2; ++j) {
+            for (size_t k = j + 1; k < buffer.size() - 1; ++k) {
+                std::ostringstream sdesc;
+                sdesc << desc << " cut at " << i << ", " << j << " and " << k;
+                std::list<std::vector<uint8_t>> buffers;
+                buffers.push_back(std::vector<uint8_t>(buffer.cbegin(),
+                                                       buffer.cbegin() + i));
+                buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + i,
+                                                       buffer.cbegin() + j));
+                buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + j,
+                                                       buffer.cbegin() + k));
+                buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + k,
+                                                       buffer.cend()));
+                scenarios.push_back(Scenario{ sdesc.str(), buffers, expected });
+            }
+        }
+    }
 
     for (auto scenario : scenarios ) {
         SCOPED_TRACE(scenario.desc_);
@@ -512,7 +570,8 @@ TEST(TcpStreamRequst, postBufferTest) {
                     request.reset(new TcpStreamRequest());
                 }
 
-                size_t bytes_used = request->postBuffer(static_cast<void*>(buf.data()), buf.size());
+                size_t bytes_used = request->postBuffer(buf.data(),
+                                                        buf.size());
                 if (!request->needData()) {
                     // Request is complete, save it.
                     requests.push_back(request);
@@ -534,6 +593,5 @@ TEST(TcpStreamRequst, postBufferTest) {
         }
     }
 }
-
 
 }
