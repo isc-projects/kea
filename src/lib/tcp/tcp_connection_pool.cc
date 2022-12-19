@@ -10,6 +10,8 @@
 #include <tcp/tcp_connection_pool.h>
 #include <util/multi_threading_mgr.h>
 
+using namespace isc::asiolink;
+
 namespace isc {
 namespace tcp {
 
@@ -95,14 +97,30 @@ TcpConnectionPool::stopAllInternal() {
     stopped_counter_ += cnt;
 }
 
-TcpConnectionList
-TcpConnectionPool::getConnections() {
+size_t
+TcpConnectionPool::usedByRemoteIp(const IOAddress& remote_ip,
+                                  size_t& total_connections) {
     if (util::MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(mutex_);
-        return (connections_);
+        return (usedByRemoteIpInternal(remote_ip, total_connections));
     } else {
-        return (connections_);
+        return (usedByRemoteIpInternal(remote_ip, total_connections));
     }
+}
+
+size_t
+TcpConnectionPool::usedByRemoteIpInternal(const IOAddress& remote_ip,
+                                          size_t& total_connections) {
+    total_connections = connections_.size();
+    size_t cnt = 0;
+    for (const auto& conn : connections_) {
+        const auto& ep = conn->getRemoteEndpoint();
+        if ((ep != TcpConnection::NO_ENDPOINT()) &&
+            (IOAddress(ep.address()) == remote_ip)) {
+            ++cnt;
+        }
+    }
+    return (cnt);
 }
 
 }

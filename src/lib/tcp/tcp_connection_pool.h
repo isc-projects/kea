@@ -60,8 +60,15 @@ public:
     /// @brief Stops all connections and removes them from the pool.
     void stopAll();
 
-    /// @brief Returns connections.
-    TcpConnectionList getConnections();
+    /// @brief Returns the number of connections using a given remote IP address.
+    ///
+    /// Used to limit the number of connections when accepting a new one.
+    ///
+    /// @param remote_ip The remote IP address.
+    /// @param[out] total_connections Size of the connection pool.
+    /// @return The number of connections using a given remote IP address.
+    size_t usedByRemoteIp(const asiolink::IOAddress& remote_ip,
+                          size_t& total_connections);
 
     /// @brief Class/static started (i.e. added to pool) connection counter.
     static std::atomic<uint64_t> started_counter_;
@@ -78,6 +85,17 @@ protected:
     ///
     /// Must be called from with a thread-safe context.
     void stopAllInternal();
+
+    /// @brief Returns the number of connections using a given remote IP address.
+    ///
+    /// Used to limit the number of connections when accepting a new one.
+    /// Must be called from with a thread-safe context.
+    ///
+    /// @param remote_ip The remote IP address.
+    /// @param[out] total_connections Size of the connection pool.
+    /// @return The number of connections using a given remote IP address.
+    size_t usedByRemoteIpInternal(const asiolink::IOAddress& remote_ip,
+                                  size_t& total_connections);
 
     /// @brief Set of connections.
     TcpConnectionList connections_;

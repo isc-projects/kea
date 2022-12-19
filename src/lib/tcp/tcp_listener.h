@@ -94,9 +94,16 @@ public:
         return (idle_timeout_);
     }
 
-    /// @brief Returns connections.
-    TcpConnectionList getConnections() {
-        return (connections_.getConnections());
+    /// @brief Returns the number of connections using a given remote IP address.
+    ///
+    /// Used to limit the number of connections when accepting a new one.
+    ///
+    /// @param remote_ip The remote IP address.
+    /// @param[out] total_connections Size of the connection pool.
+    /// @return The number of connections using a given remote IP address.
+    size_t usedByRemoteIp(const asiolink::IOAddress& remote_ip,
+                          size_t& total_connections) {
+        return (connections_.usedByRemoteIp(remote_ip, total_connections));
     }
 
 protected:
