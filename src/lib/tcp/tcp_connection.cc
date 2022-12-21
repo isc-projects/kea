@@ -274,7 +274,9 @@ TcpConnection::doWrite(TcpResponsePtr response) {
             }
         }
     } catch (...) {
-        stopThisConnection();
+        // The connection is dead and there can't be a pending write as
+        // they are in sequence.
+        TcpConnection::stopThisConnection();
     }
 }
 
@@ -358,6 +360,7 @@ TcpConnection::socketReadCallback(TcpRequestPtr request,
         } else if ((ec.value() != boost::asio::error::try_again) &&
                    (ec.value() != boost::asio::error::would_block)) {
             stopThisConnection();
+            return;
 
         // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
         // read something from the socket on the next attempt. Just make sure
@@ -443,8 +446,10 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
         // treated as fatal error.
         } else if ((ec.value() != boost::asio::error::try_again) &&
                    (ec.value() != boost::asio::error::would_block)) {
-            stopThisConnection();
-            // @todo TKM shouldn't there be a return here?
+            // The connection is dead and there can't be a pending write as
+            // they are in sequence.
+            TcpConnection::stopThisConnection();
+            return;
 
         // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
         // read something from the socket on the next attempt.

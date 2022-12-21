@@ -58,6 +58,9 @@ public:
     void stop(const TcpConnectionPtr& connection);
 
     /// @brief Stops all connections and removes them from the pool.
+    ///
+    /// @note This function is not thread-safe so should be called
+    /// when the thread pool is stopped.
     void stopAll();
 
     /// @brief Returns the number of connections using a given remote IP address.

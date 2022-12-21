@@ -396,10 +396,10 @@ protected:
     /// @brief Shuts down current connection.
     ///
     /// Copied from the next method @ref stopThisConnection
-    void shutdownConnection();
+    virtual void shutdownConnection();
 
     /// @brief Stops current connection.
-    void stopThisConnection();
+    virtual void stopThisConnection();
 
     /// @brief returns remote address in textual form
     std::string getRemoteEndpointAddressAsText() const;
