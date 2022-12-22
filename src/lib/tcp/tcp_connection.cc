@@ -300,18 +300,28 @@ TcpConnection::acceptorCallback(const boost::system::error_code& ec) {
     acceptor_callback_(ec);
 
     if (!ec) {
-        if (connection_filter_) {
-            // In theory, we should not get here with an unopened socket
-            // but just in case, we'll check for NO_ENDPOINT.
-            auto endpoint = getRemoteEndpoint();
-            if (endpoint == NO_ENDPOINT() || !connection_filter_(endpoint)) {
-                LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                          TCP_CONNECTION_REJECTED_BY_FILTER)
-                          .arg(getRemoteEndpointAddressAsText());
-                stopThisConnection();
-                TcpConnectionPool::rejected_counter_ += 1;
-                return;
+        try {
+            if (tcp_socket_ && tcp_socket_->getASIOSocket().is_open()) {
+                remote_endpoint_ =
+                    tcp_socket_->getASIOSocket().remote_endpoint();
+            } else if (tls_socket_ && tls_socket_->getASIOSocket().is_open()) {
+                remote_endpoint_ =
+                    tls_socket_->getASIOSocket().remote_endpoint();
             }
+        } catch (...) {
+            // Let's it to fail later.
+        }
+
+        // In theory, we should not get here with an unopened socket
+        // but just in case, we'll check for NO_ENDPOINT.
+        if ((remote_endpoint_ == NO_ENDPOINT()) ||
+            (connection_filter_ && !connection_filter_(remote_endpoint_))) {
+            LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                      TCP_CONNECTION_REJECTED_BY_FILTER)
+                .arg(getRemoteEndpointAddressAsText());
+            TcpConnectionPool::rejected_counter_ += 1;
+            stopThisConnection();
+            return;
         }
 
         if (!tls_context_) {
@@ -495,30 +505,10 @@ TcpConnection::idleTimeoutCallback() {
     stopThisConnection();
 }
 
-const boost::asio::ip::tcp::endpoint
-TcpConnection::getRemoteEndpoint() const {
-    try {
-        if (tcp_socket_) {
-            if (tcp_socket_->getASIOSocket().is_open()) {
-                return (tcp_socket_->getASIOSocket().remote_endpoint());
-            }
-        } else if (tls_socket_) {
-            if (tls_socket_->getASIOSocket().is_open()) {
-                return (tls_socket_->getASIOSocket().remote_endpoint());
-            }
-        }
-    } catch (...) {
-    }
-
-    return (NO_ENDPOINT());
-}
-
 std::string
 TcpConnection::getRemoteEndpointAddressAsText() const {
-
-    auto endpoint = getRemoteEndpoint();
-    if (endpoint != NO_ENDPOINT()) {
-        return (endpoint.address().to_string());
+    if (remote_endpoint_ != NO_ENDPOINT()) {
+        return (remote_endpoint_.address().to_string());
     }
 
     return ("(unknown address)");

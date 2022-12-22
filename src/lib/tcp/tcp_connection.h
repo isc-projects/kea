@@ -315,7 +315,9 @@ public:
     ///
     /// @return A reference to the endpoint if the socket is open, otherwise
     /// NO_ENDPOINT.
-    const boost::asio::ip::tcp::endpoint getRemoteEndpoint() const;
+    const boost::asio::ip::tcp::endpoint getRemoteEndpoint() const {
+	return (remote_endpoint_);
+    }
 
 protected:
 
@@ -453,6 +455,9 @@ protected:
 
     /// @brief Buffer for a single socket read.
     WireData input_buf_;
+
+    /// @brief Remote endpoint.
+    boost::asio::ip::tcp::endpoint remote_endpoint_;
 };
 
 /// @brief Pointer to the @ref TcpConnection.
