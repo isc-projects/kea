@@ -418,33 +418,6 @@ public:
     const isc::asiolink::IOAddress&
     getRelay6PeerAddress(uint8_t relay_level) const;
 
-protected:
-
-    /// @brief Returns all option instances of specified type without
-    /// copying.
-    ///
-    /// This is a variant of @ref getOptions method, which returns a collection
-    /// of options without copying them. This method should be only used by
-    /// the @ref Pkt6 class and derived classes. Any external callers should
-    /// use @ref getOptions which copies option instances before returning them
-    /// when the @ref Pkt::copy_retrieved_options_ flag is set to true.
-    ///
-    /// @param opt_type Option code.
-    ///
-    /// @return Collection of options found.
-    OptionCollection getNonCopiedOptions(const uint16_t opt_type) const;
-
-public:
-
-    /// @brief Returns all instances of specified type.
-    ///
-    /// Returns all instances of options of the specified type. DHCPv6 protocol
-    /// allows (and uses frequently) multiple instances.
-    ///
-    /// @param type option type we are looking for
-    /// @return instance of option collection with requested options
-    isc::dhcp::OptionCollection getOptions(const uint16_t type);
-
     /// @brief add information about one traversed relay
     ///
     /// This adds information about one traversed relay, i.e.

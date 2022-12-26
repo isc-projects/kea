@@ -609,6 +609,92 @@ TEST_F(Pkt4Test, options) {
     EXPECT_NO_THROW(pkt.reset());
 }
 
+// Check that multiple options of the same type may be retrieved by
+// using getOptions, Also check that retrieved options are copied when
+// setCopyRetrievedOptions is enabled.
+TEST_F(Pkt4Test, getOptions) {
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 0));
+    OptionPtr opt1(new Option(Option::V4, 1));
+    OptionPtr opt2(new Option(Option::V4, 1));
+    OptionPtr opt3(new Option(Option::V4, 2));
+    OptionPtr opt4(new Option(Option::V4, 2));
+
+    pkt->addOption(opt1);
+    pkt->Pkt::addOption(opt2);
+    pkt->Pkt::addOption(opt3);
+    pkt->Pkt::addOption(opt4);
+
+    // Retrieve options with option code 1.
+    OptionCollection options = pkt->getOptions(1);
+    ASSERT_EQ(2, options.size());
+
+    OptionCollection::const_iterator opt_it;
+
+    // Make sure that the first option is returned. We're using the pointer
+    // to opt1 to find the option.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt1));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Make sure that the second option is returned.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt2));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Retrieve options with option code 2.
+    options = pkt->getOptions(2);
+
+    // opt3 and opt4 should exist.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt3));
+    EXPECT_TRUE(opt_it != options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt4));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Enable copying options when they are retrieved.
+    pkt->setCopyRetrievedOptions(true);
+
+    options = pkt->getOptions(1);
+    ASSERT_EQ(2, options.size());
+
+    // Both retrieved options should be copied so an attempt to find them
+    // using option pointer should fail. Original pointers should have
+    // been replaced with new instances.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt1));
+    EXPECT_TRUE(opt_it == options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt2));
+    EXPECT_TRUE(opt_it == options.end());
+
+    // Return instances of options with the option code 1 and make sure
+    // that copies of the options were used to replace original options
+    // in the packet.
+    pkt->setCopyRetrievedOptions(false);
+    OptionCollection options_modified = pkt->getOptions(1);
+    for (OptionCollection::const_iterator opt_it_modified = options_modified.begin();
+         opt_it_modified != options_modified.end(); ++opt_it_modified) {
+        opt_it = std::find(options.begin(), options.end(), *opt_it_modified);
+        ASSERT_TRUE(opt_it != options.end());
+    }
+
+    // Let's check that remaining two options haven't been affected by
+    // retrieving the options with option code 1.
+    options = pkt->getOptions(2);
+    ASSERT_EQ(2, options.size());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt3));
+    EXPECT_TRUE(opt_it != options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt4));
+    EXPECT_TRUE(opt_it != options.end());
+}
+
 // This test verifies that it is possible to control whether a pointer
 // to an option or a pointer to a copy of an option is returned by the
 // packet object.

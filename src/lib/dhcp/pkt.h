@@ -348,13 +348,26 @@ protected:
     /// if such option is not present.
     OptionPtr getNonCopiedOption(const uint16_t type) const;
 
+    /// @brief Returns all option instances of specified type without
+    /// copying.
+    ///
+    /// This is a variant of @ref getOptions method, which returns a collection
+    /// of options without copying them. This method should be only used by
+    /// the @ref Pkt6 class and derived classes. Any external callers should
+    /// use @ref getOptions which copies option instances before returning them
+    /// when the @ref Pkt::copy_retrieved_options_ flag is set to true.
+    ///
+    /// @param opt_type Option code.
+    ///
+    /// @return Collection of options found.
+    OptionCollection getNonCopiedOptions(const uint16_t opt_type) const;
+
 public:
 
     /// @brief Returns the first option of specified type.
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
     /// instances of the same option are allowed (and frequently used).
-    /// Also see @ref Pkt6::getOptions().
     ///
     /// The options will be only returned after unpack() is called.
     ///
@@ -362,6 +375,15 @@ public:
     ///
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(const uint16_t type);
+
+    /// @brief Returns all instances of specified type.
+    ///
+    /// Returns all instances of options of the specified type. DHCPv6 protocol
+    /// allows (and uses frequently) multiple instances.
+    ///
+    /// @param type option type we are looking for
+    /// @return instance of option collection with requested options
+    isc::dhcp::OptionCollection getOptions(const uint16_t type);
 
     /// @brief Controls whether the option retrieved by the @ref Pkt::getOption
     /// should be copied before being returned.

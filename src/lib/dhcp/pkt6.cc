@@ -102,7 +102,6 @@ Pkt6::prepareGetAnyRelayOption(const RelaySearchOrder& order,
     }
 }
 
-
 OptionPtr
 Pkt6::getNonCopiedAnyRelayOption(const uint16_t option_code,
                                  const RelaySearchOrder& order) const {
@@ -775,33 +774,6 @@ Pkt6::getClientId() const {
         // choice left is to return an empty pointer.
     }
     return (DuidPtr());
-}
-
-isc::dhcp::OptionCollection
-Pkt6::getNonCopiedOptions(const uint16_t opt_type) const {
-    std::pair<OptionCollection::const_iterator,
-              OptionCollection::const_iterator> range = options_.equal_range(opt_type);
-    return (OptionCollection(range.first, range.second));
-}
-
-isc::dhcp::OptionCollection
-Pkt6::getOptions(const uint16_t opt_type) {
-    OptionCollection options_copy;
-
-    std::pair<OptionCollection::iterator,
-              OptionCollection::iterator> range = options_.equal_range(opt_type);
-    // If options should be copied on retrieval, we should now iterate over
-    // matching options, copy them and replace the original ones with new
-    // instances.
-    if (copy_retrieved_options_) {
-        for (OptionCollection::iterator opt_it = range.first;
-             opt_it != range.second; ++opt_it) {
-            OptionPtr option_copy = opt_it->second->clone();
-            opt_it->second = option_copy;
-        }
-    }
-    // Finally, return updated options. This can also be empty in some cases.
-    return (OptionCollection(range.first, range.second));
 }
 
 const char*

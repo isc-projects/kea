@@ -71,7 +71,7 @@ public:
         : Pkt6(buf, len, proto) {
     }
 
-    using Pkt6::getNonCopiedOptions;
+    using Pkt::getNonCopiedOptions;
     using Pkt6::getNonCopiedRelayOption;
     using Pkt6::getNonCopiedRelayOptions;
     using Pkt6::getNonCopiedAnyRelayOption;
@@ -487,9 +487,9 @@ TEST_F(Pkt6Test, addGetDelOptions) {
 }
 
 // Check that multiple options of the same type may be retrieved by using
-// Pkt6::getOptions or Pkt6::getNonCopiedOptions. In the former case, also
-// check that retrieved options are copied when Pkt6::setCopyRetrievedOptions
-// is enabled.
+// getOptions or getNonCopiedOptions. In the former case, also check
+// that retrieved options are copied when setCopyRetrievedOptions is
+// enabled.
 TEST_F(Pkt6Test, getOptions) {
     NakedPkt6 pkt(DHCPV6_SOLICIT, 1234);
     OptionPtr opt1(new Option(Option::V6, 1));

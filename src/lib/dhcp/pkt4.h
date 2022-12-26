@@ -325,6 +325,9 @@ public:
 
     /// @brief Add an option.
     ///
+    /// @note: to avoid throwing when adding multiple options
+    /// with the same type use @ref Pkt::addOption.
+    ///
     /// @throw BadValue if option with that type is already present.
     ///
     /// @param opt option to be added

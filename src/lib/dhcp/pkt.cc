@@ -64,6 +64,33 @@ Pkt::getOption(const uint16_t type) {
     return (OptionPtr()); // NULL
 }
 
+OptionCollection
+Pkt::getNonCopiedOptions(const uint16_t opt_type) const {
+    std::pair<OptionCollection::const_iterator,
+              OptionCollection::const_iterator> range = options_.equal_range(opt_type);
+    return (OptionCollection(range.first, range.second));
+}
+
+OptionCollection
+Pkt::getOptions(const uint16_t opt_type) {
+    OptionCollection options_copy;
+
+    std::pair<OptionCollection::iterator,
+              OptionCollection::iterator> range = options_.equal_range(opt_type);
+    // If options should be copied on retrieval, we should now iterate over
+    // matching options, copy them and replace the original ones with new
+    // instances.
+    if (copy_retrieved_options_) {
+        for (OptionCollection::iterator opt_it = range.first;
+             opt_it != range.second; ++opt_it) {
+            OptionPtr option_copy = opt_it->second->clone();
+            opt_it->second = option_copy;
+        }
+    }
+    // Finally, return updated options. This can also be empty in some cases.
+    return (OptionCollection(range.first, range.second));
+}
+
 bool
 Pkt::delOption(uint16_t type) {
     const auto& x = options_.find(type);
