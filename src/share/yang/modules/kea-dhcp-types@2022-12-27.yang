@@ -16,6 +16,10 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2022-12-27 {
+    description "Added never-send.";
+  }
+
   revision 2022-11-30 {
     description "Added the extended-info-checks and the ignore-rai-link-selection nodes.";
   }
@@ -828,6 +832,14 @@ module kea-dhcp-types {
       type boolean;
       description "Defines whether to always send the option,
                    regardless if the client requested it or not.";
+    }
+  }
+
+  grouping option-data-never-send {
+    description "Option data never-send grouping.";
+    leaf never-send {
+      type boolean;
+      description "Defines whether to never send the option.";
     }
   }
 

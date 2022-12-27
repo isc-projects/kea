@@ -1,7 +1,7 @@
-module kea-dhcp4-server {
+module kea-dhcp6-server {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp4-server";
-  prefix "kea-dhcp4-server";
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp6-server";
+  prefix "kea-dhcp6-server";
 
   import ietf-inet-types {
     prefix inet;
@@ -12,13 +12,17 @@ module kea-dhcp4-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2022-11-30;
+    revision-date 2022-12-27;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
-               used to configure and manage a Kea DHCPv4 server.";
+               used to configure and manage a Kea DHCPv6 server.";
+
+  revision 2022-12-27 {
+    description "Added never-send to option-data.";
+  }
 
   revision 2022-11-30 {
     description "Added the template-test node for client classes.";
@@ -70,12 +74,6 @@ module kea-dhcp4-server {
       enum "hw-address" {
         description "Hardware address";
       }
-      enum "circuit-id" {
-        description "Circuit-id option";
-      }
-      enum "client-id" {
-        description "Client identifier";
-      }
       enum "flex-id" {
         description "Flexible identifier";
       }
@@ -86,54 +84,62 @@ module kea-dhcp4-server {
   /*
   * Groupings
   */
-  grouping match-client-id {
-    description "Match client ID grouping.";
-    leaf match-client-id {
-      type boolean;
-      description "Use client-id for lease lookups. If set to false, client-id
-                   will be ignored.";
-    }
-  }
-
-  grouping next-server {
-    description "Next server address grouping.";
-    leaf next-server {
-      type inet:ipv4-address;
-      description "Next server IPv4 address. If set, this value will be set
-                   in siaddr field.";
-    }
-  }
-
-  grouping server-hostname {
-    description "Server hostname grouping.";
-    leaf server-hostname {
+  grouping data-directory {
+    description "Data directory grouping.";
+    leaf data-directory {
       type string;
-      description "Server hostname (up to 64 bytes).";
+      description "Server data directory.";
     }
   }
 
-  grouping boot-file-name {
-    description "Boot file name grouping.";
-    leaf boot-file-name {
+  grouping preferred-lifetime {
+    description "Preferred lifetime grouping.";
+    leaf preferred-lifetime {
+      type uint32;
+      units "seconds";
+      description "Preferred lifetime.";
+    }
+  }
+
+  grouping min-preferred-lifetime {
+    description "Minimum preferred lifetime grouping.";
+    leaf min-preferred-lifetime {
+      type uint32;
+      units "seconds";
+      description "Minimum preferred lifetime.";
+    }
+  }
+
+  grouping max-preferred-lifetime {
+    description "Maximum preferred lifetime grouping.";
+    leaf max-preferred-lifetime {
+      type uint32;
+      units "seconds";
+      description "Maximum preferred lifetime.";
+    }
+  }
+
+  grouping interface-id {
+    description "Interface ID grouping.";
+    leaf interface-id {
       type string;
-      description "Boot file name (up to 128 bytes).";
+      description "Interface ID entry.";
     }
-  }
-
-  grouping authoritative {
-    description "Authoritative grouping.";
-    leaf authoritative {
-      type boolean;
-      description "NAK requests for unknown clients. If set to false
-                   ignore them.";
-      }
   }
 
   grouping relay {
     description "Relay grouping.";
     leaf-list ip-addresses {
-      type inet:ipv4-address;
-      description "IPv4 addresses.";
+      type inet:ipv6-address;
+      description "IPv6 addresses.";
+    }
+  }
+
+  grouping rapid-commit {
+    description "Rapid commit grouping.";
+    leaf rapid-commit {
+      type boolean;
+      description "Rapid commit entry.";
     }
   }
 
@@ -145,16 +151,17 @@ module kea-dhcp4-server {
       description "Host identifier type.";
     }
     uses dhcp:host-identifier;
-    leaf ip-address {
-      type inet:ipv4-address;
-      description "Host reserved IPv4 address.";
+    leaf-list ip-addresses {
+      type inet:ipv6-address;
+      description "Host reserved IP addresses.";
+    }
+    leaf-list prefixes {
+      type inet:ipv6-prefix;
+      description "Host reserved IP prefixes.";
     }
     uses dhcp:host-hostname;
     uses dhcp:host-client-classes;
     uses option-data-list;
-    uses next-server;
-    uses server-hostname;
-    uses boot-file-name;
     uses dhcp:host-user-context;
   }
 
@@ -167,12 +174,15 @@ module kea-dhcp4-server {
     }
   }
 
-  grouping subnet4-list {
-    description "Subnet4 list grouping.";
-    list subnet4 {
+  grouping subnet6-list {
+    description "Subnet6 list grouping.";
+    list subnet6 {
       key id;
       ordered-by user;
-      description "List of IPv4 subnets.";
+      description "List of IPv6 subnets.";
+      uses preferred-lifetime;
+      uses min-preferred-lifetime;
+      uses max-preferred-lifetime;
       uses dhcp:valid-lifetime;
       uses dhcp:min-valid-lifetime;
       uses dhcp:max-valid-lifetime;
@@ -187,34 +197,80 @@ module kea-dhcp4-server {
         ordered-by user;
         description "Pool list.";
         leaf prefix {
-          type inet:ipv4-prefix;
-          description "Defines a pool of dynamic IPv4 addresses to be managed
-                       by the server.";
+          type inet:ipv6-prefix;
+          description "Pool prefix.";
         }
         leaf start-address {
-          type inet:ipv4-address;
+          type inet:ipv6-address;
           mandatory true;
-          description "First IPv4 address in a pool.";
+          description "First IPv6 address in a pool.";
         }
         leaf end-address {
-          type inet:ipv4-address;
+          type inet:ipv6-address;
           mandatory true;
-          description "Last IPv4 address in a pool.";
+          description "Last IPv6 address in a pool.";
         }
         uses option-data-list;
         uses dhcp:pool-client-class;
         uses dhcp:pool-require-client-classes;
         uses dhcp:pool-user-context;
       }
+      list pd-pool {
+        key prefix;
+        ordered-by user;
+        description "Prefix delegation pool list.";
+        leaf prefix {
+          type inet:ipv6-prefix;
+          mandatory true;
+          description "IPv6 pool prefix.";
+        }
+        leaf delegated-len {
+          type uint8;
+          description "Prefix pool delegated length.";
+        }
+        uses option-data-list;
+        uses dhcp:client-class {
+          refine client-class {
+            description "Prefix pool client class guard. (only
+                         clients belonging to this class will be
+                         allowed in this pool).";
+          }
+        }
+        uses dhcp:require-client-classes {
+          refine require-client-classes {
+            description "Prefix pool require client classes.";
+          }
+        }
+        leaf excluded-prefix {
+          type inet:ipv6-prefix;
+          description "Prefix pool excluded prefix.";
+        }
+        uses kea:user-context {
+          refine user-context {
+            description "Prefix pool user context. Arbitrary JSON data
+                         can be stored here.";
+          }
+        }
+      }
       leaf subnet {
-        type inet:ipv4-prefix;
+        type inet:ipv6-prefix;
         mandatory true;
-        description "IPv4 subnet prefix.";
+        description "IPv6 subnet prefix.";
       }
       uses dhcp:subnet-interface;
+      uses interface-id {
+        refine interface-id {
+          description "Subnet interface-id option.";
+        }
+      }
       uses dhcp:subnet-id;
+      uses rapid-commit {
+        refine rapid-commit {
+          description "Subnet rapid commit flag.";
+        }
+      }
       uses dhcp:subnet-client-class;
-      uses dhcp:subnet-require-client-classes;
+      uses dhcp:require-client-classes;
       uses reservations {
         refine host {
           description "Subnet host reservations list.";
@@ -225,23 +281,6 @@ module kea-dhcp4-server {
         description "Optional information about relay agent.";
         uses relay;
       }
-      uses match-client-id;
-      uses next-server;
-      uses server-hostname;
-      uses boot-file-name;
-      leaf subnet-4o6-interface {
-        type string;
-        description "Subnet DHCPv4-over-DHCPv6 interface.";
-      }
-      leaf subnet-4o6-interface-id {
-        type string;
-        description "Subnet DHCPv4-over-DHCPv6 interface-id option.";
-      }
-      leaf subnet-4o6-subnet {
-        type inet:ipv6-prefix;
-        description "Subnet DHCPv4-over-DHCPv6 IPv6 prefix.";
-      }
-      uses authoritative;
       uses dhcp:cache-max-age;
       uses dhcp:cache-threshold;
       uses dhcp:ddns-generated-prefix;
@@ -272,11 +311,10 @@ module kea-dhcp4-server {
       uses dhcp:class-test;
       uses dhcp:template-test;
       uses dhcp:class-only-if-required;
-      uses option-def-list;
       uses option-data-list;
-      uses next-server;
-      uses server-hostname;
-      uses boot-file-name;
+      uses preferred-lifetime;
+      uses min-preferred-lifetime;
+      uses max-preferred-lifetime;
       uses dhcp:valid-lifetime;
       uses dhcp:min-valid-lifetime;
       uses dhcp:max-valid-lifetime;
@@ -290,14 +328,14 @@ module kea-dhcp4-server {
       key "code space";
       description "Option definition entry.";
       leaf code {
-        type uint8;
+        type uint16;
         mandatory true;
         description "Option code to be used by the new option definition.";
       }
       leaf space {
         type string;
         mandatory true;
-        description "Option space for the new option (typically dhcp4).";
+        description "Option space for the new option (typically dhcp6).";
       }
       uses dhcp:option-def-name;
       uses dhcp:option-def-type;
@@ -305,7 +343,7 @@ module kea-dhcp4-server {
       uses dhcp:option-def-encapsulate;
       uses dhcp:option-def-array;
       uses dhcp:option-def-user-context;
-     }
+    }
   }
 
   grouping option-data-list {
@@ -314,7 +352,7 @@ module kea-dhcp4-server {
       key "code space";
       description "Option data entry.";
       leaf code {
-        type uint8;
+        type uint16;
         mandatory true;
         description "Option code.";
       }
@@ -327,6 +365,7 @@ module kea-dhcp4-server {
       uses dhcp:option-data-data;
       uses dhcp:option-data-csv-format;
       uses dhcp:option-data-always-send;
+      uses dhcp:option-data-never-send;
       uses dhcp:option-data-user-context;
     }
   }
@@ -337,8 +376,12 @@ module kea-dhcp4-server {
 
   container config {
     // config true;
-    description "Contains DHCPv4 server configuration.";
+    description "Contains DHCPv6 server configuration.";
 
+    uses data-directory;
+    uses preferred-lifetime;
+    uses min-preferred-lifetime;
+    uses max-preferred-lifetime;
     uses dhcp:valid-lifetime;
     uses dhcp:min-valid-lifetime;
     uses dhcp:max-valid-lifetime;
@@ -348,29 +391,37 @@ module kea-dhcp4-server {
     uses dhcp:t1-percent;
     uses dhcp:t2-percent;
     uses dhcp:decline-probation-period;
-    uses subnet4-list;
+    uses subnet6-list;
 
     list shared-network {
       key name;
-      description "List of IPv4 shared networks.";
       uses dhcp:network-name;
-      uses subnet4-list;
+      description "List of IPv4 shared networks.";
+      uses subnet6-list;
       uses dhcp:network-interface;
+      uses interface-id {
+        refine interface-id {
+          description "Shared network interface-id option.";
+        }
+      }
       uses dhcp:renew-timer;
       uses dhcp:rebind-timer;
       uses option-data-list;
-      uses match-client-id;
-      uses next-server;
-      uses server-hostname;
-      uses boot-file-name;
       container relay {
         description "Optional information about relay agent.";
         uses relay;
       }
-      uses authoritative;
       uses dhcp:reservation-mode;
       uses dhcp:network-client-class;
-      uses dhcp:network-require-client-classes;
+      uses dhcp:require-client-classes;
+      uses preferred-lifetime;
+      uses min-preferred-lifetime;
+      uses max-preferred-lifetime;
+      uses rapid-commit {
+        refine rapid-commit {
+          description "Shared network rapid commit flag.";
+        }
+      }
       uses dhcp:valid-lifetime;
       uses dhcp:min-valid-lifetime;
       uses dhcp:max-valid-lifetime;
@@ -401,30 +452,7 @@ module kea-dhcp4-server {
       leaf-list interfaces {
         type string;
         description "Name of the interface (e.g. eth0) or name/address
-                     (e.g. eth0/192.168.1.1) or * (use all interfaces).";
-      }
-      leaf dhcp-socket-type {
-        type enumeration {
-          enum "raw" {
-            description "DHCP service uses RAW sockets.";
-          }
-          enum "udp" {
-            description "DHCP service uses UDP sockets.";
-          }
-        }
-        description "Type of sockets to use.";
-      }
-      leaf outbound-interface {
-        type enumeration {
-          enum "same-as-inbound" {
-            description "Send the response on the interface where the query
-                         was received.";
-          }
-          enum "use-routing" {
-            description "Use kernel routing.";
-          }
-        }
-        description "Control the interface used to send a response.";
+                     (e.g. eth0/2001:db8::1) or * (use all interfaces).";
       }
       uses dhcp:interfaces-re-detect;
       uses dhcp:interfaces-service-sockets-require-all;
@@ -434,6 +462,16 @@ module kea-dhcp4-server {
     }
 
     uses dhcp:databases;
+
+    leaf-list relay-supplied-options {
+      type string;
+      description "Relay supplied options.";
+    }
+
+    leaf-list mac-sources {
+      type string;
+      description "MAC address sources.";
+    }
 
     leaf-list host-reservation-identifiers {
       type host-identifier-type;
@@ -445,27 +483,58 @@ module kea-dhcp4-server {
     uses option-data-list;
     uses kea:hooks-libraries;
     uses dhcp:expired-leases-processing;
+
+    container server-id {
+      presence "Have server ID.";
+      description "Server DUID.";
+      leaf type {
+        type enumeration {
+          enum "LLT" {
+            description "Link-layer address and timestamp.";
+          }
+          enum "EN" {
+            description "Enterprise number.";
+          }
+          enum "LL" {
+            description "Link-layer address.";
+          }
+        }
+        description "Server DIOD type.";
+      }
+      leaf identifier {
+        type string;
+        description "Server DUID identifier.";
+      }
+      leaf time {
+        type uint32;
+        description "Server DUID time.";
+      }
+      leaf htype {
+        type uint16;
+        description "Server DUID hardware type.";
+      }
+      leaf enterprise-id {
+        type uint32;
+        description "Server DUID enterprise ID.";
+      }
+      leaf persist {
+        type boolean;
+        description "Server DUID persist flag.";
+      }
+      leaf user-context {
+        type kea:user-context;
+        description "Server DUID user context.";
+      }
+    }
+
     uses dhcp:dhcp4o6-port;
     uses kea:control-socket;
     uses dhcp:hostname-char-set;
     uses dhcp:hostname-char-replacement;
     uses dhcp:dhcp-ddns;
-
-    leaf echo-client-id {
-      type boolean;
-      description "Send client-id back when the client sent it. This
-                   is conformant with RFC6842, but some older, buggy
-                   clients have problems with it.";
-    }
-
-    uses match-client-id;
-    uses next-server;
-    uses server-hostname;
-    uses boot-file-name;
-    uses authoritative;
     uses kea:user-context {
       refine user-context {
-        description "DHCPv4 server user context. Arbitrary JSON data can
+        description "DHCPv6 server user context. Arbitrary JSON data can
                      be stored here.";
       }
     }
@@ -509,26 +578,22 @@ module kea-dhcp4-server {
   */
   container state {
     config false;
-    description "State of Kea DHCPv4 server.";
+    description "State of Kea DHCPv6 server.";
 
     container leases {
-      description "Kea DHCPv4 leases.";
+      description "Kea DHCPv6 leases.";
       list lease {
         key ip-address;
-        description "List of Kea DHCPv4 leases.";
+        description "List of Kea DHCPv6 leases.";
         leaf ip-address {
-          type inet:ipv4-address;
+          type inet:ipv6-address;
           mandatory true;
           description "Lease IP address.";
         }
-        leaf hw-address {
+        leaf duid {
           type binary;
           mandatory true;
-          description "Lease hardware address.";
-        }
-        leaf client-id {
-          type binary;
-          description "Lease client-id.";
+          description "Lease DUID.";
         }
         uses dhcp:valid-lifetime {
           refine valid-lifetime {
@@ -545,6 +610,38 @@ module kea-dhcp4-server {
           type uint32;
           mandatory true;
           description "Lease subnet ID.";
+        }
+        leaf preferred-lifetime {
+          type uint32;
+          units "seconds";
+          mandatory true;
+          description "Lease preferred lifetime.";
+        }
+        leaf lease-type {
+          type enumeration {
+            enum "IA_NA" {
+              description "Identity association for non-temporary addresses.";
+            }
+            enum "IA_TA" {
+              description "Identity association for temporary addresses.";
+            }
+            enum "IA_PD" {
+              description "Identity association for prefix delegation.";
+            }
+          }
+          mandatory true;
+          description "Lease IA type.";
+        }
+        leaf iaid {
+          type uint32;
+          mandatory true;
+          description "Lease IA ID.";
+        }
+        leaf prefix-length {
+          type uint8 {
+            range 0..128;
+          }
+          description "Lease prefix length.";
         }
         leaf fqdn-fwd {
           type boolean;
@@ -566,6 +663,10 @@ module kea-dhcp4-server {
           type kea:user-context;
           description "Lease user context.";
         }
+        leaf hw-address {
+          type string;
+          description "Lease hardware address.";
+        }
       }
     }
 
@@ -573,40 +674,50 @@ module kea-dhcp4-server {
       description "Lease statistics.";
       list subnet {
         key subnet-id;
-        description "List of IPv4 subnets.";
+        description "List of IPv6 subnets.";
         leaf subnet-id {
           type uint32;
           mandatory true;
           description "Subnet ID.";
         }
-        leaf total-addresses {
+        leaf total-nas {
           type uint32;
           mandatory true;
-          description "Total addresses counter.";
+          description "Total non-temporary addresses counter.";
         }
-        leaf assigned-addresses {
+        leaf assigned-nas {
           type uint32;
           mandatory true;
-          description "Assigned addresses counter.";
+          description "Assigned non-temporary counter.";
         }
-        leaf declined-addresses {
+        leaf declined-nas {
           type uint32;
           mandatory true;
-          description "Declined addresses counter.";
+          description "Declined non-temporary addresses counter.";
+        }
+        leaf total-pds {
+          type uint32;
+          mandatory true;
+          description "Total delegated prefixes counter.";
+        }
+        leaf assigned-pds {
+          type uint32;
+          mandatory true;
+          description "Assigned delegated prefixe counter.";
         }
       }
     }
 
     container hosts {
-      description "Kea DHCPv4 hosts.";
+      description "Kea DHCPv6 hosts.";
       list host {
         key "subnet-id identifier-type identifier";
-        description "List of Kea DHCPv4 hosts.";
+        description "List of Kea DHCPv6 hosts.";
         uses host;
         uses dhcp:host-subnet-id;
         leaf auth-key {
           type string;
-          description "Host authentication key (unused in DHCPv4).";
+          description "Host authentication key.";
         }
       }
     }
