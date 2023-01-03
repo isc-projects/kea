@@ -1148,38 +1148,61 @@ AC_ARG_ENABLE(generate_docs,
 
 DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
 PKGPYTHONDIR=
+PYTHON_PREFIX=
+PYTHON_EXEC_PREFIX=
 shell_report=no
-m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
- [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
-  python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
 if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
-# If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
-# We try to find 3.x first. If not found, we can do with 2.7.
-  AM_PATH_PYTHON([2.7])
 
-  AC_ARG_WITH(site-packages,
-           [AS_HELP_STRING([--with-site-packages],
-                          [place to install Kea Python module])],
-           [pythondir=$withval;
-            pkgpythondir=${pythondir}/$PACKAGE_NAME])
-  if test "$pythondir" = "yes"; then
-     AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --site-packages=/usr/lib/python3/dist-packages])
-  fi
-
-  # pkgpythondir needs to be expanded
+  # Temporarily replace NONE with the default prefix while --enable-shell is parsed.
   saved_prefix="$prefix"
   if test "$prefix" = "NONE"; then
     prefix=$ac_default_prefix
   fi
-  PKGPYTHONDIR="$pkgpythondir"
-  OLD=
-  while test "x$OLD" != "x$PKGPYTHONDIR"; do
-    OLD="$PKGPYTHONDIR"
-    eval PKGPYTHONDIR="\"$OLD\""
+
+  # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
+  # We try to find 3.x first. If not found, we can do with 2.7.
+  m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
+                    [python3 python python2])
+  AM_PATH_PYTHON([2.7])
+
+  # Determine if the --with-site-packages flag was provided.
+  AC_ARG_WITH(site-packages,
+              [AS_HELP_STRING([--with-site-packages],
+                              [place to install Kea Python module])],
+              [with_site_packages="${withval}"])
+
+  if test -z "${with_site_packages}"; then
+    # --with-site-packages not provided. Set a default location explicitly to
+    # make sure it doesn't change based on external factors. The path resembles
+    # what python set by default at the time of this writing.
+    pythondir="${prefix}/lib/python${PYTHON_VERSION}/site-packages"
+
+  elif test "${with_site_packages}" = 'yes'; then
+    # --with-site-packages provided, but without a value. It's not clear what is meant.
+    AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --with-site-packages=/usr/lib/python3/dist-packages])
+
+  else
+    # --with-site-packages provided with value. Override pythondir.
+    pythondir="${with_site_packages}"
+  fi
+
+  # pythondir needs to be expanded.
+  old=
+  while test "${old}" != "${pythondir}"; do
+    old="${pythondir}"
+    eval pythondir="\"${old}\""
   done
-  prefix="$saved_prefix"
+
+  # Set variables used in makefiles.
   DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
-  shell_report="yes, install to $pythondir"
+  PKGPYTHONDIR="${pythondir}/${PACKAGE_NAME}"
+  PYTHON_PREFIX="${prefix}"
+  PYTHON_EXEC_PREFIX="${prefix}"
+
+  # Restore prefix.
+  prefix="$saved_prefix"
+
+  shell_report='yes'
 else
   PYTHON=no
 fi
@@ -1188,6 +1211,8 @@ fi
 AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
 AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
 AC_SUBST(PKGPYTHONDIR)
+AC_SUBST(PYTHON_PREFIX)
+AC_SUBST(PYTHON_EXEC_PREFIX)
 
 # Decide if TLS is supported.
 tls_support=no
@@ -1804,8 +1829,11 @@ if test "$PYTHON" != "no" ; then
 cat >> config.report << END
 
 Python:
-  PYTHON:          ${PYTHON}
-  PYTHON_VERSION:  ${PYTHON_VERSION}
+  PYTHON:               ${PYTHON}
+  PYTHON_VERSION:       ${PYTHON_VERSION}
+  PYTHON_PREFIX:        ${PYTHON_PREFIX}
+  PYTHON_EXEC_PREFIX:   ${PYTHON_EXEC_PREFIX}
+  PKGPYTHONDIR:         ${PKGPYTHONDIR}
 
 END
 else
