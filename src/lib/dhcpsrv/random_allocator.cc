@@ -31,7 +31,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
     auto pools = subnet->getPools(pool_type_);
 
     // Let's first iterate over the pools and identify the ones that
-    // meet client class criteria. Then, segragate these pools into
+    // meet client class criteria. Then, segregate these pools into
     // the ones that still have available addresses and exhausted
     // ones.
     std::vector<uint64_t> available;

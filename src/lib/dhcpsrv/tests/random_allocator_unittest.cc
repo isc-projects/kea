@@ -87,7 +87,7 @@ TEST_F(RandomAllocatorTest4, manyPools) {
                 ++consecutives;
             }
         }
-        // Ideally, the number of consecutive occurences should be 0 but we
+        // Ideally, the number of consecutive occurrences should be 0 but we
         // allow some to make sure the test doesn't fall over sporadically.
         EXPECT_LT(consecutives, addresses_vector.size()/4);
 
@@ -241,7 +241,7 @@ TEST_F(RandomAllocatorTest6, manyPools) {
                 ++consecutives;
             }
         }
-        // Ideally, the number of consecutive occurences should be 0 but we
+        // Ideally, the number of consecutive occurrences should be 0 but we
         // allow some to make sure the test doesn't fall over sporadically.
         EXPECT_LT(consecutives, addresses_vector.size()/4);
 
