@@ -288,8 +288,7 @@ public:
                         // If we should try again, make sure that there is no garbage
                         // in the bytes_transferred.
                         bytes_transferred = 0;
-                    } else if (expect_eof && ((ec.value() == boost::asio::error::eof) ||
-                               (ec.value() == boost::asio::ssl::error::stream_truncated))) {
+                    } else if (expect_eof) {
                         expected_eof_ = true;
                         done_callback_();
                         return;
