@@ -350,8 +350,8 @@ TcpConnection::handshakeCallback(const boost::system::error_code& ec) {
     } else {
         LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
                   TLS_REQUEST_RECEIVE_START)
-            .arg(getRemoteEndpointAddressAsText());
-
+            .arg(getRemoteEndpointAddressAsText())
+            .arg(static_cast<unsigned>(idle_timeout_/1000));
         doRead();
     }
 }

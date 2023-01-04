@@ -151,6 +151,7 @@ public:
         // Instantiate the client.
         TcpTestClientPtr client(new TcpTestClient(io_service_,
                                                   std::bind(&MtTcpListenerMgrTest::clientDone, this),
+                                                  TlsContextPtr(),
                                                   SERVER_ADDRESS, SERVER_PORT));
         // Add it to the list of clients.
         clients_.push_back(client);
@@ -179,6 +180,7 @@ public:
         // Create a new client.
         TcpTestClientPtr client(new TcpTestClient(io_service_,
                                                   std::bind(&MtTcpListenerMgrTest::clientDone, this),
+                                                  TlsContextPtr(),
                                                   SERVER_ADDRESS, SERVER_PORT));
 
         // Construct the "thread" command post including the argument,

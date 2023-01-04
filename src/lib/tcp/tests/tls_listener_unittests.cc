@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,8 +7,10 @@
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
+#include <asiolink/testutils/test_tls.h>
 #include <asiolink/io_service.h>
 #include <tcp_test_listener.h>
+#include <tcp_test_client.h>
 
 #include <gtest/gtest.h>
 
@@ -16,17 +18,10 @@
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
+using namespace isc::asiolink::test;
 using namespace isc::tcp;
 
 namespace ph = std::placeholders;
-
-std::ostream&
-operator<<(std::ostream& os, const AuditEntry& entry) {
-    os << "{ " << entry.connection_id_ << ", "
-       << (entry.direction_ == AuditEntry::INBOUND ? "I" : "O") << ", "
-       << entry.data_ << " }";
-    return (os);
-}
 
 namespace {
 
@@ -56,18 +51,18 @@ const long SHORT_IDLE_TIMEOUT = 200;
 /// @brief Test timeout (ms).
 const long TEST_TIMEOUT = 10000;
 
-/// @brief Test fixture class for @ref TcpListener.
-class TcpListenerTest : public ::testing::Test {
+/// @brief Test fixture class for @ref TcpListener that uses TLS.
+class TlsListenerTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
     ///
     /// Starts test timer which detects timeouts.
-    TcpListenerTest()
+    TlsListenerTest()
         : io_service_(), test_timer_(io_service_),
           run_io_service_timer_(io_service_),
           clients_(), clients_done_(0) {
-        test_timer_.setup(std::bind(&TcpListenerTest::timeoutHandler, this, true),
+        test_timer_.setup(std::bind(&TlsListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT,
                           IntervalTimer::ONE_SHOT);
     }
@@ -75,10 +70,24 @@ public:
     /// @brief Destructor.
     ///
     /// Removes active clients.
-    virtual ~TcpListenerTest() {
+    virtual ~TlsListenerTest() {
         for (auto client : clients_) {
             client->close();
         }
+    }
+
+    /// @brief Fetch the server TLS context.
+    TlsContextPtr serverContext() {
+        TlsContextPtr tls_context;
+        configServer(tls_context);
+        return(tls_context);
+    }
+
+    /// @brief Fetch a client TLS context that works with the server context.
+    TlsContextPtr clientContext() {
+        TlsContextPtr tls_context;
+        configClient(tls_context);
+        return(tls_context);
     }
 
     /// @brief Create a new client.
@@ -86,9 +95,9 @@ public:
     /// This method creates TcpTestClient instance and retains it in
     /// the clients_ list.
     /// @param tls_context TLS context to assign to the client.
-    TcpTestClientPtr createClient(TlsContextPtr tls_context = TlsContextPtr()) {
+    TcpTestClientPtr createClient(TlsContextPtr tls_context) {
         TcpTestClientPtr client(new TcpTestClient(io_service_,
-                                    std::bind(&TcpListenerTest::clientDone, this),
+                                    std::bind(&TlsListenerTest::clientDone, this),
                                     tls_context));
         clients_.push_back(client);
         return (client);
@@ -101,8 +110,8 @@ public:
     ///
     /// @param request String containing the request to be sent.
     /// @param tls_context TLS context to assign to the client.
-    void startRequest(const std::string& request,
-                      TlsContextPtr tls_context = TlsContextPtr()) {
+    void startRequest(const std::string& request, TlsContextPtr tls_context) {
+        ASSERT_TRUE(tls_context);
         TcpTestClientPtr client = createClient(tls_context);
         client->startRequest(request);
     }
@@ -114,8 +123,8 @@ public:
     ///
     /// @param request String containing the request to be sent.
     /// @param tls_context TLS context to assign to the client.
-    void startRequests(const std::list<std::string>& requests,
-                       TlsContextPtr tls_context = TlsContextPtr()) {
+    void startRequests(const std::list<std::string>& requests, TlsContextPtr tls_context) {
+        ASSERT_TRUE(tls_context);
         TcpTestClientPtr client = createClient(tls_context);
         client->startRequests(requests);
     }
@@ -153,7 +162,7 @@ public:
         io_service_.get_io_service().reset();
 
         if (timeout > 0) {
-            run_io_service_timer_.setup(std::bind(&TcpListenerTest::timeoutHandler,
+            run_io_service_timer_.setup(std::bind(&TlsListenerTest::timeoutHandler,
                                                   this, false),
                                         timeout,
                                         IntervalTimer::ONE_SHOT);
@@ -198,21 +207,21 @@ public:
     size_t clients_done_;
 };
 
-// This test verifies that A TCP connection can be established and used to
-// transmit a streamed request and receive a streamed response.
-TEST_F(TcpListenerTest, listen) {
+// This test verifies that a connection can be established with a client
+// with valid TLS credentials.
+TEST_F(TlsListenerTest, listen) {
     const std::string request = "I am done";
 
     TcpTestListener listener(io_service_,
                              IOAddress(SERVER_ADDRESS),
                              SERVER_PORT,
-                             TlsContextPtr(),
+                             serverContext(),
                              TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
-    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(startRequest(request, clientContext()));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
     TcpTestClientPtr client = *clients_.begin();
@@ -237,9 +246,38 @@ TEST_F(TcpListenerTest, listen) {
     io_service_.poll();
 }
 
-// This test verifies that A TCP connection can receive a complete
+// This test verifies that a connection is denied to a client
+// with invalid TLS credentials.
+TEST_F(TlsListenerTest, badClient) {
+    TcpTestListener listener(io_service_,
+                             IOAddress(SERVER_ADDRESS),
+                             SERVER_PORT,
+                             serverContext(),
+                             TcpListener::IdleTimeout(IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
+    ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
+
+    TlsContextPtr bad_client_ctx;
+    configSelf(bad_client_ctx);
+    ASSERT_NO_THROW(startRequest("", bad_client_ctx));
+
+    ASSERT_NO_THROW(runIOService());
+
+    ASSERT_EQ(1, clients_.size());
+    TcpTestClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_FALSE(client->receiveDone());
+    // Handshake fails on the listener end which manifests itself in the client
+    // as an EOF rather than a failed handshake.
+    EXPECT_TRUE(client->expectedEof());
+    EXPECT_FALSE(client->handshakeFailed());
+}
+
+// This test verifies that a TLS connection can receive a complete
 // message that spans multiple socket reads.
-TEST_F(TcpListenerTest, splitReads) {
+TEST_F(TlsListenerTest, splitReads) {
     const std::string request = "I am done";
 
     // Read at most one byte at a time.
@@ -247,7 +285,7 @@ TEST_F(TcpListenerTest, splitReads) {
     TcpTestListener listener(io_service_,
                              IOAddress(SERVER_ADDRESS),
                              SERVER_PORT,
-                             TlsContextPtr(),
+                             serverContext(),
                              TcpListener::IdleTimeout(IDLE_TIMEOUT),
                              0,
                              read_max);
@@ -255,7 +293,7 @@ TEST_F(TcpListenerTest, splitReads) {
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
-    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(startRequest(request, clientContext()));
     ASSERT_NO_THROW(runIOService());
 
     // Fetch the client.
@@ -269,13 +307,13 @@ TEST_F(TcpListenerTest, splitReads) {
     io_service_.poll();
 }
 
-// This test verifies that A TCP connection can be established and used to
+// This test verifies that a TLS connection can be established and used to
 // transmit a streamed request and receive a streamed response.
-TEST_F(TcpListenerTest, idleTimeoutTest) {
+TEST_F(TlsListenerTest, idleTimeoutTest) {
     TcpTestListener listener(io_service_,
                              IOAddress(SERVER_ADDRESS),
                              SERVER_PORT,
-                             TlsContextPtr(),
+                             serverContext(),
                              TcpListener::IdleTimeout(SHORT_IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
@@ -284,7 +322,7 @@ TEST_F(TcpListenerTest, idleTimeoutTest) {
     // Start a client with an empty request. Empty requests tell the client to read
     // without sending anything and expect the read to fail when the listener idle
     // times out the socket.
-    ASSERT_NO_THROW(startRequest(""));
+    ASSERT_NO_THROW(startRequest("", clientContext()));
 
     // Run until idle timer expires.
     ASSERT_NO_THROW(runIOService());
@@ -298,13 +336,14 @@ TEST_F(TcpListenerTest, idleTimeoutTest) {
     io_service_.poll();
 }
 
-TEST_F(TcpListenerTest, multipleClientsListen) {
+// This test verifies that TLS connections with mulitple clients.
+TEST_F(TlsListenerTest, multipleClientsListen) {
     const std::string request = "I am done";
 
     TcpTestListener listener(io_service_,
                              IOAddress(SERVER_ADDRESS),
                              SERVER_PORT,
-                             TlsContextPtr(),
+                             serverContext(),
                              TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
@@ -312,7 +351,7 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     size_t num_clients = 5;
     for (auto i = 0; i < num_clients; ++i) {
-        ASSERT_NO_THROW(startRequest(request));
+        ASSERT_NO_THROW(startRequest(request, clientContext()));
     }
 
     ASSERT_NO_THROW(runIOService());
@@ -340,13 +379,13 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
 
 // Verify that the listener handles multiple requests for multiple
 // clients.
-TEST_F(TcpListenerTest, multipleRequetsPerClients) {
+TEST_F(TlsListenerTest, multipleRequetsPerClients) {
     std::list<std::string>requests{ "one", "two", "three", "I am done"};
 
     TcpTestListener listener(io_service_,
                              IOAddress(SERVER_ADDRESS),
                              SERVER_PORT,
-                             TlsContextPtr(),
+                             serverContext(),
                              TcpListener::IdleTimeout(IDLE_TIMEOUT));
 
     ASSERT_NO_THROW(listener.start());
@@ -354,7 +393,7 @@ TEST_F(TcpListenerTest, multipleRequetsPerClients) {
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     size_t num_clients = 5;
     for (auto i = 0; i < num_clients; ++i) {
-        ASSERT_NO_THROW(startRequests(requests));
+        ASSERT_NO_THROW(startRequests(requests, clientContext()));
     }
 
     ASSERT_NO_THROW(runIOService());
@@ -392,15 +431,13 @@ TEST_F(TcpListenerTest, multipleRequetsPerClients) {
 }
 
 // Verify that connection filtering can eliminate specific connections.
-TEST_F(TcpListenerTest, filterClientsTest) {
-    const std::string request = "I am done";
-
+TEST_F(TlsListenerTest, filterClientsTest) {
     TcpTestListener listener(io_service_,
                              IOAddress(SERVER_ADDRESS),
                              SERVER_PORT,
-                             TlsContextPtr(),
+                             serverContext(),
                              TcpListener::IdleTimeout(IDLE_TIMEOUT),
-                             std::bind(&TcpListenerTest::connectionFilter, this, ph::_1));
+                             std::bind(&TlsListenerTest::connectionFilter, this, ph::_1));
 
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
@@ -410,9 +447,9 @@ TEST_F(TcpListenerTest, filterClientsTest) {
         // Every other client sends nothing (i.e. waits for EOF) as
         // we expect the filter to reject them.
         if (i % 2 == 0) {
-            ASSERT_NO_THROW(startRequest("I am done"));
+            ASSERT_NO_THROW(startRequest("I am done", clientContext()));
         } else {
-            ASSERT_NO_THROW(startRequest(""));
+            ASSERT_NO_THROW(startRequest("", clientContext()));
         }
     }
 
@@ -425,6 +462,7 @@ TEST_F(TcpListenerTest, filterClientsTest) {
             // These clients should have been accepted and received responses.
             EXPECT_TRUE(client->receiveDone());
             EXPECT_FALSE(client->expectedEof());
+            EXPECT_FALSE(client->handshakeFailed());
 
             // Now verify the AuditTrail.
             // Create the list of expected entries.
@@ -437,9 +475,12 @@ TEST_F(TcpListenerTest, filterClientsTest) {
             ASSERT_EQ(expected_entries, entries);
 
         } else {
-            // These clients should have been rejected and gotten EOF'd.
+            // Connection filteriing closes the connection before the client
+            // initiates the handshake, causing the subsequent handshake attempt
+            // to fail.
             EXPECT_FALSE(client->receiveDone());
-            EXPECT_TRUE(client->expectedEof());
+            EXPECT_FALSE(client->expectedEof());
+            EXPECT_TRUE(client->handshakeFailed());
 
             // Verify connection recorded no audit entries.
             auto entries = listener.audit_trail_->getConnectionTrail(i+1);
@@ -451,153 +492,6 @@ TEST_F(TcpListenerTest, filterClientsTest) {
 
     listener.stop();
     io_service_.poll();
-}
-
-// Exercises TcpStreamRequest::postBuffer() through various
-// data permutations.
-TEST(TcpStreamRequst, postBufferTest) {
-    // Struct describing a test scenario.
-    struct Scenario {
-        const std::string desc_;
-        // List of input buffers to submit to post.
-        std::list<std::vector<uint8_t>> input_buffers_;
-        // List of expected "request" strings conveyed.
-        std::list<std::string> expected_strings_;
-    };
-
-    std::list<Scenario> scenarios{
-    {
-        "1. Two complete messages in their own buffers",
-        {
-            { 0x00, 0x04, 0x31, 0x32, 0x33, 0x34 },
-            { 0x00, 0x03, 0x35, 0x36, 0x37 },
-        },
-        { "1234", "567" }
-    },
-    {
-        "2. Three messages: first two are in the same buffer",
-        {
-            { 0x00, 0x04, 0x31, 0x32, 0x33, 0x34, 0x00, 0x02, 0x35, 0x36 },
-            { 0x00, 0x03, 0x37, 0x38, 0x39 },
-        },
-        { "1234", "56", "789" }
-    },
-    {
-        "3. One message across three buffers",
-        {
-            { 0x00, 0x09, 0x31, 0x32, 0x33 },
-            { 0x34, 0x35, 0x36, 0x37 },
-            { 0x38, 0x39 },
-        },
-        { "123456789" }
-
-    },
-    {
-        "4. One message, length and data split across buffers",
-        {
-            { 0x00 },
-            { 0x09, 0x31, 0x32, 0x33 },
-            { 0x34, 0x35, 0x36, 0x37 },
-            { 0x38, 0x39 },
-        },
-        { "123456789" }
-    }
-    };
-
-    // Extend the second case with 3 messages to all possible splits
-    // into one to four chuncks.
-    std::string desc = "N. Three messages";
-    std::vector<uint8_t> buffer = {
-         0x00, 0x04, 0x31, 0x32, 0x33, 0x34,
-         0x00, 0x02, 0x35, 0x36,
-         0x00, 0x03, 0x37, 0x38, 0x39
-    };
-    std::list<std::string> expected = { "1234", "56", "789" };
-    // No cut.
-    scenarios.push_back(Scenario{ desc, { buffer }, expected });
-    // One cut.
-    for (size_t i = 1; i < buffer.size() - 1; ++i) {
-        std::ostringstream sdesc;
-        sdesc << desc << " cut at " << i;
-        std::list<std::vector<uint8_t>> buffers;
-        buffers.push_back(std::vector<uint8_t>(buffer.cbegin(),
-                                               buffer.cbegin() + i));
-        buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + i,
-                                               buffer.cend()));
-        scenarios.push_back(Scenario{ sdesc.str(), buffers, expected });
-    }
-    // Two cuts.
-    for (size_t i = 1; i < buffer.size() - 2; ++i) {
-        for (size_t j = i + 1; j < buffer.size() - 1; ++j) {
-            std::ostringstream sdesc;
-            sdesc << desc << " cut at " << i << " and " << j;
-            std::list<std::vector<uint8_t>> buffers;
-            buffers.push_back(std::vector<uint8_t>(buffer.cbegin(),
-                                               buffer.cbegin() + i));
-            buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + i,
-                                                   buffer.cbegin() + j));
-            buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + j,
-                                                   buffer.cend()));
-            scenarios.push_back(Scenario{ sdesc.str(), buffers, expected });
-        }
-    }
-    // Three cuts.
-    for (size_t i = 1; i < buffer.size() - 3; ++i) {
-        for (size_t j = i + 1; j < buffer.size() - 2; ++j) {
-            for (size_t k = j + 1; k < buffer.size() - 1; ++k) {
-                std::ostringstream sdesc;
-                sdesc << desc << " cut at " << i << ", " << j << " and " << k;
-                std::list<std::vector<uint8_t>> buffers;
-                buffers.push_back(std::vector<uint8_t>(buffer.cbegin(),
-                                                       buffer.cbegin() + i));
-                buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + i,
-                                                       buffer.cbegin() + j));
-                buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + j,
-                                                       buffer.cbegin() + k));
-                buffers.push_back(std::vector<uint8_t>(buffer.cbegin() + k,
-                                                       buffer.cend()));
-                scenarios.push_back(Scenario{ sdesc.str(), buffers, expected });
-            }
-        }
-    }
-
-    for (auto scenario : scenarios ) {
-        SCOPED_TRACE(scenario.desc_);
-        std::list<TcpStreamRequestPtr> requests;
-        TcpStreamRequestPtr request;
-        for (auto input_buf : scenario.input_buffers_) {
-            // Copy the input buffer.
-            std::vector<uint8_t> buf = input_buf;
-
-            // While there is data left to use, use it.
-            while (buf.size()) {
-                // If we need a new request make one.
-                if (!request) {
-                    request.reset(new TcpStreamRequest());
-                }
-
-                size_t bytes_used = request->postBuffer(buf.data(),
-                                                        buf.size());
-                if (!request->needData()) {
-                    // Request is complete, save it.
-                    requests.push_back(request);
-                    request.reset();
-                }
-
-                // Consume bytes used.
-                if (bytes_used) {
-                    buf.erase(buf.begin(), buf.begin() + bytes_used);
-                }
-            }
-        }
-
-        ASSERT_EQ(requests.size(), scenario.expected_strings_.size());
-        auto exp_string = scenario.expected_strings_.begin();
-        for (auto recvd_request : requests) {
-            ASSERT_NO_THROW(recvd_request->unpack());
-            EXPECT_EQ(*exp_string++, recvd_request->getRequestString());
-        }
-    }
 }
 
 }
