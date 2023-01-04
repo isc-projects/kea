@@ -365,6 +365,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	network_state.h \
 	pool.h \
 	random_allocation_state.h \
+	random_allocator.h \
 	resource_handler.h \
 	sanity_checker.h \
 	shared_network.h \
