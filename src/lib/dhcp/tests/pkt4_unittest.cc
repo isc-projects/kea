@@ -643,6 +643,7 @@ TEST_F(Pkt4Test, getOptions) {
 
     // Retrieve options with option code 2.
     options = pkt->getOptions(2);
+    ASSERT_EQ(2, options.size());
 
     // opt3 and opt4 should exist.
     opt_it = std::find(options.begin(), options.end(),
