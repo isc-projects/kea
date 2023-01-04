@@ -236,7 +236,6 @@ TEST_F(RandomAllocatorTest6, manyPools) {
         // be 0 or close to 0.
         int consecutives = 0;
         for (auto k = 0; k < addresses_vector.size()-1; ++k) {
-            
             if (IOAddress::increase(addresses_vector[k]) == addresses_vector[k+1]) {
                 ++consecutives;
             }

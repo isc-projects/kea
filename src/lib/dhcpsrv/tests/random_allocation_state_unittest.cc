@@ -79,7 +79,7 @@ TEST(PoolRandomAllocationStateTest, ipv6AddressPool) {
 
 // Test creating the random allocation state for an IPv6 prefix pool.
 TEST(PoolRandomAllocationStateTest, ipv6PrefixPool) {
-    // Create the pool and state.  
+    // Create the pool and state.
     auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 96);
     auto state = PoolRandomAllocationState::create(pool);
     ASSERT_TRUE(state);
