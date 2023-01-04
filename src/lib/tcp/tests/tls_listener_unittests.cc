@@ -269,10 +269,10 @@ TEST_F(TlsListenerTest, badClient) {
     TcpTestClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_FALSE(client->receiveDone());
-    // Handshake fails on the listener end which manifests itself in the client
-    // as an EOF rather than a failed handshake.
-    EXPECT_TRUE(client->expectedEof());
-    EXPECT_FALSE(client->handshakeFailed());
+
+    // Either we failed during handshake or we EOF'd as expected.  OpenSSL fails
+    // after handshake, Botan before it.
+    EXPECT_TRUE(client->expectedEof() || client->handshakeFailed());
 }
 
 // This test verifies that a TLS connection can receive a complete

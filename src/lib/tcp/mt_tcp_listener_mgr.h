@@ -160,7 +160,7 @@ public:
 
     /// @brief Sets the idle time per connection.
     ///
-    /// @param timeout Amount of time in milliseconds
+    /// @param milliseconds Amount of time in milliseconds
     void setIdleTimeout(long milliseconds) {
         idle_timeout_ = TcpListener::IdleTimeout(milliseconds);
     }
