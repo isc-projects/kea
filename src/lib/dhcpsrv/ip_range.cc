@@ -45,9 +45,7 @@ PrefixRange::PrefixRange(const asiolink::IOAddress& prefix, const uint8_t length
                   << " must not be greater than 128");
     }
     // Now calculate the last prefix in the range.
-    auto prefixes_num = prefixesInRange(prefix_length_, delegated_length_);
-    uint64_t addrs_in_prefix = static_cast<uint64_t>(1) << (128 - delegated_length_);
-    end_ = offsetAddress(prefix, (prefixes_num - 1) * addrs_in_prefix);
+    end_ = lastAddrInPrefix(prefix, length);
 }
 
 PrefixRange::PrefixRange(const asiolink::IOAddress& start, const asiolink::IOAddress& end,
@@ -61,6 +59,10 @@ PrefixRange::PrefixRange(const asiolink::IOAddress& start, const asiolink::IOAdd
     // The start must be lower or equal the end.
     if (end_ < start_) {
         isc_throw(BadValue, "invalid address range boundaries " << start_ << ":" << end_);
+    }
+    if (prefix_length_ > 128) {
+        isc_throw(BadValue, "the " << start_ << ":" << end_
+                  << " does not constitute a valid prefix delegation range");
     }
     if (delegated_length_ > 128) {
         isc_throw(BadValue, "delegated length " << static_cast<int>(delegated_length_)
