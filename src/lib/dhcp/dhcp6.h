@@ -257,14 +257,6 @@ extern const int dhcpv6_type_name_max;
 static const uint16_t HWTYPE_ETHERNET = 0x0001;
 static const uint16_t HWTYPE_INFINIBAND = 0x0020;
 
-// The following are EXPERIMENTAL and may change when IANA assigns official
-// values.
-// Secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08.txt)
-// (can't use an enum because HashAlgorithm name is already taken)
-#define SHA_256                 1
-#define SHA_512                 2
-#define RSASSA_PKCS1v1_5        1
-
 // Taken from https://www.iana.org/assignments/enterprise-numbers/enterprise-numbers
 static const uint32_t ENTERPRISE_ID_ISC = 2495;
 
