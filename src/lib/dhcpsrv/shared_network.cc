@@ -304,6 +304,10 @@ public:
 
         auto preferred_subnet = selected_subnet;
         for (auto s = subnets.begin(); s != subnets.end(); ++s) {
+            // It doesn't make sense to check the subnet against itself.
+            if (preferred_subnet == (*s)) {
+                continue;
+            }
             if ((*s)->getClientClass().get() != selected_subnet->getClientClass().get()) {
                 continue;
             }
@@ -311,16 +315,18 @@ public:
             if (!current_subnet_state) {
                 continue;
             }
-            auto selected_subnet_state = selected_subnet->getAllocationState(lease_type);
-            if (!selected_subnet_state) {
+            auto preferred_subnet_state = preferred_subnet->getAllocationState(lease_type);
+            if (!preferred_subnet_state) {
                 continue;
             }
+            // The currently checked subnet has more recent time than the
+            // currently preferred subnet. Update the preferred subnet
+            // instance.
             if (current_subnet_state->getLastAllocatedTime() >
-                selected_subnet_state->getLastAllocatedTime()) {
+                preferred_subnet_state->getLastAllocatedTime()) {
                 preferred_subnet = (*s);
             }
         }
-
         return (preferred_subnet);
     }
 };

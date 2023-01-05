@@ -18,6 +18,8 @@
 #include <testutils/test_to_element.h>
 #include <testutils/multi_threading_utils.h>
 
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <cstdint>
 #include <string>
@@ -29,6 +31,36 @@ using namespace isc::dhcp;
 using namespace isc::test;
 
 namespace {
+
+class TestSubnetIterativeAllocationState;
+
+/// @brief Shared pointer to the @c TestSubnetIterativeAllocationState
+typedef boost::shared_ptr<TestSubnetIterativeAllocationState> TestSubnetIterativeAllocationStatePtr;
+
+/// @brief A derivation exposing the @c last_allocated_time_ member.
+class TestSubnetIterativeAllocationState : public SubnetIterativeAllocationState {
+public:
+
+    /// @brief Creates the state instamce.
+    ///
+    /// @param subnet subnet instance for which the state is created.
+    /// @return state instance.
+    static TestSubnetIterativeAllocationStatePtr create(const SubnetPtr& subnet) {
+        auto subnet_prefix = subnet->get();
+        return (boost::make_shared<TestSubnetIterativeAllocationState>
+                (subnet_prefix.first, subnet_prefix.second));
+    }
+
+    /// @brief Constructor.
+    ///
+    /// @param prefix subnet prefix.
+    /// @param prefix_length subnet prefix length.
+    TestSubnetIterativeAllocationState(const IOAddress& prefix,
+                                       const uint8_t prefix_length)
+        : SubnetIterativeAllocationState(prefix, prefix_length) {
+    }
+    using SubnetIterativeAllocationState::last_allocated_time_;
+};
 
 // This test verifies that the SharedNetwork4 factory function creates a
 // valid shared network instance.
@@ -389,7 +421,7 @@ TEST(SharedNetwork4Test, getNextSubnet) {
 TEST(SharedNetwork4Test, getPreferredSubnet) {
     SharedNetwork4Ptr network(new SharedNetwork4("frog"));
 
-    // Create four subnets.
+    // Create five subnets.
     auto subnet1 = Subnet4::create(IOAddress("10.0.0.0"), 8, 10, 20, 30,
                                    SubnetID(1));
     auto subnet2 = Subnet4::create(IOAddress("192.0.2.0"), 24, 10, 20, 30,
@@ -398,7 +430,20 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
                                    SubnetID(3));
     auto subnet4 = Subnet4::create(IOAddress("172.16.28.0"), 24, 10, 20, 30,
                                    SubnetID(4));
+    auto subnet5 = Subnet4::create(IOAddress("172.16.30.0"), 24, 10, 20, 30,
+                                   SubnetID(5));
 
+    auto state1 = TestSubnetIterativeAllocationState::create(subnet1);
+    auto state2 = TestSubnetIterativeAllocationState::create(subnet1);
+    auto state3 = TestSubnetIterativeAllocationState::create(subnet1);
+    auto state4 = TestSubnetIterativeAllocationState::create(subnet1);
+    auto state5 = TestSubnetIterativeAllocationState::create(subnet1);
+
+    subnet1->setAllocationState(Lease::TYPE_V4, state1);
+    subnet2->setAllocationState(Lease::TYPE_V4, state2);
+    subnet3->setAllocationState(Lease::TYPE_V4, state3);
+    subnet4->setAllocationState(Lease::TYPE_V4, state4);
+    subnet5->setAllocationState(Lease::TYPE_V4, state5);
 
     // Associate first two subnets with classes.
     subnet1->allowClientClass("class1");
@@ -409,6 +454,7 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
     subnets.push_back(subnet2);
     subnets.push_back(subnet3);
     subnets.push_back(subnet4);
+    subnets.push_back(subnet5);
 
     // Subnets have unique IDs so they should successfully be added to the
     // network.
@@ -429,8 +475,6 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
 
     // Allocating an address from subnet2 updates the last allocated timestamp
     // for this subnet, which makes this subnet preferred over subnet1.
-    auto state2 = boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
-        (subnet2->getAllocationState(Lease::TYPE_V4));
     state2->setLastAllocated(IOAddress("192.0.2.25"));
     preferred = network->getPreferredSubnet(subnet1);
     EXPECT_EQ(subnet2->getID(), preferred->getID());
@@ -449,10 +493,12 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
     preferred = network->getPreferredSubnet(subnet4);
     EXPECT_EQ(subnet4->getID(), preferred->getID());
 
+    // Same for subnet5.
+    preferred = network->getPreferredSubnet(subnet4);
+    EXPECT_EQ(subnet4->getID(), preferred->getID());
+
     // Allocate an address from the subnet3. This makes it preferred to
-    // subnet4.
-    auto state3 = boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
-        (subnet3->getAllocationState(Lease::TYPE_V4));
+    // subnet4 and subnet5.
     state3->setLastAllocated(IOAddress("172.16.25.23"));
 
     // If the selected is subnet1, the preferred subnet is subnet2, because
@@ -469,6 +515,18 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
     // Repeat the test for subnet3 being a selected subnet.
     preferred = network->getPreferredSubnet(subnet3);
     EXPECT_EQ(subnet3->getID(), preferred->getID());
+
+    // Allocate an address from remaining subnets and make sure that the
+    // allocation from the subnet4 is slightly more recent. Both are
+    // more recent than subnet3.
+    state4->setLastAllocated(IOAddress("172.16.28.24"));
+    state5->setLastAllocated(IOAddress("172.16.30.1"));
+    state4->last_allocated_time_ += boost::posix_time::seconds(2);
+    state5->last_allocated_time_ += boost::posix_time::seconds(1);
+
+    // The subnet4 should now be preferred.
+    preferred = network->getPreferredSubnet(subnet3);
+    EXPECT_EQ(subnet4->getID(), preferred->getID());
 }
 
 // This test verifies that preferred subnet is returned based on the timestamp
