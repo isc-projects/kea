@@ -45,18 +45,17 @@ TEST_F(RandomAllocatorTest4, manyPools) {
     RandomAllocator alloc(Lease::TYPE_V4, subnet_);
 
     // Add several more pools.
-    for (int i = 2; i < 10; ++i) {
+    for (int i = 1; i < 10; ++i) {
         stringstream min, max;
-        min << "192.0.2." << i * 10 + 1;
+        min << "192.0.2." << i * 10;
         max << "192.0.2." << i * 10 + 9;
         auto pool = boost::make_shared<Pool4>(IOAddress(min.str()),
                                               IOAddress(max.str()));
         subnet_->addPool(pool);
     }
 
-    // First pool (.100 - .109) has 10 addresses.
-    // There are 8 extra pools with 9 addresses in each.
-    int total = 10 + 8 * 9;
+    // There are ten pools with 10 addresses each.
+    int total = 100;
 
     // Repeat allocation of all addresses several times. Make sure that
     // the same addresses are returned when all pools are exhausted.
@@ -93,13 +92,16 @@ TEST_F(RandomAllocatorTest4, manyPools) {
 
         // Repeat similar check for pools. The pools should be picked in the
         // random order too.
-        int pool_matches = 0;
         for (auto k = 0; k < pools_vector.size()-1; ++k) {
-            if (pools_vector[k] == subnet_->getPools(Lease::TYPE_V4)[k]) {
-                ++pool_matches;
+            // Check if the pools are adjacent (i.e., last address of the
+            // previous pool is a neighbor of the first address of the next
+            // pool).
+            if (pools_vector[k]->getLastAddress().toUint32()+1 ==
+                pools_vector[k+1]->getFirstAddress().toUint32()) {
+                ++consecutives;
             }
         }
-        EXPECT_LT(pool_matches, pools_vector.size()/2);
+        EXPECT_LT(consecutives, pools_vector.size()/2);
     }
 }
 
@@ -200,7 +202,7 @@ TEST_F(RandomAllocatorTest6, manyPools) {
     for (int i = 2; i < 10; ++i) {
         stringstream min, max;
         min << "2001:db8:1::" << hex << i * 16 + 1;
-        max << "2001:db8:1::" << hex << i * 16 + 9;
+        max << "2001:db8:1::" << hex << i * 16 + 16;
         auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA,
                                               IOAddress(min.str()),
                                               IOAddress(max.str()));
@@ -208,8 +210,8 @@ TEST_F(RandomAllocatorTest6, manyPools) {
     }
 
     // First pool (::10 - ::20) has 17 addresses.
-    // There are 8 extra pools with 9 addresses in each.
-    int total = 17 + 8 * 9;
+    // There are 8 extra pools with 16 addresses in each.
+    int total = 17 + 8 * 16;
 
     // Repeat allocation of all addresses several times. Make sure that
     // the same addresses are returned when all pools are exhausted.
@@ -246,13 +248,13 @@ TEST_F(RandomAllocatorTest6, manyPools) {
 
         // Repeat similar check for pools. The pools should be picked in the
         // random order too.
-        int pool_matches = 0;
         for (auto k = 0; k < pools_vector.size()-1; ++k) {
-            if (pools_vector[k] == subnet_->getPools(Lease::TYPE_NA)[k]) {
-                ++pool_matches;
+            if (IOAddress::increase(pools_vector[k]->getLastAddress()) ==
+                pools_vector[k]->getFirstAddress()) {
+                ++consecutives;
             }
         }
-        EXPECT_LT(pool_matches, pools_vector.size()/2);
+        EXPECT_LT(consecutives, pools_vector.size()/2);
     }
 }
 
