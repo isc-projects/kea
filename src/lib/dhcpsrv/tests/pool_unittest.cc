@@ -363,10 +363,10 @@ TEST(Pool6Test, PD) {
     EXPECT_THROW(Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::1"),
                              IOAddress("2001:db8:1::f")), BadValue);
 
-    // Check that it's not allowed to specify bigger prefix than the pool
-    // prefix len
+    // Check that it's not allowed to specify bigger prefix address than the
+    // pool prefix length
     // Should not be able to compute prefix if first address is not starting
-    // from prefix len 32 (2001:db8::)
+    // from prefix length 32 (2001:db8::)
     EXPECT_THROW(Pool6 pool3(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
                              32, 56), BadValue);
 
@@ -423,7 +423,7 @@ TEST(Pool6Test, PDExclude) {
     // Again, the excluded prefix length must be greater than main prefix
     // length.
     EXPECT_THROW(Pool6(IOAddress("2001:db8:1::"), 96, 112,
-                       IOAddress("2001:db8:1::"), 112),
+                       IOAddress("2001:db8:1::"), 104),
                  BadValue);
 
     // The "unspecified" excluded prefix must have both values set to 0.

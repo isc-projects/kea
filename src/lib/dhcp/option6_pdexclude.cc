@@ -44,7 +44,7 @@ Option6PDExclude::Option6PDExclude(const isc::asiolink::IOAddress& delegated_pre
                   << static_cast<int>(excluded_prefix_length_));
     }
 
-    // Excluded prefix must be longer than or equal to the delegated prefix.
+    // Excluded prefix must be longer than the delegated prefix length.
     if (excluded_prefix_length_ <= delegated_prefix_length) {
         isc_throw(BadValue, "length of the excluded prefix "
                   << excluded_prefix << "/"

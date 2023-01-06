@@ -151,7 +151,6 @@ Pool4::toElement() const {
     return (map);
 }
 
-
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
     : Pool(type, first, last), prefix_len_(128), pd_exclude_option_() {
@@ -299,7 +298,8 @@ Pool6::init(const Lease::Type& type,
                   << static_cast<int>(prefix_len) << ")");
     }
 
-    if (((type == Lease::TYPE_NA) || (type == Lease::TYPE_TA)) && (delegated_len != 128)) {
+    if (((type == Lease::TYPE_NA) || (type == Lease::TYPE_TA)) &&
+        (delegated_len != 128)) {
         isc_throw(BadValue, "For IA or TA pools, delegated prefix length must"
                   << " be 128.");
     }
@@ -307,9 +307,9 @@ Pool6::init(const Lease::Type& type,
     // excluded_prefix_len == 0 means there's no excluded prefix at all.
     if (excluded_prefix_len && (excluded_prefix_len <= delegated_len)) {
         isc_throw(BadValue, "Excluded prefix ("
-                                << static_cast<int>(excluded_prefix_len)
-                                << ") must be longer than or equal to the delegated prefix length ("
-                                << static_cast<int>(delegated_len) << ")");
+                  << static_cast<int>(excluded_prefix_len)
+                  << ") must be longer than the delegated prefix length ("
+                  << static_cast<int>(delegated_len) << ")");
     }
 
     /// @todo: We should probably implement checks against weird addresses
@@ -408,7 +408,6 @@ Pool6::toElement() const {
     return (map);
 }
 
-
 std::string
 Pool6::toText() const {
     std::ostringstream s;
@@ -423,5 +422,5 @@ Pool6::toText() const {
     return (s.str());
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
