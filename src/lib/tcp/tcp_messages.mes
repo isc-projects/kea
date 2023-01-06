@@ -34,10 +34,6 @@ error that should be submitted as a bug.
 This debug message is issued when the server's connection filter rejects
 a new connection based on the client's ip address.
 
-% TCP_CONNECTION_REJECTED_BY_FILTER connection from %1 has been denied by the connection filter.
-This debug message is issued when the server's connection filter rejects
-a new connection based on the client's ip address.
-
 % TCP_CONNECTION_SHUTDOWN shutting down TCP connection from %1
 This debug message is issued when one of the TCP connections is shut down.
 The connection can be stopped as a result of an error or after the

@@ -225,7 +225,7 @@ AllocEngine6Test::createHost6HWAddr(bool add_to_host_mgr, IPv6Resrv::Type type,
 Lease6Collection
 AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint, bool fake,
-                               bool in_pool) {
+                               bool in_pool, uint8_t hint_prefix_length) {
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
 
@@ -235,7 +235,7 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
                                     fake, query);
     ctx.currentIA().iaid_ = iaid_;
     ctx.currentIA().type_ = type;
-    ctx.currentIA().addHint(hint);
+    ctx.currentIA().addHint(hint, hint_prefix_length);
 
     Lease6Collection leases;
 

@@ -326,11 +326,13 @@ TEST_F(RandomAllocatorTest6, clientClasses) {
 TEST_F(RandomAllocatorTest6, singlePdPool) {
     RandomAllocator alloc(Lease::TYPE_PD, subnet_);
 
+    Pool6Ptr pool;
+
     // Remember returned prefixes, so we can verify that unique addresses
     // are returned.
     std::set<IOAddress> prefixes;
     for (auto i = 0; i < 66000; ++i) {
-        IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
+        IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0);
         prefixes.insert(candidate);
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
@@ -345,7 +347,7 @@ TEST_F(RandomAllocatorTest6, manyPdPools) {
 
     for (auto i = 0; i < 10; ++i) {
         ostringstream s;
-        s << "300" << hex << i+1 << "::";
+        s << "300" << hex << i + 1 << "::";
         auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD,
                                               IOAddress(s.str()),
                                               120,
@@ -353,12 +355,107 @@ TEST_F(RandomAllocatorTest6, manyPdPools) {
         subnet_->addPool(pool);
     }
 
-    size_t total = 65536 + 10*256;
+    size_t total = 65536 + 10 * 256;
+
+    Pool6Ptr pool;
 
     for (auto j = 0; j < 2; ++j) {
         std::set<IOAddress> prefixes;
         for (auto i = 0; i < total; ++i) {
-            IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
+            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0);
+            prefixes.insert(candidate);
+            EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
+            EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
+        }
+        // Make sure that unique prefixes have been returned.
+        EXPECT_EQ(total, prefixes.size());
+    }
+}
+
+// Test allocating delegated prefixes from multiple pools.
+TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrSmaller) {
+    RandomAllocator alloc(Lease::TYPE_PD, subnet_);
+
+    for (auto i = 0; i < 10; ++i) {
+        ostringstream s;
+        s << "300" << hex << i + 1 << "::";
+        auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD,
+                                              IOAddress(s.str()),
+                                              120,
+                                              128);
+        subnet_->addPool(pool);
+    }
+
+    size_t total = 65536;
+
+    Pool6Ptr pool;
+
+    for (auto j = 0; j < 2; ++j) {
+        std::set<IOAddress> prefixes;
+        for (auto i = 0; i < total; ++i) {
+            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_SMALLER, IOAddress("::"), 120);
+            prefixes.insert(candidate);
+            EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
+            EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
+        }
+        // Make sure that unique prefixes have been returned.
+        EXPECT_EQ(total, prefixes.size());
+    }
+}
+
+// Test allocating delegated prefixes from multiple pools.
+TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrEqual) {
+    RandomAllocator alloc(Lease::TYPE_PD, subnet_);
+
+    for (auto i = 0; i < 10; ++i) {
+        ostringstream s;
+        s << "300" << hex << i + 1 << "::";
+        auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD,
+                                              IOAddress(s.str()),
+                                              120,
+                                              128);
+        subnet_->addPool(pool);
+    }
+
+    size_t total = 10 * 256;
+
+    Pool6Ptr pool;
+
+    for (auto j = 0; j < 2; ++j) {
+        std::set<IOAddress> prefixes;
+        for (auto i = 0; i < total; ++i) {
+            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_EQUAL, IOAddress("::"), 128);
+            prefixes.insert(candidate);
+            EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
+            EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
+        }
+        // Make sure that unique prefixes have been returned.
+        EXPECT_EQ(total, prefixes.size());
+    }
+}
+
+// Test allocating delegated prefixes from multiple pools.
+TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrGreater) {
+    RandomAllocator alloc(Lease::TYPE_PD, subnet_);
+
+    for (auto i = 0; i < 10; ++i) {
+        ostringstream s;
+        s << "300" << hex << i + 1 << "::";
+        auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD,
+                                              IOAddress(s.str()),
+                                              120,
+                                              128);
+        subnet_->addPool(pool);
+    }
+
+    size_t total = 10 * 256;
+
+    Pool6Ptr pool;
+
+    for (auto j = 0; j < 2; ++j) {
+        std::set<IOAddress> prefixes;
+        for (auto i = 0; i < total; ++i) {
+            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 64);
             prefixes.insert(candidate);
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));

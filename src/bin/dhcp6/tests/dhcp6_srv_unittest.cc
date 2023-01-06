@@ -2088,8 +2088,8 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     testReleaseReject(Lease::TYPE_NA, IOAddress("2001:db8:1:1::dead"));
 }
 
-// This test verifies that incoming (invalid) RELEASE with a prefix
-// can be handled properly.
+// This test verifies that incoming (invalid) RELEASE with a prefix can be
+// handled properly.
 //
 // This test checks 3 scenarios:
 // 1. there is no such lease at all

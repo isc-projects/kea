@@ -1720,7 +1720,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 // to DHCPDISCOVER (fake allocation)
 TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0));
+    AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1757,7 +1757,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
 TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 
     // Now prepare for DISCOVER processing
-    AllocEnginePtr engine(new AllocEngine(                                          0));
+    AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1797,7 +1797,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 // to REQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0));
+    AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1832,7 +1832,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 // is reused when responding to DHCPREQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0));
+    AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -2042,7 +2042,7 @@ TEST_F(AllocEngine4Test, reservedAddressNoHint) {
 // - Client has a reservation.
 // - Client sends DHCPDISCOVER without requested IP Address.
 // - Server returns DHCPOFFER with the reserved address.
-TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
+TEST_F(AllocEngine4Test, reservedAddressNoHintFakeAllocation) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),

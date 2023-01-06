@@ -339,12 +339,15 @@ public:
     /// @param hint address to be used as a hint
     /// @param fake true - this is fake allocation (SOLICIT)
     /// @param in_pool specifies whether the lease is expected to be in pool
+    /// @param hint_prefix_length The hint prefix length that the client
+    /// provided.
     /// @return allocated lease(s) (may be empty)
     Lease6Collection allocateTest(AllocEngine& engine,
                                   const Pool6Ptr& pool,
                                   const asiolink::IOAddress& hint,
                                   bool fake,
-                                  bool in_pool = true);
+                                  bool in_pool = true,
+                                  uint8_t hint_prefix_length = 128);
 
     /// @brief Checks if the allocation can be renewed.
     ///

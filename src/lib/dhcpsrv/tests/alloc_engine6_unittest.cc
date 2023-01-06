@@ -2102,7 +2102,7 @@ TEST_F(AllocEngine6Test, largePdPool) {
     // Remove the default PD pool.
     subnet_->delPools(Lease::TYPE_PD);
 
-    // Configure the PD pool with the prefix length of /64 and the delegated
+    // Configure the PD pool with the prefix length of /80 and the delegated
     // length /96.
     Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
     subnet_->addPool(pool);
@@ -2110,6 +2110,108 @@ TEST_F(AllocEngine6Test, largePdPool) {
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool, IOAddress("::"),
                                            false, true);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can delegate the long prefix.
+// The pool with prefix of 64 and with long delegated prefix has a very
+// high capacity. The number of attempts that the allocation engine makes
+// to allocate the prefix for high capacity pools is equal to the capacity
+// value. This test verifies that the prefix can be allocated in that
+// case.
+TEST_F(AllocEngine6Test, largePdPoolPreferrSmaller) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // Let's create a lease and put it in the LeaseMgr
+    // Even if the lease is owned by the client, the non-matching prefix length
+    // in the hint should force allocation of other lease.
+    time_t now = time(NULL);
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                              duid_, 1, 2, now, subnet_->getID(), HWAddrPtr(), 96));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
+                                           false, true, 92);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can delegate the long prefix.
+// The pool with prefix of 64 and with long delegated prefix has a very
+// high capacity. The number of attempts that the allocation engine makes
+// to allocate the prefix for high capacity pools is equal to the capacity
+// value. This test verifies that the prefix can be allocated in that
+// case.
+TEST_F(AllocEngine6Test, largePdPoolPreferrEqual) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // Let's create a lease and put it in the LeaseMgr
+    // Even if the lease is owned by the client, the non-matching prefix length
+    // in the hint should force allocation of other lease.
+    time_t now = time(NULL);
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                              duid_, 1, 2, now, subnet_->getID(), HWAddrPtr(), 96));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
+                                           false, true, 80);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can delegate the long prefix.
+// The pool with prefix of 64 and with long delegated prefix has a very
+// high capacity. The number of attempts that the allocation engine makes
+// to allocate the prefix for high capacity pools is equal to the capacity
+// value. This test verifies that the prefix can be allocated in that
+// case.
+TEST_F(AllocEngine6Test, largePdPoolPreferrGreater) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // Let's create a lease and put it in the LeaseMgr
+    // Even if the lease is owned by the client, the non-matching prefix length
+    // in the hint should force allocation of other lease.
+    time_t now = time(NULL);
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"),
+                              duid_, 1, 2, now, subnet_->getID(), HWAddrPtr(), 80));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
+                                           false, true, 64);
     ASSERT_EQ(1, leases.size());
 }
 
@@ -3227,6 +3329,71 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
         << "Lease lifetime was not extended, but it should";
 }
 
+// Verifies that client with a global prefix reservation can get and
+// renew a lease for an arbitrary prefix even if using a wrong hint prefix
+// length.
+TEST_F(AllocEngine6Test, globalHostReservedPrefixDifferentPrefixLen) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                          asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("ghost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("3001::"), 64);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().iaid_ = iaid_;
+    // Using a different prefix length in the hint should have no effect
+    ctx.currentIA().addHint(asiolink::IOAddress("3001::"), 32);
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    // Check that we have been allocated the fixed address.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("3001::", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    --lease->cltt_;
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress("3001::"), 64));
+
+    // Set test fixture hostname_ to the expected value. This gets checked via
+    // renewTest.
+    hostname_ = "ghost1";
+
+    // We need a PD pool to fake renew_test
+    Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, false);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
 // Verifies that client with a subnet address reservation can get and
 // renew a lease for an address in the subnet.
 TEST_F(AllocEngine6Test, mixedHostReservedAddress) {
@@ -3288,8 +3455,74 @@ TEST_F(AllocEngine6Test, mixedHostReservedAddress) {
 }
 
 // Verifies that client with a subnet prefix reservation can get and
-// renew a lease for a prefix in the subnet.
+// renew a lease for a prefix in the subnet even if using a wrong hint prefix
+// length.
 TEST_F(AllocEngine6Test, mixedHostReservedPrefix) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("mhost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("2001:db8:1:2::"), 64);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+    subnet_->setReservationsInSubnet(true);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().iaid_ = iaid_;
+    // Using a different prefix length in the hint should have no effect
+    ctx.currentIA().addHint(asiolink::IOAddress("2001:db8:1:2::"), 32);
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("mhost1", current->getHostname());
+
+    // Check that we have been allocated the fixed prefix.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:2::", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    --lease->cltt_;
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1:2::"), 64));
+
+    // Set test fixture hostname_ to the expected value. This gets checked via
+    // renewTest.
+    hostname_ = "mhost1";
+
+    // We need a PD pool to fake renew_test
+    Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, true);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Verifies that client with a subnet prefix reservation can get and
+// renew a lease for a prefix in the subnet.
+TEST_F(AllocEngine6Test, mixedHostReservedPrefixDifferentPrefixLen) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
@@ -3453,6 +3686,81 @@ TEST_F(AllocEngine6Test, bothHostReservedPrefix) {
     AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
     ctx.currentIA().type_ = Lease::TYPE_PD;
     ctx.currentIA().iaid_ = iaid_;
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("mhost1", current->getHostname());
+
+    // Check that we have been allocated the fixed prefix.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:2::", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    --lease->cltt_;
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1:2::"), 64));
+
+    // Set test fixture hostname_ to the expected value. This gets checked via
+    // renewTest.
+    hostname_ = "mhost1";
+
+    // We need a PD pool to fake renew_test
+    Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, true);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Verifies that client with a subnet and a global prefix reservation
+// can get and renew a lease for a prefix in the subnet even if using a wrong
+// hint prefix length.
+TEST_F(AllocEngine6Test, bothHostReservedPrefixDifferentPrefixLen) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr ghost(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                           Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                           asiolink::IOAddress("0.0.0.0")));
+    ghost->setHostname("ghost1");
+    IPv6Resrv gresv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("3001::"), 64);
+    ghost->addReservation(gresv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(ghost);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("mhost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("2001:db8:1:2::"), 64);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+    subnet_->setReservationsInSubnet(true);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().iaid_ = iaid_;
+    // Using a different prefix length in the hint should have no effect
+    ctx.currentIA().addHint(asiolink::IOAddress("2001:db8:1:2::"), 32);
 
     // Look up the reservation.
     findReservation(*engine, ctx);
@@ -3693,7 +4001,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         " \"peer\": \"2001:db8::6\" } ] } }",
         true
     }
-};
+    };
 
     // Allocate a lease.
     Lease6Ptr lease;
@@ -4989,7 +5297,7 @@ TEST_F(AllocEngine6Test, getValidLifetime) {
             // Add hint
             ctx.currentIA().iaid_ = iaid_;
 
-            // prefix,prefixlen, preferred, valid
+            // prefix, prefixlen, preferred, valid
             ctx.currentIA().addHint(IOAddress("::"), 128, 0, scenario.requested_lft_);
 
             Lease6Ptr lease;
@@ -5127,7 +5435,7 @@ TEST_F(AllocEngine6Test, getTemplateClassValidLifetime) {
             // Add hint
             ctx.currentIA().iaid_ = iaid_;
 
-            // prefix,prefixlen, preferred, valid
+            // prefix, prefixlen, preferred, valid
             ctx.currentIA().addHint(IOAddress("::"), 128, 0, scenario.requested_lft_);
 
             Lease6Ptr lease;
@@ -5257,7 +5565,7 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
             // Add hint
             ctx.currentIA().iaid_ = iaid_;
 
-            // prefix,prefixlen, preferred, preferred
+            // prefix, prefixlen, preferred, valid
             ctx.currentIA().addHint(IOAddress("::"), 128, scenario.requested_lft_, 0);
 
             Lease6Ptr lease;
@@ -5398,7 +5706,7 @@ TEST_F(AllocEngine6Test, getTemplateClassPreferredLifetime) {
             // Add hint
             ctx.currentIA().iaid_ = iaid_;
 
-            // prefix,prefixlen, preferred, preferred
+            // prefix, prefixlen, preferred, valid
             ctx.currentIA().addHint(IOAddress("::"), 128, scenario.requested_lft_, 0);
 
             Lease6Ptr lease;
