@@ -64,12 +64,12 @@ MtTcpListenerMgr::start() {
                                           idle_timeout_,
                                           connection_filter_);
 
-        // Create the thread pool with immediate start.
-        thread_pool_.reset(new IoServiceThreadPool(thread_io_service_, thread_pool_size_));
-
         // Instruct the HTTP listener to actually open socket, install
         // callback and start listening.
         tcp_listener_->start();
+
+        // Create the thread pool with immediate start.
+        thread_pool_.reset(new IoServiceThreadPool(thread_io_service_, thread_pool_size_));
 
         // OK, seems like we're good to go.
         LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC, MT_TCP_LISTENER_MGR_STARTED)

@@ -481,7 +481,7 @@ public:
         }
 
         // Create an MT client with num_threads
-        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
+        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads, true)));
         ASSERT_TRUE(client_);
 
         if (num_threads_ == 0) {
@@ -491,10 +491,6 @@ public:
             // If we multi-threaded client should have it's own IOService.
             ASSERT_TRUE(client_->getThreadIOService());
         }
-
-        // Verify the pool size and number of threads are as expected.
-        ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
-        ASSERT_EQ(client_->getThreadCount(), num_threads);
 
         // Start the requisite number of requests:
         //   batch * listeners * threads.
@@ -506,6 +502,12 @@ public:
                 }
             }
         }
+
+        client_->start();
+
+        // Verify the pool size and number of threads are as expected.
+        ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
+        ASSERT_EQ(client_->getThreadCount(), num_threads);
 
         // Loop until the clients are done, an error occurs, or the time runs out.
         runIOService(expected_requests_);
@@ -645,17 +647,8 @@ public:
         }
 
         // Create an instant start, MT client with num_threads
-        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
+        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads, true)));
         ASSERT_TRUE(client_);
-
-        // Client should be running. Check convenience functions.
-        ASSERT_TRUE(client_->isRunning());
-        ASSERT_FALSE(client_->isPaused());
-        ASSERT_FALSE(client_->isStopped());
-
-        // Verify the pool size and number of threads are as expected.
-        ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
-        ASSERT_EQ(client_->getThreadCount(), num_threads);
 
         // Start the requisite number of requests:
         //   batch * listeners * threads.
@@ -667,6 +660,17 @@ public:
                 }
             }
         }
+
+        client_->start();
+
+        // Client should be running. Check convenience functions.
+        ASSERT_TRUE(client_->isRunning());
+        ASSERT_FALSE(client_->isPaused());
+        ASSERT_FALSE(client_->isStopped());
+
+        // Verify the pool size and number of threads are as expected.
+        ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
+        ASSERT_EQ(client_->getThreadCount(), num_threads);
 
         size_t rr_count = 0;
         while (rr_count < total_requests) {
