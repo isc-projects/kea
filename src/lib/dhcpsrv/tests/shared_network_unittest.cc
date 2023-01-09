@@ -41,7 +41,7 @@ typedef boost::shared_ptr<TestSubnetIterativeAllocationState> TestSubnetIterativ
 class TestSubnetIterativeAllocationState : public SubnetIterativeAllocationState {
 public:
 
-    /// @brief Creates the state instamce.
+    /// @brief Creates the state instance.
     ///
     /// @param subnet subnet instance for which the state is created.
     /// @return state instance.
@@ -494,8 +494,8 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
     EXPECT_EQ(subnet4->getID(), preferred->getID());
 
     // Same for subnet5.
-    preferred = network->getPreferredSubnet(subnet4);
-    EXPECT_EQ(subnet4->getID(), preferred->getID());
+    preferred = network->getPreferredSubnet(subnet5);
+    EXPECT_EQ(subnet5->getID(), preferred->getID());
 
     // Allocate an address from the subnet3. This makes it preferred to
     // subnet4 and subnet5.

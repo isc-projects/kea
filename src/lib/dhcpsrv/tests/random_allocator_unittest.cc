@@ -80,28 +80,29 @@ TEST_F(RandomAllocatorTest4, manyPools) {
         // Verify that the addresses are returned in the random order.
         // Count how many times we found consecutive addresses. It should
         // be 0 or close to 0.
-        int consecutives = 0;
+        int consecutive_addresses = 0;
         for (auto k = 0; k < addresses_vector.size()-1; ++k) {
             if (addresses_vector[k].toUint32() == addresses_vector[k+1].toUint32()-1) {
-                ++consecutives;
+                ++consecutive_addresses;
             }
         }
         // Ideally, the number of consecutive occurrences should be 0 but we
         // allow some to make sure the test doesn't fall over sporadically.
-        EXPECT_LT(consecutives, addresses_vector.size()/4);
+        EXPECT_LT(consecutive_addresses, addresses_vector.size()/4);
 
         // Repeat similar check for pools. The pools should be picked in the
         // random order too.
+        int consecutive_pools = 0;
         for (auto k = 0; k < pools_vector.size()-1; ++k) {
             // Check if the pools are adjacent (i.e., last address of the
             // previous pool is a neighbor of the first address of the next
             // pool).
             if (pools_vector[k]->getLastAddress().toUint32()+1 ==
                 pools_vector[k+1]->getFirstAddress().toUint32()) {
-                ++consecutives;
+                ++consecutive_pools;
             }
         }
-        EXPECT_LT(consecutives, pools_vector.size()/2);
+        EXPECT_LT(consecutive_pools, pools_vector.size()/2);
     }
 }
 
@@ -236,25 +237,26 @@ TEST_F(RandomAllocatorTest6, manyPools) {
         // Verify that the addresses are returned in the random order.
         // Count how many times we found consecutive addresses. It should
         // be 0 or close to 0.
-        int consecutives = 0;
+        int consecutive_addresses = 0;
         for (auto k = 0; k < addresses_vector.size()-1; ++k) {
             if (IOAddress::increase(addresses_vector[k]) == addresses_vector[k+1]) {
-                ++consecutives;
+                ++consecutive_addresses;
             }
         }
         // Ideally, the number of consecutive occurrences should be 0 but we
         // allow some to make sure the test doesn't fall over sporadically.
-        EXPECT_LT(consecutives, addresses_vector.size()/4);
+        EXPECT_LT(consecutive_addresses, addresses_vector.size()/4);
 
         // Repeat similar check for pools. The pools should be picked in the
         // random order too.
+        int consecutive_pools = 0;
         for (auto k = 0; k < pools_vector.size()-1; ++k) {
             if (IOAddress::increase(pools_vector[k]->getLastAddress()) ==
                 pools_vector[k]->getFirstAddress()) {
-                ++consecutives;
+                ++consecutive_pools;
             }
         }
-        EXPECT_LT(consecutives, pools_vector.size()/2);
+        EXPECT_LT(consecutive_pools, pools_vector.size()/2);
     }
 }
 
