@@ -620,7 +620,6 @@ It can be set per-session for testing:
 
     postgres=# SET synchronous_commit = OFF;
 
-
 or permanently by command (preffered method):
 
 .. code-block:: psql
