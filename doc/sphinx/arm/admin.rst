@@ -166,6 +166,18 @@ MySQL is able to store leases, host reservations, options defined on a
 per-host basis, and a subset of the server configuration parameters
 (serving as a configuration backend).
 
+.. _mysql-database-engine:
+
+MySQL 5.7 vs MySQL 8 vs MariaDB 10 and 11
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In our Kea performance testing MySQL 8 shows 60-90% drop in speed 
+in comparison with older MySQL 5.7.
+Due to the upcoming MySQL 5.7 EOL, we recommend using MariaDB instead of MySQL 8.
+
+MySQL 5.7, MySQL 8, MariaDB 10, MariaDB 11 are fully compatible,
+interchangeble and tested with Kea.
+
 .. _mysql-database-create:
 
 First-Time Creation of the MySQL Database
@@ -594,6 +606,44 @@ PostgreSQL without OpenSSL support
 Usually the PostgreSQL database client library is built with the OpenSSL
 support but Kea can be configured to handle the case where it is not
 supported:
+
+.. _pgsql-performance:
+
+Improved Performance With PostgreSQL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Changing the PostgreSQL internal value ``synchronous_commit`` from the default value
+of ON to OF can result in gain in Kea performance. On slow systems, the gain can be over 1000%.
+It can be set per-session for testing:
+
+.. code-block:: psql
+
+    postgres=# SET synchronous_commit = OFF;
+
+
+or permanently by command (preffered method):
+
+.. code-block:: psql
+
+    postgres=# ALTER SYSTEM SET synchronous_commit=OFF;
+
+or permanently in ``/etc/postgresql/[version]/main/postgresql.conf``:
+
+.. code-block:: ini
+
+    synchronous_commit = off
+
+Be aware that changing this value can cause problems during data recovery
+after a crash, so we recommend checking the `PostgreSQL documentation
+<https://www.postgresql.org/docs/current/wal-async-commit.html>`__.
+With the default value of ON, PostgreSQL writes changes to disk after every INSERT or UPDATE query
+(in Kea terms, every time a client gets a new lease or renews an existing lease). When
+``synchronous_commit`` is set to OFF, PostgreSQL writes the changes with some delay.
+Batching writes gives a substantial performance boost. The trade-off,
+however, is that in the worst-case scenario, all changes in the last moment before crash
+could be lost. Given the fact that Kea is stable software and crashes very rarely,
+most deployments find it a beneficial trade-off.
+
 
 .. code-block:: console
 
