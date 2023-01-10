@@ -610,7 +610,7 @@ supported:
 .. _pgsql-performance:
 
 Improved Performance With PostgreSQL
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Changing the PostgreSQL internal value ``synchronous_commit`` from the default value
 of ON to OF can result in gain in Kea performance. On slow systems, the gain can be over 1000%.
