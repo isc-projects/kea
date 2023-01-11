@@ -639,7 +639,7 @@ private:
                             const LeasePageSize& page_size,
                             Lease4Collection& collection) const;
 
-    /// @brief Returns existing IPv6 lease for a given IPv6 address.
+    /// @brief Returns existing IPv6 lease for a given IPv6 address and type.
     ///
     /// @param type specifies lease type: (NA, TA or PD)
     /// @param addr An address of the searched lease.
@@ -647,6 +647,13 @@ private:
     /// @return a pointer to the lease (or NULL if a lease is not found)
     Lease6Ptr getLease6Internal(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const;
+
+    /// @brief Returns existing IPv6 lease of any type for a given IPv6 address.
+    ///
+    /// @param addr An address of the searched lease.
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
+    Lease6Ptr getAnyLease6Internal(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID + IA + lease type
     /// combination

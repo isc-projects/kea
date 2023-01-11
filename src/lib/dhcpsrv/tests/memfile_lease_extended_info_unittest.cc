@@ -106,7 +106,7 @@ public:
             vector<uint8_t> duid_data = createFromString(DUID6[i]);
             DuidPtr duid(new DUID(duid_data));
             IOAddress addr(ADDRESS6[i]);
-            ASSERT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_NA, addr, duid,
+            ASSERT_NO_THROW(lease.reset(new Lease6(((i % 2) ? Lease::TYPE_NA : Lease::TYPE_PD), addr, duid,
                                                    123, 1000, 2000,
                                                    static_cast<SubnetID>(i))));
             leases6.push_back(lease);

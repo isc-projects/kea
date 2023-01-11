@@ -1076,6 +1076,16 @@ Memfile_LeaseMgr::getLease6Internal(Lease::Type type,
 }
 
 Lease6Ptr
+Memfile_LeaseMgr::getAnyLease6Internal(const isc::asiolink::IOAddress& addr) const {
+    Lease6Storage::iterator l = storage6_.find(addr);
+    if (l == storage6_.end() || !(*l)) {
+        return (Lease6Ptr());
+    } else {
+        return (Lease6Ptr(new Lease6(**l)));
+    }
+}
+
+Lease6Ptr
 Memfile_LeaseMgr::getLease6(Lease::Type type,
                             const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -2628,7 +2638,7 @@ Memfile_LeaseMgr::getLeases6ByRelayIdInternal(const DUID& relay_id,
                 break;
             }
             last_addr = (*lb)->lease_addr_;
-            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_addr);
+            Lease6Ptr lease = getAnyLease6Internal(last_addr);
             if (lease) {
                 collection.push_back(lease);
                 if (collection.size() >= page_size.page_size_) {
@@ -2654,7 +2664,7 @@ Memfile_LeaseMgr::getLeases6ByRelayIdInternal(const DUID& relay_id,
                 continue;
             }
             last_seen_addr = (*it)->lease_addr_;
-            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_seen_addr);
+            Lease6Ptr lease = getAnyLease6Internal(last_seen_addr);
             if (lease) {
                 collection.push_back(lease);
                 if (collection.size() >= page_size.page_size_) {
@@ -2734,7 +2744,7 @@ Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
 
         // Return all leases being within the page size.
         for (const IOAddress& addr : sorted) {
-            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, addr);
+            Lease6Ptr lease = getAnyLease6Internal(addr);
             if (lease) {
                 collection.push_back(lease);
                 if (collection.size() >= page_size.page_size_) {
@@ -2760,7 +2770,7 @@ Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
 
         // Return all leases being within the page size.
         for (const IOAddress& addr : sorted) {
-            Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, addr);
+            Lease6Ptr lease = getAnyLease6Internal(addr);
             if (lease) {
                 collection.push_back(lease);
                 if (collection.size() >= page_size.page_size_) {
@@ -2836,7 +2846,7 @@ Memfile_LeaseMgr::getLeases6ByLinkInternal(const IOAddress& link_addr,
             continue;
         }
         last_seen_addr = (*it)->addr_;
-        Lease6Ptr lease = getLease6Internal(Lease::TYPE_NA, last_seen_addr);
+        Lease6Ptr lease = getAnyLease6Internal(last_seen_addr);
         if (lease) {
             collection.push_back(lease);
             if (collection.size() >= page_size.page_size_) {
