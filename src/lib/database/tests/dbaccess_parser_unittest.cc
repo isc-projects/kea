@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -167,6 +167,8 @@ private:
      bool quoteValue(const std::string& parameter) const {
          return ((parameter != "persist") && (parameter != "lfc-interval") &&
                  (parameter != "connect-timeout") &&
+                 (parameter != "read-timeout") &&
+                 (parameter != "write-timeout") &&
                  (parameter != "port") &&
                  (parameter != "max-row-errors") &&
                  (parameter != "readonly"));
@@ -354,8 +356,8 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
 }
 
 // This test checks that the parser accepts the valid value of the
-// timeout parameter.
-TEST_F(DbAccessParserTest, validTimeout) {
+// connect-timeout parameter.
+TEST_F(DbAccessParserTest, validConnectTimeout) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "connect-timeout", "3600",
@@ -372,8 +374,8 @@ TEST_F(DbAccessParserTest, validTimeout) {
 }
 
 // This test checks that the parser rejects the negative value of the
-// timeout parameter.
-TEST_F(DbAccessParserTest, negativeTimeout) {
+// connect-timeout parameter.
+TEST_F(DbAccessParserTest, negativeConnectTimeout) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "connect-timeout", "-1",
@@ -388,11 +390,111 @@ TEST_F(DbAccessParserTest, negativeTimeout) {
 }
 
 // This test checks that the parser rejects a too large (greater than
-// the max uint32_t) value of the timeout parameter.
-TEST_F(DbAccessParserTest, largeTimeout) {
+// the max uint32_t) value of the connecttimeout parameter.
+TEST_F(DbAccessParserTest, largeConnectTimeout) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "connect-timeout", "4294967296",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test checks that the parser accepts the valid value of the
+// read-timeout parameter.
+TEST_F(DbAccessParserTest, validReadTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "read-timeout", "3600",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Valid read timeout", parser.getDbAccessParameters(),
+                      config);
+}
+
+// This test checks that the parser rejects the negative value of the
+// read-timeout parameter.
+TEST_F(DbAccessParserTest, negativeReadTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "read-timeout", "-1",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test checks that the parser rejects a too large (greater than
+// the max uint32_t) value of the read-timeout parameter.
+TEST_F(DbAccessParserTest, largeReadTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "read-timeout", "4294967296",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test checks that the parser accepts the valid value of the
+// write-timeout parameter.
+TEST_F(DbAccessParserTest, validWriteTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "write-timeout", "3600",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Valid write timeout", parser.getDbAccessParameters(),
+                      config);
+}
+
+// This test checks that the parser rejects the negative value of the
+// write-timeout parameter.
+TEST_F(DbAccessParserTest, negativeWriteTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "write-timeout", "-1",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test checks that the parser rejects a too large (greater than
+// the max uint32_t) value of the write-timeout parameter.
+TEST_F(DbAccessParserTest, largeWriteTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "write-timeout", "4294967296",
                             NULL};
 
     string json_config = toJson(config);
