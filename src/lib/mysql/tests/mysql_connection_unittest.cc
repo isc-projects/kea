@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -607,6 +607,126 @@ TEST_F(MySqlConnectionTest, transactions) {
     // Committing or rolling back a not started transaction is a coding error.
     EXPECT_THROW(conn_.commit(), isc::Unexpected);
     EXPECT_THROW(conn_.rollback(), isc::Unexpected);
+}
+
+// Tests that valid connection timeout is accepted.
+TEST_F(MySqlConnectionTest, connectionTimeout) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_TIMEOUT);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout));
+    EXPECT_EQ(10, timeout);
+}
+
+// Tests that invalid timeout value type causes an error.
+TEST_F(MySqlConnectionTest, connectionTimeoutInvalid) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_TIMEOUT_1);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+}
+
+// Tests that a negative connection timeout value causes an error.
+TEST_F(MySqlConnectionTest, connectionTimeoutInvalid2) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_TIMEOUT_2);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+}
+
+// Tests that a zero connection timeout value causes an error.
+TEST_F(MySqlConnectionTest, connectionTimeoutInvalid3) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_TIMEOUT_3);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+}
+
+// Tests that a valid read timeout is accepted.
+TEST_F(MySqlConnectionTest, readTimeout) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_READ_TIMEOUT);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_READ_TIMEOUT, &timeout));
+    EXPECT_EQ(11, timeout);
+}
+
+// Tests that a zero read timeout is accepted.
+TEST_F(MySqlConnectionTest, readTimeoutZero) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_READ_TIMEOUT_ZERO);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_READ_TIMEOUT, &timeout));
+    EXPECT_EQ(0, timeout);
+}
+
+// Tests that an invalid read timeout causes an error.
+TEST_F(MySqlConnectionTest, readTimeoutInvalid) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_READ_TIMEOUT_1);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+}
+
+// Tests that a valid write timeout is accepted.
+TEST_F(MySqlConnectionTest, writeTimeout) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_WRITE_TIMEOUT);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_WRITE_TIMEOUT, &timeout));
+    EXPECT_EQ(12, timeout);
+}
+
+// Tests that a zero write timeout is accepted.
+TEST_F(MySqlConnectionTest, writeTimeoutZero) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_WRITE_TIMEOUT_ZERO);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_WRITE_TIMEOUT, &timeout));
+    EXPECT_EQ(0, timeout);
+}
+
+// Tests that an invalid write timeout causes an error.
+TEST_F(MySqlConnectionTest, writeTimeoutInvalid) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_WRITE_TIMEOUT_1);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
 }
 
 TEST_F(MySqlConnectionWithPrimaryKeyTest, select) {
