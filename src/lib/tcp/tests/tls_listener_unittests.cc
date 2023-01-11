@@ -123,7 +123,8 @@ public:
     ///
     /// @param request String containing the request to be sent.
     /// @param tls_context TLS context to assign to the client.
-    void startRequests(const std::list<std::string>& requests, TlsContextPtr tls_context) {
+    void startRequests(const std::list<std::string>& requests,
+                       TlsContextPtr tls_context) {
         ASSERT_TRUE(tls_context);
         TcpTestClientPtr client = createClient(tls_context);
         client->startRequests(requests);
@@ -207,7 +208,7 @@ public:
     size_t clients_done_;
 };
 
-// This test verifies that a connection can be established with a client
+// This test verifies that a TLS connection can be established with a client
 // with valid TLS credentials.
 TEST_F(TlsListenerTest, listen) {
     const std::string request = "I am done";
@@ -246,7 +247,7 @@ TEST_F(TlsListenerTest, listen) {
     io_service_.poll();
 }
 
-// This test verifies that a connection is denied to a client
+// This test verifies that a TLS connection is denied to a client
 // with invalid TLS credentials.
 TEST_F(TlsListenerTest, badClient) {
     TcpTestListener listener(io_service_,
@@ -319,9 +320,9 @@ TEST_F(TlsListenerTest, idleTimeoutTest) {
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
-    // Start a client with an empty request. Empty requests tell the client to read
-    // without sending anything and expect the read to fail when the listener idle
-    // times out the socket.
+    // Start a client with an empty request. Empty requests tell the client
+    // to read without sending anything and expect the read to fail when
+    // the listener idle times out the socket.
     ASSERT_NO_THROW(startRequest("", clientContext()));
 
     // Run until idle timer expires.
@@ -336,7 +337,7 @@ TEST_F(TlsListenerTest, idleTimeoutTest) {
     io_service_.poll();
 }
 
-// This test verifies that TLS connections with mulitple clients.
+// This test verifies that TLS connections with multiple clients.
 TEST_F(TlsListenerTest, multipleClientsListen) {
     const std::string request = "I am done";
 
@@ -475,7 +476,7 @@ TEST_F(TlsListenerTest, filterClientsTest) {
             ASSERT_EQ(expected_entries, entries);
 
         } else {
-            // Connection filteriing closes the connection before the client
+            // Connection filtering closes the connection before the client
             // initiates the handshake, causing the subsequent handshake attempt
             // to fail.
             EXPECT_FALSE(client->receiveDone());

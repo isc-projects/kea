@@ -99,7 +99,7 @@ public:
     }
 
     bool useTls() {
-        return (tls_context_ != 0);
+        return (!!tls_context_);
     }
 
     /// @brief Destructor.

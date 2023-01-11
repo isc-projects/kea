@@ -198,7 +198,7 @@ public:
     size_t clients_done_;
 };
 
-// This test verifies that A TCP connection can be established and used to
+// This test verifies that a TCP connection can be established and used to
 // transmit a streamed request and receive a streamed response.
 TEST_F(TcpListenerTest, listen) {
     const std::string request = "I am done";
@@ -237,7 +237,7 @@ TEST_F(TcpListenerTest, listen) {
     io_service_.poll();
 }
 
-// This test verifies that A TCP connection can receive a complete
+// This test verifies that a TCP connection can receive a complete
 // message that spans multiple socket reads.
 TEST_F(TcpListenerTest, splitReads) {
     const std::string request = "I am done";
@@ -269,7 +269,7 @@ TEST_F(TcpListenerTest, splitReads) {
     io_service_.poll();
 }
 
-// This test verifies that A TCP connection can be established and used to
+// This test verifies that a TCP connection can be established and used to
 // transmit a streamed request and receive a streamed response.
 TEST_F(TcpListenerTest, idleTimeoutTest) {
     TcpTestListener listener(io_service_,
