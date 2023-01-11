@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +48,9 @@ DbAccessParser::parse(std::string& access_string,
     DatabaseConnection::ParameterMap values_copy = values_;
 
     int64_t lfc_interval = 0;
-    int64_t timeout = 0;
+    int64_t connect_timeout = 0;
+    int64_t read_timeout = 0;
+    int64_t write_timeout = 0;
     int64_t port = 0;
     int64_t max_reconnect_tries = 0;
     int64_t reconnect_wait_time = 0;
@@ -68,9 +70,19 @@ DbAccessParser::parse(std::string& access_string,
                     boost::lexical_cast<std::string>(lfc_interval);
 
             } else if (param.first == "connect-timeout") {
-                timeout = param.second->intValue();
+                connect_timeout = param.second->intValue();
                 values_copy[param.first] =
-                    boost::lexical_cast<std::string>(timeout);
+                    boost::lexical_cast<std::string>(connect_timeout);
+
+            } else if (param.first == "read-timeout") {
+                read_timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(read_timeout);
+
+            } else if (param.first == "write-timeout") {
+                write_timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(write_timeout);
 
             } else if (param.first == "max-reconnect-tries") {
                 max_reconnect_tries = param.second->intValue();
@@ -148,11 +160,27 @@ DbAccessParser::parse(std::string& access_string,
                   << " (" << value->getPosition() << ")");
     }
 
-    // d. Check that the timeout is within a reasonable range.
-    if ((timeout < 0) ||
-        (timeout > std::numeric_limits<uint32_t>::max())) {
+    // d. Check that the timeouts are within a reasonable range.
+    if ((connect_timeout < 0) ||
+        (connect_timeout > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("connect-timeout");
-        isc_throw(DbConfigError, "connect-timeout value: " << timeout
+        isc_throw(DbConfigError, "connect-timeout value: " << connect_timeout
+                  << " is out of range, expected value: 0.."
+                  << std::numeric_limits<uint32_t>::max()
+                  << " (" << value->getPosition() << ")");
+    }
+    if ((read_timeout < 0) ||
+        (read_timeout > std::numeric_limits<uint32_t>::max())) {
+        ConstElementPtr value = database_config->get("read-timeout");
+        isc_throw(DbConfigError, "read-timeout value: " << read_timeout
+                  << " is out of range, expected value: 0.."
+                  << std::numeric_limits<uint32_t>::max()
+                  << " (" << value->getPosition() << ")");
+    }
+    if ((write_timeout < 0) ||
+        (write_timeout > std::numeric_limits<uint32_t>::max())) {
+        ConstElementPtr value = database_config->get("write-timeout");
+        isc_throw(DbConfigError, "write-timeout value: " << write_timeout
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint32_t>::max()
                   << " (" << value->getPosition() << ")");
