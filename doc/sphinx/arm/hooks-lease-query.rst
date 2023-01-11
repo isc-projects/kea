@@ -351,6 +351,13 @@ not yet used by the hook library.
 
 .. note::
 
+   Kea attempts to map link address parameters to configured subnets.
+   If a given address falls outside any known subnet the query will fail with
+   a status code of STATUS_NotConfigured.  Note further that only delegated
+   prefixes that fall within the subnet will be returned in queries that
+   include the link address parameter.
+
+.. note::
    New query types are supported only with the memfile lease backend.
 
 .. _bulk-lease-query-dhcpv6-config:
