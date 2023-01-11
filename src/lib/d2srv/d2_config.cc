@@ -42,7 +42,7 @@ D2Params::D2Params(const isc::asiolink::IOAddress& ip_address,
 
 D2Params::D2Params()
     : ip_address_(isc::asiolink::IOAddress("127.0.0.1")),
-     port_(53001), dns_server_timeout_(100),
+     port_(53001), dns_server_timeout_(500),
      ncr_protocol_(dhcp_ddns::NCR_UDP),
      ncr_format_(dhcp_ddns::FMT_JSON) {
     validateContents();
