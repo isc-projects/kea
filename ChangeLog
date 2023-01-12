@@ -1,3 +1,12 @@
+2083.	[func]		marcin
+	New database connection parameters, "read-timeout" and
+	"write-timeout", control the timeouts in communication with the
+	MySQL database. The "tcp-user-timeout" controls the timeout in
+	communication with the PostgreSQL database. Setting these
+	timeouts can prevent occasional Kea hangs due to issues with
+	the database connectivity.
+	(Gitlab #2688)
+
 2082.	[bug]		razvan
 	The prefix address provided in the prefix and prefix length pair
 	from the pool configuration is now checked to match the first
