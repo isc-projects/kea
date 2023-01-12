@@ -1,3 +1,9 @@
+2085.	[func]		tmark
+	kea-dhcp-ddns uses new log messages to clearly distinguish
+	between timeouts and other IO errors when communicating with
+	DNS servers.
+	(Gitlab #2589)
+
 2084.	[func]		razvan
 	When the client adds a prefix length in the hint, the server
 	will try to select a pool with the delegated prefix length

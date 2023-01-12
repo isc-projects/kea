@@ -24,21 +24,25 @@ extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE = "DHCP_DDN
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_IO_ERROR = "DHCP_DDNS_FORWARD_ADD_IO_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_REJECTED = "DHCP_DDNS_FORWARD_ADD_REJECTED";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT = "DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT";
+extern const isc::log::MessageID DHCP_DDNS_FORWARD_ADD_TIMEOUT = "DHCP_DDNS_FORWARD_ADD_TIMEOUT";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS = "DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE = "DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR = "DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED = "DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT = "DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT";
+extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT = "DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS = "DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE = "DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR = "DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED = "DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT = "DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT";
+extern const isc::log::MessageID DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT = "DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS = "DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE = "DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_IO_ERROR = "DHCP_DDNS_FORWARD_REPLACE_IO_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_REJECTED = "DHCP_DDNS_FORWARD_REPLACE_REJECTED";
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT = "DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT";
+extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_TIMEOUT = "DHCP_DDNS_FORWARD_REPLACE_TIMEOUT";
 extern const isc::log::MessageID DHCP_DDNS_FWD_REQUEST_IGNORED = "DHCP_DDNS_FWD_REQUEST_IGNORED";
 extern const isc::log::MessageID DHCP_DDNS_INVALID_RESPONSE = "DHCP_DDNS_INVALID_RESPONSE";
 extern const isc::log::MessageID DHCP_DDNS_NOT_ON_LOOPBACK = "DHCP_DDNS_NOT_ON_LOOPBACK";
@@ -69,11 +73,13 @@ extern const isc::log::MessageID DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE = "DHCP_
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REMOVE_IO_ERROR = "DHCP_DDNS_REVERSE_REMOVE_IO_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REMOVE_REJECTED = "DHCP_DDNS_REVERSE_REMOVE_REJECTED";
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT = "DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT";
+extern const isc::log::MessageID DHCP_DDNS_REVERSE_REMOVE_TIMEOUT = "DHCP_DDNS_REVERSE_REMOVE_TIMEOUT";
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS = "DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS";
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE = "DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE";
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_IO_ERROR = "DHCP_DDNS_REVERSE_REPLACE_IO_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_REJECTED = "DHCP_DDNS_REVERSE_REPLACE_REJECTED";
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT = "DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT";
+extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_TIMEOUT = "DHCP_DDNS_REVERSE_REPLACE_TIMEOUT";
 extern const isc::log::MessageID DHCP_DDNS_REV_REQUEST_IGNORED = "DHCP_DDNS_REV_REQUEST_IGNORED";
 extern const isc::log::MessageID DHCP_DDNS_RUN_EXIT = "DHCP_DDNS_RUN_EXIT";
 extern const isc::log::MessageID DHCP_DDNS_SHUTDOWN_COMMAND = "DHCP_DDNS_SHUTDOWN_COMMAND";
@@ -107,21 +113,25 @@ const char* values[] = {
     "DHCP_DDNS_FORWARD_ADD_IO_ERROR", "DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping add for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_ADD_REJECTED", "DNS Request ID %1: Server, %2, rejected a DNS update request to add the address mapping for FQDN, %3, with an RCODE: %4",
     "DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT", "DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while adding forward address mapping for FQDN, %3",
+    "DHCP_DDNS_FORWARD_ADD_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping add for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS", "DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing a forward address mapping for FQDN %3 to DNS server %4",
     "DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE", "DNS Request ID %1: update message to remove a forward DNS Address entry could not be constructed for this request: %2, reason: %3",
     "DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR", "DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping address removal for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED", "DNS Request ID %1: Server, %2, rejected a DNS update request to remove the forward address mapping for FQDN, %3, with an RCODE: %4",
     "DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT", "DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing forward address mapping for FQDN, %3",
+    "DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a repsonse to forward mapping address removal for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS", "DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing forward RRs for FQDN %3 to DNS server %4",
     "DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE", "DNS Request ID %1: update message to remove forward DNS RR entries could not be constructed for this request: %2,  reason: %3",
     "DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR", "DHCP_DDNS Request ID %1: encountered an IO error sending a forward RR removal for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED", "DNS Request ID %1: Server, %2, rejected a DNS update request to remove forward RR entries for FQDN, %3, with an RCODE: %4",
     "DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT", "DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing forward RRs for FQDN, %3",
+    "DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for response to forward RR removal for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS", "DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing forward address mapping for FQDN %3 to DNS server %4",
     "DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE", "DNS Request ID %1: update message to replace a forward DNS entry could not be constructed from this request: %2, reason: %3",
     "DHCP_DDNS_FORWARD_REPLACE_IO_ERROR", "DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping replace for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_REPLACE_REJECTED", "DNS Request ID %1: Server, %2, rejected a DNS update request to replace the address mapping for FQDN, %3, with an RCODE: %4",
     "DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT", "DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while replacing forward address mapping for FQDN, %3",
+    "DHCP_DDNS_FORWARD_REPLACE_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping replace for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FWD_REQUEST_IGNORED", "Request ID %1: Forward updates are disabled, the forward portion of request will be ignored: %2",
     "DHCP_DDNS_INVALID_RESPONSE", "received response to DNS Update message is malformed: %1",
     "DHCP_DDNS_NOT_ON_LOOPBACK", "the DHCP-DDNS server has been configured to listen on %1 which is not the local loopback.  This is an insecure configuration supported for testing purposes only",
@@ -152,11 +162,13 @@ const char* values[] = {
     "DHCP_DDNS_REVERSE_REMOVE_IO_ERROR", "DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping remove for FQDN %2 to DNS server %3",
     "DHCP_DDNS_REVERSE_REMOVE_REJECTED", "DNS Request ID %1: Server, %2, rejected a DNS update request to remove the reverse mapping for FQDN, %3, with an RCODE: %4",
     "DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT", "DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing reverse address mapping for FQDN, %3",
+    "DHCP_DDNS_REVERSE_REMOVE_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping remove for FQDN %2 to DNS server %3",
     "DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS", "DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing reverse address mapping for FQDN %3 to DNS server %4",
     "DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE", "DNS Request ID %1: update message to replace a reverse DNS entry could not be constructed from this request: %2, reason: %3",
     "DHCP_DDNS_REVERSE_REPLACE_IO_ERROR", "DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping replacement for FQDN %2 to DNS server %3",
     "DHCP_DDNS_REVERSE_REPLACE_REJECTED", "DNS Request ID %1: Server, %2, rejected a DNS update request to replace the reverse mapping for FQDN, %3, with an RCODE: %4",
     "DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT", "DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while replacing reverse address mapping for FQDN, %3",
+    "DHCP_DDNS_REVERSE_REPLACE_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping replacement for FQDN %2 to DNS server %3",
     "DHCP_DDNS_REV_REQUEST_IGNORED", "Request ID %1: Reverse updates are disabled, the reverse portion of request will be ignored: %2",
     "DHCP_DDNS_RUN_EXIT", "application is exiting the event loop",
     "DHCP_DDNS_SHUTDOWN_COMMAND", "application received shutdown command with args: %1",
