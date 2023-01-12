@@ -609,6 +609,16 @@ TEST_F(MySqlConnectionTest, transactions) {
     EXPECT_THROW(conn_.rollback(), isc::Unexpected);
 }
 
+// Tests that invalid port value causes an error.
+TEST_F(MySqlConnectionTest, portInvalid) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_PORT_1);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DbInvalidPort);
+}
+
+
 // Tests that valid connection timeout is accepted.
 TEST_F(MySqlConnectionTest, connectionTimeout) {
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,

@@ -193,7 +193,12 @@ PgSqlConnection::getConnParameters() {
     dbconnparameters += "host = '" + shost + "'" ;
 
     unsigned int port = 0;
-    setIntParameterValue("port", 0, numeric_limits<uint16_t>::max(), port);
+    try {
+        setIntParameterValue("port", 0, numeric_limits<uint16_t>::max(), port);
+
+    } catch (const std::exception& ex) {
+        isc_throw(DbInvalidPort, ex.what());
+    }
 
     // Add port to connection parameters when not default.
     if (port > 0) {
