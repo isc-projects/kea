@@ -65,12 +65,7 @@ MySqlConnection::openDatabase() {
     }
 
     unsigned int port = 0;
-    setIntParameterValue("port", 0, numeric_limits<unsigned int>::max(), port);
-    // The port is only valid when it is in the 0..65535 range.
-    // Again fall back to the default when the given value is invalid.
-     if (port > numeric_limits<uint16_t>::max()) {
-         port = 0;
-     }
+    setIntParameterValue("port", 0, numeric_limits<uint16_t>::max(), port);
 
     const char* user = NULL;
     string suser;
@@ -108,6 +103,9 @@ MySqlConnection::openDatabase() {
         // database, a zero timeout might signify something like "wait
         // indefinitely".
         setIntParameterValue("connect-timeout", 1, numeric_limits<int>::max(), connect_timeout);
+        // Other timeouts can be 0, meaning that the database client will follow a default
+        // behavior. Earlier MySQL versions didn't have these parameters, so we allow 0
+        // to skip setting them.
         setIntParameterValue("read-timeout", 0, numeric_limits<int>::max(), read_timeout);
         setIntParameterValue("write-timeout", 0, numeric_limits<int>::max(), write_timeout);
 

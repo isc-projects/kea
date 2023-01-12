@@ -51,6 +51,7 @@ DbAccessParser::parse(std::string& access_string,
     int64_t connect_timeout = 0;
     int64_t read_timeout = 0;
     int64_t write_timeout = 0;
+    int64_t tcp_user_timeout = 0;
     int64_t port = 0;
     int64_t max_reconnect_tries = 0;
     int64_t reconnect_wait_time = 0;
@@ -83,6 +84,11 @@ DbAccessParser::parse(std::string& access_string,
                 write_timeout = param.second->intValue();
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(write_timeout);
+
+            } else if (param.first == "tcp-user-timeout") {
+                tcp_user_timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(tcp_user_timeout);
 
             } else if (param.first == "max-reconnect-tries") {
                 max_reconnect_tries = param.second->intValue();
@@ -181,6 +187,14 @@ DbAccessParser::parse(std::string& access_string,
         (write_timeout > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("write-timeout");
         isc_throw(DbConfigError, "write-timeout value: " << write_timeout
+                  << " is out of range, expected value: 0.."
+                  << std::numeric_limits<uint32_t>::max()
+                  << " (" << value->getPosition() << ")");
+    }
+    if ((tcp_user_timeout < 0) ||
+        (tcp_user_timeout > std::numeric_limits<uint32_t>::max())) {
+        ConstElementPtr value = database_config->get("tcp-user-timeout");
+        isc_throw(DbConfigError, "tcp-user-timeout value: " << tcp_user_timeout
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint32_t>::max()
                   << " (" << value->getPosition() << ")");

@@ -169,6 +169,7 @@ private:
                  (parameter != "connect-timeout") &&
                  (parameter != "read-timeout") &&
                  (parameter != "write-timeout") &&
+                 (parameter != "tcp-user-timeout") &&
                  (parameter != "port") &&
                  (parameter != "max-row-errors") &&
                  (parameter != "readonly"));
@@ -504,6 +505,57 @@ TEST_F(DbAccessParserTest, largeWriteTimeout) {
     TestDbAccessParser parser;
     EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
+
+// This test checks that the parser accepts the valid value of the
+// tcp-user-timeout parameter.
+TEST_F(DbAccessParserTest, validTcpUserTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "tcp-user-timeout", "3600",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Valid write timeout", parser.getDbAccessParameters(),
+                      config);
+}
+
+// This test checks that the parser rejects the negative value of the
+// tcp-user-timeout parameter.
+TEST_F(DbAccessParserTest, negativeTcpUserTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "tcp-user-timeout", "-1",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test checks that the parser rejects a too large (greater than
+// the max uint32_t) value of the tcp-user-timeout parameter.
+TEST_F(DbAccessParserTest, largeTcpUserTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "tcp-user-timeout", "4294967296",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
 
 // This test checks that the parser accepts the valid value of the
 // port parameter.

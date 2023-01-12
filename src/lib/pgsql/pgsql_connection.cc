@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -180,8 +180,8 @@ PgSqlConnection::prepareStatements(const PgSqlTaggedStatement* start_statement,
     }
 }
 
-void
-PgSqlConnection::openDatabase() {
+std::string
+PgSqlConnection::getConnParameters() {
     string dbconnparameters;
     string shost = "localhost";
     try {
@@ -192,38 +192,14 @@ PgSqlConnection::openDatabase() {
 
     dbconnparameters += "host = '" + shost + "'" ;
 
-    string sport;
-    try {
-        sport = getParameter("port");
-    } catch (...) {
-        // No port parameter, we are going to use the default port.
-        sport = "";
-    }
+    unsigned int port = 0;
+    setIntParameterValue("port", 0, numeric_limits<uint16_t>::max(), port);
 
-    if (sport.size() > 0) {
-        unsigned int port = 0;
-
-        // Port was given, so try to convert it to an integer.
-        try {
-            port = boost::lexical_cast<unsigned int>(sport);
-        } catch (...) {
-            // Port given but could not be converted to an unsigned int.
-            // Just fall back to the default value.
-            port = 0;
-        }
-
-        // The port is only valid when it is in the 0..65535 range.
-        // Again fall back to the default when the given value is invalid.
-        if (port > numeric_limits<uint16_t>::max()) {
-            port = 0;
-        }
-
-        // Add it to connection parameters when not default.
-        if (port > 0) {
-            std::ostringstream oss;
-            oss << port;
-            dbconnparameters += " port = " + oss.str();
-        }
+    // Add port to connection parameters when not default.
+    if (port > 0) {
+        std::ostringstream oss;
+        oss << port;
+        dbconnparameters += " port = " + oss.str();
     }
 
     string suser;
@@ -252,46 +228,36 @@ PgSqlConnection::openDatabase() {
     }
 
     unsigned int connect_timeout = PGSQL_DEFAULT_CONNECTION_TIMEOUT;
-    string stimeout;
+    unsigned int tcp_user_timeout = 0;
     try {
-        stimeout = getParameter("connect-timeout");
-    } catch (...) {
-        // No timeout parameter, we are going to use the default timeout.
-        stimeout = "";
-    }
-
-    if (stimeout.size() > 0) {
-        // Timeout was given, so try to convert it to an integer.
-
-        try {
-            connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
-        } catch (...) {
-            // Timeout given but could not be converted to an unsigned int. Set
-            // the connection timeout to an invalid value to trigger throwing
-            // of an exception.
-            connect_timeout = 0;
-        }
-
         // The timeout is only valid if greater than zero, as depending on the
         // database, a zero timeout might signify something like "wait
         // indefinitely".
-        //
-        // The check below also rejects a value greater than the maximum
-        // integer value.  The lexical_cast operation used to obtain a numeric
-        // value from a string can get confused if trying to convert a negative
-        // integer to an unsigned int: instead of throwing an exception, it may
-        // produce a large positive value.
-        if ((connect_timeout == 0) ||
-            (connect_timeout > numeric_limits<int>::max())) {
-            isc_throw(DbInvalidTimeout, "database connection timeout (" <<
-                      stimeout << ") must be an integer greater than 0");
-        }
+        setIntParameterValue("connect-timeout", 1, numeric_limits<int>::max(), connect_timeout);
+        // This timeout value can be 0, meaning that the database client will
+        // follow a default behavior. Earlier Postgres versions didn't have
+        // this parameter, so we allow 0 to skip setting them for these
+        // earlier versions.
+        setIntParameterValue("tcp-user-timeout", 0, numeric_limits<int>::max(), tcp_user_timeout);
+
+    } catch (const std::exception& ex) {
+        isc_throw(DbInvalidTimeout, ex.what());
     }
 
+    // Append timeouts.
     std::ostringstream oss;
-    oss << connect_timeout;
-    dbconnparameters += " connect_timeout = " + oss.str();
+    oss << " connect_timeout = " << connect_timeout;
+    if (tcp_user_timeout > 0) {
+        oss << " tcp_user_timeout = " << tcp_user_timeout * 1000;
+    }
+    dbconnparameters += oss.str();
 
+    return (dbconnparameters);
+}
+
+void
+PgSqlConnection::openDatabase() {
+    std::string dbconnparameters = getConnParameters();
     // Connect to Postgres, saving the low level connection pointer
     // in the holder object
     PGconn* new_conn = PQconnectdb(dbconnparameters.c_str());
@@ -532,6 +498,39 @@ PgSqlConnection::updateDeleteQuery(PgSqlTaggedStatement& statement,
 
     return (boost::lexical_cast<int>(PQcmdTuples(*result_set)));
 }
+
+template<typename T>
+void
+PgSqlConnection::setIntParameterValue(const std::string& name, int64_t min, int64_t max, T& value) {
+    string svalue;
+    try {
+        svalue = getParameter(name);
+    } catch (...) {
+        // Do nothing if the parameter is not present.
+    }
+    if (svalue.empty()) {
+        return;
+    }
+    try {
+        // Try to convert the value.
+        auto parsed_value = boost::lexical_cast<T>(svalue);
+        // Check if the value is within the specified range.
+        if ((parsed_value < min) || (parsed_value > max)) {
+            isc_throw(BadValue, "bad " << svalue << " value");
+        }
+        // Everything is fine. Return the parsed value.
+        value = parsed_value;
+
+    } catch (...) {
+        // We may end up here when lexical_cast fails or when the
+        // parsed value is not within the desired range. In both
+        // cases let's throw the same general error.
+        isc_throw(BadValue, name << " parameter (" <<
+                  svalue << ") must be an integer between "
+                  << min << " and " << max);
+    }
+}
+
 
 } // end of isc::db namespace
 } // end of isc namespace
