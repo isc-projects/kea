@@ -359,8 +359,8 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
 // This test checks that the parser accepts the valid value of the
 // connect-timeout parameter.
 TEST_F(DbAccessParserTest, validConnectTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "connect-timeout", "3600",
                             NULL};
 
@@ -377,8 +377,8 @@ TEST_F(DbAccessParserTest, validConnectTimeout) {
 // This test checks that the parser rejects the negative value of the
 // connect-timeout parameter.
 TEST_F(DbAccessParserTest, negativeConnectTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "connect-timeout", "-1",
                             NULL};
 
@@ -393,8 +393,8 @@ TEST_F(DbAccessParserTest, negativeConnectTimeout) {
 // This test checks that the parser rejects a too large (greater than
 // the max uint32_t) value of the connecttimeout parameter.
 TEST_F(DbAccessParserTest, largeConnectTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "connect-timeout", "4294967296",
                             NULL};
 
@@ -409,8 +409,8 @@ TEST_F(DbAccessParserTest, largeConnectTimeout) {
 // This test checks that the parser accepts the valid value of the
 // read-timeout parameter.
 TEST_F(DbAccessParserTest, validReadTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "read-timeout", "3600",
                             NULL};
 
@@ -427,8 +427,8 @@ TEST_F(DbAccessParserTest, validReadTimeout) {
 // This test checks that the parser rejects the negative value of the
 // read-timeout parameter.
 TEST_F(DbAccessParserTest, negativeReadTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "read-timeout", "-1",
                             NULL};
 
@@ -443,8 +443,8 @@ TEST_F(DbAccessParserTest, negativeReadTimeout) {
 // This test checks that the parser rejects a too large (greater than
 // the max uint32_t) value of the read-timeout parameter.
 TEST_F(DbAccessParserTest, largeReadTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "read-timeout", "4294967296",
                             NULL};
 
@@ -459,8 +459,8 @@ TEST_F(DbAccessParserTest, largeReadTimeout) {
 // This test checks that the parser accepts the valid value of the
 // write-timeout parameter.
 TEST_F(DbAccessParserTest, validWriteTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "write-timeout", "3600",
                             NULL};
 
@@ -477,8 +477,8 @@ TEST_F(DbAccessParserTest, validWriteTimeout) {
 // This test checks that the parser rejects the negative value of the
 // write-timeout parameter.
 TEST_F(DbAccessParserTest, negativeWriteTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "write-timeout", "-1",
                             NULL};
 
@@ -493,8 +493,8 @@ TEST_F(DbAccessParserTest, negativeWriteTimeout) {
 // This test checks that the parser rejects a too large (greater than
 // the max uint32_t) value of the write-timeout parameter.
 TEST_F(DbAccessParserTest, largeWriteTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
                             "write-timeout", "4294967296",
                             NULL};
 
@@ -509,8 +509,8 @@ TEST_F(DbAccessParserTest, largeWriteTimeout) {
 // This test checks that the parser accepts the valid value of the
 // tcp-user-timeout parameter.
 TEST_F(DbAccessParserTest, validTcpUserTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "postgresql",
+                            "name", "keatest",
                             "tcp-user-timeout", "3600",
                             NULL};
 
@@ -527,8 +527,8 @@ TEST_F(DbAccessParserTest, validTcpUserTimeout) {
 // This test checks that the parser rejects the negative value of the
 // tcp-user-timeout parameter.
 TEST_F(DbAccessParserTest, negativeTcpUserTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "postgresql",
+                            "name", "keatest",
                             "tcp-user-timeout", "-1",
                             NULL};
 
@@ -543,8 +543,8 @@ TEST_F(DbAccessParserTest, negativeTcpUserTimeout) {
 // This test checks that the parser rejects a too large (greater than
 // the max uint32_t) value of the tcp-user-timeout parameter.
 TEST_F(DbAccessParserTest, largeTcpUserTimeout) {
-    const char* config[] = {"type", "memfile",
-                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+    const char* config[] = {"type", "postgresql",
+                            "name", "keatest",
                             "tcp-user-timeout", "4294967296",
                             NULL};
 
@@ -556,6 +556,101 @@ TEST_F(DbAccessParserTest, largeTcpUserTimeout) {
     EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
+// This test verifies that specifying the tcp-user-timeout for the
+// memfile backend is not allowed.
+TEST_F(DbAccessParserTest, memfileTcpUserTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "keatest",
+                            "tcp-user-timeout", "10",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test verifies that specifying the tcp-user-timeout for the
+// mysql backend is not allowed.
+TEST_F(DbAccessParserTest, mysqlTcpUserTimeout) {
+    const char* config[] = {"type", "mysql",
+                            "name", "keatest",
+                            "tcp-user-timeout", "10",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test verifies that specifying the read-timeout for the
+// memfile backend is not allowed.
+TEST_F(DbAccessParserTest, memfileReadTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "keatest",
+                            "read-timeout", "10",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test verifies that specifying the read-timeout for the
+// postgresql backend is not allowed.
+TEST_F(DbAccessParserTest, postgresqlReadTimeout) {
+    const char* config[] = {"type", "postgresql",
+                            "name", "keatest",
+                            "read-timeout", "10",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test verifies that specifying the write-timeout for the
+// memfile backend is not allowed.
+TEST_F(DbAccessParserTest, memfileWriteTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "keatest",
+                            "write-timeout", "10",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test verifies that specifying the write-timeout for the
+// postgresql backend is not allowed.
+TEST_F(DbAccessParserTest, postgresqlWriteTimeout) {
+    const char* config[] = {"type", "postgresql",
+                            "name", "keatest",
+                            "write-timeout", "10",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
 
 // This test checks that the parser accepts the valid value of the
 // port parameter.

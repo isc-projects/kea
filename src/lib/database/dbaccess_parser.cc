@@ -183,6 +183,11 @@ DbAccessParser::parse(std::string& access_string,
                   << std::numeric_limits<uint32_t>::max()
                   << " (" << value->getPosition() << ")");
     }
+    if (read_timeout > 0 && (dbtype != "mysql")) {
+        ConstElementPtr value = database_config->get("read-timeout");
+        isc_throw(DbConfigError, "read-timeout value is only supported by the mysql backend"
+                  << " (" << value->getPosition() << ")");
+    }
     if ((write_timeout < 0) ||
         (write_timeout > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("write-timeout");
@@ -191,12 +196,22 @@ DbAccessParser::parse(std::string& access_string,
                   << std::numeric_limits<uint32_t>::max()
                   << " (" << value->getPosition() << ")");
     }
+    if (write_timeout > 0 && (dbtype != "mysql")) {
+        ConstElementPtr value = database_config->get("write-timeout");
+        isc_throw(DbConfigError, "write-timeout value is only supported by the mysql backend"
+                  << " (" << value->getPosition() << ")");
+    }
     if ((tcp_user_timeout < 0) ||
         (tcp_user_timeout > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("tcp-user-timeout");
         isc_throw(DbConfigError, "tcp-user-timeout value: " << tcp_user_timeout
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint32_t>::max()
+                  << " (" << value->getPosition() << ")");
+    }
+    if (tcp_user_timeout > 0 && (dbtype != "postgresql")) {
+        ConstElementPtr value = database_config->get("tcp-user-timeout");
+        isc_throw(DbConfigError, "tcp-user-timeout value is only supported by the mysql backend"
                   << " (" << value->getPosition() << ")");
     }
 
