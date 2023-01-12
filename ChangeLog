@@ -1,3 +1,12 @@
+2046.	[func]		marcin
+	New database connection parameters, "read-timeout" and
+	"write-timeout", control the timeouts in communication with the
+	MySQL database. The "tcp-user-timeout" controls the timeout in
+	communication with the PostgreSQL database. Setting these
+	timeouts can prevent occasional Kea hangs due to issues with
+	the database connectivity.
+	(Gitlab #2688)
+
 Kea 2.2.0 (stable) released on July 27, 2022
 
 2045.	[build]		tmark
