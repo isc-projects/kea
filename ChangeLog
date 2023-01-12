@@ -1,3 +1,10 @@
+2080.	[func]		tmark
+	Bulk Lease Query results can now include delegated prefixes.
+	Memfile queries used by Bulk Lease Query (BLQ) were modified
+	to include delegated prefixes when appropriate. Prior to
+	this they were returning only address leases.
+	(Gitlab #2713)
+
 2079.	[func]		marcin
 	The lease allocation strategy is now configurable. It is possible
 	to select between iterative and random lease selection for the

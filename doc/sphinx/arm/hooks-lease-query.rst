@@ -352,10 +352,13 @@ not yet used by the hook library.
 .. note::
 
    Kea attempts to map link address parameters to the prefixes of configured
-   subnets.  If a given address falls outside any known subnet the query will
-   fail with a status code of STATUS_NotConfigured.  Also note if the link
-   address paramter for queries by relay or remote id is not :: only delegated
-   prefixs that lie within the subnet will be returned.
+   subnets.  If a given address falls outside all configured subnet prefixes
+   the query will fail with a status code of STATUS_NotConfigured.  Also note if
+   the link address parameter for ``query-by-relay-id`` or ``query-by-remote-id``
+   is not :: (i.e. not empty) only delegated prefixes that lie within matching
+   subnet prefixes will be returned.  Currently ``query-by-address`` does not
+   support finding delegated prefixes by specifying an address that lies within
+   the prefix.
 
 .. note::
    New query types are supported only with the memfile lease backend.
