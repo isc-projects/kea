@@ -211,7 +211,7 @@ DbAccessParser::parse(std::string& access_string,
     }
     if (tcp_user_timeout > 0 && (dbtype != "postgresql")) {
         ConstElementPtr value = database_config->get("tcp-user-timeout");
-        isc_throw(DbConfigError, "tcp-user-timeout value is only supported by the mysql backend"
+        isc_throw(DbConfigError, "tcp-user-timeout value is only supported by the postgresql backend"
                   << " (" << value->getPosition() << ")");
     }
 
