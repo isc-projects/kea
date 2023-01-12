@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,9 @@ const char* INVALID_READ_TIMEOUT_1 = "read-timeout=bar";
 const char* VALID_WRITE_TIMEOUT = "write-timeout=12";
 const char* VALID_WRITE_TIMEOUT_ZERO = "write-timeout=0";
 const char* INVALID_WRITE_TIMEOUT_1 = "write-timeout=baz";
+const char* VALID_TCP_USER_TIMEOUT = "tcp-user-timeout=8";
+const char* VALID_TCP_USER_TIMEOUT_ZERO = "tcp-user-timeout=0";
+const char* INVALID_TCP_USER_TIMEOUT_1 = "-7";
 const char* VALID_READONLY_DB = "readonly=true";
 const char* INVALID_READONLY_DB = "readonly=5";
 const char* VALID_CERT = "cert-file=" TEST_CA_DIR "/kea-client.crt";

@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -562,4 +562,78 @@ TEST_F(PgSqlConnectionTest, savepoints) {
     TestRowSet three_rows{{1, "one"}, {2, "two"}, {3, "three"}};
     ASSERT_NO_THROW_LOG(testSelect(three_rows, 0, 10));
 }
+
+// Tests that valid connection timeout is accepted.
+TEST_F(PgSqlConnectionTest, connectionTimeout) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            VALID_TIMEOUT);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    std::string parameters;
+    ASSERT_NO_THROW_LOG(parameters = conn.getConnParameters());
+    EXPECT_TRUE(parameters.find("connect_timeout = 10") != std::string::npos)
+        << "parameter not found in " << parameters;
+}
+
+// Tests that invalid timeout value type causes an error.
+TEST_F(PgSqlConnectionTest, connectionTimeoutInvalid) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_TIMEOUT_1);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+// Tests that a negative connection timeout value causes an error.
+TEST_F(PgSqlConnectionTest, connectionTimeoutInvalid2) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_TIMEOUT_2);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+// Tests that a zero connection timeout value causes an error.
+TEST_F(PgSqlConnectionTest, connectionTimeoutInvalid3) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_TIMEOUT_3);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+// Tests that valid tcp user timeout is accepted.
+TEST_F(PgSqlConnectionTest, tcpUserTimeout) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            VALID_TCP_USER_TIMEOUT);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    std::string parameters;
+    ASSERT_NO_THROW_LOG(parameters = conn.getConnParameters());
+    EXPECT_TRUE(parameters.find("tcp_user_timeout = 8000") != std::string::npos)
+        << "parameter not found in " << parameters;
+}
+
+// Tests that a zero tcp user timeout is accepted.
+TEST_F(PgSqlConnectionTest, tcpUserTimeoutZero) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            VALID_TCP_USER_TIMEOUT_ZERO);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    std::string parameters;
+    ASSERT_NO_THROW_LOG(parameters = conn.getConnParameters());
+    EXPECT_FALSE(parameters.find("tcp_user_timeout") != std::string::npos)
+        << "parameter found in " << parameters << " but expected to be gone";
+}
+
+// Tests that an invalid tcp user timeout causes an error.
+TEST_F(PgSqlConnectionTest, tcpUserTimeoutInvalid) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_TIMEOUT_1);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+
 }; // namespace

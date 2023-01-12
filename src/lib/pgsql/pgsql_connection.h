@@ -265,6 +265,16 @@ public:
     void prepareStatements(const PgSqlTaggedStatement* start_statement,
                            const PgSqlTaggedStatement* end_statement);
 
+    /// @brief Creates connection string from specified parameters.
+    ///
+    /// This function is called frin the @c openDatabase and from the unit
+    /// tests.
+    ///
+    /// @return connection string for @c openDatabase.
+    /// @throw NoDatabaseName Mandatory database name not given
+    /// @throw DbInvalidTimeout when the database timeout is wrong.
+    std::string getConnParameters();
+
     /// @brief Open Database
     ///
     /// Opens the database using the information supplied in the parameters
@@ -499,6 +509,27 @@ public:
     operator bool() const {
         return (conn_);
     }
+
+private:
+
+    /// @brief Convenience function parsing and setting an integer parameter,
+    /// if it exists.
+    ///
+    /// If the parameter is not present, this function doesn't change the @c value.
+    /// Otherwise, it tries to convert the parameter to the type @c T. Finally,
+    /// it checks if the converted number is within the specified range.
+    ///
+    /// @param name Parameter name.
+    /// @param min Expected minimal value.
+    /// @param max Expected maximal value.
+    /// @param [out] value Reference to a value returning the parsed parameter.
+    /// @tparam T Parameter type.
+    /// @throw BadValue if the parameter is not a valid number or if it is out
+    /// of range.
+    template<typename T>
+    void setIntParameterValue(const std::string& name, int64_t min, int64_t max, T& value);
+
+public:
 
     /// @brief Accessor function which returns the IOService that can be used to
     /// recover the connection.
