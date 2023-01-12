@@ -68,6 +68,15 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Invalid port number
+///
+/// Thrown when the port number specified for the database connection is invalid.
+class DbInvalidPort : public Exception {
+public:
+    DbInvalidPort(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief Invalid 'readonly' value specification.
 ///
 /// Thrown when the value of the 'readonly' boolean parameter is invalid.

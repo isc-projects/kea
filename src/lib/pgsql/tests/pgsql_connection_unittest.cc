@@ -563,6 +563,15 @@ TEST_F(PgSqlConnectionTest, savepoints) {
     ASSERT_NO_THROW_LOG(testSelect(three_rows, 0, 10));
 }
 
+// Tests that invalid port value causes an error.
+TEST_F(PgSqlConnectionTest, portInvalid) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_PORT_1);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidPort);
+}
+
 // Tests that valid connection timeout is accepted.
 TEST_F(PgSqlConnectionTest, connectionTimeout) {
     std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
