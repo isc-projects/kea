@@ -78,6 +78,9 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
+  READ_TIMEOUT "read-timeout"
+  WRITE_TIMEOUT "write-timeout"
+  TCP_USER_TIMEOUT "tcp-user-timeout"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   ON_FAIL "on-fail"
@@ -963,6 +966,9 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
+                  | read_timeout
+                  | write_timeout
+                  | tcp_user_timeout
                   | max_reconnect_tries
                   | reconnect_wait_time
                   | on_fail
@@ -1052,6 +1058,25 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("connect-timeout", n);
 };
+
+read_timeout: READ_TIMEOUT COLON INTEGER {
+    ctx.unique("read-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("connect-timeout", n);
+};
+
+write_timeout: WRITE_TIMEOUT COLON INTEGER {
+    ctx.unique("write-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("write-timeout", n);
+};
+
+tcp_user_timeout: TCP_USER_TIMEOUT COLON INTEGER {
+    ctx.unique("tcp-user-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-user-timeout", n);
+};
+
 
 reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ctx.unique("reconnect-wait-time", ctx.loc2pos(@1));
