@@ -183,7 +183,7 @@ is a template that can be customized to individual requirements.
    "DhcpDdns": {
        "ip-address": "127.0.0.1",
        "port": 53001,
-       "dns-server-timeout": 100,
+       "dns-server-timeout": 500,
        "ncr-protocol": "UDP",
        "ncr-format": "JSON",
        "tsig-keys": [ ],
@@ -224,7 +224,7 @@ Global Server Parameters
 
 -  ``dns-server-timeout`` - the maximum amount of time, in milliseconds,
    that D2 will wait for a response from a DNS server to a single DNS
-   update message.
+   update message.  The default is 500 ms.
 
 -  ``ncr-protocol`` - the socket protocol to use when sending requests to
    D2. Currently only UDP is supported.

@@ -1,3 +1,10 @@
+2081.	[func]		tmark
+	The default value for the kea-dhcp-ddns parameter,
+	dns-server-timeout, has been increased from 100 ms to
+	500 ms.  This was done to improve the out-of-the-box
+	user experience.
+	(Gitlab #2590)
+
 2080.	[func]		tmark
 	Bulk Lease Query results can now include delegated prefixes.
 	Memfile queries used by Bulk Lease Query (BLQ) were modified
