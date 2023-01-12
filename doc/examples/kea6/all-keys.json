@@ -308,7 +308,10 @@
                 "type": "postgresql",
 
                 // User name to be used to access the database.
-                "user": "keatest"
+                "user": "keatest",
+
+                // TCP user timeout while communicating with the database.
+                "tcp-user-timeout": 100
             },
             {
                 // Name of the database to connect to.
@@ -341,7 +344,13 @@
                 "on-fail": "stop-retry-exit",
 
                 // Connection connect timeout.
-                "connect-timeout": 100
+                "connect-timeout": 100,
+
+                // Data read from the database timeout.
+                "read-timeout": 120,
+
+                // Data write to the database timeout.
+                "write-timeout": 180
             }
         ],
 
