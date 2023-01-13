@@ -1380,8 +1380,7 @@ HostTest::testOverrideVendorOptions(const uint16_t msg_type) {
     // Client needs to include Vendor Specific Information option
     // with ORO suboption, which the server will use to determine
     // which suboptions should be returned to the client.
-    OptionVendorPtr opt_vendor(new OptionVendor(Option::V6,
-                                                VENDOR_ID_CABLE_LABS));
+    OptionVendorPtr opt_vendor(new OptionVendor(Option::V6, VENDOR_ID_CABLE_LABS));
     // Include ORO with TFTP servers suboption code being requested.
     opt_vendor->addOption(OptionPtr(new OptionUint16(Option::V6, DOCSIS3_V6_ORO,
                                                      DOCSIS3_V6_TFTP_SERVERS)));

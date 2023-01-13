@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/iface_mgr.h>
@@ -4150,7 +4151,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     // Options should be now available
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(4491, 100);
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(100, desc1.option_->getType());
     // Try to get the option from the vendor space 1234
@@ -4209,7 +4210,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     // Options should be now available.
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(4491, 100);
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(100, desc1.option_->getType());
 
