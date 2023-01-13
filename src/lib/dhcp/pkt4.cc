@@ -227,6 +227,10 @@ Pkt4::unpack() {
     // access the entire data.
     LibDHCP::fuseOptions4(options_);
 
+    // Kea supports multiple vendor options so it needs to split received and
+    // fused options in multiple OptionVendor instances.
+    LibDHCP::extendVendorOptions4(options_);
+
     // No need to call check() here. There are thorough tests for this
     // later (see Dhcp4Srv::accept()). We want to drop the packet later,
     // so we'll be able to log more detailed drop reason.

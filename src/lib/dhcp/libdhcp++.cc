@@ -304,7 +304,6 @@ LibDHCP::optionFactory(Option::Universe u,
     return (it->second(u, type, buf));
 }
 
-
 size_t
 LibDHCP::unpackOptions6(const OptionBuffer& buf,
                         const std::string& option_space,
@@ -576,6 +575,10 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
             }
         }
 
+        if (space_is_dhcp4 && opt_type == DHO_VIVSO_SUBOPTIONS) {
+            num_defs = 0;
+        }
+
         OptionPtr opt;
         if (num_defs > 1) {
             // Multiple options of the same code are not supported right now!
@@ -680,6 +683,46 @@ LibDHCP::fuseOptions4(OptionCollection& options) {
         }
     }
     return (result);
+}
+
+void
+LibDHCP::extendVendorOptions4(isc::dhcp::OptionCollection& options) {
+    map<uint32_t, OptionCollection> vendors_data;
+    for (auto const& option : options) {
+        if (option.second->getType() == DHO_VIVSO_SUBOPTIONS) {
+            uint32_t offset = 0;
+            auto const& data = option.second->getData();
+            auto const& begin = data.begin();
+            auto const& end = data.end();
+            size_t size;
+            while ((size = distance(begin + offset, end)) != 0) {
+                if (size < sizeof(uint32_t)) {
+                    options.erase(DHO_VIVSO_SUBOPTIONS);
+                    isc_throw(SkipRemainingOptionsError,
+                              "Truncated vendor-specific information option"
+                              << ", length=" << size);
+                }
+                uint32_t vendor_id = isc::util::readUint32(&(*begin) + offset, distance(begin, end));
+                offset += 4;
+                OptionBuffer vendor_buffer(begin + offset, end);
+                try {
+                    offset += LibDHCP::unpackVendorOptions4(vendor_id, vendor_buffer, vendors_data[vendor_id]);
+                } catch (const SkipThisOptionError&)  {
+                } catch (const Exception&) {
+                    options.erase(DHO_VIVSO_SUBOPTIONS);
+                    throw;
+                }
+            }
+        }
+    }
+    options.erase(DHO_VIVSO_SUBOPTIONS);
+    for (auto const& vendor : vendors_data) {
+        OptionVendorPtr vendor_opt(new OptionVendor(Option::V4, vendor.first));
+        for (auto const& option : vendor.second) {
+            vendor_opt->addOption(option.second);
+        }
+        options.insert(std::make_pair(DHO_VIVSO_SUBOPTIONS, vendor_opt));
+    }
 }
 
 size_t

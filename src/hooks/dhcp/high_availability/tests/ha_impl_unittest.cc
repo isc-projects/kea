@@ -207,8 +207,8 @@ TEST_F(HAImplTest, buffer4Receive) {
     };
 
     // Provide DHCP message type option, truncated vendor option and domain name.
-    // Parsing this message should be successful but domain name following the
-    // truncated vendor option should be skipped.
+    // Parsing this message should be successful but vendor option should be
+    // skipped.
     std::vector<uint8_t> options = {
         53, 1, 1, // Message type = DHCPDISCOVER
         125, 6, // vendor options
@@ -240,8 +240,10 @@ TEST_F(HAImplTest, buffer4Receive) {
     // Check that the message has been parsed. The DHCP message type should
     // be set in this case.
     EXPECT_EQ(DHCPDISCOVER, static_cast<int>(query4->getType()));
-    // Domain name should be skipped because the vendor option was truncated.
-    EXPECT_FALSE(query4->getOption(DHO_DOMAIN_NAME));
+    // Vendor option should be skipped because it was truncated.
+    EXPECT_FALSE(query4->getOption(DHO_VIVSO_SUBOPTIONS));
+    // Domain name should not be skipped because the vendor option was truncated.
+    EXPECT_TRUE(query4->getOption(DHO_DOMAIN_NAME));
 }
 
 // Tests for buffer6_receive callout implementation.

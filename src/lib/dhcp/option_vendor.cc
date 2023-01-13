@@ -16,17 +16,20 @@ using namespace isc::dhcp;
 OptionVendor::OptionVendor(Option::Universe u, const uint32_t vendor_id)
     : Option(u, u == Option::V4 ?
              static_cast<uint16_t>(DHO_VIVSO_SUBOPTIONS) :
-             static_cast<uint16_t>(D6O_VENDOR_OPTS)),
-      vendor_id_(vendor_id) {
+             static_cast<uint16_t>(D6O_VENDOR_OPTS)), vendor_id_(vendor_id) {
 }
 
 OptionVendor::OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                            OptionBufferConstIter end)
     : Option(u, u == Option::V4?
              static_cast<uint16_t>(DHO_VIVSO_SUBOPTIONS) :
-             static_cast<uint16_t>(D6O_VENDOR_OPTS)),
-      vendor_id_(0) {
+             static_cast<uint16_t>(D6O_VENDOR_OPTS)), vendor_id_(0) {
     unpack(begin, end);
+}
+
+OptionVendor::OptionVendor(const OptionVendor& option) : Option(option),
+        vendor_id_(option.vendor_id_) {
+    Option::operator=(option);
 }
 
 OptionPtr
@@ -45,7 +48,12 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf, bool check) const {
         // Calculate and store data-len as follows:
         // data-len = total option length - header length
         //            - enterprise id field length - data-len field size
-        buf.writeUint8(dataLen());
+        // length of all suboptions
+        uint8_t length = 0;
+        for (auto const& opt : options_) {
+            length += opt.second->len();
+        }
+        buf.writeUint8(length);
     }
 
     packOptions(buf, check);
@@ -53,7 +61,6 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf, bool check) const {
 
 void OptionVendor::unpack(OptionBufferConstIter begin,
                           OptionBufferConstIter end) {
-
     // We throw SkipRemainingOptionsError so callers can
     // abandon further unpacking, if desired.
     if (distance(begin, end) < sizeof(uint32_t)) {
@@ -61,6 +68,8 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
                   "Truncated vendor-specific information option"
                   << ", length=" << distance(begin, end));
     }
+
+    options_.clear();
 
     vendor_id_ = isc::util::readUint32(&(*begin), distance(begin, end));
 
@@ -84,35 +93,38 @@ uint16_t OptionVendor::len() const {
     }
 
     // length of all suboptions
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        length += (*it).second->len();
+    for (auto const& opt : options_) {
+        length += opt.second->len();
     }
     return (length);
-}
-
-uint8_t
-OptionVendor::dataLen() const {
-    // Calculate and store data-len as follows:
-    // data-len = total option length - header length
-    //            - enterprise id field length - data-len field size
-    return (len() - getHeaderLen() - sizeof(uint32_t) - sizeof(uint8_t));
 }
 
 std::string
 OptionVendor::toText(int indent) const {
     std::stringstream output;
-    output << headerToText(indent) << ": "
-           << getVendorId() << " (uint32)";
+    output << headerToText(indent) << ": ";
+
+    output << vendor_id_ << " (uint32)";
 
     // For the DHCPv4 there is one more field.
     if (getUniverse() == Option::V4) {
-        output << " " << static_cast<int>(dataLen()) << " (uint8)";
+        uint32_t length = 0;
+        for (auto const& opt : options_) {
+            length += opt.second->len();
+        }
+        output << " " << length << " (uint8)";
     }
 
     // Append suboptions.
     output << suboptionsToText(indent + 2);
 
     return (output.str());
+}
+
+OptionVendor& OptionVendor::operator=(const OptionVendor& rhs) {
+    if (&rhs != this) {
+        Option::operator=(rhs);
+        vendor_id_ = rhs.vendor_id_;
+    }
+    return (*this);
 }

@@ -8,15 +8,17 @@
 // vendor options in DHCPv4:
 //
 // vivso (125) - vendor independent vendor specific option. This is by far the
-//               most popular
+//               most popular.
 // vendor specific (43) - this is probably the second most popular.
-//               Unfortunately, its definition is blurry, so there are many
-//               similar, but not exact implementations that do things in
-//               different ways.
+//                        Unfortunately, its definition is blurry, so there are
+//                        many similar, but not exact implementations that do
+//                        things in different ways.
 // vivco (124) - vendor independent vendor class option.
 // class identifier (60) - not exactly vendor specific. It's a string, but the
-//               content of that string identifies what kind of vendor device
-//               this is.
+//                         content of that string identifies what kind of vendor
+//                         device this is.
+// client-class (77) - this specifies (as a plain string) what kind of device
+//                     this is.
 
 #include <config.h>
 #include <asiolink/io_address.h>
@@ -63,10 +65,28 @@ public:
 
     /// @brief Checks if Option Request Option (ORO) in docsis (vendor-id=4491)
     /// vendor options is parsed correctly and the requested options are
-    /// actually assigned. Also covers negative tests - that options are not
+    /// actually assigned. Also covers negative tests that options are not
     /// provided when a different vendor ID is given.
-    void testVendorOptionsORO(int vendor_id) {
-        // Create a config with a custom option for Cable Labs.
+    ///
+    /// @note  Kea only knows how to process VENDOR_ID_CABLE_LABS DOCSIS3_V4_ORO
+    /// (suboption 1).
+    ///
+    /// @param configured_vendor_ids The vendor IDs that are configured in the
+    /// server: 4491 or both 4491 and 3561.
+    /// @param requested_vendor_ids Then vendor IDs that are present in ORO.
+    /// @param requested_options The requested options in ORO.
+    void testVendorOptionsORO(std::vector<uint32_t> configured_vendor_ids,
+                              std::vector<uint32_t> requested_vendor_ids,
+                              std::vector<uint32_t> requested_options) {
+        std::vector<uint32_t> result_vendor_ids;
+        ASSERT_TRUE(configured_vendor_ids.size());
+        ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
+        for (const auto& req : requested_vendor_ids) {
+            if (req == VENDOR_ID_CABLE_LABS) {
+                result_vendor_ids.push_back(req);
+            }
+        }
+        // Create a config with custom options.
         string config = R"(
             {
                 "interfaces-config": {
@@ -79,6 +99,60 @@ public:
                         "data": "192.0.2.1, 192.0.2.2",
                         "name": "tftp-servers",
                         "space": "vendor-4491"
+                    },
+                    {
+                        "code": 22,
+                        "csv-format": true,
+                        "data": "first",
+                        "name": "tag",
+                        "space": "vendor-4491"
+        )";
+        if (configured_vendor_ids.size() > 1) {
+            config += R"(
+                    },
+                    {
+                        "code": 2,
+                        "csv-format": true,
+                        "data": "10.0.2.1, 10.0.2.2",
+                        "name": "custom",
+                        "space": "vendor-3561",
+                    },
+                    {
+                        "code": 22,
+                        "csv-format": true,
+                        "data": "last",
+                        "name": "special",
+                        "space": "vendor-3561"
+            )";
+        }
+        config += R"(
+                    }
+                ],
+                "option-def": [
+                    {
+                        "code": 22,
+                        "name": "tag",
+                        "space": "vendor-4491",
+                        "type": "string"
+        )";
+        if (configured_vendor_ids.size() > 1) {
+            config += R"(
+                    },
+                    {
+                        "code": 2,
+                        "name": "custom",
+                        "space": "vendor-3561",
+                        "type": "ipv4-address",
+                        "array": true
+                    },
+                    {
+                        "code": 22,
+                        "name": "special",
+                        "space": "vendor-3561",
+                        "type": "string"
+            )";
+        }
+        config += R"(
                     }
                 ],
                 "subnet4": [
@@ -116,10 +190,11 @@ public:
         // Set interface. It is required by the server to generate server id.
         dis->setIface("eth0");
         dis->setIndex(ETH0_INDEX);
+
         OptionPtr clientid = generateClientId();
         dis->addOption(clientid);
 
-        // Pass it to the server and get an advertise
+        // Pass it to the server and get an offer
         Pkt4Ptr offer = srv.processDiscover(dis);
 
         // Check if we get a response at all.
@@ -133,10 +208,15 @@ public:
         // That suboption has code 1 and is a docsis ORO option.
         boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
                                                                             DOCSIS3_V4_ORO));
-        vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 2.
-        OptionPtr vendor(new OptionVendor(Option::V4, vendor_id));
-        vendor->addOption(vendor_oro);
-        dis->addOption(vendor);
+        for (auto const& option : requested_options) {
+            vendor_oro->addValue(option);
+        }
+
+        for (auto const& vendor_id : requested_vendor_ids) {
+            OptionVendorPtr vendor(new OptionVendor(Option::V4, vendor_id));
+            vendor->addOption(vendor_oro);
+            dis->Pkt::addOption(vendor);
+        }
 
         // Need to process DHCPDISCOVER again after requesting new option.
         offer = srv.processDiscover(dis);
@@ -146,31 +226,341 @@ public:
         // vendor ID was provided in the request. Otherwise, check that there is
         // no vendor and stop processing since the following checks are built on
         // top of the now-absent options.
-        OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
-        if (vendor_id != VENDOR_ID_CABLE_LABS) {
-            EXPECT_FALSE(tmp);
+        OptionCollection tmp = offer->getOptions(DHO_VIVSO_SUBOPTIONS);
+        ASSERT_EQ(tmp.size(), result_vendor_ids.size());
+        if (!result_vendor_ids.size()) {
             return;
         }
-        ASSERT_TRUE(tmp);
 
-        // The response should be an OptionVendor.
-        boost::shared_ptr<OptionVendor> vendor_resp =
-            boost::dynamic_pointer_cast<OptionVendor>(tmp);
-        ASSERT_TRUE(vendor_resp);
+        for (const auto& opt : tmp) {
+            // The response should be an OptionVendor.
+            OptionVendorPtr vendor_resp;
 
-        // Option 2 should be present.
-        OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
-        ASSERT_TRUE(docsis2);
+            for (auto const& vendor_id : result_vendor_ids) {
+                vendor_resp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+                ASSERT_TRUE(vendor_resp);
+                if (vendor_resp->getVendorId() == vendor_id) {
+                    break;
+                }
+                vendor_resp.reset();
+            }
+            ASSERT_TRUE(vendor_resp);
+            if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
+                for (auto const& option : requested_options) {
+                    if (option == DOCSIS3_V4_TFTP_SERVERS) {
+                        // Option 2 should be present.
+                        OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+                        ASSERT_TRUE(docsis2);
 
-        // It should be an Option4AddrLst.
-        Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
-        ASSERT_TRUE(tftp_srvs);
+                        // It should be an Option4AddrLst.
+                        Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+                        ASSERT_TRUE(tftp_srvs);
 
-        // Check that the provided addresses match the ones in configuration.
-        Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
-        ASSERT_EQ(2, addrs.size());
-        EXPECT_EQ("192.0.2.1", addrs[0].toText());
-        EXPECT_EQ("192.0.2.2", addrs[1].toText());
+                        // Check that the provided addresses match the ones in configuration.
+                        Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+                        ASSERT_EQ(2, addrs.size());
+                        EXPECT_EQ("192.0.2.1", addrs[0].toText());
+                        EXPECT_EQ("192.0.2.2", addrs[1].toText());
+                    }
+
+                    if (option == 22) {
+                        // Option 22 should be present.
+                        OptionPtr custom = vendor_resp->getOption(22);
+                        ASSERT_TRUE(custom);
+
+                        // It should be an OptionString.
+                        OptionStringPtr tag = boost::dynamic_pointer_cast<OptionString>(custom);
+                        ASSERT_TRUE(tag);
+
+                        // Check that the provided value match the ones in configuration.
+                        EXPECT_EQ(tag->getValue(), "first");
+                    }
+                }
+            } else {
+                // If explicitly sending OptionVendor and the vendor is not
+                // requested, options should not be present. Kea only knows how
+                // to process VENDOR_ID_CABLE_LABS DOCSIS3_V4_ORO (suboption 1).
+                // Option 2 should not be present.
+                OptionPtr docsis2 = vendor_resp->getOption(2);
+                ASSERT_FALSE(docsis2);
+
+                // Option 22 should not be present.
+                OptionPtr custom = vendor_resp->getOption(22);
+                ASSERT_FALSE(custom);
+            }
+        }
+    }
+
+    /// @brief Checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+    /// vendor options is parsed correctly and the configured options are
+    /// actually assigned.
+    ///
+    /// @param configured_vendor_ids The vendor IDs that are configured in the
+    /// server: 4491 or both 4491 and 3561.
+    /// @param requested_vendor_ids Then vendor IDs that are present in ORO.
+    /// @param requested_options The requested options in ORO.
+    /// @param add_vendor_option The flag which indicates if the request should
+    /// contain a OptionVendor option or should the server always send all the
+    /// OptionVendor options and suboptions.
+    void testVendorOptionsPersistent(std::vector<uint32_t> configured_vendor_ids,
+                                     std::vector<uint32_t> requested_vendor_ids,
+                                     std::vector<uint32_t> configured_options,
+                                     bool add_vendor_option) {
+        std::vector<uint32_t> result_vendor_ids;
+        ASSERT_TRUE(configured_vendor_ids.size());
+        ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
+        if (add_vendor_option) {
+            for (const auto& req : requested_vendor_ids) {
+                if (std::find(configured_vendor_ids.begin(), configured_vendor_ids.end(), req) != configured_vendor_ids.end()) {
+                    result_vendor_ids.push_back(req);
+                }
+            }
+        } else {
+            result_vendor_ids = configured_vendor_ids;
+        }
+        ASSERT_TRUE(configured_options.size());
+        ASSERT_EQ(configured_options[0], DOCSIS3_V4_TFTP_SERVERS);
+        // Create a config with a custom options.
+        string config = R"(
+            {
+                "interfaces-config": {
+                    "interfaces": [ "*" ]
+                },
+                "option-data": [
+                    {
+                        "always-send": true,
+                        "code": 2,
+                        "csv-format": true,
+                        "data": "192.0.2.1, 192.0.2.2",
+                        "name": "tftp-servers",
+                        "space": "vendor-4491"
+            )";
+        if (configured_options.size() > 1) {
+            config += R"(
+                    },
+                    {
+                        "always-send": true,
+                        "code": 22,
+                        "csv-format": true,
+                        "data": "first",
+                        "name": "tag",
+                        "space": "vendor-4491"
+            )";
+        }
+        if (!add_vendor_option) {
+            config += R"(
+                    },
+                    {
+                        "always-send": true,
+                        "name": "vivso-suboptions",
+                        "data": "4491",
+                        "space": "dhcp4"
+            )";
+        }
+        if (configured_vendor_ids.size() > 1) {
+            config += R"(
+                    },
+                    {
+                        "always-send": true,
+                        "code": 2,
+                        "csv-format": true,
+                        "data": "10.0.2.1, 10.0.2.2",
+                        "name": "custom",
+                        "space": "vendor-3561"
+            )";
+            if (configured_options.size() > 1) {
+                config += R"(
+                    },
+                    {
+                        "always-send": true,
+                        "code": 22,
+                        "csv-format": true,
+                        "data": "last",
+                        "name": "special",
+                        "space": "vendor-3561"
+                )";
+            }
+            if (!add_vendor_option) {
+                config += R"(
+                    },
+                    {
+                        "always-send": true,
+                        "name": "vivso-suboptions",
+                        "data": "3561",
+                        "space": "dhcp4"
+                )";
+            }
+        }
+        config += R"(
+                    }
+                ],
+                "option-def": [
+                    {
+                        "code": 22,
+                        "name": "tag",
+                        "space": "vendor-4491",
+                        "type": "string"
+        )";
+        if (configured_vendor_ids.size() > 1) {
+            config += R"(
+                    },
+                    {
+                        "code": 2,
+                        "name": "custom",
+                        "space": "vendor-3561",
+                        "type": "ipv4-address",
+                        "array": true
+                    },
+                    {
+                        "code": 22,
+                        "name": "special",
+                        "space": "vendor-3561",
+                        "type": "string"
+            )";
+        }
+        config += R"(
+                    }
+                ],
+                "subnet4": [
+                    {
+                        "interface": "eth0",
+                        "pools": [
+                            {
+                                "pool": "192.0.2.0/25"
+                            }
+                        ],
+                        "subnet": "192.0.2.0/24"
+                    }
+                ]
+            }
+        )";
+
+        // Parse the configuration.
+        ConstElementPtr json;
+        ASSERT_NO_THROW(json = parseDHCP4(config));
+
+        // Configure a mocked server.
+        NakedDhcpv4Srv srv(0);
+        ConstElementPtr x;
+        EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(0, rcode_);
+
+        CfgMgr::instance().commit();
+
+        // Set the giaddr and hops to non-zero address as if it was relayed.
+        boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+        dis->setGiaddr(IOAddress("192.0.2.1"));
+        dis->setHops(1);
+
+        // Set interface. It is required by the server to generate server id.
+        dis->setIface("eth0");
+        dis->setIndex(ETH0_INDEX);
+
+        OptionPtr clientid = generateClientId();
+        dis->addOption(clientid);
+
+        if (add_vendor_option) {
+            for (auto const& vendor_id : requested_vendor_ids) {
+                // Let's add a vendor-option (vendor-id=4491).
+                OptionVendorPtr vendor(new OptionVendor(Option::V4, vendor_id));
+
+                dis->Pkt::addOption(vendor);
+            }
+        }
+
+        // Pass it to the server and get an offer
+        Pkt4Ptr offer = srv.processDiscover(dis);
+
+        // check if we get response at all
+        ASSERT_TRUE(offer);
+
+        // Check if there is a vendor option response
+        OptionCollection tmp = offer->getOptions(DHO_VIVSO_SUBOPTIONS);
+        ASSERT_EQ(tmp.size(), result_vendor_ids.size());
+
+        for (const auto& opt : tmp) {
+            // The response should be an OptionVendor.
+            OptionVendorPtr vendor_resp;
+
+            for (auto const& vendor_id : result_vendor_ids) {
+                vendor_resp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+                ASSERT_TRUE(vendor_resp);
+                if (vendor_resp->getVendorId() == vendor_id) {
+                    break;
+                }
+            }
+            ASSERT_TRUE(vendor_resp);
+
+            for (auto const& option : configured_options) {
+                if (add_vendor_option &&
+                    std::find(requested_vendor_ids.begin(), requested_vendor_ids.end(),
+                              vendor_resp->getVendorId()) == requested_vendor_ids.end()) {
+                    // If explicitly sending OptionVendor and the vendor is not
+                    // requested, options should not be present.
+                    if (option == DOCSIS3_V4_TFTP_SERVERS) {
+                        // Option 2 should not be present.
+                        OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+                        ASSERT_FALSE(docsis2);
+                    }
+                    if (option == 22) {
+                        // Option 22 should not be present.
+                        OptionPtr custom = vendor_resp->getOption(22);
+                        ASSERT_FALSE(custom);
+                    }
+                } else {
+                    if (option == DOCSIS3_V4_TFTP_SERVERS) {
+                        // Option 2 should be present.
+                        OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+                        ASSERT_TRUE(docsis2);
+
+                        // It should be an Option4AddrLst.
+                        Option4AddrLstPtr tftp_srvs;
+                        if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
+                            tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+                        } else {
+                            // The option is serialized as Option so it needs to be converted to
+                            // Option4AddrLst.
+                            auto const& buffer = docsis2->toBinary();
+                            tftp_srvs.reset(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS, buffer.begin(), buffer.end()));
+                        }
+                        ASSERT_TRUE(tftp_srvs);
+
+                        // Check that the provided addresses match the ones in configuration.
+                        Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+                        ASSERT_EQ(2, addrs.size());
+                        if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
+                            EXPECT_EQ("192.0.2.1", addrs[0].toText());
+                            EXPECT_EQ("192.0.2.2", addrs[1].toText());
+                        } else {
+                            EXPECT_EQ("10.0.2.1", addrs[0].toText());
+                            EXPECT_EQ("10.0.2.2", addrs[1].toText());
+                        }
+                    }
+
+                    if (option == 22) {
+                        // Option 22 should be present.
+                        OptionPtr custom = vendor_resp->getOption(22);
+                        ASSERT_TRUE(custom);
+
+                        // It should be an OptionString.
+                        // The option is serialized as Option so it needs to be converted to
+                        // OptionString.
+                        auto const& buffer = custom->toBinary();
+                        OptionStringPtr tag(new OptionString(Option::V4, 22, buffer.begin(), buffer.end()));
+                        ASSERT_TRUE(tag);
+
+                        // Check that the provided value match the ones in configuration.
+                        if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
+                            EXPECT_EQ(tag->getValue(), "first");
+                        } else {
+                            EXPECT_EQ(tag->getValue(), "last");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     std::unique_ptr<IfaceMgrTestConfig> iface_mgr_test_config_;
@@ -240,9 +630,9 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     ASSERT_TRUE(vendor_opt_response);
 
     // Check if it's of a correct type
-    boost::shared_ptr<OptionVendor> vendor_opt =
-        boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
+    OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
     ASSERT_TRUE(vendor_opt);
+    ASSERT_EQ(vendor_opt->getVendorId(), VENDOR_ID_CABLE_LABS);
 
     // Get Relay Agent Info from response...
     OptionPtr tftp_servers_generic = vendor_opt->getOption(DOCSIS3_V4_TFTP_SERVERS);
@@ -269,8 +659,9 @@ TEST_F(VendorOptsTest, docsisVendorOptionsParse) {
     OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_TRUE(opt);
 
-    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
     // This particular capture that we have included options 1 and 5
     EXPECT_TRUE(vendor->getOption(1));
@@ -287,14 +678,15 @@ TEST_F(VendorOptsTest, docsisVendorORO) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt4Ptr dis = PktCaptures::captureRelayedDiscover();
-    EXPECT_NO_THROW(dis->unpack());
+    ASSERT_NO_THROW(dis->unpack());
 
     // Check if the packet contains vendor specific information option
     OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_TRUE(opt);
 
-    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
     opt = vendor->getOption(DOCSIS3_V4_ORO);
     ASSERT_TRUE(opt);
@@ -305,90 +697,134 @@ TEST_F(VendorOptsTest, docsisVendorORO) {
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
-TEST_F(VendorOptsTest, vendorOptionsORO) {
-    testVendorOptionsORO(VENDOR_ID_CABLE_LABS);
+TEST_F(VendorOptsTest, vendorOptionsOROOneOption) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS});
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptions) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22});
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(VendorOptsTest, vendorOptionsOROOneOptionMultipleVendorsMatchOne) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS});
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionsMultipleVendorsMatchOne) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22});
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(VendorOptsTest, vendorOptionsOROOneOptionMultipleVendorsMatchAll) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS});
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionsMultipleVendorsMatchAll) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS, 22});
 }
 
 // Same as vendorOptionsORO except a different vendor ID than Cable Labs is
 // provided and vendor options are expected to not be present in the response.
-TEST_F(VendorOptsTest, vendorOptionsORODifferentVendorID) {
-    testVendorOptionsORO(32768);
+TEST_F(VendorOptsTest, vendorOptionsOROOneOptionDifferentVendorID) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS}, {32768}, {DOCSIS3_V4_TFTP_SERVERS});
+}
+
+// Same as vendorOptionsORO except a different vendor ID than Cable Labs is
+// provided and vendor options are expected to not be present in the response.
+TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionsDifferentVendorID) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS}, {32768}, {DOCSIS3_V4_TFTP_SERVERS, 22});
+}
+
+// Same as vendorOptionsORO except a different vendor ID than Cable Labs is
+// provided and vendor options are expected to not be present in the response.
+TEST_F(VendorOptsTest, vendorOptionsOROOneOptionDifferentVendorIDMultipleVendorsMatchNone) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {32768, 16384}, {DOCSIS3_V4_TFTP_SERVERS});
+}
+
+// Same as vendorOptionsORO except a different vendor ID than Cable Labs is
+// provided and vendor options are expected to not be present in the response.
+TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionDifferentVendorIDMultipleVendorsMatchNone) {
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {32768, 16384}, {DOCSIS3_V4_TFTP_SERVERS, 22});
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and persistent options are actually assigned.
-TEST_F(VendorOptsTest, vendorPersistentOptions) {
-    NakedDhcpv4Srv srv(0);
+TEST_F(VendorOptsTest, vendorPersistentOptionsOneOption) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS}, false);
+}
 
-    ConstElementPtr x;
-    string config = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ]"
-        "},"
-        "    \"option-data\": [ {"
-        "          \"name\": \"tftp-servers\","
-        "          \"space\": \"vendor-4491\","
-        "          \"code\": 2,"
-        "          \"data\": \"192.0.2.1, 192.0.2.2\","
-        "          \"csv-format\": true,"
-        "          \"always-send\": true"
-        "        }],"
-        "\"subnet4\": [ { "
-        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
-        "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"interface\": \"eth0\" "
-        " } ]"
-        "}";
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOption) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22}, false);
+}
 
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config));
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchOne) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS}, false);
+}
 
-    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchOne) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22}, false);
+}
 
-    CfgMgr::instance().commit();
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchAll) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS}, false);
+}
 
-    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
-    // Set the giaddr and hops to non-zero address as if it was relayed.
-    dis->setGiaddr(IOAddress("192.0.2.1"));
-    dis->setHops(1);
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchAll) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS, 22}, false);
+}
 
-    OptionPtr clientid = generateClientId();
-    dis->addOption(clientid);
-    // Set interface. It is required by the server to generate server id.
-    dis->setIface("eth0");
-    dis->setIndex(ETH0_INDEX);
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionAddVendorOption) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS}, true);
+}
 
-    // Let's add a vendor-option (vendor-id=4491).
-    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
-    dis->addOption(vendor);
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionAddVendorOption) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22}, true);
+}
 
-    // Pass it to the server and get an advertise
-    Pkt4Ptr offer = srv.processDiscover(dis);
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchOneAddVendorOption) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS}, true);
+}
 
-    // check if we get response at all
-    ASSERT_TRUE(offer);
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchOneAddVendorOption) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22}, true);
+}
 
-    // Check if there is a vendor option response
-    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
-    ASSERT_TRUE(tmp);
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchAllAddVendorOption) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS}, true);
+}
 
-    // The response should be OptionVendor object
-    boost::shared_ptr<OptionVendor> vendor_resp =
-        boost::dynamic_pointer_cast<OptionVendor>(tmp);
-    ASSERT_TRUE(vendor_resp);
-
-    OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
-    ASSERT_TRUE(docsis2);
-
-    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
-    ASSERT_TRUE(tftp_srvs);
-
-    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
-    ASSERT_EQ(2, addrs.size());
-    EXPECT_EQ("192.0.2.1", addrs[0].toText());
-    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchAllAddVendorOption) {
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS, 22}, true);
 }
 
 // Test checks whether it is possible to use option definitions defined in
@@ -540,7 +976,7 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
     // Check that it includes vivso with vendor-id = 25167
     OptionVendorPtr rsp_vivso = boost::dynamic_pointer_cast<OptionVendor>(rsp);
     ASSERT_TRUE(rsp_vivso);
-    EXPECT_EQ(25167, rsp_vivso->getVendorId());
+    EXPECT_EQ(rsp_vivso->getVendorId(), 25167);
 
     // Now check that it contains suboption 2 with appropriate content.
     OptionPtr subopt2 = rsp_vivso->getOption(2);

@@ -299,6 +299,13 @@ public:
     /// @return True if any option has been fused, false otherwise.
     static bool fuseOptions4(isc::dhcp::OptionCollection& options);
 
+    /// @brief Extend vendor options from fused options in multiple OptionVendor
+    /// options and add respective suboptions.
+    ///
+    /// @param options The option container which needs to be updated with
+    /// extended vendor options.
+    static void extendVendorOptions4(isc::dhcp::OptionCollection& options);
+
     /// @brief Parses provided buffer as DHCPv4 options and creates
     /// Option objects.
     ///

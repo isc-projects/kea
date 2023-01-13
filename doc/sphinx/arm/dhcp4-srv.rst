@@ -2479,16 +2479,15 @@ The standard spaces defined in Kea and their options are:
 | 2           | tftp-servers | a list of IPv4 addresses of TFTP servers to be used by the cable modem |
 +-------------+--------------+------------------------------------------------------------------------+
 
-In Kea each vendor is represented by its own vendor space. Since there
-are hundreds of vendors and sometimes they use different option
-definitions for different hardware, it is impossible for Kea to support
-them all natively. Fortunately, it's easy to define support for
-new vendor options. Let's take an example of the Genexis home gateway. This
-device requires sending the vivso 125 option with a sub-option 2 that
-contains a string with the TFTP server URL. To support such a device, three
-steps are needed: first, we need to define option definitions that will
-explain how the option is supposed to be formed. Second, we need to
-define option values. Third, we need to tell Kea when to send those
+In Kea each vendor is represented by its own vendor space. Since there are
+hundreds of vendors and sometimes they use different option definitions for
+different hardware, it is impossible for Kea to support them all natively.
+Fortunately, it's easy to define support for new vendor options. Let's take an
+example of the Genexis home gateway. This device requires sending the vivso 125
+option with a sub-option 2 that contains a string with the TFTP server URL. To
+support such a device, three steps are needed: first, we need to define option
+definitions that will explain how the option is supposed to be formed. Second,
+we need to define option values. Third, we need to tell Kea when to send those
 specific options, which we can do via client classification.
 
 An example snippet of a configuration could look similar to the
@@ -2497,7 +2496,7 @@ following:
 ::
 
    {
-       // First, we need to define that the suboption 2 in vivso option for
+       // First, we need to define that the sub-option 2 in vivso option for
        // vendor-id 25167 has a specific format (it's a plain string in this example).
        // After this definition, we can specify values for option tftp.
        "option-def": [
@@ -2524,15 +2523,15 @@ following:
            "test": "substring(option[60].hex,0,7) == 'HMC1000'",
 
            // Once the device is recognized, we want to send two options:
-           // the vivso option with vendor-id set to 25167, and a suboption 2.
+           // the vivso option with vendor-id set to 25167, and a sub-option 2.
            "option-data": [
                {
                    "name": "vivso-suboptions",
                    "data": "25167"
                },
 
-               // The suboption 2 value is defined as any other option. However,
-               // we want to send this suboption 2, even when the client didn't
+               // The sub-option 2 value is defined as any other option. However,
+               // we want to send this sub-option 2, even when the client didn't
                // explicitly request it (often there is no way to do that for
                // vendor options). Therefore we use always-send to force Kea
                // to always send this option when 25167 vendor space is involved.
@@ -2546,27 +2545,26 @@ following:
        } ]
    }
 
-By default, Kea sends back
-only those options that are requested by a client, unless there are
-protocol rules that tell the DHCP server to always send an option. This
-approach works nicely in most cases and avoids problems with clients
-refusing responses with options they do not understand. However,
-the situation with vendor options is more complex, as they
-are not requested the same way as other options, are
-not well-documented in official RFCs, or vary by vendor.
+By default, Kea sends back only those options that are requested by a client,
+unless there are protocol rules that tell the DHCP server to always send an
+option. This approach works nicely in most cases and avoids problems with
+clients refusing responses with options they do not understand. However, the
+situation with vendor options is more complex, as they are not requested the
+same way as other options, are not well-documented in official RFCs, or vary by
+vendor.
 
-Some vendors (such
-as DOCSIS, identified by vendor option 4491) have a mechanism to
-request specific vendor options and Kea is able to honor those.
-Unfortunately, for many other vendors, such as Genexis (25167, discussed
-above), Kea does not have such a mechanism, so it cannot send any
-sub-options on its own. To solve this issue, we devised the concept of
-persistent options. Kea can be told to always send options, even if the
-client did not request them. This can be achieved by adding
-``"always-send": true`` to the option definition. Note that in this
-particular case an option is defined in vendor space 25167. With
-``always-send`` enabled, the option is sent every time there is a
-need to deal with vendor space 25167.
+Some vendors (such as DOCSIS, identified by vendor option 4491) have a mechanism
+to request specific vendor options and Kea is able to honor those (sub-option 1).
+Unfortunately, for many other vendors, such as Genexis (25167, discussed above),
+Kea does not have such a mechanism, so it cannot send any sub-options on its own.
+To solve this issue, we devised the concept of persistent options. Kea can be
+told to always send options, even if the client did not request them. This can
+be achieved by adding ``"always-send": true`` to the option definition. Note
+that in this particular case an option is defined in vendor space 25167. With
+``always-send`` enabled, the option is sent every time there is a need to deal
+with vendor space 25167.
+This is also how the Kea server can be configured to send multiple vendor
+enterprise numbers and multiple options, specific for each vendor.
 
 Another possibility is to redefine the option; see :ref:`dhcp4-private-opts`.
 
@@ -2576,10 +2574,16 @@ and ``doc/examples/kea6/vivso.json`` in the Kea sources.
 
 .. note::
 
-   Currently only one vendor is supported for the ``vivco-suboptions`` (code 124)
-   and ``vivso-suboptions`` (code 125) options. Specifying
-   multiple enterprise numbers within a single option instance or multiple
-   options with different enterprise numbers is not supported.
+   Multiple vendor enterprise numbers are supported by ``vivso-suboptions``
+   (code 125) option. The option can contain multiple options for each vendor.
+
+   Kea will honor DOCSIS sub-option 1 (ORO) and will add only requested options
+   if this sub-option is present in the client request.
+
+   Currently only one vendor is supported for the ``vivco-suboptions``
+   (code 124) option. Specifying multiple enterprise numbers within a single
+   option instance or multiple options with different enterprise numbers is not
+   supported.
 
 .. _dhcp4-option-spaces:
 
@@ -2741,11 +2745,11 @@ Support for Long Options
 ------------------------
 
 The kea-dhcp4 server partially supports long options (RFC3396).
-Since Kea 2.1.6, the server accepts configuring long options and suboptions
-(longer than 255 bytes). The options and suboptions are stored internally
+Since Kea 2.1.6, the server accepts configuring long options and sub-options
+(longer than 255 bytes). The options and sub-options are stored internally
 in their unwrapped form and they can be processed as usual using the parser
-language. On send, the server splits long options and suboptions into multiple
-options and suboptions, using the respective option code.
+language. On send, the server splits long options and sub-options into multiple
+options and sub-options, using the respective option code.
 
 ::
 
@@ -2800,8 +2804,8 @@ into two options, each with the code 240.
 
 The server is also able to receive packets with split options (options using
 the same option code) and to fuse the data chunks into one option. This is
-also supported for suboptions if each suboption data chunk also contains the
-suboption code and suboption length.
+also supported for sub-options if each sub-option data chunk also contains the
+sub-option code and sub-option length.
 
 .. _dhcp4-stateless-configuration:
 
@@ -4084,7 +4088,7 @@ retained on the lease. The lease's user-context looks something like this:
 
   { "ISC": { "relay-agent-info": { "sub-options": "0x0104AABBCCDD" } } }
 
-Or with remote and relay suboptions:
+Or with remote and relay sub-options:
 
 ::
 
@@ -7292,12 +7296,12 @@ Ignore RAI Link Selection
 -------------------------
 
 With ``"ignore-rai-link-selection": true``, Relay Agent Information Link
-Selection suboption data will not be used for subnet selection. This will use
+Selection sub-option data will not be used for subnet selection. This will use
 normal subnet selection logic instead of attempting to use the subnet specified
-by the suboption. This option is not RFC compliant and is set to ``false`` by
+by the sub-option. This option is not RFC compliant and is set to ``false`` by
 default. Setting this option to ``true`` can help with subnet selection in
 certain scenarios, for example, when your DHCP relays do not allow you to
-specify which suboptions are included in the Relay Agent Information option,
+specify which sub-options are included in the Relay Agent Information option,
 and include incorrect Link Selection information.
 
 .. code-block:: json

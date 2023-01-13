@@ -408,7 +408,7 @@ TEST_F(LibDhcpTest, packOptions6) {
                                    OptionBuffer(v6packed + 46, v6packed + 50)));
 
     boost::shared_ptr<OptionInt<uint32_t> >
-        vsi(new OptionInt<uint32_t>(Option::V6, D6O_VENDOR_OPTS, 4491));
+        vsi(new OptionInt<uint32_t>(Option::V6, D6O_VENDOR_OPTS, VENDOR_ID_CABLE_LABS));
     vsi->addOption(cm_mac);
     vsi->addOption(cmts_caps);
 
@@ -451,7 +451,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     ASSERT_EQ(5, x->second->getData().size());
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v6packed + 4, 5)); // data len=5
 
-        x = options.find(2);
+    x = options.find(2);
     ASSERT_FALSE(x == options.end()); // option 2 should exist
     EXPECT_EQ(2, x->second->getType());  // this should be option 2
     ASSERT_EQ(7, x->second->len()); // it should be of length 7
@@ -510,15 +510,19 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     EXPECT_EQ(D6O_VENDOR_OPTS, x->second->getType());
     EXPECT_EQ(26, x->second->len());
 
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(x->second);
+    ASSERT_TRUE(vendor);
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
+
     // CM MAC Address Option
-    OptionPtr cm_mac = x->second->getOption(OPTION_CM_MAC);
+    OptionPtr cm_mac = vendor->getOption(OPTION_CM_MAC);
     ASSERT_TRUE(cm_mac);
     EXPECT_EQ(OPTION_CM_MAC, cm_mac->getType());
     ASSERT_EQ(10, cm_mac->len());
     EXPECT_EQ(0, memcmp(&cm_mac->getData()[0], v6packed + 54, 6));
 
     // CMTS Capabilities
-    OptionPtr cmts_caps = x->second->getOption(OPTION_CMTS_CAPS);
+    OptionPtr cmts_caps = vendor->getOption(OPTION_CMTS_CAPS);
     ASSERT_TRUE(cmts_caps);
     EXPECT_EQ(OPTION_CMTS_CAPS, cmts_caps->getType());
     ASSERT_EQ(8, cmts_caps->len());
@@ -1076,30 +1080,96 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
     }
 }
 
+TEST_F(LibDhcpTest, extentVendorOptions4) {
+    OptionPtr suboption;
+    OptionVendorPtr opt1(new OptionVendor(Option::V4, 1));
+    suboption.reset(new OptionString(Option::V4, 16, "first"));
+    opt1->addOption(suboption);
+    OptionVendorPtr opt2(new OptionVendor(Option::V4, 1));
+    suboption.reset(new OptionString(Option::V4, 32, "second"));
+    opt2->addOption(suboption);
+    OptionVendorPtr opt3(new OptionVendor(Option::V4, 2));
+    suboption.reset(new OptionString(Option::V4, 128, "extra"));
+    opt3->addOption(suboption);
+    OptionVendorPtr opt4(new OptionVendor(Option::V4, 1));
+    suboption.reset(new OptionString(Option::V4, 64, "third"));
+    opt4->addOption(suboption);
+    OptionCollection container;
+    container.insert(make_pair(1, opt1));
+    container.insert(make_pair(1, opt2));
+    OptionCollection options;
+    for (auto const& option : container) {
+        const OptionBuffer& buffer = option.second->toBinary();
+        options.insert(make_pair(option.second->getType(),
+                                 OptionPtr(new Option(Option::V4,
+                                                      option.second->getType(),
+                                                      buffer))));
+    }
+    ASSERT_NO_THROW(LibDHCP::fuseOptions4(options));
+    ASSERT_EQ(options.size(), 1);
+    container.clear();
+    container.insert(make_pair(1, options.begin()->second));
+    container.insert(make_pair(2, opt3));
+    container.insert(make_pair(1, opt4));
+    ASSERT_EQ(container.size(), 3);
+    options.clear();
+    for (auto const& option : container) {
+        const OptionBuffer& buffer = option.second->toBinary();
+        options.insert(make_pair(option.second->getType(),
+                                 OptionPtr(new Option(Option::V4,
+                                                      option.second->getType(),
+                                                      buffer))));
+    }
+    ASSERT_EQ(options.size(), 3);
+    LibDHCP::extendVendorOptions4(options);
+    ASSERT_EQ(options.size(), 2);
+    for (auto const& option : options) {
+        OptionCollection suboptions = option.second->getOptions();
+        OptionPtr suboption;
+        OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(option.second);
+        ASSERT_TRUE(vendor);
+        if (vendor->getVendorId() == 1) {
+            ASSERT_EQ(suboptions.size(), 3);
+            suboption = option.second->getOption(16);
+            ASSERT_TRUE(suboption);
+            suboption = option.second->getOption(32);
+            ASSERT_TRUE(suboption);
+            suboption = option.second->getOption(64);
+            ASSERT_TRUE(suboption);
+        } else if (vendor->getVendorId() == 2) {
+            ASSERT_EQ(suboptions.size(), 1);
+            suboption = option.second->getOption(128);
+            ASSERT_TRUE(suboption);
+        } else {
+            FAIL() << "unexpected vendor type: " << vendor->getVendorId();
+        }
+    }
+}
+
 // This test verifies that pack options for v4 is working correctly.
 TEST_F(LibDhcpTest, packOptions4) {
 
     vector<uint8_t> payload[5];
     for (unsigned i = 0; i < 5; i++) {
         payload[i].resize(3);
-        payload[i][0] = i*10;
-        payload[i][1] = i*10+1;
-        payload[i][2] = i*10+2;
+        payload[i][0] = i * 10;
+        payload[i][1] = i * 10 + 1;
+        payload[i][2] = i * 10 + 2;
     }
 
     OptionPtr opt1(new Option(Option::V4, 12, payload[0]));
     OptionPtr opt2(new Option(Option::V4, 60, payload[1]));
     OptionPtr opt3(new Option(Option::V4, 14, payload[2]));
-    OptionPtr opt4(new Option(Option::V4,254, payload[3]));
-    OptionPtr opt5(new Option(Option::V4,128, payload[4]));
+    OptionPtr opt4(new Option(Option::V4, 254, payload[3]));
+    OptionPtr opt5(new Option(Option::V4, 128, payload[4]));
 
     // Create vendor option instance with DOCSIS3.0 enterprise id.
-    OptionVendorPtr vivsi(new OptionVendor(Option::V4, 4491));
+    OptionVendorPtr vivsi(new OptionVendor(Option::V4, VENDOR_ID_CABLE_LABS));
     vivsi->addOption(OptionPtr(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
                                                   IOAddress("10.0.0.10"))));
 
     OptionPtr vsi(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS,
-                              OptionBuffer()));
+                             OptionBuffer()));
     vsi->addOption(OptionPtr(new Option(Option::V4, 0xDC, OptionBuffer())));
 
     // Add RAI option, which comprises 3 sub-options.
@@ -1199,6 +1269,8 @@ TEST_F(LibDhcpTest, unpackOptions4) {
                                 deferred, false);
     );
 
+    ASSERT_NO_THROW(LibDHCP::extendVendorOptions4(options));
+
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
     // Option 12 holds a string so let's cast it to an appropriate type.
@@ -1245,7 +1317,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     OptionVendorPtr vivsi = boost::dynamic_pointer_cast<OptionVendor>(x->second);
     ASSERT_TRUE(vivsi);
     EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, vivsi->getType());
-    EXPECT_EQ(4491, vivsi->getVendorId());
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vivsi->getVendorId());
     OptionCollection suboptions = vivsi->getOptions();
 
     // There should be one suboption of V-I VSI.
@@ -2094,7 +2166,6 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_VIVCO_SUBOPTIONS, vivco_buf.begin(),
                                     vivco_buf.end(), typeid(OptionVendorClass));
 
-
     LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, vivsio_buf.begin(),
                                     vivsio_buf.end(), typeid(OptionVendor));
 
@@ -2723,7 +2794,7 @@ TEST_F(LibDhcpTest, vendorClass6) {
     // Let's investigate if the option content is correct
 
     // 3 fields expected: vendor-id, data-len and data
-    EXPECT_EQ(4491, vclass->getVendorId());
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vclass->getVendorId());
     EXPECT_EQ(20, vclass->len());
     ASSERT_EQ(1, vclass->getTuplesNum());
     EXPECT_EQ("eRouter1.0", vclass->getTuple(0).getText());

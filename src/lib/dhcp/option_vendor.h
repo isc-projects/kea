@@ -50,6 +50,14 @@ public:
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                  OptionBufferConstIter end);
 
+    /// @brief Copy constructor.
+    ///
+    /// This constructor makes a deep copy of the option and all of the
+    /// suboptions. It calls @ref getOptionsCopy to deep copy suboptions.
+    ///
+    /// @param source Option to be copied.
+    OptionVendor(const OptionVendor& option);
+
     /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
 
@@ -77,12 +85,16 @@ public:
     /// @brief Sets enterprise identifier
     ///
     /// @param vendor_id vendor identifier
-    void setVendorId(const uint32_t vendor_id) { vendor_id_ = vendor_id; }
+    void setVendorId(const uint32_t vendor_id) {
+        vendor_id_ = vendor_id;
+    }
 
     /// @brief Returns enterprise identifier
     ///
     /// @return enterprise identifier
-    uint32_t getVendorId() const { return (vendor_id_); }
+    uint32_t getVendorId() const {
+        return (vendor_id_);
+    }
 
     /// @brief returns complete length of option
     ///
@@ -98,19 +110,19 @@ public:
     /// @return Vendor option in the textual format.
     virtual std::string toText(int indent = 0) const;
 
+    /// @brief Assignment operator.
+    ///
+    /// The assignment operator performs a deep copy of the option and
+    /// its suboptions. It calls @ref getOptionsCopy to deep copy
+    /// suboptions.
+    ///
+    /// @param rhs Option to be assigned.
+    OptionVendor& operator=(const OptionVendor& rhs);
+
 private:
 
-    /// @brief Calculates the data-len value for DHCPv4.
-    ///
-    /// The data-len field is only present in DHCPv4 space. It follows
-    /// the vendor-id field. This method is called from the
-    /// @c OptionVendor::pack and @c OptionVendor::toText to calculate
-    /// this value.
-    ///
-    /// @return Returns calculated data-len value.
-    uint8_t dataLen() const;
-
-    uint32_t vendor_id_;  ///< Enterprise-id
+    /// @brief Enterprise-id
+    uint32_t vendor_id_;
 };
 
 /// Pointer to a vendor option
