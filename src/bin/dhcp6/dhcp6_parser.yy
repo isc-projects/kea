@@ -1038,7 +1038,7 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
 read_timeout: READ_TIMEOUT COLON INTEGER {
     ctx.unique("read-timeout", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("connect-timeout", n);
+    ctx.stack_.back()->set("read-timeout", n);
 };
 
 write_timeout: WRITE_TIMEOUT COLON INTEGER {
