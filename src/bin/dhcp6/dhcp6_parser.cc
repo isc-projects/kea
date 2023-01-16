@@ -1928,7 +1928,7 @@ namespace isc { namespace dhcp {
                                          {
     ctx.unique("read-timeout", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("connect-timeout", n);
+    ctx.stack_.back()->set("read-timeout", n);
 }
 #line 1934 "dhcp6_parser.cc"
     break;
