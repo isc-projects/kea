@@ -378,6 +378,7 @@
                 "user": "keatest",
 
                 // TCP user timeout while communicating with the database.
+                // It is specified in seconds.
                 "tcp-user-timeout": 100
             },
             {
@@ -410,13 +411,13 @@
                 // serve-retry-continue
                 "on-fail": "stop-retry-exit",
 
-                // Connection connect timeout.
+                // Connection connect timeout in seconds.
                 "connect-timeout": 100,
 
-                // Data read from the database timeout.
+                // Data read from the database timeout in seconds.
                 "read-timeout": 120,
 
-                // Data write to the database timeout.
+                // Data write to the database timeout in seconds.
                 "write-timeout": 180
             }
         ],
