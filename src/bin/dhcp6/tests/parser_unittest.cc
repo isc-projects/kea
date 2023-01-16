@@ -10,6 +10,7 @@
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <testutils/io_utils.h>
 #include <testutils/log_utils.h>
+#include <testutils/test_to_element.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/gtest_utils.h>
 
@@ -37,7 +38,11 @@ namespace test {
 void compareJSON(ConstElementPtr a, ConstElementPtr b) {
     ASSERT_TRUE(a);
     ASSERT_TRUE(b);
-    EXPECT_EQ(a->str(), b->str());
+    EXPECT_EQ(a->str(), b->str())
+#ifdef HAVE_CREATE_UNIFIED_DIFF
+        << "\nDiff:\n" << generateDiff(prettyPrint(a), prettyPrint(b)) << "\n"
+#endif
+    ;
 }
 
 /// @brief Tests if the input string can be parsed with specific parser
