@@ -466,7 +466,7 @@ TEST(Subnet4Test, pool4Checks) {
     ASSERT_THROW(subnet->addPool(pool2), BadValue);
 
     // this one is totally out of blue
-    Pool4Ptr pool3(new Pool4(IOAddress("1.2.3.4"), 16));
+    Pool4Ptr pool3(new Pool4(IOAddress("1.2.0.0"), 16));
     ASSERT_THROW(subnet->addPool(pool3), BadValue);
 
     // This pool should be added just fine.
