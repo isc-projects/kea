@@ -850,18 +850,31 @@ private:
     ///        retrieved from the lease storage or if it is already retrieved.
     /// @param hint the hint address that the client provided.
     /// @param hint_prefix_length The hint prefix length that the client
-    /// provided.
+    ///        provided. For NAs this value is always 128. For PDs, 0 means that
+    ///        there is no hint and that any pool will suffice. The value 128
+    ///        for PDs is most likely a bug in the code when calling the addHint
+    ///        function with the default value for prefix_len parameter. This
+    ///        value is not a valid delegated prefix length anyway so it is
+    ///        treated the same as when there is no hint provided.
     /// @param original_subnet the initial subnet selected for this client
     /// @param network the shared network selected for this client (if any)
     /// @param total_attempts the total number of attempt to allocate an address
-    /// for this client.
+    ///        for this client. This parameter contains the accumulative value
+    ///        for previous calls and current call of this function for the
+    ///        lease allocation for this client (current IAID).
     /// @param subnets_with_unavail_leases the number of subnets which have no
-    /// address available for this client
+    ///        address available for this client. This parameter contains the
+    ///        accumulative value for previous calls and current call of this
+    ///        function for the lease allocation for this client (current IAID).
     /// @param subnets_with_unavail_pools the number of pools which have no
-    /// address available for the client
+    ///        address available for the client. This parameter contains the
+    ///        accumulative value for previous calls and current call of this
+    ///        function for the lease allocation for this client (current IAID).
     /// @param [out] callout_status callout returned by the lease6_select
     /// @param prefix_length_match type which indicates the selection criteria
-    /// for the pools relative to the provided hint prefix length.
+    ///        for the pools relative to the provided hint prefix length. It is
+    ///        used for allocating PDs only and it is ignored for any non PD
+    ///        type.
     ///
     /// @return a new allocated address or null pointer if none is available
     Lease6Ptr allocateBestMatch(ClientContext6& ctx,

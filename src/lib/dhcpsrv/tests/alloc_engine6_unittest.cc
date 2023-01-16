@@ -2113,12 +2113,9 @@ TEST_F(AllocEngine6Test, largePdPool) {
     ASSERT_EQ(1, leases.size());
 }
 
-// This test checks that the allocation engine can delegate the long prefix.
-// The pool with prefix of 64 and with long delegated prefix has a very
-// high capacity. The number of attempts that the allocation engine makes
-// to allocate the prefix for high capacity pools is equal to the capacity
-// value. This test verifies that the prefix can be allocated in that
-// case.
+// This test checks that the allocation engine can pick a pool which has smaller
+// delegated prefix length than the hint. The already present lease in the
+// database is ignored because it does not match hint delegated length.
 TEST_F(AllocEngine6Test, largePdPoolPreferrSmaller) {
     AllocEngine engine(0);
 
@@ -2147,12 +2144,9 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrSmaller) {
     ASSERT_EQ(1, leases.size());
 }
 
-// This test checks that the allocation engine can delegate the long prefix.
-// The pool with prefix of 64 and with long delegated prefix has a very
-// high capacity. The number of attempts that the allocation engine makes
-// to allocate the prefix for high capacity pools is equal to the capacity
-// value. This test verifies that the prefix can be allocated in that
-// case.
+// This test checks that the allocation engine can pick a pool which has exact
+// delegated prefix length as the hint. The already present lease in the
+// database is ignored because it does not match hint delegated length.
 TEST_F(AllocEngine6Test, largePdPoolPreferrEqual) {
     AllocEngine engine(0);
 
@@ -2181,12 +2175,9 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrEqual) {
     ASSERT_EQ(1, leases.size());
 }
 
-// This test checks that the allocation engine can delegate the long prefix.
-// The pool with prefix of 64 and with long delegated prefix has a very
-// high capacity. The number of attempts that the allocation engine makes
-// to allocate the prefix for high capacity pools is equal to the capacity
-// value. This test verifies that the prefix can be allocated in that
-// case.
+// This test checks that the allocation engine can pick a pool which has greater
+// delegated prefix length than the hint. The already present lease in the
+// database is ignored because it does not match hint delegated length.
 TEST_F(AllocEngine6Test, largePdPoolPreferrGreater) {
     AllocEngine engine(0);
 

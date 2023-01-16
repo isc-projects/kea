@@ -102,35 +102,20 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
     for (auto i = 0; i < pools.size(); ++i) {
         // Check if the pool is allowed for the client's classes.
         if (pools[i]->clientSupported(client_classes)) {
-            auto pool = boost::dynamic_pointer_cast<Pool6>(pools[i]);
-            if (!pool) {
-                continue;
-            }
-
-            if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
-                pool->getLength() != hint_prefix_length) {
-                continue;
-            }
-
-            if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
-                pool->getLength() >= hint_prefix_length) {
-                continue;
-            }
-
-            if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
-                pool->getLength() <= hint_prefix_length) {
+            if (!Allocator::isValidPrefixPool(prefix_length_match, pools[i],
+                                              hint_prefix_length)) {
                 continue;
             }
             // Get or create the pool state.
             auto state = getPoolState(pools[i]);
             if (state->getPermutation()->exhausted()) {
-                // Pool is exhausted. It means that all addresses from
+                // Pool is exhausted. It means that all prefixes from
                 // this pool have been offered. It doesn't mean that
-                // leases are allocated for all these addresses. It
+                // leases are allocated for all these prefixes. It
                 // only means that all have been picked from the pool.
                 exhausted.push_back(i);
             } else {
-                // There are still available addresses in this pool. It
+                // There are still available prefixes in this pool. It
                 // means that not all of them have been offered.
                 available.push_back(i);
             }
@@ -139,13 +124,13 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
     // Find a suitable pool.
     PoolPtr pool;
     if (!available.empty()) {
-        // There are pools with available addresses. Let's randomly
-        // pick one of these pools and get next available address.
+        // There are pools with available prefixes. Let's randomly
+        // pick one of these pools and get next available prefix.
         pool = pools[available[getRandomNumber(available.size() - 1)]];
 
     } else if (!exhausted.empty()) {
         // All pools have been exhausted. We will start offering the same
-        // addresses from these pools. We need to reset the permutations
+        // prefixes from these pools. We need to reset the permutations
         // of the exhausted pools.
         for (auto e : exhausted) {
             getPoolState(pools[e])->getPermutation()->reset();
@@ -154,7 +139,7 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         pool = pools[exhausted[getRandomNumber(exhausted.size() - 1)]];
     }
 
-    // If pool has been found, let's get next address.
+    // If pool has been found, let's get next prefix.
     if (pool) {
         auto done = false;
         pool6 = boost::dynamic_pointer_cast<Pool6>(pool);

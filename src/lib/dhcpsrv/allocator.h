@@ -134,6 +134,18 @@ public:
                                    hint_prefix_length));
     }
 
+    /// @brief Check if the pool matches the selection criteria relative to the
+    /// provided hint prefix length.
+    ///
+    /// @param prefix_length_match type which indicates the selection criteria
+    ///        for the pools relative to the provided hint prefix length.
+    /// @param pool the pool checked for restricted delegated prefix length
+    ///        value.
+    /// @param hint_prefix_length The hint prefix length that the client
+    ///        provided.
+    static bool isValidPrefixPool(Allocator::PrefixLenMatchType prefix_length_match,
+                                  PoolPtr pool, uint8_t hint_prefix_length);
+
 private:
 
     /// @brief Picks an address.

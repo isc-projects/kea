@@ -153,7 +153,7 @@ AllocEngine6Test::AllocEngine6Test() {
 
     // Let's use odd hardware type to check if there is no Ethernet
     // hardcoded anywhere.
-    const uint8_t mac[] = { 0, 1, 22, 33, 44, 55};
+    const uint8_t mac[] = { 0, 1, 22, 33, 44, 55 };
     hwaddr_ = HWAddrPtr(new HWAddr(mac, sizeof(mac), HTYPE_FDDI));
     // Initialize a subnet and short address pool.
     initSubnet(IOAddress("2001:db8:1::"),

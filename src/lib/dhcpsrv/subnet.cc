@@ -188,23 +188,8 @@ Subnet::sumPoolCapacity(const PoolCollection& pools,
             continue;
         }
 
-        auto pool = boost::dynamic_pointer_cast<Pool6>(p);
-        if (!pool) {
-            continue;
-        }
-
-        if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
-            pool->getLength() != hint_prefix_length) {
-            continue;
-        }
-
-        if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
-            pool->getLength() >= hint_prefix_length) {
-            continue;
-        }
-
-        if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
-            pool->getLength() <= hint_prefix_length) {
+        if (!Allocator::isValidPrefixPool(prefix_length_match, p,
+                                          hint_prefix_length)) {
             continue;
         }
 

@@ -652,10 +652,19 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
+    // In the case of PDs, the allocation engine will try to match pools with
+    // the delegated prefix length matching the one provided in the hint. If the
+    // hint does not provide a preferred delegated prefix length (value is 0),
+    // the allocation engine will match any pool (any greater delegated prefix
+    // length pool). The match type for the pools is ignored for non PDs.
     Lease6Ptr hint_lease;
     bool search_hint_lease = true;
     Allocator::PrefixLenMatchType prefix_length_match = Allocator::PREFIX_LEN_EQUAL;
     if (ctx.currentIA().type_ == Lease::TYPE_PD) {
+        // If the hint has a value of 128, the code might be broken as the hint
+        // was added with the default value 128 for prefix_len by the addHint
+        // function instead of 0. However 128 is not a valid value anyway so it
+        // is reset to 0 (use any delegated prefix length available).
         if (hint_prefix_length == 128) {
             hint_prefix_length = 0;
         }
@@ -664,6 +673,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         }
     }
 
+    // Try the first allocation using PREFIX_LEN_EQUAL (or in case of PDs,
+    // PREFIX_LEN_GREATER when there is no valid delegated prefix length in the
+    // provided hint)
     Lease6Ptr lease = allocateBestMatch(ctx, hint_lease, search_hint_lease,
                                         hint, hint_prefix_length, subnet,
                                         network, total_attempts,
@@ -671,6 +683,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                                         subnets_with_unavail_pools,
                                         callout_status, prefix_length_match);
 
+    // Try the second allocation using PREFIX_LEN_SMALLER only for PDs if the
+    // first allocation using PREFIX_LEN_EQUAL failed (there was a specific
+    // delegated prefix length hint requested).
     if (!lease && ctx.currentIA().type_ == Lease::TYPE_PD &&
         prefix_length_match == Allocator::PREFIX_LEN_EQUAL) {
         prefix_length_match = Allocator::PREFIX_LEN_SMALLER;
@@ -681,6 +696,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                                   prefix_length_match);
     }
 
+    // Try the third allocation using PREFIX_LEN_GREATER only for PDs if the
+    // second allocation using PREFIX_LEN_SMALLER failed (there was a specific
+    // delegated prefix length hint requested).
     if (!lease && ctx.currentIA().type_ == Lease::TYPE_PD &&
         prefix_length_match == Allocator::PREFIX_LEN_SMALLER) {
         prefix_length_match = Allocator::PREFIX_LEN_GREATER;
@@ -814,21 +832,10 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
             continue;
         }
 
-        if (ctx.currentIA().type_ == Lease::TYPE_PD) {
-            if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
-                pool->getLength() != hint_prefix_length) {
-                continue;
-            }
-
-            if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
-                pool->getLength() >= hint_prefix_length) {
-                continue;
-            }
-
-            if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
-                pool->getLength() <= hint_prefix_length) {
-                continue;
-            }
+        if (ctx.currentIA().type_ == Lease::TYPE_PD &&
+            !Allocator::isValidPrefixPool(prefix_length_match, pool,
+                                          hint_prefix_length)) {
+            continue;
         }
 
         bool in_subnet = subnet->getReservationsInSubnet();

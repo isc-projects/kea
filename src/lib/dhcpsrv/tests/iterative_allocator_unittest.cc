@@ -102,7 +102,7 @@ TEST_F(IterativeAllocatorTest4, manyPools) {
             break;
         }
 
-        if ( cnt>total ) {
+        if (cnt > total) {
             ADD_FAILURE() << "Too many unique addresses generated.";
             break;
         }
@@ -154,8 +154,8 @@ TEST_F(IterativeAllocatorTest6, manyPools) {
     for (int i = 2; i < 10; ++i) {
         stringstream min, max;
 
-        min << "2001:db8:1::" << hex << i*16 + 1;
-        max << "2001:db8:1::" << hex << i*16 + 9;
+        min << "2001:db8:1::" << hex << i * 16 + 1;
+        max << "2001:db8:1::" << hex << i * 16 + 9;
 
         Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress(min.str()),
                                 IOAddress(max.str())));
@@ -191,7 +191,7 @@ TEST_F(IterativeAllocatorTest6, manyPools) {
             break;
         }
 
-        if ( cnt>total ) {
+        if (cnt > total) {
             ADD_FAILURE() << "Too many unique addresses generated.";
             break;
         }

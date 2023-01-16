@@ -204,7 +204,7 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                                        uint8_t hint_prefix_length) {
     uint8_t prefix_len = 0;
 
-    // Let's get the last allocated address. It is usually set correctly,
+    // Let's get the last allocated prefix. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
     IOAddress last = getSubnetState()->getLastAllocated();
@@ -217,7 +217,7 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         isc_throw(AllocFailed, "No pools defined in selected subnet");
     }
 
-    // first we need to find a pool the last address belongs to.
+    // first we need to find a pool the last prefix belongs to.
     PoolCollection::const_iterator it;
     PoolCollection::const_iterator first = pools.end();
     PoolPtr first_pool;
@@ -225,23 +225,8 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         if (!(*it)->clientSupported(client_classes)) {
             continue;
         }
-        auto pool = boost::dynamic_pointer_cast<Pool6>(*it);
-        if (!pool) {
-            continue;
-        }
-
-        if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
-            pool->getLength() != hint_prefix_length) {
-            continue;
-        }
-
-        if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
-            pool->getLength() >= hint_prefix_length) {
-            continue;
-        }
-
-        if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
-            pool->getLength() <= hint_prefix_length) {
+        if (!Allocator::isValidPrefixPool(prefix_length_match, *it,
+                                          hint_prefix_length)) {
             continue;
         }
         if (first == pools.end()) {
@@ -258,7 +243,7 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
     }
 
     // last one was bogus for one of several reasons:
-    // - we just booted up and that's the first address we're allocating
+    // - we just booted up and that's the first prefix we're allocating
     // - a subnet was removed or other reconfiguration just completed
     // - perhaps allocation algorithm was changed
     // - last pool does not allow this client
@@ -271,23 +256,8 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         if (retrying) {
             for (; it != pools.end(); ++it) {
                 if ((*it)->clientSupported(client_classes)) {
-                    auto pool = boost::dynamic_pointer_cast<Pool6>(*it);
-                    if (!pool) {
-                        continue;
-                    }
-
-                    if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
-                        pool->getLength() != hint_prefix_length) {
-                        continue;
-                    }
-
-                    if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
-                        pool->getLength() >= hint_prefix_length) {
-                        continue;
-                    }
-
-                    if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
-                        pool->getLength() <= hint_prefix_length) {
+                    if (!Allocator::isValidPrefixPool(prefix_length_match, *it,
+                                                      hint_prefix_length)) {
                         continue;
                     }
                     break;
@@ -325,7 +295,7 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         }
 
         if (valid) {
-            // Ok, we have a pool that the last address belonged to, let's use it.
+            // Ok, we have a pool that the last prefix belonged to, let's use it.
             pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
             if (!pool6) {
                 // Something is gravely wrong here
@@ -357,23 +327,8 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
     // Let's rewind to the beginning.
     for (it = first; it != pools.end(); ++it) {
         if ((*it)->clientSupported(client_classes)) {
-            auto pool = boost::dynamic_pointer_cast<Pool6>(*it);
-            if (!pool) {
-                continue;
-            }
-
-            if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
-                pool->getLength() != hint_prefix_length) {
-                continue;
-            }
-
-            if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
-                pool->getLength() >= hint_prefix_length) {
-                continue;
-            }
-
-            if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
-                pool->getLength() <= hint_prefix_length) {
+            if (!Allocator::isValidPrefixPool(prefix_length_match, *it,
+                                              hint_prefix_length)) {
                 continue;
             }
             getPoolState(*it)->setLastAllocated((*it)->getFirstAddress());
