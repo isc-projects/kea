@@ -1,3 +1,9 @@
+2082.	[bug]		razvan
+	The prefix address provided in the prefix and prefix length pair
+	from the pool configuration is now checked to match the first
+	address in the pool.
+	(Gitlab #2612)
+
 2081.	[func]		tmark
 	The default value for the kea-dhcp-ddns parameter,
 	dns-server-timeout, has been increased from 100 ms to
