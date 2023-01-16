@@ -536,8 +536,8 @@ read and write operations. Moreover, the ``read-timeout`` and ``write-timeout``
 parameters can only be specified for the MySQL backend. Setting them for
 any other backend type causes a configuration error.
 
-To set a timeout for PostgreSQL, use the ``tcp-user-timeout`` parameter
-instead. For example:
+Use the ``tcp-user-timeout`` parameter to set a timeout for PostgreSQL
+in seconds. For example:
 
 ::
 
