@@ -590,6 +590,14 @@ in seconds. For example:
 Specifying this parameter for other backend types causes a configuration
 error.
 
+.. note::
+
+    The timeouts described here are only effective for TCP connections.
+    Please note that the MySQL client library used by the Kea servers
+    typically connects to the database via a UNIX domain socket when the
+    ``host`` parameter is ``localhost`` but establishes a TCP connection
+    for ``127.0.0.1``.
+
 
 .. _hosts4-storage:
 
