@@ -2130,6 +2130,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrSmaller) {
     subnet_->addPool(pool2);
 
     // We should have got exactly one lease.
+    // Even though the hint is from the first pool, the second pool is preferred.
     Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
                                            false, true, 92);
     ASSERT_EQ(1, leases.size());
@@ -2153,14 +2154,14 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfSmaller) {
     subnet_->addPool(pool2);
 
     // Let's create a lease and put it in the LeaseMgr
-    // Even if the the prefix length in the hint does not match, the allocation
+    // Even if the prefix length in the hint does not match, the allocation
     // engine should use the existing lease.
     Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
-                              duid_, iaid_, 501, 502, subnet_->getID(), HWAddrPtr(), 96));
+                              duid_, iaid_, 300, 400, subnet_->getID(), HWAddrPtr(), 96));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // We should have got exactly one lease.
-    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:2::"),
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
                                            false, true, 92);
     ASSERT_EQ(1, leases.size());
 }
@@ -2182,6 +2183,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrEqual) {
     subnet_->addPool(pool2);
 
     // We should have got exactly one lease.
+    // Even though the hint is from the first pool, the second pool is preferred.
     Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
                                            false, true, 80);
     ASSERT_EQ(1, leases.size());
@@ -2205,14 +2207,14 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfEqual) {
     subnet_->addPool(pool2);
 
     // Let's create a lease and put it in the LeaseMgr
-    // Even if the the prefix length in the hint does not match, the allocation
+    // Even if the prefix length in the hint does not match, the allocation
     // engine should use the existing lease.
     Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
-                              duid_, iaid_, 501, 502, subnet_->getID(), HWAddrPtr(), 96));
+                              duid_, iaid_, 300, 400, subnet_->getID(), HWAddrPtr(), 96));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // We should have got exactly one lease.
-    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:2::"),
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
                                            false, true, 80);
     ASSERT_EQ(1, leases.size());
 }
@@ -2234,7 +2236,9 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrGreater) {
     subnet_->addPool(pool2);
 
     // We should have got exactly one lease.
-    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
+    // Even though the first pool also matches the condition, because of the hint,
+    // the second pool is preferred.
+    Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:3::"),
                                            false, true, 64);
     ASSERT_EQ(1, leases.size());
 }
@@ -2257,14 +2261,14 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfGreater) {
     subnet_->addPool(pool2);
 
     // Let's create a lease and put it in the LeaseMgr
-    // Even if the lease is owned by the client, the non-matching prefix length
-    // in the hint should force allocation of other lease.
-    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"),
-                              duid_, iaid_, 5001, 502, subnet_->getID(), HWAddrPtr(), 80));
+    // Even if the prefix length in the hint does not match, the allocation
+    // engine should use the existing lease.
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                              duid_, iaid_, 300, 400, subnet_->getID(), HWAddrPtr(), 96));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // We should have got exactly one lease.
-    Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:3::"),
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
                                            false, true, 64);
     ASSERT_EQ(1, leases.size());
 }
