@@ -332,7 +332,7 @@ TEST_F(RandomAllocatorTest6, singlePdPool) {
     // are returned.
     std::set<IOAddress> prefixes;
     for (auto i = 0; i < 66000; ++i) {
-        IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0);
+        IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
         prefixes.insert(candidate);
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
@@ -362,7 +362,7 @@ TEST_F(RandomAllocatorTest6, manyPdPools) {
     for (auto j = 0; j < 2; ++j) {
         std::set<IOAddress> prefixes;
         for (auto i = 0; i < total; ++i) {
-            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 0);
+            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
             prefixes.insert(candidate);
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
@@ -393,7 +393,7 @@ TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrSmaller) {
     for (auto j = 0; j < 2; ++j) {
         std::set<IOAddress> prefixes;
         for (auto i = 0; i < total; ++i) {
-            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_SMALLER, IOAddress("::"), 120);
+            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 120);
             prefixes.insert(candidate);
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
@@ -455,7 +455,7 @@ TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrGreater) {
     for (auto j = 0; j < 2; ++j) {
         std::set<IOAddress> prefixes;
         for (auto i = 0; i < total; ++i) {
-            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_GREATER, IOAddress("::"), 64);
+            IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 64);
             prefixes.insert(candidate);
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));

@@ -2114,8 +2114,7 @@ TEST_F(AllocEngine6Test, largePdPool) {
 }
 
 // This test checks that the allocation engine can pick a pool which has smaller
-// delegated prefix length than the hint. The already present lease in the
-// database is ignored because it does not match hint delegated length.
+// delegated prefix length than the hint.
 TEST_F(AllocEngine6Test, largePdPoolPreferrSmaller) {
     AllocEngine engine(0);
 
@@ -2130,23 +2129,44 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrSmaller) {
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
     subnet_->addPool(pool2);
 
-    // Let's create a lease and put it in the LeaseMgr
-    // Even if the lease is owned by the client, the non-matching prefix length
-    // in the hint should force allocation of other lease.
-    time_t now = time(NULL);
-    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
-                              duid_, 1, 2, now, subnet_->getID(), HWAddrPtr(), 96));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
                                            false, true, 92);
     ASSERT_EQ(1, leases.size());
 }
 
+// This test checks that the allocation engine can pick a pool which has smaller
+// delegated prefix length than the hint. However the already present lease in
+// the database is used and the hint delegated length is ignored.
+TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfSmaller) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // Let's create a lease and put it in the LeaseMgr
+    // Even if the the prefix length in the hint does not match, the allocation
+    // engine should use the existing lease.
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                              duid_, iaid_, 501, 502, subnet_->getID(), HWAddrPtr(), 96));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:2::"),
+                                           false, true, 92);
+    ASSERT_EQ(1, leases.size());
+}
+
 // This test checks that the allocation engine can pick a pool which has exact
-// delegated prefix length as the hint. The already present lease in the
-// database is ignored because it does not match hint delegated length.
+// delegated prefix length as the hint.
 TEST_F(AllocEngine6Test, largePdPoolPreferrEqual) {
     AllocEngine engine(0);
 
@@ -2161,24 +2181,68 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrEqual) {
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
     subnet_->addPool(pool2);
 
-    // Let's create a lease and put it in the LeaseMgr
-    // Even if the lease is owned by the client, the non-matching prefix length
-    // in the hint should force allocation of other lease.
-    time_t now = time(NULL);
-    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
-                              duid_, 1, 2, now, subnet_->getID(), HWAddrPtr(), 96));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
                                            false, true, 80);
     ASSERT_EQ(1, leases.size());
 }
 
+// This test checks that the allocation engine can pick a pool which has exact
+// delegated prefix length as the hint. However the already present lease in
+// the database is used and the hint delegated length is ignored.
+TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfEqual) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // Let's create a lease and put it in the LeaseMgr
+    // Even if the the prefix length in the hint does not match, the allocation
+    // engine should use the existing lease.
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                              duid_, iaid_, 501, 502, subnet_->getID(), HWAddrPtr(), 96));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:2::"),
+                                           false, true, 80);
+    ASSERT_EQ(1, leases.size());
+}
+
 // This test checks that the allocation engine can pick a pool which has greater
-// delegated prefix length than the hint. The already present lease in the
-// database is ignored because it does not match hint delegated length.
+// delegated prefix length than the hint.
 TEST_F(AllocEngine6Test, largePdPoolPreferrGreater) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
+                                           false, true, 64);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can pick a pool which has greater
+// delegated prefix length than the hint. However the already present lease in
+// the database is used and the hint delegated length is ignored.
+TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfGreater) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.
@@ -2195,13 +2259,12 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrGreater) {
     // Let's create a lease and put it in the LeaseMgr
     // Even if the lease is owned by the client, the non-matching prefix length
     // in the hint should force allocation of other lease.
-    time_t now = time(NULL);
     Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"),
-                              duid_, 1, 2, now, subnet_->getID(), HWAddrPtr(), 80));
+                              duid_, iaid_, 5001, 502, subnet_->getID(), HWAddrPtr(), 80));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // We should have got exactly one lease.
-    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
+    Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:3::"),
                                            false, true, 64);
     ASSERT_EQ(1, leases.size());
 }

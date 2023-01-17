@@ -59,8 +59,8 @@ public:
     /// @brief Type of preferred PD-pool prefix length selection criteria
     enum PrefixLenMatchType {
         PREFIX_LEN_EQUAL,      // select PD-pools with specific prefix length
-        PREFIX_LEN_SMALLER,    // select PD-pools with smaller prefix length
-        PREFIX_LEN_GREATER     // select PD-pools with greater prefix length
+        PREFIX_LEN_LOWER,      // select PD-pools with lower prefix length
+        PREFIX_LEN_HIGHER      // select PD-pools with higher prefix length
     };
 
     /// @brief Constructor
@@ -88,9 +88,9 @@ public:
     ///
     /// Pools which are not allowed for client classes are skipped.
     ///
-    /// @param client_classes list of classes client belongs to
-    /// @param duid Client's DUID
-    /// @param hint Client's hint
+    /// @param client_classes list of classes client belongs to.
+    /// @param duid Client's DUID.
+    /// @param hint Client's hint.
     ///
     /// @return the next address.
     virtual isc::asiolink::IOAddress
@@ -111,14 +111,15 @@ public:
     ///
     /// Pools which are not allowed for client classes are skipped.
     ///
-    /// @param client_classes list of classes client belongs to
+    /// @param client_classes list of classes client belongs to.
     /// @param pool the selected pool satisfying all required conditions.
-    /// @param duid Client's DUID
+    /// @param duid Client's DUID.
     /// @param prefix_length_match type which indicates the selection criteria
-    /// for the pools relative to the provided hint prefix length
-    /// @param hint Client's hint
+    ///        for the pools relative to the provided hint prefix length.
+    /// @param hint Client's hint.
     /// @param hint_prefix_length the hint prefix length that the client
-    /// provided
+    ///        provided. The 0 value means that there is no hint and that any
+    ///        pool will suffice.
     ///
     /// @return the next prefix.
     virtual isc::asiolink::IOAddress
@@ -142,7 +143,8 @@ public:
     /// @param pool the pool checked for restricted delegated prefix length
     ///        value.
     /// @param hint_prefix_length The hint prefix length that the client
-    ///        provided.
+    ///        provided. The 0 value means that there is no hint and that any
+    ///        pool will suffice.
     static bool isValidPrefixPool(Allocator::PrefixLenMatchType prefix_length_match,
                                   PoolPtr pool, uint8_t hint_prefix_length);
 
@@ -170,14 +172,15 @@ private:
     /// Derived classes must provide their specific implementations of
     /// this function.
     ///
-    /// @param client_classes list of classes client belongs to
+    /// @param client_classes list of classes client belongs to.
     /// @param pool the selected pool satisfying all required conditions.
-    /// @param duid Client's DUID
+    /// @param duid Client's DUID.
     /// @param prefix_length_match type which indicates the selection criteria
-    /// for the pools relative to the provided hint prefix length
-    /// @param hint Client's hint
+    ///        for the pools relative to the provided hint prefix length.
+    /// @param hint Client's hint.
     /// @param hint_prefix_length the hint prefix length that the client
-    /// provided
+    ///        provided. The 0 value means that there is no hint and that any
+    ///        pool will suffice.
     ///
     /// @return the next prefix.
     virtual isc::asiolink::IOAddress

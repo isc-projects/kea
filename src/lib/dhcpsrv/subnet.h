@@ -393,6 +393,8 @@ protected:
     /// @brief Returns a sum of possible leases in all pools allowing classes
     /// and matching selection criteria relative to provided hint prefix length.
     ///
+    /// @note This function should be called only for PD pools.
+    ///
     /// @param pools list of pools
     /// @param client_classes list of classes
     /// @param prefix_length_match type which indicates the selection criteria

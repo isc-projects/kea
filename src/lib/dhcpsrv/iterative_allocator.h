@@ -50,14 +50,15 @@ private:
     ///
     /// Internal thread-unsafe implementation of the @c pickPrefix.
     ///
-    /// @param client_classes list of classes client belongs to
+    /// @param client_classes list of classes client belongs to.
     /// @param pool the selected pool satisfying all required conditions.
-    /// @param duid Client's DUID
+    /// @param duid Client's DUID.
     /// @param prefix_length_match type which indicates the selection criteria
-    /// for the pools relative to the provided hint prefix length
-    /// @param hint Client's hint
+    ///        for the pools relative to the provided hint prefix length.
+    /// @param hint Client's hint.
     /// @param hint_prefix_length the hint prefix length that the client
-    /// provided
+    ///        provided. The 0 value means that there is no hint and that any
+    ///        pool will suffice.
     ///
     /// @return the next prefix.
     virtual isc::asiolink::IOAddress

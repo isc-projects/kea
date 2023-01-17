@@ -19,17 +19,21 @@ bool Allocator::isValidPrefixPool(Allocator::PrefixLenMatchType prefix_length_ma
         return (false);
     }
 
+    if (!hint_prefix_length) {
+        return (true);
+    }
+
     if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL &&
         pool6->getLength() != hint_prefix_length) {
         return (false);
     }
 
-    if (prefix_length_match == Allocator::PREFIX_LEN_SMALLER &&
+    if (prefix_length_match == Allocator::PREFIX_LEN_LOWER &&
         pool6->getLength() >= hint_prefix_length) {
         return (false);
     }
 
-    if (prefix_length_match == Allocator::PREFIX_LEN_GREATER &&
+    if (prefix_length_match == Allocator::PREFIX_LEN_HIGHER &&
         pool6->getLength() <= hint_prefix_length) {
         return (false);
     }

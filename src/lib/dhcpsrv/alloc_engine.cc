@@ -669,12 +669,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             hint_prefix_length = 0;
         }
         if (!hint_prefix_length) {
-            prefix_length_match = Allocator::PREFIX_LEN_GREATER;
+            prefix_length_match = Allocator::PREFIX_LEN_HIGHER;
         }
     }
 
     // Try the first allocation using PREFIX_LEN_EQUAL (or in case of PDs,
-    // PREFIX_LEN_GREATER when there is no valid delegated prefix length in the
+    // PREFIX_LEN_HIGHER when there is no valid delegated prefix length in the
     // provided hint)
     Lease6Ptr lease = allocateBestMatch(ctx, hint_lease, search_hint_lease,
                                         hint, hint_prefix_length, subnet,
@@ -683,12 +683,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                                         subnets_with_unavail_pools,
                                         callout_status, prefix_length_match);
 
-    // Try the second allocation using PREFIX_LEN_SMALLER only for PDs if the
+    // Try the second allocation using PREFIX_LEN_LOWER only for PDs if the
     // first allocation using PREFIX_LEN_EQUAL failed (there was a specific
     // delegated prefix length hint requested).
     if (!lease && ctx.currentIA().type_ == Lease::TYPE_PD &&
         prefix_length_match == Allocator::PREFIX_LEN_EQUAL) {
-        prefix_length_match = Allocator::PREFIX_LEN_SMALLER;
+        prefix_length_match = Allocator::PREFIX_LEN_LOWER;
         lease = allocateBestMatch(ctx, hint_lease, search_hint_lease, hint,
                                   hint_prefix_length, subnet, network,
                                   total_attempts, subnets_with_unavail_leases,
@@ -696,12 +696,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                                   prefix_length_match);
     }
 
-    // Try the third allocation using PREFIX_LEN_GREATER only for PDs if the
-    // second allocation using PREFIX_LEN_SMALLER failed (there was a specific
+    // Try the third allocation using PREFIX_LEN_HIGHER only for PDs if the
+    // second allocation using PREFIX_LEN_LOWER failed (there was a specific
     // delegated prefix length hint requested).
     if (!lease && ctx.currentIA().type_ == Lease::TYPE_PD &&
-        prefix_length_match == Allocator::PREFIX_LEN_SMALLER) {
-        prefix_length_match = Allocator::PREFIX_LEN_GREATER;
+        prefix_length_match == Allocator::PREFIX_LEN_LOWER) {
+        prefix_length_match = Allocator::PREFIX_LEN_HIGHER;
         lease = allocateBestMatch(ctx, hint_lease, search_hint_lease, hint,
                                   hint_prefix_length, subnet, network,
                                   total_attempts, subnets_with_unavail_leases,
@@ -845,10 +845,6 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
             search_hint_lease = false;
             hint_lease = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
             usable_hint_lease = hint_lease;
-            if (prefix_length_match == Allocator::PREFIX_LEN_EQUAL && hint_lease &&
-                hint_lease->prefixlen_ != hint_prefix_length) {
-                usable_hint_lease.reset();
-            }
         }
         if (!usable_hint_lease) {
 
@@ -868,6 +864,7 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
             }
 
             if (hosts.empty()) {
+
                 // If the in-pool reservations are disabled, or there is no
                 // reservation for a given hint, we're good to go.
 
@@ -1626,7 +1623,6 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
             // If there's only one lease left, break the loop.
             break;
         }
-
     }
 
     // Remove all elements that we previously marked for deletion (those that
@@ -2228,7 +2224,6 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         if (!changed) {
             setLeaseReusable(lease, current_preferred_lft, ctx);
         }
-
 
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
