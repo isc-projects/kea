@@ -653,6 +653,23 @@ public:
                                const bool remove_lease,
                                const uint16_t max_unwarned_cycles = 0);
 
+    /// @brief Body of reclaimExpiredLeases6.
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclamation routine
+    /// may be processing expired leases, expressed in milliseconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    /// @param max_unwarned_cycles A number of consecutive processing cycles
+    /// of expired leases, after which the system issues a warning if there
+    /// are still expired leases in the database. If this value is 0, the
+    /// warning is never issued.
+    void reclaimExpiredLeases6NoExc(const size_t max_leases,
+                                    const uint16_t timeout,
+                                    const bool remove_lease,
+                                    const uint16_t max_unwarned_cycles = 0);
+
     /// @brief Deletes reclaimed leases expired more than specified amount
     /// of time ago.
     ///
@@ -711,6 +728,23 @@ public:
     void reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
                                const bool remove_lease,
                                const uint16_t max_unwarned_cycles = 0);
+
+    /// @brief Body of reclaimExpiredLeases4.
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclamation routine
+    /// may be processing expired leases, expressed in milliseconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    /// @param max_unwarned_cycles A number of consecutive processing cycles
+    /// of expired leases, after which the system issues a warning if there
+    /// are still expired leases in the database. If this value is 0, the
+    /// warning is never issued.
+    void reclaimExpiredLeases4NoExc(const size_t max_leases,
+                                    const uint16_t timeout,
+                                    const bool remove_lease,
+                                    const uint16_t max_unwarned_cycles = 0);
 
     /// @brief Deletes reclaimed leases expired more than specified amount
     /// of time ago.

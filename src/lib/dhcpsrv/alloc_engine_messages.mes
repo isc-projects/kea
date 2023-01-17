@@ -131,6 +131,10 @@ the number of reclaimed leases may also be limited by the timeout
 value, configured with 'max-reclaim-time'. The message includes the
 number of reclaimed leases and the total time.
 
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_FAILED reclamation of expired leases failed: %1
+This error message is issued when the reclamation of the expired leases failed.
+The error message is displayed.
+
 % ALLOC_ENGINE_V4_LEASES_RECLAMATION_SLOW expired leases still exist after %1 reclamations
 This warning message is issued when the server has been unable to
 reclaim all expired leases in a specified number of consecutive
@@ -468,6 +472,10 @@ is configurable using 'max-reclaim-leases' parameter. However,
 the number of reclaimed leases may also be limited by the timeout
 value, configured with 'max-reclaim-time'. The message includes the
 number of reclaimed leases and the total time.
+
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_FAILED reclamation of expired leases failed: %1
+This error message is issued when the reclamation of the expired leases failed.
+The error message is displayed.
 
 % ALLOC_ENGINE_V6_LEASES_RECLAMATION_SLOW expired leases still exist after %1 reclamations
 This warning message is issued when the server has been unable to
