@@ -6678,7 +6678,7 @@ option is actually needed. An example configuration looks as follows:
        "subnet6": [ {
            "pd-pools": [
            {
-               "prefix":  "2001:db8::",
+               "prefix": "2001:db8::",
                "prefix-len": 56,
                "delegated-len": 64,
 

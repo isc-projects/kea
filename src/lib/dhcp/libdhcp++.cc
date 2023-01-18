@@ -688,39 +688,44 @@ LibDHCP::fuseOptions4(OptionCollection& options) {
 void
 LibDHCP::extendVendorOptions4(isc::dhcp::OptionCollection& options) {
     map<uint32_t, OptionCollection> vendors_data;
-    for (auto const& option : options) {
-        if (option.second->getType() == DHO_VIVSO_SUBOPTIONS) {
-            uint32_t offset = 0;
-            auto const& data = option.second->getData();
-            auto const& begin = data.begin();
-            auto const& end = data.end();
-            size_t size;
-            while ((size = distance(begin + offset, end)) != 0) {
-                if (size < sizeof(uint32_t)) {
-                    options.erase(DHO_VIVSO_SUBOPTIONS);
-                    isc_throw(SkipRemainingOptionsError,
-                              "Truncated vendor-specific information option"
-                              << ", length=" << size);
-                }
-                uint32_t vendor_id = isc::util::readUint32(&(*begin) + offset, distance(begin, end));
-                offset += 4;
-                OptionBuffer vendor_buffer(begin + offset, end);
-                try {
-                    offset += LibDHCP::unpackVendorOptions4(vendor_id, vendor_buffer, vendors_data[vendor_id]);
-                } catch (const SkipThisOptionError&)  {
-                } catch (const Exception&) {
-                    options.erase(DHO_VIVSO_SUBOPTIONS);
-                    throw;
-                }
+    auto const& it = options.find(DHO_VIVSO_SUBOPTIONS);
+    // After calling fuseOptions4 there should be at most one option of
+    // DHO_VIVSO_SUBOPTIONS type.
+    if (it != options.end()) {
+        uint32_t offset = 0;
+        auto const& data = it->second->getData();
+        auto const& begin = data.begin();
+        size_t size;
+        while ((size = data.size() - offset) != 0) {
+            if (size < sizeof(uint32_t)) {
+                options.erase(DHO_VIVSO_SUBOPTIONS);
+                isc_throw(SkipRemainingOptionsError,
+                          "Truncated vendor-specific information option"
+                          << ", length=" << size);
+            }
+            uint32_t vendor_id = isc::util::readUint32(&(*begin) + offset, data.size());
+            offset += 4;
+            const OptionBuffer vendor_buffer(begin + offset, data.end());
+            try {
+                offset += LibDHCP::unpackVendorOptions4(vendor_id, vendor_buffer, vendors_data[vendor_id]);
+            } catch (const SkipThisOptionError&) {
+                // Ignore this kind of error and continue.
+            } catch (const Exception&) {
+                options.erase(DHO_VIVSO_SUBOPTIONS);
+                throw;
             }
         }
     }
+    // Delete the initial option.
     options.erase(DHO_VIVSO_SUBOPTIONS);
+    // Create a new instance of OptionVendor for each enterprise ID.
     for (auto const& vendor : vendors_data) {
         OptionVendorPtr vendor_opt(new OptionVendor(Option::V4, vendor.first));
         for (auto const& option : vendor.second) {
             vendor_opt->addOption(option.second);
         }
+        // Add the new instance of VendorOption with respective sub-options for
+        // this enterprise ID.
         options.insert(std::make_pair(DHO_VIVSO_SUBOPTIONS, vendor_opt));
     }
 }

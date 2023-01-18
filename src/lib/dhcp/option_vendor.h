@@ -50,14 +50,6 @@ public:
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                  OptionBufferConstIter end);
 
-    /// @brief Copy constructor.
-    ///
-    /// This constructor makes a deep copy of the option and all of the
-    /// suboptions. It calls @ref getOptionsCopy to deep copy suboptions.
-    ///
-    /// @param source Option to be copied.
-    OptionVendor(const OptionVendor& option);
-
     /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
 
@@ -109,15 +101,6 @@ public:
     ///
     /// @return Vendor option in the textual format.
     virtual std::string toText(int indent = 0) const;
-
-    /// @brief Assignment operator.
-    ///
-    /// The assignment operator performs a deep copy of the option and
-    /// its suboptions. It calls @ref getOptionsCopy to deep copy
-    /// suboptions.
-    ///
-    /// @param rhs Option to be assigned.
-    OptionVendor& operator=(const OptionVendor& rhs);
 
 private:
 

@@ -27,11 +27,6 @@ OptionVendor::OptionVendor(Option::Universe u, OptionBufferConstIter begin,
     unpack(begin, end);
 }
 
-OptionVendor::OptionVendor(const OptionVendor& option) : Option(option),
-        vendor_id_(option.vendor_id_) {
-    Option::operator=(option);
-}
-
 OptionPtr
 OptionVendor::clone() const {
     return (cloneInternal<OptionVendor>());
@@ -68,8 +63,6 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
                   "Truncated vendor-specific information option"
                   << ", length=" << distance(begin, end));
     }
-
-    options_.clear();
 
     vendor_id_ = isc::util::readUint32(&(*begin), distance(begin, end));
 
@@ -119,12 +112,4 @@ OptionVendor::toText(int indent) const {
     output << suboptionsToText(indent + 2);
 
     return (output.str());
-}
-
-OptionVendor& OptionVendor::operator=(const OptionVendor& rhs) {
-    if (&rhs != this) {
-        Option::operator=(rhs);
-        vendor_id_ = rhs.vendor_id_;
-    }
-    return (*this);
 }

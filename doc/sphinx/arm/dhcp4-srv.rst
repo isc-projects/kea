@@ -2495,54 +2495,56 @@ following:
 
 ::
 
-   {
+   "Dhcp4": {
        // First, we need to define that the sub-option 2 in vivso option for
        // vendor-id 25167 has a specific format (it's a plain string in this example).
        // After this definition, we can specify values for option tftp.
        "option-def": [
-       {
-           // We define a short name, so the option can be referenced by name.
-           // The option has code 2 and resides within vendor space 25167.
-           // Its data is a plain string.
-           "name": "tftp",
-           "code": 2,
-           "space": "vendor-25167",
-           "type": "string"
-       } ],
+           {
+               // We define a short name, so the option can be referenced by name.
+               // The option has code 2 and resides within vendor space 25167.
+               // Its data is a plain string.
+               "name": "tftp",
+               "code": 2,
+               "space": "vendor-25167",
+               "type": "string"
+           }
+       ],
 
        "client-classes": [
-       {
-           // We now need to tell Kea how to recognize when to use vendor space 25167.
-           // Usually we can use a simple expression, such as checking if the device
-           // sent a vivso option with specific vendor-id, e.g. "vendor[4491].exists".
-           // Unfortunately, Genexis is a bit unusual in this aspect, because it
-           // doesn't send vivso. In this case we need to look into the vendor class
-           // (option code 60) and see if there's a specific string that identifies
-           // the device.
-           "name": "cpe_genexis",
-           "test": "substring(option[60].hex,0,7) == 'HMC1000'",
+           {
+               // We now need to tell Kea how to recognize when to use vendor space 25167.
+               // Usually we can use a simple expression, such as checking if the device
+               // sent a vivso option with specific vendor-id, e.g. "vendor[4491].exists".
+               // Unfortunately, Genexis is a bit unusual in this aspect, because it
+               // doesn't send vivso. In this case we need to look into the vendor class
+               // (option code 60) and see if there's a specific string that identifies
+               // the device.
+               "name": "cpe_genexis",
+               "test": "substring(option[60].hex,0,7) == 'HMC1000'",
 
-           // Once the device is recognized, we want to send two options:
-           // the vivso option with vendor-id set to 25167, and a sub-option 2.
-           "option-data": [
-               {
-                   "name": "vivso-suboptions",
-                   "data": "25167"
-               },
+               // Once the device is recognized, we want to send two options:
+               // the vivso option with vendor-id set to 25167, and a sub-option 2.
+               "option-data": [
+                   {
+                       "name": "vivso-suboptions",
+                       "data": "25167"
+                   },
 
-               // The sub-option 2 value is defined as any other option. However,
-               // we want to send this sub-option 2, even when the client didn't
-               // explicitly request it (often there is no way to do that for
-               // vendor options). Therefore we use always-send to force Kea
-               // to always send this option when 25167 vendor space is involved.
-               {
-                   "name": "tftp",
-                   "space": "vendor-25167",
-                   "data": "tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img",
-                   "always-send": true
-               }
-           ]
-       } ]
+                   // The sub-option 2 value is defined as any other option. However,
+                   // we want to send this sub-option 2, even when the client didn't
+                   // explicitly request it (often there is no way to do that for
+                   // vendor options). Therefore we use always-send to force Kea
+                   // to always send this option when 25167 vendor space is involved.
+                   {
+                       "name": "tftp",
+                       "space": "vendor-25167",
+                       "data": "tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img",
+                       "always-send": true
+                   }
+               ]
+           }
+       ]
    }
 
 By default, Kea sends back only those options that are requested by a client,
@@ -2565,12 +2567,60 @@ that in this particular case an option is defined in vendor space 25167. With
 with vendor space 25167.
 This is also how the Kea server can be configured to send multiple vendor
 enterprise numbers and multiple options, specific for each vendor.
+If these options need to be sent by the server regardless if the client
+specified any enterprise number, the ``"always-send": true`` must be configured
+for the option with code 125 (``vivso-suboptions``) for each enterprise number.
+
+::
+
+   "Dhcp4": {
+       "option-data": [
+           {
+               "always-send": true,
+               "name": "vivso-suboptions",
+               "space": "dhcp4",
+               "data": "2234"
+           },
+           {
+               "always-send": true,
+               "name": "vivso-suboptions",
+               "space": "dhcp4",
+               "data": "3561"
+           },
+           {
+               "always-send": true,
+               "data": "tagged",
+               "name": "tag",
+               "space": "vendor-2234"
+           },
+           {
+               "always-send": true,
+               "name": "url",
+               "space": "vendor-3561",
+               "data": "https://example.com:1234/path"
+           }
+       ],
+       "option-def": [
+           {
+               "code": 22,
+               "name": "tag",
+               "space": "vendor-2234",
+               "type": "string"
+           },
+           {
+               "code": 11,
+               "name": "url",
+               "space": "vendor-3561",
+               "type": "string"
+           }
+       ]
+   }
 
 Another possibility is to redefine the option; see :ref:`dhcp4-private-opts`.
 
 Kea comes with several example configuration files. Some of them showcase
 how to configure options 60 and 43. See ``doc/examples/kea4/vendor-specific.json``
-and ``doc/examples/kea6/vivso.json`` in the Kea sources.
+and ``doc/examples/kea4/vivso.json`` in the Kea sources.
 
 .. note::
 

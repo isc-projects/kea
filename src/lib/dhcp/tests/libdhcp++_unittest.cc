@@ -1107,20 +1107,21 @@ TEST_F(LibDhcpTest, extentVendorOptions4) {
     }
     ASSERT_NO_THROW(LibDHCP::fuseOptions4(options));
     ASSERT_EQ(options.size(), 1);
+    options.insert(make_pair(2, opt3));
+    options.insert(make_pair(1, opt4));
+    ASSERT_EQ(options.size(), 3);
     container.clear();
-    container.insert(make_pair(1, options.begin()->second));
-    container.insert(make_pair(2, opt3));
-    container.insert(make_pair(1, opt4));
-    ASSERT_EQ(container.size(), 3);
-    options.clear();
-    for (auto const& option : container) {
+    for (auto const& option : options) {
         const OptionBuffer& buffer = option.second->toBinary();
-        options.insert(make_pair(option.second->getType(),
+        container.insert(make_pair(option.second->getType(),
                                  OptionPtr(new Option(Option::V4,
                                                       option.second->getType(),
                                                       buffer))));
     }
-    ASSERT_EQ(options.size(), 3);
+    ASSERT_EQ(container.size(), 3);
+    options = container;
+    ASSERT_NO_THROW(LibDHCP::fuseOptions4(options));
+    ASSERT_EQ(options.size(), 1);
     LibDHCP::extendVendorOptions4(options);
     ASSERT_EQ(options.size(), 2);
     for (auto const& option : options) {
