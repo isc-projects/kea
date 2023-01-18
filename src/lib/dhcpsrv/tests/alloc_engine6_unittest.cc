@@ -2115,7 +2115,7 @@ TEST_F(AllocEngine6Test, largePdPool) {
 
 // This test checks that the allocation engine can pick a pool which has smaller
 // delegated prefix length than the hint.
-TEST_F(AllocEngine6Test, largePdPoolPreferrSmaller) {
+TEST_F(AllocEngine6Test, largePdPoolPreferLower) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.
@@ -2139,7 +2139,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrSmaller) {
 // This test checks that the allocation engine can pick a pool which has smaller
 // delegated prefix length than the hint. However the already present lease in
 // the database is used and the hint delegated length is ignored.
-TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfSmaller) {
+TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfLower) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.
@@ -2168,7 +2168,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfSmaller) {
 
 // This test checks that the allocation engine can pick a pool which has exact
 // delegated prefix length as the hint.
-TEST_F(AllocEngine6Test, largePdPoolPreferrEqual) {
+TEST_F(AllocEngine6Test, largePdPoolPreferEqual) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.
@@ -2192,7 +2192,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrEqual) {
 // This test checks that the allocation engine can pick a pool which has exact
 // delegated prefix length as the hint. However the already present lease in
 // the database is used and the hint delegated length is ignored.
-TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfEqual) {
+TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfEqual) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.
@@ -2221,7 +2221,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfEqual) {
 
 // This test checks that the allocation engine can pick a pool which has greater
 // delegated prefix length than the hint.
-TEST_F(AllocEngine6Test, largePdPoolPreferrGreater) {
+TEST_F(AllocEngine6Test, largePdPoolPreferHigher) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.
@@ -2246,7 +2246,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferrGreater) {
 // This test checks that the allocation engine can pick a pool which has greater
 // delegated prefix length than the hint. However the already present lease in
 // the database is used and the hint delegated length is ignored.
-TEST_F(AllocEngine6Test, largePdPoolPreferrExistingLeaseInsteadOfGreater) {
+TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfHigher) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.

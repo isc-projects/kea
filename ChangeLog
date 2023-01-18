@@ -1,3 +1,13 @@
+2084.	[func]		razvan
+	When the client adds a prefix length in the hint, the server
+	will try to select a pool with the delegated prefix length
+	equal to the respective value. If no pool is found, the server
+	will try to select a pool with a lower delegated prefix length
+	(a larger address space) and if none is found, it will try to
+	select a pool with a higher delegated prefix length (a smaller
+	address space).
+	(Gitlab #1958)
+
 2083.	[func]		marcin
 	New database connection parameters, "read-timeout" and
 	"write-timeout", control the timeouts in communication with the

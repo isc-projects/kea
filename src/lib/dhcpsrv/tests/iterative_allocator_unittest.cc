@@ -427,7 +427,7 @@ TEST_F(IterativeAllocatorTest6, prefixStep) {
 
 // This test verifies that the allocator picks delegated prefixes from several
 // pools.
-TEST_F(IterativeAllocatorTest6, prefixStepPreferrSmaller) {
+TEST_F(IterativeAllocatorTest6, prefixStepPreferLower) {
     subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
@@ -494,7 +494,7 @@ TEST_F(IterativeAllocatorTest6, prefixStepPreferrSmaller) {
 
 // This test verifies that the allocator picks delegated prefixes from several
 // pools.
-TEST_F(IterativeAllocatorTest6, prefixStepPreferrEqual) {
+TEST_F(IterativeAllocatorTest6, prefixStepPreferEqual) {
     subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
@@ -525,7 +525,7 @@ TEST_F(IterativeAllocatorTest6, prefixStepPreferrEqual) {
 
 // This test verifies that the allocator picks delegated prefixes from several
 // pools.
-TEST_F(IterativeAllocatorTest6, prefixStepPreferrGreater) {
+TEST_F(IterativeAllocatorTest6, prefixStepPreferHigher) {
     subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));

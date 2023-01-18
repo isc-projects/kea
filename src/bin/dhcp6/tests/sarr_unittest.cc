@@ -321,6 +321,15 @@ public:
     /// the correct (configured) length.
     void directClientPrefixHint();
 
+    /// @brief Check that the server assigns a delegated prefix that is later
+    /// returned to the client for various prefix hints.
+    ///
+    /// When the client renews the lease, it sends a prefix hint with the same
+    /// prefix but with a different prefix length. In another case, the client
+    /// asks for the same prefix length but different prefix. In both cases,
+    /// the server should return an existing lease.
+    void directClientPrefixLengthHintRenewal();
+
     /// @brief This test verifies that the same options can be specified on the
     /// global level, subnet level and pool level. The options associated with
     /// pools are used when the lease is handed out from these pools.
@@ -445,6 +454,64 @@ TEST_F(SARRTest, directClientPrefixHint) {
 TEST_F(SARRTest, directClientPrefixHintMultiThreading) {
     Dhcpv6SrvMTTestGuard guard(*this, true);
     directClientPrefixHint();
+}
+
+void
+SARRTest::directClientPrefixLengthHintRenewal() {
+    Dhcp6Client client;
+    // Configure client to request IA_PD.
+    client.requestPrefix();
+    configure(CONFIGS[0], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    // Append IAPREFIX option to the client's message.
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, asiolink::IOAddress("2001:db8:3:36::")));
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    // The server should respect the prefix hint.
+    EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
+    // Server ignores other parts of the IAPREFIX option.
+    EXPECT_EQ(64, lease_client.prefixlen_);
+    EXPECT_EQ(3000, lease_client.preferred_lft_);
+    EXPECT_EQ(4000, lease_client.valid_lft_);
+    Lease6Ptr lease_server = checkLease(lease_client);
+    // Check that the server recorded the lease.
+    ASSERT_TRUE(lease_server);
+
+    // Request the same prefix with a different length. The server should
+    // return an existing lease.
+    client.clearRequestedIAs();
+    ASSERT_NO_THROW(client.requestPrefix(5678, 80, IOAddress("2001:db8:3:36::")));
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_EQ(1, client.getLeaseNum());
+    lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
+    EXPECT_EQ(64, lease_client.prefixlen_);
+
+    // Try to request another prefix. The client should still get the existing
+    // lease.
+    client.clearRequestedIAs();
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:3:37::")));
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_EQ(1, client.getLeaseNum());
+    lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
+    EXPECT_EQ(64, lease_client.prefixlen_);
+}
+
+TEST_F(SARRTest, directClientPrefixLengthHintRenewal) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientPrefixLengthHintRenewal();
+}
+
+TEST_F(SARRTest, directClientPrefixLengthHintRenewalMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientPrefixLengthHintRenewal();
 }
 
 void

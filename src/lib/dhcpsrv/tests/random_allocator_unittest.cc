@@ -373,7 +373,7 @@ TEST_F(RandomAllocatorTest6, manyPdPools) {
 }
 
 // Test allocating delegated prefixes from multiple pools.
-TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrSmaller) {
+TEST_F(RandomAllocatorTest6, manyPdPoolsPreferLower) {
     RandomAllocator alloc(Lease::TYPE_PD, subnet_);
 
     for (auto i = 0; i < 10; ++i) {
@@ -404,7 +404,7 @@ TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrSmaller) {
 }
 
 // Test allocating delegated prefixes from multiple pools.
-TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrEqual) {
+TEST_F(RandomAllocatorTest6, manyPdPoolsPreferEqual) {
     RandomAllocator alloc(Lease::TYPE_PD, subnet_);
 
     for (auto i = 0; i < 10; ++i) {
@@ -435,7 +435,7 @@ TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrEqual) {
 }
 
 // Test allocating delegated prefixes from multiple pools.
-TEST_F(RandomAllocatorTest6, manyPdPoolsPreferrGreater) {
+TEST_F(RandomAllocatorTest6, manyPdPoolsPreferHigher) {
     RandomAllocator alloc(Lease::TYPE_PD, subnet_);
 
     for (auto i = 0; i < 10; ++i) {
