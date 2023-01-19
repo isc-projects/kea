@@ -175,7 +175,7 @@ aborted.  This is most likely a configuration issue.
 
 % DHCP_DDNS_FORWARD_REPLACE_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping replace for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
-DHCP_DDNS is carrying out a forward address update.  The application will
+DHCP_DDNS is carrying out a forward mapping replace.  The application will
 retry against the same server or others as appropriate.
 
 % DHCP_DDNS_FORWARD_REPLACE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping replace for FQDN %2 to DNS server %3
