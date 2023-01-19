@@ -4152,7 +4152,7 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet = $30,"
         "  reservations_out_of_pool = $31,"
         "  cache_threshold = cast($32 as float),"
-        "  cache_max_age =  $33"
+        "  cache_max_age =  $33 "
         "WHERE subnet_id = $34 OR subnet_prefix = $35"
     },
 
