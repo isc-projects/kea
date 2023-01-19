@@ -1,3 +1,8 @@
+2090.	[build]		andrei
+	Fixed the --with-site-packages configure flag which had no effect
+	previously.
+	(Gitlab #2669)
+
 Kea 2.3.4 (development) released on January 25, 2022
 
 2089.	[build]		razvan
