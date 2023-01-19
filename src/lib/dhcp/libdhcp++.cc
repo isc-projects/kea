@@ -685,13 +685,10 @@ LibDHCP::fuseOptions4(OptionCollection& options) {
 void
 LibDHCP::extendVendorOptions4(OptionCollection& options) {
     map<uint32_t, OptionCollection> vendors_data;
-    auto const& it = options.find(DHO_VIVSO_SUBOPTIONS);
-    // After calling fuseOptions4 there should be at most one option of
-    // DHO_VIVSO_SUBOPTIONS type.
-    if (it != options.end()) {
+    auto range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
+    for (auto it = range.first; it != range.second; ++it) {
         uint32_t offset = 0;
         auto const& data = it->second->getData();
-        auto const& begin = data.begin();
         size_t size;
         while ((size = data.size() - offset) != 0) {
             if (size < sizeof(uint32_t)) {
@@ -702,7 +699,7 @@ LibDHCP::extendVendorOptions4(OptionCollection& options) {
             }
             uint32_t vendor_id = readUint32(&data[offset], data.size());
             offset += 4;
-            const OptionBuffer vendor_buffer(begin + offset, data.end());
+            const OptionBuffer vendor_buffer(data.begin() + offset, data.end());
             try {
                 offset += LibDHCP::unpackVendorOptions4(vendor_id, vendor_buffer,
                                                         vendors_data[vendor_id]);
