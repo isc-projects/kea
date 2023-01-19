@@ -347,7 +347,7 @@ aborted.  This is most likely a configuration issue.
 
 % DHCP_DDNS_REVERSE_REMOVE_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping remove for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
-DHCP_DDNS is carrying out a reverse address update.  The application will
+DHCP_DDNS is carrying out a reverse mapping remove.  The application will
 retry against the same server or others as appropriate.
 
 % DHCP_DDNS_REVERSE_REMOVE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping remove for FQDN %2 to DNS server %3
