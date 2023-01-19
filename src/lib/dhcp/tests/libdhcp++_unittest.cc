@@ -1080,7 +1080,13 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
     }
 }
 
-TEST_F(LibDhcpTest, extentVendorOptions4) {
+// This test checks that the server can receive multiple vendor options
+// (code 125) with some using the same enterprise ID and some using a different
+// enterprise ID. It should also be able to extend one option which contains
+// multiple enterprise IDs in multiple instances of OptionVendor.
+// The extendVendorOptions4 should be able to create one instance for each
+// enterprise ID, each with it's respective suboptions.
+TEST_F(LibDhcpTest, extendVendorOptions4) {
     OptionPtr suboption;
     OptionVendorPtr opt1(new OptionVendor(Option::V4, 1));
     suboption.reset(new OptionString(Option::V4, 16, "first"));
@@ -1095,8 +1101,8 @@ TEST_F(LibDhcpTest, extentVendorOptions4) {
     suboption.reset(new OptionString(Option::V4, 64, "third"));
     opt4->addOption(suboption);
     OptionCollection container;
-    container.insert(make_pair(1, opt1));
-    container.insert(make_pair(1, opt2));
+    container.insert(make_pair(DHO_VIVSO_SUBOPTIONS, opt1));
+    container.insert(make_pair(DHO_VIVSO_SUBOPTIONS, opt2));
     OptionCollection options;
     for (auto const& option : container) {
         const OptionBuffer& buffer = option.second->toBinary();
@@ -1107,24 +1113,27 @@ TEST_F(LibDhcpTest, extentVendorOptions4) {
     }
     ASSERT_NO_THROW(LibDHCP::fuseOptions4(options));
     ASSERT_EQ(options.size(), 1);
-    options.insert(make_pair(2, opt3));
-    options.insert(make_pair(1, opt4));
-    ASSERT_EQ(options.size(), 3);
+    ASSERT_EQ(options.count(DHO_VIVSO_SUBOPTIONS), 1);
+    ASSERT_EQ(options.find(DHO_VIVSO_SUBOPTIONS)->second->getType(), DHO_VIVSO_SUBOPTIONS);
     container.clear();
-    for (auto const& option : options) {
+    container.insert(make_pair(DHO_VIVSO_SUBOPTIONS, options.begin()->second));
+    container.insert(make_pair(DHO_VIVSO_SUBOPTIONS, opt3));
+    container.insert(make_pair(DHO_VIVSO_SUBOPTIONS, opt4));
+    ASSERT_EQ(container.size(), 3);
+    options.clear();
+    for (auto const& option : container) {
         const OptionBuffer& buffer = option.second->toBinary();
-        container.insert(make_pair(option.second->getType(),
+        options.insert(make_pair(option.second->getType(),
                                  OptionPtr(new Option(Option::V4,
                                                       option.second->getType(),
                                                       buffer))));
     }
-    ASSERT_EQ(container.size(), 3);
-    options = container;
-    ASSERT_NO_THROW(LibDHCP::fuseOptions4(options));
-    ASSERT_EQ(options.size(), 1);
+    ASSERT_EQ(options.size(), 3);
     LibDHCP::extendVendorOptions4(options);
     ASSERT_EQ(options.size(), 2);
+    ASSERT_EQ(options.count(DHO_VIVSO_SUBOPTIONS), 2);
     for (auto const& option : options) {
+        ASSERT_EQ(option.second->getType(), DHO_VIVSO_SUBOPTIONS);
         OptionCollection suboptions = option.second->getOptions();
         OptionPtr suboption;
         OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(option.second);

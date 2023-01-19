@@ -685,7 +685,7 @@ LibDHCP::fuseOptions4(OptionCollection& options) {
 void
 LibDHCP::extendVendorOptions4(OptionCollection& options) {
     map<uint32_t, OptionCollection> vendors_data;
-    auto range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
+    const auto& range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
     for (auto it = range.first; it != range.second; ++it) {
         uint32_t offset = 0;
         auto const& data = it->second->getData();
@@ -710,6 +710,9 @@ LibDHCP::extendVendorOptions4(OptionCollection& options) {
                 throw;
             }
         }
+    }
+    if (vendors_data.empty()) {
+        return;
     }
     // Delete the initial option.
     options.erase(DHO_VIVSO_SUBOPTIONS);
