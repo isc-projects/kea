@@ -1,3 +1,8 @@
+2086.	[bug]		andrei
+	A spacing issue in a prepared statement that prevented Config
+	Backend from working with PostgreSQL 15 and above has been fixed.
+	(Gitlab #2724)
+
 2085.	[func]		tmark
 	kea-dhcp-ddns uses new log messages to clearly distinguish
 	between timeouts and other IO errors when communicating with
