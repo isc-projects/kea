@@ -1,3 +1,8 @@
+2088.	[func]*		tomek
+	The libreload command is now deprecated. The code is still there,
+	but it will be removed in the future versions.
+	(Gitlab #2693)
+
 2087.	[func]		razvan
 	The Kea DHCPv4 server can now handle multiple vendor options
 	with different enterprise IDs and multiple vivso-suboptions.
