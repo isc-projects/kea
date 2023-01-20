@@ -1087,6 +1087,9 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
 // multiple enterprise IDs in multiple instances of OptionVendor.
 // The extendVendorOptions4 should be able to create one instance for each
 // enterprise ID, each with it's respective suboptions.
+// Some of the test scenarios are not following RFCs, but people out there are
+// like to do it anyway. We want Kea to be robust and handle such scenarios,
+// therefore we're testing also for non-conformant behavior.
 TEST_F(LibDhcpTest, extendVendorOptions4) {
     OptionPtr suboption;
     OptionVendorPtr opt1(new OptionVendor(Option::V4, 1));
