@@ -50,7 +50,7 @@ libkea_yang_la_LIBADD += $(LIBYANGCPP_LIBS)
 libkea_yang_la_LIBADD += $(SYSREPO_LIBS)
 libkea_yang_la_LIBADD += $(SYSREPOCPP_LIBS)
 
-libkea_yang_la_LDFLAGS = -no-undefined -version-info 41:0:0
+libkea_yang_la_LDFLAGS = -no-undefined -version-info 42:0:0
 
 # Specify the headers for copying into the installation directory tree.
 libkea_yang_includedir = $(pkgincludedir)/yang

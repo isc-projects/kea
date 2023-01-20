@@ -20,7 +20,7 @@ libkea_pgsql_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_pgsql_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_pgsql_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
-libkea_pgsql_la_LDFLAGS = -no-undefined -version-info 47:0:0
+libkea_pgsql_la_LDFLAGS = -no-undefined -version-info 48:0:0
 
 libkea_pgsql_la_LDFLAGS += $(PGSQL_LIBS)
 
