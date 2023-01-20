@@ -79,7 +79,7 @@ public:
                               std::vector<uint32_t> requested_vendor_ids,
                               std::vector<uint32_t> requested_options) {
         std::vector<uint32_t> result_vendor_ids;
-        ASSERT_TRUE(configured_vendor_ids.size());
+        ASSERT_FALSE(configured_vendor_ids.empty());
         ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
         for (const auto& req : requested_vendor_ids) {
             if (req == VENDOR_ID_CABLE_LABS) {
@@ -292,7 +292,7 @@ public:
         }
     }
 
-    /// @brief Checks if vendor options is parsed correctly and the persistent
+    /// @brief Checks if vendor options are parsed correctly and the persistent
     /// options are actually assigned. Also covers negative tests that options
     /// are not provided when a different vendor ID is given.
     ///
@@ -782,7 +782,7 @@ TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionDifferentVendorIDMultipleVe
                          {DOCSIS3_V4_TFTP_SERVERS, 22});
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOption) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS},
@@ -791,7 +791,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsOneOption) {
                                 false);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOption) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS},
@@ -800,7 +800,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOption) {
                                 false);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchOne) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
@@ -809,7 +809,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchOne) 
                                 false);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchOne) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
@@ -818,7 +818,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatch
                                 false);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchAll) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
@@ -827,7 +827,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchAll) 
                                 false);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchAll) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
@@ -836,7 +836,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatch
                                 false);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionAddVendorOption) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS},
@@ -845,7 +845,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionAddVendorOption) {
                                 true);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionAddVendorOption) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS},
@@ -854,7 +854,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionAddVendorOption) {
                                 true);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchOneAddVendorOption) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
@@ -863,7 +863,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchOneAd
                                 true);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchOneAddVendorOption) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
@@ -872,7 +872,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatch
                                 true);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchAllAddVendorOption) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
@@ -881,7 +881,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchAllAd
                                 true);
 }
 
-// This test checks vendor options is parsed correctly and the persistent
+// This test checks vendor options are parsed correctly and the persistent
 // options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchAllAddVendorOption) {
     testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},

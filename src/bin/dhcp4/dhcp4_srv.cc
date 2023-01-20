@@ -1872,7 +1872,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
                 OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, opt);
                 // Got it: add it and jump to the outer loop
                 if (desc.option_) {
-                    resp->Pkt::addOption(desc.option_);
+                    resp->addOption(desc.option_);
                     break;
                 }
             }
@@ -1948,7 +1948,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     }
 
     // Next, try to get the vendor-id from the client packet's
-    // vendor-specific information option (17).
+    // vendor-specific information option (125).
     map<uint32_t, OptionVendorPtr> vendor_reqs;
     for (auto opt : query->getOptions(DHO_VIVSO_SUBOPTIONS)) {
         OptionVendorPtr vendor_req;
