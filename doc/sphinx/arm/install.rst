@@ -641,3 +641,10 @@ Kea versions 1.9.9 and earlier required Sysrepo 0.7.x to run, when optional supp
 enabled. Kea versions 1.9.10 and later now require Sysrepo 1.4.x and the related libyang 1.x library to
 run. The earlier Sysrepo versions are no longer supported. The latest Sysrepo 2.x version does not
 provide C++ bindings, and as such, is not usable for Kea.
+libreload command
+-----------------
+
+The libreload was deprecated in Kea 2.3.4. The code to handle this command is
+still there, but there are reports of it being buggy and not really usable.
+Kea 2.3 and upcoming 2.4 versions will produce a warning when this command
+is used. It will be removed some time in 2.5 timeframe.

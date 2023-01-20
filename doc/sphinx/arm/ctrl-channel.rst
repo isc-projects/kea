@@ -494,6 +494,8 @@ information about the processing of expired leases (lease reclamation).
 The ``libreload`` Command
 -------------------------
 
+This command is now deprecated and will be removed in future Kea versions.
+
 The ``libreload`` command first unloads and then loads all currently
 loaded hook libraries. This is primarily intended to allow one or more
 hook libraries to be replaced with newer versions, without requiring Kea
