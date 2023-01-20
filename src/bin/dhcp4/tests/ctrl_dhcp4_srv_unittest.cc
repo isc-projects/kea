@@ -469,7 +469,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
     std::string response;
     sendUnixCommand("{ \"command\": \"libreload\" }", response);
     EXPECT_EQ("{ \"result\": 0, "
-              "\"text\": \"Hooks libraries successfully reloaded.\" }"
+              "\"text\": \"Hooks libraries successfully reloaded "
+              "(WARNING: libreload is deprecated).\" }"
               , response);
 
     // Check that the libraries have unloaded and reloaded.  The libraries are
@@ -515,7 +516,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreloadFailMultiThreading) {
     std::string response;
     sendUnixCommand("{ \"command\": \"libreload\" }", response);
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"Failed to reload hooks libraries.\" }"
+              "\"text\": \"Failed to reload hooks libraries"
+              " (WARNING: libreload is deprecated).\" }"
               , response);
 
     // Check that the libraries have unloaded and failed to reload.  The

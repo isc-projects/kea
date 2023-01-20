@@ -228,6 +228,8 @@ ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr args)
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
+    LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED).arg("libreload command");
+
     // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
 
@@ -241,7 +243,8 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         static_cast<void>(HooksManager::unloadLibraries());
         bool status = HooksManager::loadLibraries(loaded);
         if (!status) {
-            isc_throw(Unexpected, "Failed to reload hooks libraries.");
+            isc_throw(Unexpected, "Failed to reload hooks libraries"
+                                  " (WARNING: libreload is deprecated).");
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_HOOKS_LIBS_RELOAD_FAIL);
@@ -249,7 +252,8 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         return (answer);
     }
     ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Hooks libraries successfully reloaded.");
+                             "Hooks libraries successfully reloaded "
+                             "(WARNING: libreload is deprecated).");
     return (answer);
 }
 
@@ -826,7 +830,6 @@ ControlledDhcpv6Srv::processCommand(const string& command,
             return (srv->commandShutdownHandler(command, args));
 
         } else if (command == "libreload") {
-            LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED).arg("libreload command");
             return (srv->commandLibReloadHandler(command, args));
 
         } else if (command == "config-reload") {
