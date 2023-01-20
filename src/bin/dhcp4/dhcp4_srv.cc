@@ -1736,38 +1736,41 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
 
     // Retrieve subnet.
     Subnet4Ptr subnet = ex.getContext()->subnet_;
+    if (!subnet) {
+        // All methods using the CfgOptionList object return soon when
+        // there is no subnet so do the same
+        return;
+    }
+
     // Firstly, host specific options.
     const ConstHostPtr& host = ex.getContext()->currentHost();
     if (host && !host->getCfgOption4()->empty()) {
         co_list.push_back(host->getCfgOption4());
     }
 
-    // Secondly, pool specific options. Pools are defined within a subnet, so
-    // if there is no subnet, there is nothing to do.
-    if (subnet) {
-        Pkt4Ptr resp = ex.getResponse();
-        IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
-        if (resp) {
-            addr = resp->getYiaddr();
+    // Secondly, pool specific options.
+    Pkt4Ptr resp = ex.getResponse();
+    IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
+    if (resp) {
+        addr = resp->getYiaddr();
+    }
+    if (!addr.isV4Zero()) {
+        PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
+        if (pool && !pool->getCfgOption()->empty()) {
+            co_list.push_back(pool->getCfgOption());
         }
-        if (!addr.isV4Zero()) {
-            PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
-            if (pool && !pool->getCfgOption()->empty()) {
-                co_list.push_back(pool->getCfgOption());
-            }
-        }
+    }
 
-        // Thirdly, subnet configured options.
-        if (!subnet->getCfgOption()->empty()) {
-            co_list.push_back(subnet->getCfgOption());
-        }
+    // Thirdly, subnet configured options.
+    if (!subnet->getCfgOption()->empty()) {
+        co_list.push_back(subnet->getCfgOption());
+    }
 
-        // Fourthly, shared network specific options.
-        SharedNetwork4Ptr network;
-        subnet->getSharedNetwork(network);
-        if (network && !network->getCfgOption()->empty()) {
-            co_list.push_back(network->getCfgOption());
-        }
+    // Fourthly, shared network specific options.
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    if (network && !network->getCfgOption()->empty()) {
+        co_list.push_back(network->getCfgOption());
     }
 
     // Each class in the incoming packet
@@ -1804,6 +1807,17 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
 
 void
 Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
+    // Get the subnet relevant for the client. We will need it
+    // to get the options associated with it.
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    // If we can't find the subnet for the client there is no way
+    // to get the options to be sent to a client. We don't log an
+    // error because it will be logged by the assignLease method
+    // anyway.
+    if (!subnet) {
+        return;
+    }
+
     // Unlikely short cut
     const CfgOptionList& co_list = ex.getCfgOptionList();
     if (co_list.empty()) {
