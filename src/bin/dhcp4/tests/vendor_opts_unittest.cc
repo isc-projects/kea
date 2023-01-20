@@ -228,7 +228,7 @@ public:
         // top of the now-absent options.
         OptionCollection tmp = offer->getOptions(DHO_VIVSO_SUBOPTIONS);
         ASSERT_EQ(tmp.size(), result_vendor_ids.size());
-        if (!result_vendor_ids.size()) {
+        if (result_vendor_ids.empty()) {
             return;
         }
 
@@ -253,7 +253,8 @@ public:
                         ASSERT_TRUE(docsis2);
 
                         // It should be an Option4AddrLst.
-                        Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+                        Option4AddrLstPtr tftp_srvs =
+                                boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
                         ASSERT_TRUE(tftp_srvs);
 
                         // Check that the provided addresses match the ones in configuration.
@@ -291,9 +292,9 @@ public:
         }
     }
 
-    /// @brief Checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-    /// vendor options is parsed correctly and the configured options are
-    /// actually assigned.
+    /// @brief Checks if vendor options is parsed correctly and the persistent
+    /// options are actually assigned. Also covers negative tests that options
+    /// are not provided when a different vendor ID is given.
     ///
     /// @param configured_vendor_ids The vendor IDs that are configured in the
     /// server: 4491 or both 4491 and 3561.
@@ -307,18 +308,20 @@ public:
                                      std::vector<uint32_t> configured_options,
                                      bool add_vendor_option) {
         std::vector<uint32_t> result_vendor_ids;
-        ASSERT_TRUE(configured_vendor_ids.size());
+        ASSERT_FALSE(configured_vendor_ids.empty());
         ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
         if (add_vendor_option) {
             for (const auto& req : requested_vendor_ids) {
-                if (std::find(configured_vendor_ids.begin(), configured_vendor_ids.end(), req) != configured_vendor_ids.end()) {
+                if (std::find(configured_vendor_ids.begin(),
+                              configured_vendor_ids.end(), req) !=
+                    configured_vendor_ids.end()) {
                     result_vendor_ids.push_back(req);
                 }
             }
         } else {
             result_vendor_ids = configured_vendor_ids;
         }
-        ASSERT_TRUE(configured_options.size());
+        ASSERT_FALSE(configured_options.empty());
         ASSERT_EQ(configured_options[0], DOCSIS3_V4_TFTP_SERVERS);
         // Create a config with a custom options.
         string config = R"(
@@ -480,7 +483,7 @@ public:
         OptionCollection tmp = offer->getOptions(DHO_VIVSO_SUBOPTIONS);
         ASSERT_EQ(tmp.size(), result_vendor_ids.size());
 
-        for (const auto& opt : tmp) {
+        for (auto const& opt : tmp) {
             // The response should be an OptionVendor.
             OptionVendorPtr vendor_resp;
 
@@ -523,7 +526,8 @@ public:
                             // The option is serialized as Option so it needs to be converted to
                             // Option4AddrLst.
                             auto const& buffer = docsis2->toBinary();
-                            tftp_srvs.reset(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS, buffer.begin(), buffer.end()));
+                            tftp_srvs.reset(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
+                                                               buffer.begin(), buffer.end()));
                         }
                         ASSERT_TRUE(tftp_srvs);
 
@@ -548,7 +552,8 @@ public:
                         // The option is serialized as Option so it needs to be converted to
                         // OptionString.
                         auto const& buffer = custom->toBinary();
-                        OptionStringPtr tag(new OptionString(Option::V4, 22, buffer.begin(), buffer.end()));
+                        OptionStringPtr tag(new OptionString(Option::V4, 22,
+                                                             buffer.begin(), buffer.end()));
                         ASSERT_TRUE(tag);
 
                         // Check that the provided value match the ones in configuration.
@@ -563,6 +568,7 @@ public:
         }
     }
 
+    // @brief Test configuration for IfaceMgr.
     std::unique_ptr<IfaceMgrTestConfig> iface_mgr_test_config_;
 };
 
@@ -630,7 +636,8 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     ASSERT_TRUE(vendor_opt_response);
 
     // Check if it's of a correct type
-    OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
+    OptionVendorPtr vendor_opt =
+            boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
     ASSERT_TRUE(vendor_opt);
     ASSERT_EQ(vendor_opt->getVendorId(), VENDOR_ID_CABLE_LABS);
 
@@ -698,133 +705,189 @@ TEST_F(VendorOptsTest, docsisVendorORO) {
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(VendorOptsTest, vendorOptionsOROOneOption) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS},
+                         {VENDOR_ID_CABLE_LABS},
+                         {DOCSIS3_V4_TFTP_SERVERS});
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptions) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS},
+                         {VENDOR_ID_CABLE_LABS},
+                         {DOCSIS3_V4_TFTP_SERVERS, 22});
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(VendorOptsTest, vendorOptionsOROOneOptionMultipleVendorsMatchOne) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561},
+                         {VENDOR_ID_CABLE_LABS},
+                         {DOCSIS3_V4_TFTP_SERVERS});
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionsMultipleVendorsMatchOne) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561},
+                         {VENDOR_ID_CABLE_LABS},
+                         {DOCSIS3_V4_TFTP_SERVERS, 22});
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(VendorOptsTest, vendorOptionsOROOneOptionMultipleVendorsMatchAll) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561},
+                         {VENDOR_ID_CABLE_LABS, 3561},
+                         {DOCSIS3_V4_TFTP_SERVERS});
 }
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionsMultipleVendorsMatchAll) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS, 22});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561},
+                         {VENDOR_ID_CABLE_LABS, 3561},
+                         {DOCSIS3_V4_TFTP_SERVERS, 22});
 }
 
 // Same as vendorOptionsORO except a different vendor ID than Cable Labs is
 // provided and vendor options are expected to not be present in the response.
 TEST_F(VendorOptsTest, vendorOptionsOROOneOptionDifferentVendorID) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS}, {32768}, {DOCSIS3_V4_TFTP_SERVERS});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS},
+                         {32768},
+                         {DOCSIS3_V4_TFTP_SERVERS});
 }
 
 // Same as vendorOptionsORO except a different vendor ID than Cable Labs is
 // provided and vendor options are expected to not be present in the response.
 TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionsDifferentVendorID) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS}, {32768}, {DOCSIS3_V4_TFTP_SERVERS, 22});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS},
+                         {32768},
+                         {DOCSIS3_V4_TFTP_SERVERS, 22});
 }
 
 // Same as vendorOptionsORO except a different vendor ID than Cable Labs is
 // provided and vendor options are expected to not be present in the response.
 TEST_F(VendorOptsTest, vendorOptionsOROOneOptionDifferentVendorIDMultipleVendorsMatchNone) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {32768, 16384}, {DOCSIS3_V4_TFTP_SERVERS});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561},
+                         {32768, 16384},
+                         {DOCSIS3_V4_TFTP_SERVERS});
 }
 
 // Same as vendorOptionsORO except a different vendor ID than Cable Labs is
 // provided and vendor options are expected to not be present in the response.
 TEST_F(VendorOptsTest, vendorOptionsOROMultipleOptionDifferentVendorIDMultipleVendorsMatchNone) {
-    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561}, {32768, 16384}, {DOCSIS3_V4_TFTP_SERVERS, 22});
+    testVendorOptionsORO({VENDOR_ID_CABLE_LABS, 3561},
+                         {32768, 16384},
+                         {DOCSIS3_V4_TFTP_SERVERS, 22});
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOption) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS}, false);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS},
+                                {VENDOR_ID_CABLE_LABS},
+                                {DOCSIS3_V4_TFTP_SERVERS},
+                                false);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOption) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22}, false);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS},
+                                {VENDOR_ID_CABLE_LABS},
+                                {DOCSIS3_V4_TFTP_SERVERS, 22},
+                                false);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchOne) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS}, false);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
+                                {VENDOR_ID_CABLE_LABS},
+                                {DOCSIS3_V4_TFTP_SERVERS},
+                                false);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchOne) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22}, false);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
+                                {VENDOR_ID_CABLE_LABS},
+                                {DOCSIS3_V4_TFTP_SERVERS, 22},
+                                false);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchAll) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS}, false);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
+                                {VENDOR_ID_CABLE_LABS, 3561},
+                                {DOCSIS3_V4_TFTP_SERVERS},
+                                false);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchAll) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS, 22}, false);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
+                                {VENDOR_ID_CABLE_LABS, 3561},
+                                {DOCSIS3_V4_TFTP_SERVERS, 22},
+                                false);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionAddVendorOption) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS}, true);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS},
+                                {VENDOR_ID_CABLE_LABS},
+                                {DOCSIS3_V4_TFTP_SERVERS},
+                                true);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionAddVendorOption) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22}, true);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS},
+                                {VENDOR_ID_CABLE_LABS},
+                                {DOCSIS3_V4_TFTP_SERVERS, 22},
+                                true);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchOneAddVendorOption) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS}, true);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
+                                {VENDOR_ID_CABLE_LABS},
+                                {DOCSIS3_V4_TFTP_SERVERS},
+                                true);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchOneAddVendorOption) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS}, {DOCSIS3_V4_TFTP_SERVERS, 22}, true);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
+                                {VENDOR_ID_CABLE_LABS},
+                                {DOCSIS3_V4_TFTP_SERVERS, 22},
+                                true);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsOneOptionMultipleVendorsMatchAllAddVendorOption) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS}, true);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
+                                {VENDOR_ID_CABLE_LABS, 3561},
+                                {DOCSIS3_V4_TFTP_SERVERS},
+                                true);
 }
 
-// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
-// vendor options is parsed correctly and persistent options are actually assigned.
+// This test checks vendor options is parsed correctly and the persistent
+// options are actually assigned.
 TEST_F(VendorOptsTest, vendorPersistentOptionsMultipleOptionMultipleVendorsMatchAllAddVendorOption) {
-    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561}, {VENDOR_ID_CABLE_LABS, 3561}, {DOCSIS3_V4_TFTP_SERVERS, 22}, true);
+    testVendorOptionsPersistent({VENDOR_ID_CABLE_LABS, 3561},
+                                {VENDOR_ID_CABLE_LABS, 3561},
+                                {DOCSIS3_V4_TFTP_SERVERS, 22},
+                                true);
 }
 
 // Test checks whether it is possible to use option definitions defined in

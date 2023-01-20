@@ -276,6 +276,7 @@ private:
     }
     )";
 
+    // @brief Test configuration for IfaceMgr.
     std::unique_ptr<IfaceMgrTestConfig> iface_mgr_test_config_;
 };
 

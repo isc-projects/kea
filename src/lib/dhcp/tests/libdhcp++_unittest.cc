@@ -408,7 +408,8 @@ TEST_F(LibDhcpTest, packOptions6) {
                                    OptionBuffer(v6packed + 46, v6packed + 50)));
 
     boost::shared_ptr<OptionInt<uint32_t> >
-        vsi(new OptionInt<uint32_t>(Option::V6, D6O_VENDOR_OPTS, VENDOR_ID_CABLE_LABS));
+        vsi(new OptionInt<uint32_t>(Option::V6, D6O_VENDOR_OPTS,
+                                    VENDOR_ID_CABLE_LABS));
     vsi->addOption(cm_mac);
     vsi->addOption(cmts_caps);
 

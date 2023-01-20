@@ -705,6 +705,7 @@ LibDHCP::extendVendorOptions4(OptionCollection& options) {
                                                         vendors_data[vendor_id]);
             } catch (const SkipThisOptionError&) {
                 // Ignore this kind of error and continue.
+                break;
             } catch (const Exception&) {
                 options.erase(DHO_VIVSO_SUBOPTIONS);
                 throw;
