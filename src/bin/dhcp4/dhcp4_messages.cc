@@ -53,6 +53,7 @@ extern const isc::log::MessageID DHCP4_DECLINE_LEASE_MISMATCH = "DHCP4_DECLINE_L
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_NOT_FOUND = "DHCP4_DECLINE_LEASE_NOT_FOUND";
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_MISSING = "DHCP4_DEFERRED_OPTION_MISSING";
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_UNPACK_FAIL = "DHCP4_DEFERRED_OPTION_UNPACK_FAIL";
+extern const isc::log::MessageID DHCP4_DEPRECATED = "DHCP4_DEPRECATED";
 extern const isc::log::MessageID DHCP4_DEVELOPMENT_VERSION = "DHCP4_DEVELOPMENT_VERSION";
 extern const isc::log::MessageID DHCP4_DHCP4O6_BAD_PACKET = "DHCP4_DHCP4O6_BAD_PACKET";
 extern const isc::log::MessageID DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP = "DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP";
@@ -222,6 +223,7 @@ const char* values[] = {
     "DHCP4_DECLINE_LEASE_NOT_FOUND", "Received DHCPDECLINE for addr %1 from client %2, but no such lease found.",
     "DHCP4_DEFERRED_OPTION_MISSING", "can find deferred option code %1 in the query",
     "DHCP4_DEFERRED_OPTION_UNPACK_FAIL", "An error unpacking the deferred option %1: %2",
+    "DHCP4_DEPRECATED", "The following mechanism is now deprecated and will be removed in the future: %1",
     "DHCP4_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
     "DHCP4_DHCP4O6_BAD_PACKET", "received malformed DHCPv4o6 packet: %1",
     "DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP", "%1: packet was dropped, because a callout set the next step to 'drop'",

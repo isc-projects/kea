@@ -290,6 +290,11 @@ received in Decline message. It's expected that the option will contain an
 address that is being declined. Specific information will be printed in a
 separate message.
 
+% DHCP6_DEPRECATED The following mechanism is now deprecated and will be removed in the future: %1
+The mechanism specified by parameter 1 is deprecated. It is functional, but
+there is a plan to remove this capability in the future version. You
+should plan your strategy to stop using it soon.
+
 % DHCP6_DEVELOPMENT_VERSION This software is a development branch of Kea. It is not recommended for production use.
 This warning message is displayed when the version is a development
 (vs stable) one: the second number of the version is odd.

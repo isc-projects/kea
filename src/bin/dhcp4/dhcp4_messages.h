@@ -54,6 +54,7 @@ extern const isc::log::MessageID DHCP4_DECLINE_LEASE_MISMATCH;
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_NOT_FOUND;
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_MISSING;
 extern const isc::log::MessageID DHCP4_DEFERRED_OPTION_UNPACK_FAIL;
+extern const isc::log::MessageID DHCP4_DEPRECATED;
 extern const isc::log::MessageID DHCP4_DEVELOPMENT_VERSION;
 extern const isc::log::MessageID DHCP4_DHCP4O6_BAD_PACKET;
 extern const isc::log::MessageID DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP;

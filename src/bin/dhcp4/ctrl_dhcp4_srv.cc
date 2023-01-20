@@ -823,6 +823,7 @@ ControlledDhcpv4Srv::processCommand(const string& command,
             return (srv->commandShutdownHandler(command, args));
 
         } else if (command == "libreload") {
+            LOG_WARN(dhcp4_logger, DHCP4_DEPRECATED).arg("libreload command");
             return (srv->commandLibReloadHandler(command, args));
 
         } else if (command == "config-reload") {
