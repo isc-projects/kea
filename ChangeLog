@@ -1,3 +1,8 @@
+2087.	[func]		razvan
+	The Kea DHCPv4 server can now handle multiple vendor options
+	with different enterprise IDs and multiple vivso-suboptions.
+	(Gitlab #1518)
+
 2086.	[bug]		andrei
 	A spacing issue in a prepared statement that prevented Config
 	Backend from working with PostgreSQL 15 and above has been fixed.
