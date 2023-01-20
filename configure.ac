@@ -722,7 +722,7 @@ if test "$MYSQL_CONFIG" != "" ; then
     # Note that MYSQL is present in the config.h file
     AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
 
-    # Check is my_bool is defined.
+    # Check if my_bool is defined.
     AC_COMPILE_IFELSE(
         [AC_LANG_PROGRAM([#include <mysql.h>
                           const my_bool MLM_FALSE = 0;]
@@ -731,9 +731,27 @@ if test "$MYSQL_CONFIG" != "" ; then
          AC_DEFINE([HAVE_MYSQL_MY_BOOL], [1], [MySQL uses my_bool])],
         [AC_MSG_RESULT([checking for MySQL my_bool... no])])
 
+    # Check if mysql_get_option is defined.
+    AC_MSG_CHECKING([for MySQL mysql_get_option])
+    AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM(
+            [#include <mysql.h>],
+            [MYSQL handle;
+             unsigned int timeout;
+             mysql_get_option(&handle, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);]
+        )],
+        [AC_MSG_RESULT([yes])
+         AC_DEFINE([HAVE_MYSQL_GET_OPTION], [true], [MySQL has mysql_get_option defined.])],
+        [AC_MSG_RESULT([no])
+         AC_MSG_WARN([mysql_get_option program failed to build:
+
+$(cat conftest.cpp)
+
+$(cat conftest.err)])]
+    )
+
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
-
 fi
 
 # Solaris puts FIONREAD in filio.h
