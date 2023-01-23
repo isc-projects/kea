@@ -150,6 +150,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                  | reservations_lookup_first
                  | compatibility
                  | parked_packet_limit
+                 | allocator
                  | unknown_map_entry
 
      valid_lifetime ::= "valid-lifetime" ":" INTEGER
@@ -177,6 +178,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      server_tag ::= "server-tag" ":" STRING
 
      parked_packet_limit ::= "parked-packet-limit" ":" INTEGER
+
+     allocator ::= "allocator" ":" STRING
 
      echo_client_id ::= "echo-client-id" ":" BOOLEAN
 
@@ -303,6 +306,9 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                        | lfc_interval
                        | readonly
                        | connect_timeout
+                       | read_timeout
+                       | write_timeout
+                       | tcp_user_timeout
                        | max_reconnect_tries
                        | reconnect_wait_time
                        | on_fail
@@ -336,6 +342,12 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      readonly ::= "readonly" ":" BOOLEAN
 
      connect_timeout ::= "connect-timeout" ":" INTEGER
+
+     read_timeout ::= "read-timeout" ":" INTEGER
+
+     write_timeout ::= "write-timeout" ":" INTEGER
+
+     tcp_user_timeout ::= "tcp-user-timeout" ":" INTEGER
 
      max_reconnect_tries ::= "max-reconnect-tries" ":" INTEGER
 
@@ -509,6 +521,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                   | hostname_char_set
                   | hostname_char_replacement
                   | store_extended_info
+                  | allocator
                   | unknown_map_entry
 
      subnet ::= "subnet" ":" STRING
@@ -594,6 +607,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | hostname_char_set
                          | hostname_char_replacement
                          | store_extended_info
+                         | allocator
                          | unknown_map_entry
 
      option_def_list ::= "option-def" ":" "[" option_def_list_content "]"

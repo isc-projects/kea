@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,12 +80,6 @@ This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a forward address add.  The application will
 retry against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_ADD_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping add for FQDN %2 to DNS server %3
-This is an error message issued when no response is received from the DNS
-server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
-a forward address add.  The application will retry against the same
-server or others as appropriate.
-
 % DHCP_DDNS_FORWARD_ADD_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to add the address mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
@@ -95,6 +89,12 @@ in RFC 2136.
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to add a forward address mapping,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_ADD_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping add for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward address add.  The application will retry against the same
+server or others as appropriate.
 
 % DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing a forward address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
@@ -113,12 +113,6 @@ This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a forward address remove.  The application will retry
 against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a repsonse to forward mapping address removal for FQDN %2 to DNS server %3
-This is an error message issued when no response is received from the DNS
-server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
-a forward mapping address removal.  The application will retry against the same
-server or others as appropriate.
-
 % DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to remove the forward address mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
@@ -128,6 +122,12 @@ in RFC 2136.
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove a forward address mapping, is mangled or malformed.
 The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a repsonse to forward mapping address removal for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward mapping address removal.  The application will retry against the same
+server or others as appropriate.
 
 % DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing forward RRs for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
@@ -145,12 +145,6 @@ This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a forward RR remove.  The application will retry
 against the same server.
 
-% DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for response to forward RR removal for FQDN %2 to DNS server %3
-This is an error message issued when no response is received from the DNS
-server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
-a forward RR removal.  The application will retry against the same
-server or others as appropriate.
-
 % DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to remove forward RR entries for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
@@ -161,6 +155,12 @@ This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove forward RRs mapping, is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 /*sar*/
+
+% DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for response to forward RR removal for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward RR removal.  The application will retry against the same
+server or others as appropriate.
 
 % DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing forward address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
@@ -178,12 +178,6 @@ This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a forward mapping replace.  The application will
 retry against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_REPLACE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping replace for FQDN %2 to DNS server %3
-This is an error message issued when no response is received from the DNS
-server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
-a forward mapping replace.  The application will retry against the same
-server or others as appropriate.
-
 % DHCP_DDNS_FORWARD_REPLACE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to replace the address mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
@@ -193,6 +187,12 @@ in RFC 2136.
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to replace a forward address mapping,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_REPLACE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping replace for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward mapping replace.  The application will retry against the same
+server or others as appropriate.
 
 % DHCP_DDNS_FWD_REQUEST_IGNORED Request ID %1: Forward updates are disabled, the forward portion of request will be ignored: %2
 This is a debug message issued when forward DNS updates are disabled and
@@ -350,12 +350,6 @@ This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a reverse mapping remove.  The application will
 retry against the same server or others as appropriate.
 
-% DHCP_DDNS_REVERSE_REMOVE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping remove for FQDN %2 to DNS server %3
-This is an error message issued when no response is received from the DNS
-server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
-a reverse mapping remove. The application will retry against the same
-server or others as appropriate.
-
 % DHCP_DDNS_REVERSE_REMOVE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to remove the reverse mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
@@ -365,6 +359,12 @@ in RFC 2136.
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove a reverse address,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_REVERSE_REMOVE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping remove for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a reverse mapping remove. The application will retry against the same
+server or others as appropriate.
 
 % DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing reverse address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
@@ -382,12 +382,6 @@ This is an error message issued when a communication error occurs while
 DHCP_DDNS is carrying out a reverse mapping replacement.  The application will
 retry against the same server or others as appropriate.
 
-% DHCP_DDNS_REVERSE_REPLACE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping replacement for FQDN %2 to DNS server %3
-This is an error message issued when no response is received from the DNS
-server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
-a reverse mapping replacement.  The application will retry against the same
-server or others as appropriate.
-
 % DHCP_DDNS_REVERSE_REPLACE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to replace the reverse mapping for FQDN, %3, with an RCODE: %4
 This is an error message issued when an update was rejected by the DNS server
 it was sent to for the reason given by the RCODE. The rcode values are defined
@@ -397,6 +391,12 @@ in RFC 2136.
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to replace a reverse address,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_REVERSE_REPLACE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping replacement for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a reverse mapping replacement.  The application will retry against the same
+server or others as appropriate.
 
 % DHCP_DDNS_REV_REQUEST_IGNORED Request ID %1: Reverse updates are disabled, the reverse portion of request will be ignored: %2
 This is a debug message issued when reverse DNS updates are disabled and

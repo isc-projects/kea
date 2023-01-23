@@ -153,6 +153,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | reservations_lookup_first
                  | compatibility
                  | parked_packet_limit
+                 | allocator
+                 | pd_allocator
                  | unknown_map_entry
 
      data_directory ::= "data-directory" ":" STRING
@@ -221,6 +223,10 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      parked_packet_limit ::= "parked-packet-limit" ":" INTEGER
 
+     allocator ::= "allocator" ":" STRING
+
+     pd_allocator ::= "pd-allocator" ":" STRING
+
      early_global_reservations_lookup ::= "early-global-reservations-lookup" ":" BOOLEAN
 
      ip_reservations_unique ::= "ip-reservations-unique" ":" BOOLEAN
@@ -283,6 +289,9 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                        | lfc_interval
                        | readonly
                        | connect_timeout
+                       | read_timeout
+                       | write_timeout
+                       | tcp_user_timeout
                        | max_reconnect_tries
                        | reconnect_wait_time
                        | on_fail
@@ -316,6 +325,12 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      readonly ::= "readonly" ":" BOOLEAN
 
      connect_timeout ::= "connect-timeout" ":" INTEGER
+
+     read_timeout ::= "read-timeout" ":" INTEGER
+
+     write_timeout ::= "write-timeout" ":" INTEGER
+
+     tcp_user_timeout ::= "tcp-user-timeout" ":" INTEGER
 
      reconnect_wait_time ::= "reconnect-wait-time" ":" INTEGER
 
@@ -507,6 +522,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | ddns_update_on_renew
                   | ddns_use_conflict_resolution
                   | store_extended_info
+                  | allocator
+                  | pd_allocator
                   | unknown_map_entry
 
      subnet ::= "subnet" ":" STRING
@@ -590,6 +607,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | ddns_update_on_renew
                          | ddns_use_conflict_resolution
                          | store_extended_info
+                         | allocator
+                         | pd_allocator
                          | unknown_map_entry
 
      option_def_list ::= "option-def" ":" "[" option_def_list_content "]"

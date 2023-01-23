@@ -328,7 +328,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -453,7 +452,7 @@ typedef size_t yy_size_t;
 #endif
 
 /* %if-not-reentrant */
-extern yy_size_t yyleng;
+extern int yyleng;
 /* %endif */
 
 /* %if-c-only */
@@ -506,7 +505,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -587,8 +586,8 @@ static YY_BUFFER_STATE * yy_buffer_stack = NULL; /**< Stack as an array. */
 /* %not-for-header */
 /* yy_hold_char holds the character lost when yytext is formed. */
 static char yy_hold_char;
-static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t yyleng;
+static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+int yyleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = NULL;
@@ -618,7 +617,7 @@ static void yy_init_buffer ( YY_BUFFER_STATE b, FILE *file  );
 
 YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string ( const char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, yy_size_t len  );
+YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len  );
 
 /* %endif */
 
@@ -686,7 +685,7 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
 /* %% [2.0] code to fiddle yytext and yyleng for yymore() goes here \ */\
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (int) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 /* %% [3.0] code to copy yytext_ptr to yytext[] goes here, if %array \ */\
@@ -2115,7 +2114,7 @@ static const flex_int16_t yy_rule_linenum[228] =
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "dhcp6_lexer.ll"
-/* Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2157,7 +2156,7 @@ using namespace isc::dhcp;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser6Context::fatal(msg)
-#line 2160 "dhcp6_lexer.cc"
+#line 2159 "dhcp6_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -2183,8 +2182,8 @@ using namespace isc::dhcp;
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
+#line 2185 "dhcp6_lexer.cc"
 #line 2186 "dhcp6_lexer.cc"
-#line 2187 "dhcp6_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -2240,7 +2239,7 @@ FILE *yyget_out ( void );
 
 void yyset_out  ( FILE * _out_str  );
 
-			yy_size_t yyget_leng ( void );
+			int yyget_leng ( void );
 
 char *yyget_text ( void );
 
@@ -2327,7 +2326,7 @@ static int input ( void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		int n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -2514,7 +2513,7 @@ YY_DECL
     }
 
 
-#line 2517 "dhcp6_lexer.cc"
+#line 2516 "dhcp6_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -5560,7 +5559,7 @@ YY_RULE_SETUP
 #line 2413 "dhcp6_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 5563 "dhcp6_lexer.cc"
+#line 5562 "dhcp6_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -5762,7 +5761,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -5776,7 +5775,7 @@ static int yy_get_next_buffer (void)
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -5834,7 +5833,7 @@ static int yy_get_next_buffer (void)
 
 	if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		yy_size_t new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
+		int new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
 		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc(
 			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
@@ -5955,7 +5954,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (int) ((yy_c_buf_p) - (yytext_ptr));
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -6398,12 +6397,12 @@ YY_BUFFER_STATE yy_scan_string (const char * yystr )
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n;
-	yy_size_t i;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = (yy_size_t) (_yybytes_len + 2);
@@ -6450,7 +6449,7 @@ static void yynoreturn yy_fatal_error (const char* msg )
 	do \
 		{ \
 		/* Undo effects of setting up yytext. */ \
-        yy_size_t yyless_macro_arg = (n); \
+        int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		yytext[yyleng] = (yy_hold_char); \
 		(yy_c_buf_p) = yytext + yyless_macro_arg; \
@@ -6494,7 +6493,7 @@ FILE *yyget_out  (void)
 /** Get the length of the current token.
  * 
  */
-yy_size_t yyget_leng  (void)
+int yyget_leng  (void)
 {
         return yyleng;
 }
