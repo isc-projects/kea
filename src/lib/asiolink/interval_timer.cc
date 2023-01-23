@@ -64,6 +64,7 @@ public:
         lock_guard<mutex> lk (mutex_);
         timer_.cancel();
         interval_ = 0;
+        cbfunc_ = std::function<void()>();
     }
 
     /// @brief Get the timer interval.
