@@ -548,6 +548,57 @@ access the database should be set:
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
 
+.. _tuning-database-timeouts4:
+
+Tuning Database Timeouts
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+In rare cases, reading or writing to the database may hang. It can be
+caused by a temporary network issue or misconfiguration of the proxy
+server switching the connection between different database instances.
+These situations are rare, but we have received reports from the users
+that Kea can sometimes hang while performing the database IO operations.
+Setting appropriate timeout values can mitigate such issues.
+
+MySQL exposes two distinct connection options to configure the read and
+write timeouts. Kea's corresponding ``read-timeout`` and  ``write-timeout``
+configuration parameters specify the timeouts in seconds. For example:
+
+::
+
+   "Dhcp4": { "lease-database": { "read-timeout" : 10, "write-timeout": 20, ... }, ... }
+
+
+Setting these parameters to 0 is equivalent to not specifying them and
+causes the Kea server to establish a connection to the database with the
+MySQL defaults. In this case, Kea waits infinitely for the completion of
+the read and write operations.
+
+MySQL versions earlier than 5.6 do not support setting timeouts for the
+read and write operations. Moreover, the ``read-timeout`` and ``write-timeout``
+parameters can only be specified for the MySQL backend. Setting them for
+any other backend type causes a configuration error.
+
+Use the ``tcp-user-timeout`` parameter to set a timeout for PostgreSQL
+in seconds. For example:
+
+::
+
+   "Dhcp4": { "lease-database": { "tcp-user-timeout" : 10, ... }, ... }
+
+
+Specifying this parameter for other backend types causes a configuration
+error.
+
+.. note::
+
+    The timeouts described here are only effective for TCP connections.
+    Please note that the MySQL client library used by the Kea servers
+    typically connects to the database via a UNIX domain socket when the
+    ``host`` parameter is ``localhost`` but establishes a TCP connection
+    for ``127.0.0.1``.
+
+
 .. _hosts4-storage:
 
 Hosts Storage
@@ -762,6 +813,12 @@ the parameter is not specified.
 
    The ``readonly`` parameter is only supported for MySQL and
    PostgreSQL databases.
+
+
+Tuning Database Timeouts for Hosts Storage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+See :ref:`tuning-database-timeouts4`.
 
 .. _dhcp4-interface-configuration:
 

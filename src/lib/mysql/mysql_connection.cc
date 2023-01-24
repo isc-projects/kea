@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,30 +65,11 @@ MySqlConnection::openDatabase() {
     }
 
     unsigned int port = 0;
-    string sport;
     try {
-        sport = getParameter("port");
-    } catch (...) {
-        // No port parameter, we are going to use the default port.
-        sport = "";
-    }
+        setIntParameterValue("port", 0, numeric_limits<uint16_t>::max(), port);
 
-    if (sport.size() > 0) {
-        // Port was given, so try to convert it to an integer.
-
-        try {
-            port = boost::lexical_cast<unsigned int>(sport);
-        } catch (...) {
-            // Port given but could not be converted to an unsigned int.
-            // Just fall back to the default value.
-            port = 0;
-        }
-
-        // The port is only valid when it is in the 0..65535 range.
-        // Again fall back to the default when the given value is invalid.
-        if (port > numeric_limits<uint16_t>::max()) {
-            port = 0;
-        }
+    } catch (const std::exception& ex) {
+        isc_throw(DbInvalidPort, ex.what());
     }
 
     const char* user = NULL;
@@ -120,40 +101,21 @@ MySqlConnection::openDatabase() {
     }
 
     unsigned int connect_timeout = MYSQL_DEFAULT_CONNECTION_TIMEOUT;
-    string stimeout;
+    unsigned int read_timeout = 0;
+    unsigned int write_timeout = 0;
     try {
-        stimeout = getParameter("connect-timeout");
-    } catch (...) {
-        // No timeout parameter, we are going to use the default timeout.
-        stimeout = "";
-    }
-
-    if (stimeout.size() > 0) {
-        // Timeout was given, so try to convert it to an integer.
-
-        try {
-            connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
-        } catch (...) {
-            // Timeout given but could not be converted to an unsigned int. Set
-            // the connection timeout to an invalid value to trigger throwing
-            // of an exception.
-            connect_timeout = 0;
-        }
-
         // The timeout is only valid if greater than zero, as depending on the
         // database, a zero timeout might signify something like "wait
         // indefinitely".
-        //
-        // The check below also rejects a value greater than the maximum
-        // integer value.  The lexical_cast operation used to obtain a numeric
-        // value from a string can get confused if trying to convert a negative
-        // integer to an unsigned int: instead of throwing an exception, it may
-        // produce a large positive value.
-        if ((connect_timeout == 0) ||
-            (connect_timeout > numeric_limits<int>::max())) {
-            isc_throw(DbInvalidTimeout, "database connection timeout (" <<
-                      stimeout << ") must be an integer greater than 0");
-        }
+        setIntParameterValue("connect-timeout", 1, numeric_limits<int>::max(), connect_timeout);
+        // Other timeouts can be 0, meaning that the database client will follow a default
+        // behavior. Earlier MySQL versions didn't have these parameters, so we allow 0
+        // to skip setting them.
+        setIntParameterValue("read-timeout", 0, numeric_limits<int>::max(), read_timeout);
+        setIntParameterValue("write-timeout", 0, numeric_limits<int>::max(), write_timeout);
+
+    } catch (const std::exception& ex) {
+        isc_throw(DbInvalidTimeout, ex.what());
     }
 
     const char* ca_file(0);
@@ -239,6 +201,26 @@ MySqlConnection::openDatabase() {
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set database connection timeout: " <<
                   mysql_error(mysql_));
+    }
+
+    // Set the read timeout if it has been specified. Otherwise, the timeout is
+    // not used.
+    if (read_timeout > 0) {
+        result = mysql_options(mysql_, MYSQL_OPT_READ_TIMEOUT, &read_timeout);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set database read timeout: " <<
+                      mysql_error(mysql_));
+        }
+    }
+
+    // Set the write timeout if it has been specified. Otherwise, the timeout
+    // is not used.
+    if (write_timeout > 0) {
+        result = mysql_options(mysql_, MYSQL_OPT_WRITE_TIMEOUT, &write_timeout);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set database write timeout: " <<
+                      mysql_error(mysql_));
+        }
     }
 
     // If TLS is enabled set it. If something should go wrong it will happen
@@ -514,6 +496,38 @@ MySqlConnection::rollback() {
     if (mysql_rollback(mysql_) != 0) {
         isc_throw(DbOperationError, "rollback failed: "
                   << mysql_error(mysql_));
+    }
+}
+
+template<typename T>
+void
+MySqlConnection::setIntParameterValue(const std::string& name, int64_t min, int64_t max, T& value) {
+    string svalue;
+    try {
+        svalue = getParameter(name);
+    } catch (...) {
+        // Do nothing if the parameter is not present.
+    }
+    if (svalue.empty()) {
+        return;
+    }
+    try {
+        // Try to convert the value.
+        auto parsed_value = boost::lexical_cast<T>(svalue);
+        // Check if the value is within the specified range.
+        if ((parsed_value < min) || (parsed_value > max)) {
+            isc_throw(BadValue, "bad " << svalue << " value");
+        }
+        // Everything is fine. Return the parsed value.
+        value = parsed_value;
+
+    } catch (...) {
+        // We may end up here when lexical_cast fails or when the
+        // parsed value is not within the desired range. In both
+        // cases let's throw the same general error.
+        isc_throw(BadValue, name << " parameter (" <<
+                  svalue << ") must be an integer between "
+                  << min << " and " << max);
     }
 }
 

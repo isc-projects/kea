@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,9 +47,8 @@ public:
     /// @param database_config The configuration value for the "*-database"
     ///        identifier.
     ///
-    /// @throw isc::dhcp::DbConfigError The 'type' keyword contains an
-    ///        unknown database type or is missing from the list of
-    ///        database access keywords.
+    /// @throw isc::dhcp::DbConfigError The connection parameters or their
+    /// combination is invalid.
     void parse(std::string& access_string,
                isc::data::ConstElementPtr database_config);
 
