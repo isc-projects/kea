@@ -361,9 +361,8 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
             if capture:
                 output = ''
             t0 = time.time()
-            t1 = time.time()
             # repeat until process is running or timeout not occurred
-            while p.poll() is None and (timeout is None or t1 - t0 < timeout):
+            while True:
                 line = p.stdout.readline()
                 if line:
                     line_decoded = line.decode(encoding='ascii', errors='ignore').rstrip() + '\r'
@@ -374,6 +373,8 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                     if log_file_path:
                         log_file.write(line)
                 t1 = time.time()
+                if p.poll() is not None or (timeout is not None and timeout < t1 - t0):
+                    break
 
             # If no exitcode yet, ie. process is still running then it means that timeout occurred.
             # In such case terminate the process and raise an exception.
