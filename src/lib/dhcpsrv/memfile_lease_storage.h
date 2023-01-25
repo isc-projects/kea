@@ -357,12 +357,6 @@ typedef boost::shared_ptr<Lease6ExtendedInfo> Lease6ExtendedInfoPtr;
 /// @brief Tag for indexes by lease address.
 struct LeaseAddressIndexTag { };
 
-/// @brief Tag for index using relay id.
-struct RelayIdIndexTag { };
-
-/// @brief Tag for index using remote id.
-struct RemoteIdIndexTag { };
-
 /// @brief A multi index container holding lease6 extended info for by relay id.
 ///
 /// The lease6 extended info may be accessed using different indexes:
