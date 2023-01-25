@@ -8,6 +8,8 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS;
+extern const isc::log::MessageID ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6;
 extern const isc::log::MessageID ALLOC_ENGINE_LEASE_RECLAIMED;
 extern const isc::log::MessageID ALLOC_ENGINE_REMOVAL_NCR_FAILED;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_ERROR;

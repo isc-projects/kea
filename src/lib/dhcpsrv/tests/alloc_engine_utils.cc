@@ -403,7 +403,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const DuidPtr& duid,
 Lease6Collection
 AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                             AllocEngine::HintContainer& hints,
-                            bool in_pool) {
+                            bool in_subnet, bool in_pool) {
 
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
@@ -421,7 +421,7 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
     for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
 
         // Do all checks on the lease
-        checkLease6(duid_, *it, type, expected_len, in_pool, in_pool);
+        checkLease6(duid_, *it, type, expected_len, in_subnet, in_pool);
 
         // Check that context has been updated with allocated addresses or
         // prefixes.

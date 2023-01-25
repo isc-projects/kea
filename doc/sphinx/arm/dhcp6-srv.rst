@@ -4566,18 +4566,22 @@ every subnet that has global reservations enabled.
 
 This feature can be used to assign certain parameters, such as hostname
 or other dedicated, host-specific options. It can also be used to assign
-addresses or prefixes. However, global reservations that assign either
-of these bypass the whole topology determination provided by the DHCP logic
-implemented in Kea. It is very easy to misuse this feature and get a
-configuration that is inconsistent. To give a specific example, imagine
-a global reservation for the address 2001:db8:1111::1 and two subnets
-2001:db8:1111::/48 and 2001:db8:ffff::/48. If global reservations are
-used in both subnets and a device matching global host reservations
-visits part of the network that is covered by 2001:db8:ffff::/48, it
-will get the IP address 2001:db8:ffff::1, which is outside of the
-prefix announced by its local router using router advertisements. Such a
-configuration is unusable or, at the very least, riddled with
-issues, such as downlink traffic not reaching the device.
+addresses or prefixes.
+
+An address assigned via global host reservation must be feasible for the
+subnet the server selects for the client. In other words, the address must
+lie within the subnet otherwise it will be ignored and the server will
+attempt to dynamically allocate an address.  In the event the selected subnet
+belongs to a shared-network the server will check for feasibility against
+the subnet's siblings, selecting the first in-range subnet.  If no such
+subnet exists, the server will fallback to dynamically allocating the address.
+This does not apply to globally reserved prefixes.
+
+.. note::
+
+    Prior to release 2.3.5, the server did not perform feasibility checks on
+    globally reserved addresses. This allowed the server to be configured to
+    hand out nonsensical leases for arbitrary address values.
 
 To use global host reservations, a configuration similar to the
 following can be used:

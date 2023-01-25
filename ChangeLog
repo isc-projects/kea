@@ -1,3 +1,14 @@
+2099.	[func]*		tmark
+	An address reserved in a global reservation must now lie
+	within the range of the subnet or shared-network selected
+	by Kea. In the event that it does not, the server will
+	attempt to allocate an address dynamically.  This change
+	applies to both kea-dhcp4 and kea-dhcp6.  Prior to this
+	the servers would grant a lease for any globallyo reserved
+	address without regard for its feasibility within the
+	selected subnet.
+	(Gitlab #2631)
+
 2098.	[doc]		razvan
 	Updated classify ARM examples with a case when both operands of
 	the evaluated expression are computed at runtime.

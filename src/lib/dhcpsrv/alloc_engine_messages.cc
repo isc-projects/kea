@@ -7,6 +7,8 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS = "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS";
+extern const isc::log::MessageID ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6 = "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6";
 extern const isc::log::MessageID ALLOC_ENGINE_LEASE_RECLAIMED = "ALLOC_ENGINE_LEASE_RECLAIMED";
 extern const isc::log::MessageID ALLOC_ENGINE_REMOVAL_NCR_FAILED = "ALLOC_ENGINE_REMOVAL_NCR_FAILED";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_ERROR = "ALLOC_ENGINE_V4_ALLOC_ERROR";
@@ -90,6 +92,8 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE = "
 namespace {
 
 const char* values[] = {
+    "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS", "ignoring globally reserved address %1, it falls outside %2",
+    "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6", "ignoring globally reserved address %1, it falls outside %2",
     "ALLOC_ENGINE_LEASE_RECLAIMED", "successfully reclaimed lease %1",
     "ALLOC_ENGINE_REMOVAL_NCR_FAILED", "sending removal name change request failed for lease %1: %2",
     "ALLOC_ENGINE_V4_ALLOC_ERROR", "%1: error during attempt to allocate an IPv4 address: %2",

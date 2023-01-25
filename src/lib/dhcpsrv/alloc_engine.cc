@@ -1346,6 +1346,32 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
         // It doesn't matter whether it is for this client or for someone else.
         if (!LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, addr)) {
 
+            // Check the feasibility of this address within this shared-network.
+            // Assign the context's subnet accordingly.
+            // Only necessary for IA_NA
+            if (type == IPv6Resrv::TYPE_NA) {
+                bool valid_subnet = false;
+                auto subnet = ctx.subnet_;
+                while (subnet) {
+                    if (subnet->inRange(addr)) {
+                        valid_subnet = true;
+                        break;
+                    }
+
+                    subnet = subnet->getNextSubnet(ctx.subnet_);
+                }
+
+                if (!valid_subnet) {
+                    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                              ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6)
+                              .arg(addr.toText())
+                              .arg(labelNetworkOrSubnet(ctx.subnet_));
+                    continue;
+                }
+
+                ctx.subnet_ = subnet;
+            }
+
             if (!ghost->getHostname().empty()) {
                 // If there is a hostname reservation here we should stick
                 // to this reservation. By updating the hostname in the
@@ -3023,6 +3049,25 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
         .arg(lease->addr_.toText());
 }
 
+std::string
+AllocEngine::labelNetworkOrSubnet(SubnetPtr subnet) {
+    if (!subnet) {
+        return("<empty subnet>");
+    }
+
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    std::ostringstream ss;
+    if (network) {
+        ss << "shared-network: " << network->getName();
+    } else {
+        ss << "subnet id: " << subnet->getID();
+    }
+
+    return(ss.str());
+}
+
+
 }  // namespace dhcp
 }  // namespace isc
 
@@ -3117,23 +3162,24 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         return (false);
     }
 
-    // Flag used to perform search for global reservations only once.
-    bool search_global_done = false;
+    // Fetch the globally reserved address if there is one.
+    auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
+    auto global_host_address = ((host != ctx.hosts_.end() && host->second) ?
+                                 host->second->getIPv4Reservation() :
+                                 IOAddress::IPV4_ZERO_ADDRESS());
 
+    // Start with currently selected subnet.
     Subnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        // Skip search if the global reservations have already been examined.
-        if (!search_global_done && subnet->getReservationsGlobal()) {
-            auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
-            // if we want global + other modes we would need to
-            // return only if true, else continue
-            if (host != ctx.hosts_.end() && host->second &&
-                !host->second->getIPv4Reservation().isV4Zero()) {
-                return (true);
-            }
-            // No need to perform this search again as there are no global
-            // reservations.
-            search_global_done = true;
+        // If there's a globally reserved address and global reservations are
+        // enabled for this network and we're either not enforcing address
+        // feasiblity or we are and it's feasible, update the selected
+        // network to that of the address and return true.
+        if (subnet->getReservationsGlobal() &&
+            (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) &&
+            (subnet->inRange(global_host_address))) {
+            ctx.subnet_ = subnet;
+            return (true);
         }
 
         if (subnet->getReservationsInSubnet()) {
@@ -3156,6 +3202,13 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         // No address reservation found here, so let's try another subnet
         // within the same shared network.
         subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+    }
+
+    if (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) {
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS)
+            .arg(ctx.currentHost()->getIPv4Reservation().toText())
+            .arg(AllocEngine::labelNetworkOrSubnet(ctx.subnet_));
     }
 
     return (false);

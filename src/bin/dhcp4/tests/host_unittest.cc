@@ -50,8 +50,13 @@ const char* CONFIGS[] = {
         "},\n"
         "{\n"
         "   \"hw-address\": \"01:02:03:04:05:06\",\n"
-        "   \"hostname\": \"hw-host-fixed\",\n"
+        "   \"hostname\": \"hw-host-fixed-out-of-range\",\n"
         "   \"ip-address\": \"192.0.1.77\"\n"
+        "},\n"
+        "{\n"
+        "   \"hw-address\": \"02:02:03:04:05:06\",\n"
+        "   \"hostname\": \"hw-host-fixed-in-range\",\n"
+        "   \"ip-address\": \"10.0.0.77\"\n"
         "},\n"
         "{\n"
         "   \"duid\": \"01:02:03:04:05\",\n"
@@ -587,15 +592,24 @@ TEST_F(HostTest, globalHardwareDynamicAddress) {
     runDoraTest(CONFIGS[0], client, "hw-host-dynamic", "10.0.0.10");
 }
 
-// Verifies that a client matched to a global address reservation
-// gets both the hostname and the reserved address
-// when the subnet reservations flags are global only.
-TEST_F(HostTest, globalHardwareFixedAddress) {
+// Verifies that a client matched to a global in-subnet address reservation
+// gets both the hostname and the reserved address when the subnet reservations
+// flags are global only.
+TEST_F(HostTest, globalHardwareFixedAddressInRange) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
 
-    //client.includeClientId(clientid_a);
+    client.setHWAddress("02:02:03:04:05:06");
+    runDoraTest(CONFIGS[0], client, "hw-host-fixed-in-range", "10.0.0.77");
+}
+
+// Verifies that a client matched to a global out-of-range address reservation
+// gets the hostname and a dynmaic address when the subnet reservations
+// flags are global only.
+TEST_F(HostTest, globalHardwareFixedAddressOutOfRange) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
     client.setHWAddress("01:02:03:04:05:06");
-    runDoraTest(CONFIGS[0], client, "hw-host-fixed", "192.0.1.77");
+    runDoraTest(CONFIGS[0], client, "hw-host-fixed-out-of-range", "10.0.0.10");
 }
 
 // Verifies that a client can be matched to a global reservation by DUID

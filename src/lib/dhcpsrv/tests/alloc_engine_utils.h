@@ -358,12 +358,14 @@ public:
     /// @param engine a reference to Allocation Engine
     /// @param pool pool from which the lease will be allocated from
     /// @param hints address to be used as a hint
+    /// @param in_subnet whether the lease is expected to be in subnet
     /// @param in_pool specifies whether the lease is expected to be in pool
     /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine,
                                const Pool6Ptr& pool,
                                AllocEngine::HintContainer& hints,
-                               bool in_pool = true);
+                               bool in_subnet,
+                               bool in_pool);
 
     /// @brief Checks if the address allocation with a hint that is in range,
     ///        in pool, but is currently used, can succeed

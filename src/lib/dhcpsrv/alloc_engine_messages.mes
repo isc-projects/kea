@@ -606,3 +606,15 @@ normal occurrence during conflict resolution, which can occur in cases
 such as the system administrator adding reservations for an address
 that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their prefixes.
+
+% ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS ignoring globally reserved address %1, it falls outside %2
+This debug message is issued when the allocation engine determines that
+the globally reserved address falls outside the selected subnet or
+shared-network.  The server should ignore the reserved address and
+attempt a dynamic allocation.
+
+% ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6 ignoring globally reserved address %1, it falls outside %2
+This debug message is issued when the allocation engine determines that
+the globally reserved address falls outside the selected subnet or
+shared-network.  The server should ignore the reserved address and
+attempt a dynamic allocation.

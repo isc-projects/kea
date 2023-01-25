@@ -1836,6 +1836,16 @@ public:
 
     /// @brief The read-write mutex.
     isc::util::ReadWriteMutex rw_mutex_;
+
+    /// @brief Generates a label for subnet or shared-network from subnet
+    ///
+    /// Creates a string for the subnet and it's ID for stand alone subnets
+    /// or the shared-network and its name if the given subnet belongs to a
+    /// shared-network.
+    ///
+    /// @param subnet pointer to the source subnet
+    /// @return string contaning the generated label
+    static std::string labelNetworkOrSubnet(SubnetPtr subnet);
 };
 
 /// @brief A pointer to the @c AllocEngine object.
