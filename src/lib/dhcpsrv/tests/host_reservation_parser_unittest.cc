@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -540,10 +540,16 @@ TEST_F(HostReservationParserTest, noIdentifier) {
 }
 
 // This test verifies  that the configuration parser for host reservations
-// throws an exception when neither ip address nor hostname is specified.
+// no longer throws when neither ip address nor hostname is specified.
 TEST_F(HostReservationParserTest, noResource) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\" }";
-    testInvalidConfig<HostReservationParser4>(config);
+    ElementPtr config_element = Element::fromJSON(config);
+    HostPtr host;
+    HostReservationParser4 parser;
+    EXPECT_NO_THROW({
+        host = parser.parse(SubnetID(10), config_element);
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    });
 }
 
 // This test verifies that the parser can parse the reservation entry
@@ -589,12 +595,17 @@ TEST_F(HostReservationParserTest, noIPAddress) {
 }
 
 // This test verifies  that the configuration parser for host reservations
-// throws an exception when hostname is empty, and IP address is not
-// specified.
+// no longer throws when hostname is empty, and IP address is not specified.
 TEST_F(HostReservationParserTest, emptyHostname) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"hostname\": \"\" }";
-    testInvalidConfig<HostReservationParser4>(config);
+    ElementPtr config_element = Element::fromJSON(config);
+    HostPtr host;
+    HostReservationParser4 parser;
+    EXPECT_NO_THROW({
+        host = parser.parse(SubnetID(10), config_element);
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    });
 }
 
 // This test verifies that the configuration parser for host reservations
@@ -630,11 +641,17 @@ TEST_F(HostReservationParserTest, malformedNextServer) {
 }
 
 // This test verifies that the configuration parser for host reservations
-// throws an exception when zero next server address is specified.
+// no longer throws when zero next server address is specified.
 TEST_F(HostReservationParserTest, zeroNextServer) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"next-server\": \"0.0.0.0\" }";
-    testInvalidConfig<HostReservationParser4>(config);
+    ElementPtr config_element = Element::fromJSON(config);
+    HostPtr host;
+    HostReservationParser4 parser;
+    EXPECT_NO_THROW({
+        host = parser.parse(SubnetID(10), config_element);
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    });
 }
 
 // This test verifies that the configuration parser for host reservations
