@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -976,31 +976,6 @@ CfgHosts::add4(const HostPtr& host) {
 
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
-
-    // There should be at least one resource reserved: hostname, IPv4
-    // address, siaddr, sname, file or IPv6 address or prefix.
-    /// @todo: this check should be done in add(), not in add4()
-    if (host->getHostname().empty() &&
-        (host->getIPv4Reservation().isV4Zero()) &&
-        !host->hasIPv6Reservation() &&
-        host->getNextServer().isV4Zero() &&
-        host->getServerHostname().empty() &&
-        host->getBootFileName().empty() &&
-        host->getCfgOption4()->empty() &&
-        host->getCfgOption6()->empty() &&
-        host->getClientClasses4().empty() &&
-        host->getClientClasses6().empty()) {
-        std::ostringstream s;
-        if (hwaddr) {
-            s << "for DUID: " << hwaddr->toText();
-        } else if (duid) {
-            s << "for HW address: " << duid->toText();
-        }
-        isc_throw(BadValue, "specified reservation " << s.str()
-                  << " must include at least one resource, i.e. "
-                  "hostname, IPv4 address, IPv6 address/prefix, "
-                  "options");
-    }
 
     // Check for duplicates for the specified IPv4 subnet.
     if (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) {
