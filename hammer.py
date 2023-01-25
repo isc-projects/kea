@@ -335,7 +335,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
         quiet = True
     if cwd and "~/" in cwd:
         # replace relative home directory
-        cwd = cwd.replace('~', execute('cd ~ && pwd', capture=True, super_quiet=True)[1].rstrip())
+        cwd = cwd.replace('~', os.environ['HOME'])
     if not super_quiet:
         log.info('>>>>> Executing %s in %s', cmd, cwd if cwd else os.getcwd())
     if not check_times:
