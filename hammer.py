@@ -1114,7 +1114,7 @@ def _install_libyang_from_sources(ignore_errors = False):
 def _install_sysrepo_from_sources(ignore_errors = False):
     """Install sysrepo from sources."""
     for prefix in ['/usr', '/usr/local']:
-        sysrepo_so = f'{prefix}/lib/libsysrepo.so.h'
+        sysrepo_so = f'{prefix}/lib/libsysrepo.so'
         sysrepo_header = f'{prefix}/include/sysrepo/version.h'
         if (os.path.exists(sysrepo_so) and os.path.exists(sysrepo_header) and
             execute(f"grep -F '#define SR_VERSION_MAJOR 7' '{sysrepo_header}'", raise_error=False) == 0):
