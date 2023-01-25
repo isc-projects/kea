@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -5294,32 +5294,7 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 1);
 
-    // Case 3: Neither ip address nor hostname specified.
-    config = "{ " + genIfaceConfig() + "," +
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ "
-        " { "
-        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
-        "    \"subnet\": \"192.0.4.0/24\","
-        "    \"id\": 542,"
-        "    \"reservations\": ["
-        "      {"
-        "        \"hw-address\": \"06:05:04:03:02:01\""
-        "      }"
-        "    ]"
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
-
-    ASSERT_NO_THROW(json = parseDHCP4(config));
-
-    // Remove existing configuration, if any.
-    CfgMgr::instance().clear();
-
-    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    checkResult(x, 1);
-
-    // Case 4: Broken specification of option data.
+    // Case 3: Broken specification of option data.
     config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

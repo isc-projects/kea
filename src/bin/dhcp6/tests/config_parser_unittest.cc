@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -5627,34 +5627,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 1);
 
-    // Case 3: Neither ip address nor hostname specified.
-    config = "{ " + genIfaceConfig() + ","
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ "
-        " { "
-        "    \"pools\": [ ],"
-        "    \"subnet\": \"2001:db8:3::/64\", "
-        "    \"id\": 542,"
-        "    \"reservations\": ["
-        "      {"
-        "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\""
-        "      }"
-        "    ]"
-        " } "
-        "], "
-        "\"preferred-lifetime\": 3000,"
-        "\"valid-lifetime\": 4000 }";
-
-    json = parseDHCP6(config);
-
-    // Remove existing configuration, if any.
-    CfgMgr::instance().clear();
-
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    checkResult(x, 1);
-
-    // Case 4: Broken specification of option data.
+    // Case 3: Broken specification of option data.
     config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
