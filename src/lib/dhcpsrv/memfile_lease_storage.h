@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -321,7 +321,7 @@ typedef Lease4Storage::index<SubnetIdIndexTag>::type Lease4StorageSubnetIdIndex;
 typedef Lease4Storage::index<HostnameIndexTag>::type Lease4StorageHostnameIndex;
 
 /// @brief DHCPv4 lease storage index by remote identifier.
-typedef Lease4Storage::index<RemoteIdIndexTag>::type Lease4StorageRemoteIdInde;
+typedef Lease4Storage::index<RemoteIdIndexTag>::type Lease4StorageRemoteIdIndex;
 
 /// @brief DHCPv4 lease storage index by relay identifier.
 typedef Lease4Storage::index<RelayIdIndexTag>::type Lease4StorageRelayIdIndex;
