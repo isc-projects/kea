@@ -2487,6 +2487,17 @@ Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
                   << lower_bound_address);
     }
 
+    // Catch 2038 bug with 32 bit time_t.
+    if ((qry_start_time < 0) || (qry_end_time < 0)) {
+        isc_throw(BadValue, "negative time value");
+    }
+
+    // Start time must be before end time.
+    if ((qry_start_time > 0) && (qry_end_time > 0) &&
+        (qry_start_time > qry_end_time)) {
+        isc_throw(BadValue, "start time must be before end time");
+    }
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_RELAYID4)
         .arg(page_size.page_size_)
@@ -2512,12 +2523,41 @@ Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
 }
 
 Lease4Collection
-Memfile_LeaseMgr::getLeases4ByRelayIdInternal(const OptionBuffer&,
-                                              const IOAddress&,
-                                              const LeasePageSize&,
-                                              const time_t&,
-                                              const time_t&) {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases4ByRelayId not implemented");
+Memfile_LeaseMgr::getLeases4ByRelayIdInternal(const OptionBuffer& relay_id,
+                                              const IOAddress& lower_bound_address,
+                                              const LeasePageSize& page_size,
+                                              const time_t& qry_start_time,
+                                              const time_t& qry_end_time) {
+    Lease4Collection collection;
+    const Lease4StorageRelayIdIndex& idx = storage4_.get<RelayIdIndexTag>();
+    Lease4StorageRelayIdIndex::const_iterator lb =
+        idx.lower_bound(boost::make_tuple(relay_id, lower_bound_address));
+    // Return all convenient leases being within the page size.
+    IOAddress last_addr = lower_bound_address;
+    for (; lb != idx.end(); ++lb) {
+        if ((*lb)->addr_ == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        if ((*lb)->relay_id_ != relay_id) {
+            // Gone after the relay id index.
+            break;
+        }
+        last_addr = (*lb)->addr_;
+        if ((qry_start_time > 0) && ((*lb)->cltt_ < qry_start_time)) {
+            // Too old.
+            continue;
+        }
+        if ((qry_end_time > 0) && ((*lb)->cltt_ < qry_end_time)) {
+            // Too young.
+            continue;
+        }
+        collection.push_back(Lease4Ptr(new Lease4(**lb)));
+        if (collection.size() >= page_size.page_size_) {
+            break;
+        }
+    }
+    return (collection);
 }
 
 Lease4Collection
@@ -2531,6 +2571,17 @@ Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
         isc_throw(InvalidAddressFamily, "expected IPv4 address while "
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
+    }
+
+    // Catch 2038 bug with 32 bit time_t.
+    if ((qry_start_time < 0) || (qry_end_time < 0)) {
+        isc_throw(BadValue, "negative time value");
+    }
+
+    // Start time must be before end time.
+    if ((qry_start_time > 0) && (qry_end_time > 0) &&
+        (qry_start_time > qry_end_time)) {
+        isc_throw(BadValue, "start time must be before end time");
     }
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -2558,12 +2609,41 @@ Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
 }
 
 Lease4Collection
-Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer&,
-                                               const IOAddress&,
-                                               const LeasePageSize&,
-                                               const time_t&,
-                                               const time_t&) {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::getLeases4ByRemoteId not implemented");
+Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer& remote_id,
+                                               const IOAddress& lower_bound_address,
+                                               const LeasePageSize& page_size,
+                                               const time_t& qry_start_time,
+                                               const time_t& qry_end_time) {
+    Lease4Collection collection;
+    std::map<IOAddress, Lease4Ptr> sorted;
+    const Lease4StorageRemoteIdIndex& idx = storage4_.get<RemoteIdIndexTag>();
+    Lease4StorageRemoteIdRange er = idx.equal_range(remote_id);
+    // Store all convenient leases being within the page size.
+    for (auto it = er.first; it != er.second; ++it) {
+        const IOAddress& addr = (*it)->addr_;
+        if (addr <= lower_bound_address) {
+            // Not greater than lower_bound_address.
+            continue;
+        }
+        if ((qry_start_time > 0) && ((*it)->cltt_ < qry_start_time)) {
+            // Too old.
+            continue;
+        }
+        if ((qry_end_time > 0) && ((*it)->cltt_ < qry_end_time)) {
+            // Too young.
+            continue;
+        }
+        sorted[addr] = *it;
+    }
+
+    // Return all leases being within the page size.
+    for (auto it : sorted) {
+        collection.push_back(Lease4Ptr(new Lease4(*it.second)));
+        if (collection.size() >= page_size.page_size_) {
+            break;
+        }
+    }
+    return (collection);
 }
 
 Lease6Collection
