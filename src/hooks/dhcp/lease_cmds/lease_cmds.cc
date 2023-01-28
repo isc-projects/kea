@@ -725,9 +725,9 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
         if ((!old_extended_info && !extended_info) ||
             (old_extended_info && extended_info &&
              (*old_extended_info == *extended_info))) {
-            // Leave the default Lease::ACTION_IGNORE.
+            // Leave the default Lease6::ACTION_IGNORE.
         } else {
-            lease->extended_info_action_ = Lease::ACTION_UPDATE;
+            lease->extended_info_action_ = Lease6::ACTION_UPDATE;
         }
     }
     try {

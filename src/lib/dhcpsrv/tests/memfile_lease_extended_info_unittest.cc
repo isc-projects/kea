@@ -79,7 +79,7 @@ public:
     MemfileExtendedInfoTest() {
         pmap_.clear();
         lease_mgr_.reset();
-	leases4.clear();
+        leases4.clear();
         leases6.clear();
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -88,7 +88,7 @@ public:
     ~MemfileExtendedInfoTest() {
         pmap_.clear();
         lease_mgr_.reset();
-	leases4.clear();
+        leases4.clear();
         leases6.clear();
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -731,11 +731,11 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     ASSERT_TRUE(lease);
     EXPECT_NE(lease_addr, lease->addr_);
     // Put a value different of the expected one.
-    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    lease->extended_info_action_ = Lease6::ACTION_UPDATE;
     bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->deleteLease(lease));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
     EXPECT_EQ(2, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(2, lease_mgr_->remote_id6_.size());
 
@@ -773,11 +773,11 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr, lease->addr_);
     // Put a value different from the expected one.
-    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    lease->extended_info_action_ = Lease6::ACTION_UPDATE;
     bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->deleteLease(lease));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
     EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
 }
@@ -806,11 +806,11 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
     lease->setContext(user_context);
     // Put a value different of the expected one.
-    lease->extended_info_action_ = Lease::ACTION_DELETE;
+    lease->extended_info_action_ = Lease6::ACTION_DELETE;
     bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Check extended info tables.
     ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
@@ -856,11 +856,11 @@ TEST_F(MemfileExtendedInfoTest, addLease6disabled) {
     ElementPtr user_context;
     ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
     lease->setContext(user_context);
-    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    lease->extended_info_action_ = Lease6::ACTION_UPDATE;
     bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
     EXPECT_TRUE(lease_mgr_->remote_id6_.empty());
 }
@@ -897,9 +897,9 @@ TEST_F(MemfileExtendedInfoTest, updateLease6ignore) {
     lease->setContext(user_context);
 
     // Set action and call updateLease6.
-    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
     ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were not touched.
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
@@ -943,9 +943,9 @@ TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
 
     // Set action and call updateLease6.
     lease.reset(new Lease6(*lease));
-    lease->extended_info_action_ = Lease::ACTION_DELETE;;
+    lease->extended_info_action_ = Lease6::ACTION_DELETE;;
     ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were cleared.
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
@@ -989,9 +989,9 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
 
     // Set action and call updateLease6.
     lease.reset(new Lease6(*lease));
-    lease->extended_info_action_ = Lease::ACTION_DELETE;;
+    lease->extended_info_action_ = Lease6::ACTION_DELETE;;
     ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were not touched.
     EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
@@ -1032,9 +1032,9 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     lease->setContext(user_context);
 
     // Set action and call updateLease6.
-    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    lease->extended_info_action_ = Lease6::ACTION_UPDATE;
     ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were updated.
     ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
@@ -1090,9 +1090,9 @@ TEST_F(MemfileExtendedInfoTest, updateLease6updateDisabled) {
     lease->setContext(user_context);
 
     // Set action and call updateLease6.
-    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    lease->extended_info_action_ = Lease6::ACTION_UPDATE;
     ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were not touched.
     EXPECT_TRUE(lease_mgr_->relay_id6_.empty());
@@ -1162,9 +1162,9 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     lease->setContext(user_context);
 
     // Set action and call updateLease6.
-    lease->extended_info_action_ = Lease::ACTION_UPDATE;
+    lease->extended_info_action_ = Lease6::ACTION_UPDATE;
     ASSERT_NO_THROW(lease_mgr_->updateLease6(lease));
-    EXPECT_EQ(Lease::ACTION_IGNORE, lease->extended_info_action_);
+    EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were updated.
     ASSERT_EQ(1, lease_mgr_->relay_id6_.size());

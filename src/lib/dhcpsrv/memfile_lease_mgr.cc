@@ -652,6 +652,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
                                                  CSVLeaseFile4>(file4,
                                                                 lease_file4_,
                                                                 storage4_);
+            static_cast<void>(extractExtendedInfo4(false, false));
         }
     } else {
         std::string file6 = initLeaseFilePath(V6);
@@ -756,7 +757,7 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
         lease_file6_->append(*lease);
     }
 
-    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
     storage6_.insert(lease);
 
     // Update lease current expiration time (allows update between the creation
@@ -1473,8 +1474,8 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     bool persist = persistLeases(V6);
 
     // Get the recorded action and reset it.
-    Lease::ExtendedInfoAction recorded_action = lease->extended_info_action_;
-    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+    Lease6::ExtendedInfoAction recorded_action = lease->extended_info_action_;
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
 
     // Lease must exist if it is to be updated.
     Lease6StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
@@ -1512,14 +1513,14 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     // Update extended info tables.
     if (getExtendedInfoTablesEnabled()) {
         switch (recorded_action) {
-        case Lease::ACTION_IGNORE:
+        case Lease6::ACTION_IGNORE:
             break;
 
-        case Lease::ACTION_DELETE:
+        case Lease6::ACTION_DELETE:
             deleteExtendedInfo6(lease->addr_);
             break;
 
-        case Lease::ACTION_UPDATE:
+        case Lease6::ACTION_UPDATE:
             deleteExtendedInfo6(lease->addr_);
             static_cast<void>(addExtendedInfo6(lease));
             break;
@@ -1589,7 +1590,7 @@ Memfile_LeaseMgr::deleteLease(const Lease4Ptr& lease) {
 
 bool
 Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
-    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
 
     const isc::asiolink::IOAddress& addr = lease->addr_;
     Lease6Storage::iterator l = storage6_.find(addr);
@@ -2935,6 +2936,61 @@ Memfile_LeaseMgr::getLeases6ByLinkInternal(const IOAddress& link_addr,
         }
     }
     return (collection);
+}
+
+size_t
+Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
+    CfgConsistencyPtr cfg;
+    if (current) {
+        cfg = CfgMgr::instance().getCurrentCfg()->getConsistency();
+    } else {
+        cfg = CfgMgr::instance().getStagingCfg()->getConsistency();
+    }
+    if (!cfg) {
+        isc_throw(Unexpected, "the " << (current ? "current" : "staging")
+                  << " consistency configuration is null");
+    }
+    auto check = cfg->getExtendedInfoSanityCheck();
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4)
+        .arg(CfgConsistency::sanityCheckToText(check))
+        .arg(update ? " updating in file" : "");
+
+    size_t leases = 0;
+    size_t modified = 0;
+    size_t updated = 0;
+    size_t processed = 0;
+
+    for (auto lease : storage4_) {
+        ++leases;
+        try {
+            if (upgradeLease4ExtendedInfo(lease, check)) {
+                ++modified;
+                if (update && persistLeases(V4)) {
+                    lease_file4_->append(*lease);
+                    ++updated;
+                }
+            }
+            extractLease4ExtendedInfo(lease, false);
+            if (!lease->relay_id_.empty() || !lease->remote_id_.empty()) {
+                ++processed;
+            }
+        } catch (const std::exception& ex) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR)
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4)
+        .arg(leases)
+        .arg(modified)
+        .arg(updated)
+        .arg(processed);
+
+    return (updated);
 }
 
 size_t

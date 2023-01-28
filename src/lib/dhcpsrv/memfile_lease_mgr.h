@@ -1477,6 +1477,17 @@ private:
                              const asiolink::IOAddress& lower_bound_address,
                              const LeasePageSize& page_size);
 
+    /// @brief Extract extended info for v4 leases.
+    ///
+    /// For v4 relay and remote identifiers are stored inside leases vs.
+    /// tables for v6.
+    ///
+    /// @param update Update extended info in database.
+    /// @param current specify whether to use current (true) or staging
+    /// (false) config.
+    /// @return The number of updates in the database or 0.
+    size_t extractExtendedInfo4(bool update, bool current);
+
     /// @brief Build extended info v6 tables.
     ///
     /// @param update Update extended info in database.

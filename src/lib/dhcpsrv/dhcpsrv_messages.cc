@@ -74,6 +74,7 @@ extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FIXED = "DHCPSRV_LEASE_SAN
 extern const isc::log::MessageID DHCPSRV_MEMFILE_ADD_ADDR4 = "DHCPSRV_MEMFILE_ADD_ADDR4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_ADD_ADDR6 = "DHCPSRV_MEMFILE_ADD_ADDR6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6 = "DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4 = "DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_BEGIN_TRANSACTION = "DHCPSRV_MEMFILE_BEGIN_TRANSACTION";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 = "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR = "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR";
@@ -84,6 +85,8 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_DELETE_ADDR = "DHCPSRV_MEMFILE_
 extern const isc::log::MessageID DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4 = "DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6 = "DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START = "DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4 = "DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR = "DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET4 = "DHCPSRV_MEMFILE_GET4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET6 = "DHCPSRV_MEMFILE_GET6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET6_DUID = "DHCPSRV_MEMFILE_GET6_DUID";
@@ -322,6 +325,7 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_ADD_ADDR4", "adding IPv4 lease with address %1",
     "DHCPSRV_MEMFILE_ADD_ADDR6", "adding IPv6 lease with address %1",
     "DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6", "building extended info tables with %1 sanity check level%2, tables %3",
+    "DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4", "extract  extended info with %1 sanity check level%2",
     "DHCPSRV_MEMFILE_BEGIN_TRANSACTION", "committing to memory file database",
     "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6", "building extended info tables saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases were entered into tables",
     "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR", "building extended info tables got an exception on the lease for %1: %2",
@@ -332,6 +336,8 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4", "deleting reclaimed IPv4 leases that expired more than %1 seconds ago",
     "DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6", "deleting reclaimed IPv6 leases that expired more than %1 seconds ago",
     "DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START", "starting deletion of %1 expired-reclaimed leases",
+    "DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4", "extracting extended info saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases have relay or remote id",
+    "DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR", "extracting extended info got an exception on the lease for %1: %2",
     "DHCPSRV_MEMFILE_GET4", "obtaining all IPv4 leases",
     "DHCPSRV_MEMFILE_GET6", "obtaining all IPv6 leases",
     "DHCPSRV_MEMFILE_GET6_DUID", "obtaining IPv6 leases for DUID %1",

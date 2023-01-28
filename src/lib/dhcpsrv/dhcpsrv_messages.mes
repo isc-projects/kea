@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -391,6 +391,11 @@ A debug message issued when the server is building extended info tables.
 The extended info sanity check level, update in file when requested
 and the fact tables are enabled or disabled are displayed.
 
+% DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4 extract  extended info with %1 sanity check level%2
+A debug message issued when the server is extracting extended info.
+The extended info sanity check level and update in file when requested
+are displayed.
+
 % DHCPSRV_MEMFILE_BEGIN_TRANSACTION committing to memory file database
 The code has issued a begin transaction call.  For the memory file database, this is
 a no-op.
@@ -441,6 +446,14 @@ lease expires before considering its removal.
 A debug message issued when the server has found expired-reclaimed
 leases to be removed. The number of leases to be removed is logged
 in the message.
+
+% DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4 extracting extended info saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases have relay or remote id
+Extended info extraction was finished. Some statistics are displayed, the
+updated in database is returned to the command interface.
+
+% DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR extracting extended info got an exception on the lease for %1: %2
+A debug message issued when the server is extracting extended info and
+receives an exception processing a lease.
 
 % DHCPSRV_MEMFILE_GET4 obtaining all IPv4 leases
 A debug message issued when the server is attempting to obtain all IPv4

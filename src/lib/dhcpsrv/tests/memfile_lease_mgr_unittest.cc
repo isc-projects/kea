@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2373,6 +2373,10 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "192.0.0.8,08:08:08:08:08:08,,800,6400,1,1,1,,0,"
         "{ \"a\": \"b\"&#x2c \"c\": { \"d\": 1&#x2c\"e\": 2 } }\n"
     );
+
+    // Not sanitize user contexts.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
 
     startBackend(V4);
 

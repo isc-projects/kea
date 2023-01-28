@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -958,6 +958,92 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
             }
         }
         return (changed);
+    }
+}
+
+void
+LeaseMgr::extractLease4ExtendedInfo(const Lease4Ptr& lease,
+                                    bool ignore_errors) {
+    if (!lease) {
+        return;
+    }
+
+    ConstElementPtr user_context = lease->getContext();
+    if (!user_context) {
+        return;
+    }
+    if (user_context->getType() != Element::map) {
+        if (ignore_errors) {
+            return;
+        }
+        isc_throw(BadValue, "user context is not a map");
+    }
+    if (user_context->empty()) {
+        return;
+    }
+
+    ConstElementPtr isc = user_context->get("ISC");
+    if (!isc) {
+        return;
+    }
+    if (isc->getType() != Element::map) {
+        if (ignore_errors) {
+            return;
+        }
+        isc_throw(BadValue, "ISC entry is not a map");
+    }
+    if (isc->empty()) {
+        return;
+    }
+
+    ConstElementPtr extended_info = isc->get("relay-agent-info");
+    if (!extended_info) {
+        return;
+    }
+    if (extended_info->getType() != Element::map) {
+        if (ignore_errors) {
+            return;
+        }
+        isc_throw(BadValue, "relay-agent-info is not a map");
+    }
+    if (extended_info->empty()) {
+        return;
+    }
+
+    ConstElementPtr relay_id = extended_info->get("relay-id");
+    if (relay_id) {
+        if (relay_id->getType() == Element::string) {
+            vector<uint8_t> bytes;
+            try {
+                encode::decodeHex(relay_id->stringValue(), bytes);
+            } catch (...) {
+                // Decode failed
+                if (!ignore_errors) {
+                    throw;
+                }
+            }
+            lease->relay_id_ = bytes;
+        } else if (!ignore_errors) {
+            isc_throw(BadValue, "relay-id entry is not a string");
+        }
+    }
+
+    ConstElementPtr remote_id = extended_info->get("remote-id");
+    if (remote_id) {
+        if (remote_id->getType() == Element::string) {
+            vector<uint8_t> bytes;
+            try {
+                encode::decodeHex(remote_id->stringValue(), bytes);
+            } catch (...) {
+                // Decode failed
+                if (!ignore_errors) {
+                    throw;
+                }
+            }
+            lease->remote_id_ = bytes;
+        } else if (!ignore_errors) {
+            isc_throw(BadValue, "remote-id entry is not a string");
+        }
     }
 }
 

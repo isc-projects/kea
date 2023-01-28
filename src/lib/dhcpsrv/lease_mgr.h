@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -854,6 +854,14 @@ public:
     upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
                               CfgConsistency::ExtendedInfoSanity check =
                               CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    /// @brief Extract relay and remote identifiers from the extended info.
+    ///
+    /// @param lease Pointer to the lease to be updated.
+    /// @param ignore_errors When true (the default) ignore errors,
+    /// when false throw an exception.
+    static void extractLease4ExtendedInfo(const Lease4Ptr& lease,
+                                          bool ignore_errors = true);
 
     /// @brief Returns existing IPv4 leases with a given relay-id.
     ///

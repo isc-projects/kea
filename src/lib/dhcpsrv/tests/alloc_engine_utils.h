@@ -86,7 +86,8 @@ public:
     /// @brief Wrapper method for invoking AllocEngine4::updateLease4ExtendedInfo().
     /// @param lease lease to update
     /// @param ctx current packet processing context
-    void callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
+    /// @return true if extended information was changed
+    bool callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       AllocEngine::ClientContext4& ctx) const {
         return (updateLease4ExtendedInfo(lease, ctx));
     }
