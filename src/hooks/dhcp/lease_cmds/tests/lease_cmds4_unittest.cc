@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -171,6 +171,10 @@ public:
     /// @brief Check that a well formed lease4 with a comment can be added.
     void testLease4AddComment();
 
+    /// @brief Check that a well formed lease4 with relay and remote ids
+    /// can be added.
+    void testLease4AddExtendedInfo();
+
     /// @brief Check that lease4-get can handle a situation when the query is
     /// broken (some required parameters are missing).
     void testLease4GetMissingParams();
@@ -324,6 +328,10 @@ public:
     /// @brief Check that a lease4 can be updated. We're adding a comment and an
     /// user context.
     void testLease4UpdateComment();
+
+    /// @brief Check that a lease4 can be updated. We're adding relay and
+    /// remote ids.
+    void testLease4UpdateExtendedInfo();
 
     /// @brief Check that lease4-del can handle a situation when the query is
     /// broken (some required parameters are missing).
@@ -908,7 +916,7 @@ void Lease4CmdsTest::testLease4AddComment() {
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"comment\": \"a comment\"\n"
         "    }\n"
-            "}";
+        "}";
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
@@ -925,6 +933,56 @@ void Lease4CmdsTest::testLease4AddComment() {
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
+}
+
+void Lease4CmdsTest::testLease4AddExtendedInfo() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    checkLease4Stats(44, 0, 0);
+
+    checkLease4Stats(88, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": { \"ISC\": { \"relay-agent-info\": {\n"
+        "           \"sub-options\": \"0x02030102030C03AABBCC\",\n"
+        "           \"remote-id\": \"010203\",\n"
+        "           \"relay-id\": \"AABBCC\"\n"
+        "        } } }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 1, 0);
+
+    checkLease4Stats(88, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease have proper value set.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    string expected = "{ \"ISC\": { \"relay-agent-info\": ";
+    expected += "{ \"relay-id\": \"AABBCC\", ";
+    expected += "\"remote-id\": \"010203\", ";
+    expected += "\"sub-options\": \"0x02030102030C03AABBCC\" } } }";
+    EXPECT_EQ(expected, ctx->str());
+    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    EXPECT_EQ(relay_id, l->relay_id_);
+    const vector<uint8_t> remote_id = { 1, 2, 3 };
+    EXPECT_EQ(remote_id, l->remote_id_);
 }
 
 void Lease4CmdsTest::testLease4GetMissingParams() {
@@ -2243,6 +2301,58 @@ void Lease4CmdsTest::testLease4UpdateComment() {
     EXPECT_EQ("true", ctx->get("foobar")->str());
 }
 
+void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    checkLease4Stats(44, 2, 0);
+
+    checkLease4Stats(88, 2, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"42:42:42:42:42:42:42:42\",\n"
+        "        \"user-context\": { \"ISC\": { \"relay-agent-info\": {\n"
+        "           \"sub-options\": \"0x02030102030C03AABBCC\",\n"
+        "           \"remote-id\": \"010203\",\n"
+        "           \"relay-id\": \"AABBCC\"\n"
+        "        } } }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 2, 0);
+
+    checkLease4Stats(88, 2, 0);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure it's been updated.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("42:42:42:42:42:42:42:42", l->hwaddr_->toText(false));
+
+    // Check user context.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    string expected = "{ \"ISC\": { \"relay-agent-info\": ";
+    expected += "{ \"relay-id\": \"AABBCC\", ";
+    expected += "\"remote-id\": \"010203\", ";
+    expected += "\"sub-options\": \"0x02030102030C03AABBCC\" } } }";
+    EXPECT_EQ(expected, ctx->str());
+    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    EXPECT_EQ(relay_id, l->relay_id_);
+    const vector<uint8_t> remote_id = { 1, 2, 3 };
+    EXPECT_EQ(remote_id, l->remote_id_);
+}
+
 void Lease4CmdsTest::testLease4DelMissingParams() {
     // No parameters whatsoever. You want just a lease, any lease?
     string cmd =
@@ -3286,6 +3396,15 @@ TEST_F(Lease4CmdsTest, lease4AddCommentMultiThreading) {
     testLease4AddComment();
 }
 
+TEST_F(Lease4CmdsTest, lease4AddExtendedInfo) {
+    testLease4AddExtendedInfo();
+}
+
+TEST_F(Lease4CmdsTest, lease4AddExtendedInfoMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddExtendedInfo();
+}
+
 TEST_F(Lease4CmdsTest, lease4GetMissingParams) {
     testLease4GetMissingParams();
 }
@@ -3653,6 +3772,15 @@ TEST_F(Lease4CmdsTest, lease4UpdateComment) {
 TEST_F(Lease4CmdsTest, lease4UpdateCommentMultiThreading) {
     MultiThreadingTest mt(true);
     testLease4UpdateComment();
+}
+
+TEST_F(Lease4CmdsTest, lease4UpdateExtendedInfo) {
+    testLease4UpdateExtendedInfo();
+}
+
+TEST_F(Lease4CmdsTest, lease4UpdateExtendedInfoMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4UpdateExtendedInfo();
 }
 
 TEST_F(Lease4CmdsTest, lease4DelMissingParams) {

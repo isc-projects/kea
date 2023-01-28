@@ -318,6 +318,8 @@ Lease4::Lease4(const Lease4& other)
 
     if (other.getContext()) {
         setContext(other.getContext());
+        relay_id_ = other.relay_id_;
+        remote_id_ = other.remote_id_;
     }
 }
 
@@ -419,6 +421,8 @@ Lease4::operator=(const Lease4& other) {
 
         if (other.getContext()) {
             setContext(other.getContext());
+            relay_id_ = other.relay_id_;
+            remote_id_ = other.remote_id_;
         }
     }
     return (*this);

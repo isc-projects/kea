@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,7 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
-
-#include <gtest/gtest.h>
+#include <testutils/gtest_utils.h>
 
 #include <iostream>
 #include <list>
@@ -871,6 +870,202 @@ TEST(Lease4ExtendedInfoTest, upgradeLease4ExtendedInfo) {
                 << "actual: " << *after << std::endl;
         }
     }
+}
+
+// Verify Lease4 user context extract basic operations.
+TEST(Lease4ExtendedInfoTest, extract) {
+    Lease4Ptr lease;
+
+    // No Lease.
+    ASSERT_FALSE(lease);
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease, false));
+
+    // No user context.
+    lease.reset(new Lease4());
+    ASSERT_TRUE(lease);
+    ASSERT_FALSE(lease->getContext());
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease, false));
+
+    // Not map user context.
+    ElementPtr user_context = Element::createList();
+    lease->setContext(user_context);
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+
+    // No ISC.
+    user_context = Element::createMap();
+    user_context->set("foo", Element::create(string("bar")));
+    lease->setContext(user_context);
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease, false));
+
+    // Not a map ISC.
+    user_context = Element::createMap();
+    lease->setContext(user_context);
+    ElementPtr isc = Element::create(string("..."));
+    user_context->set("ISC", isc);
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+
+    // No relay agent info.
+    user_context = Element::createMap();
+    lease->setContext(user_context);
+    isc = Element::createMap();
+    user_context->set("ISC", isc);
+    isc->set("foo", Element::create(string("bar")));
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease, false));
+
+    // Not a map relay agent info.
+    user_context = Element::createMap();
+    lease->setContext(user_context);
+    isc = Element::createMap();
+    user_context->set("ISC", isc);
+    ElementPtr rai = Element::createMap();
+    rai->set("foo", Element::create(string("bar")));
+    isc->set("relay-agent-info", rai);
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+
+    // No upgraded.
+    user_context = Element::createMap();
+    lease->setContext(user_context);
+    isc = Element::createMap();
+    user_context->set("ISC", isc);
+    rai = Element::create(string("0x02030102030C03AABBCC"));
+    isc->set("relay-agent-info", rai);
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+
+    // Upgraded.
+    EXPECT_TRUE(LeaseMgr::upgradeLease4ExtendedInfo(lease));
+    EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease, false));
+    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    EXPECT_EQ(relay_id, lease->relay_id_);
+    const vector<uint8_t> remote_id = { 1, 2, 3 };
+    EXPECT_EQ(remote_id, lease->remote_id_);
+}
+
+// Verify Lease4 user context extract complex operations.
+TEST(Lease4ExtendedInfoTest, extractLease4ExtendedInfo) {
+    struct Scenario {
+        string description_;  // test description.
+        string context_;      // user context.
+        string msg_;          // error message.
+    };
+
+    // Test scenarios.
+    vector<Scenario> scenarios {
+        {
+            "no user context",
+            "",
+            ""
+        },
+        {
+            "user context is not a map",
+            "[ ]",
+            "user context is not a map"
+        },
+        {
+            "no ISC entry",
+            "{ }",
+            ""
+        },
+        {
+            "no ISC entry but not empty",
+            "{ \"foo\": true }",
+            ""
+        },
+        {
+            "ISC entry is not a map",
+            "{ \"ISC\": true }",
+            "ISC entry is not a map"
+        },
+        {
+            "ISC entry is not a map, user context not empty",
+            "{ \"foo\": true, \"ISC\": true }",
+            "ISC entry is not a map"
+        },
+        {
+            "no relay agent info",
+            "{ \"ISC\": { } }",
+            ""
+        },
+        {
+            "no relay agent info, ISC not empty",
+            "{ \"ISC\": { \"foo\": true } }",
+            ""
+        },
+        {
+            "relay agent info is not a string or a map",
+            "{ \"ISC\": { \"relay-agent-info\": false } }",
+            "relay-agent-info is not a map"
+        },
+        {
+            "relay agent info is not a string or a map, ISC not empty",
+            "{ \"ISC\": { \"foo\": true, \"relay-agent-info\": false } }",
+            "relay-agent-info is not a map"
+        },
+        {
+            "relay agent info has a junk value",
+            "{ \"ISC\": { \"relay-agent-info\": \"foobar\" } }",
+            "relay-agent-info is not a map"
+        },
+        {
+            "relay agent info has a junk value, ISC not empty",
+            "{ \"ISC\": { \"foo\": true, \"relay-agent-info\": \"foobar\" } }",
+            "relay-agent-info is not a map"
+        },
+        {
+            "relay agent info has a rai without ids",
+            "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+            " \"0x0104AABBCCDD\" } } }",
+            ""
+        },
+        {
+            "relay agent info with other entries",
+            "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+            " \"0x0104AABBCCDD\" }, \"bar\": 456 }, \"foo\": 123 }",
+            ""
+        },
+        {
+            "relay agent info has a rai with ids",
+            "{ \"ISC\": { \"relay-agent-info\": { \"sub-options\":"
+            " \"0x02030102030C03AABBCC\", \"remote-id\": \"010203\","
+            " \"relay-id\": \"AABBCC\" } } }",
+            ""
+        }
+    };
+
+    Lease4Ptr lease(new Lease4());
+    ElementPtr user_context;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+
+        // Create the original user context from JSON.
+        if (scenario.context_.empty()) {
+            user_context.reset();
+        } else {
+            ASSERT_NO_THROW(user_context = Element::fromJSON(scenario.context_))
+                << "invalid user context, test " << scenario.description_
+                << " is broken";
+        }
+
+        // Perform the test.
+        lease->setContext(user_context);
+        if (scenario.msg_.empty()) {
+            EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease, false));
+        } else {
+            EXPECT_NO_THROW(LeaseMgr::extractLease4ExtendedInfo(lease));
+            EXPECT_THROW_MSG(LeaseMgr::extractLease4ExtendedInfo(lease, false),
+                             BadValue, scenario.msg_);
+        }
+    }
+    // Last scenario sets relay and remote ids.
+    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    EXPECT_EQ(relay_id, lease->relay_id_);
+    const vector<uint8_t> remote_id = { 1, 2, 3 };
+    EXPECT_EQ(remote_id, lease->remote_id_);
 }
 
 // Verify Lease6 user context upgrade basic operations.

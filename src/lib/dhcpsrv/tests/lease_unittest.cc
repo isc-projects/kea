@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -113,7 +113,7 @@ public:
 // This test checks if the Lease4 structure can be instantiated correctly.
 TEST_F(Lease4Test, constructor) {
      // Get current time for the use in Lease.
-    const time_t current_time = time(NULL);
+    const time_t current_time = time(0);
 
     // We want to check that various addresses work, so let's iterate over
     // these.
@@ -146,7 +146,7 @@ TEST_F(Lease4Test, constructor) {
 TEST_F(Lease4Test, copyConstructor) {
 
     // Get current time for the use in Lease4.
-    const time_t current_time = time(NULL);
+    const time_t current_time = time(0);
 
     // Create the lease
     Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, current_time,
@@ -158,6 +158,12 @@ TEST_F(Lease4Test, copyConstructor) {
 
     // Set an user context.
     lease.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
+
+    // Set relay and remote id.
+    const std::vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    lease.relay_id_ = relay_id;
+    const std::vector<uint8_t> remote_id = { 1, 2, 3 };
+    lease.remote_id_ = remote_id;
 
     // Use copy constructor to copy the lease.
     Lease4 copied_lease(lease);
@@ -173,6 +179,10 @@ TEST_F(Lease4Test, copyConstructor) {
     EXPECT_TRUE(lease.getContext() == copied_lease.getContext());
     EXPECT_TRUE(*lease.getContext() == *copied_lease.getContext());
 
+    // Relay and remote ids are equal.
+    EXPECT_TRUE(lease.relay_id_ == copied_lease.relay_id_);
+    EXPECT_TRUE(lease.remote_id_ == copied_lease.remote_id_);
+
     // Hardware addresses are equal, but they should point to two objects,
     // each holding the same data. The content should be equal...
     EXPECT_TRUE(*lease.hwaddr_ == *copied_lease.hwaddr_);
@@ -180,7 +190,7 @@ TEST_F(Lease4Test, copyConstructor) {
     // ... but it should point to different objects.
     EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
 
-    // Now let's check that the hwaddr pointer is copied even if it's NULL:
+    // Now let's check that the hwaddr pointer is copied even if it's null:
     lease.hwaddr_.reset();
     Lease4 copied_lease2(lease);
     EXPECT_TRUE(lease == copied_lease2);
@@ -191,7 +201,7 @@ TEST_F(Lease4Test, copyConstructor) {
 TEST_F(Lease4Test, operatorAssign) {
 
     // Get the current time for the use in Lease4.
-    const time_t current_time = time(NULL);
+    const time_t current_time = time(0);
 
     // Create the lease
     Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, current_time,
@@ -204,33 +214,44 @@ TEST_F(Lease4Test, operatorAssign) {
     // Set an user context.
     lease.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
+    // Set relay and remote id.
+    const std::vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    lease.relay_id_ = relay_id;
+    const std::vector<uint8_t> remote_id = { 1, 2, 3 };
+    lease.remote_id_ = remote_id;
+
     // Create a default lease.
-    Lease4 copied_lease;
+    Lease4 assigned_lease;
     // Use assignment operator to assign new lease.
-    copied_lease = lease;
+    assigned_lease = lease;
 
     // Both leases should be now equal. When doing this check we assume that
     // the equality operator works correctly.
-    EXPECT_TRUE(lease == copied_lease);
+    EXPECT_TRUE(lease == assigned_lease);
     // Client IDs are equal, but they should be in two distinct pointers.
-    EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
+    EXPECT_FALSE(lease.client_id_ == assigned_lease.client_id_);
 
     // User context are equal and point to the same object.
-    ASSERT_TRUE(copied_lease.getContext());
-    EXPECT_TRUE(lease.getContext() == copied_lease.getContext());
-    EXPECT_TRUE(*lease.getContext() == *copied_lease.getContext());
+    ASSERT_TRUE(assigned_lease.getContext());
+    EXPECT_TRUE(lease.getContext() == assigned_lease.getContext());
+    EXPECT_TRUE(*lease.getContext() == *assigned_lease.getContext());
+
+    // User context are equal and point to the same object.
+    ASSERT_TRUE(assigned_lease.getContext());
+    EXPECT_TRUE(lease.getContext() == assigned_lease.getContext());
+    EXPECT_TRUE(*lease.getContext() == *assigned_lease.getContext());
 
     // Hardware addresses are equal, but they should point to two objects,
     // each holding the same data. The content should be equal...
-    EXPECT_TRUE(*lease.hwaddr_ == *copied_lease.hwaddr_);
+    EXPECT_TRUE(*lease.hwaddr_ == *assigned_lease.hwaddr_);
 
     // ... but it should point to different objects.
-    EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
+    EXPECT_FALSE(lease.hwaddr_ == assigned_lease.hwaddr_);
 
-    // Now let's check that the hwaddr pointer is copied even if it's NULL:
+    // Now let's check that the hwaddr pointer is copied even if it's null:
     lease.hwaddr_.reset();
-    copied_lease = lease;
-    EXPECT_TRUE(lease == copied_lease);
+    assigned_lease = lease;
+    EXPECT_TRUE(lease == assigned_lease);
 }
 
 // This test verifies that it is correctly determined when the lease
@@ -255,7 +276,7 @@ TEST_F(Lease4Test, leaseBelongsToClient) {
 
     // Create the lease with MAC address and Client Identifier.
     Lease4 lease(IOAddress("192.0.2.1"), matching_hw, matching_client_id,
-                 60, time(NULL), 0, 0, 1);
+                 60, time(0), 0, 0, 1);
 
     // Verify cases for lease that has both hw address and client identifier.
     EXPECT_TRUE(lease.belongsToClient(matching_hw, matching_client_id));
@@ -304,7 +325,7 @@ TEST_F(Lease4Test, operatorEquals) {
 
     // Random values for the tests
     const uint32_t ADDRESS = 0x01020304;
-    const time_t current_time = time(NULL);
+    const time_t current_time = time(0);
 
     // Check when the leases are equal.
     Lease4 lease1(ADDRESS, hwaddr_, clientid_, VALID_LIFETIME, current_time,
@@ -414,14 +435,14 @@ TEST_F(Lease4Test, operatorEquals) {
 }
 
 // Verify that the client id can be returned as a vector object and if client
-// id is NULL the empty vector is returned.
+// id is null the empty vector is returned.
 TEST_F(Lease4Test, getClientIdVector) {
     // Create a lease.
     Lease4 lease;
-    // By default, the lease should have client id set to NULL. If it doesn't,
+    // By default, the lease should have client id set to null. If it doesn't,
     // continuing the test makes no sense.
     ASSERT_FALSE(lease.client_id_);
-    // When client id is NULL the vector returned should be empty.
+    // When client id is null the vector returned should be empty.
     EXPECT_TRUE(lease.getClientIdVector().empty());
 
     // Initialize client identifier to non-null value.
@@ -641,7 +662,7 @@ TEST_F(Lease4Test, decline) {
     lease.fqdn_fwd_ = true;
     lease.fqdn_rev_ = true;
 
-    time_t now = time(NULL);
+    time_t now = time(0);
 
     // Move lease to declined state and set its valid-lifetime to 123 seconds
     lease.decline(123);
@@ -719,7 +740,7 @@ TEST(Lease6Test, Lease6ConstructorDefault) {
         EXPECT_FALSE(lease->getContext());
     }
 
-    // Lease6 must be instantiated with a DUID, not with NULL pointer
+    // Lease6 must be instantiated with a DUID, not with null pointer
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
     EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
@@ -763,7 +784,7 @@ TEST(Lease6Test, Lease6ConstructorWithFQDN) {
         EXPECT_EQ("host.example.com.", lease->hostname_);
     }
 
-    // Lease6 must be instantiated with a DUID, not with NULL pointer
+    // Lease6 must be instantiated with a DUID, not with null pointer
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
     EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
@@ -792,7 +813,7 @@ TEST(Lease6Test, operatorEquals) {
     lease1.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
     lease2.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
-    // cltt_ constructs with time(NULL), make sure they are always equal
+    // cltt_ constructs with time(0), make sure they are always equal
     lease1.cltt_ = lease2.cltt_;
 
     EXPECT_TRUE(lease1 == lease2);
@@ -918,16 +939,16 @@ TEST(Lease6Test, Lease6Expired) {
     Lease6 lease(Lease::TYPE_NA, addr, duid, iaid, 100, 200, subnet_id);
 
     // Case 1: a second before expiration
-    lease.cltt_ = time(NULL) - 100;
+    lease.cltt_ = time(0) - 100;
     lease.valid_lft_ = 101;
     EXPECT_FALSE(lease.expired());
 
     // Case 2: the lease will expire after this second is concluded
-    lease.cltt_ = time(NULL) - 101;
+    lease.cltt_ = time(0) - 101;
     EXPECT_FALSE(lease.expired());
 
     // Case 3: the lease is expired
-    lease.cltt_ = time(NULL) - 102;
+    lease.cltt_ = time(0) - 102;
     EXPECT_TRUE(lease.expired());
 
     // Case 4: the lease is static
@@ -936,17 +957,17 @@ TEST(Lease6Test, Lease6Expired) {
     EXPECT_FALSE(lease.expired());
 }
 
-// Verify that the DUID can be returned as a vector object and if DUID is NULL
+// Verify that the DUID can be returned as a vector object and if DUID is null
 // the empty vector is returned.
 TEST(Lease6Test, getDuidVector) {
     // Create a lease.
     Lease6 lease;
-    // By default, the lease should have client id set to NULL. If it doesn't,
+    // By default, the lease should have client id set to null. If it doesn't,
     // continuing the test makes no sense.
     ASSERT_FALSE(lease.duid_);
-    // When client id is NULL the vector returned should be empty.
+    // When client id is null the vector returned should be empty.
     EXPECT_TRUE(lease.getDuidVector().empty());
-    // Now, let's set the non NULL DUID. Fill it with the 8 bytes, each
+    // Now, let's set the non null DUID. Fill it with the 8 bytes, each
     // holding a value of 0x42.
     std::vector<uint8_t> duid_vec(8, 0x42);
     lease.duid_ = DuidPtr(new DUID(duid_vec));
@@ -973,7 +994,7 @@ TEST(Lease6Test, decline) {
     lease.fqdn_fwd_ = true;
     lease.fqdn_rev_ = true;
 
-    time_t now = time(NULL);
+    time_t now = time(0);
 
     // Move the lease to declined state and set probation-period to 123 seconds
     lease.decline(123);
@@ -1381,5 +1402,4 @@ TEST(Lease6Test, stateToText) {
     EXPECT_EQ("expired-reclaimed", Lease6::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
 }
 
-
-}; // end of anonymous namespace
+} // end of anonymous namespace
