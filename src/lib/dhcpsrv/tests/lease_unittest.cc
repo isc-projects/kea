@@ -489,6 +489,8 @@ TEST_F(Lease4Test, toText) {
              << "Client id:     " << clientid_->toText() << "\n"
              << "Subnet ID:     789\n"
              << "State:         default\n"
+             << "Relay ID:      none\n"
+             << "Remote ID:     none\n"
              << "User context:  { \"foobar\": 1234 }\n";
 
     EXPECT_EQ(expected.str(), lease.toText());
@@ -505,7 +507,10 @@ TEST_F(Lease4Test, toText) {
              << "Hardware addr: (none)\n"
              << "Client id:     (none)\n"
              << "Subnet ID:     789\n"
-             << "State:         default\n";
+             << "State:         default\n"
+             << "Relay ID:      none\n"
+             << "Remote ID:     none\n";
+
     EXPECT_EQ(expected.str(), lease.toText());
 }
 

@@ -2549,7 +2549,7 @@ Memfile_LeaseMgr::getLeases4ByRelayIdInternal(const OptionBuffer& relay_id,
             // Too old.
             continue;
         }
-        if ((qry_end_time > 0) && ((*lb)->cltt_ < qry_end_time)) {
+        if ((qry_end_time > 0) && ((*lb)->cltt_ > qry_end_time)) {
             // Too young.
             continue;
         }
@@ -2630,7 +2630,7 @@ Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer& remote_id,
             // Too old.
             continue;
         }
-        if ((qry_end_time > 0) && ((*it)->cltt_ < qry_end_time)) {
+        if ((qry_end_time > 0) && ((*it)->cltt_ > qry_end_time)) {
             // Too young.
             continue;
         }

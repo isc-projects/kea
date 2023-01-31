@@ -8,6 +8,7 @@
 
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
+#include <util/strutil.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <sstream>
@@ -595,7 +596,11 @@ Lease4::toText() const {
            << "Hardware addr: " << (hwaddr_ ? hwaddr_->toText(false) : "(none)") << "\n"
            << "Client id:     " << (client_id_ ? client_id_->toText() : "(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
-           << "State:         " << statesToText(state_) << "\n";
+           << "State:         " << statesToText(state_) << "\n"
+           << "Relay ID:      " << (relay_id_.empty() ? "none" :
+                                    str::dumpAsHex(&relay_id_[0], relay_id_.size())) << "\n"
+           << "Remote ID:     " << (remote_id_.empty() ? "none" :
+                                    str::dumpAsHex(&remote_id_[0], remote_id_.size())) << "\n";
 
     if (getContext()) {
         stream << "User context:  " << getContext()->str() << "\n";
