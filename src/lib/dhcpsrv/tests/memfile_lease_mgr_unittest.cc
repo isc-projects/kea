@@ -3548,6 +3548,232 @@ TEST_F(MemfileLeaseMgrTest, notPersistWriteLease6MultiThread) {
     EXPECT_GT(content.size(), content1.size());
 }
 
+/// @brief Checks that extractExtendedInfo4 both updates extended info
+/// and set id fields at startup.
+TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile4_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
+
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{}\n"
+
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,"
+        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\" } }\n"
+    );
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was updated.
+    Lease4Ptr lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+
+    // Check the lease with extended info was upgraded.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.3"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    ConstElementPtr rai = isc->get("relay-agent-info");
+    ASSERT_TRUE(rai);
+    ASSERT_EQ(Element::map, rai->getType());
+    EXPECT_EQ(3, rai->size());
+    ConstElementPtr sub_options = rai->get("sub-options");
+    ASSERT_TRUE(sub_options);
+    EXPECT_EQ("\"0x02030102030C03AABBCC\"", sub_options->str());
+    ConstElementPtr relay_id = rai->get("relay-id");
+    ASSERT_TRUE(relay_id);
+    EXPECT_EQ("\"AABBCC\"", relay_id->str());
+    ConstElementPtr remote_id = rai->get("remote-id");
+    ASSERT_TRUE(remote_id);
+    EXPECT_EQ("\"010203\"", remote_id->str());
+
+    // Check the lease has the ids.
+    const vector<uint8_t> relay = { 0xaa, 0xbb, 0xcc };
+    EXPECT_EQ(relay, lease->relay_id_);
+    const vector<uint8_t> remote = { 1, 2, 3 };
+    EXPECT_EQ(remote, lease->remote_id_);
+}
+
+/// @brief Checks that extractExtendedInfo4 does not update
+/// when extended info sanitizing is disabled.
+TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4noSanitize) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile4_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
+
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{}\n"
+
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,"
+        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\" } }\n"
+    );
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was not updated.
+    Lease4Ptr lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check the lease with extended info was not upgraded.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.3"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    ConstElementPtr rai = isc->get("relay-agent-info");
+    ASSERT_TRUE(rai);
+    EXPECT_EQ(Element::string, rai->getType());
+    EXPECT_EQ("\"0x02030102030C03AABBCC\"", rai->str());
+
+    // Check the lease has no ids.
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+}
+
+/// @brief Checks that extractExtendedInfo4 updates extended info
+/// when explicitly requested.
+TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4ExplicitSanitize) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile4_0.csv");
+    LeaseFileIO io(lease_file);
+    string content =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
+
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{}\n"
+
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,"
+        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\" } }\n";
+    io.writeFile(content);
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was not updated.
+    Lease4Ptr lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check the lease with extended info was not upgraded.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.3"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    ConstElementPtr rai = isc->get("relay-agent-info");
+    ASSERT_TRUE(rai);
+    EXPECT_EQ(Element::string, rai->getType());
+    EXPECT_EQ("\"0x02030102030C03AABBCC\"", rai->str());
+
+    // Check the lease has no ids.
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+
+    // Enable sanitizing.
+    CfgMgr::instance().getCurrentCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    // Now run extractExtendedInfo4 with update set to true.
+    size_t updated = 0;
+    EXPECT_NO_THROW(updated = lease_mgr->extractExtendedInfo4(true, true));
+    EXPECT_EQ(2, updated);
+
+    // Check the lease with empty user context was updated.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+
+    // Check the lease with extended info was upgraded.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.3"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    rai = isc->get("relay-agent-info");
+    ASSERT_TRUE(rai);
+    ASSERT_EQ(Element::map, rai->getType());
+    EXPECT_EQ(3, rai->size());
+    ConstElementPtr sub_options = rai->get("sub-options");
+    ASSERT_TRUE(sub_options);
+    EXPECT_EQ("\"0x02030102030C03AABBCC\"", sub_options->str());
+    ConstElementPtr relay_id = rai->get("relay-id");
+    ASSERT_TRUE(relay_id);
+    EXPECT_EQ("\"AABBCC\"", relay_id->str());
+    ConstElementPtr remote_id = rai->get("remote-id");
+    ASSERT_TRUE(remote_id);
+    EXPECT_EQ("\"010203\"", remote_id->str());
+
+    // Check the lease has the ids.
+    const vector<uint8_t> relay = { 0xaa, 0xbb, 0xcc };
+    EXPECT_EQ(relay, lease->relay_id_);
+    const vector<uint8_t> remote = { 1, 2, 3 };
+    EXPECT_EQ(remote, lease->remote_id_);
+
+    // Check the lease file was updated.
+    string new_content =
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,\n"
+
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,"
+        "{ \"ISC\": { \"relay-agent-info\": { "
+        "\"relay-id\": \"AABBCC\"&#x2c "
+        "\"remote-id\": \"010203\"&#x2c "
+        "\"sub-options\": \"0x02030102030C03AABBCC\" } } }\n";
+    string expected = content + new_content;
+    EXPECT_EQ(expected, io.readFile());
+}
+
 /// @brief Checks that buildExtendedInfoTables6 both updates extended info
 /// and add them into tables at startup.
 TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6) {
