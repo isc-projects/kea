@@ -459,7 +459,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
                                                           now_ - 500,
                                                           now_ - 100));
     EXPECT_EQ(0, got.size());
-}       
+}
 
 TEST_F(MemfileExtendedInfoTest, getLeases4ByRelayId) {
     testGetLeases4ByRelayId();
@@ -689,7 +689,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
                                                           now_ - 500,
                                                           now_ - 100));
     EXPECT_EQ(0, got.size());
-}       
+}
 
 TEST_F(MemfileExtendedInfoTest, getLeases4ByRemoteId) {
     testGetLeases4ByRemoteId();
