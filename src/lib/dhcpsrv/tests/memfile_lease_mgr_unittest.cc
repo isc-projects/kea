@@ -2392,8 +2392,8 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "Client id:     (none)\n"
         "Subnet ID:     1\n"
         "State:         declined\n"
-        "Relay ID:      none\n"
-        "Remote ID:     none\n"
+        "Relay ID:      (none)\n"
+        "Remote ID:     (none)\n"
         "User context:  {  }\n"
     );
 
@@ -2409,8 +2409,8 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "Client id:     (none)\n"
         "Subnet ID:     1\n"
         "State:         default\n"
-        "Relay ID:      none\n"
-        "Remote ID:     none\n"
+        "Relay ID:      (none)\n"
+        "Remote ID:     (none)\n"
         "User context:  { \"comment\": \"this lease is for the kitchen computer\" }\n"
     );
 
@@ -2426,8 +2426,8 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "Client id:     (none)\n"
         "Subnet ID:     1\n"
         "State:         default\n"
-        "Relay ID:      none\n"
-        "Remote ID:     none\n"
+        "Relay ID:      (none)\n"
+        "Remote ID:     (none)\n"
         "User context:  "
         "{ \"comment\": \"this lease is for the mainframe computer\", "
         "\"comment2\": \"don't release it\" }\n"
@@ -2445,8 +2445,8 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "Client id:     (none)\n"
         "Subnet ID:     1\n"
         "State:         default\n"
-        "Relay ID:      none\n"
-        "Remote ID:     none\n"
+        "Relay ID:      (none)\n"
+        "Remote ID:     (none)\n"
         "User context:  { \"a\": \"b\", \"c\": { \"d\": 1, \"e\": 2 } }\n"
     );
 }

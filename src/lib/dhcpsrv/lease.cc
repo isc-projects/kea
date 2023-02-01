@@ -597,9 +597,9 @@ Lease4::toText() const {
            << "Client id:     " << (client_id_ ? client_id_->toText() : "(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
            << "State:         " << statesToText(state_) << "\n"
-           << "Relay ID:      " << (relay_id_.empty() ? "none" :
+           << "Relay ID:      " << (relay_id_.empty() ? "(none)" :
                                     str::dumpAsHex(&relay_id_[0], relay_id_.size())) << "\n"
-           << "Remote ID:     " << (remote_id_.empty() ? "none" :
+           << "Remote ID:     " << (remote_id_.empty() ? "(none)" :
                                     str::dumpAsHex(&remote_id_[0], remote_id_.size())) << "\n";
 
     if (getContext()) {
