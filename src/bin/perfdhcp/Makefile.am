@@ -37,16 +37,17 @@ perfdhcp_SOURCES = main.cc
 
 perfdhcp_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
-perfdhcp_LDADD = libperfdhcp.la
+perfdhcp_LDADD  = libperfdhcp.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-perfdhcp_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-perfdhcp_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 perfdhcp_LDADD += $(CRYPTO_LIBS)
 perfdhcp_LDADD += $(BOOST_LIBS)

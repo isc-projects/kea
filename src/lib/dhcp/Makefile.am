@@ -74,16 +74,16 @@ libkea_dhcp___la_SOURCES += std_option_defs.h
 
 libkea_dhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
-libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
-libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
-libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
-libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_dhcp___la_LIBADD  += $(BOOST_LIBS)
-libkea_dhcp___la_LIBADD  += $(CRYPTO_LIBS)
+libkea_dhcp___la_LIBADD  = $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dhcp___la_LIBADD += $(BOOST_LIBS)
+libkea_dhcp___la_LIBADD += $(CRYPTO_LIBS)
 libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 68:0:0
 libkea_dhcp___la_LDFLAGS += $(CRYPTO_LDFLAGS)
 

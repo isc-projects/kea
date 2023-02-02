@@ -156,7 +156,7 @@ libkea_dns___la_SOURCES += rdata/generic/detail/txt_like.h
 libkea_dns___la_SOURCES += rdata/generic/detail/ds_like.h
 
 libkea_dns___la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_dns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_dns___la_LIBADD  = $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_dns___la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dns___la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dns___la_LIBADD += $(CRYPTO_LIBS)

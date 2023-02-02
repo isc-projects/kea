@@ -36,14 +36,13 @@ libkea_process_la_LDFLAGS  = $(AM_LDFLAGS)
 libkea_process_la_LDFLAGS += -no-undefined -version-info 53:0:0
 
 libkea_process_la_LIBADD  =
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

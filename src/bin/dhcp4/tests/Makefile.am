@@ -118,9 +118,9 @@ dhcp4_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
 dhcp4_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
-dhcp4_unittests_LDADD = $(top_builddir)/src/bin/dhcp4/libdhcp4.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+dhcp4_unittests_LDADD  = $(top_builddir)/src/bin/dhcp4/libdhcp4.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
@@ -144,14 +144,10 @@ endif
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
-
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

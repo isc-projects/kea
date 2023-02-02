@@ -52,20 +52,14 @@ netconf_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 netconf_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 
-netconf_unittests_LDADD = $(top_builddir)/src/bin/netconf/libnetconf.la
+netconf_unittests_LDADD  = $(top_builddir)/src/bin/netconf/libnetconf.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/process/testutils/libprocesstest.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-#netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-#netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
-#netconf_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
-#netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/testutils/libyangtest.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/libkea-yang.la
-#netconf_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
-#netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la

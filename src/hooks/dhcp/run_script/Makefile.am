@@ -33,6 +33,7 @@ libdhcp_run_script_la_LDFLAGS  += -avoid-version -export-dynamic -module
 libdhcp_run_script_la_LIBADD  = librun_script.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
+libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcp_run_script_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la

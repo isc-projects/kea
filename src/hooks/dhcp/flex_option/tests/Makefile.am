@@ -40,6 +40,7 @@ flex_option_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 flex_option_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/flex_option/libflex_option.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
+flex_option_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

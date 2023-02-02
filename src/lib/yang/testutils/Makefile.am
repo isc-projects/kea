@@ -24,7 +24,7 @@ libyangtest_la_CXXFLAGS = $(AM_CXXFLAGS)
 libyangtest_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libyangtest_la_LDFLAGS  = $(AM_LDFLAGS)
 
-libyangtest_la_LIBADD   = $(top_builddir)/src/lib/yang/libkea-yang.la
-libyangtest_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libyangtest_la_LIBADD  = $(top_builddir)/src/lib/yang/libkea-yang.la
+libyangtest_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 
 endif

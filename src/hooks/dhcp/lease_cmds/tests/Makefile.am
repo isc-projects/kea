@@ -39,6 +39,7 @@ lease_cmds_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 lease_cmds_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
+lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
@@ -49,7 +50,6 @@ lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la

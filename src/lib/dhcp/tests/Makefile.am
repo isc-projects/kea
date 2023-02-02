@@ -69,7 +69,7 @@ libdhcp___unittests_SOURCES += option_space_unittest.cc
 libdhcp___unittests_SOURCES += option_string_unittest.cc
 libdhcp___unittests_SOURCES += option_vendor_unittest.cc
 libdhcp___unittests_SOURCES += option_vendor_class_unittest.cc
-libdhcp___unittests_SOURCES  += pkt_captures4.cc pkt_captures6.cc pkt_captures.h
+libdhcp___unittests_SOURCES += pkt_captures4.cc pkt_captures6.cc pkt_captures.h
 libdhcp___unittests_SOURCES += packet_queue4_unittest.cc
 libdhcp___unittests_SOURCES += packet_queue6_unittest.cc
 libdhcp___unittests_SOURCES += packet_queue_mgr4_unittest.cc
@@ -106,15 +106,15 @@ libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libdhcp___unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 libdhcp___unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
