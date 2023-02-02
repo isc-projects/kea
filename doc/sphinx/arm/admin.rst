@@ -607,13 +607,17 @@ Usually the PostgreSQL database client library is built with the OpenSSL
 support but Kea can be configured to handle the case where it is not
 supported:
 
+.. code-block:: console
+
+   $ ./configure [other-options] --disable-pgsql-ssl
+
 .. _pgsql-performance:
 
 Improved Performance With PostgreSQL
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Changing the PostgreSQL internal value ``synchronous_commit`` from the default value
-of ON to OF can result in gain in Kea performance. On slow systems, the gain can be over 1000%.
+of ON to OFF can result in gain in Kea performance. On slow systems, the gain can be over 1000%.
 It can be set per-session for testing:
 
 .. code-block:: psql
@@ -642,11 +646,6 @@ Batching writes gives a substantial performance boost. The trade-off,
 however, is that in the worst-case scenario, all changes in the last moment before crash
 could be lost. Given the fact that Kea is stable software and crashes very rarely,
 most deployments find it a beneficial trade-off.
-
-
-.. code-block:: console
-
-   $ ./configure [other-options] --disable-pgsql-ssl
 
 Using Read-Only Databases With Host Reservations
 ------------------------------------------------
