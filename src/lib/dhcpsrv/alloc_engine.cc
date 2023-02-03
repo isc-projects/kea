@@ -3171,10 +3171,9 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
     // Start with currently selected subnet.
     Subnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        // If there's a globally reserved address and global reservations are
-        // enabled for this network and we're either not enforcing address
-        // feasiblity or we are and it's feasible, update the selected
-        // network to that of the address and return true.
+        // If global reservations are enabled for this subnet and there is
+        // globally reserved address and that address is feasible for this
+        // subnet, update the selected subnet and return true.
         if (subnet->getReservationsGlobal() &&
             (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) &&
             (subnet->inRange(global_host_address))) {
