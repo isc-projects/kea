@@ -267,6 +267,9 @@ CfgOption::encapsulateInternal(const OptionPtr& option) {
     const std::string& encap_space = option->getEncapsulatedSpace();
     // Empty value means that no option space is encapsulated.
     if (!encap_space.empty()) {
+        if (encap_space == DHCP4_OPTION_SPACE || encap_space == DHCP6_OPTION_SPACE) {
+            return;
+        }
         // Retrieve all options from the encapsulated option space.
         OptionContainerPtr encap_options = getAll(encap_space);
         for (auto const& encap_opt : *encap_options) {
@@ -279,13 +282,7 @@ CfgOption::encapsulateInternal(const OptionPtr& option) {
             if (!option->getOption(encap_opt.option_->getType())) {
                 option->addOption(encap_opt.option_);
             }
-            // This is a workaround for preventing infinite recursion when
-            // trying to encapsulate options created with default global option
-            // spaces.
-            if (encap_space != DHCP4_OPTION_SPACE &&
-                encap_space != DHCP6_OPTION_SPACE) {
-                encapsulateInternal(encap_opt.option_);
-            }
+            encapsulateInternal(encap_opt.option_);
         }
     }
 }

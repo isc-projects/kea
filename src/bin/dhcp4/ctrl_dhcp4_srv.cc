@@ -119,7 +119,8 @@ ControlledDhcpv4Srv::init(const std::string& file_name) {
 }
 
 void ControlledDhcpv4Srv::cleanup() {
-    // Nothing to do here. No need to disconnect from anything.
+    signal_set_.reset();
+    getIOService()->poll();
 }
 
 ConstElementPtr

@@ -820,6 +820,9 @@ DControllerBase::~DControllerBase() {
         }
         LOG_ERROR(dctl_logger, DCTL_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
+
+    io_signal_set_.reset();
+    getIOService()->poll();
 }
 
 // Refer to config_report so it will be embedded in the binary
