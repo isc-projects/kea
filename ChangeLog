@@ -1,7 +1,7 @@
 2091.	[bug]		marcin
-	Fixed a bug that caused a response to a config-get command to lack
-	the configured read-timeout, write-timeout, and tcp-user-timeout
-	parameters.
+	Fixed a bug that caused a response to a config-get command
+	to lack the configured read-timeout, write-timeout, and
+	tcp-user-timeout parameters.
 	(Gitlab #2741)
 
 2090.	[build]		andrei
