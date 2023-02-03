@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -525,7 +525,7 @@ TEST(DatabaseConnectionTest, redactAccessStringNoPassword) {
 TEST(DatabaseConnection, toElementDbAccessStringValid) {
     const char* configs[] = {
         "{\n"
-        "\"connect-timeout\" : 200, \n"
+        "\"connect-timeout\": 200, \n"
         "\"on-fail\": \"stop-retry-exit\", \n"
         "\"lfc-interval\" : 100, \n"
         "\"host\": \"whatevah\", \n"
@@ -543,6 +543,55 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"cert-file\": \"my-cert.crt\", \n"
         "\"key-file\": \"my-key.key\", \n"
         "\"cipher-list\": \"AES\" \n"
+        "}\n"
+    };
+
+    DbAccessParser parser;
+    std::string access_str;
+    ConstElementPtr json_elements;
+
+    ASSERT_NO_THROW(json_elements = Element::fromJSON(configs[0]));
+    ASSERT_NO_THROW(parser.parse(access_str, json_elements));
+
+    ElementPtr round_trip = DatabaseConnection::toElementDbAccessString(access_str);
+
+    ASSERT_TRUE(json_elements->equals(*round_trip));
+}
+
+// Check that the toElementDbAccessString() handles Postgres backend
+// specific paramateres.
+TEST(DatabaseConnection, toElementDbAccessStringValidPostgresql) {
+    const char* configs[] = {
+        "{\n"
+        "\"connect-timeout\": 200, \n"
+        "\"tcp-user-timeout\": 10, \n"
+        "\"type\": \"postgresql\", \n"
+        "\"user\": \"user_str\" \n"
+        "}\n"
+    };
+
+    DbAccessParser parser;
+    std::string access_str;
+    ConstElementPtr json_elements;
+
+    ASSERT_NO_THROW(json_elements = Element::fromJSON(configs[0]));
+    ASSERT_NO_THROW(parser.parse(access_str, json_elements));
+
+    ElementPtr round_trip = DatabaseConnection::toElementDbAccessString(access_str);
+
+    ASSERT_TRUE(json_elements->equals(*round_trip));
+}
+
+// Check that the toElementDbAccessString() handles MySQL backend
+// specific paramateres.
+TEST(DatabaseConnection, toElementDbAccessStringValidMySql) {
+    const char* configs[] = {
+        "{\n"
+        "\"connect-timeout\": 200, \n"
+        "\"read-timeout\": 10, \n"
+        "\"write-timeout\": 10, \n"
+        "\"type\": \"mysql\", \n"
+        "\"user\": \"user_str\" \n"
         "}\n"
     };
 

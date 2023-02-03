@@ -20,7 +20,9 @@ extern const isc::log::MessageID DATABASE_PGSQL_FATAL_ERROR;
 extern const isc::log::MessageID DATABASE_PGSQL_ROLLBACK;
 extern const isc::log::MessageID DATABASE_PGSQL_ROLLBACK_SAVEPOINT;
 extern const isc::log::MessageID DATABASE_PGSQL_START_TRANSACTION;
-extern const isc::log::MessageID DATABASE_TO_JSON_ERROR;
+extern const isc::log::MessageID DATABASE_TO_JSON_BOOLEAN_ERROR;
+extern const isc::log::MessageID DATABASE_TO_JSON_INTEGER_ERROR;
+extern const isc::log::MessageID DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR;
 
 } // namespace db
 } // namespace isc

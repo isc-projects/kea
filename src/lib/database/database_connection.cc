@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -225,6 +225,9 @@ DatabaseConnection::toElement(const ParameterMap& params) {
 
         if ((keyword == "lfc-interval") ||
             (keyword == "connect-timeout") ||
+            (keyword == "read-timeout") ||
+            (keyword == "write-timeout") ||
+            (keyword == "tcp-user-timeout") ||
             (keyword == "reconnect-wait-time") ||
             (keyword == "max-reconnect-tries") ||
             (keyword == "port") ||
@@ -235,8 +238,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                 int_value = boost::lexical_cast<int64_t>(value);
                 result->set(keyword, isc::data::Element::create(int_value));
             } catch (...) {
-                LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
-                    .arg("integer").arg(keyword).arg(value);
+                LOG_ERROR(database_logger, DATABASE_TO_JSON_INTEGER_ERROR)
+                    .arg(keyword).arg(value);
             }
         } else if ((keyword == "persist") ||
                    (keyword == "readonly")) {
@@ -245,8 +248,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
             } else if (value == "false") {
                 result->set(keyword, isc::data::Element::create(false));
             } else {
-                LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
-                    .arg("boolean").arg(keyword).arg(value);
+                LOG_ERROR(database_logger, DATABASE_TO_JSON_BOOLEAN_ERROR)
+                    .arg(keyword).arg(value);
             }
         } else if ((keyword == "type") ||
                    (keyword == "user") ||
@@ -260,8 +263,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "cipher-list")) {
             result->set(keyword, isc::data::Element::create(value));
         } else {
-            LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
-                    .arg("unknown").arg(keyword).arg(value);
+            LOG_ERROR(database_logger, DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR)
+                    .arg(keyword).arg(value);
         }
     }
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,8 +80,20 @@ inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
 
-% DATABASE_TO_JSON_ERROR Internal logic error: unknown %1 element found in state: %2
+% DATABASE_TO_JSON_BOOLEAN_ERROR Internal logic error: invalid boolean value found in database connection parameters: %1=%2
 This error message is printed when conversion to JSON of the internal state is requested,
-but the connection string contains unrecognized parameter. This is a programming error.
+but the connection string contains a boolean parameter with invalid value. It is a programming
+error. The software will continue operation, but the returned JSON data will be syntactically
+valid, but incomplete. The culprit parameter will not be converted.
+
+% DATABASE_TO_JSON_INTEGER_ERROR Internal logic error: invalid integer value found in database connection parameters: %1=%2
+This error message is printed when conversion to JSON of the internal state is requested,
+but the connection string contains the integer parameter with a wrong value. It is a programming
+error. The software will continue operation, but the returned JSON data will be syntactically
+valid, but incomplete. The culprit parameter will not be converted.
+
+% DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR Internal logic error: unknown element found in database connection parameters: %1=%2
+This error message is printed when conversion to JSON of the internal state is requested,
+but the connection string contains unrecognized parameter. It is a programming error.
 The software will continue operation, but the returned JSON data will be syntactically
 valid, but incomplete. The unknown parameter will not be converted.
