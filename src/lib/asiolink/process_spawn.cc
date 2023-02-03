@@ -398,7 +398,7 @@ ProcessSpawnImpl::waitForProcess(int) {
 void
 ProcessSpawnImpl::clearState(const pid_t pid) {
     if (isRunning(pid)) {
-        isc_throw(InvalidOperation, "unable to remove the status for the"
+        isc_throw(InvalidOperation, "unable to remove the status for the "
                   "process (pid: " << pid << ") which is still running");
     }
     lock_guard<std::mutex> lk(mutex_);

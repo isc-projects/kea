@@ -66,6 +66,9 @@ public:
     /// @brief Destructor.
     ~ProcessSpawnTest() {
         io_signal_set_->remove(SIGCHLD);
+        io_signal_set_.reset();
+        // Make sure the cancel handler for the IOSignalSet is called.
+        io_service_->run_one();
     }
 
     /// @brief Method used as the IOSignalSet handler.

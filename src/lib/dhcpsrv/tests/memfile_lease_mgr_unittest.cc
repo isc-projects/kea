@@ -2005,13 +2005,10 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
 
     const string leasefile(getLeaseFilePath("leasefile4_0.csv"));
 
-    // Parameters for the lease file. Make sure the leases are persistent, so they
-    // are written to disk.
-    DatabaseConnection::ParameterMap pmap;
-    pmap["universe"] = "4";
-    pmap["name"] = leasefile;
-    pmap["persist"] = "true";
-    pmap["lfc-interval"] = "0";
+    std::string dbaccess = "universe=4 type=memfile persist=true lfc-interval=0 name=";
+    dbaccess += leasefile;
+
+    LeaseMgrFactory::create(dbaccess);
 
     srand(seed);
 
@@ -2019,7 +2016,8 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
 
     // Recreate Memfile_LeaseMgr.
     LeaseMgrFactory::destroy();
-    ASSERT_NO_THROW(lmptr_ = new Memfile_LeaseMgr(pmap));
+    ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
+    lmptr_ = &(LeaseMgrFactory::instance());
 
     // We will store addresses here, so it will be easier to randomly
     // pick a lease.
@@ -2059,8 +2057,10 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     // container is rebuilt correctly and the indexes are
     // consistent with lease information held.
     ASSERT_NO_THROW({
+        // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
-        lmptr_ = new Memfile_LeaseMgr(pmap);
+        ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
+        lmptr_ = &(LeaseMgrFactory::instance());
     });
 
     // Ok, let's check if the leases are really accessible.
@@ -2135,13 +2135,10 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
 
     const string leasefile(getLeaseFilePath("leasefile6_0.csv"));
 
-    // Parameters for the lease file. Make sure the leases are persistent, so they
-    // are written to disk.
-    DatabaseConnection::ParameterMap pmap;
-    pmap["universe"] = "6";
-    pmap["name"] = leasefile;
-    pmap["persist"] = "true";
-    pmap["lfc-interval"] = "0";
+    std::string dbaccess = "universe=6 type=memfile persist=true lfc-interval=0 name=";
+    dbaccess += leasefile;
+
+    LeaseMgrFactory::create(dbaccess);
 
     srand(seed);
 
@@ -2149,7 +2146,8 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
 
     // Recreate Memfile_LeaseMgr.
     LeaseMgrFactory::destroy();
-    ASSERT_NO_THROW(lmptr_ = new Memfile_LeaseMgr(pmap));
+    ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
+    lmptr_ = &(LeaseMgrFactory::instance());
 
     // We will store addresses here, so it will be easier to randomly
     // pick a lease.
@@ -2190,8 +2188,10 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     // container is rebuilt correctly and the indexes are
     // consistent with lease information held.
     ASSERT_NO_THROW({
+        // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
-        lmptr_ = new Memfile_LeaseMgr(pmap);
+        ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
+        lmptr_ = &(LeaseMgrFactory::instance());
     });
 
     // Ok, let's check if the leases are really accessible.

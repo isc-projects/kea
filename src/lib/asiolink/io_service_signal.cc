@@ -30,7 +30,7 @@ public:
     IOSignalSetImpl(IOServicePtr io_service, IOSignalHandler handler);
 
     /// @brief Destructor.
-    ~IOSignalSetImpl() = default;
+    ~IOSignalSetImpl();
 
     /// @brief Install the callback on the IO service queue.
     void install();
@@ -44,6 +44,9 @@ public:
     ///
     /// @param signum the signal number.
     void remove(int signum);
+
+    /// @brief Cancel the remaining installed signal handler callbacks.
+    void cancel();
 
 private:
     /// @brief Extends the lifetime of IOService to avoid heap-use-after-free.
@@ -69,6 +72,15 @@ IOSignalSetImpl::IOSignalSetImpl(IOServicePtr io_service,
       handler_(handler) {
 }
 
+IOSignalSetImpl::~IOSignalSetImpl() {
+    handler_ = IOSignalHandler();
+}
+
+void
+IOSignalSetImpl::cancel() {
+    signal_set_.cancel();
+}
+
 void
 IOSignalSetImpl::callback(const boost::system::error_code& ec, int signum) {
     if (ec && ec.value() == boost::asio::error::operation_aborted) {
@@ -86,7 +98,8 @@ IOSignalSetImpl::callback(const boost::system::error_code& ec, int signum) {
 void
 IOSignalSetImpl::install() {
     signal_set_.async_wait(std::bind(&IOSignalSetImpl::callback,
-                                     shared_from_this(), ph::_1, ph::_2));
+                                     shared_from_this(),
+                                     ph::_1, ph::_2));
 }
 
 void
@@ -113,6 +126,10 @@ IOSignalSet::IOSignalSet(IOServicePtr io_service, IOSignalHandler handler) :
     impl_(new IOSignalSetImpl(io_service, handler)) {
     // It can throw but the error is fatal...
     impl_->install();
+}
+
+IOSignalSet::~IOSignalSet() {
+    impl_->cancel();
 }
 
 void

@@ -1497,6 +1497,14 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     // Make sure subnet1 updates are now enabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_TRUE(params->getEnableUpdates());
+
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+            return (ConstCfgGlobalsPtr());
+        });
+
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+            return (ConstCfgGlobalsPtr());
+        });
 }
 
 // Verifies that the fallback values for DDNS parameters when
@@ -1657,6 +1665,14 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     // Make sure subnet1 updates are now enabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_TRUE(params->getEnableUpdates());
+
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+            return (ConstCfgGlobalsPtr());
+        });
+
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+            return (ConstCfgGlobalsPtr());
+        });
 }
 
 // Verifies that the fallback values for DDNS parameters when

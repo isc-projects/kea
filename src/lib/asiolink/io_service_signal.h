@@ -32,7 +32,7 @@ public:
     IOSignalSet(asiolink::IOServicePtr io_service, IOSignalHandler handler);
 
     /// @brief Destructor.
-    ~IOSignalSet() = default;
+    ~IOSignalSet();
 
     /// @brief Add a signal to the list of signals to handle.
     ///
