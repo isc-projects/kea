@@ -325,7 +325,7 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_ADD_ADDR4", "adding IPv4 lease with address %1",
     "DHCPSRV_MEMFILE_ADD_ADDR6", "adding IPv6 lease with address %1",
     "DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6", "building extended info tables with %1 sanity check level%2, tables %3",
-    "DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4", "extract  extended info with %1 sanity check level%2",
+    "DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4", "extract extended info with %1 sanity check level%2",
     "DHCPSRV_MEMFILE_BEGIN_TRANSACTION", "committing to memory file database",
     "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6", "building extended info tables saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases were entered into tables",
     "DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR", "building extended info tables got an exception on the lease for %1: %2",

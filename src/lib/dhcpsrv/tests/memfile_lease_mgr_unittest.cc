@@ -3615,6 +3615,20 @@ TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4) {
     EXPECT_EQ(relay, lease->relay_id_);
     const vector<uint8_t> remote = { 1, 2, 3 };
     EXPECT_EQ(remote, lease->remote_id_);
+
+    // Check the id indexes where updated.
+    IOAddress zero = IOAddress::IPV4_ZERO_ADDRESS();
+    Lease4Collection leases;
+    EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRelayId(relay,
+                                                            zero,
+                                                            LeasePageSize(100)));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*lease, *leases[0]);
+    EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRemoteId(remote,
+                                                             zero,
+                                                             LeasePageSize(100)));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*lease, *leases[0]);
 }
 
 /// @brief Checks that extractExtendedInfo4 does not update
@@ -3769,6 +3783,20 @@ TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4ExplicitSanitize) {
     const vector<uint8_t> remote = { 1, 2, 3 };
     EXPECT_EQ(remote, lease->remote_id_);
 
+
+    // Check the id indexes where updated.
+    IOAddress zero = IOAddress::IPV4_ZERO_ADDRESS();
+    Lease4Collection leases;
+    EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRelayId(relay,
+                                                            zero,
+                                                            LeasePageSize(100)));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*lease, *leases[0]);
+    EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRemoteId(remote,
+                                                             zero,
+                                                             LeasePageSize(100)));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*lease, *leases[0]);
     // Check the lease file was updated.
     string new_content =
         "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,\n"

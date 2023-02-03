@@ -2961,8 +2961,13 @@ Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
     size_t modified = 0;
     size_t updated = 0;
     size_t processed = 0;
+    auto& index = storage4_.get<AddressIndexTag>();
+    auto lease_it = index.begin();
+    auto next_it = index.end();
 
-    for (auto lease : storage4_) {
+    for (; lease_it != index.end(); lease_it = next_it) {
+        next_it = std::next(lease_it);
+        Lease4Ptr lease = *lease_it;
         ++leases;
         try {
             if (upgradeLease4ExtendedInfo(lease, check)) {
@@ -2972,8 +2977,12 @@ Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
                     ++updated;
                 }
             }
-            extractLease4ExtendedInfo(lease, false);
-            if (!lease->relay_id_.empty() || !lease->remote_id_.empty()) {
+            // Work on a copy as the multi-index requires fields used
+            // as indexes to be read-only.
+            Lease4Ptr copy(new Lease4(*lease));
+            extractLease4ExtendedInfo(copy, false);
+            if (!copy->relay_id_.empty() || !copy->remote_id_.empty()) {
+                index.replace(lease_it, copy);
                 ++processed;
             }
         } catch (const std::exception& ex) {

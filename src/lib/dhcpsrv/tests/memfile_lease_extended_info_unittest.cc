@@ -475,66 +475,66 @@ void
 MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
     // Lease manager is created with empty tables.
     start(Memfile_LeaseMgr::V4);
-    initLease4(false);
+    initLease4(true);
 
-    // Create leases.
+    // Update leases.
     IOAddress addr0(ADDRESS4[0]);
     IOAddress addr1(ADDRESS4[1]);
     IOAddress addr2(ADDRESS4[2]);
     IOAddress addr3(ADDRESS4[3]);
     IOAddress addr4(ADDRESS4[4]);
     IOAddress zero = IOAddress::IPV4_ZERO_ADDRESS();
-    vector<uint8_t> remote_id0 = { 0xaa, 0xbb, 0xcc };
-    vector<uint8_t> remote_id1 = { 1, 2, 3, 4 };
+    vector<uint8_t> remote_id0 = { 1, 2, 3, 4 };
+    vector<uint8_t> remote_id1 = { 0xaa, 0xbb, 0xcc };
     vector<uint8_t> remote_id2 = createFromString(DUIDS[2]);
     string user_context_txt0 = "{ \"ISC\": { \"relay-agent-info\": {";
-    user_context_txt0 += " \"sub-options\": \"0203AABBCC\",";
-    user_context_txt0 += " \"remote-id\": \"AABBCC\" } } }";
+    user_context_txt0 += " \"sub-options\": \"020401020304\",";
+    user_context_txt0 += " \"remote-id\": \"01020304\" } } }";
     ElementPtr user_context0;
     ASSERT_NO_THROW(user_context0 = Element::fromJSON(user_context_txt0));
     string user_context_txt1 = "{ \"ISC\": { \"relay-agent-info\": {";
-    user_context_txt1 += " \"sub-options\": \"020401020304\",";
-    user_context_txt1 += " \"remote-id\": \"01020304\" } } }";
+    user_context_txt1 += " \"sub-options\": \"0203AABBCC\",";
+    user_context_txt1 += " \"remote-id\": \"AABBCC\" } } }";
     ElementPtr user_context1;
     ASSERT_NO_THROW(user_context1 = Element::fromJSON(user_context_txt1));
 
     Lease4Ptr lease;
     // lease0: addr0, id0, now.
-    lease = leases4[0];
-    ASSERT_TRUE(lease);
+    lease.reset(new Lease4(*leases4[0]));
+    leases4[0] = lease;
     lease->remote_id_ = remote_id0;
     lease->setContext(user_context0);
 
     // lease1: addr1, id1, now.
-    lease = leases4[1];
-    ASSERT_TRUE(lease);
+    lease.reset(new Lease4(*leases4[1]));
+    leases4[1] = lease;
     lease->remote_id_ = remote_id1;
     lease->setContext(user_context1);
 
     // lease2: addr2, id0, now - 500.
-    lease = leases4[2];
-    ASSERT_TRUE(lease);
+    lease.reset(new Lease4(*leases4[2]));
+    leases4[2] = lease;
     lease->remote_id_ = remote_id0;
     lease->setContext(user_context0);
     lease->cltt_ = now_ - 500;
 
     // lease3: addr3, id0, now - 800.
-    lease = leases4[3];
-    ASSERT_TRUE(lease);
+    lease.reset(new Lease4(*leases4[3]));
+    leases4[3] = lease;
     lease->remote_id_ = remote_id0;
     lease->setContext(user_context0);
     lease->cltt_ = now_ - 800;
 
     // lease4: addr4, id0, now - 100.
-    lease = leases4[4];
-    ASSERT_TRUE(lease);
+    lease.reset(new Lease4(*leases4[4]));
+    leases4[4] = lease;
     lease->remote_id_ = remote_id0;
     lease->setContext(user_context0);
     lease->cltt_ = now_ - 100;
 
-    // Add leases.
+    // Update leases.
     for (size_t i = 0; i < leases4.size(); ++i) {
-        EXPECT_TRUE(lease_mgr_->addLease(leases4[i]));
+        EXPECT_NO_THROW(lease_mgr_->updateLease4(leases4[i]));
     }
 
     Lease4Collection got;
