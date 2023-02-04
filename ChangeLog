@@ -1,3 +1,10 @@
+2093.	[func]		fdupont
+	It is now possible to add an "empty" host reservation
+	without any attribute (e.g. no address, no hostname, no
+	client 	class, ...)  at all. This is useful to determine
+	the KNOWN class.
+	(Gitlab #2723)
+
 2092.	[bug]		fdupont
 	Added logic to kea-dhcp4 and kea-dhcp6 to catch and log
 	database connection errors that occur during lease
