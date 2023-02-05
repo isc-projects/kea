@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,6 +58,7 @@ enum DbMessageID {
     PGSQL_ROLLBACK,
     PGSQL_CREATE_SAVEPOINT,
     PGSQL_ROLLBACK_SAVEPOINT,
+    PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED,
 
     MYSQL_FATAL_ERROR,
     MYSQL_START_TRANSACTION,

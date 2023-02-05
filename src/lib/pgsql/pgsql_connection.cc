@@ -249,11 +249,17 @@ PgSqlConnection::getConnParameters() {
         isc_throw(DbInvalidTimeout, ex.what());
     }
 
-    // Append timeouts.
+    // Append connection timeout.
     std::ostringstream oss;
     oss << " connect_timeout = " << connect_timeout;
+
     if (tcp_user_timeout > 0) {
+// tcp_user_timeout parameter is a PostgreSQL 12+ feature.
+#ifdef HAVE_PGSQL_TCP_USER_TIMEOUT
         oss << " tcp_user_timeout = " << tcp_user_timeout * 1000;
+#else
+        DB_LOG_WARN(PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED).arg();
+#endif
     }
     dbconnparameters += oss.str();
 

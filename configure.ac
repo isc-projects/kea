@@ -802,6 +802,7 @@ if test "$PG_CONFIG" != "" ; then
     PGSQL_LIBS=`$PG_CONFIG --libdir`
     PGSQL_LIBS="-L$PGSQL_LIBS -lpq"
     PGSQL_VERSION=`$PG_CONFIG --version`
+    PGSQL_MAJOR_VERSION=`$PG_CONFIG --version | cut -f2 -d' ' | cut -f1 -d'.'`
 
     AC_SUBST(PGSQL_CPPFLAGS)
     AC_SUBST(PGSQL_LIBS)
@@ -831,6 +832,10 @@ if test "$PG_CONFIG" != "" ; then
 
     # Note that PostgreSQL is present in the config.h file
     AC_DEFINE([HAVE_PGSQL], [1], [PostgreSQL is present])
+
+if test $PGSQL_MAJOR_VERSION -ge 12; then
+   AC_DEFINE([HAVE_PGSQL_TCP_USER_TIMEOUT], [1], [PostgreSQL connection parameter tcp_user_timeout supported])
+fi
 fi
 
 # ... and at the shell level, so Makefile.am can take action depending on this.

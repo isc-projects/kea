@@ -611,7 +611,9 @@ TEST_F(PgSqlConnectionTest, connectionTimeoutInvalid3) {
     EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
 }
 
-// Tests that valid tcp user timeout is accepted.
+// Tests that valid tcp user timeout is accepted. This parameter is
+// supported by PostgreSQL 12 and later.
+#ifdef HAVE_PGSQL_TCP_USER_TIMEOUT
 TEST_F(PgSqlConnectionTest, tcpUserTimeout) {
     std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
                                             VALID_USER, VALID_PASSWORD,
@@ -622,6 +624,7 @@ TEST_F(PgSqlConnectionTest, tcpUserTimeout) {
     EXPECT_TRUE(parameters.find("tcp_user_timeout = 8000") != std::string::npos)
         << "parameter not found in " << parameters;
 }
+#endif
 
 // Tests that a zero tcp user timeout is accepted.
 TEST_F(PgSqlConnectionTest, tcpUserTimeoutZero) {

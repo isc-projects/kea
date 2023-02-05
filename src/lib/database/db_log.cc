@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,20 +22,21 @@ const int DB_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
 
 /// @brief Map of translated messages.
 const DbLogger::MessageMap db_message_map = {
-    { DB_INVALID_ACCESS,        DATABASE_INVALID_ACCESS },
+    { DB_INVALID_ACCESS,                  DATABASE_INVALID_ACCESS },
 
-    { PGSQL_DEALLOC_ERROR,      DATABASE_PGSQL_DEALLOC_ERROR },
-    { PGSQL_FATAL_ERROR,        DATABASE_PGSQL_FATAL_ERROR },
-    { PGSQL_START_TRANSACTION,  DATABASE_PGSQL_START_TRANSACTION },
-    { PGSQL_COMMIT,             DATABASE_PGSQL_COMMIT },
-    { PGSQL_ROLLBACK,           DATABASE_PGSQL_ROLLBACK },
-    { PGSQL_CREATE_SAVEPOINT,   DATABASE_PGSQL_CREATE_SAVEPOINT },
-    { PGSQL_ROLLBACK_SAVEPOINT, DATABASE_PGSQL_ROLLBACK_SAVEPOINT },
+    { PGSQL_DEALLOC_ERROR,                DATABASE_PGSQL_DEALLOC_ERROR },
+    { PGSQL_FATAL_ERROR,                  DATABASE_PGSQL_FATAL_ERROR },
+    { PGSQL_START_TRANSACTION,            DATABASE_PGSQL_START_TRANSACTION },
+    { PGSQL_COMMIT,                       DATABASE_PGSQL_COMMIT },
+    { PGSQL_ROLLBACK,                     DATABASE_PGSQL_ROLLBACK },
+    { PGSQL_CREATE_SAVEPOINT,             DATABASE_PGSQL_CREATE_SAVEPOINT },
+    { PGSQL_ROLLBACK_SAVEPOINT,           DATABASE_PGSQL_ROLLBACK_SAVEPOINT },
+    { PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED, DATABASE_PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED },
 
-    { MYSQL_FATAL_ERROR,        DATABASE_MYSQL_FATAL_ERROR },
-    { MYSQL_START_TRANSACTION,  DATABASE_MYSQL_START_TRANSACTION },
-    { MYSQL_COMMIT,             DATABASE_MYSQL_COMMIT },
-    { MYSQL_ROLLBACK,           DATABASE_MYSQL_ROLLBACK },
+    { MYSQL_FATAL_ERROR,                  DATABASE_MYSQL_FATAL_ERROR },
+    { MYSQL_START_TRANSACTION,            DATABASE_MYSQL_START_TRANSACTION },
+    { MYSQL_COMMIT,                       DATABASE_MYSQL_COMMIT },
+    { MYSQL_ROLLBACK,                     DATABASE_MYSQL_ROLLBACK },
 };
 
 isc::log::Logger database_logger("database");
