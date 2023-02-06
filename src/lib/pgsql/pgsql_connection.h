@@ -267,22 +267,58 @@ public:
 
     /// @brief Creates connection string from specified parameters.
     ///
-    /// This function is called frin the @c openDatabase and from the unit
-    /// tests.
+    /// This function is called from the unit tests.
     ///
     /// @return connection string for @c openDatabase.
     /// @throw NoDatabaseName Mandatory database name not given
     /// @throw DbInvalidTimeout when the database timeout is wrong.
     std::string getConnParameters();
 
-    /// @brief Open Database
+private:
+
+    /// @brief Creates connection string from the specified parameters.
+    ///
+    /// This is an internal implemenation of the @c getConnParameters that
+    /// allows for controlling logging. In some cases, a caller can disable
+    /// logging warnings to avoid duplication of the log messages emitted
+    /// when the invocation is a result of calling  @c getVersion before
+    /// opening the connection for the normal server operation.
+    ///
+    /// @param logging boolean parameter controlling if logging should be
+    /// enabled (when true) or disabled (when false).
+    ///
+    /// @return connection string for @c openDatabase.
+    /// @throw NoDatabaseName Mandatory database name not given
+    /// @throw DbInvalidTimeout when the database timeout is wrong.
+    std::string getConnParametersInternal(bool logging);
+
+public:
+
+    /// @brief Open database with logging.
     ///
     /// Opens the database using the information supplied in the parameters
-    /// passed to the constructor.
+    /// passed to the constructor. It logs warnings resulting from the
+    /// @c getConnParameters.
     ///
     /// @throw NoDatabaseName Mandatory database name not given
     /// @throw DbOpenError Error opening the database
     void openDatabase();
+
+private:
+
+    /// @brief Internal implementation of the database opening.
+    ///
+    /// It allows for controlling if the @c getConnParameterInternal function
+    /// should log the warnings.
+    ///
+    /// @param logging boolean parameter controlling if logging should be
+    /// enabled (when true) or disabled (when false).
+    ///
+    /// @throw NoDatabaseName Mandatory database name not given
+    /// @throw DbOpenError Error opening the database
+    void openDatabaseInternal(bool logging);
+
+public:
 
     /// @brief Starts new transaction
     ///

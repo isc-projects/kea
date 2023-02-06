@@ -139,7 +139,7 @@ PgSqlConnection::getVersion(const ParameterMap& parameters) {
     PgSqlConnection conn(parameters);
 
     // Open the database.
-    conn.openDatabase();
+    conn.openDatabaseInternal(false);
 
     const char* version_sql =  "SELECT version, minor FROM schema_version;";
     PgSqlResult r(PQexec(conn.conn_, version_sql));
@@ -182,6 +182,11 @@ PgSqlConnection::prepareStatements(const PgSqlTaggedStatement* start_statement,
 
 std::string
 PgSqlConnection::getConnParameters() {
+    return (getConnParametersInternal(false));
+}
+
+std::string
+PgSqlConnection::getConnParametersInternal(bool logging) {
     string dbconnparameters;
     string shost = "localhost";
     try {
@@ -258,7 +263,9 @@ PgSqlConnection::getConnParameters() {
 #ifdef HAVE_PGSQL_TCP_USER_TIMEOUT
         oss << " tcp_user_timeout = " << tcp_user_timeout * 1000;
 #else
-        DB_LOG_WARN(PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED).arg();
+        if (logging) {
+            DB_LOG_WARN(PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED).arg();
+        }
 #endif
     }
     dbconnparameters += oss.str();
@@ -268,7 +275,12 @@ PgSqlConnection::getConnParameters() {
 
 void
 PgSqlConnection::openDatabase() {
-    std::string dbconnparameters = getConnParameters();
+    openDatabaseInternal(true);
+}
+
+void
+PgSqlConnection::openDatabaseInternal(bool logging) {
+    std::string dbconnparameters = getConnParametersInternal(logging);
     // Connect to Postgres, saving the low level connection pointer
     // in the holder object
     PGconn* new_conn = PQconnectdb(dbconnparameters.c_str());
@@ -287,6 +299,8 @@ PgSqlConnection::openDatabase() {
     // We have a valid connection, so let's save it to our holder
     conn_.setConnection(new_conn);
 }
+
+
 
 bool
 PgSqlConnection::compareError(const PgSqlResult& r, const char* error_state) {
