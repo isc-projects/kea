@@ -6,7 +6,8 @@
 	applies to both kea-dhcp4 and kea-dhcp6.  Prior to this
 	the servers would grant a lease for any globally reserved
 	address without regard for its feasibility within the
-	selected subnet.
+	selected subnet. Thanks to Kyle Birkeland for reporting
+	the issue and contributing the patch.
 	(Gitlab #2631, #2632)
 
 2098.	[doc]		razvan
