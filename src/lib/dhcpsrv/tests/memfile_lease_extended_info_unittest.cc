@@ -498,6 +498,12 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
     ElementPtr user_context1;
     ASSERT_NO_THROW(user_context1 = Element::fromJSON(user_context_txt1));
 
+    // The multi-index requires to keep all fields used as indexes read only
+    // so instead of modifying members of leases4 first take a copy on them.
+    // If you do not do this the multi-index replace operation which implements
+    // the updateLease4 method will fail to update all modified indexes
+    // because some will have the same value as in the stored object...
+
     Lease4Ptr lease;
     // lease0: addr0, id0, now.
     lease.reset(new Lease4(*leases4[0]));
