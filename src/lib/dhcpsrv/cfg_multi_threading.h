@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,12 @@ public:
     /// @param value The multi-threading configuration
     static void apply(data::ConstElementPtr value);
 
-    /// @brief extract multi threading parameters
+    /// @brief Extract multi-threading parameters from a given configuration.
+    ///
+    /// If the configuration does not contain the enable parameter,
+    /// multi-threading is disabled. This is very useful as a default value for
+    /// unit tests, so that they are kept simple, and that they can enable
+    /// multi-threading on their own if it is in their scope to test MT.
     ///
     /// @param[in] value The multi-threading configuration
     /// @param[out] enabled The enabled flag

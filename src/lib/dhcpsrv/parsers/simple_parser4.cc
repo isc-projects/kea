@@ -393,7 +393,7 @@ const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
 
 /// @brief This table defines default values for multi-threading in DHCPv4.
 const SimpleDefaults SimpleParser4::DHCP_MULTI_THREADING4_DEFAULTS = {
-    { "enable-multi-threading", Element::boolean, "false" },
+    { "enable-multi-threading", Element::boolean, "true" },
     { "thread-pool-size",       Element::integer, "0" },
     { "packet-queue-size",      Element::integer, "64" }
 };
