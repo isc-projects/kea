@@ -1,3 +1,10 @@
+2095.	[bug]		marcin, tmark
+	Added a compile-time check if the PostgreSQL version supports
+	the "tcp-user-timeout" parameter. This parameter is available in
+	the PostgreSQL version 12 and later. It is now ignored for the
+	earlier versions and a suitable warning message is issued.
+	(Gitlab #2734)
+
 2094.	[bug]		razvan
 	Fixed a bug which was causing the Kea server to crash when
 	using high-availability hooks library and running reconfigure
