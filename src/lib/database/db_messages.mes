@@ -83,8 +83,8 @@ any of these INSERT statements fail.
 % DATABASE_PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED tcp_user_timeout is not supported in this PostgreSQL version
 This warning message is issued when a user has configured the tcp_user_timeout
 parameter in the connection to the PostgreSQL database but the installed database
-does not support this parameter. This parameter is supported by the PostgreSQL
-version 12 or later. The parameter setting will be ignored.
+does not support this parameter. It is supported by the PostgreSQL version 12 or later.
+The parameter setting will be ignored.
 
 % DATABASE_TO_JSON_BOOLEAN_ERROR Internal logic error: invalid boolean value found in database connection parameters: %1=%2
 This error message is printed when conversion to JSON of the internal state is requested,

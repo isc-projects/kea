@@ -300,8 +300,6 @@ PgSqlConnection::openDatabaseInternal(bool logging) {
     conn_.setConnection(new_conn);
 }
 
-
-
 bool
 PgSqlConnection::compareError(const PgSqlResult& r, const char* error_state) {
     const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
