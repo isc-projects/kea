@@ -4193,15 +4193,15 @@ threads. These settings can be found under the ``multi-threading`` structure and
 represented by:
 
 -  ``enable-multi-threading`` - use multiple threads to process packets in
-   parallel. The default is ``false``.
+   parallel. The default is ``true``.
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
-   parallel. It may be set to 0 (auto-detect), or any positive number explicitly sets
-   the thread count. The default is 0.
+   parallel. It may be set to ``0`` (auto-detect), or any positive number which
+   explicitly sets the thread count. The default is ``0``.
 
 -  ``packet-queue-size`` - specify the size of the queue used by the thread
-   pool to process packets. It may be set to 0 (unlimited), or any positive
-   number explicitly sets the queue size. The default is 64.
+   pool to process packets. It may be set to ``0`` (unlimited), or any positive
+   number explicitly sets the queue size. The default is ``64``.
 
 An example configuration that sets these parameters looks as follows:
 
