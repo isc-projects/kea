@@ -34,10 +34,9 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
-#include <cstdlib>
 #include <fstream>
 #include <iomanip>
-#include <iostream>
+#include <regex>
 #include <sstream>
 #include <thread>
 
@@ -119,7 +118,6 @@ public:
             socket_path_ = sandbox.join("kea4.sock");
         }
         reset();
-        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Destructor
@@ -132,7 +130,6 @@ public:
         CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
         server_.reset();
-        MultiThreadingMgr::instance().setMode(false);
     };
 
     /// @brief Returns pointer to the server's IO service.
@@ -449,7 +446,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
     // Load two libraries
     HookLibsCollection libraries;
     libraries.push_back(make_pair(CALLOUT_LIBRARY_1, ConstElementPtr()));
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_2, ConstElementPtr()));
     HooksManager::loadLibraries(libraries);
 
     // Check they are loaded.
@@ -457,11 +453,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
         HooksManager::getLibraryInfo();
     ASSERT_TRUE(libraries == loaded_libraries);
 
-    // ... which also included checking that the marker file created by the
-    // load functions exists and holds the correct value (of "12" - the
-    // first library appends "1" to the file, the second appends "2"). Also
-    // check that the unload marker file does not yet exist.
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1"));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
     // Now execute the "libreload" command.  This should cause the libraries
@@ -476,8 +468,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
     // Check that the libraries have unloaded and reloaded.  The libraries are
     // unloaded in the reverse order to which they are loaded.  When they load,
     // they should append information to the loading marker file.
-    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "1"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "11"));
 }
 
 // Check that the "libreload" command will fail to reload libraries which are
@@ -488,6 +480,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreloadFailMultiThreading) {
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Disable multi-threading to temporarily trick the hook manager
+    // into loading single-threaded libraries.
+    MultiThreadingMgr::instance().setMode(false);
 
     // Load two libraries
     HookLibsCollection libraries;
@@ -1144,16 +1140,22 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
 
     auto found_multi_threading = arguments->get("multi-threading-enabled");
     ASSERT_TRUE(found_multi_threading);
-    EXPECT_FALSE(found_multi_threading->boolValue());
+    EXPECT_TRUE(found_multi_threading->boolValue());
 
     auto found_thread_count = arguments->get("thread-pool-size");
-    ASSERT_FALSE(found_thread_count);
+    ASSERT_TRUE(found_thread_count);
+    // The default value varies between systems.
+    // Let's just make sure it's a positive value.
+    EXPECT_LE(0, found_thread_count->intValue());
 
     auto found_queue_size = arguments->get("packet-queue-size");
-    ASSERT_FALSE(found_queue_size);
+    ASSERT_TRUE(found_queue_size);
+    EXPECT_EQ(64, found_queue_size->intValue());
 
     auto found_queue_stats = arguments->get("packet-queue-statistics");
-    ASSERT_FALSE(found_queue_stats);
+    ASSERT_TRUE(found_queue_stats);
+    EXPECT_TRUE(regex_match(found_queue_stats->str(),
+                            regex("[ 0\\.[0-9]+, 0\\.[0-9]+, 0\\.[0-9]+ ]")));
 
     MultiThreadingMgr::instance().setMode(true);
     MultiThreadingMgr::instance().setThreadPoolSize(4);

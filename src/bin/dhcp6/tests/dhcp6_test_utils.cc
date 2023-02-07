@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -841,6 +841,16 @@ Dhcpv6SrvTest::testReceiveStats(uint8_t pkt_type, const std::string& stat_name) 
     // They also must have expected values.
     EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
     EXPECT_EQ(1, tested_stat->getInteger().first);
+}
+
+ConstElementPtr
+Dhcpv6SrvTest::configure(Dhcpv6Srv& server, ConstElementPtr config) {
+    ConstElementPtr const status(configureDhcp6Server(server, config));
+
+    // Simulate the application of MT config such as in ControlledDhcpvXSrv::processConfig().
+    CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+
+    return status;
 }
 
 void

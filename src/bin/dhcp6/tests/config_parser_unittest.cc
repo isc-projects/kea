@@ -31,6 +31,7 @@
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
+#include <testutils/test_to_element.h>
 #include <util/chrono_time_utils.h>
 
 #include "test_data_files_config.h"
@@ -436,7 +437,7 @@ public:
         ASSERT_NO_THROW(json = parseDHCP6(config, true));
 
         ConstElementPtr status;
-        EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+        EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
         ASSERT_TRUE(status);
 
         int rcode;
@@ -685,7 +686,7 @@ public:
         ConstElementPtr status;
         try {
             json = parseJSON(config);
-            status = configureDhcp6Server(srv_, json);
+            status = Dhcpv6SrvTest::configure(srv_, json);
 
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "Unable to " << operation << ". "
@@ -803,7 +804,7 @@ public:
         ConstElementPtr x;
         std::string config = createConfigWithOption(param_value, parameter);
         ConstElementPtr json = parseDHCP6(config);
-        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
         CfgMgr::instance().clear();
@@ -821,7 +822,7 @@ public:
         ConstElementPtr x;
         std::string config = createConfigWithOption(params);
         ConstElementPtr json = parseDHCP6(config);
-        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
         CfgMgr::instance().clear();
@@ -925,7 +926,7 @@ public:
 
         // Make sure that the configuration was successful.
         ConstElementPtr status;
-        EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+        EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
         checkResult(status, 0);
 
         // Get the subnet.
@@ -954,7 +955,7 @@ public:
         ConstElementPtr json;
 
         EXPECT_NO_THROW(json = parseDHCP6(config, true));
-        EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+        EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
         ASSERT_TRUE(status);
         checkResult(status, 0);
 
@@ -1007,7 +1008,7 @@ TEST_F(Dhcp6ParserTest, bogusCommand) {
 
     ConstElementPtr x;
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_,
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_,
                     parseJSON("{\"bogus\": 5}")));
 
     // returned value must be 1 (configuration parse error)
@@ -1027,7 +1028,7 @@ TEST_F(Dhcp6ParserTest, emptyInterfaceConfig) {
                                       "\"valid-lifetime\": 4000 }"));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -1048,7 +1049,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
     ASSERT_NO_THROW(json = parseDHCP6(too_small));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     string expected = "subnet configuration failed: "
         "the value of min-valid-lifetime (2000) is not "
         "less than (default) valid-lifetime (1000)";
@@ -1062,7 +1063,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
         "\"valid-lifetime\": 2000, \"max-valid-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(too_large));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected = "subnet configuration failed: "
         "the value of (default) valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
@@ -1077,7 +1078,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
         "\"max-valid-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(before));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected = "subnet configuration failed: "
         "the value of (default) valid-lifetime (1000) is not "
         "between min-valid-lifetime (2000) and max-valid-lifetime (4000)";
@@ -1092,7 +1093,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
         "\"max-valid-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(after));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected = "subnet configuration failed: "
         "the value of (default) valid-lifetime (5000) is not "
         "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
@@ -1107,7 +1108,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
         "\"max-valid-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected = "subnet configuration failed: "
         "the value of min-valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
@@ -1126,7 +1127,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
     ASSERT_NO_THROW(json = parseDHCP6(too_small));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     string expected =
         "the value of min-valid-lifetime (2000) is not "
         "less than (default) valid-lifetime (1000)";
@@ -1137,7 +1138,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
         "\"valid-lifetime\": 2000, \"max-valid-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(too_large));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected =
         "the value of (default) valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
@@ -1149,7 +1150,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
         "\"max-valid-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(before));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected =
         "the value of (default) valid-lifetime (1000) is not "
         "between min-valid-lifetime (2000) and max-valid-lifetime (4000)";
@@ -1161,7 +1162,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
         "\"max-valid-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(after));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected =
         "the value of (default) valid-lifetime (5000) is not "
         "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
@@ -1173,7 +1174,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
         "\"max-valid-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected =
         "the value of min-valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
@@ -1195,7 +1196,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     ASSERT_NO_THROW(json = parseDHCP6(too_small));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     string expected = "subnet configuration failed: "
         "the value of min-preferred-lifetime (2000) is not "
         "less than (default) preferred-lifetime (1000)";
@@ -1209,7 +1210,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
         "\"preferred-lifetime\": 2000, \"max-preferred-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(too_large));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected = "subnet configuration failed: "
         "the value of (default) preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
@@ -1224,7 +1225,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
         "\"max-preferred-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(before));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected = "subnet configuration failed: "
         "the value of (default) preferred-lifetime (1000) is not between "
         "min-preferred-lifetime (2000) and max-preferred-lifetime (4000)";
@@ -1239,7 +1240,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
         "\"max-preferred-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(after));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected = "subnet configuration failed: "
         "the value of (default) preferred-lifetime (5000) is not between "
         "min-preferred-lifetime (1000) and max-preferred-lifetime (4000)";
@@ -1254,7 +1255,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
         "\"max-preferred-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected = "subnet configuration failed: "
         "the value of min-preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
@@ -1273,7 +1274,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
     ASSERT_NO_THROW(json = parseDHCP6(too_small));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     string expected =
         "the value of min-preferred-lifetime (2000) is not "
         "less than (default) preferred-lifetime (1000)";
@@ -1284,7 +1285,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
         "\"preferred-lifetime\": 2000, \"max-preferred-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(too_large));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected =
         "the value of (default) preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
@@ -1296,7 +1297,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
         "\"max-preferred-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(before));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected =
         "the value of (default) preferred-lifetime (1000) is not between "
         "min-preferred-lifetime (2000) and max-preferred-lifetime (4000)";
@@ -1308,7 +1309,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
         "\"max-preferred-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(after));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected =
         "the value of (default) preferred-lifetime (5000) is not between "
         "min-preferred-lifetime (1000) and max-preferred-lifetime (4000)";
@@ -1320,7 +1321,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
         "\"max-preferred-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(crossed));
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     expected =
         "the value of min-preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
@@ -1343,7 +1344,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -1371,7 +1372,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // check if returned status is OK
     checkResult(status, 0);
@@ -1429,7 +1430,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
     extractConfig(config);
 
     do {
-        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
         checkResult(x, 0);
 
         CfgMgr::instance().commit();
@@ -1490,7 +1491,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
     extractConfig(config);
 
     do {
-        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
         checkResult(x, 0);
 
         CfgMgr::instance().commit();
@@ -1546,7 +1547,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsOverlappingIDs) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 1);
     EXPECT_TRUE(errorContainsPosition(x, "<string>"));
 }
@@ -1633,7 +1634,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(config4));
     extractConfig(config4);
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     CfgMgr::instance().commit();
@@ -1645,7 +1646,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
 
     // Do the reconfiguration (the last subnet is removed)
     ASSERT_NO_THROW(json = parseDHCP6(config_first3));
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     CfgMgr::instance().commit();
@@ -1663,14 +1664,14 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     /// from in between (not first, not last)
 
     ASSERT_NO_THROW(json = parseDHCP6(config4));
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     CfgMgr::instance().commit();
 
     // Do reconfiguration
     ASSERT_NO_THROW(json = parseDHCP6(config_second_removed));
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     CfgMgr::instance().commit();
@@ -1716,7 +1717,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
@@ -1758,7 +1759,7 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
     extractConfig(config("eth0"));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
@@ -1790,7 +1791,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 1 (configuration error)
     checkResult(status, 1);
@@ -1819,7 +1820,7 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
     ConstElementPtr json = parseJSON(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 1 (parse error)
     checkResult(status, 1);
@@ -1852,7 +1853,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // Returned value should be 0 (configuration success)
     checkResult(status, 0);
@@ -1892,7 +1893,7 @@ TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
     ConstElementPtr json = parseJSON(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // Returned value should be 1 (parse error)
     checkResult(status, 1);
@@ -1919,7 +1920,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // Returned value should be 1 (configuration error)
     checkResult(status, 1);
@@ -1984,7 +1985,7 @@ TEST_F(Dhcp6ParserTest, badSubnetValues) {
             ASSERT_NO_THROW(config = parseDHCP6((*scenario).config_json_))
                             << "invalid json, broken test";
             ConstElementPtr status;
-            EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+            EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
             checkResult(status, 1);
             EXPECT_EQ(comment_->stringValue(), (*scenario).exp_error_msg_);
         }
@@ -2067,7 +2068,7 @@ TEST_F(Dhcp6ParserTest, multiplePools) {
     extractConfig(config);
 
     ConstElementPtr status;
-    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     const Subnet6Collection* subnets =
@@ -2117,7 +2118,7 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
@@ -2147,7 +2148,7 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value must be 1 (configuration parse error)
     checkResult(x, 0);
@@ -2251,7 +2252,7 @@ TEST_F(Dhcp6ParserTest, badPools) {
     ASSERT_NO_THROW(json7 = parseDHCP6(config_bogus7));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json1));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json1));
 
     // check if returned status is always a failure
     checkResult(status, 1);
@@ -2259,37 +2260,37 @@ TEST_F(Dhcp6ParserTest, badPools) {
 
     CfgMgr::instance().clear();
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json2));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json2));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json3));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json3));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json4));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json4));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json5));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json5));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json6));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json6));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json7));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json7));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
@@ -2324,7 +2325,7 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     // Verify that DHCP6 configuration processing succeeds.
     // Returned value must be non-empty ConstElementPtr to config result.
     // rcode should be 0 which indicates successful configuration processing.
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
@@ -2383,7 +2384,7 @@ TEST_F(Dhcp6ParserTest, pdPoolPrefixExclude) {
     // Verify that DHCP6 configuration processing succeeds.
     // Returned value must be non-empty ConstElementPtr to config result.
     // rcode should be 0 which indicates successful configuration processing.
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
@@ -2464,7 +2465,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     // Verify that DHCP6 configuration processing succeeds.
     // Returned value must be non-empty ConstElementPtr to config result.
     // rcode should be 0 which indicates successful configuration processing.
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
@@ -2521,7 +2522,7 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     // Verify that DHCP6 configuration processing succeeds.
     // Returned value must be non-empty ConstElementPtr to config result.
     // rcode should be 0 which indicates successful configuration processing.
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
@@ -2626,7 +2627,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         }
 
         // Configuration processing should fail without a throw.
-        ASSERT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        ASSERT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
 
         // Returned value must be non-empty ConstElementPtr to config result.
         // rcode should be 1 which indicates configuration error.
@@ -2659,7 +2660,7 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -2691,7 +2692,7 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     // configuration and should result in removal of the option 100 from the
     // libdhcp++. Note DHCP6 or OPTION_DEFS parsers do not accept empty maps.
     json.reset(new MapElement());
-    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     EXPECT_FALSE(LibDHCP::getRuntimeOptionDef("isc", 100));
@@ -2723,7 +2724,7 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -2778,7 +2779,7 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
 
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -2843,7 +2844,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
 
     // Use the configuration string to create new option definitions.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -2891,7 +2892,7 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -2932,7 +2933,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulate) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -2966,7 +2967,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidName) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
@@ -2991,7 +2992,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidType) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
@@ -3017,7 +3018,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
@@ -3043,7 +3044,7 @@ TEST_F(Dhcp6ParserTest, optionIntegerTypes) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 0);
@@ -3068,7 +3069,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidEncapsulatedSpace) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
@@ -3097,7 +3098,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulatedSpaceAndArray) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
@@ -3123,7 +3124,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
@@ -3157,7 +3158,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -3186,7 +3187,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     json = parseOPTION_DEFS(config);
 
     // Use the configuration string to create new option definition.
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
@@ -3208,7 +3209,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     json = parseOPTION_DEFS(config);
 
     // Use the configuration string to create new option definition.
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting success.
     checkResult(status, 0);
@@ -3250,7 +3251,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsGlobal) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // These options are global
@@ -3323,7 +3324,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsSubnet) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // These options are subnet options
@@ -3415,7 +3416,7 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -3492,7 +3493,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -3549,7 +3550,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -3609,7 +3610,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     Subnet6Ptr subnet1 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
@@ -3710,7 +3711,7 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
@@ -3961,7 +3962,7 @@ TEST_F(Dhcp6ParserTest, optionDataValidHexLiterals) {
         ConstElementPtr json;
         ASSERT_NO_THROW(json = parseDHCP6(config));
 
-        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
         checkResult(x, 0);
 
         Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
@@ -4007,7 +4008,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     std::string config = createConfigWithOption(params);
     ConstElementPtr json = parseDHCP6(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
@@ -4062,7 +4063,7 @@ TEST_F(Dhcp6ParserTest, rdnssOption) {
     std::string config = createConfigWithOption(params);
     ConstElementPtr json = parseDHCP6(config, true);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
@@ -4142,7 +4143,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -4201,7 +4202,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -4268,7 +4269,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -4319,7 +4320,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
 
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -4374,8 +4375,8 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
 // Helper function to return a configuration containing an arbitrary number
 // of hooks libraries.
 std::string
-buildHooksLibrariesConfig(const std::vector<std::string>& libraries,
-                          bool multi_threading) {
+buildHooksLibrariesConfig(const std::vector<std::string>& libraries = {},
+                          bool multi_threading = true) {
     const string lbrace("{");
     const string rbrace("}");
     const string liblabel("\"library\": ");
@@ -4422,32 +4423,15 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries,
         "    \"space\": \"a-vendor-space\""
         " } ]");
 
-    if (multi_threading) {
-        config += string(
-            ","
-            "\"multi-threading\": {"
-            "    \"enable-multi-threading\": true"
-            "}");
-    }
+        config += R"(,
+    "multi-threading": {
+        "enable-multi-threading": )" +
+            string(multi_threading ? "true" : "false") + R"(
+    })";
 
     config += string("}");
 
     return (config);
-}
-
-// Convenience function for creating hooks library configuration with one or
-// two character string constants.
-std::string
-buildHooksLibrariesConfig(const char* library1 = NULL,
-                          const char* library2 = NULL) {
-    std::vector<std::string> libraries;
-    if (library1 != NULL) {
-        libraries.push_back(string(library1));
-        if (library2 != NULL) {
-            libraries.push_back(string(library2));
-        }
-    }
-    return (buildHooksLibrariesConfig(libraries, false));
 }
 
 // The goal of this test is to verify the configuration of hooks libraries if
@@ -4469,13 +4453,13 @@ TEST_F(Dhcp6ParserTest, NoHooksLibraries) {
 // Verify parsing fails with one library that will fail validation.
 TEST_F(Dhcp6ParserTest, InvalidLibrary) {
     // Parse a configuration containing a failing library.
-    string config = buildHooksLibrariesConfig(NOT_PRESENT_LIBRARY);
+    string config = buildHooksLibrariesConfig({NOT_PRESENT_LIBRARY});
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
-    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // The status object must not be NULL
     ASSERT_TRUE(status);
@@ -4492,8 +4476,8 @@ TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
     // Set up the configuration with two libraries and load them.
-    string config = buildHooksLibrariesConfig(CALLOUT_LIBRARY_1,
-                                              CALLOUT_LIBRARY_2);
+    string config = buildHooksLibrariesConfig({CALLOUT_LIBRARY_1, CALLOUT_LIBRARY_2},
+                                              /* multi_threading = */ false);
     ASSERT_TRUE(executeConfiguration(config,
                                      "load two valid libraries"));
 
@@ -4533,7 +4517,7 @@ TEST_F(Dhcp6ParserTest, IncompatibleLibrary2Specified) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(config));
     ConstElementPtr status;
-    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // The status object must not be NULL
     ASSERT_TRUE(status);
@@ -4567,7 +4551,7 @@ TEST_F(Dhcp6ParserTest, IncompatibleLibrary3Specified) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(config));
     ConstElementPtr status;
-    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // The status object must not be NULL
     ASSERT_TRUE(status);
@@ -4607,7 +4591,7 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
@@ -4645,7 +4629,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET6, 10000);
@@ -4676,7 +4660,7 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
@@ -4709,7 +4693,7 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfoList) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
@@ -4756,7 +4740,7 @@ TEST_F(Dhcp6ParserTest, classifySubnets) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     const Subnet6Collection* subnets =
@@ -4848,7 +4832,7 @@ TEST_F(Dhcp6ParserTest, classifyPools) {
     ASSERT_NO_THROW(json = parseDHCP6(config, true));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     const Subnet6Collection* subnets =
@@ -4946,7 +4930,7 @@ TEST_F(Dhcp6ParserTest, classifyPdPools) {
     ASSERT_NO_THROW(json = parseDHCP6(config, true));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     const Subnet6Collection* subnets =
@@ -5038,7 +5022,7 @@ TEST_F(Dhcp6ParserTest, d2ClientConfigValid) {
 
     // Pass the configuration in for parsing.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // check if returned status is OK
     checkResult(status, 0);
@@ -5114,7 +5098,7 @@ TEST_F(Dhcp6ParserTest, d2ClientConfigMoveToGlobal) {
 
     // Pass the configuration in for parsing.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // check if returned status is OK
     checkResult(status, 0);
@@ -5199,7 +5183,7 @@ TEST_F(Dhcp6ParserTest, d2ClientConfigBoth) {
 
     // Pass the configuration in for parsing.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // check if returned status is OK
     checkResult(status, 0);
@@ -5262,7 +5246,7 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
 
     // Configuration should not throw, but should fail.
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // check if returned status is failed.
     checkResult(status, 1);
@@ -5378,7 +5362,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // Make sure all subnets have been successfully configured. There is no
@@ -5539,7 +5523,7 @@ TEST_F(Dhcp6ParserTest, reservationWithOptionDefinition) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // Hosts configuration must be available.
@@ -5592,7 +5576,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
 
     ConstElementPtr json = parseJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 1);
 
     EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
@@ -5624,7 +5608,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     // Remove existing configuration, if any.
     CfgMgr::instance().clear();
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 1);
 
     // Case 3: Broken specification of option data.
@@ -5657,7 +5641,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     // Remove existing configuration, if any.
     CfgMgr::instance().clear();
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 1);
 }
 
@@ -5680,7 +5664,7 @@ TEST_F(Dhcp6ParserTest, macSources1) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     CfgMACSources sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
@@ -5710,7 +5694,7 @@ TEST_F(Dhcp6ParserTest, macSources2) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     CfgMACSources sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
@@ -5727,7 +5711,7 @@ TEST_F(Dhcp6ParserTest, macSources2) {
 TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
     ConstElementPtr status;
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_,
                     parseJSON("{ " + genIfaceConfig() + ","
                               "\"mac-sources\": [ ],"
                               "\"preferred-lifetime\": 3000,"
@@ -5755,7 +5739,7 @@ TEST_F(Dhcp6ParserTest, macSourcesBogus) {
                                       "\"valid-lifetime\": 4000 }"));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     // returned value should be 1 (failure)
     checkResult(status, 1);
 }
@@ -5830,7 +5814,7 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     extractConfig(hr_config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -5931,7 +5915,7 @@ TEST_F(Dhcp6ParserTest, hostReservationGlobal) {
     extractConfig(hr_config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -5976,7 +5960,7 @@ TEST_F(Dhcp6ParserTest, rsooNumbers) {
                    "\"valid-lifetime\": 4000 }"));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -6013,7 +5997,7 @@ TEST_F(Dhcp6ParserTest, rsooNames) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -6063,7 +6047,7 @@ TEST_F(Dhcp6ParserTest, rsooNegativeNumber) {
                    "\"valid-lifetime\": 4000 }"));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     // returned value should be 0 (success)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -6081,7 +6065,7 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
                    "\"valid-lifetime\": 4000 }"));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     // returned value should be 0 (success)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -6097,7 +6081,7 @@ TEST_F(Dhcp6ParserTest, notExistDataDir) {
     ASSERT_NO_THROW(config = parseDHCP6(config_txt));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // returned value should be 1 (error)
     int rcode;
@@ -6119,7 +6103,7 @@ TEST_F(Dhcp6ParserTest, notDirDataDir) {
     ASSERT_NO_THROW(config = parseDHCP6(config_txt));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // returned value should be 1 (error)
     int rcode;
@@ -6144,7 +6128,7 @@ TEST_F(Dhcp6ParserTest, testDataDir) {
     // Do not export it as it will keep the current TEST_DATA_BUILDDIR...
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // returned value should be 0 (success);
     checkResult(status, 0);
@@ -6167,7 +6151,7 @@ TEST_F(Dhcp6ParserTest, declineTimerDefault) {
     extractConfig(config_txt);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -6190,7 +6174,7 @@ TEST_F(Dhcp6ParserTest, dhcp4o6portDefault) {
     extractConfig(config_txt);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -6213,7 +6197,7 @@ TEST_F(Dhcp6ParserTest, declineTimer) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -6234,7 +6218,7 @@ TEST_F(Dhcp6ParserTest, declineTimerError) {
     ConstElementPtr json = parseJSON(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 1 (error)
     checkResult(status, 1);
@@ -6268,7 +6252,7 @@ TEST_F(Dhcp6ParserTest, expiredLeasesProcessing) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // Returned value should be 0 (success)
     checkResult(status, 0);
@@ -6309,7 +6293,7 @@ TEST_F(Dhcp6ParserTest, expiredLeasesProcessingError) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // Returned value should be 0 (error)
     checkResult(status, 1);
@@ -6346,7 +6330,7 @@ TEST_F(Dhcp6ParserTest, validClientClassDictionary) {
     extractConfig(config);
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -6575,7 +6559,7 @@ TEST_F(Dhcp6ParserTest, invalidPoolRange) {
     ASSERT_NO_THROW(json = parseDHCP6(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = parseAnswer(rcode, status);
@@ -6606,7 +6590,7 @@ TEST_F(Dhcp6ParserTest, outsideSubnetPool) {
     ASSERT_NO_THROW(json = parseDHCP6(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = parseAnswer(rcode, status);
@@ -7598,7 +7582,7 @@ TEST_F(Dhcp6ParserTest, globalReservations) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
     extractConfig(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
     // Make sure all subnets have been successfully configured. There is no
@@ -7748,18 +7732,31 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
     struct Scenario {
         std::string description_;
         std::string json_;
+        std::string mt_json_;
     };
-
     std::vector<Scenario> scenarios = {
         {
         "no entry",
-        ""
+        "",
+        "",
         },
         {
         "queue disabled",
         "{ \n"
         "   \"enable-queue\": false \n"
-        "} \n"
+        "} \n",
+        R"("multi-threading": {
+            "enable-multi-threading": false
+        })",
+        },
+        {
+        "queue enabled at first, but gets forcefully disabled by MT",
+        "{ \n"
+        "   \"enable-queue\": true \n"
+        "} \n",
+        R"("multi-threading": {
+            "enable-multi-threading": true
+        })",
         },
         {
         "queue disabled, arbitrary content allowed",
@@ -7767,14 +7764,20 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
         "   \"enable-queue\": false, \n"
         "   \"foo\": \"bogus\", \n"
         "   \"random-int\" : 1234 \n"
-        "} \n"
+        "} \n",
+        R"("multi-threading": {
+            "enable-multi-threading": false
+        })",
         },
         {
         "queue enabled, with queue-type",
         "{ \n"
         "   \"enable-queue\": true, \n"
         "   \"queue-type\": \"some-type\" \n"
-        "} \n"
+        "} \n",
+        R"("multi-threading": {
+            "enable-multi-threading": false
+        })",
         },
         {
         "queue enabled with queue-type and arbitrary content",
@@ -7783,7 +7786,10 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
         "   \"queue-type\": \"some-type\", \n"
         "   \"foo\": \"bogus\", \n"
         "   \"random-int\" : 1234 \n"
-        "} \n"
+        "} \n",
+        R"("multi-threading": {
+            "enable-multi-threading": false
+        })",
         }
     };
 
@@ -7806,8 +7812,10 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
             if (!scenario.json_.empty()) {
                os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
             }
-
-            os << "} \n";
+            if (!scenario.mt_json_.empty()) {
+                os << ",\n" << scenario.mt_json_;
+            }
+            os << "\n}\n";
 
             // Configure the server. This should succeed.
             configure(os.str(), CONTROL_RESULT_SUCCESS, "");
@@ -7833,8 +7841,18 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
             // Add the defaults to expected queue control.
             SimpleParser6::setDefaults(exp_control, SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS);
 
+            // This specific scenario is the only one where we expect enable-queue
+            // to be changed from what the user set it to.
+            if (scenario.description_ == "queue enabled at first, but gets forcefully disabled by MT") {
+                exp_control->set("enable-queue", Element::create(false));
+            }
+
             // Verify that the staged queue control equals the expected queue control.
-            EXPECT_TRUE(staged_control->equals(*exp_control));
+            EXPECT_TRUE(staged_control->equals(*exp_control))
+#ifdef HAVE_CREATE_UNIFIED_DIFF
+                << "\nDiff:\n" << isc::test::generateDiff(prettyPrint(staged_control), prettyPrint(exp_control)) << "\n"
+#endif
+            ;
         }
     }
 }
@@ -7927,7 +7945,7 @@ TEST_F(Dhcp6ParserTest, storeExtendedInfoGlobal) {
 
     ConstElementPtr json = parseJSON(config);
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     // First subnet should override the global value.
@@ -7963,7 +7981,7 @@ TEST_F(Dhcp6ParserTest, storeExtendedInfoNoGlobal) {
 
     ConstElementPtr json = parseJSON(config);
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     // First subnet should use global default.
@@ -7994,7 +8012,7 @@ TEST_F(Dhcp6ParserTest, statsDefaultLimits) {
     extractConfig(config);
 
     ConstElementPtr status;
-    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     CfgMgr::instance().commit();
@@ -8016,7 +8034,7 @@ TEST_F(Dhcp6ParserTest, multiThreadingDefaultSettings) {
     extractConfig(config);
 
     ConstElementPtr status;
-    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     ConstElementPtr cfg = CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading();
@@ -8024,7 +8042,7 @@ TEST_F(Dhcp6ParserTest, multiThreadingDefaultSettings) {
 
     std::string content_json =
         "{"
-        "    \"enable-multi-threading\": false,\n"
+        "    \"enable-multi-threading\": true,\n"
         "    \"thread-pool-size\": 0,\n"
         "    \"packet-queue-size\": 64\n"
         "}";
@@ -8053,7 +8071,7 @@ TEST_F(Dhcp6ParserTest, multiThreadingSettings) {
     extractConfig(config);
 
     ConstElementPtr status;
-    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(status, 0);
 
     ConstElementPtr cfg = CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading();
@@ -8096,7 +8114,7 @@ TEST_F(Dhcp6ParserTest, clientClassValidPreferredLifetime) {
     extractConfig(config);
 
     ConstElementPtr status;
-    ASSERT_NO_THROW_LOG(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW_LOG(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
@@ -8160,7 +8178,7 @@ TEST_F(Dhcp6ParserTest, templateClientClassValidPreferredLifetime) {
     extractConfig(config);
 
     ConstElementPtr status;
-    ASSERT_NO_THROW_LOG(status = configureDhcp6Server(srv_, json));
+    ASSERT_NO_THROW_LOG(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 

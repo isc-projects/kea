@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,6 +114,16 @@ void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {
     option_prl->addValue(DHO_LPR_SERVERS);
     // And add 'Parameter Request List' option into the DISCOVER packet.
     pkt->addOption(option_prl);
+}
+
+ConstElementPtr
+Dhcpv4SrvTest::configure(Dhcpv4Srv& server, ConstElementPtr config) {
+    ConstElementPtr const status(configureDhcp4Server(server, config));
+
+    // Simulate the application of MT config such as in ControlledDhcpvXSrv::processConfig().
+    CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+
+    return status;
 }
 
 void

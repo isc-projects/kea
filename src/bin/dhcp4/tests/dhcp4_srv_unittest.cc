@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3098,7 +3098,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3160,7 +3160,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3228,7 +3228,7 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3342,7 +3342,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3393,7 +3393,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3449,7 +3449,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3523,7 +3523,7 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3596,7 +3596,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3679,7 +3679,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3813,7 +3813,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3881,7 +3881,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3937,7 +3937,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -4001,7 +4001,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -4904,7 +4904,6 @@ TEST_F(Dhcpv4SrvTest, userContext) {
 
     // This config has one subnet with user-context with one
     // pool (also with context). Make sure the configuration could be accepted.
-    cout << CONFIGS[3] << endl;
     EXPECT_NO_THROW(configure(CONFIGS[3]));
 
     // Now make sure the data was not lost.
@@ -5000,7 +4999,7 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);

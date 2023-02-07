@@ -35,6 +35,7 @@
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/dhcp4.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfgmgr.h>
 
 #include <gtest/gtest.h>
@@ -176,7 +177,7 @@ public:
         // Configure a mocked server.
         NakedDhcpv4Srv srv(0);
         ConstElementPtr x;
-        EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+        EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
         ASSERT_EQ(0, rcode_);
@@ -445,7 +446,7 @@ public:
         // Configure a mocked server.
         NakedDhcpv4Srv srv(0);
         ConstElementPtr x;
-        EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+        EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
         ASSERT_EQ(0, rcode_);
@@ -602,7 +603,7 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -928,13 +929,13 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
     NakedDhcpv4Srv srv(0);
 
     // This should fail (missing option definition)
-    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_bogus));
+    EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json_bogus));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(1, rcode_);
 
     // This should work (option definition present)
-    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_valid));
+    EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json_valid));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -1079,7 +1080,7 @@ TEST_F(VendorOptsTest, option43LastResort) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1151,7 +1152,7 @@ TEST_F(VendorOptsTest, option43BadRaw) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1239,7 +1240,7 @@ TEST_F(VendorOptsTest, option43FailRaw) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1307,7 +1308,7 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1397,7 +1398,7 @@ TEST_F(VendorOptsTest, option43RawClass) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1494,7 +1495,7 @@ TEST_F(VendorOptsTest, option43Class) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1623,7 +1624,7 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1758,7 +1759,7 @@ TEST_F(VendorOptsTest, option43Classes) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1986,7 +1987,7 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_) << isc::data::prettyPrint(status);
@@ -2090,14 +2091,14 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
     CfgMgr::instance().commit();
 
-        // Create a packet with enough to select the subnet and go through
+    // Create a packet with enough to select the subnet and go through
     // the DISCOVER processing
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
     query->setRemoteAddr(IOAddress("192.0.2.1"));

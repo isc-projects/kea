@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -5611,7 +5611,8 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
 
         // Minimal valid configuration for the server. It includes the
         // section which loads the callout library #3, which implements
-        // dhcp6_srv_configured callout.
+        // dhcp6_srv_configured callout. MT needs to be disabled
+        // since the library is single-threaded.
         string config_str =
             "{"
             "    \"interfaces-config\": {"
@@ -5631,8 +5632,12 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
             "            \"library\": \"" + std::string(CALLOUT_LIBRARY_3) + "\""
             + parameters +
             "        }"
-            "    ]"
-            "}";
+          R"(    ],
+                 "multi-threading": {
+                    "enable-multi-threading": false
+                }
+            })";
+
 
         ConstElementPtr config = Element::fromJSON(config_str);
 

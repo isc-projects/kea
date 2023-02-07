@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -374,6 +374,17 @@ public:
     ///
     /// @param pkt packet to add PRL option to.
     void addPrlOption(Pkt4Ptr& pkt);
+
+    /// @brief Used to configure a server for tests.
+    ///
+    /// A wrapper over configureDhcp4Server() to which any other
+    /// simulations of production code are added.
+    ///
+    /// @brief server the server being tested
+    /// @brief config the configuration the server is configured with
+    ///
+    /// @return a JSON-formatted status of the reconfiguration
+    static ConstElementPtr configure(Dhcpv4Srv& server, isc::data::ConstElementPtr config);
 
     /// @brief Configures options being requested in the PRL option.
     ///

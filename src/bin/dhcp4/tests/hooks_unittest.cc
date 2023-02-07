@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1710,7 +1710,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1793,7 +1793,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3020,7 +3020,7 @@ TEST_F(HooksDhcpv4SrvTest, host4Identifier) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3091,7 +3091,7 @@ TEST_F(HooksDhcpv4SrvTest, host4IdentifierHWAddr) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3232,7 +3232,8 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
 
         // Minimal valid configuration for the server. It includes the
         // section which loads the callout library #3, which implements
-        // dhcp4_srv_configured callout.
+        // dhcp4_srv_configured callout. MT needs to be disabled
+        // since the library is single-threaded.
         string config_str =
             "{"
             "    \"interfaces-config\": {"
@@ -3251,8 +3252,11 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
             "            \"library\": \"" + std::string(CALLOUT_LIBRARY_3) + "\""
             + parameters +
             "        }"
-            "    ]"
-            "}";
+          R"(    ],
+                 "multi-threading": {
+                    "enable-multi-threading": false
+                }
+            })";
 
         ConstElementPtr config = Element::fromJSON(config_str);
 
@@ -3303,6 +3307,10 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     IfaceMgrTestConfig test_config(true);
 
     // Configure 1 directly reachable subnet, parked-packet-limit of 1.
+    // TODO: investigate why enabling MT causes exception BadValue with message
+    // "interface eth1 doesn't exist and therefore it is impossible"
+    // " to find a suitable subnet for its IPv4 address" to be thrown, and
+    // sometimes a segfault.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
@@ -3314,14 +3322,18 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"interface\": \"eth1\" "
         " } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000,"
+        R"("multi-threading": {
+            "enable-multi-threading": false
+        }
+        })";
 
     ConstElementPtr json;
     EXPECT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);

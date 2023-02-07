@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,14 +15,24 @@
 using namespace isc::util;
 using namespace isc;
 
+/// @brief Fixture used to reset multi-threading before and after each test.
+struct MultiThreadingMgrTest : ::testing::Test {
+    MultiThreadingMgrTest() {
+        MultiThreadingMgr::instance().apply(false, 0, 0);
+    }
+    ~MultiThreadingMgrTest() {
+        MultiThreadingMgr::instance().apply(false, 0, 0);
+    }
+};
+
 /// @brief Verifies that the default mode is false (MT disabled).
-TEST(MultiThreadingMgrTest, defaultMode) {
+TEST_F(MultiThreadingMgrTest, defaultMode) {
     // MT should be disabled
     EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
 }
 
 /// @brief Verifies that the mode setter works.
-TEST(MultiThreadingMgrTest, setMode) {
+TEST_F(MultiThreadingMgrTest, setMode) {
     // enable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().setMode(true));
     // MT should be enabled
@@ -34,13 +44,13 @@ TEST(MultiThreadingMgrTest, setMode) {
 }
 
 /// @brief Verifies that accessing the thread pool works.
-TEST(MultiThreadingMgrTest, threadPool) {
+TEST_F(MultiThreadingMgrTest, threadPool) {
     // get the thread pool
     EXPECT_NO_THROW(MultiThreadingMgr::instance().getThreadPool());
 }
 
 /// @brief Verifies that the thread pool size setter works.
-TEST(MultiThreadingMgrTest, threadPoolSize) {
+TEST_F(MultiThreadingMgrTest, threadPoolSize) {
     // default thread count is 0
     EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
     // set thread count to 16
@@ -54,7 +64,7 @@ TEST(MultiThreadingMgrTest, threadPoolSize) {
 }
 
 /// @brief Verifies that the packet queue size setter works.
-TEST(MultiThreadingMgrTest, packetQueueSize) {
+TEST_F(MultiThreadingMgrTest, packetQueueSize) {
     // default queue size is 0
     EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
     EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxQueueSize(), 0);
@@ -71,13 +81,13 @@ TEST(MultiThreadingMgrTest, packetQueueSize) {
 }
 
 /// @brief Verifies that detecting thread count works.
-TEST(MultiThreadingMgrTest, detectThreadCount) {
+TEST_F(MultiThreadingMgrTest, detectThreadCount) {
     // detecting thread count should work
     EXPECT_NE(MultiThreadingMgr::detectThreadCount(), 0);
 }
 
 /// @brief Verifies that apply settings works.
-TEST(MultiThreadingMgrTest, applyConfig) {
+TEST_F(MultiThreadingMgrTest, applyConfig) {
     // get the thread pool
     auto& thread_pool = MultiThreadingMgr::instance().getThreadPool();
     // MT should be disabled
@@ -125,7 +135,7 @@ TEST(MultiThreadingMgrTest, applyConfig) {
 }
 
 /// @brief Verifies that the critical section flag works.
-TEST(MultiThreadingMgrTest, criticalSectionFlag) {
+TEST_F(MultiThreadingMgrTest, criticalSectionFlag) {
     // get the thread pool
     auto& thread_pool = MultiThreadingMgr::instance().getThreadPool();
     // MT should be disabled
@@ -175,7 +185,7 @@ TEST(MultiThreadingMgrTest, criticalSectionFlag) {
 }
 
 /// @brief Verifies that the critical section works.
-TEST(MultiThreadingMgrTest, criticalSection) {
+TEST_F(MultiThreadingMgrTest, criticalSection) {
     // get the thread pool instance
     auto& thread_pool = MultiThreadingMgr::instance().getThreadPool();
     // thread pool should be stopped
