@@ -4909,8 +4909,8 @@ have reservations) will get their default DNS server configured.
         ],
         "reservations": [
             // Clients on this list will be added to the KNOWN class.
-            { "hw-address": "aa:bb:cc:dd:ee:fe" },
-            { "hw-address": "11:22:33:44:55:66" }
+            { "duid": "01:02:03:04:05:0A:0B:0C:0D:0E" },
+            { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
         ],
         "reservations-in-subnet": true,
 
@@ -4949,9 +4949,9 @@ their bills.
         "reservations": [
             // Clients on this list will be added to the KNOWN class. Some
             // will also be added to the blocked class.
-            { "hw-address": "aa:bb:cc:dd:ee:fe",
+            { "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
               "client-classes": [ "blocked" ] },
-            { "hw-address": "11:22:33:44:55:66" }
+            { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
         ],
         "reservations-in-subnet": true,
 
