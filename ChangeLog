@@ -1,3 +1,10 @@
+2092.	[bug]		fdupont
+	Added logic to kea-dhcp4 and kea-dhcp6 to catch and log
+	database connection errors that occur during lease
+	reclamation. Prior to this such errors caused the
+	reclamation timer to not get rescheduled.
+	(Gitlab #2682)
+
 2091.	[bug]		marcin
 	Fixed a bug that caused a response to a config-get command
 	to lack the configured read-timeout, write-timeout, and

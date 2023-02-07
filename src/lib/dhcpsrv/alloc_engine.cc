@@ -2343,8 +2343,8 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases,
         .arg(timeout);
 
     try {
-        reclaimExpiredLeases6NoExc(max_leases, timeout, remove_lease,
-                                   max_unwarned_cycles);
+        reclaimExpiredLeases6Internal(max_leases, timeout, remove_lease,
+                                      max_unwarned_cycles);
     } catch (const std::exception& ex) {
         LOG_ERROR(alloc_engine_logger,
                   ALLOC_ENGINE_V6_LEASES_RECLAMATION_FAILED)
@@ -2353,10 +2353,10 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases,
 }
 
 void
-AllocEngine::reclaimExpiredLeases6NoExc(const size_t max_leases,
-                                        const uint16_t timeout,
-                                        const bool remove_lease,
-                                        const uint16_t max_unwarned_cycles) {
+AllocEngine::reclaimExpiredLeases6Internal(const size_t max_leases,
+                                           const uint16_t timeout,
+                                           const bool remove_lease,
+                                           const uint16_t max_unwarned_cycles) {
 
     // Create stopwatch and automatically start it to measure the time
     // taken by the routine.
@@ -2506,8 +2506,8 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases,
         .arg(timeout);
 
     try {
-        reclaimExpiredLeases4NoExc(max_leases, timeout, remove_lease,
-                                   max_unwarned_cycles);
+        reclaimExpiredLeases4Internal(max_leases, timeout, remove_lease,
+                                      max_unwarned_cycles);
     } catch (const std::exception& ex) {
         LOG_ERROR(alloc_engine_logger,
                   ALLOC_ENGINE_V4_LEASES_RECLAMATION_FAILED)
@@ -2516,10 +2516,10 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases,
 }
 
 void
-AllocEngine::reclaimExpiredLeases4NoExc(const size_t max_leases,
-                                        const uint16_t timeout,
-                                        const bool remove_lease,
-                                        const uint16_t max_unwarned_cycles) {
+AllocEngine::reclaimExpiredLeases4Internal(const size_t max_leases,
+                                           const uint16_t timeout,
+                                           const bool remove_lease,
+                                           const uint16_t max_unwarned_cycles) {
 
     // Create stopwatch and automatically start it to measure the time
     // taken by the routine.

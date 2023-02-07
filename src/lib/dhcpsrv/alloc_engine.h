@@ -665,10 +665,10 @@ public:
     /// of expired leases, after which the system issues a warning if there
     /// are still expired leases in the database. If this value is 0, the
     /// warning is never issued.
-    void reclaimExpiredLeases6NoExc(const size_t max_leases,
-                                    const uint16_t timeout,
-                                    const bool remove_lease,
-                                    const uint16_t max_unwarned_cycles = 0);
+    void reclaimExpiredLeases6Internal(const size_t max_leases,
+                                       const uint16_t timeout,
+                                       const bool remove_lease,
+                                       const uint16_t max_unwarned_cycles = 0);
 
     /// @brief Deletes reclaimed leases expired more than specified amount
     /// of time ago.
@@ -741,10 +741,10 @@ public:
     /// of expired leases, after which the system issues a warning if there
     /// are still expired leases in the database. If this value is 0, the
     /// warning is never issued.
-    void reclaimExpiredLeases4NoExc(const size_t max_leases,
-                                    const uint16_t timeout,
-                                    const bool remove_lease,
-                                    const uint16_t max_unwarned_cycles = 0);
+    void reclaimExpiredLeases4Internal(const size_t max_leases,
+                                       const uint16_t timeout,
+                                       const bool remove_lease,
+                                       const uint16_t max_unwarned_cycles = 0);
 
     /// @brief Deletes reclaimed leases expired more than specified amount
     /// of time ago.
