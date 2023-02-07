@@ -4879,6 +4879,100 @@ enabled, host reservations lookup is always performed first to avoid lease
 lookup resource locking. The ``reservations-lookup-first`` defaults to ``false``
 when multi-threading is disabled.
 
+.. _host_reservations_as_basic_access_control6:
+
+Host Reservations as Basic Access Control
+-----------------------------------------
+
+Starting with Kea 2.3.5, it is possible to define a host reservation that
+contains just an identifier, without any address, options or values. In some
+deployments this is useful, as the hosts that have a reservation will belong to
+KNOWN class, while others won't. This can be used as a basic access control.
+
+The following example demonstrates this concept. There is a single IPv6 subnet
+and all clients will get an address from it. However, only known (those that
+have reservations) will get their default DNS server configured.
+
+::
+
+    "Dhcp6": {
+        "client-classes": [
+            {
+                "name": "KNOWN",
+                "option-data": [
+                    {
+                        "name": "dns-servers",
+                        "data": "2001:db8::1"
+                    }
+                ]
+            }
+        ],
+        "reservations": [
+            // Clients on this list will be added to the KNOWN class.
+            { "hw-address": "aa:bb:cc:dd:ee:fe" },
+            { "hw-address": "11:22:33:44:55:66" }
+        ],
+        "reservations-in-subnet": true,
+
+        "subnet6": [
+            {
+                "subnet": "2001:db8:1::/48",
+                "pools": [
+                    {
+                        "pool": "2001:db8:1:1::/64"
+                    }
+                ]
+            }
+        ]
+    }
+
+This concept can be extended further. A good real life scenario is a list of
+customers of an ISP. Some of them haven't paid their bills. A new class can be
+defined to use alternative default DNS server, that instead of giving access
+to Internet, redirects customers to a captive portal urging them to pay
+their bills.
+
+::
+
+    "Dhcp6": {
+        "client-classes": [
+            {
+                "name": "blocked",
+                "option-data": [
+                    {
+                        "name": "dns-servers",
+                        "data": "2001:db8::2"
+                    }
+                ]
+            },
+        ],
+        "reservations": [
+            // Clients on this list will be added to the KNOWN class. Some
+            // will also be added to the blocked class.
+            { "hw-address": "aa:bb:cc:dd:ee:fe",
+              "client-classes": [ "blocked" ] },
+            { "hw-address": "11:22:33:44:55:66" }
+        ],
+        "reservations-in-subnet": true,
+
+        "subnet6": [
+            {
+                "subnet": "2001:db8:1::/48",
+                "pools": [
+                    {
+                        "pool": "2001:db8:1:1::/64"
+                    }
+                ],
+                "option-data": [
+                    {
+                        "name": "dns-servers",
+                        "data": "2001:db8::1"
+                    }
+                ]
+            }
+        ]
+    }
+
 .. _shared-network6:
 
 Shared Networks in DHCPv6
