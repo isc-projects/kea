@@ -806,6 +806,13 @@ public:
     /// @return A pointer to unparsed network configuration.
     virtual data::ElementPtr toElement() const;
 
+    /// @brief Generates an identifying label for logging.
+    ///
+    /// @return string containing the label
+    virtual std::string getLabel() const {
+        return ("base-network");
+    }
+
 protected:
 
     /// @brief Gets the optional callback function used to fetch globally

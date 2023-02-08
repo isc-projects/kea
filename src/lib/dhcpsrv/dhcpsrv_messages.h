@@ -32,6 +32,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_ONLY_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ONLY_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_OPTION_DUPLICATE;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_RELAY_IP_ADDRESS_DEPRECATED;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_RENEW_GTR_REBIND;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT;

@@ -786,12 +786,6 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         output << "t2=" << rebind << ", ";
     }
 
-    if (has_renew && has_rebind && (renew > rebind)) {
-        isc_throw(DhcpConfigError, "the value of renew-timer (" << renew
-                  << ") is greater than the value of rebind-timer ("
-                  << rebind << ")");
-    }
-
     if (!subnet4->getValid().unspecified()) {
         output << "valid-lifetime=" << subnet4->getValid().get();
     }
@@ -1371,12 +1365,6 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     if (has_rebind) {
         rebind = subnet6->getT2().get();
         output << "t2=" << rebind << ", ";
-    }
-
-    if (has_renew && has_rebind && (renew > rebind)) {
-        isc_throw(DhcpConfigError, "the value of renew-timer (" << renew
-                  << ") is greater than the value of rebind-timer ("
-                  << rebind << ")");
     }
 
     if (!subnet6->getPreferred().unspecified()) {

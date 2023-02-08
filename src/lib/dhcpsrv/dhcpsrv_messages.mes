@@ -1249,3 +1249,9 @@ indicate an error in the source code, please submit a bug report.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software.  This is a configuration error.
+
+% DHCPSRV_CFGMGR_RENEW_GTR_REBIND in %1, the value of renew-timer %2 is greater than the value of rebind-timer %3, ignoring renew-timer
+A warning message that indicates the configured renew-timer is greater
+than the configured rebind-timer.  The server will ignore the the renew
+timer value and send the rebind timer value only.  This is considered
+a non-fatal configuration error.

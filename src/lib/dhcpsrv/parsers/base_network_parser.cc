@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <util/triplet.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
 #include <util/optional.h>
 #include <util/strutil.h>
@@ -114,9 +115,13 @@ BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
     }
 
     if (has_renew && has_rebind && (renew > rebind)) {
-        isc_throw(DhcpConfigError, "the value of renew-timer (" << renew
-                  << ") is greater than the value of rebind-timer ("
-                  << rebind << ")");
+        // The renew-timer value is too large and server logic
+        // later on will end up not sending it. Warn the user but
+        // allow the configuration to pass.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_RENEW_GTR_REBIND)
+                 .arg(network->getLabel())
+                 .arg(renew)
+                 .arg(rebind);
     }
 
     network->setValid(parseIntTriplet(network_data, "valid-lifetime"));

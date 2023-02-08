@@ -1,3 +1,10 @@
+2097.	[func]		tmark
+	kea-dhcp4 and kea-dhcp6 will now accept but warn about
+	and then ignore renew-timer	values that exceed rebind-timer
+	values.  Prior to this the servers treated this as a fatal
+	configuration error.
+	(Gitlab #2677)
+
 2096.	[bug]		[tmark]
 	Corrected a bug which allowed options to be added to themselves
 	as suboptions.

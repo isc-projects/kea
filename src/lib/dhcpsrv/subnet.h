@@ -422,6 +422,12 @@ protected:
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
 
+    virtual std::string getLabel() const {
+        std::stringstream ss;
+        ss << "subnet-id " << id_;
+        return (ss.str());
+    }
+
     /// @brief Converts subnet prefix to a pair of prefix/length pair.
     ///
     /// IPv4 and IPv6 specific conversion functions should apply extra checks

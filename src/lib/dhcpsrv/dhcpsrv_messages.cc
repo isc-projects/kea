@@ -31,6 +31,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_ONLY_SUBNET4 = "DHCPSRV_CFGMGR_O
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ONLY_SUBNET6 = "DHCPSRV_CFGMGR_ONLY_SUBNET6";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_OPTION_DUPLICATE = "DHCPSRV_CFGMGR_OPTION_DUPLICATE";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_RELAY_IP_ADDRESS_DEPRECATED = "DHCPSRV_CFGMGR_RELAY_IP_ADDRESS_DEPRECATED";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_RENEW_GTR_REBIND = "DHCPSRV_CFGMGR_RENEW_GTR_REBIND";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED = "DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT = "DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT = "DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT";
@@ -282,6 +283,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_ONLY_SUBNET6", "retrieved subnet %1 for address hint %2",
     "DHCPSRV_CFGMGR_OPTION_DUPLICATE", "multiple options with the code: %1 added to the subnet: %2",
     "DHCPSRV_CFGMGR_RELAY_IP_ADDRESS_DEPRECATED", "\"relay\" uses \"ip-address\", which has been deprecated, please use \"ip-addresses\": %1",
+    "DHCPSRV_CFGMGR_RENEW_GTR_REBIND", "in %1, the value of renew-timer %2 is greater than the value of rebind-timer %3, ignoring renew-timer",
     "DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED", "use of raw sockets is unsupported on this OS, UDP sockets will be used",
     "DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT", "\"dhcp-socket-type\" not specified , using default socket type %1",
     "DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT", "using socket type %1",

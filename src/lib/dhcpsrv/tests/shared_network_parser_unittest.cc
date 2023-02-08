@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -26,7 +27,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
 namespace {
-class SharedNetworkParserTest : public ::testing::Test {
+class SharedNetworkParserTest :  public LogContentTest {
 public:
 
     /// @brief Structure for describing a single relay test scenario
@@ -495,7 +496,8 @@ TEST_F(SharedNetwork4ParserTest, iface) {
 TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
     IfaceMgrTestConfig ifmgr(true);
 
-    // Basic configuration for shared network.
+    // Basic configuration for shared network but with a renew-timer value
+    // larger than rebind-timer.
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
     ConstElementPtr valid_element = config_element->get("rebind-timer");
@@ -508,8 +510,15 @@ TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
     SharedNetwork4Parser parser;
     SharedNetwork4Ptr network;
 
-    ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
-    ASSERT_FALSE(network);
+    // Parser should not throw.
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in shared-network bird,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test verifies that shared network parser for IPv4 works properly
@@ -785,7 +794,8 @@ TEST_F(SharedNetwork6ParserTest, parseWithInterfaceId) {
 TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
     IfaceMgrTestConfig ifmgr(true);
 
-    // Use the configuration with interface-id instead of interface parameter.
+    // Basic configuration for shared network but with a renew-timer value
+    // larger than rebind-timer.
     use_iface_id_ = true;
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
@@ -799,8 +809,15 @@ TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
     SharedNetwork6Parser parser;
     SharedNetwork6Ptr network;
 
-    ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
-    ASSERT_FALSE(network);
+    // Parser should not throw.
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in shared-network bird,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test verifies that shared network parser for IPv6 works properly
