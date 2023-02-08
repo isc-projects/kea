@@ -943,6 +943,18 @@ void Lease4CmdsTest::testLease4AddExtendedInfo() {
 
     checkLease4Stats(88, 0, 0);
 
+    Lease4Collection leases;
+    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    leases = lmptr_->getLeases4ByRelayId(relay_id,
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+    const vector<uint8_t> remote_id = { 1, 2, 3 };
+    leases = lmptr_->getLeases4ByRemoteId(remote_id,
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+
     // Now send the command.
     string txt =
         "{\n"
@@ -979,10 +991,20 @@ void Lease4CmdsTest::testLease4AddExtendedInfo() {
     expected += "\"remote-id\": \"010203\", ";
     expected += "\"sub-options\": \"0x02030102030C03AABBCC\" } } }";
     EXPECT_EQ(expected, ctx->str());
-    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
     EXPECT_EQ(relay_id, l->relay_id_);
-    const vector<uint8_t> remote_id = { 1, 2, 3 };
     EXPECT_EQ(remote_id, l->remote_id_);
+
+    // Check the lease can be retrieved by its relay or remote id too.
+    leases = lmptr_->getLeases4ByRelayId(relay_id,
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*l, *leases[0]);
+    leases = lmptr_->getLeases4ByRemoteId(remote_id,
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*l, *leases[0]);
 }
 
 void Lease4CmdsTest::testLease4GetMissingParams() {
@@ -2309,6 +2331,18 @@ void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
 
     checkLease4Stats(88, 2, 0);
 
+    Lease4Collection leases;
+    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    leases = lmptr_->getLeases4ByRelayId(relay_id,
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+    const vector<uint8_t> remote_id = { 1, 2, 3 };
+    leases = lmptr_->getLeases4ByRemoteId(remote_id,
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+
     // Now send the command.
     string txt =
         "{\n"
@@ -2347,10 +2381,20 @@ void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
     expected += "\"remote-id\": \"010203\", ";
     expected += "\"sub-options\": \"0x02030102030C03AABBCC\" } } }";
     EXPECT_EQ(expected, ctx->str());
-    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
     EXPECT_EQ(relay_id, l->relay_id_);
-    const vector<uint8_t> remote_id = { 1, 2, 3 };
     EXPECT_EQ(remote_id, l->remote_id_);
+
+    // Check the lease can be retrieved by its relay or remote id too.
+    leases = lmptr_->getLeases4ByRelayId(relay_id,
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*l, *leases[0]);
+    leases = lmptr_->getLeases4ByRemoteId(remote_id,
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*l, *leases[0]);
 }
 
 void Lease4CmdsTest::testLease4DelMissingParams() {

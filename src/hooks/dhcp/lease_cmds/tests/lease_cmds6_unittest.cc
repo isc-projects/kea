@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2106,9 +2106,9 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
     vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
     leases = lmptr_->getLeases6ByRemoteId(remote_id,
                                           IOAddress::IPV6_ZERO_ADDRESS(),
-                                         0,
-                                         IOAddress::IPV6_ZERO_ADDRESS(),
-                                         LeasePageSize(10));
+                                          0,
+                                          IOAddress::IPV6_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
     EXPECT_TRUE(leases.empty());
     vector<uint8_t> relay_bin(8, 0x64);
     DuidPtr relay_id(new DUID(relay_bin));
