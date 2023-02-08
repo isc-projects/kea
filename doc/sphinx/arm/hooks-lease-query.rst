@@ -368,39 +368,40 @@ New options are defined for Bulk Leasequery:
 
 - status-code (151)
 
-    This option in replies carries a status code as MalformedQuery
-    or NotAllowed with an optional text message.
+    This reply option carries a status code such as MalformedQuery or
+    NotAllowed with an optional text message.
 
 - base-time (152)
 
-    This option in replies carries the absolute current time the
-    response was created. All other time-based options in the reply
-    are related to it.a
+    This reply option carries the absolute current time the response
+    was created. All other time-based reply options are related to
+    this value.
 
 - start-time-of-state (153)
 
-    The option in replies carries the time of the lease transition into its
+    The reply option carries the time of the lease transition into its
     current state.
 
 - query-start-time (154)
 
-    The option in queries specifies a start query time: all leases older
-    won't be returned in replies.
+    The query option specifies a start query time: replies will only
+    contain leases that are older than this value.
 
 - query-end-time (155)
 
-    The option in queries specifies a end query time: all leases younger
-    won't be returned in replies.
+    The query option specifies an end query time: replies will only
+    contain leases that are younger than this value.
 
 - dhcp-state (156)
 
-    This option in replies carries the lease state.
+    This reply option carries the lease state.
 
 - data-source (157)
 
-    This option in replies carries the source of the data as a remote flag.
+    This reply option carries the source of the data as a remote flag.
 
-RFC 6926 reuses and extends the Virtual Subnet Selection option (221).
+RFC 6926 reuses and extends the Virtual Subnet Selection option (221)
+defined in RFC 6607.
 
 .. note::
 
