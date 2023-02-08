@@ -580,8 +580,7 @@ LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease,
     } catch (const exception& ex) {
         ostringstream err;
         err << "in " << verifying << " a problem was found: " << ex.what();
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL)
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL)
             .arg(lease->addr_.toText())
             .arg(err.str());
 
@@ -932,8 +931,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
             err << " [relay#" << i << "]";
         }
         err << " a problem was found: " << ex.what();
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL)
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL)
             .arg(lease->addr_.toText())
             .arg(err.str());
 

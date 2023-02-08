@@ -344,7 +344,7 @@ should be of the form 'keyword=value keyword=value...' is included in
 the message.
 
 % DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL extended info for lease %1 failed checks (%2)
-This debug message is printed when a lease extended info failed to
+This error message is printed when a lease extended info failed to
 pass sanity checks. The detail of the found problem was displayed and
 the extended info deleted from the lease user context.
 
@@ -352,7 +352,7 @@ the extended info deleted from the lease user context.
 This debug message is printed when a lease extended info was upgraded.
 
 % DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL extended info for lease %1 failed checks (%2)
-This debug message is printed when a lease extended info failed to
+This error message is printed when a lease extended info failed to
 pass sanity checks. The detail of the found problem was displayed and
 the extended info deleted from the lease user context.
 
