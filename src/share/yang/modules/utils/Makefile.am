@@ -17,11 +17,15 @@ SHTESTS  =
 SHTESTS += check-hashes.sh
 SHTESTS += check-revisions.sh
 
+if HAVE_GTEST
+
 # Run shell tests on "make check".
 check_SCRIPTS = $(SHTESTS)
 TESTS = $(SHTESTS)
 
-# Don't install tests.
+endif
+
+# Don't install shell tests.
 noinst_SCRIPTS = $(SHTESTS)
 
 endif
