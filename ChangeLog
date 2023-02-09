@@ -1,3 +1,8 @@
+2096.	[bug]		[tmark]
+	Corrected a bug which allowed options to be added to themselves
+	as suboptions.
+	(Gitlab #2538)
+
 2095.	[bug]		marcin, tmark
 	Added a compile-time check if the PostgreSQL version supports
 	the "tcp-user-timeout" parameter. This parameter is available in

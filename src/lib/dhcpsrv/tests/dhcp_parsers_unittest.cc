@@ -3377,4 +3377,43 @@ TEST_F(ParseConfigTest, invalidSubnetPdAllocator6) {
 // (see CtrlDhcpv4SrvTest.commandSocketBasic in
 // src/bin/dhcp4/tests/ctrl_dhcp4_srv_unittest.cc).
 
+
+// Verifies that an option which encapsulates its own option space
+// doesn't cause infinite recursion.
+TEST_F(ParseConfigTest, selfEncapsulationTest) {
+    // Verify that the option definition can be retrieved.
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, 45);
+    ASSERT_TRUE(def);
+
+    // Configuration string.
+    std::string config =
+        "{"
+        " \"option-data\": ["
+        "{"
+        "    \"name\": \"client-data\","
+        "    \"code\": 45,"
+        "    \"csv-format\": false,"
+        "    \"space\": \"dhcp6\","
+        "    \"data\": \"0001000B0102020202030303030303\""
+        "}"
+        "]}";
+
+    // Verify that the configuration string parses.
+    family_ = AF_INET6;
+    int rcode = parseConfiguration(config, true, true);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionCustomPtr opt = boost::dynamic_pointer_cast<OptionCustom>
+                          (getOptionPtr(DHCP6_OPTION_SPACE, D6O_CLIENT_DATA));
+    ASSERT_TRUE(opt);
+
+    // Verify length is correct and doesn't infinitely recurse.
+    EXPECT_EQ(19, opt->len());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
+}
+
 }  // Anonymous namespace
