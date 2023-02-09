@@ -379,17 +379,17 @@ New options are defined for Bulk Leasequery:
 
 - start-time-of-state (153)
 
-    The reply option carries the time of the lease transition into its
+    This reply option carries the time of the lease transition into its
     current state.
 
 - query-start-time (154)
 
-    The query option specifies a start query time: replies will only
+    This query option specifies a start query time: replies will only
     contain leases that are older than this value.
 
 - query-end-time (155)
 
-    The query option specifies an end query time: replies will only
+    This query option specifies an end query time: replies will only
     contain leases that are younger than this value.
 
 - dhcp-state (156)
