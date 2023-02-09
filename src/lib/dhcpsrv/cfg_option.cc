@@ -270,11 +270,6 @@ CfgOption::encapsulateInternal(const OptionPtr& option) {
         // Retrieve all options from the encapsulated option space.
         OptionContainerPtr encap_options = getAll(encap_space);
         for (auto const& encap_opt : *encap_options) {
-            if (option.get() == encap_opt.option_.get()) {
-                // Avoid recursion by not adding options to themselves.
-                continue;
-            }
-
             // Add sub-option if there isn't one added already.
             if (!option->getOption(encap_opt.option_->getType())) {
                 option->addOption(encap_opt.option_);

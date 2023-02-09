@@ -13,6 +13,7 @@
 #include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -632,6 +633,19 @@ TEST_F(OptionTest, createPayload) {
     EXPECT_EQ(Option::V4, option->getUniverse());
     EXPECT_EQ(123, option->getType());
     EXPECT_EQ(buf_, option->getData());
+}
+
+// Verify that options cannot be added to themselves as suboptions.
+TEST_F(OptionTest, optionsCannotContainThemselves) {
+    OptionBuffer buf1 {0xaa, 0xbb};
+    OptionBuffer buf2 {0xcc, 0xdd};
+    OptionPtr option = Option::create(Option::V4, 123, buf1);
+    OptionPtr option2 = Option::create(Option::V4, 124, buf2);
+    ASSERT_TRUE(option);
+    ASSERT_NO_THROW(option->addOption(option2));
+    EXPECT_THROW_MSG(option->addOption(option), InvalidOperation,
+        "option cannot be added to itself: type=123, len=006: aa:bb,\noptions:\n"
+        "  type=124, len=002: cc:dd");
 }
 
 }
