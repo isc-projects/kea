@@ -1,3 +1,10 @@
+2094.	[bug]		razvan
+	Fixed a bug which was causing the Kea server to crash when
+	using high-availability hooks library and running reconfigure
+	commands. Thanks to Caciano Machado for reporting this bug and
+	providing detailed steps on how to replicate it.
+	(Gitlab #2575)
+
 2093.	[func]		fdupont
 	It is now possible to add an "empty" host reservation
 	without any attribute (e.g. no address, no hostname, no
