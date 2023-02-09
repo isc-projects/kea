@@ -10,7 +10,6 @@
 #include <cc/data.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
-#include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
