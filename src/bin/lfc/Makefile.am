@@ -38,11 +38,12 @@ kea_lfc_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
-if HAVE_MYSQL
-kea_lfc_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
 if HAVE_PGSQL
 kea_lfc_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+
+if HAVE_MYSQL
+kea_lfc_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
 
 kea_lfc_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

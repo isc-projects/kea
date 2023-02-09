@@ -35,8 +35,8 @@ pgsql_cb_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 pgsql_cb_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
-pgsql_cb_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
-pgsql_cb_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_cb/libpgsqlcb.la
+pgsql_cb_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/pgsql_cb/libpgsqlcb.la
+pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la

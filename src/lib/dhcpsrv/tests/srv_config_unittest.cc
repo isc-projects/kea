@@ -1499,12 +1499,12 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_TRUE(params->getEnableUpdates());
 
     subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
-            return (ConstCfgGlobalsPtr());
-        });
+        return (ConstCfgGlobalsPtr());
+    });
 
     subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
-            return (ConstCfgGlobalsPtr());
-        });
+        return (ConstCfgGlobalsPtr());
+    });
 }
 
 // Verifies that the fallback values for DDNS parameters when
@@ -1667,12 +1667,12 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_TRUE(params->getEnableUpdates());
 
     subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
-            return (ConstCfgGlobalsPtr());
-        });
+        return (ConstCfgGlobalsPtr());
+    });
 
     subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
-            return (ConstCfgGlobalsPtr());
-        });
+        return (ConstCfgGlobalsPtr());
+    });
 }
 
 // Verifies that the fallback values for DDNS parameters when
