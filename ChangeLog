@@ -1,3 +1,10 @@
+2050.	[bug]		razvan
+	Fixed a bug which was causing the Kea server to crash when
+	using high-availability hooks library and running reconfigure
+	commands. Thanks to Caciano Machado for reporting this bug and
+	providing detailed steps on how to replicate it.
+	(Gitlab #2948, #2575)
+
 2049.	[doc]		andrei
 	Disabled smart quotes in Sphinx configuration to leave quotes
 	unchanged. Prior to this change, quotes were converted into
