@@ -63,7 +63,7 @@ public:
     ~IOSignalTest() {
         io_signal_set_.reset();
         // Make sure the cancel handler for the IOSignalSet is called.
-        io_service_->run_one();
+        io_service_->poll();
     }
 
     /// @brief Method used as the IOSignalSet handler.
