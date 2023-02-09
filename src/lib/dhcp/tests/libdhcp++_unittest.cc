@@ -1082,6 +1082,79 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
 }
 
 // This test checks that the server can receive multiple vendor options
+// (code 124) with some using the same enterprise ID and some using a different
+// enterprise ID. It should also be able to extend one option which contains
+// multiple enterprise IDs in multiple instances of OptionVendor.
+// The extendVendorOptions4 should be able to create one instance for each
+// enterprise ID, each with it's respective tuples.
+// Some of the test scenarios are not following RFCs, but people out there are
+// like to do it anyway. We want Kea to be robust and handle such scenarios,
+// therefore we're testing also for non-conformant behavior.
+TEST_F(LibDhcpTest, extendVivco) {
+    OptionBuffer data1 = {
+        0, 0, 0, 1,                        // enterprise id 1
+        5,                                 // length 5
+        0x66, 0x69, 0x72, 0x73, 0x74,      // 'first'
+        0, 0, 0, 1,                        // enterprise id 1
+        6,                                 // length 6
+        0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64 // 'second'
+    };
+    OptionPtr opt1(new Option(Option::V4, DHO_VIVCO_SUBOPTIONS,
+                              data1.cbegin(), data1.cend()));
+    OptionBuffer data2 = {
+        0, 0, 0, 2,                   // enterprise id 2
+        5,                            // length 5
+        0x65, 0x78, 0x74, 0x72, 0x61  // 'extra'
+    };
+    OptionPtr opt2(new Option(Option::V4, DHO_VIVCO_SUBOPTIONS,
+                              data2.cbegin(), data2.cend()));
+    OptionBuffer data3 = {
+        0, 0, 0, 1,                   // enterprise id 1
+        5,                            // length 5
+        0x74, 0x68, 0x69, 0x72, 0x64  // 'third'
+    };
+    OptionPtr opt3(new Option(Option::V4, DHO_VIVCO_SUBOPTIONS,
+                              data3.cbegin(), data3.cend()));
+    OptionCollection options;
+    options.insert(make_pair(DHO_VIVCO_SUBOPTIONS, opt1));
+    options.insert(make_pair(DHO_VIVCO_SUBOPTIONS, opt2));
+    options.insert(make_pair(DHO_VIVCO_SUBOPTIONS, opt3));
+    EXPECT_EQ(options.size(), 3);
+    EXPECT_NO_THROW(LibDHCP::fuseOptions4(options));
+    EXPECT_EQ(options.size(), 1);
+    EXPECT_NO_THROW(LibDHCP::extendVendorOptions4(options));
+    EXPECT_EQ(options.size(), 2);
+    EXPECT_EQ(options.count(DHO_VIVCO_SUBOPTIONS), 2);
+    for (auto const& option : options) {
+        ASSERT_EQ(option.second->getType(), DHO_VIVCO_SUBOPTIONS);
+        OptionVendorClassPtr vendor =
+            boost::dynamic_pointer_cast<OptionVendorClass>(option.second);
+        ASSERT_TRUE(vendor);
+        if (vendor->getVendorId() == 1) {
+            ASSERT_EQ(vendor->getTuplesNum(), 3);
+            OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+            ASSERT_NO_THROW(tuple = vendor->getTuple(0));
+            EXPECT_EQ(5, tuple.getLength());
+            EXPECT_EQ("first", tuple.getText());
+            ASSERT_NO_THROW(tuple = vendor->getTuple(1));
+            EXPECT_EQ(6, tuple.getLength());
+            EXPECT_EQ("second", tuple.getText());
+            ASSERT_NO_THROW(tuple = vendor->getTuple(2));
+            EXPECT_EQ(5, tuple.getLength());
+            EXPECT_EQ("third",  tuple.getText());
+        } else if (vendor->getVendorId() == 2) {
+            ASSERT_EQ(vendor->getTuplesNum(), 1);
+            OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+            ASSERT_NO_THROW(tuple = vendor->getTuple(0));
+            EXPECT_EQ(5, tuple.getLength());
+            EXPECT_EQ("extra", tuple.getText());
+        } else {
+            FAIL() << "unexpected vendor type: " << vendor->getVendorId();
+        }
+    }
+}
+
+// This test checks that the server can receive multiple vendor options
 // (code 125) with some using the same enterprise ID and some using a different
 // enterprise ID. It should also be able to extend one option which contains
 // multiple enterprise IDs in multiple instances of OptionVendor.
@@ -1090,7 +1163,7 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
 // Some of the test scenarios are not following RFCs, but people out there are
 // like to do it anyway. We want Kea to be robust and handle such scenarios,
 // therefore we're testing also for non-conformant behavior.
-TEST_F(LibDhcpTest, extendVendorOptions4) {
+TEST_F(LibDhcpTest, extendVivso) {
     OptionPtr suboption;
     OptionVendorPtr opt1(new OptionVendor(Option::V4, 1));
     suboption.reset(new OptionString(Option::V4, 16, "first"));

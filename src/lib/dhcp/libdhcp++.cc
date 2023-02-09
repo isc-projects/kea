@@ -15,6 +15,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor_class.h>
 #include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
@@ -572,7 +573,9 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
             }
         }
 
-        if (space_is_dhcp4 && opt_type == DHO_VIVSO_SUBOPTIONS) {
+        if (space_is_dhcp4 &&
+            (opt_type == DHO_VIVSO_SUBOPTIONS ||
+             opt_type == DHO_VIVCO_SUBOPTIONS)) {
             num_defs = 0;
         }
 
@@ -684,6 +687,70 @@ LibDHCP::fuseOptions4(OptionCollection& options) {
 
 void
 LibDHCP::extendVendorOptions4(OptionCollection& options) {
+    LibDHCP::extendVivco(options);
+    LibDHCP::extendVivso(options);
+}
+
+void
+LibDHCP::extendVivco(OptionCollection& options) {
+    typedef vector<OpaqueDataTuple> TuplesCollection;
+    map<uint32_t, TuplesCollection> vendors_tuples;
+    const auto& range = options.equal_range(DHO_VIVCO_SUBOPTIONS);
+    for (auto it = range.first; it != range.second; ++it) {
+        uint32_t offset = 0;
+        auto const& data = it->second->getData();
+        size_t size;
+        while ((size = data.size() - offset) != 0) {
+            if (size < sizeof(uint32_t)) {
+                options.erase(DHO_VIVCO_SUBOPTIONS);
+                isc_throw(SkipRemainingOptionsError,
+                          "Truncated vendor-class information option"
+                          << ", length=" << size);
+            }
+            uint32_t vendor_id = readUint32(&data[offset], data.size());
+            offset += 4;
+            try {
+                // From OptionVendorClass::unpack.
+                OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE,
+                                      data.begin() + offset, data.end());
+                vendors_tuples[vendor_id].push_back(tuple);
+                offset += tuple.getTotalLength();
+            } catch (const OpaqueDataTupleError&) {
+                // Ignore this kind of error and continue.
+                break;
+            } catch (const Exception&) {
+                options.erase(DHO_VIVCO_SUBOPTIONS);
+                throw;
+            }
+        }
+    }
+    if (vendors_tuples.empty()) {
+        return;
+    }
+    // Delete the initial option.
+    options.erase(DHO_VIVCO_SUBOPTIONS);
+    // Create a new instance of OptionVendor for each enterprise ID.
+    for (auto const& vendor : vendors_tuples) {
+        if (vendor.second.empty()) {
+            continue;
+        }
+        OptionVendorClassPtr vendor_opt(new OptionVendorClass(Option::V4,
+                                                              vendor.first));
+        for (size_t i = 0; i < vendor.second.size(); ++i) {
+            if (i == 0) {
+                vendor_opt->setTuple(0, vendor.second[0]);
+            } else {
+                vendor_opt->addTuple(vendor.second[i]);
+            }
+        }
+        // Add the new instance of VendorOption with respective sub-options for
+        // this enterprise ID.
+        options.insert(std::make_pair(DHO_VIVCO_SUBOPTIONS, vendor_opt));
+    }
+}
+
+void
+LibDHCP::extendVivso(OptionCollection& options) {
     map<uint32_t, OptionCollection> vendors_data;
     const auto& range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
     for (auto it = range.first; it != range.second; ++it) {

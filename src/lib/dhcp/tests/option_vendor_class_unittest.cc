@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/option_vendor_class.h>
 #include <util/buffer.h>
-
+#include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -264,6 +264,29 @@ TEST(OptionVendorClass, unpack4) {
     ASSERT_EQ(2, vendor_class->getTuplesNum());
     EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
     EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
+}
+
+// This function checks that the DHCPv4 option with two different enterprise
+// ids can't be parsed.
+TEST(OptionVendorClass, twoEnterpriseIds) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0, 0, 0x4, 0xD2,                    // enterprise id 1234
+        0x0B,                               // tuple length is 11
+        0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, // Hello<space>
+        0x77, 0x6F, 0x72, 0x6C, 0x64,       // world
+        0, 0, 0x16, 0x2E,                   // enterprise id 5678
+        3,                                  // tuple length is 3
+        0x66, 0x6F, 0x6F                    // foo
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+    std::string msg = "V-I Vendor Class option with two different ";
+    msg += "enterprise ids: 1234 and 5678";
+
+    ASSERT_THROW_MSG(OptionVendorClassPtr(new OptionVendorClass(Option::V4,
+                                                                buf.begin(),
+                                                                buf.end())),
+                     BadValue, msg);
 }
 
 // This function checks that the DHCPv6 option with two opaque data tuples

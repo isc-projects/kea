@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,6 +79,16 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
         // tuple. Let's read it, unless we have already reached the end of
         // buffer.
         if ((getUniverse() == V4) && (begin + offset != end)) {
+            // Get the other enterprise id.
+            uint32_t other_id = isc::util::readUint32(&(*(begin + offset)),
+                                                      distance(begin + offset,
+                                                               end));
+            // Throw if there are two different enterprise ids.
+            if (other_id != vendor_id_) {
+                isc_throw(isc::BadValue, "V-I Vendor Class option with two "
+                          "different enterprise ids: " << vendor_id_
+                          << " and " << other_id);
+            }
             // Advance the offset by the size of enterprise id.
             offset += sizeof(vendor_id_);
             // If the offset already ran over the buffer length or there is

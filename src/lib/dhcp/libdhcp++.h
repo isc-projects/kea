@@ -306,6 +306,22 @@ public:
     /// extended vendor options.
     static void extendVendorOptions4(isc::dhcp::OptionCollection& options);
 
+    /// @brief Extend VIVCO options.
+    ///
+    /// VIVCO part of extendVendorOptions4.
+    ///
+    /// @param options The option container which needs to be updated with
+    /// extended vendor options.
+    static void extendVivco(isc::dhcp::OptionCollection& options);
+
+    /// @brief Extend VIVSO options.
+    ///
+    /// VIVSO part of extendVendorOptions4.
+    ///
+    /// @param options The option container which needs to be updated with
+    /// extended vendor options.
+    static void extendVivso(isc::dhcp::OptionCollection& options);
+
     /// @brief Parses provided buffer as DHCPv4 options and creates
     /// Option objects.
     ///

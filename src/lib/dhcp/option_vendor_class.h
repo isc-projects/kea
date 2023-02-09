@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,9 +35,9 @@ namespace dhcp {
 /// Vendor Class option is controlled by the @c u (universe) parameter passed
 /// to the constructor.
 ///
-/// @todo Currently, the enterprise id field is set to a value of the first
-/// enterprise id occurrence in the parsed option. At some point we should
-/// be able to differentiate between enterprise ids.
+/// @Currently, the enterprise id field is set to a value of the first
+/// enterprise id occurrence in the parsed option. This assumes that
+/// all tuples in the same option are for the same vendor.
 class OptionVendorClass : public Option {
 public:
 
