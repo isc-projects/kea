@@ -19,6 +19,7 @@ extern const isc::log::MessageID DATABASE_PGSQL_FATAL_ERROR = "DATABASE_PGSQL_FA
 extern const isc::log::MessageID DATABASE_PGSQL_ROLLBACK = "DATABASE_PGSQL_ROLLBACK";
 extern const isc::log::MessageID DATABASE_PGSQL_ROLLBACK_SAVEPOINT = "DATABASE_PGSQL_ROLLBACK_SAVEPOINT";
 extern const isc::log::MessageID DATABASE_PGSQL_START_TRANSACTION = "DATABASE_PGSQL_START_TRANSACTION";
+extern const isc::log::MessageID DATABASE_PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED = "DATABASE_PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED";
 extern const isc::log::MessageID DATABASE_TO_JSON_BOOLEAN_ERROR = "DATABASE_TO_JSON_BOOLEAN_ERROR";
 extern const isc::log::MessageID DATABASE_TO_JSON_INTEGER_ERROR = "DATABASE_TO_JSON_INTEGER_ERROR";
 extern const isc::log::MessageID DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR = "DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR";
@@ -41,6 +42,7 @@ const char* values[] = {
     "DATABASE_PGSQL_ROLLBACK", "rolling back PostgreSQL database",
     "DATABASE_PGSQL_ROLLBACK_SAVEPOINT", "rolling back PostgreSQL database to savepoint: $1",
     "DATABASE_PGSQL_START_TRANSACTION", "starting a new PostgreSQL transaction",
+    "DATABASE_PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED", "tcp_user_timeout is not supported in this PostgreSQL version",
     "DATABASE_TO_JSON_BOOLEAN_ERROR", "Internal logic error: invalid boolean value found in database connection parameters: %1=%2",
     "DATABASE_TO_JSON_INTEGER_ERROR", "Internal logic error: invalid integer value found in database connection parameters: %1=%2",
     "DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR", "Internal logic error: unknown element found in database connection parameters: %1=%2",
