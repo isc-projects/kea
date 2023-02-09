@@ -3401,19 +3401,20 @@ TEST_F(ParseConfigTest, selfEncapsulationTest) {
     // Verify that the configuration string parses.
     family_ = AF_INET6;
 
-    ElementPtr json = Element::fromJSON(config);
-    EXPECT_TRUE(json);
-    ConstElementPtr status = parseElementSet(json, false);
-    int rcode = 0;
-    ConstElementPtr comment = parseAnswer(rcode, status);
-    ASSERT_TRUE(comment);
-    ASSERT_EQ(comment->getType(), Element::string);
-    EXPECT_EQ(1, rcode);
-    std::string expected =
-        "Configuration parsing failed: "
-        "option cannot be added to itself: type=00045, len=00015:"
-        ",\noptions:\n  type=00001, len=00011: 01:02:02:02:02:03:03:03:03:03:03";
-    EXPECT_EQ(expected, comment->stringValue());
+    int rcode = parseConfiguration(config, true, true);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionCustomPtr opt = boost::dynamic_pointer_cast<OptionCustom>
+                          (getOptionPtr(DHCP6_OPTION_SPACE, D6O_CLIENT_DATA));
+    ASSERT_TRUE(opt);
+
+    // Verify length is correct and doesn't infinitely recurse.
+    EXPECT_EQ(19, opt->len());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
 }
 
 }  // Anonymous namespace
