@@ -1862,10 +1862,6 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // to be returned to the client.
     for (auto const& opt : requested_opts) {
         // Add nothing when it is already there.
-        // Skip special cases: DHO_VIVSO_SUBOPTIONS
-        if (opt == DHO_VIVSO_SUBOPTIONS) {
-            continue;
-        }
         if (!resp->getOption(opt)) {
             // Iterate on the configured option list
             for (auto const& copts : co_list) {
@@ -1875,6 +1871,39 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
                     resp->addOption(desc.option_);
                     break;
                 }
+            }
+        }
+    }
+
+    if (requested_opts.count(DHO_VIVCO_SUBOPTIONS) > 0) {
+        set<uint32_t> vendor_ids;
+        for (auto opt : resp->getOptions(DHO_VIVCO_SUBOPTIONS)) {
+            OptionVendorClassPtr vendor_opts;
+            vendor_opts = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+            if (vendor_opts) {
+                static_cast<void>(vendor_ids.insert(vendor_opts->getVendorId()));
+            }
+        }
+        // Iterate on the configured option list
+        for (auto const& copts : co_list) {
+            for (OptionDescriptor desc : copts->getList(DHCP4_OPTION_SPACE,
+                                                        DHO_VIVCO_SUBOPTIONS)) {
+                if (!desc.option_) {
+                    continue;
+                }
+                OptionVendorClassPtr vendor_opts =
+                    boost::dynamic_pointer_cast<OptionVendorClass>(desc.option_);
+                if (!vendor_opts) {
+                    continue;
+                }
+                // Is the vendor id already in the response?
+                uint32_t vendor_id = vendor_opts->getVendorId();
+                if (vendor_ids.count(vendor_id) > 0) {
+                    continue;
+                }
+                // Got it: add it.
+                resp->Pkt::addOption(desc.option_);
+                static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
     }
