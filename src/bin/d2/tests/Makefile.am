@@ -74,7 +74,6 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/d2srv/testutils/libd2srvtest.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/process/testutils/libprocesstest.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

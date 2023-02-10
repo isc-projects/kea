@@ -48,7 +48,6 @@ kea_dhcp_ddns_SOURCES  = main.cc
 kea_dhcp_ddns_LDADD  = libd2.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la

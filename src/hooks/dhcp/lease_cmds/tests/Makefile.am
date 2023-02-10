@@ -39,7 +39,6 @@ lease_cmds_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 lease_cmds_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

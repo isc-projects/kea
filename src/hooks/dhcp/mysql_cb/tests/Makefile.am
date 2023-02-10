@@ -39,7 +39,6 @@ mysql_cb_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/mysql_cb/libmysqlcb.l
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

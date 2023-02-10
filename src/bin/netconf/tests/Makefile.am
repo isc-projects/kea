@@ -55,7 +55,6 @@ netconf_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 netconf_unittests_LDADD  = $(top_builddir)/src/bin/netconf/libnetconf.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/process/testutils/libprocesstest.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-netconf_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/testutils/libyangtest.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/libkea-yang.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la

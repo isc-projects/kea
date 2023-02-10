@@ -46,7 +46,6 @@ kea_dhcp4_SOURCES  = main.cc
 kea_dhcp4_LDADD  = libdhcp4.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

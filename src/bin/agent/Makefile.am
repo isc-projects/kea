@@ -41,7 +41,6 @@ kea_ctrl_agent_SOURCES = main.cc
 
 kea_ctrl_agent_LDADD  = libagent.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

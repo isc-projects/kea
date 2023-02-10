@@ -39,7 +39,6 @@ libprocess_unittests_LDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 libprocess_unittests_LDADD  = $(top_builddir)/src/lib/process/testutils/libprocesstest.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-libprocess_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la

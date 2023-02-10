@@ -42,7 +42,6 @@ run_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 run_unittests_LDADD  = $(top_builddir)/src/bin/perfdhcp/libperfdhcp.la
 run_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la

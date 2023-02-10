@@ -60,7 +60,6 @@ ca_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 ca_unittests_LDADD  = $(top_builddir)/src/bin/agent/libagent.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/process/testutils/libprocesstest.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-ca_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

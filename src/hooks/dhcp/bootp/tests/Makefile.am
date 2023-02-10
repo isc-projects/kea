@@ -37,7 +37,6 @@ bootp_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 bootp_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/bootp/libbootp.la
 bootp_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-bootp_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 bootp_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 bootp_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 bootp_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la

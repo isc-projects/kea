@@ -39,7 +39,6 @@ pgsql_cb_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/pgsql_cb/libpgsqlcb.l
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 pgsql_cb_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

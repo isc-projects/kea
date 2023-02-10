@@ -39,7 +39,6 @@ perfdhcp_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 perfdhcp_LDADD  = libperfdhcp.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-perfdhcp_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
