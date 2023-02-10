@@ -17,6 +17,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt4o6.h>

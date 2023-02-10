@@ -32,6 +32,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/dhcp4.h>
@@ -2138,4 +2139,76 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
         boost::dynamic_pointer_cast<OptionString>(sopt);
     ASSERT_TRUE(sopt0);
     EXPECT_EQ("/dist/images/jinstall-ex.tgz", sopt0->getValue());
+}
+
+// Checks if it's possible to have 2 vivco options  with different vendor IDs.
+TEST_F(VendorOptsTest, twoVivcos) {
+    Dhcp4Client client;
+
+    // The config defines 2 vendors with for each a vivco option,
+    // having the always send flag set to true.
+    // The encoding for the option-class option is a bit hairy: first is
+    // the vendor id (uint32) and the remaining is a binary which stands
+    // for a tuple so length (uint8) x value.
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"option-data\": ["
+        "        {"
+        "            \"name\": \"vivco-suboptions\","
+        "            \"always-send\": true,"
+        "            \"data\": \"1234, 03666f6f\""
+        "        },"
+        "        {"
+        "            \"name\": \"vivco-suboptions\","
+        "            \"always-send\": true,"
+        "            \"data\": \"5678, 03626172\""
+        "        }"
+        "    ],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ],"
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"interface\": \"eth0\" "
+        " } ]"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Let's check whether the server is not able to process this packet.
+    EXPECT_NO_THROW(client.doDiscover());
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check whether there are vivco options.
+    const OptionCollection& classes =
+        client.getContext().response_->getOptions(DHO_VIVCO_SUBOPTIONS);
+    ASSERT_EQ(2, classes.size());
+    OptionVendorClassPtr opt_class1234;
+    OptionVendorClassPtr opt_class5678;
+    for (auto opt : classes) {
+        ASSERT_EQ(DHO_VIVCO_SUBOPTIONS, opt.first);
+        OptionVendorClassPtr opt_class =
+            boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+        ASSERT_TRUE(opt_class);
+        uint32_t vendor_id = opt_class->getVendorId();
+        if (vendor_id == 1234) {
+            ASSERT_FALSE(opt_class1234);
+            opt_class1234 = opt_class;
+            continue;
+        }
+        ASSERT_EQ(5678, vendor_id);
+        ASSERT_FALSE(opt_class5678);
+        opt_class5678 = opt_class;
+    }
+
+    // Verify first vivco option.
+    ASSERT_TRUE(opt_class1234);
+    ASSERT_EQ(1, opt_class1234->getTuplesNum());
+    EXPECT_EQ("foo", opt_class1234->getTuple(0).getText());
+
+    // Verify second vivco option.
+    ASSERT_TRUE(opt_class5678);
+    ASSERT_EQ(1, opt_class5678->getTuplesNum());
+    EXPECT_EQ("bar", opt_class5678->getTuple(0).getText());
 }
