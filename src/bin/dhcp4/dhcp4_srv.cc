@@ -4126,22 +4126,22 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         try {
             bool status = evaluateBool(*expr_ptr, *query);
             if (status) {
-                LOG_INFO(options4_logger, EVAL_RESULT)
+                LOG_INFO(dhcp4_logger, EVAL_RESULT)
                     .arg(*cclass)
                     .arg(status);
                 // Matching: add the class
                 query->addClass(*cclass);
             } else {
-                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
                     .arg(*cclass)
                     .arg(status);
             }
         } catch (const Exception& ex) {
-            LOG_ERROR(options4_logger, EVAL_RESULT)
+            LOG_ERROR(dhcp4_logger, EVAL_RESULT)
                 .arg(*cclass)
                 .arg(ex.what());
         } catch (...) {
-            LOG_ERROR(options4_logger, EVAL_RESULT)
+            LOG_ERROR(dhcp4_logger, EVAL_RESULT)
                 .arg(*cclass)
                 .arg("get exception?");
         }
