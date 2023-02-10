@@ -2059,7 +2059,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     ASSERT_NO_THROW({
         // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
-        ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
+        LeaseMgrFactory::create(dbaccess);
         lmptr_ = &(LeaseMgrFactory::instance());
     });
 
@@ -2190,7 +2190,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     ASSERT_NO_THROW({
         // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
-        ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
+        LeaseMgrFactory::create(dbaccess);
         lmptr_ = &(LeaseMgrFactory::instance());
     });
 
