@@ -30,7 +30,6 @@ libdhcpsrvtest_la_SOURCES += test_config_backend_dhcp6.cc test_config_backend_dh
 if HAVE_MYSQL
 libdhcpsrvtest_la_SOURCES += mysql_generic_backend_unittest.cc mysql_generic_backend_unittest.h
 endif
-
 if HAVE_PGSQL
 libdhcpsrvtest_la_SOURCES += pgsql_generic_backend_unittest.cc pgsql_generic_backend_unittest.h
 endif
@@ -40,13 +39,13 @@ libdhcpsrvtest_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
 libdhcpsrvtest_la_LIBADD =
 
-if HAVE_MYSQL
-libdhcpsrvtest_la_CPPFLAGS += $(MYSQL_CPPFLAGS)
-libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
 if HAVE_PGSQL
 libdhcpsrvtest_la_CPPFLAGS += $(PGSQL_CPPFLAGS)
 libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_MYSQL
+libdhcpsrvtest_la_CPPFLAGS += $(MYSQL_CPPFLAGS)
+libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
 
 libdhcpsrvtest_la_LDFLAGS  = $(AM_LDFLAGS)
