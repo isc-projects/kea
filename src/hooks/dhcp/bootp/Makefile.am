@@ -31,7 +31,6 @@ libdhcp_bootp_la_LDFLAGS  = $(AM_LDFLAGS)
 libdhcp_bootp_la_LDFLAGS  += -avoid-version -export-dynamic -module
 libdhcp_bootp_la_LIBADD  = libbootp.la
 libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
-libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la

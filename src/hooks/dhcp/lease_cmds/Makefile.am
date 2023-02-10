@@ -35,7 +35,6 @@ libdhcp_lease_cmds_la_LDFLAGS  += -avoid-version -export-dynamic -module
 libdhcp_lease_cmds_la_LIBADD  = liblease_cmds.la
 libdhcp_lease_cmds_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcp_lease_cmds_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
-libdhcp_lease_cmds_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libdhcp_lease_cmds_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_lease_cmds_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcp_lease_cmds_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
