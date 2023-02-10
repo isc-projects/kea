@@ -27,7 +27,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
 namespace {
-class SharedNetworkParserTest :  public LogContentTest {
+class SharedNetworkParserTest : public LogContentTest {
 public:
 
     /// @brief Structure for describing a single relay test scenario
@@ -43,7 +43,7 @@ public:
     };
 
     /// @brief virtual destructor
-    virtual ~SharedNetworkParserTest(){};
+    virtual ~SharedNetworkParserTest() = default;
 
     /// @brief Fetch valid shared network configuration JSON text
     virtual std::string getWorkingConfig() const = 0;

@@ -2102,11 +2102,11 @@ TEST(CfgSubnets6Test, getLinks) {
 }
 
 /// @brief Test fixture for parsing v6 Subnets that can verify log output.
-class Subnet6ParserTest :  public LogContentTest {
+class Subnet6ParserTest : public LogContentTest {
 public:
 
     /// @brief virtual destructor
-    virtual ~Subnet6ParserTest(){};
+    virtual ~Subnet6ParserTest() = default;
 };
 
 // This test verifies that subnet parser for IPv6 works properly
@@ -2121,7 +2121,7 @@ TEST_F(Subnet6ParserTest, parseWithInvalidRenewRebind) {
         "    \"renew-timer\": 200\n"
         "}";
 
-    // Basic configuration for subnet4 but with a renew-timer value
+    // Basic configuration for subnet6 but with a renew-timer value
     // larger than rebind-timer.
     ElementPtr config_element = Element::fromJSON(config);
 

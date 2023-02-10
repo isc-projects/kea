@@ -2179,18 +2179,17 @@ TEST(CfgSubnets4Test, getLinks) {
     EXPECT_EQ(24, link_len);
 }
 
-/// @brief Test fixture for parsing v6 Subnets that can verify log output.
-class Subnet4ParserTest :  public LogContentTest {
+/// @brief Test fixture for parsing v4 Subnets that can verify log output.
+class Subnet4ParserTest : public LogContentTest {
 public:
 
     /// @brief virtual destructor
-    virtual ~Subnet4ParserTest(){};
+    virtual ~Subnet4ParserTest() = default;
 };
 
 // This test verifies that subnet parser for IPv4 works properly
 // when using invalid renew and rebind timers.
 TEST_F(Subnet4ParserTest, parseWithInvalidRenewRebind) {
-    //IfaceMgrTestConfig ifmgr(true);
     std::string config =
         "{\n"
         "    \"id\": 1,\n"

@@ -69,7 +69,7 @@ the server detects that a deprecated parameter has been specified in the
 "dhcp-ddns" element for which no corresponding global value exists. When
 this occurs, the server removes the parameter from dhcp-ddns and inserts the
 parameter into the global scope. The log message shows the deprecated
-and the supported parameter names.  Note the configuration change only affects
+and the supported parameter names. Note the configuration change only affects
 the in-memory configuration. Modify the configuration to comply with
 the supported parameters.
 
@@ -185,7 +185,7 @@ subnet.
 % DHCPSRV_CFGMGR_SUBNET4_IFACE selected subnet %1 for packet received over interface %2
 This is a debug message reporting that the DHCP configuration manager
 has returned the specified IPv4 subnet for a packet received over
-the given interface.  This particular subnet was selected, because it
+the given interface. This particular subnet was selected, because it
 was specified as being directly reachable over the given interface. (see
 'interface' parameter in the subnet4 definition).
 
@@ -202,7 +202,7 @@ as the address is within the subnet.
 % DHCPSRV_CFGMGR_SUBNET6_IFACE selected subnet %1 for packet received over interface %2
 This is a debug message reporting that the DHCP configuration manager
 has returned the specified IPv6 subnet for a packet received over
-given interface.  This particular subnet was selected, because it
+given interface. This particular subnet was selected, because it
 was specified as being directly reachable over given interface. (see
 'interface' parameter in the subnet6 definition).
 
@@ -230,7 +230,7 @@ specified IPv4 subnet in its current configuration. Subnet ID and result
 
 % DHCPSRV_CFGMGR_UPDATE_SUBNET6 updating subnet %1 (result %2)
 A debug message reported when the DHCP configuration manager is replacing the
-specified IPv6 subnet in its current configuration.  Subnet ID and result
+specified IPv6 subnet in its current configuration. Subnet ID and result
 (expected to be true) are displayed.
 
 % DHCPSRV_CFGMGR_USE_ADDRESS listening on address %1, on interface %2
@@ -243,7 +243,7 @@ address on the specific interface.
 
 % DHCPSRV_CLOSE_DB closing currently open %1 database
 This is a debug message, issued when the DHCP server closes the currently
-open lease database.  It is issued at program shutdown and whenever
+open lease database. It is issued at program shutdown and whenever
 the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
@@ -266,13 +266,13 @@ handler should not propagate exceptions. Please report this error.
 
 % DHCPSRV_DHCP_DDNS_HANDLER_NULL error handler for DHCP_DDNS IO is not set.
 This is an error message that occurs when an attempt to send a request to
-kea-dhcp-ddns fails and there is no registered error handler.  This is a
+kea-dhcp-ddns fails and there is no registered error handler. This is a
 programmatic error which should never occur and should be reported.
 
 % DHCPSRV_DHCP_DDNS_NCR_REJECTED NameChangeRequest rejected by the sender: %1, ncr: %2
 This is an error message indicating that NameChangeSender used to deliver DDNS
-update requests to kea-dhcp-ddns rejected the request.  This most likely cause
-is the sender's queue has reached maximum capacity.  This would imply that
+update requests to kea-dhcp-ddns rejected the request. This most likely cause
+is the sender's queue has reached maximum capacity. This would imply that
 requests are being generated faster than they can be delivered.
 
 % DHCPSRV_DHCP_DDNS_NCR_SENT NameChangeRequest sent to kea-dhcp-ddns: %1
@@ -290,9 +290,9 @@ shutdown. It may occur if kea-dhcp-ddns communications break down.
 
 % DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES DHCP_DDNS updates are being suspended.
 This is a warning message indicating the DHCP_DDNS updates have been turned
-off.  This should only occur if IO errors communicating with kea-dhcp-ddns
-have been experienced.  Any such errors should have preceding entries in the
-log with details.  No further attempts to communicate with kea-dhcp-ddns will
+off. This should only occur if IO errors communicating with kea-dhcp-ddns
+have been experienced. Any such errors should have preceding entries in the
+log with details. No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
 % DHCPSRV_HOOK_LEASE4_RECOVER_SKIP DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.
@@ -339,7 +339,7 @@ database and the client will get a NoAddrsAvail for that IA_NA option.
 
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
-and the attempt ended in error.  The access string in question - which
+and the attempt ended in error. The access string in question - which
 should be of the form 'keyword=value keyword=value...' is included in
 the message.
 
@@ -397,8 +397,8 @@ The extended info sanity check level and update in file when requested
 are displayed.
 
 % DHCPSRV_MEMFILE_BEGIN_TRANSACTION committing to memory file database
-The code has issued a begin transaction call.  For the memory file database, this is
-a no-op.
+The code has issued a begin transaction call. For the memory file database
+this is a no-op.
 
 % DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 building extended info tables saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases were entered into tables
 Extended info tables build was finished. Some statistics are displayed, the
@@ -409,7 +409,7 @@ A debug message issued when the server is building extended info tables and
 receives an exception processing a lease.
 
 % DHCPSRV_MEMFILE_COMMIT committing to memory file database
-The code has issued a commit call.  For the memory file database, this is
+The code has issued a commit call. For the memory file database this is
 a no-op.
 
 % DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
@@ -421,7 +421,7 @@ installation upgrade (or downgrade).
 
 % DHCPSRV_MEMFILE_DB opening memory file lease database: %1
 This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a memory file lease database.  The parameters of
+V6) is about to open a memory file lease database. The parameters of
 the connection including database name and username needed to access it
 (but not the password if any) are logged.
 
@@ -532,7 +532,7 @@ A debug message issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a relay id and client
 transaction time between start and end dates.
 
-% DHCPSRV_MEMFILE_GET_RELAYID6 obtaining at most %1 IPv6 leases starting from address %2 with relay id  %3 and link %4/%5
+% DHCPSRV_MEMFILE_GET_RELAYID6 obtaining at most %1 IPv6 leases starting from address %2 with relay id %3 and link %4/%5
 A debug message issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a relay id and a link.
 
@@ -623,17 +623,17 @@ The message includes the reason for this error.
 
 % DHCPSRV_MEMFILE_NEEDS_DOWNGRADING version of lease file: %1 schema is later than version %2
 A warning message issued when the schema of the lease file loaded by the server
-is newer than the memfile schema of the server.  The server converts the lease
+is newer than the memfile schema of the server. The server converts the lease
 data from newer schemas to its schema as it is read, therefore the lease
 information in use by the server will be correct. Note though, that any data
-stored in newer schema fields will be dropped.  What remains is for the
+stored in newer schema fields will be dropped. What remains is for the
 file itself to be rewritten using the current schema.
 
 % DHCPSRV_MEMFILE_NEEDS_UPGRADING version of lease file: %1 schema is earlier than version %2
 A warning message issued when the schema of the lease file loaded by the server
-pre-dates the memfile schema of the server.  Note that the server converts the
+pre-dates the memfile schema of the server. Note that the server converts the
 lease data from older schemas to the current schema as it is read, therefore
-the lease information in use by the server will be correct.  What remains is
+the lease information in use by the server will be correct. What remains is
 for the file itself to be rewritten using the current schema.
 
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
@@ -650,7 +650,7 @@ The database read will continue, but that particular lease will no longer
 have hardware address associated with it.
 
 % DHCPSRV_MEMFILE_ROLLBACK rolling back memory file database
-The code has issued a rollback call.  For the memory file database, this is
+The code has issued a rollback call. For the memory file database this is
 a no-op.
 
 % DHCPSRV_MEMFILE_UPDATE_ADDR4 updating IPv4 lease for address %1
@@ -700,13 +700,13 @@ with the specified address to the MySQL backend database.
 The code has issued a begin transaction call.
 
 % DHCPSRV_MYSQL_COMMIT committing to MySQL database
-The code has issued a commit call.  All outstanding transactions will be
-committed to the database.  Note that depending on the MySQL settings,
+The code has issued a commit call. All outstanding transactions will be
+committed to the database. Note that depending on the MySQL settings,
 the commit may not include a write to disk.
 
 % DHCPSRV_MYSQL_DB opening MySQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a MySQL lease database.  The parameters of the
+V6) is about to open a MySQL lease database. The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
 
@@ -733,9 +733,9 @@ lease expires before considering its removal.
 
 % DHCPSRV_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
 An error message indicating that communication with the MySQL database server
-has been lost.  If automatic recovery has been enabled,  then the server will
-attempt to recover the connectivity.  If not the server will exit with a
-non-zero exit code.  The cause of such an error is most likely a network issue
+has been lost. If automatic recovery has been enabled, then the server will
+attempt to recover the connectivity. If not the server will exit with a
+non-zero exit code. The cause of such an error is most likely a network issue
 or the MySQL server has gone down.
 
 % DHCPSRV_MYSQL_GET4 obtaining all IPv4 leases
@@ -830,7 +830,7 @@ information from the MySQL database.
 
 % DHCPSRV_MYSQL_HOST_DB opening MySQL hosts database: %1
 This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a MySQL hosts database.  The parameters of the
+V6) is about to open a MySQL hosts database. The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
 
@@ -849,11 +849,11 @@ An error message issued when an attempt to reconnect has failed.
 
 % DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
 An info message issued when the server is scheduling the next attempt to reconnect
-to the database.  This occurs when the server has lost database connectivity and
+to the database. This occurs when the server has lost database connectivity and
 is attempting to reconnect automatically.
 
 % DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
-An error message issued when the server failed to reconnect.  Loss of connectivity
+An error message issued when the server failed to reconnect. Loss of connectivity
 is typically a network or database server issue.
 
 % DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
@@ -861,11 +861,11 @@ An error message issued when an attempt to reconnect has failed.
 
 % DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
 An info message issued when the server is scheduling the next attempt to reconnect
-to the database.  This occurs when the server has lost database connectivity and
+to the database. This occurs when the server has lost database connectivity and
 is attempting to reconnect automatically.
 
 % DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
-An error message issued when the server failed to reconnect.  Loss of connectivity
+An error message issued when the server failed to reconnect. Loss of connectivity
 is typically a network or database server issue.
 
 % DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT recount of leases returned a negative value
@@ -879,7 +879,7 @@ This error message is issued when TLS for the connection was required but
 TLS is not used.
 
 % DHCPSRV_MYSQL_ROLLBACK rolling back MySQL database
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call. All outstanding transaction will
 be rolled back and not committed to the database.
 
 % DHCPSRV_MYSQL_START_TRANSACTION starting new MySQL transaction
@@ -906,7 +906,7 @@ lease from the MySQL database for the specified address.
 % DHCPSRV_NOTYPE_DB no 'type' keyword to determine database backend: %1
 This is an error message, logged when an attempt has been made to access
 a database backend, but where no 'type' keyword has been included in
-the access string.  The access string (less any passwords) is included
+the access string. The access string (less any passwords) is included
 in the message.
 
 % DHCPSRV_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
@@ -930,21 +930,21 @@ with the specified address to the PostgreSQL backend database.
 The code has issued a begin transaction call.
 
 % DHCPSRV_PGSQL_COMMIT committing to PostgreSQL database
-The code has issued a commit call.  All outstanding transactions will be
-committed to the database.  Note that depending on the PostgreSQL settings,
+The code has issued a commit call. All outstanding transactions will be
+committed to the database. Note that depending on the PostgreSQL settings,
 the commit may not include a write to disk.
 
 % DHCPSRV_PGSQL_DB opening PostgreSQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a PostgreSQL lease database.  The parameters of the
+V6) is about to open a PostgreSQL lease database. The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
 
 % DHCPSRV_PGSQL_DEALLOC_ERROR An error occurred deallocating SQL statements while closing the PostgreSQL lease database: %1
 This is an error message issued when a DHCP server (either V4 or V6) experienced
 and error freeing database SQL resources as part of closing its connection to
-the PostgreSQL database.  The connection is closed as part of normal server
-shutdown.  This error is most likely a programmatic issue that is highly
+the PostgreSQL database. The connection is closed as part of normal server
+shutdown. This error is most likely a programmatic issue that is highly
 unlikely to occur or negatively impact server operation.
 
 % DHCPSRV_PGSQL_DELETE_ADDR deleting lease for address %1
@@ -965,9 +965,9 @@ lease expires before considering its removal.
 
 % DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
 An error message indicating that communication with the PostgreSQL database server
-has been lost.  If automatic recovery has been enabled,  then the server will
-attempt to recover the connectivity.  If not the server will exit with a
-non-zero exit code.  The cause of such an error is most likely a network issue
+has been lost. If automatic recovery has been enabled, then the server will
+attempt to recover the connectivity. If not the server will exit with a
+non-zero exit code. The cause of such an error is most likely a network issue
 or the PostgreSQL server has gone down.
 
 % DHCPSRV_PGSQL_GET4 obtaining all IPv4 leases
@@ -1062,7 +1062,7 @@ information from the PostgreSQL database.
 
 % DHCPSRV_PGSQL_HOST_DB opening PostgreSQL hosts database: %1
 This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a PostgreSQL hosts database.  The parameters of the
+V6) is about to open a PostgreSQL hosts database. The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
 
@@ -1081,11 +1081,11 @@ An error message issued when an attempt to reconnect has failed.
 
 % DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
 An info message issued when the server is scheduling the next attempt to reconnect
-to the database.  This occurs when the server has lost database connectivity and
+to the database. This occurs when the server has lost database connectivity and
 is attempting to reconnect automatically.
 
 % DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
-An error message issued when the server failed to reconnect.  Loss of connectivity
+An error message issued when the server failed to reconnect. Loss of connectivity
 is typically a network or database server issue.
 
 % DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
@@ -1093,11 +1093,11 @@ An error message issued when an attempt to reconnect has failed.
 
 % DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
 An info message issued when the server is scheduling the next attempt to reconnect
-to the database.  This occurs when the server has lost database connectivity and
+to the database. This occurs when the server has lost database connectivity and
 is attempting to reconnect automatically.
 
 % DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
-An error message issued when the server failed to reconnect.  Loss of connectivity
+An error message issued when the server failed to reconnect. Loss of connectivity
 is typically a network or database server issue.
 
 % DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT recount of leases returned a negative value
@@ -1112,7 +1112,7 @@ configuration: Kea was built with this feature disabled for PostgreSQL.
 The parameters of the connection are logged.
 
 % DHCPSRV_PGSQL_ROLLBACK rolling back PostgreSQL database
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call. All outstanding transaction will
 be rolled back and not committed to the database.
 
 % DHCPSRV_PGSQL_START_TRANSACTION starting a new PostgreSQL transaction
@@ -1242,16 +1242,16 @@ included in the message.
 % DHCPSRV_UNEXPECTED_NAME database access parameters passed through '%1', expected 'lease-database'
 The parameters for access the lease database were passed to the server through
 the named configuration parameter, but the code was expecting them to be
-passed via the parameter named "lease-database".  If the database opens
-successfully, there is no impact on server operation.  However, as this does
+passed via the parameter named "lease-database". If the database opens
+successfully, there is no impact on server operation. However, as this does
 indicate an error in the source code, please submit a bug report.
 
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
-message) that is unknown to the software.  This is a configuration error.
+message) that is unknown to the software. This is a configuration error.
 
 % DHCPSRV_CFGMGR_RENEW_GTR_REBIND in %1, the value of renew-timer %2 is greater than the value of rebind-timer %3, ignoring renew-timer
 A warning message that indicates the configured renew-timer is greater
-than the configured rebind-timer.  The server will ignore the the renew
-timer value and send the rebind timer value only.  This is considered
+than the configured rebind-timer. The server will ignore the renew
+timer value and send the rebind timer value only. This is considered
 a non-fatal configuration error.
