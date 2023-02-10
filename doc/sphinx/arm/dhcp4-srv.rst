@@ -3173,8 +3173,41 @@ may take precedence.
 
 Required evaluation is also available at the shared-network and pool levels.
 The order in which required classes are considered is: shared-network,
-subnet, and pool, i.e. in the reverse order from the way in which ``option-data`` is
-processed.
+subnet, and pool, i.e. in the reverse order from the way in which
+``option-data`` is processed.
+
+.. note::
+
+   Vendor-Identifying Vendor Options are a special case: for all other
+   options an option is identified by its code point, ``vivco-suboptions``
+   (124) and ``vivso-suboptions`` (125) are identified by the pair of
+   code and vendor identifier. This has no visible effect for the
+   ``vivso-suboptions`` which has for value the vendor identifier but it
+   is different for ``vivco-suboptions`` which has for value a record
+   with the vendor identifier and a binary value. For instance in:
+
+::
+
+   "Dhcp4": {
+       "option-data": [
+          {
+              "name": "vivco-suboptions",
+              "always-send": true,
+              "data": "1234, 03666f6f"
+          },
+          {
+              "name": "vivco-suboptions",
+              "always-send": true,
+              "data": "5678, 03626172"
+          },
+          ...
+        ],
+        ...
+    }
+
+The first ``option-data`` entry does not hide as usual the second one because
+vendor identifiers (1234 and 5678) are different: responses will carry
+two instances of the ``vivco-suboptions`` option, each for a different vendor.
 
 .. _dhcp4-ddns-config:
 
