@@ -197,7 +197,6 @@ endif
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dhcpsrv_la_LIBADD  = $(top_builddir)/src/lib/process/libkea-process.la
-libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
