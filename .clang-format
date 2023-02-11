@@ -50,7 +50,7 @@ IncludeCategories:
   - Regex:           '^<config.h>$'
     Priority:        0
     # Kea's own files
-  - Regex:           '^<(asiodns|asiolink|cc|cfgrpt|config|config_backend|cryptolink|database|dhcp|dhcpsrv|dhcp_ddns|dns|eval|exceptions|hooks|http|log|mysql|pgsql|process|stats|testutils|util|yang|admin|agent|d2|dhcp4|dhcp6|keactrl|lfc|netconf|perfdhcp|shell|limits)/'
+  - Regex:           '^<(asiodns|asiolink|cc|config|config_backend|cryptolink|database|dhcp|dhcpsrv|dhcp_ddns|dns|eval|exceptions|hooks|http|log|mysql|pgsql|process|stats|testutils|util|yang|admin|agent|d2|dhcp4|dhcp6|keactrl|lfc|netconf|perfdhcp|shell|limits)/'
     Priority:        1
     # C++ standard library headers
   - Regex:           '^<[[:alnum:]]>$'

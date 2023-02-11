@@ -8,7 +8,6 @@
 
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
-#include <cfgrpt/config_report.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -24,6 +23,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
+#include <process/cfgrpt/config_report.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 

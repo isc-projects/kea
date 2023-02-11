@@ -7,7 +7,6 @@
 #include <config.h>
 #include <kea_version.h>
 
-#include <cfgrpt/config_report.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/parser_context.h>
@@ -17,6 +16,7 @@
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <log/output_option.h>
+#include <process/cfgrpt/config_report.h>
 #include <process/daemon.h>
 
 #include <boost/lexical_cast.hpp>

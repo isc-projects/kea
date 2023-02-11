@@ -8,7 +8,7 @@
 
 #include <sstream>
 
-#include <cfgrpt/config_report.h>
+#include <process/cfgrpt/config_report.h>
 
 namespace isc {
 namespace detail {

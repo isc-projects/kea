@@ -870,7 +870,6 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/lib/asiodns \
                          ../../src/lib/asiolink \
                          ../../src/lib/cc \
-                         ../../src/lib/cfgrpt \
                          ../../src/lib/config \
                          ../../src/lib/config_backend \
                          ../../src/lib/cryptolink \
@@ -891,6 +890,7 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/lib/mysql \
                          ../../src/lib/pgsql \
                          ../../src/lib/process \
+                         ../../src/lib/process/cfgrpt \
                          ../../src/lib/stats \
                          ../../src/lib/tcp \
                          ../../src/lib/testutils \

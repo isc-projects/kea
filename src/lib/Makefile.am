@@ -15,4 +15,4 @@ if HAVE_NETCONF
 SUBDIRS += yang
 endif
 
-SUBDIRS += asiodns dhcp_ddns eval cfgrpt process dhcpsrv d2srv
+SUBDIRS += asiodns dhcp_ddns eval process dhcpsrv d2srv

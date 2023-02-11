@@ -20,7 +20,7 @@ report_file = $(abs_top_builddir)/config.report
 
 # Generate config_report.cc
 config_report.cc: $(report_file)
-	${SHELL} $(top_srcdir)/tools/mk_cfgrpt.sh $(report_file) $(top_builddir)/src/lib/cfgrpt/config_report.cc
+	${SHELL} $(top_srcdir)/tools/mk_cfgrpt.sh $(report_file) $(top_builddir)/src/lib/process/cfgrpt/config_report.cc
 
 # Specify the headers for copying into the installation directory tree. The
 # following headers are anticipated to be useful for the user libraries.

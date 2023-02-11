@@ -6,11 +6,11 @@
 
 #include <config.h>
 
-#include <cfgrpt/config_report.h>
 #include <config/command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
+#include <process/cfgrpt/config_report.h>
 #include <stats/stats_mgr.h>
 
 #include <stdlib.h>

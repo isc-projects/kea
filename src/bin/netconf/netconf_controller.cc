@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <cfgrpt/config_report.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_process.h>
 #include <netconf/parser_context.h>
+#include <process/cfgrpt/config_report.h>
 
 #include <signal.h>
 

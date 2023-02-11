@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <cc/command_interpreter.h>
-#include <cfgrpt/config_report.h>
+#include <process/cfgrpt/config_report.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger.h>

@@ -8,13 +8,13 @@
 
 #include <perfdhcp/command_options.h>
 
+#include <asiolink/io_error.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
-#include <cfgrpt/config_report.h>
+#include <process/cfgrpt/config_report.h>
 #include <util/encode/hex.h>
-#include <asiolink/io_error.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

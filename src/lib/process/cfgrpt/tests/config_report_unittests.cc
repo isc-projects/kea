@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <kea_version.h>
-#include <cfgrpt/config_report.h>
+#include <process/cfgrpt/config_report.h>
 
 #include <gtest/gtest.h>
 

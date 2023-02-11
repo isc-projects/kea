@@ -19,7 +19,7 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
-#include <cfgrpt/config_report.h>
+#include <process/cfgrpt/config_report.h>
 
 #include <iostream>
 #include <sstream>
