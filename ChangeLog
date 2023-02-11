@@ -1,7 +1,12 @@
+2098.	[doc]		razvan
+	Updated classify ARM examples with a case when both operands of
+	the evaluated expression are computed at runtime.
+	(Gitlab #2664)
+
 2097.	[func]		tmark
-	kea-dhcp4 and kea-dhcp6 will now accept but warn about
-	and then ignore renew-timer values that exceed rebind-timer
-	values.  Prior to this the servers treated this as a fatal
+	kea-dhcp4 and kea-dhcp6 will now accept but ignore and
+	warn about renew-timer values that exceed rebind-timer
+	values. Prior to this the servers treated this as a fatal
 	configuration error.
 	(Gitlab #2677)
 

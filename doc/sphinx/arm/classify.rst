@@ -919,6 +919,23 @@ hex string (which would indicate a DUID based on an enterprise ID of
        ...
    }
 
+It is also possible to have both left and right operands of the evaluated
+expression processed at runtime.
+
+::
+
+   "Dhcp4": {
+       "client-classes": [
+           {
+               "name": "Infrastructure",
+               "test": "option[82].option[2].hex == pkt4.mac",
+               ...
+           },
+           ...
+       ],
+       ...
+   }
+
 .. _classification-using-host-reservations:
 
 Using Static Host Reservations in Classification
