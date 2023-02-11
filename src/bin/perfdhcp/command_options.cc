@@ -38,9 +38,6 @@ using namespace isc::dhcp;
 namespace isc {
 namespace perfdhcp {
 
-// Refer to config_report so it will be embedded in the binary
-const char* const* perfdhcp_config_report = isc::detail::config_report;
-
 CommandOptions::LeaseType::LeaseType()
     : type_(ADDRESS) {
 }

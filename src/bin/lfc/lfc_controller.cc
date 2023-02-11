@@ -40,9 +40,6 @@ const uint32_t MAX_LEASE_ERRORS = 100;
 namespace isc {
 namespace lfc {
 
-// Refer to config_report so it will be embedded in the binary
-const char* const* lfc_config_report = isc::detail::config_report;
-
 /// @brief Defines the application name, it may be used to locate
 /// configuration data and appears in log statements.
 const char* LFCController::lfc_app_name_ = "DhcpLFC";

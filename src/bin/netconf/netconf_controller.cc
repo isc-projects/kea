@@ -68,8 +68,5 @@ NetconfController::getNetconfProcess() {
     return (boost::dynamic_pointer_cast<NetconfProcess>(getProcess()));
 }
 
-// Refer to config_report so it will be embedded in the binary.
-const char* const* netconf_config_report = isc::detail::config_report;
-
 }  // namespace netconf
 }  // namespace isc

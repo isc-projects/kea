@@ -4254,9 +4254,6 @@ Dhcpv4Srv::d2ClientErrorHandler(const
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }
 
-// Refer to config_report so it will be embedded in the binary
-const char* const* dhcp4_config_report = isc::detail::config_report;
-
 std::string
 Dhcpv4Srv::getVersion(bool extended) {
     std::stringstream tmp;
