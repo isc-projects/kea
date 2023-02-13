@@ -3271,8 +3271,8 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
         << "Lease lifetime was not extended, but it should";
 }
 
-// Verifies that client with a global address reservation can get and
-// renew a lease for an arbitrary address.
+// Verifies that client with a globally reserved address that is
+// outside the selected subnet is given a dynamic address instead.
 TEST_F(AllocEngine6Test, globalHostReservedAddress) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
@@ -3302,11 +3302,11 @@ TEST_F(AllocEngine6Test, globalHostReservedAddress) {
     ASSERT_TRUE(current);
     ASSERT_EQ("ghost1", current->getHostname());
 
-    // Check that we have been allocated the fixed address.
+    // Check that we have been allocated a dynamic address.
     Lease6Ptr lease;
     ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
-//    EXPECT_EQ("3001::1", lease->addr_.toText());
+    EXPECT_NE("3001::1", lease->addr_.toText());
     EXPECT_TRUE(subnet_->inRange(lease->addr_))
                 << " address not in range: " << lease->addr_.toText();
 
@@ -3330,8 +3330,8 @@ TEST_F(AllocEngine6Test, globalHostReservedAddress) {
         << "Lease lifetime was not extended, but it should";
 }
 
-// Verifies that client with a global address reservation can get and
-// renew a lease for an arbitrary address.
+// Verifies that client with a globally reserved address that is
+// inside the selected subnet is given that address.
 TEST_F(AllocEngine6Test, globalHostReservedMatchingAddress) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));

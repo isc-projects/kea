@@ -3302,7 +3302,7 @@ TEST_F(AllocEngine4Test, globalReservationReservedMatchingAddressDiscover) {
 // - Client has no lease in the database.
 // - Client has a global reservation outside the current subnet.
 // - Client sends REQUEST
-// - Client is allocated the reserved address.
+// - Client is allocated a dynamic address.
 // - Lease is added to the lease database
 TEST_F(AllocEngine4Test, globalReservationReservedNonMatchingAddressRequest) {
     // Create reservation for the client.
@@ -3334,6 +3334,7 @@ TEST_F(AllocEngine4Test, globalReservationReservedNonMatchingAddressRequest) {
     // We should allocate the reserved address.
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
+    ASSERT_NE("192.0.77.123", lease->addr_.toText());
     EXPECT_TRUE(subnet_->inRange(lease->addr_));
 
     // Check that the lease is indeed in LeaseMgr
