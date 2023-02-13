@@ -1839,7 +1839,7 @@ public:
 
     /// @brief Generates a label for subnet or shared-network from subnet
     ///
-    /// Creates a string for the subnet and it's ID for stand alone subnets
+    /// Creates a string for the subnet and its ID for stand alone subnets
     /// or the shared-network and its name if the given subnet belongs to a
     /// shared-network.
     ///

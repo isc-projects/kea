@@ -3163,9 +3163,9 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
     }
 
     // Fetch the globally reserved address if there is one.
-    auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
-    auto global_host_address = ((host != ctx.hosts_.end() && host->second) ?
-                                 host->second->getIPv4Reservation() :
+    auto global_host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
+    auto global_host_address = ((global_host != ctx.hosts_.end() && global_host->second) ?
+                                 global_host->second->getIPv4Reservation() :
                                  IOAddress::IPV4_ZERO_ADDRESS());
 
     // Start with currently selected subnet.
