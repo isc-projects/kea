@@ -920,7 +920,10 @@ hex string (which would indicate a DUID based on an enterprise ID of
    }
 
 It is also possible to have both left and right operands of the evaluated
-expression processed at runtime.
+expression processed at runtime. Expressions related to packets can appear in
+the expression as many times as needed. There is no limit. However, each token
+has a small impact on performance and exceedingly complex expressions may be a
+major bottleneck.
 
 ::
 
