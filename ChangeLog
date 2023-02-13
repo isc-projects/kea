@@ -1,3 +1,7 @@
+2100.	[doc]		Kevin P. Fleming
+	Fixed several JSON examples in the Kea ARM.
+	(Gitlab #2494)
+
 2099.	[func]*		tmark
 	An address reserved in a global reservation must now lie
 	within the range of the subnet or shared-network selected

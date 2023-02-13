@@ -257,3 +257,6 @@ We have received the following contributions:
  - Kyle Birkeland
    2023-02: Contributed a patch that enforces address suitability for globally
             reserved addresses for both kea-dhcp4 and kea-dhcp6.
+
+ - Kevin P. Fleming
+   2023-02: Fixed several examples in DHCPv6 section of the ARM.
