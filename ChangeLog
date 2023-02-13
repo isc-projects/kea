@@ -1,3 +1,10 @@
+2102.	[func]*		tmark
+	The logger to which kea-dhcp4 now logs EVAL_RESULT log
+	messages issued during packet classification has been
+	changed from "options4" to "dhcp4".  This corrects an
+	inconsistency between kea-dhcp6 and kea-dhcp4 behavior.
+	(Gitlab #2720)
+
 2101.	[build]		andrei
 	Shell tests and python tests no longer run if gtest is disabled.
 	This provides the ability to run distcheck without tests.
