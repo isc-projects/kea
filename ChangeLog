@@ -1,3 +1,8 @@
+2101.	[build]		andrei
+	Shell tests and python tests no longer run if gtest is disabled.
+	This provides the ability to run distcheck without tests.
+	(Gitlab #2742)
+
 2100.	[doc]		Kevin P. Fleming
 	Fixed several JSON examples in the Kea ARM.
 	(Gitlab #2494)
