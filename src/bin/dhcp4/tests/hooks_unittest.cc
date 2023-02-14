@@ -2262,15 +2262,15 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client1.receiveResponse());
-    ASSERT_TRUE(client1.getContext().response_);
     Pkt4Ptr rsp = client1.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
 
     // Receive and check the second response.
     ASSERT_NO_THROW(client2.receiveResponse());
-    ASSERT_TRUE(client2.getContext().response_);
     rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
 
@@ -3306,11 +3306,6 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
 TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     IfaceMgrTestConfig test_config(true);
 
-    // Configure 1 directly reachable subnet, parked-packet-limit of 1.
-    // TODO: investigate why enabling MT causes exception BadValue with message
-    // "interface eth1 doesn't exist and therefore it is impossible"
-    // " to find a suitable subnet for its IPv4 address" to be thrown, and
-    // sometimes a segfault.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
@@ -3322,11 +3317,8 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"interface\": \"eth1\" "
         " } ],"
-        "\"valid-lifetime\": 4000,"
-        R"("multi-threading": {
-            "enable-multi-threading": false
-        }
-        })";
+        "\"valid-lifetime\": 4000"
+        "}";
 
     ConstElementPtr json;
     EXPECT_NO_THROW(json = parseDHCP4(config));
@@ -3397,8 +3389,8 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client.receiveResponse());
-    ASSERT_TRUE(client.getContext().response_);
     Pkt4Ptr rsp = client.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
 
@@ -3424,8 +3416,8 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client2.receiveResponse());
-    ASSERT_TRUE(client2.getContext().response_);
     rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
 

@@ -142,7 +142,6 @@ public:
     ///
     /// See fake_received_ field for description
     virtual Pkt4Ptr receivePacket(int /*timeout*/) {
-
         // If there is anything prepared as fake incoming traffic, use it
         if (!fake_received_.empty()) {
             Pkt4Ptr pkt = fake_received_.front();
@@ -163,12 +162,8 @@ public:
     /// Pretend to send a packet, but instead just store it in fake_send_ list
     /// where test can later inspect server's response.
     virtual void sendPacket(const Pkt4Ptr& pkt) {
-        if (isc::util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            fake_sent_.push_back(pkt);
-        } else {
-            fake_sent_.push_back(pkt);
-        }
+        isc::util::MultiThreadingLock lock(mutex_);
+        fake_sent_.push_back(pkt);
     }
 
     /// @brief fake receive packet from server
@@ -177,25 +172,17 @@ public:
     ///
     /// @return The received packet.
     Pkt4Ptr receiveOneMsg() {
-        if (isc::util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            return (receiveOneMsgInternal());
-        } else {
-            return (receiveOneMsgInternal());
-        }
-    }
+        // Make sure the server processed all packets.
+        isc::util::MultiThreadingMgr::instance().getThreadPool().wait(2);
 
-    /// @brief fake receive packet from server
-    ///
-    /// The client uses this packet as a reply from the server.
-    /// This function should be called in a thread safe context.
-    ///
-    /// @return The received packet.
-    Pkt4Ptr receiveOneMsgInternal() {
+        // Lock the mutex for the rest of the function.
+        isc::util::MultiThreadingLock lock(mutex_);
+
         // Return empty pointer if server hasn't responded.
         if (fake_sent_.empty()) {
             return (Pkt4Ptr());
         }
+
         Pkt4Ptr msg = fake_sent_.front();
         fake_sent_.pop_front();
         return (msg);
