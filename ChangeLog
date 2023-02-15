@@ -1,3 +1,11 @@
+2103.	[perf]		andrei
+	When not explicitly configured, multi-threading is now enabled by
+	default for the core Kea DHCP service ("enable-multi-threading"
+	set to true). For now, HA+MT is still disabled by default
+	("enable-multi-threading" and "http-dedicated-listener" both
+	still set to false in the high-availability library parameters).
+	(Gitlab #2402)
+
 2102.	[func]*		tmark
 	The logger to which kea-dhcp4 now logs EVAL_RESULT log
 	messages issued during packet classification has been
