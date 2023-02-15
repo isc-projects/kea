@@ -2176,7 +2176,7 @@ TEST_F(VendorOptsTest, twoVivcos) {
 
     EXPECT_NO_THROW(configure(config, *client.getServer()));
 
-    // Let's check whether the server is not able to process this packet.
+    // Let's check whether the server is able to process this packet.
     EXPECT_NO_THROW(client.doDiscover());
     ASSERT_TRUE(client.getContext().response_);
 
