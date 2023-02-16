@@ -1947,8 +1947,10 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
                 if (vendor_ids.count(vendor_id) > 0) {
                     continue;
                 }
-                // Got it: add it.
-                resp->Pkt::addOption(desc.option_);
+                // Append a fresh vendor option as the next method should
+                // add suboptions to it.
+                vendor_opts.reset(new OptionVendor(Option::V4, vendor_id));
+                resp->Pkt::addOption(vendor_opts);
                 static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }

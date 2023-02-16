@@ -639,6 +639,20 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
     vector<uint8_t> subopt2bin = subopt2->toBinary(false);
     string txt(subopt2bin.begin(), subopt2bin.end());
     EXPECT_EQ("tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img", txt);
+
+    // Check the config was not altered by unwanted side effect
+    // on the vendor option.
+
+    // Get class config:
+    ClientClassDefPtr cdef = CfgMgr::instance().getCurrentCfg()->
+        getClientClassDictionary()->findClass("cpe_genexis");
+    ASSERT_TRUE(cdef);
+    OptionDescriptor cdesc = cdef->getCfgOption()->
+        get(DHCP6_OPTION_SPACE, D6O_VENDOR_OPTS);
+    ASSERT_TRUE(cdesc.option_);
+    // If the config was altered these two EXPECT will fail.
+    EXPECT_EQ(0, cdesc.option_->getOptions().size());
+    EXPECT_FALSE(cdesc.option_->getOption(2));
 }
 
 // Checks if it's possible to have 2 vendor-class options and 2 vendor-opts
