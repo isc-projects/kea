@@ -1518,6 +1518,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
+    // For each requested option code get the first instance of the option
+    // to be returned to the client.
     for (uint16_t opt : requested_opts) {
         // Add nothing when it is already there.
         if (!answer->getOption(opt)) {
@@ -1534,9 +1536,11 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
-    // Special cases for vendor class and options.
+    // Special cases for vendor class and options which are identified
+    // by the code/type and the vendor/enterprise id vs. the code/type only.
     if (requested_opts.count(D6O_VENDOR_CLASS) > 0) {
         set<uint32_t> vendor_ids;
+        // Get what already exists in the response.
         for (auto opt : answer->getOptions(D6O_VENDOR_CLASS)) {
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
@@ -1572,6 +1576,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
 
     if (requested_opts.count(D6O_VENDOR_OPTS) > 0) {
         set<uint32_t> vendor_ids;
+        // Get what already exists in the response.
         for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);

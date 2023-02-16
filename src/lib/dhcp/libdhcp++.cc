@@ -685,14 +685,12 @@ LibDHCP::fuseOptions4(OptionCollection& options) {
     return (result);
 }
 
-void
-LibDHCP::extendVendorOptions4(OptionCollection& options) {
-    LibDHCP::extendVivco(options);
-    LibDHCP::extendVivso(options);
-}
+namespace { // Anynomous namespace.
+
+// VIVCO part of extendVendorOptions4.
 
 void
-LibDHCP::extendVivco(OptionCollection& options) {
+extendVivco(OptionCollection& options) {
     typedef vector<OpaqueDataTuple> TuplesCollection;
     map<uint32_t, TuplesCollection> vendors_tuples;
     const auto& range = options.equal_range(DHO_VIVCO_SUBOPTIONS);
@@ -718,7 +716,7 @@ LibDHCP::extendVivco(OptionCollection& options) {
             } catch (const OpaqueDataTupleError&) {
                 // Ignore this kind of error and continue.
                 break;
-            } catch (const Exception&) {
+            } catch (const isc::Exception&) {
                 options.erase(DHO_VIVCO_SUBOPTIONS);
                 throw;
             }
@@ -749,8 +747,10 @@ LibDHCP::extendVivco(OptionCollection& options) {
     }
 }
 
+// VIVSO part of extendVendorOptions4.
+
 void
-LibDHCP::extendVivso(OptionCollection& options) {
+extendVivso(OptionCollection& options) {
     map<uint32_t, OptionCollection> vendors_data;
     const auto& range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
     for (auto it = range.first; it != range.second; ++it) {
@@ -773,7 +773,7 @@ LibDHCP::extendVivso(OptionCollection& options) {
             } catch (const SkipThisOptionError&) {
                 // Ignore this kind of error and continue.
                 break;
-            } catch (const Exception&) {
+            } catch (const isc::Exception&) {
                 options.erase(DHO_VIVSO_SUBOPTIONS);
                 throw;
             }
@@ -794,6 +794,14 @@ LibDHCP::extendVivso(OptionCollection& options) {
         // this enterprise ID.
         options.insert(std::make_pair(DHO_VIVSO_SUBOPTIONS, vendor_opt));
     }
+}
+
+} // end of anonymous namespace.
+
+void
+LibDHCP::extendVendorOptions4(OptionCollection& options) {
+    extendVivco(options);
+    extendVivso(options);
 }
 
 size_t

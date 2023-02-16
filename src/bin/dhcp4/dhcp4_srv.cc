@@ -1859,10 +1859,14 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         }
     }
 
-    // For each requested option code get the instance of the option
+    // For each requested option code get the first instance of the option
     // to be returned to the client.
     for (auto const& opt : requested_opts) {
         // Add nothing when it is already there.
+        // Skip special cases: DHO_VIVSO_SUBOPTIONS.
+        if (opt == DHO_VIVSO_SUBOPTIONS) {
+            continue;
+        }
         if (!resp->getOption(opt)) {
             // Iterate on the configured option list
             for (auto const& copts : co_list) {
@@ -1876,8 +1880,11 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         }
     }
 
+    // Special cases for vendor class and options which are identified
+    // by the code/type and the vendor/enterprise id vs. the code/type only.
     if (requested_opts.count(DHO_VIVCO_SUBOPTIONS) > 0) {
         set<uint32_t> vendor_ids;
+        // Get what already exists in the response.
         for (auto opt : resp->getOptions(DHO_VIVCO_SUBOPTIONS)) {
             OptionVendorClassPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
@@ -1911,6 +1918,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
 
     if (requested_opts.count(DHO_VIVSO_SUBOPTIONS) > 0) {
         set<uint32_t> vendor_ids;
+        // Get what already exists in the response.
         for (auto opt : resp->getOptions(DHO_VIVSO_SUBOPTIONS)) {
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
