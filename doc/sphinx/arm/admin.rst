@@ -171,7 +171,7 @@ per-host basis, and a subset of the server configuration parameters
 MySQL 5.7 vs MySQL 8 vs MariaDB 10 and 11
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In our Kea performance testing MySQL 8 shows 60-90% drop in speed 
+In our Kea performance testing MySQL 8 shows 60-90% drop in speed
 in comparison with older MySQL 5.7.
 Due to the upcoming MySQL 5.7 EOL, we recommend using MariaDB instead of MySQL 8.
 
@@ -624,7 +624,7 @@ It can be set per-session for testing:
 
     postgres=# SET synchronous_commit = OFF;
 
-or permanently by command (preffered method):
+or permanently by command (preferred method):
 
 .. code-block:: psql
 

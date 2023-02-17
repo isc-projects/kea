@@ -357,7 +357,7 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",
     "DHCPSRV_MEMFILE_GET_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2",
     "DHCPSRV_MEMFILE_GET_RELAYID4", "obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5",
-    "DHCPSRV_MEMFILE_GET_RELAYID6", "obtaining at most %1 IPv6 leases starting from address %2 with relay id  %3 and link %4/%5",
+    "DHCPSRV_MEMFILE_GET_RELAYID6", "obtaining at most %1 IPv6 leases starting from address %2 with relay id %3 and link %4/%5",
     "DHCPSRV_MEMFILE_GET_REMOTEID4", "obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5",
     "DHCPSRV_MEMFILE_GET_REMOTEID6", "obtaining at most %1 IPv6 leases starting from address %2 with remote id %3 and link %4/%5",
     "DHCPSRV_MEMFILE_GET_SUBID4", "obtaining IPv4 leases for subnet ID %1",

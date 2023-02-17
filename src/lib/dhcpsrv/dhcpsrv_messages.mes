@@ -145,6 +145,12 @@ contains "ip-address" rather than its replacement, "ip-addresses".
 The server will still honor the value but users are encouraged to
 move to the new list parameter.
 
+% DHCPSRV_CFGMGR_RENEW_GTR_REBIND in %1, the value of renew-timer %2 is greater than the value of rebind-timer %3, ignoring renew-timer
+A warning message that indicates the configured renew-timer is greater
+than the configured rebind-timer. The server will ignore the renew
+timer value and send the rebind timer value only. This is considered
+a non-fatal configuration error.
+
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, UDP sockets will be used
 This warning message is logged when the user specified that the
 DHCPv4 server should use the raw sockets to receive the DHCP
@@ -1249,9 +1255,3 @@ indicate an error in the source code, please submit a bug report.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
-
-% DHCPSRV_CFGMGR_RENEW_GTR_REBIND in %1, the value of renew-timer %2 is greater than the value of rebind-timer %3, ignoring renew-timer
-A warning message that indicates the configured renew-timer is greater
-than the configured rebind-timer. The server will ignore the renew
-timer value and send the rebind timer value only. This is considered
-a non-fatal configuration error.

@@ -123,7 +123,7 @@ This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove a forward address mapping, is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
-% DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a repsonse to forward mapping address removal for FQDN %2 to DNS server %3
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping address removal for FQDN %2 to DNS server %3
 This is an error message issued when no response is received from the DNS
 server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
 a forward mapping address removal.  The application will retry against the same

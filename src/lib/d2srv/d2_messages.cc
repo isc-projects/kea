@@ -119,7 +119,7 @@ const char* values[] = {
     "DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR", "DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping address removal for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED", "DNS Request ID %1: Server, %2, rejected a DNS update request to remove the forward address mapping for FQDN, %3, with an RCODE: %4",
     "DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT", "DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing forward address mapping for FQDN, %3",
-    "DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a repsonse to forward mapping address removal for FQDN %2 to DNS server %3",
+    "DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping address removal for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS", "DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing forward RRs for FQDN %3 to DNS server %4",
     "DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE", "DNS Request ID %1: update message to remove forward DNS RR entries could not be constructed for this request: %2,  reason: %3",
     "DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR", "DHCP_DDNS Request ID %1: encountered an IO error sending a forward RR removal for FQDN %2 to DNS server %3",
