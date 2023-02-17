@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,8 +15,37 @@
 #include <cstring>
 #include <vector>
 #include <sstream>
+#include <unordered_set>
 
 using namespace isc::asiolink;
+
+TEST(IOAddressHashTest, hashIPv4) {
+    IOAddress::Hash hash;
+    std::unordered_set<size_t> results;
+    for (uint32_t i = 0; i < 10; i++) {
+        IOAddress address(i);
+        auto result = hash(address);
+        results.insert(result);
+    }
+    // Make sure that the hashing function generated a unique hash for
+    // each address.
+    EXPECT_EQ(10, results.size());
+}
+
+TEST(IOAddressHashTest, hashIPv6) {
+    IOAddress::Hash hash;
+    std::unordered_set<size_t> results;
+    for (auto i = 0; i < 10; i++) {
+        std::ostringstream s;
+        s << "2001:db8:" << i << "::ffff";
+        IOAddress address(s.str());
+        auto result = hash(address);
+        results.insert(result);
+    }
+    // Make sure that the hashing function generated a unique hash for
+    // each address.
+    EXPECT_EQ(10, results.size());
+}
 
 TEST(IOAddressTest, fromText) {
     IOAddress io_address_v4("192.0.2.1");

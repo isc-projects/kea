@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,17 @@ namespace asiolink {
 /// This class is a wrapper for the ASIO \c ip::address class.
 class IOAddress {
 public:
+
+    /// \brief An \c IOAddress hash enabling the use in the unordered
+    /// STL containers.
+    struct Hash {
+        /// \brief A hashing operator.
+        ///
+        /// \param io_address an address to be hashed.
+        /// \return a hashing result.
+        size_t operator()(const IOAddress &io_address) const;
+    };
+
     ///
     /// \name Constructors and Destructor
     ///
