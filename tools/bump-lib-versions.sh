@@ -155,9 +155,8 @@ fi
 
 (echo "\
 TODO.	[build]		TODO
-	The library version numbers have been bumped for the Kea ${major}.${middle}.${minor}
+	The library version numbers have been bumped up for the Kea ${major}.${middle}.${minor}
 	${release} release.
 	(Gitlab #TODO)
 " && cat ./ChangeLog) > ./ChangeLog.tmp
 mv ./ChangeLog.tmp ./ChangeLog
-

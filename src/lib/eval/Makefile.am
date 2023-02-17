@@ -36,7 +36,7 @@ libkea_eval_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_eval_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_eval_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_eval_la_LDFLAGS  = -no-undefined -version-info 49:0:0
+libkea_eval_la_LDFLAGS  = -no-undefined -version-info 50:0:0
 libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = eval.dox

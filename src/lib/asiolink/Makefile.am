@@ -11,7 +11,7 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-asiolink.la
 
-libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 52:0:0
+libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 53:0:0
 libkea_asiolink_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 libkea_asiolink_la_SOURCES  = asiolink.h

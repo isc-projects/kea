@@ -9,7 +9,7 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-asiodns.la
 
-libkea_asiodns_la_LDFLAGS = -no-undefined -version-info 34:0:0
+libkea_asiodns_la_LDFLAGS = -no-undefined -version-info 35:0:0
 
 libkea_asiodns_la_SOURCES = io_fetch.cc io_fetch.h
 libkea_asiodns_la_SOURCES += logger.h logger.cc

@@ -1,3 +1,8 @@
+2104.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 2.3.5
+	development release.
+	(Gitlab #2768)
+
 2103.	[perf]		andrei
 	When not explicitly configured, multi-threading is now enabled by
 	default for the core Kea DHCP service ("enable-multi-threading"

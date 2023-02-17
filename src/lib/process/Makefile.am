@@ -33,7 +33,7 @@ libkea_process_la_SOURCES += redact_config.cc redact_config.h
 libkea_process_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_process_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_process_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_process_la_LDFLAGS += -no-undefined -version-info 53:0:0
+libkea_process_la_LDFLAGS += -no-undefined -version-info 54:0:0
 
 libkea_process_la_LIBADD  = $(top_builddir)/src/lib/process/cfgrpt/libcfgrpt.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
