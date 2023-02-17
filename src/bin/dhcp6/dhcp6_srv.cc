@@ -2635,8 +2635,8 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
             min_preferred_lft = (*l)->preferred_lft_;
         }
 
-        // Now remove this prefix from the hints list.
-        AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
+        // Now remove this address from the hints list.
+        AllocEngine::Resource hint_type((*l)->addr_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
