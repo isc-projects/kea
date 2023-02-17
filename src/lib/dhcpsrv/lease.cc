@@ -704,8 +704,10 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
     lease->type_ = textToType(lease_type->stringValue());
 
     // prefix length
-    ConstElementPtr prefix_len = element->get("prefix-len");
-    if (lease->type_ == Lease::TYPE_PD) {
+    if (lease->type_ != Lease::TYPE_PD) {
+        lease->prefixlen_ = 128;
+    } else {
+        ConstElementPtr prefix_len = element->get("prefix-len");
         if (!prefix_len || (prefix_len->getType() != Element::integer)) {
             isc_throw(BadValue, "prefix-len is not present in the parsed lease"
                       " or it is not a number");

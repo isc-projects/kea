@@ -1290,7 +1290,7 @@ TEST(Lease6Test, fromElementNA) {
 
     // IPv6 specific properties.
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_EQ(123456, lease->iaid_);
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());

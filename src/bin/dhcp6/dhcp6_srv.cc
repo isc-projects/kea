@@ -1120,7 +1120,8 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                     bool in_new = false;
                     for (auto const& new_lease : ctx.new_leases_) {
                         if ((new_lease->addr_ == old_lease->addr_) &&
-                            (new_lease->prefixlen_ == old_lease->prefixlen_)) {
+                            (new_lease->type_ != Lease::TYPE_PD ||
+                             (new_lease->prefixlen_ == old_lease->prefixlen_))) {
                             in_new = true;
                             break;
                         }
