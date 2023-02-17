@@ -32,57 +32,57 @@ Kea 2.3.5 (development) released on February 22, 2023
 2099.	[func]*		tmark
 	An address reserved in a global reservation must now lie
 	within the range of the subnet or shared-network selected
-	by Kea. In the event that it does not, the server will
-	attempt to allocate an address dynamically.  This change
-	applies to both kea-dhcp4 and kea-dhcp6.  Prior to this
-	the servers would grant a lease for any globally reserved
-	address without regard for its feasibility within the
-	selected subnet. Thanks to Kyle Birkeland for reporting
-	the issue and contributing the patch.
+	by Kea. If it does not, the server will attempt to allocate an
+	address dynamically. This change applies to both kea-dhcp4 and
+	kea-dhcp6. Previously, the servers would grant a lease for any
+	globally reserved address without regard for its feasibility
+	within the selected subnet. Thanks to Kyle Birkeland for
+	reporting the issue and contributing the patch.
 	(Gitlab #2631, #2632)
 
 2098.	[doc]		razvan
-	Updated classify ARM examples with a case when both operands of
-	the evaluated expression are computed at runtime.
+	Updated client classification examples in the ARM with a case
+	where both operands of the evaluated expression are computed at
+	runtime.
 	(Gitlab #2664)
 
 2097.	[func]		tmark
-	kea-dhcp4 and kea-dhcp6 will now accept but ignore and
-	warn about renew-timer values that exceed rebind-timer
-	values. Prior to this the servers treated this as a fatal
+	kea-dhcp4 and kea-dhcp6 will now accept renew-timer values that
+	exceed rebind-timer values but will ignore them and issue a
+	warning. Previously, the servers treated those values as a fatal
 	configuration error.
 	(Gitlab #2677)
 
 2096.	[bug]		[tmark]
-	Corrected a bug which allowed options to be added to themselves
+	Fixed a bug which allowed options to be added to themselves
 	as suboptions.
 	(Gitlab #2538)
 
 2095.	[bug]		marcin, tmark
-	Added a compile-time check if the PostgreSQL version supports
-	the "tcp-user-timeout" parameter. This parameter is available in
-	the PostgreSQL version 12 and later. It is now ignored for the
-	earlier versions and a suitable warning message is issued.
+	Added a compile-time check of whether the PostgreSQL version
+	supports the "tcp-user-timeout" parameter. This parameter
+	is available in PostgreSQL version 12 and later. It is now
+	ignored for earlier versions and a suitable warning message
+	is issued.
 	(Gitlab #2734)
 
 2094.	[bug]		razvan
-	Fixed a bug which was causing the Kea server to crash when
-	using high-availability hooks library and running reconfigure
+	Fixed a bug which caused the Kea server to crash when
+	using the high-availability hooks library and running reconfigure
 	commands. Thanks to Caciano Machado for reporting this bug and
 	providing detailed steps on how to replicate it.
 	(Gitlab #2575)
 
 2093.	[func]		fdupont
-	It is now possible to add an "empty" host reservation
-	without any attribute (e.g. no address, no hostname, no
-	client 	classes, ...)  at all. This is useful to determine
-	the KNOWN class.
+	It is now possible to add an "empty" host reservation without any
+	attribute (e.g. no address, no hostname, no client classes,
+	etc.). This is useful for determining the KNOWN class.
 	(Gitlab #2723)
 
 2092.	[bug]		fdupont
 	Added logic to kea-dhcp4 and kea-dhcp6 to catch and log
 	database connection errors that occur during lease
-	reclamation. Prior to this such errors caused the
+	reclamation. Previously, such errors caused the
 	reclamation timer to not get rescheduled.
 	(Gitlab #2682)
 
@@ -93,8 +93,8 @@ Kea 2.3.5 (development) released on February 22, 2023
 	(Gitlab #2741)
 
 2090.	[build]		andrei
-	Fixed the --with-site-packages configure flag which had no effect
-	previously.
+	Fixed the --with-site-packages configure flag, which previously
+	had no effect.
 	(Gitlab #2669)
 
 Kea 2.3.4 (development) released on January 25, 2022
