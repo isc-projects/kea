@@ -153,6 +153,7 @@ libkea_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libkea_dhcpsrv_la_SOURCES += subnet_id.h
 libkea_dhcpsrv_la_SOURCES += subnet_selector.h
 libkea_dhcpsrv_la_SOURCES += timer_mgr.cc timer_mgr.h
+libkea_dhcpsrv_la_SOURCES += tracking_lease_mgr.cc tracking_lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += utils.h
 libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h
 
@@ -363,6 +364,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	ncr_generator.h \
 	network.h \
 	network_state.h \
+	tracking_lease_mgr.h \
 	pool.h \
 	random_allocation_state.h \
 	random_allocator.h \

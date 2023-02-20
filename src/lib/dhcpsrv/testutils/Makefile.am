@@ -12,7 +12,8 @@ if HAVE_GTEST
 
 noinst_LTLIBRARIES = libdhcpsrvtest.la
 
-libdhcpsrvtest_la_SOURCES  = config_result_check.cc config_result_check.h
+libdhcpsrvtest_la_SOURCES  = concrete_lease_mgr.cc concrete_lease_mgr.h
+libdhcpsrvtest_la_SOURCES += config_result_check.cc config_result_check.h
 libdhcpsrvtest_la_SOURCES += dhcp4o6_test_ipc.cc dhcp4o6_test_ipc.h
 libdhcpsrvtest_la_SOURCES += host_data_source_utils.cc host_data_source_utils.h
 libdhcpsrvtest_la_SOURCES += memory_host_data_source.cc memory_host_data_source.h

@@ -133,6 +133,7 @@ libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h
 libdhcpsrv_unittests_SOURCES += timer_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += tracking_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += network_state_unittest.cc
 libdhcpsrv_unittests_SOURCES += network_unittest.cc
 

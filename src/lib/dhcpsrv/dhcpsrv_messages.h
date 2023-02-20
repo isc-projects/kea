@@ -70,6 +70,8 @@ extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL;
 extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED;
 extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL;
 extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED;
+extern const isc::log::MessageID DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION;
+extern const isc::log::MessageID DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION;
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FAIL;
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FAIL_DISCARD;
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FIXED;
