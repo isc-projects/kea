@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2942,6 +2942,23 @@ GenericLeaseMgrTest::makeLease6(const Lease::Type& type,
 
     EXPECT_TRUE(lmptr_->addLease(lease));
     return lease;
+}
+
+void
+GenericLeaseMgrTest::logCallback(const TrackingLeaseMgr::CallbackType type, SubnetID subnet_id,
+                                 const LeasePtr& lease) {
+    logs_.push_back(Log{type, subnet_id, lease});
+}
+
+int
+GenericLeaseMgrTest::countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id) const {
+    int count = 0;
+    for (auto log : logs_) {
+        if ((log.type == type) && (log.subnet_id == subnet_id)) {
+            ++count;
+        }
+    }
+    return (count);
 }
 
 void

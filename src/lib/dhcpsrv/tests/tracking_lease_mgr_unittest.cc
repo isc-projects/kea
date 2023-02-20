@@ -27,17 +27,6 @@ namespace {
 class TrackingLeaseMgrTest : public GenericLeaseMgrTest {
 public:
 
-    /// @brief A structure holding a single callback log entry.
-    ///
-    /// The @c logCallback function inserts logs of this type into the
-    /// @c logs vector. The vector can be later examined to see what
-    /// callbacks have been invoked.
-    typedef struct {
-        TrackingLeaseMgr::CallbackType type;
-        SubnetID subnet_id;
-        LeasePtr lease;
-    } Log;
-
     /// @brief Reopen the database
     ///
     /// No-op implementation. We need to provide concrete implementation,
@@ -46,49 +35,21 @@ public:
 
     /// @brief Convenience function creating a lease instance.
     ///
+    /// We don't use the @c initializeLease4 and the initializeLease6 functions
+    /// here because they use tons of parameters we don't really need here.
+    /// We simply need the subnet id and the address. It improves the tests
+    /// readability.
+    ///
     /// @param subnet_id subnet identifier for the lease.
     /// @param address leased address.
     /// @tparam LeaseType type of the lease: @c Lease4 or Lease6.
     template<typename LeaseType>
-    boost::shared_ptr<LeaseType> createLease(int subnet_id, std::string address) const {
+    boost::shared_ptr<LeaseType> initializeLease(int subnet_id, std::string address) const {
         auto lease = boost::make_shared<LeaseType>();
         lease->subnet_id_ = SubnetID(subnet_id);
         lease->addr_ = IOAddress(address);
         return (lease);
     }
-
-    /// @brief Callback function recording its parameters.
-    ///
-    /// It is used in the unit tests that verify that appropriate callbacks
-    /// have been invoked.
-    ///
-    /// @param type callback type.
-    /// @param subnet_id subnet identifier.
-    /// @param lease lease instance.
-    void logCallback(const TrackingLeaseMgr::CallbackType type, SubnetID subnet_id, const LeasePtr& lease) {
-        logs_.push_back(Log{type, subnet_id, lease});
-    }
-
-    /// @brief Counts log entries.
-    ///
-    /// It counts the logs associated with the specific callback type and subnet id.
-    ///
-    /// @param type callback type.
-    /// @param subnet_id subnet identifier.
-    /// @return The number of callback logs associated with the specific type and
-    /// the subnet id.
-    int countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id) const {
-        int count = 0;
-        for (auto log : logs_) {
-            if ((log.type == type) && (log.subnet_id == subnet_id)) {
-                ++count;
-            }
-        }
-        return (count);
-    }
-
-    /// Recorded callback logs.
-    std::vector<Log> logs_;
 };
 
 /// Tests that leases can be locked and unlocked. When a lease is locked
@@ -98,19 +59,19 @@ TEST_F(TrackingLeaseMgrTest, tryLock) {
     ConcreteLeaseMgr mgr(pmap);
 
     // An attempt to lock an already locked lease should fail.
-    EXPECT_TRUE(mgr.tryLock(createLease<Lease4>(1, "192.0.2.1")));
-    EXPECT_FALSE(mgr.tryLock(createLease<Lease4>(1, "192.0.2.1")));
+    EXPECT_TRUE(mgr.tryLock(initializeLease<Lease4>(1, "192.0.2.1")));
+    EXPECT_FALSE(mgr.tryLock(initializeLease<Lease4>(1, "192.0.2.1")));
 
     // We can lock another lease but we cannot lock an already locked one.
-    EXPECT_TRUE(mgr.tryLock(createLease<Lease4>(1, "192.0.2.2")));
-    EXPECT_FALSE(mgr.tryLock(createLease<Lease4>(1, "192.0.2.1")));
-    EXPECT_FALSE(mgr.tryLock(createLease<Lease4>(2, "192.0.2.2")));
+    EXPECT_TRUE(mgr.tryLock(initializeLease<Lease4>(1, "192.0.2.2")));
+    EXPECT_FALSE(mgr.tryLock(initializeLease<Lease4>(1, "192.0.2.1")));
+    EXPECT_FALSE(mgr.tryLock(initializeLease<Lease4>(2, "192.0.2.2")));
 
     // If we unlock the lease, it can be locked again. However, unlocking
     // the lease should not affect other locks.
-    mgr.unlock(createLease<Lease4>(1, "192.0.2.1"));
-    EXPECT_FALSE(mgr.tryLock(createLease<Lease4>(2, "192.0.2.2")));
-    EXPECT_TRUE(mgr.tryLock(createLease<Lease4>(1, "192.0.2.1")));
+    mgr.unlock(initializeLease<Lease4>(1, "192.0.2.1"));
+    EXPECT_FALSE(mgr.tryLock(initializeLease<Lease4>(2, "192.0.2.2")));
+    EXPECT_TRUE(mgr.tryLock(initializeLease<Lease4>(1, "192.0.2.1")));
 }
 
 /// Tests registering the callbacks.
@@ -155,14 +116,14 @@ TEST_F(TrackingLeaseMgrTest, registerCallbacks) {
                                                    _1)));
 
     // This call should trigger the lease add callbacks for subnet id 0 and 1.
-    EXPECT_NO_THROW(mgr.trackAddLease(createLease<Lease4>(1, "192.0.2.1"), false));
+    EXPECT_NO_THROW(mgr.trackAddLease(initializeLease<Lease4>(1, "192.0.2.1"), false));
     EXPECT_EQ(2, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 0));
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 1));
 
     // This call should trigger the lease add callback for subnet id 0 only. That's
     // because we have no callback for the subnet id 3.
-    EXPECT_NO_THROW(mgr.trackAddLease(createLease<Lease4>(3, "192.0.2.1"), false));
+    EXPECT_NO_THROW(mgr.trackAddLease(initializeLease<Lease4>(3, "192.0.2.1"), false));
     EXPECT_EQ(3, logs_.size());
     EXPECT_EQ(2, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 0));
 }
@@ -239,7 +200,7 @@ TEST_F(TrackingLeaseMgrTest, trackUpdateLease) {
                                                    TrackingLeaseMgr::TRACK_DELETE_LEASE,
                                                    0,
                                                    _1)));
-    EXPECT_NO_THROW(mgr.trackUpdateLease(createLease<Lease4>(1, "192.0.2.1"), false));
+    EXPECT_NO_THROW(mgr.trackUpdateLease(initializeLease<Lease4>(1, "192.0.2.1"), false));
     EXPECT_EQ(1, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_UPDATE_LEASE, 0));
 }
@@ -267,7 +228,7 @@ TEST_F(TrackingLeaseMgrTest, trackDeleteLease) {
                                                    TrackingLeaseMgr::TRACK_DELETE_LEASE,
                                                    0,
                                                    _1)));
-    EXPECT_NO_THROW(mgr.trackDeleteLease(createLease<Lease4>(1, "192.0.2.1"), false));
+    EXPECT_NO_THROW(mgr.trackDeleteLease(initializeLease<Lease4>(1, "192.0.2.1"), false));
     EXPECT_EQ(1, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_DELETE_LEASE, 0));
 }
@@ -325,9 +286,9 @@ TEST_F(TrackingLeaseMgrTest, unregisterCallbacksBySubnetID) {
     EXPECT_NO_THROW(mgr.unregisterCallbacks(SubnetID(1)));
 
     // Invoke the remaining callbacksm for the subnet id 1.
-    EXPECT_NO_THROW(mgr.trackAddLease(createLease<Lease4>(1, "192.0.2.1"), false));
-    EXPECT_NO_THROW(mgr.trackUpdateLease(createLease<Lease4>(1, "192.0.2.1"), false));
-    EXPECT_NO_THROW(mgr.trackDeleteLease(createLease<Lease4>(1, "192.0.2.1"), false));
+    EXPECT_NO_THROW(mgr.trackAddLease(initializeLease<Lease4>(1, "192.0.2.1"), false));
+    EXPECT_NO_THROW(mgr.trackUpdateLease(initializeLease<Lease4>(1, "192.0.2.1"), false));
+    EXPECT_NO_THROW(mgr.trackDeleteLease(initializeLease<Lease4>(1, "192.0.2.1"), false));
 
     // It should only run the callback for the subnet id 0 that is still
     // registered.
@@ -338,7 +299,7 @@ TEST_F(TrackingLeaseMgrTest, unregisterCallbacksBySubnetID) {
     EXPECT_NO_THROW(mgr.unregisterCallbacks(SubnetID(0)));
 
     // Make sure it is no longer invoked.
-    EXPECT_NO_THROW(mgr.trackAddLease(createLease<Lease4>(1, "192.0.2.1"), false));
+    EXPECT_NO_THROW(mgr.trackAddLease(initializeLease<Lease4>(1, "192.0.2.1"), false));
     EXPECT_EQ(1, logs_.size());
 
     // Unregistering it again should be no-op.

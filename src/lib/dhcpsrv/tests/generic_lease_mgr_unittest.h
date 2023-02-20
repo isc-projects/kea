@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #define GENERIC_LEASE_MGR_UNITTEST_H
 
 #include <asiolink/io_service.h>
-#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/tracking_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 
 #include <gtest/gtest.h>
@@ -35,6 +35,17 @@ class GenericLeaseMgrTest : public ::testing::Test {
 public:
     /// @brief Universe (V4 or V6).
     enum Universe { V4, V6 };
+
+    /// @brief A structure holding a single callback log entry.
+    ///
+    /// The @c logCallback function inserts logs of this type into the
+    /// @c logs vector. The vector can be later examined to see what
+    /// callbacks have been invoked.
+    typedef struct {
+        TrackingLeaseMgr::CallbackType type;
+        SubnetID subnet_id;
+        LeasePtr lease;
+    } Log;
 
     /// @brief Default constructor.
     GenericLeaseMgrTest();
@@ -153,6 +164,27 @@ public:
                          const SubnetID& subnet_id,
                          const uint32_t state = Lease::STATE_DEFAULT,
                          const data::ConstElementPtr user_context = data::ConstElementPtr());
+
+    /// @brief Callback function recording its parameters.
+    ///
+    /// It is used in the unit tests that verify that appropriate callbacks
+    /// have been invoked.
+    ///
+    /// @param type callback type.
+    /// @param subnet_id subnet identifier.
+    /// @param lease lease instance.
+    void logCallback(const TrackingLeaseMgr::CallbackType type, SubnetID subnet_id,
+                     const LeasePtr& lease);
+
+    /// @brief Counts log entries.
+    ///
+    /// It counts the logs associated with the specific callback type and subnet id.
+    ///
+    /// @param type callback type.
+    /// @param subnet_id subnet identifier.
+    /// @return The number of callback logs associated with the specific type and
+    /// the subnet id.
+    int countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id) const;
 
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
     void testBasicLease4();
@@ -550,6 +582,9 @@ public:
 
     /// @brief IOAddress forms of IPv6 addresses
     std::vector<isc::asiolink::IOAddress> ioaddress6_;
+
+    /// Recorded callback logs.
+    std::vector<Log> logs_;
 
     /// @brief Pointer to the lease manager
     LeaseMgr* lmptr_;
