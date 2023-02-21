@@ -1,3 +1,11 @@
+2106.	[bug]		tmark
+	Corrected code that allowed lease6-get-* commands to return
+	IA_NA leases with prefix length values of zero and logic in
+	kea-dhcp6 that was incorrectly generating duplicate iaaddr
+	options with lifetimes of zero for such leases in REPLYs to
+	RENEWs.
+	(Gitlab #2660)
+
 2105.	[bug]		tmark
 	kea-dhcp6 now consistently uses valid and preferred lifetime
 	values provided via classes.  Prior to this it was not
