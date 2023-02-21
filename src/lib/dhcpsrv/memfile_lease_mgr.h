@@ -15,7 +15,7 @@
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/memfile_lease_limits.h>
 #include <dhcpsrv/memfile_lease_storage.h>
-#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/tracking_lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
@@ -77,7 +77,7 @@ class LFCSetup;
 /// is not specified, the default location in the installation
 /// directory is used: <install-dir>/var/lib/kea/kea-leases4.csv and
 /// <install-dir>/var/lib/kea/kea-leases6.csv.
-class Memfile_LeaseMgr : public LeaseMgr {
+class Memfile_LeaseMgr : public TrackingLeaseMgr {
 public:
 
     /// @defgroup v4 memfile backend versions

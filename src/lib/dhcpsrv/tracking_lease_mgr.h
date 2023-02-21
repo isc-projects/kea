@@ -156,6 +156,17 @@ protected:
     /// @param lease a lease instance for which unlocking should be attempted.
     void unlock(const LeasePtr& lease);
 
+public:
+
+    /// @brief Checks if the lease is locked.
+    ///
+    /// This function is useful in the unit tests.
+    ///
+    /// @return true if the lease is locked, false otherwise.
+    bool isLocked(const LeasePtr& lease);
+
+protected:
+
     /// @brief Invokes the callbacks when a new lease is added.
     ///
     /// It executes all callbacks of the @c TRACK_ADD_LEASE type for a subnet id of 0

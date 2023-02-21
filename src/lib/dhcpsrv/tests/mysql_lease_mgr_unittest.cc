@@ -64,7 +64,7 @@ public:
             throw;
         }
 
-        lmptr_ = &(LeaseMgrFactory::instance());
+        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
 
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -104,7 +104,7 @@ public:
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validMySQLConnectionString());
-        lmptr_ = &(LeaseMgrFactory::instance());
+        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
     }
 };
 
@@ -1172,6 +1172,108 @@ TEST_F(MySqlLeaseMgrTest, checkLimits6) {
 
     // The rest of the checks are only for databases with JSON support.
     testLeaseLimits6();
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MySqlLeaseMgrTest, trackAddLease4) {
+    // It is unnecessary to lock the lease in ST. The backend does not
+    // provide the MT-safe context for the callbacks.
+    testTrackAddLease4(false, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MySqlLeaseMgrTest, trackAddLease4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // The lease should be locked in the MT mode. The backend does not
+    // provide an MT-safe context.
+    testTrackAddLease4(true, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is added.
+TEST_F(MySqlLeaseMgrTest, trackAddLease6) {
+    // It is unnecessary to lock the lease in ST. The backend does not
+    // provide the MT-safe context for the callbacks.
+    testTrackAddLease6(false, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is added.
+TEST_F(MySqlLeaseMgrTest, trackAddLease6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // The lease should be locked in the MT mode. The backend does not
+    // provide an MT-safe context.
+    testTrackAddLease6(true, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is updated.
+TEST_F(MySqlLeaseMgrTest, trackUpdateLease4) {
+    // It is unnecessary to lock the lease in ST. The backend does not
+    // provide the MT-safe context for the callbacks.
+    testTrackUpdateLease4(false, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is updated.
+TEST_F(MySqlLeaseMgrTest, trackUpdateLease4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // The lease should be locked in the MT mode. The backend does not
+    // provide an MT-safe context.
+    testTrackUpdateLease4(true, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is updated.
+TEST_F(MySqlLeaseMgrTest, trackUpdateLease6) {
+    // It is unnecessary to lock the lease in ST. The backend does not
+    // provide the MT-safe context for the callbacks.
+    testTrackUpdateLease6(false, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is updated.
+TEST_F(MySqlLeaseMgrTest, trackUpdateLease6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // The lease should be locked in the MT mode. The backend does not
+    // provide an MT-safe context.
+    testTrackUpdateLease6(true, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is deleted.
+TEST_F(MySqlLeaseMgrTest, trackDeleteLease4) {
+    // It is unnecessary to lock the lease in ST. The backend does not
+    // provide the MT-safe context for the callbacks.
+    testTrackDeleteLease4(false, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is deleted.
+TEST_F(MySqlLeaseMgrTest, trackDeleteLease4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // The lease should be locked in the MT mode. The backend does not
+    // provide an MT-safe context.
+    testTrackDeleteLease4(true, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is deleted.
+TEST_F(MySqlLeaseMgrTest, trackDeleteLease6) {
+    // It is unnecessary to lock the lease in ST. The backend does not
+    // provide the MT-safe context for the callbacks.
+    testTrackDeleteLease6(false, false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is deleted.
+TEST_F(MySqlLeaseMgrTest, trackDeleteLease6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    // The lease should be locked in the MT mode. The backend does not
+    // provide an MT-safe context.
+    testTrackDeleteLease6(true, false);
 }
 
 }  // namespace

@@ -235,7 +235,7 @@ public:
                 " lease database backend.\n";
             throw;
         }
-        lmptr_ = &(LeaseMgrFactory::instance());
+        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
     }
 
     /// @brief Runs IOService and stops after a specified time.
@@ -2017,7 +2017,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     // Recreate Memfile_LeaseMgr.
     LeaseMgrFactory::destroy();
     ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
-    lmptr_ = &(LeaseMgrFactory::instance());
+    lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
 
     // We will store addresses here, so it will be easier to randomly
     // pick a lease.
@@ -2060,7 +2060,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
         // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(dbaccess);
-        lmptr_ = &(LeaseMgrFactory::instance());
+        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
     });
 
     // Ok, let's check if the leases are really accessible.
@@ -2147,7 +2147,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     // Recreate Memfile_LeaseMgr.
     LeaseMgrFactory::destroy();
     ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
-    lmptr_ = &(LeaseMgrFactory::instance());
+    lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
 
     // We will store addresses here, so it will be easier to randomly
     // pick a lease.
@@ -2191,7 +2191,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
         // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(dbaccess);
-        lmptr_ = &(LeaseMgrFactory::instance());
+        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
     });
 
     // Ok, let's check if the leases are really accessible.
@@ -4236,5 +4236,108 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, ex_info->id_);
 }
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLease4) {
+    startBackend(V4);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackAddLease4(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLease4MultiThreading) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackAddLease4(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLease6) {
+    startBackend(V6);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackAddLease6(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLease6MultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackAddLease6(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLease4) {
+    startBackend(V4);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackUpdateLease4(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLease4MultiThreading) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackUpdateLease4(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLease6) {
+    startBackend(V6);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackUpdateLease6(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLease6MultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackUpdateLease6(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLease4) {
+    startBackend(V4);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackDeleteLease4(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLease4MultiThreading) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackDeleteLease4(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLease6) {
+    startBackend(V6);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackDeleteLease6(false, true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLease6MultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    // Expect that lease is not locked and the MT-safe context.
+    testTrackDeleteLease6(false, true);
+}
+
 
 }  // namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1794,6 +1794,48 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
     // If running in single-threaded mode, there's nothing to do here.
 }
 
+// MySqlLeaseTrackingContextAlloc Constructor and Destructor
+
+MySqlLeaseMgr::MySqlLeaseTrackingContextAlloc::MySqlLeaseTrackingContextAlloc(
+    MySqlLeaseMgr& mgr, const LeasePtr& lease) : ctx_(), mgr_(mgr), lease_(lease) {
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        // multi-threaded
+        {
+            // we need to protect the whole pool_ operation, hence extra scope {}
+            lock_guard<mutex> lock(mgr_.pool_->mutex_);
+            if (mgr_.hasCallbacks() && !mgr_.tryLock(lease)) {
+                isc_throw(DbOperationError, "unable to lock the lease " << lease->addr_);
+            }
+            if (!mgr_.pool_->pool_.empty()) {
+                ctx_ = mgr_.pool_->pool_.back();
+                mgr_.pool_->pool_.pop_back();
+            }
+        }
+        if (!ctx_) {
+            ctx_ = mgr_.createContext();
+        }
+    } else {
+        // single-threaded
+        if (mgr_.pool_->pool_.empty()) {
+            isc_throw(Unexpected, "No available MySQL lease context?!");
+        }
+        ctx_ = mgr_.pool_->pool_.back();
+    }
+}
+
+MySqlLeaseMgr::MySqlLeaseTrackingContextAlloc::~MySqlLeaseTrackingContextAlloc() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        // multi-threaded
+        lock_guard<mutex> lock(mgr_.pool_->mutex_);
+        if (mgr_.hasCallbacks()) {
+            mgr_.unlock(lease_);
+        }
+        mgr_.pool_->pool_.push_back(ctx_);
+    }
+    // If running in single-threaded mode, there's nothing to do here.
+}
+
 void
 MySqlLeaseMgr::setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& /* parameters */) {
     isc_throw(isc::NotImplemented, "extended info tables are not yet supported by mysql");
@@ -1802,7 +1844,7 @@ MySqlLeaseMgr::setExtendedInfoTablesEnabled(const db::DatabaseConnection::Parame
 // MySqlLeaseMgr Constructor and Destructor
 
 MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : parameters_(parameters), timer_name_("") {
+    : TrackingLeaseMgr(), parameters_(parameters), timer_name_("") {
 
     // Check if the extended info tables are enabled.
     LeaseMgr::setExtendedInfoTablesEnabled(parameters);
@@ -1955,7 +1997,6 @@ bool
 MySqlLeaseMgr::addLeaseCommon(MySqlLeaseContextPtr& ctx,
                               StatementIndex stindex,
                               std::vector<MYSQL_BIND>& bind) {
-
     // Bind the parameters to the statement
     int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], &bind[0]);
     checkError(ctx, status, stindex, "unable to bind parameters");
@@ -1983,7 +2024,7 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
         .arg(lease->addr_.toText());
 
     // Get a context
-    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseTrackingContextAlloc get_context(*this, lease);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
     // Create the MYSQL_BIND array for the lease
@@ -1996,6 +2037,11 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
 
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackAddLease(lease, false);
+    }
+
     return (result);
 }
 
@@ -2006,7 +2052,7 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
         .arg(lease->type_);
 
     // Get a context
-    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseTrackingContextAlloc get_context(*this, lease);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
     // Create the MYSQL_BIND array for the lease
@@ -2018,6 +2064,11 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackAddLease(lease, false);
+    }
 
     return (result);
 }
@@ -2853,7 +2904,7 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
         .arg(lease->addr_.toText());
 
     // Get a context
-    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseTrackingContextAlloc get_context(*this, lease);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
     // Create the MYSQL_BIND array for the data being updated
@@ -2890,6 +2941,11 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackUpdateLease(lease, false);
+    }
 }
 
 void
@@ -2901,7 +2957,7 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
         .arg(lease->type_);
 
     // Get a context
-    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseTrackingContextAlloc get_context(*this, lease);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
     // Create the MYSQL_BIND array for the data being updated
@@ -2943,6 +2999,11 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackUpdateLease(lease, false);
+    }
 }
 
 // Delete lease methods.  Similar to other groups of methods, these comprise
@@ -2951,13 +3012,9 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 // handles the common processing.
 
 uint64_t
-MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
+MySqlLeaseMgr::deleteLeaseCommon(MySqlLeaseContextPtr& ctx,
+                                 StatementIndex stindex,
                                  MYSQL_BIND* bind) {
-
-    // Get a context
-    MySqlLeaseContextAlloc get_context(*this);
-    MySqlLeaseContextPtr ctx = get_context.ctx_;
-
     // Bind the input parameters to the statement
     int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
     checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
@@ -3000,10 +3057,17 @@ MySqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     inbind[1].buffer = reinterpret_cast<char*>(&expire);
     inbind[1].buffer_length = sizeof(expire);
 
-    auto affected_rows = deleteLeaseCommon(DELETE_LEASE4, inbind);
+    // Get a context
+    MySqlLeaseTrackingContextAlloc get_context(*this, lease);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    auto affected_rows = deleteLeaseCommon(ctx, DELETE_LEASE4, inbind);
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
+        if (hasCallbacks()) {
+            trackDeleteLease(lease, false);
+        }
         return (true);
     }
 
@@ -3052,10 +3116,17 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     inbind[1].buffer = reinterpret_cast<char*>(&expire);
     inbind[1].buffer_length = sizeof(expire);
 
-    auto affected_rows = deleteLeaseCommon(DELETE_LEASE6, inbind);
+    // Get a context
+    MySqlLeaseTrackingContextAlloc get_context(*this, lease);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    auto affected_rows = deleteLeaseCommon(ctx, DELETE_LEASE6, inbind);
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
+        if (hasCallbacks()) {
+            trackDeleteLease(lease, false);
+        }
         return (true);
     }
 
@@ -3104,8 +3175,12 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     inbind[1].buffer = reinterpret_cast<char*>(&expire_time);
     inbind[1].buffer_length = sizeof(expire_time);
 
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Get the number of deleted leases and log it.
-    uint64_t deleted_leases = deleteLeaseCommon(statement_index, inbind);
+    uint64_t deleted_leases = deleteLeaseCommon(ctx, statement_index, inbind);
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED)
         .arg(deleted_leases);
 

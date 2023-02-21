@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/tracking_lease_mgr.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 
@@ -88,7 +89,7 @@ typedef boost::shared_ptr<PgSqlLeaseContextPool> PgSqlLeaseContextPoolPtr;
 /// database.  Use of this backend presupposes that a PostgreSQL database is
 /// available and that the Kea schema has been created within it.
 
-class PgSqlLeaseMgr : public LeaseMgr {
+class PgSqlLeaseMgr : public TrackingLeaseMgr {
 public:
 
     /// @brief Constructor
@@ -881,6 +882,7 @@ private:
     /// to the prepared statement, executes the statement and checks to
     /// see how many rows were deleted.
     ///
+    /// @param ctx Context
     /// @param stindex Index of prepared statement to be executed
     /// @param bind_array Array containing lease values and where clause
     /// parameters for the delete
@@ -889,7 +891,8 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    uint64_t deleteLeaseCommon(StatementIndex stindex,
+    uint64_t deleteLeaseCommon(PgSqlLeaseContextPtr& ctx,
+                               StatementIndex stindex,
                                db::PsqlBindArray& bind_array);
 
     /// @brief Delete expired-reclaimed leases.
@@ -1076,7 +1079,7 @@ private:
     /// @brief Write V6 leases to a file.
     virtual void writeLeases6(const std::string& /*filename*/) override;
 
-    /// @brief Context RAII Allocator.
+    /// @brief Context RAII allocator.
     class PgSqlLeaseContextAlloc {
     public:
 
@@ -1100,6 +1103,39 @@ private:
 
         /// @brief The manager
         const PgSqlLeaseMgr& mgr_;
+    };
+
+    /// @brief Context RAII allocator for lease tracking.
+    ///
+    /// This context should be used in the non-const calls that
+    /// may trigger callbacks for lease tracking.
+    class PgSqlLeaseTrackingContextAlloc {
+    public:
+
+        /// @brief Constructor
+        ///
+        /// This constructor takes a context of the pool if one is available
+        /// or creates a new one.
+        ///
+        /// @param mgr A parent instance
+        /// @param lease allocated or deallocated lease instance.
+        PgSqlLeaseTrackingContextAlloc(PgSqlLeaseMgr& mgr, const LeasePtr& lease);
+
+        /// @brief Destructor
+        ///
+        /// This destructor puts back the context in the pool.
+        ~PgSqlLeaseTrackingContextAlloc();
+
+        /// @brief The context
+        PgSqlLeaseContextPtr ctx_;
+
+    private:
+
+        /// @brief The manager
+        PgSqlLeaseMgr& mgr_;
+
+        /// @brief Tracked lease instance.
+        LeasePtr lease_;
     };
 
 protected:

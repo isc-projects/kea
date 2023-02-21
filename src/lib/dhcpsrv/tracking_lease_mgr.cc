@@ -35,6 +35,11 @@ TrackingLeaseMgr::unlock(const LeasePtr& lease) {
     locked_leases_.erase(lease->addr_);
 }
 
+bool
+TrackingLeaseMgr::isLocked(const LeasePtr& lease) {
+    return (locked_leases_.find(lease->addr_) != locked_leases_.end());
+}
+
 void
 TrackingLeaseMgr::trackAddLease(const LeasePtr& lease, bool mt_safe) {
     runCallbacks(TRACK_ADD_LEASE, lease, mt_safe);

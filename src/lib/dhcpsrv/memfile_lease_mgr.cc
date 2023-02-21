@@ -637,7 +637,7 @@ const int Memfile_LeaseMgr::MAJOR_VERSION_V6;
 const int Memfile_LeaseMgr::MINOR_VERSION_V6;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : LeaseMgr(), lfc_setup_(), conn_(parameters), mutex_(new std::mutex) {
+    : TrackingLeaseMgr(), lfc_setup_(), conn_(parameters), mutex_(new std::mutex) {
     bool conversion_needed = false;
 
     // Check if the extended info tables are enabled.
@@ -727,6 +727,11 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     // Increment class lease counters.
     class_lease_counter_.addLease(lease);
 
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackAddLease(lease, true);
+    }
+
     return (true);
 }
 
@@ -769,6 +774,11 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
 
     if (getExtendedInfoTablesEnabled()) {
         static_cast<void>(addExtendedInfo6(lease));
+    }
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackAddLease(lease, true);
     }
 
     return (true);
@@ -1451,6 +1461,11 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
 
     // Adjust class lease counters.
     class_lease_counter_.updateLease(lease, old_lease);
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackUpdateLease(lease, true);
+    }
 }
 
 void
@@ -1526,6 +1541,11 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
             break;
         }
     }
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackUpdateLease(lease, true);
+    }
 }
 
 void
@@ -1570,6 +1590,11 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
 
         // Decrement class lease counters.
         class_lease_counter_.removeLease(lease);
+
+        // Run installed callbacks.
+        if (hasCallbacks()) {
+            trackDeleteLease(lease, true);
+        }
 
         return (true);
     }
@@ -1623,6 +1648,11 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
         // Delete references from extended info tables.
         if (getExtendedInfoTablesEnabled()) {
             deleteExtendedInfo6(lease->addr_);
+        }
+
+        // Run installed callbacks.
+        if (hasCallbacks()) {
+            trackDeleteLease(lease, true);
         }
 
         return (true);

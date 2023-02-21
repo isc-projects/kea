@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <asiolink/io_service.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
-#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/tracking_lease_mgr.h>
 #include <mysql/mysql_connection.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -89,7 +89,7 @@ typedef boost::shared_ptr<MySqlLeaseContextPool> MySqlLeaseContextPoolPtr;
 /// database.  Use of this backend presupposes that a MySQL database is
 /// available and that the Kea schema has been created within it.
 
-class MySqlLeaseMgr : public LeaseMgr {
+class MySqlLeaseMgr : public TrackingLeaseMgr {
 public:
 
     /// @brief Constructor
@@ -906,6 +906,7 @@ private:
     /// to the prepared statement, executes the statement and checks to
     /// see how many rows were deleted.
     ///
+    /// @param ctx Context
     /// @param stindex Index of prepared statement to be executed
     /// @param bind Array of MYSQL_BIND objects representing the parameters.
     ///        (Note that the number is determined by the number of parameters
@@ -915,7 +916,8 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    uint64_t deleteLeaseCommon(StatementIndex stindex,
+    uint64_t deleteLeaseCommon(MySqlLeaseContextPtr& ctx,
+                               StatementIndex stindex,
                                MYSQL_BIND* bind);
 
     /// @brief Delete expired-reclaimed leases.
@@ -1117,7 +1119,7 @@ private:
     /// @return The number of updates in the database or 0.
     virtual size_t buildExtendedInfoTables6(bool update, bool current) override;
 
-    /// @brief Context RAII Allocator.
+    /// @brief Context RAII allocator.
     class MySqlLeaseContextAlloc {
     public:
 
@@ -1141,6 +1143,39 @@ private:
 
         /// @brief The manager
         const MySqlLeaseMgr& mgr_;
+    };
+
+    /// @brief Context RAII allocator for lease tracking.
+    ///
+    /// This context should be used in the non-const calls that
+    /// may trigger callbacks for lease tracking.
+    class MySqlLeaseTrackingContextAlloc {
+    public:
+
+        /// @brief Constructor
+        ///
+        /// This constructor takes a context of the pool if one is available
+        /// or creates a new one.
+        ///
+        /// @param mgr A parent instance
+        /// @param lease allocated or deallocated lease instance.
+        MySqlLeaseTrackingContextAlloc(MySqlLeaseMgr& mgr, const LeasePtr& lease);
+
+        /// @brief Destructor
+        ///
+        /// This destructor puts back the context in the pool.
+        ~MySqlLeaseTrackingContextAlloc();
+
+        /// @brief The context
+        MySqlLeaseContextPtr ctx_;
+
+    private:
+
+        /// @brief The manager
+        MySqlLeaseMgr& mgr_;
+
+        /// @brief Tracked lease instance.
+        LeasePtr lease_;
     };
 
 protected:

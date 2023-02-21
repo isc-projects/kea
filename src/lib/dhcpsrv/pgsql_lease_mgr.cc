@@ -1250,6 +1250,48 @@ PgSqlLeaseMgr::PgSqlLeaseContextAlloc::~PgSqlLeaseContextAlloc() {
     // If running in single-threaded mode, there's nothing to do here.
 }
 
+// PgSqlLeaseTrackingContextAlloc Constructor and Destructor
+
+PgSqlLeaseMgr::PgSqlLeaseTrackingContextAlloc::PgSqlLeaseTrackingContextAlloc(
+    PgSqlLeaseMgr& mgr, const LeasePtr& lease) : ctx_(), mgr_(mgr), lease_(lease) {
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        // multi-threaded
+        {
+            // we need to protect the whole pool_ operation, hence extra scope {}
+            lock_guard<mutex> lock(mgr_.pool_->mutex_);
+            if (mgr_.hasCallbacks() && !mgr_.tryLock(lease)) {
+                isc_throw(DbOperationError, "unable to lock the lease " << lease->addr_);
+            }
+            if (!mgr_.pool_->pool_.empty()) {
+                ctx_ = mgr_.pool_->pool_.back();
+                mgr_.pool_->pool_.pop_back();
+            }
+        }
+        if (!ctx_) {
+            ctx_ = mgr_.createContext();
+        }
+    } else {
+        // single-threaded
+        if (mgr_.pool_->pool_.empty()) {
+            isc_throw(Unexpected, "No available PostgreSQL lease context?!");
+        }
+        ctx_ = mgr_.pool_->pool_.back();
+    }
+}
+
+PgSqlLeaseMgr::PgSqlLeaseTrackingContextAlloc::~PgSqlLeaseTrackingContextAlloc() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        // multi-threaded
+        lock_guard<mutex> lock(mgr_.pool_->mutex_);
+        if (mgr_.hasCallbacks()) {
+            mgr_.unlock(lease_);
+        }
+        mgr_.pool_->pool_.push_back(ctx_);
+    }
+    // If running in single-threaded mode, there's nothing to do here.
+}
+
 void
 PgSqlLeaseMgr::setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& /* parameters */) {
     isc_throw(isc::NotImplemented, "extended info tables are not yet supported by mysql");
@@ -1258,7 +1300,7 @@ PgSqlLeaseMgr::setExtendedInfoTablesEnabled(const db::DatabaseConnection::Parame
 // PgSqlLeaseMgr Constructor and Destructor
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : parameters_(parameters), timer_name_("") {
+    : TrackingLeaseMgr(), parameters_(parameters), timer_name_("") {
 
     // Check if the extended info tables are enabled.
     LeaseMgr::setExtendedInfoTablesEnabled(parameters);
@@ -1452,7 +1494,7 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
         .arg(lease->addr_.toText());
 
     // Get a context
-    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseTrackingContextAlloc get_context(*this, lease);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
     PsqlBindArray bind_array;
@@ -1462,6 +1504,11 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackAddLease(lease, false);
+    }
 
     return (result);
 }
@@ -1473,7 +1520,7 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
         .arg(lease->type_);
 
     // Get a context
-    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseTrackingContextAlloc get_context(*this, lease);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
     PsqlBindArray bind_array;
@@ -1484,6 +1531,11 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackAddLease(lease, false);
+    }
 
     return (result);
 }
@@ -2116,7 +2168,7 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
         .arg(lease->addr_.toText());
 
     // Get a context
-    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseTrackingContextAlloc get_context(*this, lease);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
     // Create the BIND array for the data being updated
@@ -2142,6 +2194,11 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackUpdateLease(lease, false);
+    }
 }
 
 void
@@ -2153,7 +2210,7 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
         .arg(lease->type_);
 
     // Get a context
-    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseTrackingContextAlloc get_context(*this, lease);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
     // Create the BIND array for the data being updated
@@ -2179,15 +2236,17 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackUpdateLease(lease, false);
+    }
 }
 
 uint64_t
-PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
+PgSqlLeaseMgr::deleteLeaseCommon(PgSqlLeaseContextPtr& ctx,
+                                 StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
-    // Get a context
-    PgSqlLeaseContextAlloc get_context(*this);
-    PgSqlLeaseContextPtr ctx = get_context.ctx_;
-
     PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
@@ -2222,10 +2281,17 @@ PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     }
     bind_array.add(expire_str);
 
-    auto affected_rows = deleteLeaseCommon(DELETE_LEASE4, bind_array);
+    // Get a context
+    PgSqlLeaseTrackingContextAlloc get_context(*this, lease);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    auto affected_rows = deleteLeaseCommon(ctx, DELETE_LEASE4, bind_array);
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
+        if (hasCallbacks()) {
+            trackDeleteLease(lease, false);
+        }
         return (true);
     }
 
@@ -2263,10 +2329,17 @@ PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     }
     bind_array.add(expire_str);
 
-    auto affected_rows = deleteLeaseCommon(DELETE_LEASE6, bind_array);
+    // Get a context
+    PgSqlLeaseTrackingContextAlloc get_context(*this, lease);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    auto affected_rows = deleteLeaseCommon(ctx, DELETE_LEASE6, bind_array);
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
+        if (hasCallbacks()) {
+            trackDeleteLease(lease, false);
+        }
         return (true);
     }
 
@@ -2309,8 +2382,12 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
         static_cast<time_t>(secs));
     bind_array.add(expiration_str);
 
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Delete leases.
-    return (deleteLeaseCommon(statement_index, bind_array));
+    return (deleteLeaseCommon(ctx, statement_index, bind_array));
 }
 
 string
