@@ -394,12 +394,6 @@ loaded by the ``kea-dhcp4`` or ``kea-dhcp6`` processes. If a library
 from ISC does not work as expected, please make sure that it has been
 loaded by the correct process per the table below.
 
-.. warning::
-
-   While the Kea Control Agent includes the "hooks" functionality, (i.e.
-   hook libraries can be loaded by this process), none of ISC's current
-   hook libraries should be loaded by the Control Agent.
-
 .. tabularcolumns:: |p{0.1\linewidth}|p{0.1\linewidth}|p{0.8\linewidth}|
 
 .. table:: List of available hook libraries
