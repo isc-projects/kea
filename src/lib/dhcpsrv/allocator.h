@@ -12,6 +12,7 @@
 #include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/pool.h>
 #include <util/multi_threading_mgr.h>
 #include <boost/shared_ptr.hpp>
@@ -70,13 +71,12 @@ public:
     /// @param type specifies pool type (addresses, temporary addresses
     /// or prefixes).
     /// @param subnet weak pointer to the subnet owning the allocator.
-    Allocator(Lease::Type type, const WeakSubnetPtr& subnet)
-        : pool_type_(type),
-          subnet_(subnet) {
-    }
+    Allocator(Lease::Type type, const WeakSubnetPtr& subnet);
 
-    /// @brief Virtual destructor
-    virtual ~Allocator() = default;
+    /// @brief Virtual destructor.
+    ///
+    /// Removes all LeaseMgr callbacks it installed.
+    virtual ~Allocator();
 
     /// @brief Picks an address.
     ///
@@ -148,6 +148,16 @@ public:
     static bool isValidPrefixPool(Allocator::PrefixLenMatchType prefix_length_match,
                                   PoolPtr pool, uint8_t hint_prefix_length);
 
+    /// @brief Performs allocator initialization after server's reconfiguration.
+    ///
+    /// Some allocators install callbacks in the lease manager to keep track of
+    /// the lease allocations. These callbacks may only be installed when the
+    /// lease manager instance is available (i.e., when the server finishes the
+    /// reconfiguration). Such callbacks can be installed in this function.
+    ///
+    /// In this function, the allocators can also re-build their allocation states.
+    virtual void initAfterConfigure() {};
+
 private:
 
     /// @brief Picks an address.
@@ -195,6 +205,9 @@ protected:
 
     /// @brief Defines pool type allocation
     Lease::Type pool_type_;
+
+    /// @brief ID of a subnet to which the allocator belongs.
+    SubnetID subnet_id_;
 
     /// @brief Weak pointer to the subnet owning the allocator.
     WeakSubnetPtr subnet_;

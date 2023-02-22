@@ -69,6 +69,8 @@ extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL = "DHC
 extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED = "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED";
 extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL = "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL";
 extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED = "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED";
+extern const isc::log::MessageID DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION = "DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION";
+extern const isc::log::MessageID DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION = "DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION";
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FAIL = "DHCPSRV_LEASE_SANITY_FAIL";
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FAIL_DISCARD = "DHCPSRV_LEASE_SANITY_FAIL_DISCARD";
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FIXED = "DHCPSRV_LEASE_SANITY_FIXED";
@@ -321,6 +323,8 @@ const char* values[] = {
     "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED", "extended info for lease %1 was upgraded",
     "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL", "extended info for lease %1 failed checks (%2)",
     "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED", "extended info for lease %1 was upgraded",
+    "DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION", "exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3: %4",
+    "DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION", "unknown exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3",
     "DHCPSRV_LEASE_SANITY_FAIL", "The lease %1 with subnet-id %2 failed subnet-id checks (%3).",
     "DHCPSRV_LEASE_SANITY_FAIL_DISCARD", "The lease %1 with subnet-id %2 failed subnet-id checks (%3) and was dropped.",
     "DHCPSRV_LEASE_SANITY_FIXED", "The lease %1 with subnet-id %2 failed subnet-id checks, but was corrected to subnet-id %3.",

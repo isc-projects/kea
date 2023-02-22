@@ -423,6 +423,13 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
     return (candidate);
 }
 
+void
+Subnet::initAllocatorsAfterConfigure() {
+    for (auto allocator : allocators_) {
+        allocator.second->initAfterConfigure();
+    }
+}
+
 const PoolPtr Subnet::getPool(Lease::Type type,
                               const ClientClasses& client_classes,
                               const isc::asiolink::IOAddress& hint) const {

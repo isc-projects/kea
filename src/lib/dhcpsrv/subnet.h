@@ -316,6 +316,9 @@ public:
     /// @param allocation_state allocation state instance.
     void setAllocationState(Lease::Type type, const SubnetAllocationStatePtr& allocation_state);
 
+    /// @brief Calls @c initAfterConfigure for each allocator.
+    void initAllocatorsAfterConfigure();
+
 protected:
 
     /// @brief Protected constructor.

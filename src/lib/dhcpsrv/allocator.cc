@@ -6,13 +6,35 @@
 
 #include <config.h>
 #include <dhcpsrv/allocator.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 
 using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
 
-bool Allocator::isValidPrefixPool(Allocator::PrefixLenMatchType prefix_length_match,
+Allocator::Allocator(Lease::Type type, const WeakSubnetPtr& subnet)
+    : pool_type_(type),
+      subnet_id_(0),
+      subnet_(subnet) {
+    // Remember subnet ID in a separate variable. It may be needed in
+    // the destructor where the subnet weak pointer is unavailable.
+    subnet_id_ = subnet_.lock()->getID();
+}
+
+Allocator::~Allocator() {
+    if (!LeaseMgrFactory::haveInstance()) {
+        // If there is no lease manager instance, the callbacks are
+        // gone already anyway.
+        return;
+    }
+    // Remove the callbacks.
+    auto& lease_mgr = LeaseMgrFactory::instance();
+    lease_mgr.unregisterCallbacks(subnet_id_, pool_type_);
+}
+
+bool
+Allocator::isValidPrefixPool(Allocator::PrefixLenMatchType prefix_length_match,
                                   PoolPtr pool, uint8_t hint_prefix_length) {
     auto pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
     if (!pool6) {

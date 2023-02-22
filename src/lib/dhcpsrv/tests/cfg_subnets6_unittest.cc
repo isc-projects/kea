@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/iterative_allocator.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/subnet.h>
@@ -40,6 +41,30 @@ using namespace isc::test;
 using namespace isc::util;
 
 namespace {
+
+/// @brief An allocator recording calls to @c initAfterConfigure.
+class InitRecordingAllocator : public IterativeAllocator {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param type specifies the type of allocated leases.
+    /// @param subnet weak pointer to the subnet owning the allocator.
+    InitRecordingAllocator(Lease::Type type, const WeakSubnetPtr& subnet)
+        : IterativeAllocator(type, subnet), callcount_(0) {
+    }
+
+    /// @brief Increases the call count of this function.
+    ///
+    /// The call count can be later examined to check whether or not
+    /// the function was called.
+    virtual void initAfterConfigure() {
+        ++callcount_;
+    };
+
+    /// @brief Call count of the @c initAllocatorsAfterConfigure.
+    int callcount_;
+};
 
 /// @brief Generates interface id option.
 ///
@@ -2100,6 +2125,39 @@ TEST(CfgSubnets6Test, getLinks) {
     EXPECT_EQ(expected, links);
     EXPECT_EQ(48, link_len);
 }
+
+// This test verifies that for each subnet in the configuration it calls
+// the registerLeaseMgrCallback function.
+TEST(CfgSubnets6Test, initAllocatorsAfterConfigure) {
+    CfgSubnets6 cfg;
+
+    // Create 4 subnets.
+    Subnet6Ptr subnet0(new Subnet6(IOAddress("2001:db8:1::"),
+                                   64, 1, 2, 3, 4, SubnetID(111)));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:2::"),
+                                   64, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:3::"),
+                                   64, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:4::"),
+                                   64, 1, 2, 3, 4, SubnetID(3)));
+
+    auto allocator0 = boost::make_shared<InitRecordingAllocator>(Lease::TYPE_NA, subnet0);
+    subnet0->setAllocator(Lease::TYPE_NA, allocator0);
+
+    auto allocator2 = boost::make_shared<InitRecordingAllocator>(Lease::TYPE_PD, subnet2);
+    subnet2->setAllocator(Lease::TYPE_PD, allocator2);
+
+    cfg.add(subnet0);
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    cfg.initAllocatorsAfterConfigure();
+
+    EXPECT_EQ(1, allocator0->callcount_);
+    EXPECT_EQ(1, allocator2->callcount_);
+}
+
 
 /// @brief Test fixture for parsing v6 Subnets that can verify log output.
 class Subnet6ParserTest : public LogContentTest {

@@ -327,6 +327,9 @@ public:
     /// configuration and also subnet-ids may change.
     void removeStatistics();
 
+    /// @brief Calls @c initAllocatorsAfterConfigure for each subnet.
+    void initAllocatorsAfterConfigure();
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration

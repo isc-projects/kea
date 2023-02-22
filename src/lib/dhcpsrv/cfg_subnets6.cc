@@ -473,6 +473,13 @@ CfgSubnets6::updateStatistics() {
     }
 }
 
+void
+CfgSubnets6::initAllocatorsAfterConfigure() {
+    for (auto subnet : subnets_) {
+        subnet->initAllocatorsAfterConfigure();
+    }
+}
+
 ElementPtr
 CfgSubnets6::toElement() const {
     ElementPtr result = Element::createList();
