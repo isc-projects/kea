@@ -244,12 +244,12 @@ public:
 
 protected:
 
-    /// @brief Checks if any callbacks has been registered.
+    /// @brief Checks if any callbacks have been registered.
     ///
     /// It is a quick check to be performed by the backends whether or not
     /// the callbacks mechanism is used.
     ///
-    /// @return true if any callbacks has been registered.
+    /// @return true if any callbacks have been registered.
     bool hasCallbacks() const;
 
     /// @brief Converts callback type to string for logging purposes.
