@@ -1,3 +1,10 @@
+2105.	[bug]		tmark
+	kea-dhcp6 now consistently uses valid and preferred lifetime
+	values provided via classes.  Prior to this it was not
+	utilizing class-supplied lifetimes when renewing existing
+	leases or when reusing expired leases.
+	(Gitlab #2739)
+
 Kea 2.3.5 (development) released on February 22, 2023
 
 2104.	[build]		andrei

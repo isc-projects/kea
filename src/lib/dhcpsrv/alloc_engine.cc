@@ -1680,25 +1680,11 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     // address, lease type and prefixlen (0) stay the same
     expired->iaid_ = ctx.currentIA().iaid_;
     expired->duid_ = ctx.duid_;
-    // Use subnet's preferred triplet to conditionally determine
-    // preferred lifetime based on hint
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getPreferred()) {
-        uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
-        expired->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
-    } else {
-        expired->preferred_lft_ = ctx.subnet_->getPreferred();
-    }
-    // Use subnet's valid triplet to conditionally determine
-    // valid lifetime based on hint
+
+    // Calculate life times.
+    getLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
     expired->reuseable_valid_lft_ = 0;
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getValid()) {
-        uint32_t valid = ctx.currentIA().hints_[0].getValid();
-        expired->valid_lft_ = ctx.subnet_->getValid().get(valid);
-    } else {
-        expired->valid_lft_ = ctx.subnet_->getValid();
-    }
+
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = ctx.subnet_->getID();
     expired->hostname_ = ctx.hostname_;
@@ -2132,26 +2118,14 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     Lease6Ptr old_data(new Lease6(*lease));
 
     bool changed = false;
+
+    // Calculate life times.
     uint32_t current_preferred_lft = lease->preferred_lft_;
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getPreferred()) {
-        uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
-        lease->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
-    } else {
-        lease->preferred_lft_ = ctx.subnet_->getPreferred();
-    }
-    if (lease->preferred_lft_ < current_preferred_lft) {
-        changed = true;
-    }
-    lease->reuseable_valid_lft_ = 0;
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getValid()) {
-        uint32_t valid = ctx.currentIA().hints_[0].getValid();
-        lease->valid_lft_ = ctx.subnet_->getValid().get(valid);
-    } else {
-        lease->valid_lft_ = ctx.subnet_->getValid();
-    }
-    if (lease->valid_lft_ < lease->current_valid_lft_) {
+    getLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+
+    // If either has changed set the changed flag.
+    if ((lease->preferred_lft_ != current_preferred_lft) ||
+        (lease->valid_lft_ != lease->current_valid_lft_)) {
         changed = true;
     }
 

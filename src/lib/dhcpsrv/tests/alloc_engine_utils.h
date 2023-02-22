@@ -306,13 +306,15 @@ public:
     /// @param valid valid lifetime to be used as a hint
     /// @param exp_preferred expected lease preferred lifetime
     /// @param exp_valid expected lease valid lifetime
+    /// @param class_def class definition to add to the context
     /// @return allocated lease (or NULL)
     Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint,
                                uint32_t preferred,
                                uint32_t valid,
                                uint32_t exp_preferred,
-                               uint32_t exp_valid);
+                               uint32_t exp_valid,
+                               ClientClassDefPtr class_def = ClientClassDefPtr());
 
     /// @brief Checks if the simple allocation can succeed for custom DUID.
     ///

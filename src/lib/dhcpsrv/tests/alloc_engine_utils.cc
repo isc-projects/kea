@@ -289,7 +289,8 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
 Lease6Ptr
 AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
                                    uint32_t preferred, uint32_t valid,
-                                   uint32_t exp_preferred, uint32_t exp_valid) {
+                                   uint32_t exp_preferred, uint32_t exp_valid,
+                                   ClientClassDefPtr class_def) {
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
 
@@ -311,6 +312,12 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     ctx.currentIA().addHint(hint, expected_len, preferred, valid);
     subnet_->setPreferred(Triplet<uint32_t>(200, 300, 400));
     subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
+
+    if (class_def) {
+        std::cout << "adding class defintion" << std::endl;
+        CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass(class_def);
+        ctx.query_->addClass(class_def->getName());
+    }
 
     // Set some non-standard callout status to make sure it doesn't affect the
     // allocation.
@@ -404,7 +411,6 @@ Lease6Collection
 AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                             AllocEngine::HintContainer& hints,
                             bool in_subnet, bool in_pool) {
-
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
 
