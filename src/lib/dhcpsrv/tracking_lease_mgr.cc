@@ -19,7 +19,7 @@ namespace isc {
 namespace dhcp {
 
 TrackingLeaseMgr::TrackingLeaseMgr()
-    : LeaseMgr() {
+    : LeaseMgr(), callbacks_(new TrackingLeaseMgr::CallbackContainer()) {
 }
 
 bool
@@ -61,7 +61,7 @@ TrackingLeaseMgr::registerCallback(TrackingLeaseMgr::CallbackType type,
                                    std::string owner,
                                    TrackingLeaseMgr::CallbackFn callback_fn) {
     // The first index filters the callbacks by type and subnet_id.
-    auto& idx = callbacks_.get<0>();
+    auto& idx = callbacks_->get<0>();
     auto range = idx.equal_range(boost::make_tuple(type, subnet_id));
     if (range.first != range.second) {
         // Make sure that the callback for this owner does not exist.
@@ -75,7 +75,7 @@ TrackingLeaseMgr::registerCallback(TrackingLeaseMgr::CallbackType type,
         }
     }
     TrackingLeaseMgr::Callback callback{type, owner, subnet_id, callback_fn};
-    callbacks_.insert(callback);
+    callbacks_->insert(callback);
 }
 
 void
@@ -88,18 +88,18 @@ TrackingLeaseMgr::registerCallback(TrackingLeaseMgr::CallbackType type,
 void
 TrackingLeaseMgr::unregisterCallbacks(SubnetID subnet_id) {
     // The second index filters the callbacks by the subnet identifier.
-    auto& idx = callbacks_.get<1>();
+    auto& idx = callbacks_->get<1>();
     idx.erase(subnet_id);
 }
 
 void
 TrackingLeaseMgr::unregisterAllCallbacks() {
-    callbacks_.clear();
+    callbacks_->clear();
 }
 
 bool
 TrackingLeaseMgr::hasCallbacks() const {
-    return (!callbacks_.empty());
+    return (!callbacks_->empty());
 }
 
 std::string
@@ -127,7 +127,7 @@ void
 TrackingLeaseMgr::runCallbacksForSubnetID(CallbackType type, SubnetID subnet_id,
                                           const LeasePtr& lease, bool mt_safe) {
     // The first index filters by callback type and subnet_id.
-    auto& idx_by_type = callbacks_.get<0>();
+    auto& idx_by_type = callbacks_->get<0>();
     auto cbs = idx_by_type.equal_range(boost::make_tuple(type, subnet_id));
     if (cbs.first == cbs.second) {
         return;

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #define LEASE_MGR_FACTORY_H
 
 #include <database/database_connection.h>
-#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/tracking_lease_mgr.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -76,6 +76,19 @@ public:
     /// lease manager is available.
     static void destroy();
 
+    /// @brief Recreate an instance of a lease manager with optionally
+    /// preserving registered callbacks.
+    ///
+    /// @param dbaccess Database access parameters.  These are in the form of
+    ///        "keyword=value" pairs, separated by spaces. They are backend-
+    ///        -end specific, although must include the "type" keyword which
+    ///        gives the backend in use.
+    /// @param preserve_callbacks a boolean flag indicating if all registered
+    ///        @c TrackingLeaseMgr callbacks should be copied to the new
+    ///        instance.
+    static void recreate(const std::string& dbaccess,
+                         bool preserve_callbacks = true);
+
     /// @brief Return current lease manager
     ///
     /// Returns an instance of the "current" lease manager.  An exception
@@ -83,7 +96,7 @@ public:
     ///
     /// @throw isc::dhcp::NoLeaseManager No lease manager is available: use
     ///        create() to create one before calling this method.
-    static LeaseMgr& instance();
+    static TrackingLeaseMgr& instance();
 
     /// @brief Indicates if the lease manager has been instantiated.
     ///
@@ -96,7 +109,7 @@ private:
     /// Holds a pointer to the singleton lease manager.  The singleton
     /// is encapsulated in this method to avoid a "static initialization
     /// fiasco" if defined in an external static variable.
-    static boost::scoped_ptr<LeaseMgr>& getLeaseMgrPtr();
+    static boost::scoped_ptr<TrackingLeaseMgr>& getLeaseMgrPtr();
 
 };
 

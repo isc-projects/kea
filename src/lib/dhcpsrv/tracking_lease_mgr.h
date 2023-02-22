@@ -16,7 +16,7 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <functional>
 #include <string>
 #include <unordered_set>
@@ -76,6 +76,12 @@ namespace dhcp {
 class TrackingLeaseMgr : public LeaseMgr {
 public:
 
+    /// The @c LeaseMgrFactory manages the @c LeaseMgr instances and has
+    /// to be able to move installed callbacks between them. No other external
+    /// class can have access to the callbacks container. Thus, we can't make
+    /// the container public. The friend declaration deals with it cleanly.
+    friend class LeaseMgrFactory;
+
     /// @brief An enumeration differentiating between lease write operations.
     typedef enum {
         TRACK_ADD_LEASE,
@@ -104,6 +110,8 @@ public:
         CallbackFn fn;
     } Callback;
 
+protected:
+
     /// @brief A multi-index container holding registered callbacks.
     ///
     /// The callbacks are accessible via two indexes. The first composite index
@@ -125,7 +133,8 @@ public:
         >
     > CallbackContainer;
 
-protected:
+    /// @brief Pointer to the callback container.
+    typedef boost::shared_ptr<CallbackContainer> CallbackContainerPtr;
 
     /// @brief Constructor.
     TrackingLeaseMgr();
@@ -273,7 +282,7 @@ protected:
                                  const LeasePtr& lease, bool mt_safe);
 
     /// @brief The multi-index container holding registered callbacks.
-    CallbackContainer callbacks_;
+    CallbackContainerPtr callbacks_;
 
     /// @brief A set of locked leases.
     ///

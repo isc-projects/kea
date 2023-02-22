@@ -55,9 +55,8 @@ CfgDbAccess::getHostDbAccessStringList() const {
 
 void
 CfgDbAccess::createManagers() const {
-    // Recreate lease manager.
-    LeaseMgrFactory::destroy();
-    LeaseMgrFactory::create(getLeaseDbAccessString());
+    // Recreate lease manager without preserving the registered callbacks.
+    LeaseMgrFactory::recreate(getLeaseDbAccessString(), false);
 
     // Recreate host data source.
     HostMgr::create();

@@ -64,7 +64,7 @@ public:
             throw;
         }
 
-        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+        lmptr_ = &(LeaseMgrFactory::instance());
 
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -104,7 +104,7 @@ public:
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validMySQLConnectionString());
-        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+        lmptr_ = &(LeaseMgrFactory::instance());
     }
 };
 
@@ -1274,6 +1274,18 @@ TEST_F(MySqlLeaseMgrTest, trackDeleteLease6MultiThreading) {
     // The lease should be locked in the MT mode. The backend does not
     // provide an MT-safe context.
     testTrackDeleteLease6(true, false);
+}
+
+/// @brief Checks that the lease manager can be recreated and its
+/// registered callbacks preserved, if desired.
+TEST_F(MySqlLeaseMgrTest, recreateWithCallbacks) {
+    testRecreateWithCallbacks(validMySQLConnectionString());
+}
+
+/// @brief Checks that the lease manager can be recreated without the
+/// previously registered callbacks.
+TEST_F(MySqlLeaseMgrTest, recreateWithoutCallbacks) {
+    testRecreateWithoutCallbacks(validMySQLConnectionString());
 }
 
 }  // namespace

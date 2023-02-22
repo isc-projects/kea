@@ -32,10 +32,10 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-boost::scoped_ptr<LeaseMgr>&
+boost::scoped_ptr<TrackingLeaseMgr>&
 LeaseMgrFactory::getLeaseMgrPtr() {
-    static boost::scoped_ptr<LeaseMgr> leaseMgrPtr;
-    return (leaseMgrPtr);
+    static boost::scoped_ptr<TrackingLeaseMgr> lease_mgr_ptr;
+    return (lease_mgr_ptr);
 }
 
 void
@@ -101,14 +101,33 @@ LeaseMgrFactory::destroy() {
     getLeaseMgrPtr().reset();
 }
 
+void
+LeaseMgrFactory::recreate(const std::string& dbaccess, bool preserve_callbacks) {
+    TrackingLeaseMgr::CallbackContainerPtr callbacks;
+    // Preserve the callbacks if needed.
+    if (preserve_callbacks && haveInstance()) {
+        callbacks = instance().callbacks_;
+    }
+
+    // Re-create the manager.
+    destroy();
+    create(dbaccess);
+
+    if (callbacks) {
+        // Copy the callbacks to the new instance. It should be fast
+        // because we merely copy the pointer.
+        instance().callbacks_ = callbacks;
+    }
+}
+
 bool
 LeaseMgrFactory::haveInstance() {
     return (getLeaseMgrPtr().get());
 }
 
-LeaseMgr&
+TrackingLeaseMgr&
 LeaseMgrFactory::instance() {
-    LeaseMgr* lmptr = getLeaseMgrPtr().get();
+    TrackingLeaseMgr* lmptr = getLeaseMgrPtr().get();
     if (lmptr == NULL) {
         isc_throw(NoLeaseManager, "no current lease manager is available");
     }

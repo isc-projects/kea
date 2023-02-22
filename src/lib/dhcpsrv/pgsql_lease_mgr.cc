@@ -1368,8 +1368,7 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     // At least one connection was lost.
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
-        LeaseMgrFactory::destroy();
-        LeaseMgrFactory::create(cfg_db->getLeaseDbAccessString());
+        LeaseMgrFactory::recreate(cfg_db->getLeaseDbAccessString());
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED)

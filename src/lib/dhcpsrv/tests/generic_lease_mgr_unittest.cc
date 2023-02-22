@@ -4399,6 +4399,50 @@ GenericLeaseMgrTest::testTrackDeleteLease6(bool expect_locked, bool expect_mt_sa
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
+void
+GenericLeaseMgrTest::testRecreateWithCallbacks(const std::string& access) {
+    // Register a callback.
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, "flq",
+                             std::bind(&GenericLeaseMgrTest::logCallback,
+                                       this,
+                                       TrackingLeaseMgr::TRACK_ADD_LEASE,
+                                       0,
+                                       ph::_1,
+                                       ph::_2));
+
+    // Recreate the lease manager with the callbacks.
+    ASSERT_NO_THROW(LeaseMgrFactory::recreate(access, true));
+    lmptr_ = &(LeaseMgrFactory::instance());
+
+    // Add a lease. It should trigger the callback.
+    Lease4Ptr lease = initializeLease4(straddress4_[1]);
+    EXPECT_TRUE(lmptr_->addLease(lease));
+
+    // Make sure that the callback has been invoked.
+    EXPECT_EQ(1, logs_.size());
+}
+
+void
+GenericLeaseMgrTest::testRecreateWithoutCallbacks(const std::string& access) {
+    // Register a callback.
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, "flq",
+                             std::bind(&GenericLeaseMgrTest::logCallback,
+                                       this,
+                                       TrackingLeaseMgr::TRACK_ADD_LEASE,
+                                       0,
+                                       ph::_1,
+                                       ph::_2));
+
+    // Recreate the lease manager without the callbacks.
+    ASSERT_NO_THROW(LeaseMgrFactory::recreate(access, false));
+    lmptr_ = &(LeaseMgrFactory::instance());
+
+    // Add a lease. It should not trigger the callback.
+    Lease4Ptr lease = initializeLease4(straddress4_[1]);
+    EXPECT_TRUE(lmptr_->addLease(lease));
+    EXPECT_TRUE(logs_.empty());
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc

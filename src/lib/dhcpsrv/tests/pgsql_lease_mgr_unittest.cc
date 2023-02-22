@@ -64,7 +64,7 @@ public:
             throw;
         }
 
-        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+        lmptr_ = &(LeaseMgrFactory::instance());
 
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -104,7 +104,7 @@ public:
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validPgSQLConnectionString());
-        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+        lmptr_ = &(LeaseMgrFactory::instance());
     }
 };
 
@@ -1264,5 +1264,18 @@ TEST_F(PgSqlLeaseMgrTest, trackDeleteLease6MultiThreading) {
     // provide an MT-safe context.
     testTrackDeleteLease6(true, false);
 }
+
+/// @brief Checks that the lease manager can be recreated and its
+/// registered callbacks preserved, if desired.
+TEST_F(PgSqlLeaseMgrTest, recreateWithCallbacks) {
+    testRecreateWithCallbacks(validPgSQLConnectionString());
+}
+
+/// @brief Checks that the lease manager can be recreated without the
+/// previously registered callbacks.
+TEST_F(PgSqlLeaseMgrTest, recreateWithoutCallbacks) {
+    testRecreateWithoutCallbacks(validPgSQLConnectionString());
+}
+
 
 }  // namespace

@@ -235,7 +235,7 @@ public:
                 " lease database backend.\n";
             throw;
         }
-        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+        lmptr_ = &(LeaseMgrFactory::instance());
     }
 
     /// @brief Runs IOService and stops after a specified time.
@@ -2017,7 +2017,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     // Recreate Memfile_LeaseMgr.
     LeaseMgrFactory::destroy();
     ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
-    lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+    lmptr_ = &(LeaseMgrFactory::instance());
 
     // We will store addresses here, so it will be easier to randomly
     // pick a lease.
@@ -2060,7 +2060,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
         // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(dbaccess);
-        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+        lmptr_ = &(LeaseMgrFactory::instance());
     });
 
     // Ok, let's check if the leases are really accessible.
@@ -2147,7 +2147,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     // Recreate Memfile_LeaseMgr.
     LeaseMgrFactory::destroy();
     ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
-    lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+    lmptr_ = &(LeaseMgrFactory::instance());
 
     // We will store addresses here, so it will be easier to randomly
     // pick a lease.
@@ -2191,7 +2191,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
         // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(dbaccess);
-        lmptr_ = static_cast<TrackingLeaseMgr*>(&(LeaseMgrFactory::instance()));
+        lmptr_ = &(LeaseMgrFactory::instance());
     });
 
     // Ok, let's check if the leases are really accessible.
@@ -4339,5 +4339,18 @@ TEST_F(MemfileLeaseMgrTest, trackDeleteLease6MultiThreading) {
     testTrackDeleteLease6(false, true);
 }
 
+/// @brief Checks that the lease manager can be recreated and its
+/// registered callbacks preserved, if desired.
+TEST_F(MemfileLeaseMgrTest, recreateWithCallbacks) {
+    startBackend(V4);
+    testRecreateWithCallbacks(getConfigString(V4));
+}
+
+/// @brief Checks that the lease manager can be recreated without the
+/// previously registered callbacks.
+TEST_F(MemfileLeaseMgrTest, recreateWithoutCallbacks) {
+    startBackend(V4);
+    testRecreateWithoutCallbacks(getConfigString(V4));
+}
 
 }  // namespace

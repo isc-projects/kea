@@ -626,6 +626,20 @@ public:
     /// expect that the callbacks are called in the MT-safe context.
     void testTrackDeleteLease6(bool expect_locked, bool expect_mt_safe);
 
+    /// @brief Checks that the lease manager can be recreated and its
+    /// registered callbacks preserved, if desired.
+    ///
+    /// @param access database connection string used for recreating the
+    /// lease manager.
+    void testRecreateWithCallbacks(const std::string& access);
+
+    /// @brief Checks that the lease manager can be recreated without the
+    /// previously registered callbacks.
+    ///
+    /// @param access database connection string used for recreating the
+    /// lease manager.
+    void testRecreateWithoutCallbacks(const std::string& access);
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string> straddress4_;
 
