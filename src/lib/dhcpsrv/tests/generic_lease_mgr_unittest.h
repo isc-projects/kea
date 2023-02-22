@@ -182,13 +182,15 @@ public:
 
     /// @brief Counts log entries.
     ///
-    /// It counts the logs associated with the specific callback type and subnet id.
+    /// It counts the logs associated with the specific callback type, subnet id
+    /// and lease type.
     ///
     /// @param type callback type.
     /// @param subnet_id subnet identifier.
     /// @return The number of callback logs associated with the specific type and
     /// the subnet id.
-    int countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id) const;
+    int countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id,
+                  Lease::Type lease_type) const;
 
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
     void testBasicLease4();

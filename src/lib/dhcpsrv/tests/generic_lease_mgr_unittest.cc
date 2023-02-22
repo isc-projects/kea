@@ -2953,10 +2953,11 @@ GenericLeaseMgrTest::logCallback(TrackingLeaseMgr::CallbackType type, SubnetID s
 }
 
 int
-GenericLeaseMgrTest::countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id) const {
+GenericLeaseMgrTest::countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id,
+                               Lease::Type lease_type) const {
     int count = 0;
     for (auto log : logs_) {
-        if ((log.type == type) && (log.subnet_id == subnet_id)) {
+        if ((log.type == type) && (log.subnet_id == subnet_id) && (log.lease->getType() == lease_type)) {
             ++count;
         }
     }
@@ -4162,7 +4163,8 @@ GenericLeaseMgrTest::testClassLeaseCount6(Lease::Type ltype) {
 void
 GenericLeaseMgrTest::testTrackAddLease4(bool expect_locked, bool expect_mt_safe) {
     // Register a callback for all subnets.
-    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, "flq",
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
+                             Lease::TYPE_V4,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
@@ -4200,7 +4202,8 @@ GenericLeaseMgrTest::testTrackAddLease4(bool expect_locked, bool expect_mt_safe)
 void
 GenericLeaseMgrTest::testTrackAddLease6(bool expect_locked, bool expect_mt_safe) {
     // Register a callback for all subnets.
-    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, "flq",
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
+                             Lease::TYPE_NA,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
@@ -4208,7 +4211,7 @@ GenericLeaseMgrTest::testTrackAddLease6(bool expect_locked, bool expect_mt_safe)
                                        ph::_1,
                                        ph::_2));
     // Add a lease. It should trigger the callback.
-    Lease6Ptr lease = initializeLease6(straddress6_[1]);
+    Lease6Ptr lease = initializeLease6(straddress6_[0]);
     EXPECT_TRUE(lmptr_->addLease(lease));
 
     // Make sure that the callback has been invoked.
@@ -4238,7 +4241,8 @@ GenericLeaseMgrTest::testTrackAddLease6(bool expect_locked, bool expect_mt_safe)
 void
 GenericLeaseMgrTest::testTrackUpdateLease4(bool expect_locked, bool expect_mt_safe) {
     // Register a callback for all subnets.
-    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, 0, "flq",
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq", 0,
+                             Lease::TYPE_V4,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_UPDATE_LEASE,
@@ -4279,7 +4283,8 @@ GenericLeaseMgrTest::testTrackUpdateLease4(bool expect_locked, bool expect_mt_sa
 void
 GenericLeaseMgrTest::testTrackUpdateLease6(bool expect_locked, bool expect_mt_safe) {
     // Register a callback for all subnets.
-    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, 0, "flq",
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq", 0,
+                             Lease::TYPE_NA,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_UPDATE_LEASE,
@@ -4287,7 +4292,7 @@ GenericLeaseMgrTest::testTrackUpdateLease6(bool expect_locked, bool expect_mt_sa
                                        ph::_1,
                                        ph::_2));
     // Add a lease.
-    Lease6Ptr lease = initializeLease6(straddress6_[1]);
+    Lease6Ptr lease = initializeLease6(straddress6_[0]);
     EXPECT_TRUE(lmptr_->addLease(lease));
     EXPECT_TRUE(logs_.empty());
 
@@ -4320,7 +4325,8 @@ GenericLeaseMgrTest::testTrackUpdateLease6(bool expect_locked, bool expect_mt_sa
 void
 GenericLeaseMgrTest::testTrackDeleteLease4(bool expect_locked, bool expect_mt_safe) {
     // Register a callback for all subnets.
-    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, 0, "flq",
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq", 0,
+                             Lease::TYPE_V4,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_DELETE_LEASE,
@@ -4361,7 +4367,8 @@ GenericLeaseMgrTest::testTrackDeleteLease4(bool expect_locked, bool expect_mt_sa
 void
 GenericLeaseMgrTest::testTrackDeleteLease6(bool expect_locked, bool expect_mt_safe) {
     // Register a callback for all subnets.
-    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, 0, "flq",
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq", 0,
+                             Lease::TYPE_NA,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_DELETE_LEASE,
@@ -4369,7 +4376,7 @@ GenericLeaseMgrTest::testTrackDeleteLease6(bool expect_locked, bool expect_mt_sa
                                        ph::_1,
                                        ph::_2));
     // Add a lease.
-    Lease6Ptr lease = initializeLease6(straddress6_[1]);
+    Lease6Ptr lease = initializeLease6(straddress6_[0]);
     EXPECT_TRUE(lmptr_->addLease(lease));
     EXPECT_TRUE(logs_.empty());
 
@@ -4402,7 +4409,8 @@ GenericLeaseMgrTest::testTrackDeleteLease6(bool expect_locked, bool expect_mt_sa
 void
 GenericLeaseMgrTest::testRecreateWithCallbacks(const std::string& access) {
     // Register a callback.
-    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, "flq",
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
+                             Lease::TYPE_V4,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
@@ -4425,7 +4433,8 @@ GenericLeaseMgrTest::testRecreateWithCallbacks(const std::string& access) {
 void
 GenericLeaseMgrTest::testRecreateWithoutCallbacks(const std::string& access) {
     // Register a callback.
-    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, "flq",
+    lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
+                             Lease::TYPE_V4,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,

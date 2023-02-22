@@ -99,14 +99,21 @@ public:
 
     /// @brief A structure representing a registered callback.
     ///
-    /// It associates the callback with a type, its owner, and a subnet
-    /// identifier. The owner is a string specified by the registration
-    /// function caller. There must be at most one callback registered
-    /// for the particular owner and the subnet identifier.
+    /// It associates the callback with a type, its owner, subnet
+    /// identifier, and a lease type. The owner is a string specified
+    /// by the registration function caller. There must be at most one
+    /// callback registered for the particular owner, subnet identifier
+    /// and the lease type.
     typedef struct {
+        /// Callback type (i.e., lease add, update, delete).
         CallbackType type;
+        /// An entity owning callback registration (e.g., FLQ allocator).
         std::string owner;
+        /// Subnet identifier associated with the callback.
         SubnetID subnet_id;
+        /// Lease types for which the callback should be invoked.
+        Lease::Type lease_type;
+        /// Callback function.
         CallbackFn fn;
     } Callback;
 
@@ -116,7 +123,8 @@ protected:
     ///
     /// The callbacks are accessible via two indexes. The first composite index
     /// filters the callbacks by the callback type (i.e., lease add, update or delete)
-    /// and the subnet id. The second index filters the callbacks by the subnet id.
+    /// and the subnet id. The second index filters the callbacks by the subnet id
+    /// and the lease type.
     typedef boost::multi_index_container<
         Callback,
         boost::multi_index::indexed_by<
@@ -124,11 +132,16 @@ protected:
                 boost::multi_index::composite_key<
                     Callback,
                     boost::multi_index::member<Callback, CallbackType, &Callback::type>,
-                    boost::multi_index::member<Callback, SubnetID, &Callback::subnet_id>
+                    boost::multi_index::member<Callback, SubnetID, &Callback::subnet_id>,
+                    boost::multi_index::member<Callback, Lease::Type, &Callback::lease_type>
                 >
             >,
-            boost::multi_index::hashed_non_unique<
-                boost::multi_index::member<Callback, SubnetID, &Callback::subnet_id>
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::composite_key<
+                    Callback,
+                    boost::multi_index::member<Callback, SubnetID, &Callback::subnet_id>,
+                    boost::multi_index::member<Callback, Lease::Type, &Callback::lease_type>
+                >
             >
         >
     > CallbackContainer;
@@ -217,27 +230,32 @@ public:
     /// @brief Registers a callback function for a subnet.
     ///
     /// @param type callback type.
+    /// @param owner callback owner identifier.
     /// @param subnet_id subnet identifier; it can be set to 0 if the callback should be
     /// called for subnets.
-    /// @param owner callback owner identifier.
+    /// @param lease_type a lease type.
     /// @param callback_fn callback function instance.
     /// @throw InvalidOperation when the callback has been already registered for the given owner and
     /// the subnet identifier.
-    void registerCallback(CallbackType type, SubnetID subnet_id, std::string owner, CallbackFn callback_fn);
+    void registerCallback(CallbackType type, std::string owner, SubnetID subnet_id,
+                          Lease::Type lease_type, CallbackFn callback_fn);
 
     /// @brief Registers a callback function for all subnets.
     ///
     /// @param type callback type.
     /// @param owner callback owner identifier.
+    /// @param lease_type a lease type.
     /// @param callback_fn callback function instance.
     /// @throw InvalidOperation when the callback has been already registered for the given owner and
     /// all subnets.
-    void registerCallback(CallbackType type, std::string owner, CallbackFn callback_fn);
+    void registerCallback(CallbackType type, std::string owner, Lease::Type lease_type,
+                          CallbackFn callback_fn);
 
     /// @brief Unregisters all callbacks for a given subnet identifier.
     ///
-    /// @param subnet_id subnet identifier.
-    void unregisterCallbacks(SubnetID subnet_id);
+    /// @param subnet_id a subnet identifier.
+    /// @param lease_type a lease type.
+    void unregisterCallbacks(SubnetID subnet_id, Lease::Type lease_type);
 
     /// @brief Unregisters all callbacks.
     void unregisterAllCallbacks();
