@@ -144,7 +144,7 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
                 "no details available";
             isc_throw(isc::BadValue, reason);
         }
-    }  catch (const std::exception& ex) {
+    } catch (const std::exception& ex) {
         // If configuration failed at any stage, we drop the staging
         // configuration and continue to use the previous one.
         CfgMgr::instance().rollback();
@@ -389,6 +389,20 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
 
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
+    // Let's first check the config
+    ConstElementPtr result = checkConfig(dhcp6);
+
+    int rcode = 0;
+    isc::config::parseAnswer(rcode, result);
+    if (rcode != CONTROL_RESULT_SUCCESS) {
+        return (result);
+    }
+
     // disable multi-threading (it will be applied by new configuration)
     // this must be done in order to properly handle MT to ST transition
     // when 'multi-threading' structure is missing from new config
@@ -410,12 +424,11 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
     // Now we configure the server proper.
-    ConstElementPtr result = processConfig(dhcp6);
+    result = processConfig(dhcp6);
 
     // If the configuration parsed successfully, apply the new logger
     // configuration and the commit the new configuration.  We apply
     // the logging first in case there's a configuration failure.
-    int rcode = 0;
     isc::config::parseAnswer(rcode, result);
     if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
