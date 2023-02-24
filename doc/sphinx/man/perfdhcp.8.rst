@@ -326,13 +326,13 @@ Options
    ``T``
       When finished, prints templates.
 
-``-y seconds``
-   Time in seconds after which ``perfdhcp`` starts simulating the client waiting longer for server responses. This increases the
-   ``secs`` field in DHCPv4 and sends increased values in the ``Elapsed Time`` option in DHCPv6. Must be used with ``-Y``.
-
 ``-Y seconds``
+   Time in seconds after which ``perfdhcp`` starts simulating the client waiting longer for server responses. This increases the
+   ``secs`` field in DHCPv4 and sends increased values in the ``Elapsed Time`` option in DHCPv6. Must be used with ``-y``.
+
+``-y seconds``
    Time in seconds during which ``perfdhcp`` simulates the client waiting longer for server responses. This increases
-   the ``secs`` field in DHCPv4 and sends increased values in the ``Elapsed Time`` option in DHCPv6. Must be used with ``-y``.
+   the ``secs`` field in DHCPv4 and sends increased values in the ``Elapsed Time`` option in DHCPv6. Must be used with ``-Y``.
 
 DHCPv4-Only Options
 ~~~~~~~~~~~~~~~~~~~
