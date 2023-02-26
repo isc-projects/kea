@@ -26,6 +26,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::config;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
@@ -76,8 +77,8 @@ DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
                                bool check_only,
                                const std::function<void()>& post_config_cb) {
     if (!config_set) {
-        return (isc::config::createAnswer(1,
-                                    std::string("Can't parse NULL config")));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+                                          std::string("Can't parse NULL config")));
     }
     LOG_DEBUG(dctl_logger, isc::log::DBGLVL_COMMAND, DCTL_CONFIG_START)
         .arg(redactConfig(config_set)->str());
@@ -122,7 +123,7 @@ DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
             }
 
             // Use the answer provided.
-            //answer = isc::config::createAnswer(0, "Configuration committed.");
+            //answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration committed.");
         } else {
             LOG_INFO(dctl_logger, DCTL_CONFIG_CHECK_COMPLETE)
                 .arg(getConfigSummary(0))
@@ -131,7 +132,7 @@ DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(ex.what());
-        answer = isc::config::createAnswer(1, ex.what());
+        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
         rollback = true;
     }
 

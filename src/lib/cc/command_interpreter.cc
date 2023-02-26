@@ -52,7 +52,7 @@ createAnswer(const int status_code, const std::string& text,
 
 ConstElementPtr
 createAnswer() {
-    return (createAnswer(0, string(""), ConstElementPtr()));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, string(""), ConstElementPtr()));
 }
 
 ConstElementPtr

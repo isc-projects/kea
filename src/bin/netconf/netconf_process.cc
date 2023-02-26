@@ -75,7 +75,7 @@ NetconfProcess::runIO() {
 isc::data::ConstElementPtr
 NetconfProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
     setShutdownFlag(true);
-    return (isc::config::createAnswer(0, "Netconf is shutting down"));
+    return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Netconf is shutting down"));
 }
 
 isc::data::ConstElementPtr

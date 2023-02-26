@@ -246,12 +246,12 @@ ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_HOOKS_LIBS_RELOAD_FAIL);
-        ConstElementPtr answer = isc::config::createAnswer(1, ex.what());
+        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
         return (answer);
     }
-    ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Hooks libraries successfully reloaded"
-                             " (WARNING: libreload is deprecated).");
+    ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
+                             "Hooks libraries successfully reloaded "
+                             "(WARNING: libreload is deprecated).");
     return (answer);
 }
 
@@ -281,7 +281,7 @@ ControlledDhcpv4Srv::commandConfigGetHandler(const string&,
                                              ConstElementPtr /*args*/) {
     ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
 
-    return (createAnswer(0, config));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, config));
 }
 
 ConstElementPtr
@@ -391,25 +391,6 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     // configuration attempts.
     CfgMgr::instance().rollback();
 
-    // Let's first check the config
-    ConstElementPtr result = checkConfig(dhcp4);
-
-    int rcode = 0;
-    isc::config::parseAnswer(rcode, result);
-    if (rcode != CONTROL_RESULT_SUCCESS) {
-        return (result);
-    }
-
-    // disable multi-threading (it will be applied by new configuration)
-    // this must be done in order to properly handle MT to ST transition
-    // when 'multi-threading' structure is missing from new config
-    MultiThreadingMgr::instance().apply(false, 0, 0);
-
-    // We are starting the configuration process so we should remove any
-    // staging configuration that has been created during previous
-    // configuration attempts.
-    CfgMgr::instance().rollback();
-
     // Parse the logger configuration explicitly into the staging config.
     // Note this does not alter the current loggers, they remain in
     // effect until we apply the logging config below.  If no logging
@@ -421,11 +402,12 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
     // Now we configure the server proper.
-    result = processConfig(dhcp4);
+    ConstElementPtr result = processConfig(dhcp4);
 
     // If the configuration parsed successfully, apply the new logger
     // configuration and the commit the new configuration.  We apply
     // the logging first in case there's a configuration failure.
+    int rcode = 0;
     isc::config::parseAnswer(rcode, result);
     if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
@@ -645,7 +627,7 @@ ControlledDhcpv4Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
     ElementPtr extended = Element::create(Dhcpv4Srv::getVersion(true));
     ElementPtr arguments = Element::createMap();
     arguments->set("extended", extended);
-    ConstElementPtr answer = isc::config::createAnswer(0,
+    ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
                                 Dhcpv4Srv::getVersion(false),
                                 arguments);
     return (answer);
@@ -655,7 +637,7 @@ ConstElementPtr
 ControlledDhcpv4Srv::commandBuildReportHandler(const string&,
                                                ConstElementPtr) {
     ConstElementPtr answer =
-        isc::config::createAnswer(0, isc::detail::getConfigReport());
+        isc::config::createAnswer(CONTROL_RESULT_SUCCESS, isc::detail::getConfigReport());
     return (answer);
 }
 
@@ -791,7 +773,7 @@ ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
     }
     status->set("sockets", sockets);
 
-    return (createAnswer(0, status));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, status));
 }
 
 ConstElementPtr
@@ -830,7 +812,7 @@ ControlledDhcpv4Srv::processCommand(const string& command,
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 
     if (!srv) {
-        ConstElementPtr no_srv = isc::config::createAnswer(1,
+        ConstElementPtr no_srv = isc::config::createAnswer(CONTROL_RESULT_ERROR,
             "Server object not initialized, so can't process command '" +
             command + "', arguments: '" + txt + "'.");
         return (no_srv);
@@ -883,11 +865,11 @@ ControlledDhcpv4Srv::processCommand(const string& command,
             return (srv->commandStatusGetHandler(command, args));
         }
 
-        return (isc::config::createAnswer(1, "Unrecognized command:"
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Unrecognized command:"
                                           + command));
 
     } catch (const isc::Exception& ex) {
-        return (isc::config::createAnswer(1, "Error while processing command '"
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Error while processing command '"
                                           + command + "': " + ex.what() +
                                           ", params: '" + txt + "'"));
     }
@@ -902,7 +884,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     if (!srv) {
         err << "Server object not initialized, can't process config.";
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
@@ -920,7 +902,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         }
     } catch (const std::exception& ex) {
         err << "Failed to process configuration:" << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Re-open lease and host database with new parameters.
@@ -945,7 +927,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         srv->getNetworkState()->reset(NetworkState::Origin::DB_CONNECTION);
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Server will start DDNS communications if its enabled.
@@ -954,7 +936,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     } catch (const std::exception& ex) {
         err << "Error starting DHCP_DDNS client after server reconfiguration: "
             << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Setup DHCPv4-over-DHCPv6 IPC
@@ -963,7 +945,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     } catch (const std::exception& ex) {
         err << "error starting DHCPv4-over-DHCPv6 IPC "
                " after server reconfiguration: " << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Configure DHCP packet queueing
@@ -978,7 +960,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     } catch (const std::exception& ex) {
         err << "Error setting packet queue controls after server reconfiguration: "
             << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Configure a callback to shut down the server when the bind socket
@@ -1008,7 +990,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         err << "unable to setup timers for periodically running the"
             " reclamation of the expired leases: "
             << ex.what() << ".";
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Setup config backend polling, if configured for it.
@@ -1094,12 +1076,10 @@ ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
 
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 
-    // Single stream instance used in all error clauses
-    std::ostringstream err;
-
     if (!srv) {
-        err << "Server object not initialized, can't process config.";
-        return (isc::config::createAnswer(1, err.str()));
+        ConstElementPtr no_srv = isc::config::createAnswer(CONTROL_RESULT_ERROR,
+            "Server object not initialized, can't process config.");
+        return (no_srv);
     }
 
     return (configureDhcp4Server(*srv, config, true));

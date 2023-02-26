@@ -321,28 +321,10 @@ void configureCommandChannel() {
 }
 
 isc::data::ConstElementPtr
-configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
-                     bool check_only) {
-    if (!config_set) {
-        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
-                                 string("Can't parse NULL config"));
-        return (answer);
-    }
-
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START)
-        .arg(server.redactConfig(config_set)->str());
-
+processDhcp4Config(isc::data::ConstElementPtr config_set) {
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
-
-    // Close DHCP sockets and remove any existing timers.
-    if (!check_only) {
-        IfaceMgr::instance().closeSockets();
-        TimerMgr::instance()->unregisterTimers();
-        server.discardPackets();
-        server.getCBControl()->reset();
-    }
 
     // Revert any runtime option definitions configured so far and not committed.
     LibDHCP::revertRuntimeOptionDefs();
@@ -355,9 +337,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
     // Answer will hold the result.
     ConstElementPtr answer;
-    // Rollback informs whether error occurred and original data
-    // have to be restored to global storages.
-    bool rollback = false;
+
     // Global parameter name in case of an error.
     string parameter_name;
     ElementPtr mutable_cfg;
@@ -459,7 +439,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
         if (ifaces_config) {
             parameter_name = "interfaces-config";
-            IfacesConfigParser parser(AF_INET, check_only);
+            IfacesConfigParser parser(AF_INET, true);
             CfgIfacePtr cfg_iface = srv_config->getCfgIface();
             parser.parse(cfg_iface, ifaces_config);
         }
@@ -740,25 +720,95 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
                   .arg(parameter_name).arg(ex.what());
         answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        // An error occurred, so make sure that we restore original data.
-        rollback = true;
     } catch (...) {
         // For things like bad_cast in boost::lexical_cast
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(parameter_name);
-        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
-                                           " processing error");
+        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration "
+                                           "processing error");
+    }
 
-        // An error occurred, so make sure that we restore original data.
+    if (!answer) {
+        answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration seems sane. "
+                                           "Control-socket, hook-libraries, and D2 configuration "
+                                           "were sanity checked, but not applied.");
+    }
+
+    return (answer);
+}
+
+isc::data::ConstElementPtr
+configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
+                     bool check_only) {
+    if (!config_set) {
+        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
+                                                           "Can't parse NULL config");
+        return (answer);
+    }
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START)
+        .arg(server.redactConfig(config_set)->str());
+
+    // Rollback informs whether error occurred and original data
+    // have to be restored to global storages.
+    bool rollback = false;
+
+    auto answer = processDhcp4Config(config_set);
+
+    int status_code = 0;
+    isc::config::parseAnswer(status_code, answer);
+    if (status_code != CONTROL_RESULT_SUCCESS) {
         rollback = true;
     }
 
-    if (check_only) {
-        rollback = true;
-        if (!answer) {
-            answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
-            "Configuration seems sane. Control-socket, hook-libraries, and D2 "
-            "configuration were sanity checked, but not applied.");
+    SrvConfigPtr srv_config;
+
+    if (!rollback) {
+        if (!check_only) {
+            string parameter_name;
+            ElementPtr mutable_cfg;
+
+            // Close DHCP sockets and remove any existing timers.
+            IfaceMgr::instance().closeSockets();
+            TimerMgr::instance()->unregisterTimers();
+            server.discardPackets();
+            server.getCBControl()->reset();
+
+            try {
+
+                // Get the staging configuration.
+                srv_config = CfgMgr::instance().getStagingCfg();
+
+                // This is a way to convert ConstElementPtr to ElementPtr.
+                // We need a config that can be edited, because we will insert
+                // default values and will insert derived values as well.
+                mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+
+                ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
+                if (ifaces_config) {
+                    parameter_name = "interfaces-config";
+                    IfacesConfigParser parser(AF_INET, false);
+                    CfgIfacePtr cfg_iface = srv_config->getCfgIface();
+                    cfg_iface->reset();
+                    parser.parse(cfg_iface, ifaces_config);
+                }
+            } catch (const isc::Exception& ex) {
+                LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
+                          .arg(parameter_name).arg(ex.what());
+                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+
+                // An error occurred, so make sure that we restore original data.
+                rollback = true;
+            } catch (...) {
+                // For things like bad_cast in boost::lexical_cast
+                LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(parameter_name);
+                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+                                                   " processing error");
+
+                // An error occurred, so make sure that we restore original data.
+                rollback = true;
+            }
+        } else {
+            rollback = true;
         }
     }
 

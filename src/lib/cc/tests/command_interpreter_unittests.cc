@@ -42,17 +42,17 @@ TEST(CommandInterpreterTest, createAnswer) {
     EXPECT_EQ("{ \"result\": 0 }", answer->str());
 
     // Let's check if we can generate an error.
-    answer = createAnswer(1, "error");
+    answer = createAnswer(CONTROL_RESULT_ERROR, "error");
     EXPECT_EQ("{ \"result\": 1, \"text\": \"error\" }", answer->str());
 
     // This is expected to throw. When status code is non-zero (indicating error),
     // textual explanation is mandatory.
-    EXPECT_THROW(createAnswer(1, ElementPtr()), CtrlChannelError);
-    EXPECT_THROW(createAnswer(1, Element::create(1)), CtrlChannelError);
+    EXPECT_THROW(createAnswer(CONTROL_RESULT_ERROR, ElementPtr()), CtrlChannelError);
+    EXPECT_THROW(createAnswer(CONTROL_RESULT_ERROR, Element::create(1)), CtrlChannelError);
 
     // Let's check if answer can be generate with some data in it.
     ConstElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
-    answer = createAnswer(0, arg);
+    answer = createAnswer(CONTROL_RESULT_SUCCESS, arg);
     EXPECT_EQ("{ \"arguments\": [ \"just\", \"some\", \"data\" ], \"result\": 0 }",
               answer->str());
 }

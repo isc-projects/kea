@@ -380,7 +380,7 @@ public:
         // both structures are built using the same order.
         EXPECT_EQ(Element::fromJSON(expected_command)->str(),
                   entire_command->str());
-        return (createAnswer(0, "long command received ok"));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "long command received ok"));
     }
 
     /// @brief Command handler which generates long response
@@ -396,7 +396,7 @@ public:
             s << std::setw(5) << i;
             arguments->add(Element::create(s.str()));
         }
-        return (createAnswer(0, arguments));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 };
 

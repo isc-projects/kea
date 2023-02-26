@@ -120,7 +120,7 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
             // registered
             // for it, combine the lists of commands.
             if (!hooks_commands->empty()) {
-                response = combineCommandsLists(response, createAnswer(0, hooks_commands));
+                response = combineCommandsLists(response, createAnswer(CONTROL_RESULT_SUCCESS, hooks_commands));
             }
         }
     }

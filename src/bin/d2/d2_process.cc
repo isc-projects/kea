@@ -17,6 +17,7 @@
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 
+using namespace isc::config;
 using namespace isc::hooks;
 using namespace isc::process;
 
@@ -221,16 +222,18 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
                 shutdown_type_ = SD_NOW;
             } else {
                 setShutdownFlag(false);
-                return (isc::config::createAnswer(1, "Invalid Shutdown type: "
-                                                  + type_str));
+                return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+                                                  "Invalid Shutdown type: " +
+                                                  type_str));
             }
         }
     }
 
     // Set the base class's shutdown flag.
     setShutdownFlag(true);
-    return (isc::config::createAnswer(0, "Shutdown initiated, type is: "
-                                      + type_str));
+    return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
+                                      "Shutdown initiated, type is: " +\
+                                      type_str));
 }
 
 isc::data::ConstElementPtr
@@ -295,7 +298,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
             LOG_ERROR(d2_logger, DHCP_DDNS_CONFIGURED_CALLOUT_DROP)
                 .arg(error);
             reconf_queue_flag_ = false;
-            answer = isc::config::createAnswer(1, error);
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, error);
             return (answer);
         }
     }

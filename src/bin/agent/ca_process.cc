@@ -98,7 +98,8 @@ CtrlAgentProcess::runIO() {
 isc::data::ConstElementPtr
 CtrlAgentProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
     setShutdownFlag(true);
-    return (isc::config::createAnswer(0, "Control Agent is shutting down"));
+    return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
+                                      "Control Agent is shutting down"));
 }
 
 isc::data::ConstElementPtr

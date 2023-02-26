@@ -191,7 +191,7 @@ public:
         // Answer will hold the result.
         ConstElementPtr answer;
         if (!config_set) {
-            answer = isc::config::createAnswer(1,
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
                                  string("Can't parse NULL config"));
             return (answer);
         }
@@ -302,13 +302,13 @@ public:
             }
 
             // Everything was fine. Configuration is successful.
-            answer = isc::config::createAnswer(0, "Configuration committed.");
+            answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration committed.");
         } catch (const isc::Exception& ex) {
-            answer = isc::config::createAnswer(1,
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
                         string("Configuration parsing failed: ") + ex.what());
 
         } catch (...) {
-            answer = isc::config::createAnswer(1,
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
                                         string("Configuration parsing failed"));
         }
 
