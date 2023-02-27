@@ -86,7 +86,7 @@ public:
         /// @brief Default constructor.
         ///
         /// @param address the address or prefix
-        /// @param prefix_len the prefix length (defaults 128 for addresses)
+        /// @param prefix_len the prefix length (defaults to 128)
         /// @param preferred the optional preferred lifetime,
         /// defaults to 0, meaning not specified
         /// @param valid the optional valid lifetime,
