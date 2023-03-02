@@ -212,8 +212,6 @@ protected:
     /// @brief Weak pointer to the subnet owning the allocator.
     WeakSubnetPtr subnet_;
 
-private:
-
     /// @brief The mutex to protect the allocated lease.
     std::mutex mutex_;
 };

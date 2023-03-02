@@ -930,6 +930,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
         srv->getNetworkState()->reset(NetworkState::Origin::DB_CONNECTION);
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->initAllocatorsAfterConfigure();
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
