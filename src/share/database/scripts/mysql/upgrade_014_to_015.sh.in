@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,6 +61,16 @@ ALTER TABLE dhcp4_options
 
 ALTER TABLE dhcp6_options
     ADD COLUMN cancelled TINYINT(1) NOT NULL DEFAULT 0;
+
+-- Add offer_lifetime column to v4 tables.
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN offer_lifetime INT(10) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN offer_lifetime INT(10) DEFAULT NULL;
+
+ALTER TABLE dhcp4_client_class
+    ADD COLUMN offer_lifetime INT(10) DEFAULT NULL;
 
 -- Update the schema version number.
 UPDATE schema_version

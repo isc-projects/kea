@@ -153,6 +153,7 @@ public:
                 "    \"store-extended-info\": true,"
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
+                "    \"offer-lft\": 777,"
                 "    \"ddns-update-on-renew\": true,"
                 "    \"option-data\": ["
                 "        {"
@@ -282,6 +283,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
     EXPECT_EQ(123, network->getCacheMaxAge().get());
+    EXPECT_EQ(777, network->getOfferLft().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
     EXPECT_EQ("iterative", network->getAllocatorType().get());
 

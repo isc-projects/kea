@@ -1215,7 +1215,7 @@ public:
     /// @brief Constructor.
     Network4()
         : Network(), match_client_id_(true, true), authoritative_(),
-          siaddr_(), sname_(), filename_() {
+          siaddr_(), sname_(), filename_(), offer_lft_() {
     }
 
     /// @brief Returns the flag indicating if the client identifiers should
@@ -1310,6 +1310,24 @@ public:
                                       CfgGlobals::BOOT_FILE_NAME));
     }
 
+    /// @brief Sets offer lifetime for the network.
+    ///
+    /// Will be used for the offer lifetime (may be empty if not defined)
+    void setOfferLft(const util::Optional<uint32_t>& offer_lft) {
+        offer_lft_ = offer_lft;
+    }
+
+    /// @brief Returns offer lifetime for the network
+    ///
+    /// @param inheritance inheritance mode to be used.
+    /// @return offer lifetime value
+    util::Optional<uint32_t>
+    getOfferLft(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network4>(&Network4::getOfferLft, offer_lft_,
+                                      inheritance,
+                                      CfgGlobals::OFFER_LFT));
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1330,15 +1348,21 @@ private:
     /// @brief Should requests for unknown IP addresses be rejected.
     util::Optional<bool> authoritative_;
 
-    /// @brief siaddr value for this subnet
+    /// @brief siaddr value for this network
     util::Optional<asiolink::IOAddress> siaddr_;
 
-    /// @brief server hostname for this subnet
+    /// @brief server hostname for this network
     util::Optional<std::string> sname_;
 
-    /// @brief boot file name for this subnet
+    /// @brief boot file name for this network
     util::Optional<std::string> filename_;
+
+    /// @brief offer lifetime for this network
+    util::Optional<uint32_t> offer_lft_;
 };
+
+/// @brief Pointer to the @ref Network4 object.
+typedef boost::shared_ptr<Network4> Network4Ptr;
 
 class Network6;
 

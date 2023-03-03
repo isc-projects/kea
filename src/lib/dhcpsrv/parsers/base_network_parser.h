@@ -130,6 +130,16 @@ protected:
     /// to be stored.
     void parsePdAllocatorParams(const data::ConstElementPtr& network_data,
                                 Network6Ptr& network);
+
+    /// @brief Parses offer-lft parameter (v4 only)
+    ///
+    /// @param network_data Data element holding shared network
+    /// configuration to be parsed.
+    /// @param [out] network Pointer to the v4 network in which parsed data is
+    /// to be stored.
+    /// @throw DhcpConfigError if the value is less than 0.
+    void parseOfferLft(const data::ConstElementPtr& network_data,
+                       Network4Ptr& network);
 };
 
 } // end of namespace isc::dhcp

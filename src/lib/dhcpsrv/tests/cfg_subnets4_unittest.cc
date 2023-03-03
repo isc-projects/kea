@@ -1059,6 +1059,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet2->setValid(Triplet<uint32_t>(100));
     subnet2->setStoreExtendedInfo(true);
     subnet2->setCacheMaxAge(80);
+    subnet2->setOfferLft(99);
 
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
@@ -1131,7 +1132,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ],\n"
         "    \"store-extended-info\": true,\n"
-        "    \"cache-max-age\": 80\n"
+        "    \"cache-max-age\": 80,\n"
+        "    \"offer-lft\": 99\n"
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"192.0.2.128/26\",\n"

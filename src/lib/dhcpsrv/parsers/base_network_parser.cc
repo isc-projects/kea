@@ -298,5 +298,21 @@ BaseNetworkParser::parsePdAllocatorParams(const data::ConstElementPtr& network_d
     }
 }
 
+void
+BaseNetworkParser::parseOfferLft(const data::ConstElementPtr& network_data,
+                                        Network4Ptr& network) {
+    if (network_data->contains("offer-lft")) {
+        auto value = getInteger(network_data, "offer-lft");
+        if (value < 0) {
+            isc_throw(DhcpConfigError, "the value of offer-lft '"
+                      << value << "' must be a positive number ("
+                      << getPosition("offer-lft", network_data) << ")");
+        }
+
+        network->setOfferLft(value);
+    }
+}
+
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

@@ -320,6 +320,11 @@ Network4::toElement() const {
         map->set("boot-file-name",Element::create(filename_.get()));
     }
 
+    // Set offer-lft
+    if (!offer_lft_.unspecified()) {
+        map->set("offer-lft",Element::create(offer_lft_.get()));
+    }
+
     return (map);
 }
 

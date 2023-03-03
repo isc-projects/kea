@@ -959,6 +959,17 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse lease cache parameters
     parseCacheParams(params, network);
+
+    // Set the offer_lft value for the subnet.
+    if (params->contains("offer-lft")) {
+        uint32_t offer_lft = getInteger(params, "offer-lft");
+        subnet4->setOfferLft(offer_lft);
+    }
+
+    // Parse offer-lft parameter.
+    Network4Ptr network4 = boost::dynamic_pointer_cast<Network4>(subnet4);
+    parseOfferLft(params, network4);
+
 }
 
 void

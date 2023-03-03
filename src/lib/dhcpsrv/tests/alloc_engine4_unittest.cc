@@ -5653,6 +5653,67 @@ TEST_F(PgSqlAllocEngine4Test, bootpDelete) {
 }
 #endif
 
+// Verifies that offer_lft is non-zero, that an offered lease is stored
+// in the lease database.
+// @todo Currently fails, enable when offer-lft is functional.
+TEST_F(AllocEngine4Test, DISABLED_discoverOfferLft) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Get rid of the default test configuration.
+    cfg_mgr.clear();
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+
+    // Set subnet's offer-lft to a non-zero, positive value.
+    uint32_t offer_lft = (subnet_->getValid() / 3);
+    subnet_->setOfferLft(offer_lft);
+    ASSERT_EQ(offer_lft, subnet_->getOfferLft().get());
+
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Ask for any address
+    AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
+                                     IOAddress("0.0.0.0"), true, true,
+                                     "one", true);
+    ctx1.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Check that we got that single lease
+    Lease4Ptr lease = engine->allocateLease4(ctx1);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+    EXPECT_EQ(offer_lft, lease->valid_lft_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+
+    // Check that the lease has been stored by LeaseMgr.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(offer_lft, from_mgr->valid_lft_);
+    EXPECT_FALSE(from_mgr->fqdn_fwd_);
+    EXPECT_FALSE(from_mgr->fqdn_rev_);
+
+    // Try to discover an address for a second client.
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+
+    // Ask for any address.
+    AllocEngine::ClientContext4 ctx2(subnet_, ClientIdPtr(), hwaddr2,
+                                     IOAddress("0.0.0.0"), true, true,
+                                     "two", true);
+    ctx2.query_.reset(new Pkt4(DHCPDISCOVER, 1235));
+
+    // Verify that we did not get a lease.
+    lease = engine->allocateLease4(ctx1);
+    ASSERT_FALSE(lease);
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc

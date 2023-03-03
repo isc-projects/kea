@@ -781,6 +781,10 @@
                 // to be sent in 'siaddr'.
                 "next-server": "192.0.2.123",
 
+                // If greater than zero, it is the lifetime of leases temporarily allocated
+                // on DISCOVER.  When zero (the default) leases are not allocated on DISCOVER.
+                "offer-lft" : 60,
+
                 // List of shared network specific DHCP options.
                 "option-data": [],
 
@@ -915,6 +919,10 @@
                         // Subnet level specification of the next server to be sent
                         // in 'siaddr'.
                         "next-server": "0.0.0.0",
+
+                        // If greater than zero, it is the lifetime of leases temporarily allocated
+                        // on DISCOVER.  When zero (the default) leases are not allocated on DISCOVER.
+                        "offer-lft" : 60,
 
                         // Turn on storage of extended information (e.g. relay agent
                         // information) with each lease for this subnet.
@@ -1219,6 +1227,10 @@
                 "severity": "INFO"
             }
         ],
+
+        // If greater than zero, it is the lifetime of leases temporarily allocated
+        // on DISCOVER.  When zero (the default) leases are not allocated on DISCOVER.
+        "offer-lft" : 60,
 
         // Look at advanced example for the use of user-contexts.
         "user-context": { }

@@ -201,6 +201,10 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
         // Parse allocator params.
         parseAllocatorParams(shared_network_data, network);
 
+        // Parse offer-lft parameter.
+        Network4Ptr network4 = boost::dynamic_pointer_cast<Network4>(shared_network);
+        parseOfferLft(shared_network_data, network4);
+
     } catch (const DhcpConfigError&) {
         // Position was already added
         throw;

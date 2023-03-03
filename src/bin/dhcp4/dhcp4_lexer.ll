@@ -2093,6 +2093,16 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"offer-lft\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_OFFER_LFT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("offer-lft", driver.loc_);
+    }
+}
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.

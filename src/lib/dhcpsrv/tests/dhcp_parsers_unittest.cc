@@ -425,7 +425,8 @@ public:
             // If error was reported, the error string should contain
             // position of the data element which caused failure.
             if (rcode_ != 0) {
-                EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+                EXPECT_TRUE(errorContainsPosition(status, "<string>"))
+                            << "error text:" << error_text_;
             }
         }
 
@@ -2814,6 +2815,9 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
 
     auto allocator = subnet->getAllocator(Lease::TYPE_V4);
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+
+    EXPECT_TRUE(subnet->getOfferLft().unspecified());
+    EXPECT_EQ(0, subnet->getOfferLft().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -3008,6 +3012,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
 
     EXPECT_TRUE(network->getAllocatorType().unspecified());
     EXPECT_TRUE(network->getAllocatorType().get().empty());
+
+    EXPECT_TRUE(network->getOfferLft().unspecified());
+    EXPECT_EQ(0, network->getOfferLft().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 shared network
@@ -3418,5 +3425,42 @@ TEST_F(ParseConfigTest, selfEncapsulationTest) {
     CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
     cfg.runCfgOptionsTest(family_, config);
 }
+
+// This test verifies parsing offer-lft for Subnet4.
+TEST_F(ParseConfigTest, subnet4OfferLft) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 123,"
+        "        \"offer-lft\": 888"
+        "    } ]"
+        "}";
+
+    int rcode = parseConfiguration(config, false, false);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getBySubnetId(123);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getOfferLft().unspecified());
+    EXPECT_EQ(888, subnet->getOfferLft().get());
+}
+
+// This test verifies parsing invalid offer-lft for Subnet4.
+TEST_F(ParseConfigTest, subnet4InvalidOfferLft) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 123,"
+        "        \"offer-lft\": -77"
+        "    } ]"
+        "}";
+
+    int rcode = parseConfiguration(config, false, false);
+    ASSERT_NE(0, rcode);
+}
+
 
 }  // Anonymous namespace

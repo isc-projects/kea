@@ -209,6 +209,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
     network1->setHostnameCharSet("[^A-Z]");
     network1->setHostnameCharReplacement("x");
     network1->setCacheThreshold(.20);
+    network1->setOfferLft(77);
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
@@ -270,7 +271,8 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"t2-percent\": .655,\n"
         "    \"hostname-char-replacement\": \"x\",\n"
         "    \"hostname-char-set\": \"[^A-Z]\",\n"
-        "    \"cache-threshold\": .20\n"
+        "    \"cache-threshold\": .20,\n"
+        "    \"offer-lft\": 77\n"
         "  }\n"
         "]\n";
 
