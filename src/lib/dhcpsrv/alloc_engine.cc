@@ -3323,10 +3323,11 @@ AllocEngine::ClientContext4::ClientContext4()
       subnet_(), clientid_(), hwaddr_(),
       requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
       fwd_dns_update_(false), rev_dns_update_(false),
-      hostname_(""), callout_handle_(), fake_allocation_(false),
+      hostname_(""), callout_handle_(), fake_allocation_(false), offer_lft_(0),
       old_lease_(), new_lease_(), hosts_(), conflicting_lease_(),
       query_(), host_identifiers_(), unknown_requested_addr_(false),
       ddns_params_() {
+
 }
 
 AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
@@ -3336,13 +3337,14 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
                                             const bool fwd_dns_update,
                                             const bool rev_dns_update,
                                             const std::string& hostname,
-                                            const bool fake_allocation)
+                                            const bool fake_allocation,
+                                            const uint32_t offer_lft)
     : early_global_reservations_lookup_(false),
       subnet_(subnet), clientid_(clientid), hwaddr_(hwaddr),
       requested_address_(requested_addr),
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
-      fake_allocation_(fake_allocation), old_lease_(), new_lease_(),
+      fake_allocation_(fake_allocation), offer_lft_(offer_lft), old_lease_(), new_lease_(),
       hosts_(), host_identifiers_(), unknown_requested_addr_(false),
       ddns_params_(new DdnsParams()) {
 
@@ -3424,7 +3426,6 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
 
         if (ctx.fake_allocation_) {
             return (discoverLease4(ctx));
-
         } else {
             ctx.new_lease_ = requestLease4(ctx);
         }
@@ -3559,6 +3560,9 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // not be continued.
     Lease4Ptr client_lease;
     findClientLease(ctx, client_lease);
+
+    // Fetch offer_lft to see if we're allocating on DISCOVER.
+    ctx.offer_lft_ = getOfferLft(ctx);
 
     // new_lease will hold the pointer to the lease that we will offer to the
     // caller.
@@ -3857,8 +3861,47 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
 }
 
 uint32_t
-AllocEngine::getValidLft(const ClientContext4& ctx) {
+AllocEngine::getOfferLft(const ClientContext4& ctx) {
+    // Not a DISCOVER or it's BOOTP, punt.
+    if ((!ctx.fake_allocation_) || (ctx.query_->inClass("BOOTP"))) {
+        return (0);
+    }
 
+    util::Optional<uint32_t> offer_lft;
+
+#if 0
+    /// @todo TKM need this when we add offer-lst to client class.
+    // If specified in one of our classes use it.
+    // We use the first one we find.
+    const ClientClasses classes = ctx.query_->getClasses();
+    if (!classes.empty()) {
+        // Let's get class definitions
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+
+        // Iterate over the assigned class definitions.
+        for (ClientClasses::const_iterator name = classes.cbegin();
+             name != classes.cend(); ++name) {
+            ClientClassDefPtr cl = dict->findClass(*name);
+            if (cl && (!cl->getOfferLft().unspecified())) {
+                offer_lft = cl->getOfferLft();
+                break;
+            }
+        }
+    }
+#endif
+
+    // If no classes specified it, get it from the subnet.
+    if (offer_lft.unspecified()) {
+        offer_lft = ctx.subnet_->getOfferLft();
+    }
+
+    return (offer_lft.unspecified() ? 0 : offer_lft.get());
+}
+
+
+uint32_t
+AllocEngine::getValidLft(const ClientContext4& ctx) {
     // If it's BOOTP, use infinite valid lifetime.
     if (ctx.query_->inClass("BOOTP")) {
         return (Lease::INFINITY_LFT);
@@ -3919,8 +3962,8 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         isc_throw(BadValue, "Can't create a lease without a subnet");
     }
 
-    // Get the context appropriate valid lifetime.
-    uint32_t valid_lft = getValidLft(ctx);
+    // Get the context appropriate lifetime.
+    uint32_t valid_lft = (ctx.offer_lft_ ? ctx.offer_lft_ :  getValidLft(ctx));
 
     time_t now = time(NULL);
 
@@ -3967,6 +4010,9 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         // Is this solicit (fake = true) or request (fake = false)
         ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
 
+        // Are we allocating on DISCOVER? (i.e. offer_lft > 0).
+        ctx.callout_handle_->setArgument("offer_lft", ctx.offer_lft_);
+
         // Pass the intended lease as well
         ctx.callout_handle_->setArgument("lease4", lease);
 
@@ -3988,7 +4034,15 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         ctx.callout_handle_->getArgument("lease4", lease);
     }
 
-    if (!ctx.fake_allocation_) {
+    if (ctx.fake_allocation_ && ctx.offer_lft_) {
+        // Turn them off before we persist, so we'll see it as different when
+        // we extend it in the REQUEST.  This should cause us to do DDNS (if
+        // it's enabled).
+        lease->fqdn_fwd_ = false;
+        lease->fqdn_rev_ = false;
+    }
+
+    if (!ctx.fake_allocation_ || ctx.offer_lft_) {
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
         if (status) {
@@ -4015,7 +4069,6 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         }
     } else {
         // That is only fake (DISCOVER) allocation
-
         // It is for OFFER only. We should not insert the lease and callers
         // have already verified the lease does not exist in the database.
         return (lease);
@@ -4043,7 +4096,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         setLeaseReusable(lease, ctx);
     }
 
-    if (!ctx.fake_allocation_) {
+    if (!ctx.fake_allocation_  || ctx.offer_lft_) {
         // If the lease is expired we have to reclaim it before
         // re-assigning it to the client. The lease reclamation
         // involves execution of hooks and DNS update.
@@ -4103,7 +4156,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         /// DROP status does not make sense here.
     }
 
-    if (!ctx.fake_allocation_ && !skip && (lease->reuseable_valid_lft_ == 0)) {
+    if ((!ctx.fake_allocation_ || ctx.offer_lft_) && !skip && (lease->reuseable_valid_lft_ == 0)) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(lease);
 
@@ -4142,7 +4195,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         isc_throw(BadValue, "null subnet specified for the reuseExpiredLease");
     }
 
-    if (!ctx.fake_allocation_) {
+    if (!ctx.fake_allocation_ || ctx.offer_lft_) {
         // The expired lease needs to be reclaimed before it can be reused.
         // This includes declined leases for which probation period has
         // elapsed.
@@ -4184,6 +4237,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
 
         // Is this solicit (fake = true) or request (fake = false)
         ctx.callout_handle_->setArgument("fake_allocation", ctx.fake_allocation_);
+        ctx.callout_handle_->setArgument("offer_lft", ctx.offer_lft_);
 
         // The lease that will be assigned to a client
         ctx.callout_handle_->setArgument("lease4", expired);
@@ -4209,7 +4263,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         ctx.callout_handle_->getArgument("lease4", expired);
     }
 
-    if (!ctx.fake_allocation_) {
+    if (!ctx.fake_allocation_ || ctx.offer_lft_) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(expired);
 
@@ -4514,10 +4568,10 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     lease->cltt_ = time(NULL);
 
     // Get the context appropriate valid lifetime.
-    lease->valid_lft_ = getValidLft(ctx);
+    lease->valid_lft_ = (ctx.offer_lft_ ? ctx.offer_lft_ : getValidLft(ctx));
 
-    // Reduced valid lifetime is a significant change.
-    if (lease->valid_lft_ < lease->current_valid_lft_) {
+    // Valid lifetime has changed.
+    if (lease->valid_lft_ != lease->current_valid_lft_) {
         changed = true;
     }
 

@@ -5655,8 +5655,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpDelete) {
 
 // Verifies that offer_lft is non-zero, that an offered lease is stored
 // in the lease database.
-// @todo Currently fails, enable when offer-lft is functional.
-TEST_F(AllocEngine4Test, DISABLED_discoverOfferLft) {
+TEST_F(AllocEngine4Test, discoverOfferLft) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
@@ -5710,8 +5709,75 @@ TEST_F(AllocEngine4Test, DISABLED_discoverOfferLft) {
     ctx2.query_.reset(new Pkt4(DHCPDISCOVER, 1235));
 
     // Verify that we did not get a lease.
-    lease = engine->allocateLease4(ctx1);
+    lease = engine->allocateLease4(ctx2);
     ASSERT_FALSE(lease);
+}
+
+// Verifies that when offer_lft is non-zero, that an expired lease can
+// be reclaimed an offered correctly.
+TEST_F(AllocEngine4Test, discoverOfferLftReuseExpiredLease4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Get rid of the default test configuration.
+    cfg_mgr.clear();
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+
+    // Set subnet's offer-lft to a non-zero, positive value.
+    uint32_t offer_lft = (subnet_->getValid() / 3);
+    subnet_->setOfferLft(offer_lft);
+    ASSERT_EQ(offer_lft, subnet_->getOfferLft().get());
+
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Just a different hw/client-id for the second client
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
+    time_t now = time(NULL) - 500; // Allocated 500 seconds ago
+    Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
+                               495, now, subnet_->getID()));
+    // Copy the lease, so as it can be compared with the old lease returned
+    // by the allocation engine.
+    Lease4 original_lease(*lease);
+
+    // Lease was assigned 500 seconds ago, but its valid lifetime is 495, so it
+    // is expired already
+    ASSERT_TRUE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // CASE 1: Asking for any address
+    AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
+                                     IOAddress("0.0.0.0"), false, false,
+                                     "", true);
+    ctx1.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    lease = engine->allocateLease4(ctx1);
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+    EXPECT_EQ(offer_lft, lease->valid_lft_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+
+    // We are reusing expired lease, the old (expired) instance should be
+    // returned. The returned instance should be the same as the original
+    // lease.
+    ASSERT_TRUE(ctx1.old_lease_);
+    EXPECT_TRUE(original_lease == *ctx1.old_lease_);
+
+    // Check that the lease has been stored by LeaseMgr.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(offer_lft, from_mgr->valid_lft_);
+    EXPECT_FALSE(from_mgr->fqdn_fwd_);
+    EXPECT_FALSE(from_mgr->fqdn_rev_);
 }
 
 }  // namespace test

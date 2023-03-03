@@ -2855,8 +2855,12 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         }
 
         // IP Address Lease time (type 51)
-        OptionPtr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
-                                       lease->valid_lft_));
+        // If we're not allocating on discover  then we just sent the lifetime on the lease.
+        // Otherwise (i.e. offer_lft > 0), the lease's lifetime has been set to offer_lft but
+        // we want to send the client the proper valid lifetime so we have to fetch it.
+        auto send_lft = (ctx->offer_lft_ ? AllocEngine::getValidLft(*ctx) : lease->valid_lft_);
+        OptionPtr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, send_lft));
+
         resp->addOption(opt);
 
         // Subnet mask (type 1)
@@ -2964,7 +2968,8 @@ Dhcpv4Srv::postAllocateNameUpdate(const AllocEngine::ClientContext4Ptr& ctx, con
         // any potential exceptions (e.g. invalid lease database backend
         // implementation) and log an error.
         try {
-            if (!ctx->fake_allocation_) {
+            /// TKM - do this on committed-discover
+            if (!ctx->fake_allocation_ || (ctx->offer_lft_ > 0)) {
                 // The lease can't be reused.
                 lease->reuseable_valid_lft_ = 0;
 

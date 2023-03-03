@@ -551,6 +551,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease4");
+    expected_argument_names.push_back("offer_lft");
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("subnet4");
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);

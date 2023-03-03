@@ -1266,6 +1266,10 @@ public:
         /// update existing lease.
         bool fake_allocation_;
 
+        /// @brief If not zero, then we will allocate on DISCOVER for this
+        /// amount of time.
+        uint32_t offer_lft_;
+
         /// @brief A pointer to an old lease that the client had before update.
         Lease4Ptr old_lease_;
 
@@ -1355,12 +1359,14 @@ public:
         /// @param fake_allocation Is this real i.e. REQUEST (false)
         ///      or just picking an address for DISCOVER that is not really
         ///      allocated (true)
+        /// @param offer_lft When not zero, leases ARE allocated on DISCOVER and use
+        /// this value as lease lifetime.
         ClientContext4(const Subnet4Ptr& subnet, const ClientIdPtr& clientid,
                        const HWAddrPtr& hwaddr,
                        const asiolink::IOAddress& requested_addr,
                        const bool fwd_dns_update, const bool rev_dns_update,
-                       const std::string& hostname, const bool fake_allocation);
-
+                       const std::string& hostname, const bool fake_allocation,
+                       const uint32_t offer_lft = 0);
         private:
             /// @brief Contains a pointer to the DDNS parameters for selected
             /// subnet.  Set by the first call to getDdnsParams() made when
@@ -1522,6 +1528,21 @@ public:
     /// @param ctx Client context holding various information about the client.
     /// @return unsigned integer value of the valid lifetime to use.
     static uint32_t getValidLft(const ClientContext4& ctx);
+
+    /// @brief Returns the offer lifetime based on the v4 context
+    ///
+    /// If the client query is a BOOTP query or something other than
+    /// DHCPDISCOVER, return 0.
+    ///
+    /// @todo Classes not supported yet.
+    /// Otherwise, the value will be selected from the first
+    /// class matched to the query which defines it or from the subnet
+    /// if none do. Classes are searched in the order they are assigned
+    /// to the query.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    /// @return unsigned integer value of the offer lifetime to use.
+    static uint32_t getOfferLft(const ClientContext4& ctx);
 
 private:
 
