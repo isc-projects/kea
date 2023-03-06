@@ -185,16 +185,7 @@ enum DHCPv6StatusCode {
 // STATUS_OutdatedBindingInformation = 19,
 // STATUS_ServerShuttingDown         = 20,
 // STATUS_DNSUpdateNotSupported      = 21,
-// STATUS_ExcessiveTimeSkew          = 22,
-
-// The following are EXPERIMENTAL and may change when IANA assigns official
-// values.
-/* secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08) */
-/* temporary values for hackathon 93 */
-   STATUS_AlgorithmNotSupported     = 705,
-   STATUS_AuthenticationFail        = 706,
-   STATUS_TimestampFail             = 707,
-   STATUS_SignatureFail             = 708
+// STATUS_ExcessiveTimeSkew          = 22
 };
 
 /*
