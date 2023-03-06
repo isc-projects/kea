@@ -73,13 +73,8 @@ Kea 2.3.5 (development) released on February 22, 2023
 	configuration error.
 	(Gitlab #2677)
 
-<<<<<<< HEAD
-2096.	[bug]		[tmark]
-	Fixed a bug which allowed options to be added to themselves
-=======
 2096.	[bug]		tmark
 	Corrected a bug which allowed options to be added to themselves
->>>>>>> c35373e401 ([#467] Added a ChangeLog entry)
 	as suboptions.
 	(Gitlab #2538)
 
