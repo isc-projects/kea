@@ -119,19 +119,23 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
         CfgOptionPtr opts = host->getCfgOption4();
         OptionDescriptor desc =
             createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                       true, formatted, "my-boot-file");
+                                       true, false, formatted, "my-boot-file");
         desc.setContext(user_context);
         opts->add(desc, DHCP4_OPTION_SPACE);
         opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
-                                            false, formatted, 64),
+                                            false, false, formatted, 64),
                   DHCP4_OPTION_SPACE);
-        opts->add(createOption<OptionUint32>(Option::V4, 1, false, formatted, 312131),
+        opts->add(createOption<OptionUint32>(Option::V4, 1, false, false,
+                                             formatted, 312131),
                   "vendor-encapsulated-options");
-        opts->add(createAddressOption<Option4AddrLst>(254, false, formatted,
-                                                      "192.0.2.3"), DHCP4_OPTION_SPACE);
-        opts->add(createEmptyOption(Option::V4, 1, true), "isc");
-        opts->add(createAddressOption<Option4AddrLst>(2, false, formatted, "10.0.0.5",
-                                                      "10.0.0.3", "10.0.3.4"), "isc");
+        opts->add(createAddressOption<Option4AddrLst>(254, false, false,
+                                                      formatted, "192.0.2.3"),
+                  DHCP4_OPTION_SPACE);
+        opts->add(createEmptyOption(Option::V4, 1, true, false), "isc");
+        opts->add(createAddressOption<Option4AddrLst>(2, false, false,
+                                                      formatted, "10.0.0.5",
+                                                      "10.0.0.3", "10.0.3.4"),
+                  "isc");
 
         // Add definitions for DHCPv4 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
@@ -149,20 +153,22 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
         CfgOptionPtr opts = host->getCfgOption6();
         OptionDescriptor desc =
             createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
-                                       true, formatted, "my-boot-file");
+                                       true, false, formatted, "my-boot-file");
         desc.setContext(user_context);
         opts->add(desc, DHCP6_OPTION_SPACE);
         opts->add(createOption<OptionUint32>(Option::V6, D6O_INFORMATION_REFRESH_TIME,
-                                             false, formatted, 3600),
+                                             false, false, formatted, 3600),
                   DHCP6_OPTION_SPACE);
-        opts->add(createVendorOption(Option::V6, false, formatted, 2495),
+        opts->add(createVendorOption(Option::V6, false, false, formatted, 2495),
                   DHCP6_OPTION_SPACE);
-        opts->add(createAddressOption<Option6AddrLst>(1024, false, formatted,
-                                                      "2001:db8:1::1"),
+        opts->add(createAddressOption<Option6AddrLst>(1024, false, false,
+                                                      formatted, "2001:db8:1::1"),
                   DHCP6_OPTION_SPACE);
-        opts->add(createEmptyOption(Option::V6, 1, true), "isc2");
-        opts->add(createAddressOption<Option6AddrLst>(2, false, formatted, "3000::1",
-                                                      "3000::2", "3000::3"), "isc2");
+        opts->add(createEmptyOption(Option::V6, 1, true, false), "isc2");
+        opts->add(createAddressOption<Option6AddrLst>(2, false, false,
+                                                      formatted, "3000::1",
+                                                      "3000::2", "3000::3"),
+                  "isc2");
 
         // Add definitions for DHCPv6 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
@@ -532,7 +538,7 @@ GenericHostDataSourceTest::testGetAllbyHostnameSubnet4() {
     CfgOptionPtr opts = host2->getCfgOption4();
     OptionDescriptor desc =
         createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                   true, false, "my-boot-file");
+                                   true, false, false, "my-boot-file");
     opts->add(desc, DHCP4_OPTION_SPACE);
 
     HostPtr host3 = HostDataSourceUtils::initializeHost4("192.0.2.3", id);
@@ -615,7 +621,7 @@ GenericHostDataSourceTest::testGetAllbyHostnameSubnet6() {
     CfgOptionPtr opts = host2->getCfgOption6();
     OptionDescriptor desc =
         createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
-                                   true, true, "my-boot-file");
+                                   true, false, true, "my-boot-file");
     opts->add(desc, DHCP6_OPTION_SPACE);
 
     HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3", id, false);
@@ -803,12 +809,12 @@ GenericHostDataSourceTest::testGetPageLimit4(const Host::IdentifierType& id) {
         CfgOptionPtr opts = host->getCfgOption4();
         OptionDescriptor desc =
             createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                       true, false, "my-boot-file");
+                                       true, false, false, "my-boot-file");
         opts->add(desc, DHCP4_OPTION_SPACE);
         opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
-                                            false, false, 64 + i),
+                                            false, true, false, 64 + i),
                   DHCP4_OPTION_SPACE);
-        opts->add(createEmptyOption(Option::V4, 1, true), "isc");
+        opts->add(createEmptyOption(Option::V4, 1, true, true), "isc");
 
         ASSERT_NO_THROW(hdsptr_->add(host));
     }
@@ -871,14 +877,14 @@ GenericHostDataSourceTest::testGetPageLimit6(const Host::IdentifierType& id) {
         CfgOptionPtr opts = host->getCfgOption6();
         OptionDescriptor desc =
             createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
-                                       true, false, "my-boot-file");
+                                       true, false, false, "my-boot-file");
         opts->add(desc, DHCP6_OPTION_SPACE);
         opts->add(createOption<OptionUint32>(Option::V6,
                                              D6O_INFORMATION_REFRESH_TIME,
-                                             false, false, 3600 + i),
+                                             false, true, false, 3600 + i),
                   DHCP6_OPTION_SPACE);
         opts->add(createAddressOption<Option6AddrLst>(D6O_SIP_SERVERS_ADDR,
-                                                      false, false,
+                                                      false, false, false,
                                                       addr.toText()),
                   DHCP6_OPTION_SPACE);
 

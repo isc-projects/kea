@@ -337,21 +337,24 @@ TEST_F(Dhcp4CBTest, mergeOptions) {
     // Add host-name to the first backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionString>(Option::V4, DHO_HOST_NAME,
-                                         true, false, "new.example.com")));
+                                         true, false, false,
+                                         "new.example.com")));
     opt->space_name_ = DHCP4_OPTION_SPACE;
     db1_->createUpdateOption4(ServerSelector::ALL(), opt);
 
     // Add boot-file-name to the first backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                         true, false, "my-boot-file")));
+                                         true, false, false,
+                                         "my-boot-file")));
     opt->space_name_ = DHCP4_OPTION_SPACE;
     db1_->createUpdateOption4(ServerSelector::ALL(), opt);
 
     // Add boot-file-name to the second backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                         true, false, "your-boot-file")));
+                                         true, false, false,
+                                         "your-boot-file")));
     opt->space_name_ = DHCP4_OPTION_SPACE;
     db2_->createUpdateOption4(ServerSelector::ALL(), opt);
 

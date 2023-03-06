@@ -1141,7 +1141,8 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
         "\"option-data\": ["
         "    {    \"name\": \"ipv6-forwarding\", "
         "         \"data\": \"false\", "
-        "         \"always-send\": true } ], "
+        "         \"always-send\": true, "
+        "         \"never-send\": false } ], "
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
         "    \"subnet\": \"2001:db8:1::/48\", "
@@ -1149,7 +1150,8 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"false\", "
-        "             \"always-send\": false } ] } ] }";
+        "             \"always-send\": false, "
+        "             \"never-send\": false } ] } ] }";
     ASSERT_NO_THROW(configure(config));
 
     // Create a packet with enough to select the subnet and go through
@@ -1180,6 +1182,70 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
     // Global sets the value to true/1, subnet to false/0
     // Here subnet has the priority
     EXPECT_EQ(0, opt->getUint8());
+}
+
+// Checks class never-send options have the priority over everything else.
+TEST_F(ClassifyTest, classNeverSend) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Subnet sets an ipv6-forwarding option in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    // Note the cancellation flag follows a "OR" semantic so to set
+    // it to false (or to leave the default) has no effect.
+    std::string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"option-data\": ["
+        "    {    \"name\": \"ipv6-forwarding\", "
+        "         \"data\": \"false\", "
+        "         \"always-send\": true, "
+        "         \"never-send\": false } ], "
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"always-send\": false, "
+        "             \"never-send\": true } ] } ] }";
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr query = createSolicit();
+
+    // Do not add an ORO.
+    OptionPtr oro = query->getOption(D6O_ORO);
+    EXPECT_FALSE(oro);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Process the query
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv.earlyGHRLookup(query, ctx);
+    ASSERT_FALSE(drop);
+    srv.initContext(query, ctx,  drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr response = srv.processSolicit(ctx);
+
+    // Processing should not add an ip-forwarding option
+    EXPECT_FALSE(response->getOption(2345));
 }
 
 // Checks if the client-class field is indeed used for subnet selection.

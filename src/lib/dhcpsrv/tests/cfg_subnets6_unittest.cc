@@ -975,7 +975,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     std::string value("Yay!");
     OptionPtr option(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 3b updates subnet 3 with different UD and removes it
     // from network 2
@@ -986,7 +986,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value = "Team!";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 4b updates subnet 4 and moves it from network2 to network 1
     Subnet6Ptr subnet4b(new Subnet6(IOAddress("2001:4::"),
@@ -1004,7 +1004,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value = "POOLS";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add pool 2
@@ -1012,7 +1012,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value ="RULE!";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add subnets to the merge from config.

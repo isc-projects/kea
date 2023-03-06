@@ -159,14 +159,15 @@ TEST(Pool4Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "dhcp4"));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false,
+                                                  "dhcp4"));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp4 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     }
 
     // Get options from the pool and check if all 10 are there.
@@ -583,14 +584,15 @@ TEST(Pool6Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false,
+                                                  "dhcp6"));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     }
 
     // Get options from the pool and check if all 10 are there.

@@ -511,14 +511,16 @@ const SimpleDefaults ParseConfigTest::OPTION4_DEF_DEFAULTS = {
 const SimpleDefaults ParseConfigTest::OPTION6_DEFAULTS = {
     { "space",        Element::string,  "dhcp6"},
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean,"false"}
+    { "always-send",  Element::boolean,"false"},
+    { "never-send",   Element::boolean,"false"}
 };
 
 /// This table defines default values for options in DHCPv4
 const SimpleDefaults ParseConfigTest::OPTION4_DEFAULTS = {
     { "space",        Element::string,  "dhcp4"},
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean, "false"}
+    { "always-send",  Element::boolean, "false"},
+    { "never-send",   Element::boolean, "false"}
 };
 
 /// This table defines default values for both DHCPv4 and DHCPv6

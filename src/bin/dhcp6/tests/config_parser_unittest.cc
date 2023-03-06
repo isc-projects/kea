@@ -638,7 +638,7 @@ public:
             ADD_FAILURE() << "A subnet for the specified address "
                           << subnet_address
                           << " does not exist in Config Manager";
-            return (OptionDescriptor(false));
+            return (OptionDescriptor(false, false));
         }
         OptionContainerPtr options =
             subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
@@ -664,7 +664,7 @@ public:
                           << subnet_address.toText() << "'. Expected "
                 " at most one option";
         } else if (std::distance(range.first, range.second) == 0) {
-            return (OptionDescriptor(OptionPtr(), false));
+            return (OptionDescriptor(OptionPtr(), false, false));
         }
 
         return (*range.first);

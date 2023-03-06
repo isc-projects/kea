@@ -151,7 +151,8 @@ protected:
     /// @param parent A data element holding full option data configuration.
     /// @return Option data as a string. It will return empty string if
     /// option data is unspecified.
-    std::string extractData(data::ConstElementPtr parent) const;
+    util::Optional<std::string>
+    extractData(data::ConstElementPtr parent) const;
 
     /// @brief Retrieves option space name.
     ///
@@ -168,6 +169,11 @@ protected:
     ///
     /// @return Value of the persistent parameter, possibly unspecified.
     util::Optional<bool> extractPersistent(data::ConstElementPtr parent) const;
+
+    /// @brief Retrieves cancelled/never-send parameter as an optional value.
+    ///
+    /// @return Value of the cancelled parameter, possibly unspecified.
+    util::Optional<bool> extractCancelled(data::ConstElementPtr parent) const;
 
     /// @brief Address family: @c AF_INET or @c AF_INET6.
     uint16_t address_family_;

@@ -143,7 +143,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "13.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "14.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -760,6 +760,18 @@ pgsql_upgrade_12_to_13_test() {
     done
 }
 
+pgsql_upgrade_13_to_14_test() {
+    # Added cancelled column to dhcp4_options
+    run_command \
+        pgsql_execute "select cancelled from dhcp4_options;"
+    assert_eq 0 "${EXIT_CODE}" "dhcp4_options is missing cancelled column. (expected status  code %d, returned %d)"
+
+    # Added cancelled column to dhcp6_options
+    run_command \
+        pgsql_execute "select cancelled from dhcp6_options;"
+    assert_eq 0 "${EXIT_CODE}" "dhcp6_options is missing cancelled column. (expected status  code %d, returned %d)"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -777,7 +789,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "13.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "14.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0
@@ -811,6 +823,9 @@ pgsql_upgrade_test() {
 
     # Check 12 to 13 upgrade
     pgsql_upgrade_12_to_13_test
+
+    # Check 13 to 14 upgrade
+    pgsql_upgrade_13_to_14_test
 
     # Let's wipe the whole database
     pgsql_wipe

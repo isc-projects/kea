@@ -1327,6 +1327,116 @@ TEST_F(VendorOptsTest, vendorOptionsOROAndPersistentMultipleOptionDifferentVendo
                                       { 32768, 16384 },
                                       {},
                                       { DOCSIS3_V4_TFTP_SERVERS, 22 });
+// This test checks if cancelled options are actually never assigned.
+TEST_F(VendorOptsTest, vendorCancelledOptions) {
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr x;
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "    \"option-def\": [ {"
+        "          \"space\": \"vendor-4491\","
+        "          \"name\": \"foo\","
+        "          \"code\": 100,"
+        "          \"type\": \"string\""
+        "        } ],"
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"192.0.2.1, 192.0.2.2\","
+        "          \"csv-format\": true,"
+        "          \"always-send\": true"
+        "        },{"
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 100,"
+        "          \"csv-format\": true,"
+        "          \"data\": \"bar\""
+        "        } ],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\", "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"never-send\": true"
+        "        } ]"
+        " } ]"
+        "}";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_) << comment_->str();
+
+    CfgMgr::instance().commit();
+
+    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr and hops to non-zero address as if it was relayed.
+    dis->setGiaddr(IOAddress("192.0.2.1"));
+    dis->setHops(1);
+
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    // Set interface. It is required by the server to generate server id.
+    dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
+
+    // Let's add a vendor-option (vendor-id=4491).
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    dis->addOption(vendor);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // check if we get response at all
+    ASSERT_TRUE(offer);
+
+    // There should be no vendor option response.
+    EXPECT_FALSE(offer->getOption(DHO_VIVSO_SUBOPTIONS));
+
+    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+    // That suboption has code 1 and is a docsis ORO option.
+    boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
+                                                                        DOCSIS3_V4_ORO));
+    vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 2.
+    vendor->addOption(vendor_oro);
+
+    // Need to process DHCPDISCOVER again after requesting new option.
+    offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Again there should be no vendor option response.
+    EXPECT_FALSE(offer->getOption(DHO_VIVSO_SUBOPTIONS));
+
+    // Request option 100.
+    vendor_oro->addValue(100);
+
+    // Try again.
+    offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if there is a vendor option response
+    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    // No tftp-servers.
+    EXPECT_FALSE(vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS));
+
+    // But an option 100.
+    EXPECT_EQ(1, vendor_resp->getOptions().size());
+    EXPECT_TRUE(vendor_resp->getOption(100));
 }
 
 // Test checks whether it is possible to use option definitions defined in

@@ -1311,6 +1311,120 @@ TEST_F(VendorOptsTest, vendorOptionsOROAndPersistentMultipleOptionDifferentVendo
                                       { DOCSIS3_V6_CONFIG_FILE, 12 });
 }
 
+// This test checks if cancellation (aka never-send) flag unconditionally
+// makes the server to never add the specified option.
+TEST_F(VendorOptsTest, vendorNeverSend) {
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-def\": [ {"
+        "        \"name\": \"config-file\","
+        "        \"code\": 33,"
+        "        \"type\": \"string\","
+        "        \"space\": \"vendor-4491\""
+        "     },"
+        "     {"
+        "        \"name\": \"vendor-name\","
+        "        \"code\": 10,"
+        "        \"type\": \"string\","
+        "        \"space\": \"vendor-4491\""
+        "     } ],"
+        "    \"option-data\": [ {"
+        "          \"name\": \"config-file\","
+        "          \"space\": \"vendor-4491\","
+        "          \"data\": \"normal_erouter_v6.cm\","
+        "          \"always-send\": true"
+        "     },"
+        "     {"
+        "          \"name\": \"vendor-name\","
+        "          \"space\": \"vendor-4491\","
+        "          \"data\": \"ISC\""
+        "        }],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"preferred-lifetime\": 3000,"
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\","
+        "    \"option-data\": [ {"
+        "           \"name\": \"config-file\","
+        "           \"space\": \"vendor-4491\","
+        "           \"never-send\": true"
+        "     } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(configure(config));
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Let's add a vendor-option (vendor-id=4491).
+    OptionPtr vendor(new OptionVendor(Option::V6, 4491));
+    sol->addOption(vendor);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
+    srv_.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr adv = srv_.processSolicit(ctx);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // There is no vendor option response.
+    EXPECT_FALSE(adv->getOption(D6O_VENDOR_OPTS));
+
+    // Add again an ORO but requesting both 10 and 33.
+    sol->delOption(D6O_VENDOR_OPTS);
+    boost::shared_ptr<OptionUint16Array> vendor_oro2(new OptionUint16Array(Option::V6,
+                                                                          DOCSIS3_V6_ORO));
+    vendor_oro2->addValue(DOCSIS3_V6_VENDOR_NAME); // Request option 10
+    vendor_oro2->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33
+    OptionPtr vendor3(new OptionVendor(Option::V6, 4491));
+    vendor3->addOption(vendor_oro2);
+    sol->addOption(vendor3);
+
+    // Need to process SOLICIT again after requesting new option.
+    AllocEngine::ClientContext6 ctx3;
+    drop = !srv_.earlyGHRLookup(sol, ctx3);
+    ASSERT_FALSE(drop);
+    srv_.initContext(sol, ctx3, drop);
+    ASSERT_FALSE(drop);
+    adv = srv_.processSolicit(ctx3);
+    ASSERT_TRUE(adv);
+
+    // Check if there is vendor option response
+    OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    // Still no config-file (33) option.
+    EXPECT_FALSE(vendor_resp->getOption(33));
+
+    // But the vendor option response is not empty.
+    const OptionCollection& opts = vendor_resp->getOptions();
+    ASSERT_EQ(1, opts.size());
+    EXPECT_TRUE(vendor_resp->getOption(10));
+}
+
 // Test checks whether it is possible to use option definitions defined in
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {

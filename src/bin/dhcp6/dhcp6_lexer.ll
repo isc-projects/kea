@@ -1192,6 +1192,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"never-send\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DATA:
+        return isc::dhcp::Dhcp6Parser::make_NEVER_SEND(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("never-send", driver.loc_);
+    }
+}
+
 \"pools\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:

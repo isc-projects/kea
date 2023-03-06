@@ -1417,6 +1417,49 @@ The ``dns-servers`` option is always added to responses (the always-send is
 "sticky"), but the value is the subnet one when the client is localized
 in the subnet.
 
+At the opposite of ``always-send`` if the ``never-send`` flag is set to
+``true`` for a particular option the server does not add it to the response.
+The effect is the same as if the client removed the option code in the
+Option Request Option (or its equivalent for vendor options), as in:
+
+::
+
+   "Dhcp6": {
+       "option-data": [
+           {
+              "name": "dns-servers",
+              "data": "2001:db8::cafe, 2001:db8::babe"
+           },
+           ...
+       ],
+       "subnet6": [
+           {
+              "subnet": "2001:db8:1::/64",
+              "option-data": [
+                  {
+                      "name": "dns-servers",
+                      "never-send": true
+                  },
+                  ...
+              ],
+              ...
+           },
+           ...
+       ],
+       ...
+   }
+
+The ``dns-server`` option is never added to responses (the never-send is
+"sticky" too). The ``never-send`` is as the precedence over ``always-send``
+so if both are true the option is not added.
+
+.. note::
+
+   The ``never-send`` is less powerful than the :ref:`hooks-flex-option`,
+   for instance it has no effect on options managed by the server itself.
+   Both ``always-send`` and ``never-send`` has no effect too on options
+   which cannot be requested, for instance from a custom space.
+
 It is possible to override options on a per-subnet basis. If clients
 connected to most subnets are expected to get the same values of
 a given option, administrators should use global options; it is possible to override

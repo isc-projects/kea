@@ -732,7 +732,7 @@ PgSqlConfigBackendImpl::getOptions(const int index,
             OptionDescriptorPtr desc = processOptionRow(universe, worker, 0);
             if (desc) {
                 // server_tag for the global option
-                ServerTag last_option_server_tag(worker.getString(12));
+                ServerTag last_option_server_tag(worker.getString(13));
                 desc->setServerTag(last_option_server_tag.get());
 
                 // If we're fetching options for a given server (explicit server
@@ -776,7 +776,8 @@ PgSqlConfigBackendImpl::getOptions(const int index,
 
 OptionDescriptorPtr
 PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
-                                         PgSqlResultRowWorker& worker, size_t first_col) {
+                                         PgSqlResultRowWorker& worker,
+                                         size_t first_col) {
     // Some of the options have standard or custom definitions.
     // Depending whether the option has a definition or not a different
     // C++ class may be used to represent the option. Therefore, the
@@ -807,12 +808,21 @@ PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
         persistent = worker.getBool(first_col + 5);
     }
 
+    // Check if the option is cancelled.
+    bool cancelled = false;
+    if (!worker.isColumnNull(first_col + 6)) {
+        cancelled = worker.getBool(first_col + 6);
+    }
+
     // Create option descriptor which encapsulates our option and adds
     // additional information, i.e. whether the option is persistent,
     // its option space and timestamp.
-    OptionDescriptorPtr desc = OptionDescriptor::create(option, persistent, formatted_value);
+    OptionDescriptorPtr desc = OptionDescriptor::create(option,
+                                                        persistent,
+                                                        cancelled,
+                                                        formatted_value);
     desc->space_name_ = space;
-    desc->setModificationTime(worker.getTimestamp(first_col + 11));
+    desc->setModificationTime(worker.getTimestamp(first_col + 12));
 
     // Set database id for the option.
     // @todo Can this actually ever be null and if it is, isn't that an error?

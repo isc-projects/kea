@@ -562,6 +562,7 @@ public:
     /// - formatted_value,
     /// - space,
     /// - persistent,
+    /// - cancelled,
     /// - dhcp4_subnet_id/dhcp6_subnet_id,
     /// - scope_id,
     /// - user_context,

@@ -61,12 +61,14 @@ TEST_F(TranslatorOptionDataListTestv6, get) {
     const string& xoption = xpath + "/option-data[code='100'][space='dns']";
     const string& xformat = xoption + "/csv-format";
     const string& xdata = xoption + "/data";
-    const string& xsend = xoption + "/always-send";
+    const string& xalways = xoption + "/always-send";
+    const string& xnever = xoption + "/never-send";
     string const s_false("false");
     ASSERT_NO_THROW_LOG(sess_->setItem(xformat, s_false));
     string const s_data("12121212");
     ASSERT_NO_THROW_LOG(sess_->setItem(xdata, s_data));
-    ASSERT_NO_THROW_LOG(sess_->setItem(xsend, s_false));
+    ASSERT_NO_THROW_LOG(sess_->setItem(xalways, s_false));
+    ASSERT_NO_THROW_LOG(sess_->setItem(xnever, s_false));
     sess_->applyChanges();
 
     // Get the option data.
@@ -78,6 +80,7 @@ TEST_F(TranslatorOptionDataListTestv6, get) {
               " \"code\": 100,"
               " \"csv-format\": false,"
               " \"data\": \"12121212\","
+              " \"never-send\": false,"
               " \"space\": \"dns\""
               " }",
               option->str());
@@ -117,6 +120,7 @@ TEST_F(TranslatorOptionDataListTestv6, set) {
     option->set("csv-format", Element::create(false));
     option->set("data", Element::create("12121212"));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     options->add(option);
     EXPECT_NO_THROW_LOG(translator_->setOptionDataList(xpath, options));
 

@@ -42,7 +42,7 @@ typedef std::vector<OptionDescriptor> OptionDescriptorList;
 /// Option descriptor holds instance of an option and additional information
 /// for this option. This information comprises whether this option is sent
 /// to DHCP client only on request (persistent = false) or always
-/// (persistent = true).
+/// (persistent = true), or must never send (cancelled = true).
 class OptionDescriptor : public data::StampedElement, public data::UserContext {
 public:
     /// @brief Option instance.
@@ -53,6 +53,14 @@ public:
     /// If true, option is always sent to the client. If false, option is
     /// sent to the client when requested using ORO or PRL option.
     bool persistent_;
+
+    /// @brief Cancelled flag.
+    ///
+    /// If true, option is never sent to the client. If false, option is
+    /// sent when it should.
+    /// @note: When true the action of this flag is final i.e. it can't be
+    /// overridden at a more specific level and has precedence over persist.
+    bool cancelled_;
 
     /// @brief Option value in textual (CSV) format.
     ///
@@ -84,13 +92,14 @@ public:
     ///
     /// @param opt option instance.
     /// @param persist if true, option is always sent.
+    /// @param cancel if true, option is never sent.
     /// @param formatted_value option value in the textual format (optional).
     /// @param user_context user context (optional).
-    OptionDescriptor(const OptionPtr& opt, bool persist,
+    OptionDescriptor(const OptionPtr& opt, bool persist, bool cancel,
                      const std::string& formatted_value = "",
                      data::ConstElementPtr user_context = data::ConstElementPtr())
         : data::StampedElement(), option_(opt), persistent_(persist),
-          formatted_value_(formatted_value),
+          cancelled_(cancel), formatted_value_(formatted_value),
           space_name_() {
         setContext(user_context);
     };
@@ -98,9 +107,10 @@ public:
     /// @brief Constructor.
     ///
     /// @param persist if true option is always sent.
-    OptionDescriptor(bool persist)
+    /// @param cancel if true, option is never sent.
+    OptionDescriptor(bool persist, bool cancel)
         : data::StampedElement(), option_(OptionPtr()), persistent_(persist),
-          formatted_value_(), space_name_() {};
+          cancelled_(cancel), formatted_value_(), space_name_() {};
 
     /// @brief Copy constructor.
     ///
@@ -109,6 +119,7 @@ public:
         : data::StampedElement(desc),
           option_(desc.option_),
           persistent_(desc.persistent_),
+          cancelled_(desc.cancelled_),
           formatted_value_(desc.formatted_value_),
           space_name_(desc.space_name_) {
         setContext(desc.getContext());
@@ -123,6 +134,7 @@ public:
             data::StampedElement::operator=(other);
             option_ = other.option_;
             persistent_ = other.persistent_;
+            cancelled_ = other.cancelled_;
             formatted_value_ = other.formatted_value_;
             space_name_ = other.space_name_;
             setContext(other.getContext());
@@ -134,12 +146,14 @@ public:
     ///
     /// @param opt option instance.
     /// @param persist if true, option is always sent.
+    /// @param cancel if true, option is never sent.
     /// @param formatted_value option value in the textual format (optional).
     /// @param user_context user context (optional).
     ///
     /// @return Pointer to the @c OptionDescriptor instance.
     static OptionDescriptorPtr create(const OptionPtr& opt,
                                       bool persist,
+                                      bool cancel,
                                       const std::string& formatted_value = "",
                                       data::ConstElementPtr user_context =
                                       data::ConstElementPtr());
@@ -147,9 +161,10 @@ public:
     /// @brief Factory function creating an instance of the @c OptionDescriptor.
     ///
     /// @param persist if true option is always sent.
+    /// @param cancel if true, option is never sent.
     ///
     /// @return Pointer to the @c OptionDescriptor instance.
-    static OptionDescriptorPtr create(bool persist);
+    static OptionDescriptorPtr create(bool persist, bool cancel);
 
     /// @brief Factory function creating an instance of the @c OptionDescriptor.
     ///
@@ -195,12 +210,14 @@ public:
 /// - persistency flag index: used to search option descriptors with
 /// 'persistent' flag set to true.
 ///
-/// This container is the equivalent of three separate STL containers:
+/// This container is the equivalent of four separate STL containers:
 /// - std::list of all options,
 /// - std::multimap of options with option code used as a multimap key,
 /// - std::multimap of option descriptors with option persistency flag
 /// used as a multimap key.
-/// The major advantage of this container over 3 separate STL containers
+/// - std::multimap of option descriptors with option cancellation flag
+/// used as a multimap key.
+/// The major advantage of this container over 4 separate STL containers
 /// is automatic synchronization of all indexes when elements are added,
 /// removed or modified in the container. With separate containers,
 /// the synchronization would have to be guaranteed by the Subnet class
@@ -268,6 +285,15 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<OptionIdIndexTag>,
             boost::multi_index::const_mem_fun<data::BaseStampedElement, uint64_t,
                                               &data::BaseStampedElement::getId>
+        >,
+        // Start definition of index #5.
+        // Use 'cancelled' struct member as a key.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::member<
+                OptionDescriptor,
+                bool,
+                &OptionDescriptor::cancelled_
+            >
         >
     >
 > OptionContainer;
@@ -288,6 +314,13 @@ typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 /// the beginning of the range, the second element represents the end.
 typedef std::pair<OptionContainerPersistIndex::const_iterator,
                   OptionContainerPersistIndex::const_iterator> OptionContainerPersistRange;
+/// Type of the index #5 - option cancellation flag.
+typedef OptionContainer::nth_index<5>::type OptionContainerCancelIndex;
+/// Pair of iterators to represent the range of options having the
+/// same cancellation flag. The first element in this pair represents
+/// the beginning of the range, the second element represents the end.
+typedef std::pair<OptionContainerCancelIndex::const_iterator,
+                  OptionContainerCancelIndex::const_iterator> OptionContainerCancelRange;
 
 /// @brief Represents option data configuration for the DHCP server.
 ///
@@ -375,12 +408,14 @@ public:
     /// @param option Pointer to the option being added.
     /// @param persistent Boolean value which specifies if the option should
     /// be sent to the client regardless if requested (true), or nor (false)
+    /// @param cancelled Boolean value which specifies if the option must
+    /// never be sent to the client.
     /// @param option_space Option space name.
     /// @param id Optional database id to be associated with the option.
     ///
     /// @throw isc::BadValue if the option space is invalid.
     void add(const OptionPtr& option, const bool persistent,
-             const std::string& option_space,
+             const bool cancelled, const std::string& option_space,
              const uint64_t id = 0);
 
     /// @brief A variant of the @ref CfgOption::add method which takes option
@@ -552,14 +587,14 @@ public:
         // Check for presence of options.
         OptionContainerPtr options = getAll(key);
         if (!options || options->empty()) {
-            return (OptionDescriptor(false));
+            return (OptionDescriptor(false, false));
         }
 
         // Some options present, locate the one we are interested in.
         const OptionContainerTypeIndex& idx = options->get<1>();
         OptionContainerTypeIndex::const_iterator od_itr = idx.find(option_code);
         if (od_itr == idx.end()) {
-            return (OptionDescriptor(false));
+            return (OptionDescriptor(false, false));
         }
 
         return (*od_itr);

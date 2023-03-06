@@ -1490,6 +1490,49 @@ The ``domain-name-servers`` option is always added to responses (the
 always-send is "sticky"), but the value is the subnet one when the client
 is localized in the subnet.
 
+At the opposite of ``always-send`` if the ``never-send`` flag is set to
+``true`` for a particular option the server does not add it to the response.
+The effect is the same as if the client removed the option code in the
+Parameter Request List option Option (or its equivalent for vendor options):
+
+::
+
+   "Dhcp4": {
+       "option-data": [
+           {
+              "name": "domain-name-servers",
+              "data": "192.0.2.1, 192.0.2.2"
+           },
+           ...
+       ],
+       "subnet4": [
+           {
+              "subnet": "192.0.3.0/24",
+              "option-data": [
+                  {
+                      "name": "domain-name-servers",
+                      "never-send": true
+                  },
+                  ...
+              ],
+              ...
+           },
+           ...
+       ],
+       ...
+   }
+
+The ``domain-name-servers`` option is never added to responses (the
+never-send is "sticky" too). The ``never-send`` is as the precedence
+over ``always-send`` so if both are true the option is not added.
+
+.. note::
+
+   The ``never-send`` is less powerful than the :ref:`hooks-flex-option`,
+   for instance it has no effect on options managed by the server itself.
+   Both ``always-send`` and ``never-send`` has no effect too on options
+   which cannot be requested, for instance from a custom space.
+
 The ``name`` parameter specifies the option name. For a list of
 currently supported names, see :ref:`dhcp4-std-options-list`
 below. The ``code`` parameter specifies the option code, which must

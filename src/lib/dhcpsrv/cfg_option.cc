@@ -24,16 +24,17 @@ namespace isc {
 namespace dhcp {
 
 OptionDescriptorPtr
-OptionDescriptor::create(const OptionPtr& opt, bool persist,
+OptionDescriptor::create(const OptionPtr& opt, bool persist, bool cancel,
                          const std::string& formatted_value,
                          ConstElementPtr user_context) {
-    return (boost::make_shared<OptionDescriptor>(opt, persist, formatted_value,
+    return (boost::make_shared<OptionDescriptor>(opt, persist, cancel,
+                                                 formatted_value,
                                                  user_context));
 }
 
 OptionDescriptorPtr
-OptionDescriptor::create(bool persist) {
-    return (boost::make_shared<OptionDescriptor>(persist));
+OptionDescriptor::create(bool persist, bool cancel) {
+    return (boost::make_shared<OptionDescriptor>(persist, cancel));
 }
 
 OptionDescriptorPtr
@@ -44,6 +45,7 @@ OptionDescriptor::create(const OptionDescriptor& desc) {
 bool
 OptionDescriptor::equals(const OptionDescriptor& other) const {
     return ((persistent_ == other.persistent_) &&
+            (cancelled_ == other.cancelled_) &&
             (formatted_value_ == other.formatted_value_) &&
             (space_name_ == other.space_name_) &&
             option_->equals(other.option_));
@@ -64,10 +66,12 @@ CfgOption::equals(const CfgOption& other) const {
 }
 
 void
-CfgOption::add(const OptionPtr& option, const bool persistent,
+CfgOption::add(const OptionPtr& option,
+               const bool persistent,
+               const bool cancelled,
                const std::string& option_space,
                const uint64_t id) {
-    OptionDescriptor desc(option, persistent);
+    OptionDescriptor desc(option, persistent, cancelled);
     if (id > 0) {
         desc.setId(id);
     }
@@ -455,14 +459,17 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
                 map->set("csv-format", Element::create(true));
                 map->set("data", Element::create(opt.formatted_value_));
             } else {
-                map->set("csv-format", Element::create(false));
                 std::vector<uint8_t> bin = opt.option_->toBinary();
-                std::string repr = util::encode::encodeHex(bin);
-                map->set("data", Element::create(repr));
+                if (!opt.cancelled_ || !bin.empty()) {
+                    map->set("csv-format", Element::create(false));
+                    std::string repr = util::encode::encodeHex(bin);
+                    map->set("data", Element::create(repr));
+                }
             }
             // Set the persistency flag
             map->set("always-send", Element::create(opt.persistent_));
-
+            // Set the cancelled flag.
+            map->set("never-send", Element::create(opt.cancelled_));
             // Include metadata if requested.
             if (include_metadata) {
                 map->set("metadata", opt.getMetadata());
@@ -504,13 +511,17 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
                 map->set("csv-format", Element::create(true));
                 map->set("data", Element::create(opt.formatted_value_));
             } else {
-                map->set("csv-format", Element::create(false));
                 std::vector<uint8_t> bin = opt.option_->toBinary();
-                std::string repr = util::encode::encodeHex(bin);
-                map->set("data", Element::create(repr));
+                if (!opt.cancelled_ || !bin.empty()) {
+                    map->set("csv-format", Element::create(false));
+                    std::string repr = util::encode::encodeHex(bin);
+                    map->set("data", Element::create(repr));
+                }
             }
             // Set the persistency flag
             map->set("always-send", Element::create(opt.persistent_));
+            // Set the cancellation flag
+            map->set("never-send", Element::create(opt.cancelled_));
             // Push on the list
             result->add(map);
         }

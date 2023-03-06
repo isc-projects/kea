@@ -185,6 +185,7 @@ const SimpleKeywords SimpleParser4::OPTION4_PARAMETERS = {
     { "space",        Element::string },
     { "csv-format",   Element::boolean },
     { "always-send",  Element::boolean },
+    { "never-send",   Element::boolean },
     { "user-context", Element::map },
     { "comment",      Element::string },
     { "metadata",     Element::map }
@@ -198,7 +199,8 @@ const SimpleKeywords SimpleParser4::OPTION4_PARAMETERS = {
 const SimpleDefaults SimpleParser4::OPTION4_DEFAULTS = {
     { "space",        Element::string,  "dhcp4"}, // DHCP4_OPTION_SPACE
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean, "false"}
+    { "always-send",  Element::boolean, "false"},
+    { "never-send",   Element::boolean, "false"}
 };
 
 /// @brief This table defines all subnet parameters for DHCPv4.

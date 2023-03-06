@@ -1038,7 +1038,8 @@ TEST_F(HostReservationParserTest, options4) {
            "\"csv-format\": true,"
            "\"space\": \"dhcp4\","
            "\"data\": \"172.16.15.23\","
-           "\"always-send\": false"
+           "\"always-send\": false,"
+           "\"never-send\": false"
         "},"
         "{"
            "\"name\": \"default-ip-ttl\","
@@ -1091,12 +1092,14 @@ TEST_F(HostReservationParserTest, options4) {
     option->set("space", Element::create(std::string(DHCP4_OPTION_SPACE)));
     option->set("csv-format", Element::create(true));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     option = config_element->get("option-data")->getNonConst(1);
     option = config_element->get("option-data")->getNonConst(2);
     option->set("code", Element::create(DHO_DEFAULT_IP_TTL));
     option->set("space", Element::create(std::string(DHCP4_OPTION_SPACE)));
     option->set("csv-format", Element::create(true));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     ElementPtr expected = Element::createList();
     expected->add(config_element);
 
@@ -1130,7 +1133,8 @@ TEST_F(HostReservationParserTest, options6) {
            "\"csv-format\": true,"
            "\"space\": \"dhcp6\","
            "\"data\": \"2001:db8:1::1204\","
-           "\"always-send\": true"
+           "\"always-send\": true,"
+           "\"never-send\": true"
         "},"
         "{"
            "\"name\": \"preference\","
@@ -1184,12 +1188,14 @@ TEST_F(HostReservationParserTest, options6) {
     option->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
     option->set("csv-format", Element::create(true));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     option = config_element->get("option-data")->getNonConst(1);
     option = config_element->get("option-data")->getNonConst(2);
     option->set("code", Element::create(D6O_PREFERENCE));
     option->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
     option->set("csv-format", Element::create(true));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     config = prettyPrint(config_element);
     boost::algorithm::to_lower(config);
 

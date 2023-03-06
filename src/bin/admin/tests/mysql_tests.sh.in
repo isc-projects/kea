@@ -708,7 +708,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "14.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "15.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1334,6 +1334,16 @@ SET @disable_audit = 0;"
 
     # Check upgrade from 13.0 to 14.0.
     mysql_upgrade_13_to_14_test
+
+    # Check upgrade from 14.0 to 15.0.
+
+    # table: dhcp4_options new cancelled column.
+    qry="select cancelled from dhcp4_options"
+    run_statement "dhcp4_options" "$qry"
+
+    # table: dhcp6_options new cancelled column.
+    qry="select cancelled from dhcp6_options"
+    run_statement "dhcp6_options" "$qry"
 
     # Let's wipe the whole database
     mysql_wipe

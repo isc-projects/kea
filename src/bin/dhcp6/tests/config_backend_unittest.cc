@@ -325,14 +325,15 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
     // Add solmax-rt to the first backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
-                                         true, false, "updated-boot-file")));
+                                         true, false, false,
+                                         "updated-boot-file")));
     opt->space_name_ = DHCP6_OPTION_SPACE;
     db1_->createUpdateOption6(ServerSelector::ALL(), opt);
 
     // Add solmax-rt to the second backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionUint32>(Option::V6, D6O_SOL_MAX_RT,
-                                         false, true, 700)));
+                                         false, false, true, 700)));
     opt->space_name_ = DHCP6_OPTION_SPACE;
     db2_->createUpdateOption6(ServerSelector::ALL(), opt);
 

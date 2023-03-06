@@ -143,14 +143,17 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     // Add several options to the subnet.
     subnet->getCfgOption()->add(test_options_[0]->option_,
                                 test_options_[0]->persistent_,
+                                test_options_[0]->cancelled_,
                                 test_options_[0]->space_name_);
 
     subnet->getCfgOption()->add(test_options_[1]->option_,
                                 test_options_[1]->persistent_,
+                                test_options_[1]->cancelled_,
                                 test_options_[1]->space_name_);
 
     subnet->getCfgOption()->add(test_options_[2]->option_,
                                 test_options_[2]->persistent_,
+                                test_options_[2]->cancelled_,
                                 test_options_[2]->space_name_);
 
     test_subnets_.push_back(subnet);
@@ -168,10 +171,12 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
 
     pool1->getCfgOption()->add(test_options_[3]->option_,
                                test_options_[3]->persistent_,
+                               test_options_[3]->cancelled_,
                                test_options_[3]->space_name_);
 
     pool1->getCfgOption()->add(test_options_[4]->option_,
                                test_options_[4]->persistent_,
+                               test_options_[4]->cancelled_,
                                test_options_[4]->space_name_);
 
     pool2.reset(new Pool6(Lease::TYPE_NA,
@@ -191,10 +196,12 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
 
     pdpool1->getCfgOption()->add(test_options_[3]->option_,
                                  test_options_[3]->persistent_,
+                                 test_options_[3]->cancelled_,
                                  test_options_[3]->space_name_);
 
     pdpool1->getCfgOption()->add(test_options_[4]->option_,
                                  test_options_[4]->persistent_,
+                                 test_options_[4]->cancelled_,
                                  test_options_[4]->space_name_);
 
     // Create the prefix delegation pool with an excluded prefix.
@@ -228,6 +235,7 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
 
     subnet->getCfgOption()->add(test_options_[0]->option_,
                                 test_options_[0]->persistent_,
+                                test_options_[0]->cancelled_,
                                 test_options_[0]->space_name_);
 
     test_subnets_.push_back(subnet);
@@ -272,14 +280,17 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(test_options_[2]->option_,
                                         test_options_[2]->persistent_,
+                                        test_options_[2]->cancelled_,
                                         test_options_[2]->space_name_);
 
     shared_network->getCfgOption()->add(test_options_[3]->option_,
                                         test_options_[3]->persistent_,
+                                        test_options_[3]->cancelled_,
                                         test_options_[3]->space_name_);
 
     shared_network->getCfgOption()->add(test_options_[4]->option_,
                                         test_options_[4]->persistent_,
+                                        test_options_[4]->cancelled_,
                                         test_options_[4]->space_name_);
 
     test_networks_.push_back(shared_network);
@@ -307,6 +318,7 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
 
     shared_network->getCfgOption()->add(test_options_[0]->option_,
                                         test_options_[0]->persistent_,
+                                        test_options_[0]->cancelled_,
                                         test_options_[0]->space_name_);
     test_networks_.push_back(shared_network);
 
@@ -352,30 +364,30 @@ GenericConfigBackendDHCPv6Test::initTestOptions() {
 
     OptionDescriptor desc =
         createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
-                                   true, false, "my-timezone");
+                                   true, false, false, "my-timezone");
     desc.space_name_ = DHCP6_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionUint8>(Option::V6, D6O_PREFERENCE,
-                                     false, true, 64);
+                                     false, false, true, 64);
     desc.space_name_ = DHCP6_OPTION_SPACE;
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createOption<OptionUint32>(Option::V6, 1, false, false, 312131),
+    desc = createOption<OptionUint32>(Option::V6, 1, false, false, false, 312131),
     desc.space_name_ = "vendor-encapsulated-options";
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createAddressOption<Option6AddrLst>(1254, true, true,
+    desc = createAddressOption<Option6AddrLst>(1254, true, true, true,
                                                "2001:db8::3");
     desc.space_name_ = DHCP6_OPTION_SPACE;
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createEmptyOption(Option::V6, 1, true);
+    desc = createEmptyOption(Option::V6, 1, true, false);
     desc.space_name_ = "isc";
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createAddressOption<Option6AddrLst>(2, false, true,
+    desc = createAddressOption<Option6AddrLst>(2, false, false, true,
                                                "2001:db8:1::5",
                                                "2001:db8:1::3",
                                                "2001:db8:3::4");
@@ -383,13 +395,13 @@ GenericConfigBackendDHCPv6Test::initTestOptions() {
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
-                                      true, false, "my-timezone-2");
+                                      true, false, false, "my-timezone-2");
     desc.space_name_ = DHCP6_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
-                                      true, false, "my-timezone-3");
+                                      true, true, false, "my-timezone-3");
     desc.space_name_ = DHCP6_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
@@ -3236,6 +3248,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteOption6Test() {
 
     // Modify option and update it in the database.
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
+    opt_posix_timezone->cancelled_ = !opt_posix_timezone->cancelled_;
     cbptr_->createUpdateOption6(ServerSelector::ALL(),
                                 opt_posix_timezone);
 
@@ -3613,6 +3626,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteSubnetOption6Test() {
     ASSERT_EQ(5, countRows("dhcp6_options"));
 
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
+    opt_posix_timezone->cancelled_ = !opt_posix_timezone->cancelled_;
     cbptr_->createUpdateOption6(ServerSelector::ANY(), subnet->getID(),
                                 opt_posix_timezone);
 
@@ -3721,6 +3735,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeletePoolOption6Test() {
 
     // Modify the option and update it in the database.
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
+    opt_posix_timezone->cancelled_ = !opt_posix_timezone->cancelled_;
     cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
@@ -3851,6 +3866,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeletePdPoolOption6Test() {
 
     // Modify the option and update it in the database.
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
+    opt_posix_timezone->cancelled_ = !opt_posix_timezone->cancelled_;
     cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pd_pool->getFirstAddress(),
                                 static_cast<uint8_t>(pd_pool_len),
@@ -3976,6 +3992,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteSharedNetworkOption6Test() {
     ASSERT_EQ(1, countRows("dhcp6_options"));
 
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
+    opt_posix_timezone->cancelled_ = !opt_posix_timezone->cancelled_;
     cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 shared_network->getName(),
                                 opt_posix_timezone);
@@ -4230,9 +4247,11 @@ GenericConfigBackendDHCPv6Test::getClientClass6Test() {
     auto class1 = test_client_classes_[0];
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[0]->option_,
                                                     test_options_[0]->persistent_,
+                                                    test_options_[0]->cancelled_,
                                                     test_options_[0]->space_name_));
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[1]->option_,
                                                     test_options_[1]->persistent_,
+                                                    test_options_[1]->cancelled_,
                                                     test_options_[1]->space_name_));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
 
@@ -4298,9 +4317,11 @@ GenericConfigBackendDHCPv6Test::createUpdateClientClass6OptionsTest() {
     auto class1 = test_client_classes_[0];
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[0]->option_,
                                                     test_options_[0]->persistent_,
+                                                    test_options_[0]->cancelled_,
                                                     test_options_[0]->space_name_));
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[1]->option_,
                                                     test_options_[1]->persistent_,
+                                                    test_options_[1]->cancelled_,
                                                     test_options_[1]->space_name_));
     auto cfg_option_def = boost::make_shared<CfgOptionDef>();
     class1->setCfgOptionDef(cfg_option_def);

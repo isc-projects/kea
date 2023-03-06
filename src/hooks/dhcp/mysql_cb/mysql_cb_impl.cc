@@ -740,11 +740,13 @@ MySqlConfigBackendImpl::getOptions(const int index,
     }
     // value
     out_bindings.push_back(MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH));
-    // forma\tted_value
+    // formatted_value
     out_bindings.push_back(MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH));
     // space
     out_bindings.push_back(MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH));
     // persistent
+    out_bindings.push_back(MySqlBinding::createInteger<uint8_t>());
+    // cancelled
     out_bindings.push_back(MySqlBinding::createInteger<uint8_t>());
     // dhcp[46]_subnet_id
     out_bindings.push_back(MySqlBinding::createInteger<uint32_t>());
@@ -781,7 +783,7 @@ MySqlConfigBackendImpl::getOptions(const int index,
             OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
             if (desc) {
                 // server_tag for the global option
-                ServerTag last_option_server_tag(out_bindings[12]->getString());
+                ServerTag last_option_server_tag(out_bindings[13]->getString());
                 desc->setServerTag(last_option_server_tag.get());
 
                 // If we're fetching options for a given server (explicit server
@@ -858,12 +860,18 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // Check if the option is persistent.
     bool persistent = static_cast<bool>((*(first_binding + 5))->getIntegerOrDefault<uint8_t>(0));
 
+    // Check if the option is cancelled.
+    bool cancelled = static_cast<bool>((*(first_binding + 6))->getIntegerOrDefault<uint8_t>(0));
+
     // Create option descriptor which encapsulates our option and adds
     // additional information, i.e. whether the option is persistent,
     // its option space and timestamp.
-    OptionDescriptorPtr desc = OptionDescriptor::create(option, persistent, formatted_value);
+    OptionDescriptorPtr desc = OptionDescriptor::create(option,
+                                                        persistent,
+                                                        cancelled,
+                                                        formatted_value);
     desc->space_name_ = space;
-    desc->setModificationTime((*(first_binding + 11))->getTimestamp());
+    desc->setModificationTime((*(first_binding + 12))->getTimestamp());
 
     // Set database id for the option.
     if (!(*first_binding)->amNull()) {

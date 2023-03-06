@@ -123,6 +123,7 @@ const char* CONFIGS[] = {
     "    \"renew-timer\": 1000, "
     "    \"valid-lifetime\": 4000, "
     "    \"subnet6\": [ {"
+    "       \"interface\": \"eth0\", "
     "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
     "       \"subnet\": \"2001:db8:1::/48\""
     "    } ], "
@@ -140,6 +141,38 @@ const char* CONFIGS[] = {
     "}",
 
     // Configuration 3:
+    // - a single subnet with one option cancelled with never-send.
+    // - two global options (one enforced with always-send)
+    "{"
+    "    \"interfaces-config\": { \"interfaces\": [ \"*\" ] }, "
+    "    \"preferred-lifetime\": 3000, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet6\": [ {"
+    "       \"interface\": \"eth0\", "
+    "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+    "       \"subnet\": \"2001:db8:1::/48\", "
+    "       \"option-data\": ["
+    "       {"
+    "           \"name\": \"subscriber-id\", "
+    "           \"never-send\": true"
+    "       } ]"
+    "    } ], "
+    "    \"option-data\": ["
+    "    {"
+    "        \"name\": \"dns-servers\", "
+    "        \"data\": \"2001:db8:1234:FFFF::1\""
+    "    }, "
+    "    {"
+    "        \"name\": \"subscriber-id\", "
+    "         \"data\": \"1234\", "
+    "         \"always-send\": true"
+    "    }"
+    "    ]"
+    "}",
+
+    // Configuration 4:
     // - one subnet with one address pool and one prefix pool
     // - user-contexts defined in subnet and each pool
     "{"
@@ -2834,7 +2867,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     EXPECT_TRUE(adv->getRelayOption(D6O_RELAY_SOURCE_PORT, 0));
 }
 
-// Checks effect of persistency (aka always-true) flag on the ORO
+// Checks effect of persistency (aka always-send) flag on the ORO
 TEST_F(Dhcpv6SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
 
@@ -2912,6 +2945,87 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     const OptionCollection& sifs = response->getOptions(D6O_SUBSCRIBER_ID);
     ASSERT_EQ(1, sifs.size());
     // But no dns-servers
+    ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
+    // Nor a sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+}
+
+// Checks effect of cancellation (aka never-send) flag.
+TEST_F(Dhcpv6SrvTest, neverSend) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(CONFIGS[3]));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Create and add an ORO for another option
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(D6O_SNTP_SERVERS);
+    sol->addOption(oro);
+
+    // Let the server process it and generate a response.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
+    srv_.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr response = srv_.processSolicit(ctx);
+
+    // The server should not add a subscriber-id option
+    ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
+    // And no dns-servers
+    ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
+    // Nor a sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+
+    // Reset ORO adding dns-servers
+    sol->delOption(D6O_ORO);
+    oro->addValue(D6O_NAME_SERVERS);
+    sol->addOption(oro);
+
+    // Let the server process it again. This time the name-servers
+    // option should be present.
+    AllocEngine::ClientContext6 ctx2;
+    drop = !srv_.earlyGHRLookup(sol, ctx2);
+    ASSERT_FALSE(drop);
+    srv_.initContext(sol, ctx2, drop);
+    ASSERT_FALSE(drop);
+    response = srv_.processSolicit(ctx2);
+
+    // Processing should not add a subscriber-id option
+    ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
+    // But now a dns-servers
+    ASSERT_TRUE(response->getOption(D6O_NAME_SERVERS));
+    // And still no sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+
+    // Reset ORO adding subscriber-id
+    sol->delOption(D6O_ORO);
+    OptionUint16ArrayPtr oro2(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro2);
+    oro2->addValue(D6O_SUBSCRIBER_ID);
+    sol->addOption(oro2);
+
+    // Let the server process it again.
+    AllocEngine::ClientContext6 ctx3;
+    drop = !srv_.earlyGHRLookup(sol, ctx3);
+    ASSERT_FALSE(drop);
+    srv_.initContext(sol, ctx3, drop);
+    ASSERT_FALSE(drop);
+    response = srv_.processSolicit(ctx3);
+
+    // The subscriber-id option should still not be present.
+    ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
+    // And no dns-servers
     ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
     // Nor a sntp-servers
     ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
@@ -3486,7 +3600,7 @@ TEST_F(Dhcpv6SrvTest, userContext) {
 
     // This config has one subnet with user-context with one
     // pool (also with context). Make sure the configuration could be accepted.
-    EXPECT_NO_THROW(configure(CONFIGS[3]));
+    EXPECT_NO_THROW(configure(CONFIGS[4]));
 
     // Now make sure the data was not lost.
     ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();

@@ -38,11 +38,12 @@ TEST(OptionDescriptorTest, create) {
     OptionPtr option = Option::create(Option::V4, 234);
     ElementPtr context = Element::createMap();
     context->set("name", Element::create("value"));
-    auto desc = OptionDescriptor::create(option, true, "value", context);
+    auto desc = OptionDescriptor::create(option, true, true, "value", context);
 
     ASSERT_TRUE(desc);
     EXPECT_EQ(option, desc->option_);
     EXPECT_TRUE(desc->persistent_);
+    EXPECT_TRUE(desc->cancelled_);
     EXPECT_EQ("value", desc->formatted_value_);
     EXPECT_EQ(context, desc->getContext());
 }
@@ -50,11 +51,12 @@ TEST(OptionDescriptorTest, create) {
 // This test verifies that the OptionDescriptor factory function variant
 // taking persistent flag as an argument creates valid instance.
 TEST(OptionDescriptorTest, createPersistent) {
-    auto desc = OptionDescriptor::create(true);
+    auto desc = OptionDescriptor::create(true, true);
     ASSERT_TRUE(desc);
 
     EXPECT_FALSE(desc->option_);
     EXPECT_TRUE(desc->persistent_);
+    EXPECT_TRUE(desc->cancelled_);
     EXPECT_TRUE(desc->formatted_value_.empty());
     EXPECT_FALSE(desc->getContext());
 }
@@ -65,7 +67,7 @@ TEST(OptionDescriptorTest, createCopy) {
     OptionPtr option = Option::create(Option::V4, 234);
     ElementPtr context = Element::createMap();
     context->set("name", Element::create("value"));
-    auto desc = OptionDescriptor::create(option, true, "value", context);
+    auto desc = OptionDescriptor::create(option, true, true, "value", context);
 
     auto desc_copy = OptionDescriptor::create(*desc);
     ASSERT_TRUE(desc_copy);
@@ -73,6 +75,7 @@ TEST(OptionDescriptorTest, createCopy) {
     ASSERT_TRUE(desc_copy);
     EXPECT_EQ(option, desc_copy->option_);
     EXPECT_TRUE(desc_copy->persistent_);
+    EXPECT_TRUE(desc_copy->cancelled_);
     EXPECT_EQ("value", desc_copy->formatted_value_);
     EXPECT_EQ(context, desc_copy->getContext());
 }
@@ -81,14 +84,15 @@ TEST(OptionDescriptorTest, createCopy) {
 // does the shallow copy.
 TEST(OptionDescriptorTest, assign) {
     // Create a persistent option descriptor.
-    auto desc = OptionDescriptor::create(true);
+    auto desc = OptionDescriptor::create(true, true);
     ASSERT_TRUE(desc);
 
     // Create another option descriptor.
     OptionPtr option = Option::create(Option::V4, 234);
     ElementPtr context = Element::createMap();
     context->set("name", Element::create("value"));
-    auto desc1 = OptionDescriptor::create(option, true, "value", context);
+    auto desc1 = OptionDescriptor::create(option, false, false,  "value",
+                                          context);
     ASSERT_TRUE(desc1);
 
     // Assign the option descriptor.
@@ -97,7 +101,8 @@ TEST(OptionDescriptorTest, assign) {
     // Check it.
     ASSERT_TRUE(desc);
     EXPECT_EQ(option, desc->option_);
-    EXPECT_TRUE(desc->persistent_);
+    EXPECT_FALSE(desc->persistent_);
+    EXPECT_FALSE(desc->cancelled_);
     EXPECT_EQ("value", desc->formatted_value_);
     EXPECT_EQ(context, desc->getContext());
 }
@@ -125,7 +130,7 @@ public:
 
             // In order to easier identify the options by id, let's use the option
             // code as the id.
-            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE,
+            ASSERT_NO_THROW(cfg.add(option, false, false, DHCP6_OPTION_SPACE,
                                     static_cast<uint64_t>(code)));
         }
 
@@ -134,7 +139,7 @@ public:
             OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
                                                                       code, 2345));
             option->setEncapsulatedSpace("bar");
-            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE,
+            ASSERT_NO_THROW(cfg.add(option, false, false, DHCP6_OPTION_SPACE,
                                     static_cast<uint64_t>(code)));
         }
 
@@ -144,7 +149,8 @@ public:
             OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
                                                                    0x01));
             option->setEncapsulatedSpace("foo-subs");
-            ASSERT_NO_THROW(cfg.add(option, false, "foo", static_cast<uint64_t>(code)));
+            ASSERT_NO_THROW(cfg.add(option, false, false, "foo",
+                                    static_cast<uint64_t>(code)));
         }
 
         // Create sub-options belonging to "bar" option space and encapsulating
@@ -153,14 +159,15 @@ public:
             OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
                                                                    code, 0x02));
             option->setEncapsulatedSpace("bar-subs");
-            ASSERT_NO_THROW(cfg.add(option, false, "bar", static_cast<uint64_t>(code)));
+            ASSERT_NO_THROW(cfg.add(option, false, false, "bar",
+                                    static_cast<uint64_t>(code)));
         }
 
         // Create sub-options belonging to "foo-subs" option space.
         for (uint16_t code = 1; code < 10; ++code) {
             OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
                                                                    0x03));
-            ASSERT_NO_THROW(cfg.add(option, false, "foo-subs",
+            ASSERT_NO_THROW(cfg.add(option, false, false, "foo-subs",
                                     static_cast<uint64_t>(code)));
         }
 
@@ -168,7 +175,7 @@ public:
         for (uint16_t code = 501;  code < 510; ++code) {
             OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
                                                                    code, 0x04));
-            ASSERT_NO_THROW(cfg.add(option, false, "bar-subs",
+            ASSERT_NO_THROW(cfg.add(option, false, false, "bar-subs",
                                     static_cast<uint64_t>(code)));
         }
     }
@@ -185,8 +192,8 @@ TEST_F(CfgOptionTest, empty) {
 
     // Add an option to each configuration
     OptionPtr option(new Option(Option::V6, 1));
-    ASSERT_NO_THROW(cfg1.add(option, false, DHCP6_OPTION_SPACE));
-    ASSERT_NO_THROW(cfg2.add(option, true, "isc"));
+    ASSERT_NO_THROW(cfg1.add(option, false, false, DHCP6_OPTION_SPACE));
+    ASSERT_NO_THROW(cfg2.add(option, true, true, "isc"));
 
     // The first option configuration has an option
     ASSERT_FALSE(cfg1.empty());
@@ -208,8 +215,8 @@ TEST_F(CfgOptionTest, equals) {
     // option code and content.
     for (uint16_t code = 1; code < 10; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, code)));
-        ASSERT_NO_THROW(cfg1.add(option, false, "isc"));
-        ASSERT_NO_THROW(cfg1.add(option, true, "vendor-123"));
+        ASSERT_NO_THROW(cfg1.add(option, false, false, "isc"));
+        ASSERT_NO_THROW(cfg1.add(option, true, true, "vendor-123"));
     }
 
     // Configurations should now be different.
@@ -220,8 +227,8 @@ TEST_F(CfgOptionTest, equals) {
     // spaces.
     for (uint16_t code = 2; code < 10; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, code)));
-        ASSERT_NO_THROW(cfg2.add(option, false, "isc"));
-        ASSERT_NO_THROW(cfg2.add(option, true, "vendor-123"));
+        ASSERT_NO_THROW(cfg2.add(option, false, false, "isc"));
+        ASSERT_NO_THROW(cfg2.add(option, true, true, "vendor-123"));
     }
 
     // Configurations should still be unequal.
@@ -231,7 +238,7 @@ TEST_F(CfgOptionTest, equals) {
     // Add missing option to the option space isc.
     ASSERT_NO_THROW(cfg2.add(OptionPtr(new Option(Option::V6, 1,
                                                   OptionBuffer(10, 0x01))),
-                             false, "isc"));
+                             false, false, "isc"));
     // Configurations should still be unequal because option with code 1
     // is missing in the option space vendor-123.
     ASSERT_FALSE(cfg1 == cfg2);
@@ -240,11 +247,10 @@ TEST_F(CfgOptionTest, equals) {
     // Add missing option.
     ASSERT_NO_THROW(cfg2.add(OptionPtr(new Option(Option::V6, 1,
                                                   OptionBuffer(10, 0x01))),
-                             true, "vendor-123"));
+                             true, true, "vendor-123"));
     // Configurations should now be equal.
     ASSERT_TRUE(cfg1 == cfg2);
     ASSERT_FALSE(cfg1 != cfg2);
-
 }
 
 // This test verifies that multiple options can be added to the configuration
@@ -255,14 +261,14 @@ TEST_F(CfgOptionTest, add) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(cfg.add(option, false, false, DHCP6_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, "isc"));
+        ASSERT_NO_THROW(cfg.add(option, false, false, "isc"));
     }
 
     // Get options from the Subnet and check if all 10 are there.
@@ -304,13 +310,13 @@ TEST_F(CfgOptionTest, replace) {
 
     // Let's add some options to the config to the config.
     OptionStringPtr option(new OptionString(Option::V6, 1, "one"));
-    ASSERT_NO_THROW(cfg.add(option, false, "isc"));
+    ASSERT_NO_THROW(cfg.add(option, false, false, "isc"));
 
     option.reset(new OptionString(Option::V6, 2, "two"));
-    ASSERT_NO_THROW(cfg.add(option, false, "isc"));
+    ASSERT_NO_THROW(cfg.add(option, false, false, "isc"));
 
     option.reset(new OptionString(Option::V6, 3, "three"));
-    ASSERT_NO_THROW(cfg.add(option, false, "isc"));
+    ASSERT_NO_THROW(cfg.add(option, false, false, "isc"));
 
     // Now let's make sure we can find them and they are as expected.
     OptionDescriptor desc = cfg.get("isc", 1);
@@ -367,14 +373,14 @@ TEST_F(CfgOptionTest, mergeTo) {
     // from the range of 100 to 109 and holding one byte of data equal to 0xFF.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(cfg_src.add(option, false, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(cfg_src.add(option, false, false, DHCP6_OPTION_SPACE));
     }
 
     // Create collection of options in vendor space 123, with option codes
     // from the range of 100 to 109 and holding one byte of data equal to 0xFF.
     for (uint16_t code = 100; code < 110; code += 2) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(cfg_src.add(option, false, "vendor-123"));
+        ASSERT_NO_THROW(cfg_src.add(option, false, false, "vendor-123"));
     }
 
     // Create destination configuration (configuration that we merge the
@@ -384,14 +390,14 @@ TEST_F(CfgOptionTest, mergeTo) {
     // 100 to 108.
     for (uint16_t code = 100; code < 110; code += 2) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
-        ASSERT_NO_THROW(cfg_dst.add(option, false, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(cfg_dst.add(option, false, false, DHCP6_OPTION_SPACE));
     }
 
     // Create collection of options having odd option codes in the range of
     // 101 to 109.
     for (uint16_t code = 101; code < 110; code += 2) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
-        ASSERT_NO_THROW(cfg_dst.add(option, false, "vendor-123"));
+        ASSERT_NO_THROW(cfg_dst.add(option, false, false, "vendor-123"));
     }
 
     // Merge source configuration to the destination configuration. The options
@@ -439,14 +445,14 @@ TEST_F(CfgOptionTest, copy) {
     // Add 10 options to the custom option space in the source configuration.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
-        ASSERT_NO_THROW(cfg_src.add(option, false, "foo"));
+        ASSERT_NO_THROW(cfg_src.add(option, false, false, "foo"));
     }
 
     CfgOption cfg_dst;
     // Add 20 options to the custom option space in destination configuration.
     for (uint16_t code = 100; code < 120; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(cfg_dst.add(option, false, "isc"));
+        ASSERT_NO_THROW(cfg_dst.add(option, false, false, "isc"));
     }
 
     // Copy entire configuration to the destination. This should override any
@@ -492,28 +498,28 @@ TEST_F(CfgOptionTest, validMerge) {
 
     // Create our existing config, that gets merged into.
     OptionPtr option(new Option(Option::V4, 1, OptionBuffer(1, 0x01)));
-    ASSERT_NO_THROW(this_cfg.add(option, false, "isc"));
+    ASSERT_NO_THROW(this_cfg.add(option, false, false, "isc"));
 
     // Add option 3 to "fluff"
     option.reset(new Option(Option::V4, 3, OptionBuffer(1, 0x03)));
-    ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
+    ASSERT_NO_THROW(this_cfg.add(option, false, false, "fluff"));
 
     // Add option 4 to "fluff".
     option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x04)));
-    ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
+    ASSERT_NO_THROW(this_cfg.add(option, false, false, "fluff"));
 
     // Create our other config that will be merged from.
     // Add Option 1 to "isc",  this should "overwrite" the original.
     option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x10)));
-    ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
+    ASSERT_NO_THROW(other_cfg.add(option, false, false, "isc"));
 
     // Add option 2  to "isc".
     option.reset(new Option(Option::V4, 2, OptionBuffer(1, 0x20)));
-    ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
+    ASSERT_NO_THROW(other_cfg.add(option, false, false, "isc"));
 
     // Add option 4 to "isc".
     option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x40)));
-    ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
+    ASSERT_NO_THROW(other_cfg.add(option, false, false, "isc"));
 
     // Merge source configuration to the destination configuration. The options
     // in the destination should be preserved. The options from the source
@@ -569,11 +575,11 @@ TEST_F(CfgOptionTest, mergeInvalid) {
     // Create our other config that will be merged from.
     // Add an option without a formatted value.
     OptionPtr option(new Option(Option::V4, 1, OptionBuffer(1, 0x01)));
-    ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
+    ASSERT_NO_THROW(other_cfg.add(option, false, false, "isc"));
 
     // Add an option with a formatted value.
     option.reset(new Option(Option::V4, 2));
-    OptionDescriptor desc(option, false, "one,two,three");
+    OptionDescriptor desc(option, false, false, "one,two,three");
     ASSERT_NO_THROW(other_cfg.add(desc, "isc"));
 
     // When we attempt to merge, it should fail, recognizing that
@@ -612,7 +618,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     std::string value = "v4.example.com";
     OptionPtr option(new Option(Option::V6, DHO_HOST_NAME));
     option->setData(value.begin(), value.end());
-    OptionDescriptorPtr desc(new OptionDescriptor(option, false));
+    OptionDescriptorPtr desc(new OptionDescriptor(option, false, false));
 
     bool updated = false;
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
@@ -627,7 +633,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
         { 2, 'v', '6', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 3, 'c', 'o', 'm', 0 };
     option.reset(new Option(Option::V6, D6O_AFTR_NAME));
     option->setData(fqdn.begin(), fqdn.end());
-    desc.reset(new OptionDescriptor(option, false));
+    desc.reset(new OptionDescriptor(option, false, false));
 
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
     ASSERT_TRUE(updated);
@@ -639,7 +645,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     space = "vendor-4491";
     value = "192.0.2.1, 192.0.2.2";
     option.reset(new Option(Option::V4, 2));
-    desc.reset(new OptionDescriptor(option, false, value));
+    desc.reset(new OptionDescriptor(option, false, false, value));
 
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
     ASSERT_TRUE(updated);
@@ -651,7 +657,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     // Now, a user defined uint8 option
     space = "isc";
     option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x77)));
-    desc.reset(new OptionDescriptor(option, false));
+    desc.reset(new OptionDescriptor(option, false, false));
 
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
     ASSERT_TRUE(updated);
@@ -661,7 +667,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
 
     // Now, a user defined array of ints from a formatted value
     option.reset(new Option(Option::V4, 2));
-    desc.reset(new OptionDescriptor(option, false, "1,2,3"));
+    desc.reset(new OptionDescriptor(option, false, false, "1,2,3"));
 
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
     ASSERT_TRUE(updated);
@@ -672,7 +678,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
 
     // Finally, a generic, undefined option
     option.reset(new Option(Option::V4, 199, OptionBuffer(1, 0x77)));
-    desc.reset(new OptionDescriptor(option, false));
+    desc.reset(new OptionDescriptor(option, false, false));
 
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
     ASSERT_FALSE(updated);
@@ -769,7 +775,7 @@ TEST_F(CfgOptionTest, deleteOptions) {
     // Because we called "encapsulate", this option should have been
     // propagated to the options encapsulating option space "foo".
     for (uint16_t code = 1000; code < 1020; ++code) {
-        OptionDescriptor top_level_option(false);
+        OptionDescriptor top_level_option(false, false);
         ASSERT_NO_THROW(top_level_option = cfg.get(DHCP6_OPTION_SPACE, code));
         // Make sure that the option with code 5 is there.
         ASSERT_TRUE(top_level_option.option_);
@@ -798,7 +804,7 @@ TEST_F(CfgOptionTest, deleteOptions) {
     // Iterate over the options encapsulating "foo" option space. Make sure
     // that the option with code 5 is no longer encapsulated by these options.
     for (uint16_t code = 1000; code < 1020; ++code) {
-        OptionDescriptor top_level_option(false);
+        OptionDescriptor top_level_option(false, false);
         ASSERT_NO_THROW(top_level_option = cfg.get(DHCP6_OPTION_SPACE, code));
         ASSERT_TRUE(top_level_option.option_);
         EXPECT_FALSE(top_level_option.option_->getOption(5));
@@ -838,7 +844,8 @@ TEST_F(CfgOptionTest, deleteOptionsById) {
     // Create multiple vendor options for vendor id 123.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, "vendor-123", static_cast<uint64_t>(code)));
+        ASSERT_NO_THROW(cfg.add(option, false, false, "vendor-123",
+                                static_cast<uint64_t>(code)));
     }
 
     // Delete options with id of 100. It includes both regular options and
@@ -876,13 +883,13 @@ TEST_F(CfgOptionTest, delVendorOption) {
     // Create multiple vendor options for vendor id 123.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, "vendor-123"));
+        ASSERT_NO_THROW(cfg.add(option, false, false, "vendor-123"));
     }
 
     // Create multiple vendor options for vendor id 234.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, "vendor-234"));
+        ASSERT_NO_THROW(cfg.add(option, false, false, "vendor-234"));
     }
 
     // Make sure that the option we're trying to delete is there.
@@ -912,7 +919,7 @@ TEST_F(CfgOptionTest, get) {
     // Add 10 options to a "dhcp6" option space in the subnet.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(cfg.add(option, false, false, DHCP6_OPTION_SPACE));
     }
 
     // Check that we can get each added option descriptor using
@@ -939,9 +946,9 @@ TEST_F(CfgOptionTest, getList) {
     // Add twice 10 options to a "dhcp4" option space in the subnet.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, DHCP4_OPTION_SPACE));
+        ASSERT_NO_THROW(cfg.add(option, false, false, DHCP4_OPTION_SPACE));
         OptionPtr option2(new Option(Option::V4, code, OptionBuffer(10, 0xEE)));
-        ASSERT_NO_THROW(cfg.add(option2, false, DHCP4_OPTION_SPACE));
+        ASSERT_NO_THROW(cfg.add(option2, false, false, DHCP4_OPTION_SPACE));
     }
 
     // Check that we can get each added option descriptors.
@@ -984,9 +991,9 @@ TEST_F(CfgOptionTest, getListVendor) {
     // Add twice 10 options to a "dhcp4" option space in the subnet.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, vendor_space));
+        ASSERT_NO_THROW(cfg.add(option, false, false, vendor_space));
         OptionPtr option2(new Option(Option::V4, code, OptionBuffer(10, 0xEE)));
-        ASSERT_NO_THROW(cfg.add(option2, false, vendor_space));
+        ASSERT_NO_THROW(cfg.add(option2, false, false, vendor_space));
     }
 
     // Check that we can get each added option descriptors.
@@ -1030,7 +1037,7 @@ TEST_F(CfgOptionTest, addNonUniqueOptions) {
         // In the inner loop we create options with unique codes (100-109).
         for (uint16_t code = 100; code < 110; ++code) {
             OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+            ASSERT_NO_THROW(cfg.add(option, false, false, DHCP6_OPTION_SPACE));
         }
     }
 
@@ -1080,7 +1087,7 @@ TEST(Subnet6Test, addPersistentOption) {
         // and options with these codes will be flagged non-persistent.
         // Options with other codes will be flagged persistent.
         bool persistent = (code % 3) ? true : false;
-        ASSERT_NO_THROW(cfg.add(option, persistent, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(cfg.add(option, persistent, true, DHCP6_OPTION_SPACE));
     }
 
     // Get added options from the subnet.
@@ -1101,6 +1108,45 @@ TEST(Subnet6Test, addPersistentOption) {
     ASSERT_EQ(3, distance(range_non_persistent.first, range_non_persistent.second));
 }
 
+// This test verifies that the option with the cancellation flag can be
+// added to the configuration and that options with the cancellation flags
+// can be retrieved.
+TEST(Subnet6Test, addCancelledOption) {
+    CfgOption cfg;
+
+    // Add 10 options to the subnet with option codes 100 - 109.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        // We create 10 options and want some of them to be flagged
+        // cancelled and some non-cancelled. Cancelled options are
+        // those that server must never send to clients.
+        // We pick 3 out of 10 options and mark them
+        // non-cancelled and 7 other options cancelled.
+        // Code values: 102, 105 and 108 are divisible by 3
+        // and options with these codes will be flagged non-cancelled.
+        // Options with other codes will be flagged cancelled.
+        bool cancelled = (code % 3) ? true : false;
+        ASSERT_NO_THROW(cfg.add(option, true, cancelled, DHCP6_OPTION_SPACE));
+    }
+
+    // Get added options from the subnet.
+    OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
+
+    // options->get<2> returns reference to container index #5. This
+    // index is used to access options by the 'cancelled' flag.
+    OptionContainerCancelIndex& idx = options->get<5>();
+
+    // Get all cancelled options->
+    OptionContainerCancelRange range_cancelled = idx.equal_range(true);
+    // 7 out of 10 options have been flagged cancelled.
+    ASSERT_EQ(7, distance(range_cancelled.first, range_cancelled.second));
+
+    // Get all non-cancelled options->
+    OptionContainerCancelRange range_non_cancelled = idx.equal_range(false);
+    // 3 out of 10 options have been flagged not cancelled.
+    ASSERT_EQ(3, distance(range_non_cancelled.first, range_non_cancelled.second));
+}
+
 // This test verifies that the vendor option can be added to the configuration.
 TEST_F(CfgOptionTest, addVendorOptions) {
     CfgOption cfg;
@@ -1108,7 +1154,7 @@ TEST_F(CfgOptionTest, addVendorOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, "vendor-12345678"));
+        ASSERT_NO_THROW(cfg.add(option, false, false, "vendor-12345678"));
     }
 
     // Second option space uses corner case value for vendor id = max uint8.
@@ -1120,7 +1166,7 @@ TEST_F(CfgOptionTest, addVendorOptions) {
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, option_space.str()));
+        ASSERT_NO_THROW(cfg.add(option, false, false, option_space.str()));
     }
 
     // Get options from the Subnet and check if all 10 are there.
@@ -1167,7 +1213,7 @@ TEST_F(CfgOptionTest, getVendorIdsSpaceNames) {
         // Generate space name for a unique vendor id.
         std::ostringstream s;
         s << "vendor-" << code;
-        ASSERT_NO_THROW(cfg.add(option, false, s.str()));
+        ASSERT_NO_THROW(cfg.add(option, false, false, s.str()));
     }
 
     // We should now have 10 different vendor ids.
@@ -1191,16 +1237,18 @@ TEST_F(CfgOptionTest, unparse) {
 
     // Add some options.
     OptionPtr opt1(new Option(Option::V6, 100, OptionBuffer(4, 0x12)));
-    cfg.add(opt1, false, "dns");
+    cfg.add(opt1, false, true, "dns");
     OptionPtr opt2(new Option(Option::V6, 101, OptionBuffer(4, 12)));
-    OptionDescriptor desc2(opt2, false, "12, 12, 12, 12");
+    OptionDescriptor desc2(opt2, false, true, "12, 12, 12, 12");
     std::string ctx = "{ \"comment\": \"foo\", \"bar\": 1 }";
     desc2.setContext(data::Element::fromJSON(ctx));
     cfg.add(desc2, "dns");
     OptionPtr opt3(new Option(Option::V6, D6O_STATUS_CODE, OptionBuffer(2, 0)));
-    cfg.add(opt3, false, DHCP6_OPTION_SPACE);
+    cfg.add(opt3, false, false, DHCP6_OPTION_SPACE);
     OptionPtr opt4(new Option(Option::V6, 100, OptionBuffer(4, 0x21)));
-    cfg.add(opt4, true, "vendor-1234");
+    cfg.add(opt4, true, true, "vendor-1234");
+    OptionPtr opt5(new Option(Option::V6, 111));
+    cfg.add(opt5, false, true, "vendor-5678");
 
     // Unparse
     std::string expected = "[\n"
@@ -1209,13 +1257,15 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"space\": \"dns\",\n"
         "    \"csv-format\": false,\n"
         "    \"data\": \"12121212\",\n"
-        "    \"always-send\": false\n"
+        "    \"always-send\": false,\n"
+        "    \"never-send\": true\n"
         "},{\n"
         "    \"code\": 101,\n"
         "    \"space\": \"dns\",\n"
         "    \"csv-format\": true,\n"
         "    \"data\": \"12, 12, 12, 12\",\n"
         "    \"always-send\": false,\n"
+        "    \"never-send\": true,\n"
         "    \"user-context\": { \"comment\": \"foo\", \"bar\": 1 }\n"
         "},{\n"
         "    \"code\": 13,\n"
@@ -1223,13 +1273,20 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"space\": \"dhcp6\",\n"
         "    \"csv-format\": false,\n"
         "    \"data\": \"0000\",\n"
-        "    \"always-send\": false\n"
+        "    \"always-send\": false,\n"
+        "    \"never-send\": false\n"
         "},{\n"
         "    \"code\": 100,\n"
         "    \"space\": \"vendor-1234\",\n"
         "    \"csv-format\": false,\n"
         "    \"data\": \"21212121\",\n"
-        "    \"always-send\": true\n"
+        "    \"always-send\": true,\n"
+        "    \"never-send\": true\n"
+        "},{\n"
+        "    \"code\": 111,\n"
+        "    \"space\": \"vendor-5678\",\n"
+        "    \"always-send\": false,\n"
+        "    \"never-send\": true\n"
         "}]\n";
     isc::test::runToElementTest<CfgOption>(expected, cfg);
 }

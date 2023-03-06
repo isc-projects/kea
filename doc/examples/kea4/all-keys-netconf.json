@@ -568,6 +568,13 @@
                 // provided.
                 "name": "domain-name-servers",
 
+                // Boolean flag indicating if the given option is never
+                // send in response. The default value of false indicates
+                // that it is sent when it should. When true the option
+                // is not sent despite of any other setting, i.e. it is
+                // a final flag.
+                "never-send": false,
+
                 // Option space. The default is the "dhcp4" option space which
                 // groups top level DHCPv4 options.
                 "space": "dhcp4"
@@ -889,6 +896,10 @@
 
                                 // Option name.
                                 "name": "routers",
+
+                                // Boolean flag indicating if the given option is never
+                                // send in response.
+                                "never-send": false,
 
                                 // Option space. The default value "dhcp4" designates the
                                 // top level option space.

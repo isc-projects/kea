@@ -81,6 +81,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp4_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -93,6 +94,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o.dhcp4_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -187,6 +189,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp6_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -200,6 +203,7 @@ namespace {
     "  y.formatted_value," \
     "  y.space," \
     "  y.persistent," \
+    "  y.cancelled," \
     "  y.dhcp6_subnet_id," \
     "  y.scope_id," \
     "  y.user_context," \
@@ -213,6 +217,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o.dhcp6_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -299,6 +304,7 @@ namespace {
       "  x.formatted_value," \
       "  x.space," \
       "  x.persistent," \
+      "  x.cancelled," \
       "  x.dhcp4_subnet_id," \
       "  x.scope_id," \
       "  x.user_context," \
@@ -339,6 +345,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp6_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -383,6 +390,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp6_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -429,6 +437,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o.dhcp4_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -509,6 +518,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o.dhcp6_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -598,6 +608,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o." #table_prefix "_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -692,6 +703,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp4_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -755,6 +767,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp6_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -909,6 +922,7 @@ namespace {
     "  formatted_value," \
     "  space," \
     "  persistent," \
+    "  cancelled," \
     "  dhcp_client_class," \
     " " #table_prefix "_subnet_id," \
     "  scope_id," \
@@ -917,7 +931,7 @@ namespace {
     "  pool_id," \
     "  modification_ts" \
     pd_pool_id \
-    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" last ")"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" last ")"
 
 #define MYSQL_INSERT_OPTION4() \
     MYSQL_INSERT_OPTION_COMMON(dhcp4, "", "")
@@ -1028,6 +1042,7 @@ namespace {
     "  o.formatted_value = ?," \
     "  o.space = ?," \
     "  o.persistent = ?," \
+    "  o.cancelled = ?," \
     "  o.dhcp_client_class = ?," \
     "  o." #table_prefix "_subnet_id = ?," \
     "  o.scope_id = ?," \

@@ -510,7 +510,7 @@ public:
                           << subnet_address.toText() << "'. Expected "
                 " at most one option";
         } else if (std::distance(range.first, range.second) == 0) {
-            return (OptionDescriptor(OptionPtr(), false));
+            return (OptionDescriptor(OptionPtr(), false, false));
         }
 
         return (*range.first);

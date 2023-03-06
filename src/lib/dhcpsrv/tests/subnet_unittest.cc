@@ -585,7 +585,8 @@ TEST(Subnet4Test, addInvalidOption) {
     // should result in exception.
     OptionPtr option2;
     ASSERT_FALSE(option2);
-    EXPECT_THROW(subnet->getCfgOption()->add(option2, false, DHCP4_OPTION_SPACE),
+    EXPECT_THROW(subnet->getCfgOption()->add(option2, false, false,
+                                             DHCP4_OPTION_SPACE),
                  isc::BadValue);
 }
 
@@ -680,8 +681,7 @@ TEST(Subnet4Test, parsePrefix) {
 
     // No slash sign.
     EXPECT_THROW(Subnet4::parsePrefix("10.0.0.1"), BadValue);
-
-    // IPv6 is not allowed here.
+   // IPv6 is not allowed here.
     EXPECT_THROW(Subnet4::parsePrefix("3000::/24"), BadValue);
 }
 
@@ -752,7 +752,7 @@ TEST(Subnet4Test, getServerId) {
     option_server_id->writeAddress(IOAddress("1.2.3.4"));
 
     CfgOptionPtr cfg_option = subnet.getCfgOption();
-    cfg_option->add(option_server_id, false, DHCP4_OPTION_SPACE);
+    cfg_option->add(option_server_id, false, false, DHCP4_OPTION_SPACE);
 
     // Verify that the server identifier returned by the Subnet4 object is
     // correct.
@@ -1312,14 +1312,16 @@ TEST(Subnet6Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, false,
+                                                    DHCP6_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "isc"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, false,
+                                                    "isc"));
     }
 
     // Get options from the Subnet and check if all 10 are there.
@@ -1364,7 +1366,8 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         // In the inner loop we create options with unique codes (100-109).
         for (uint16_t code = 100; code < 110; ++code) {
             OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-            ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
+            ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, false,
+                                                        DHCP6_OPTION_SPACE));
         }
     }
 
@@ -1412,7 +1415,9 @@ TEST(Subnet6Test, addPersistentOption) {
         // and options with these codes will be flagged non-persistent.
         // Options with other codes will be flagged persistent.
         bool persistent = (code % 3) ? true : false;
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, persistent, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, persistent,
+                                                    false,
+                                                    DHCP6_OPTION_SPACE));
     }
 
     // Get added options from the subnet.
@@ -1439,7 +1444,8 @@ TEST(Subnet6Test, getOptions) {
     // Add 10 options to a "dhcp6" option space in the subnet.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, false,
+                                                    DHCP6_OPTION_SPACE));
     }
 
     // Check that we can get each added option descriptor using
@@ -1466,14 +1472,16 @@ TEST(Subnet6Test, addVendorOption) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "vendor-12345678"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, false,
+                                                    "vendor-12345678"));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "vendor-87654321"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, false,
+                                                    "vendor-87654321"));
     }
 
     // Get options from the Subnet and check if all 10 are there.

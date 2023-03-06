@@ -337,7 +337,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     std::string value("Yay!");
     OptionPtr option(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(network1b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(network1b->getCfgOption()->add(option, false, false, "isc"));
     ASSERT_NO_THROW(network1b->add(subnet4));
 
     // Network2 we will not touch.

@@ -895,14 +895,15 @@ TEST_F(HostTest, addOptions4) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, DHCP4_OPTION_SPACE));
+        ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, false,
+                                                  DHCP4_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp4 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, "isc"));
+        ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, false, "isc"));
     }
 
     // Get options from the Subnet and check if all 10 are there.
@@ -959,14 +960,15 @@ TEST_F(HostTest, addOptions6) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(host.getCfgOption6()->add(option, false, DHCP6_OPTION_SPACE));
+        ASSERT_NO_THROW(host.getCfgOption6()->add(option, false, false,
+                                                  DHCP6_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(host.getCfgOption6()->add(option, false, "isc"));
+        ASSERT_NO_THROW(host.getCfgOption6()->add(option, false, false, "isc"));
     }
 
     // Get options from the Subnet and check if all 10 are there.

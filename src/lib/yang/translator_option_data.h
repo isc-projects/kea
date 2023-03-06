@@ -23,6 +23,7 @@ namespace yang {
 ///     "csv-format": <csv format flag>,
 ///     "data": <value>,
 ///     "always-send": <always send flag>,
+///     "never-send": <never send flag>,
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
 /// }
@@ -37,6 +38,7 @@ namespace yang {
 ///    +--rw data?           string
 ///    +--rw csv-format?     boolean
 ///    +--rw always-send?    boolean
+///    +--rw never-send?     boolean
 ///    +--rw user-context?   user-context
 /// @endcode
 ///
@@ -48,7 +50,8 @@ namespace yang {
 ///         "space": "dns",
 ///         "csv-format": false,
 ///         "data": "12121212",
-///         "always-send": false
+///         "always-send": false,
+///         "never-send": false
 ///     }
 /// ]
 /// @endcode
@@ -66,6 +69,8 @@ namespace yang {
 ///     option-data[code='100'][space='dns']/csv-format = false
 ///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/always-send = false
+///  /kea-dhcp6-server:config/
+///     option-data[code='100'][space='dns']/never-send = false
 /// @endcode
 
 /// @brief A translator class for converting an option data between

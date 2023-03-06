@@ -65,7 +65,7 @@ TEST(ClientClassDef, copyConstruction) {
 
     auto cfg_option = boost::make_shared<CfgOption>();
     auto option = boost::make_shared<Option>(Option::V6, 1024);
-    cfg_option->add(option, false, DHCP6_OPTION_SPACE);
+    cfg_option->add(option, false, false, DHCP6_OPTION_SPACE);
 
     auto option_def = boost::make_shared<OptionDefinition>("foo", 1024, "dhcp6", "empty");
     CfgOptionDefPtr cfg_option_def = boost::make_shared<CfgOptionDef>();
@@ -144,13 +144,15 @@ TEST(ClientClassDef, cfgOptionBasics) {
     OptionPtr option;
     test_options.reset(new CfgOption());
     option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
+    ASSERT_NO_THROW(test_options->add(option, false, false,
+                                      DHCP4_OPTION_SPACE));
 
     option.reset(new Option(Option::V6, 101, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, "isc"));
+    ASSERT_NO_THROW(test_options->add(option, false, false, "isc"));
 
     option.reset(new Option(Option::V6, 100, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP6_OPTION_SPACE));
+    ASSERT_NO_THROW(test_options->add(option, false, false,
+                                      DHCP6_OPTION_SPACE));
 
     // Now remake the client class with cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr, test_options)));
@@ -187,7 +189,8 @@ TEST(ClientClassDef, copyAndEquality) {
     OptionPtr option;
     test_options.reset(new CfgOption());
     option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
+    ASSERT_NO_THROW(test_options->add(option, false, false,
+                                      DHCP4_OPTION_SPACE));
 
     // Now remake the client class with cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef("class_one", expr,
@@ -283,7 +286,8 @@ TEST(ClientClassDef, copyAndEquality) {
     // Make a class that with same name and expression, but different options
     // verify that the equality tools reflect that the classes are not equal.
     option.reset(new Option(Option::V4, 20, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
+    ASSERT_NO_THROW(test_options->add(option, false, false,
+                                      DHCP4_OPTION_SPACE));
     ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
                                                      test_options)));
     EXPECT_FALSE(cclass->equals(*cclass2));
@@ -749,12 +753,13 @@ TEST(ClientClassDictionary, createOptions) {
     // Make some options for the second class.
     cfg_option.reset(new CfgOption());
     OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
-    OptionDescriptorPtr desc = OptionDescriptor::create(option, true, "bogus-file.txt");
+    OptionDescriptorPtr desc = OptionDescriptor::create(option, true, false,
+                                                        "bogus-file.txt");
     desc->space_name_ = DHCP4_OPTION_SPACE;
     cfg_option->add(*desc, desc->space_name_);
 
     option = Option::create(Option::V4, DHO_TFTP_SERVER_NAME);
-    desc = OptionDescriptor::create(option, true, "bogus-tftp-server");
+    desc = OptionDescriptor::create(option, true, false, "bogus-tftp-server");
     desc->space_name_ = DHCP4_OPTION_SPACE;
     cfg_option->add(*desc, desc->space_name_);
 
@@ -842,7 +847,7 @@ TEST(TemplateClientClassDef, copyConstruction) {
 
     auto cfg_option = boost::make_shared<CfgOption>();
     auto option = boost::make_shared<Option>(Option::V6, 1024);
-    cfg_option->add(option, false, DHCP6_OPTION_SPACE);
+    cfg_option->add(option, false, false, DHCP6_OPTION_SPACE);
 
     auto option_def = boost::make_shared<OptionDefinition>("foo", 1024, "dhcp6", "empty");
     CfgOptionDefPtr cfg_option_def = boost::make_shared<CfgOptionDef>();
@@ -921,13 +926,15 @@ TEST(TemplateClientClassDef, cfgOptionBasics) {
     OptionPtr option;
     test_options.reset(new CfgOption());
     option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
+    ASSERT_NO_THROW(test_options->add(option, false, false,
+                                      DHCP4_OPTION_SPACE));
 
     option.reset(new Option(Option::V6, 101, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, "isc"));
+    ASSERT_NO_THROW(test_options->add(option, false, false, "isc"));
 
     option.reset(new Option(Option::V6, 100, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP6_OPTION_SPACE));
+    ASSERT_NO_THROW(test_options->add(option, false, false,
+                                      DHCP6_OPTION_SPACE));
 
     // Now remake the client class with cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr, test_options)));
@@ -964,7 +971,8 @@ TEST(TemplateClientClassDef, copyAndEquality) {
     OptionPtr option;
     test_options.reset(new CfgOption());
     option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
+    ASSERT_NO_THROW(test_options->add(option, false, false,
+                                      DHCP4_OPTION_SPACE));
 
     // Now remake the client class with cfg_option
     ASSERT_NO_THROW(cclass.reset(new TemplateClientClassDef("class_one", expr,
@@ -1060,7 +1068,8 @@ TEST(TemplateClientClassDef, copyAndEquality) {
     // Make a class that with same name and expression, but different options
     // verify that the equality tools reflect that the classes are not equal.
     option.reset(new Option(Option::V4, 20, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
+    ASSERT_NO_THROW(test_options->add(option, false, false,
+                                      DHCP4_OPTION_SPACE));
     ASSERT_NO_THROW(cclass2.reset(new TemplateClientClassDef("class_one", expr,
                                                              test_options)));
     EXPECT_FALSE(cclass->equals(*cclass2));
@@ -1602,12 +1611,13 @@ TEST(ClientClassDictionary, templateCreateOptions) {
     // Make some options for the second class.
     cfg_option.reset(new CfgOption());
     OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
-    OptionDescriptorPtr desc = OptionDescriptor::create(option, true, "bogus-file.txt");
+    OptionDescriptorPtr desc = OptionDescriptor::create(option, true, false,
+                                                        "bogus-file.txt");
     desc->space_name_ = DHCP4_OPTION_SPACE;
     cfg_option->add(*desc, desc->space_name_);
 
     option = Option::create(Option::V4, DHO_TFTP_SERVER_NAME);
-    desc = OptionDescriptor::create(option, true, "bogus-tftp-server");
+    desc = OptionDescriptor::create(option, true, false, "bogus-tftp-server");
     desc->space_name_ = DHCP4_OPTION_SPACE;
     cfg_option->add(*desc, desc->space_name_);
 

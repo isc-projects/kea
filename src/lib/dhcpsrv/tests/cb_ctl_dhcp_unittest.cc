@@ -337,7 +337,8 @@ public:
         // Insert global options into the database.
         OptionDescriptorPtr opt(new OptionDescriptor(createOption<OptionString>
                                                      (Option::V4, DHO_HOST_NAME,
-                                                      true, false, "new.example.com")));
+                                                      true, false, false,
+                                                      "new.example.com")));
         opt->setId(1);
         opt->space_name_ = DHCP4_OPTION_SPACE;
         opt->setModificationTime(getTimestamp("dhcp4_options"));
@@ -346,7 +347,7 @@ public:
 
         opt.reset(new OptionDescriptor(createOption<OptionString>
                                        (Option::V4, DHO_TFTP_SERVER_NAME,
-                                        true, false, "tftp-my")));
+                                        true, false, false, "tftp-my")));
         opt->setId(2);
         opt->space_name_ = DHCP4_OPTION_SPACE;
         opt->setModificationTime(getTimestamp("dhcp4_options"));
@@ -389,7 +390,10 @@ public:
 
         // Add a standard option to the class.
         OptionPtr option = Option::create(Option::V4, DHO_BOOT_FILE_NAME);
-        OptionDescriptorPtr desc = OptionDescriptor::create(option, true, "bogus-file.txt");
+        OptionDescriptorPtr desc = OptionDescriptor::create(option,
+                                                            true,
+                                                            false,
+                                                            "bogus-file.txt");
         desc->space_name_ = DHCP4_OPTION_SPACE;
         desc->setModificationTime(getTimestamp("dhcp4_client_class"));
         client_class->getCfgOption()->add(*desc, desc->space_name_);
@@ -404,7 +408,7 @@ public:
 
         // Add a custom option to the class.
         option = Option::create(Option::V4, 201);
-        desc = OptionDescriptor::create(option, true, "custom-stuff");
+        desc = OptionDescriptor::create(option, true, false, "custom-stuff");
         desc->space_name_ = "isc";
         desc->setModificationTime(getTimestamp("dhcp4_client_class"));
         client_class->getCfgOption()->add(*desc, desc->space_name_);
@@ -1173,7 +1177,8 @@ public:
         // Insert global options into the database.
         OptionDescriptorPtr opt(new OptionDescriptor(createOption<OptionString>
                                                      (Option::V6, D6O_BOOTFILE_URL,
-                                                      true, false, "some.bootfile")));
+                                                      true, false, false,
+                                                      "some.bootfile")));
         opt->setId(1);
         opt->space_name_ = DHCP6_OPTION_SPACE;
         opt->setModificationTime(getTimestamp("dhcp6_options"));
@@ -1182,7 +1187,8 @@ public:
 
         opt.reset(new OptionDescriptor(createOption<OptionString>
                                        (Option::V6, D6O_AFTR_NAME,
-                                        true, true, "some.example.com")));
+                                        true, true, true,
+                                        "some.example.com")));
         opt->setId(2);
         opt->space_name_ = DHCP6_OPTION_SPACE;
         opt->setModificationTime(getTimestamp("dhcp6_options"));
@@ -1225,7 +1231,9 @@ public:
 
         // Add an option to the class.
         OptionPtr option = Option::create(Option::V6, D6O_BOOTFILE_URL);
-        OptionDescriptorPtr desc = OptionDescriptor::create(option, true, "client.boot.url");
+        OptionDescriptorPtr desc = OptionDescriptor::create(option, true,
+                                                            false,
+                                                            "client.boot.url");
         desc->space_name_ = DHCP6_OPTION_SPACE;
         desc->setModificationTime(getTimestamp("dhcp6_client_class"));
         client_class->getCfgOption()->add(*desc, desc->space_name_);

@@ -60,6 +60,7 @@ TranslatorOptionData::getOptionDataKea(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "csv-format");
     checkAndGetLeaf(result, data_node, "data");
     checkAndGetLeaf(result, data_node, "name");
+    checkAndGetLeaf(result, data_node, "never-send");
 
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
 
@@ -94,6 +95,7 @@ TranslatorOptionData::setOptionDataKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "csv-format", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "data", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "name", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "never-send", LeafBaseType::Bool);
 
     checkAndSetUserContext(elem, xpath);
 }

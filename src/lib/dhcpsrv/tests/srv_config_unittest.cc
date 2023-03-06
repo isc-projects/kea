@@ -385,7 +385,7 @@ TEST_F(SrvConfigTest, copy) {
 
     // Add an option.
     OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(10, 0xFF)));
-    conf1.getCfgOption()->add(option, true, DHCP6_OPTION_SPACE);
+    conf1.getCfgOption()->add(option, true, false, DHCP6_OPTION_SPACE);
 
     // Add a class dictionary
     conf1.setClientClassDictionary(ref_dictionary_);
@@ -458,12 +458,12 @@ TEST_F(SrvConfigTest, equality) {
 
     // Differ by option data.
     OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(1, 0xFF)));
-    conf1.getCfgOption()->add(option, false, "isc");
+    conf1.getCfgOption()->add(option, false, false, "isc");
 
     EXPECT_FALSE(conf1 == conf2);
     EXPECT_TRUE(conf1 != conf2);
 
-    conf2.getCfgOption()->add(option, false, "isc");
+    conf2.getCfgOption()->add(option, false, false, "isc");
 
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
