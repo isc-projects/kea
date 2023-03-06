@@ -131,7 +131,7 @@ protected:
     void parsePdAllocatorParams(const data::ConstElementPtr& network_data,
                                 Network6Ptr& network);
 
-    /// @brief Parses offer-lft parameter (v4 only)
+    /// @brief Parses offer-lifetime parameter (v4 only)
     ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.

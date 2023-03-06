@@ -5670,7 +5670,7 @@ TEST_F(AllocEngine4Test, discoverOfferLft) {
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
 
-    // Set subnet's offer-lft to a non-zero, positive value.
+    // Set subnet's offer-lifetime to a non-zero, positive value.
     uint32_t offer_lft = (subnet_->getValid() / 3);
     subnet_->setOfferLft(offer_lft);
     ASSERT_EQ(offer_lft, subnet_->getOfferLft().get());
@@ -5730,7 +5730,7 @@ TEST_F(AllocEngine4Test, discoverOfferLftReuseExpiredLease4) {
     pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
     subnet_->addPool(pool_);
 
-    // Set subnet's offer-lft to a non-zero, positive value.
+    // Set subnet's offer-lifetime to a non-zero, positive value.
     uint32_t offer_lft = (subnet_->getValid() / 3);
     subnet_->setOfferLft(offer_lft);
     ASSERT_EQ(offer_lft, subnet_->getOfferLft().get());
@@ -5778,6 +5778,103 @@ TEST_F(AllocEngine4Test, discoverOfferLftReuseExpiredLease4) {
     EXPECT_EQ(offer_lft, from_mgr->valid_lft_);
     EXPECT_FALSE(from_mgr->fqdn_fwd_);
     EXPECT_FALSE(from_mgr->fqdn_rev_);
+}
+
+// Verifies that AllocEngine::getOfferLft(ctx4) returns the appropriate
+// lifetime value based on the context content.
+TEST_F(AllocEngine4Test, getOfferft4) {
+    AllocEngine engine(0);
+
+    // Let's make three classes, two with offer-lifetime and one without,
+    // and add them to the dictionary.
+    ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+
+    ClientClassDefPtr class_def(new ClientClassDef("offer_lft_one", ExpressionPtr()));
+    Optional<uint32_t> offer_lft_one(100);
+    class_def->setOfferLft(offer_lft_one);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("offer_lft_two", ExpressionPtr()));
+    Optional<uint32_t>offer_lft_two(200);
+    class_def->setOfferLft(offer_lft_two);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("offer_lft_zero", ExpressionPtr()));
+    Optional<uint32_t>offer_lft_zero(0);
+    class_def->setOfferLft(offer_lft_zero);
+    dictionary->addClass(class_def);
+
+    class_def.reset(new ClientClassDef("offer_lft_unspec", ExpressionPtr()));
+    dictionary->addClass(class_def);
+
+    // Commit our class changes.
+    CfgMgr::instance().commit();
+
+    // Update the subnet's triplet to something more useful.
+    subnet_->setOfferLft(Optional<uint32_t>(300));
+
+    // Describes a test scenario.
+    struct Scenario {
+        std::string desc_;                  // descriptive text for logging
+        std::vector<std::string> classes_;  // class list of assigned classes
+        uint32_t exp_valid_lft_;            // expected lease lifetime
+    };
+
+    // Scenarios to test.
+    std::vector<Scenario> scenarios = {
+        {
+            "BOOTP",
+            { "BOOTP" },
+            Lease::INFINITY_LFT
+        },
+        {
+            "no classes",
+            {},
+            subnet_->getOfferLft()
+        },
+        {
+            "class unspecified",
+            { "offer_lft_unspec" },
+            subnet_->getOfferLft()
+        },
+        {
+            "from last class",
+            { "offer_lft_unspec", "offer_lft_one" },
+            offer_lft_one.get()
+        },
+        {
+            "from first class",
+            { "offer_lft_two", "offer_lft_one" },
+            offer_lft_two.get()
+        },
+        {
+            // Useing class value of zero should override non-zero set at
+            // subnet level, lease should have actual valid lft
+            "zero from class",
+            { "offer_lft_zero" },
+            subnet_->getValid()
+        }
+    };
+
+    // Iterate over the scenarios and verify the correct outcome.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            // Create a context;
+            AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
+                                            IOAddress("0.0.0.0"), false, false,
+                                            "", true);
+            ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+            // Add client classes (if any)
+            for (auto class_name : scenario.classes_) {
+                ctx.query_->addClass(class_name);
+            }
+
+            Lease4Ptr lease = engine.allocateLease4(ctx);
+            ASSERT_TRUE(lease);
+            EXPECT_EQ(lease->valid_lft_, scenario.exp_valid_lft_);
+        }
+    }
 }
 
 }  // namespace test

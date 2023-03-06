@@ -3869,8 +3869,6 @@ AllocEngine::getOfferLft(const ClientContext4& ctx) {
 
     util::Optional<uint32_t> offer_lft;
 
-#if 0
-    /// @todo TKM need this when we add offer-lst to client class.
     // If specified in one of our classes use it.
     // We use the first one we find.
     const ClientClasses classes = ctx.query_->getClasses();
@@ -3889,7 +3887,6 @@ AllocEngine::getOfferLft(const ClientContext4& ctx) {
             }
         }
     }
-#endif
 
     // If no classes specified it, get it from the subnet.
     if (offer_lft.unspecified()) {

@@ -272,7 +272,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"hostname-char-replacement\": \"x\",\n"
         "    \"hostname-char-set\": \"[^A-Z]\",\n"
         "    \"cache-threshold\": .20,\n"
-        "    \"offer-lft\": 77\n"
+        "    \"offer-lifetime\": 77\n"
         "  }\n"
         "]\n";
 

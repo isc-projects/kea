@@ -229,6 +229,18 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         }
     }
 
+    Optional<uint32_t> offer_lft;
+    if (class_def_cfg->contains("offer-lifetime")) {
+        auto value = getInteger(class_def_cfg, "offer-lifetime");
+        if (value < 0) {
+            isc_throw(DhcpConfigError, "the value of offer-lifetime '"
+                      << value << "' must be a positive number ("
+                      << getPosition("offer-lifetime", class_def_cfg) << ")");
+        }
+
+        offer_lft = value;
+    }
+
     // Parse valid lifetime triplet.
     Triplet<uint32_t> valid_lft = parseIntTriplet(class_def_cfg, "valid-lifetime");
 
@@ -266,7 +278,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         class_dictionary->addClass(name, match_expr, test, required,
                                    depend_on_known, options, defs,
                                    user_context, next_server, sname, filename,
-                                   valid_lft, preferred_lft, is_template);
+                                   valid_lft, preferred_lft, is_template, offer_lft);
     } catch (const std::exception& ex) {
         std::ostringstream s;
         s << "Can't add class: " << ex.what();

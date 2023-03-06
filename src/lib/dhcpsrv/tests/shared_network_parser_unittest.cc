@@ -153,7 +153,7 @@ public:
                 "    \"store-extended-info\": true,"
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
-                "    \"offer-lft\": 777,"
+                "    \"offer-lifetime\": 777,"
                 "    \"ddns-update-on-renew\": true,"
                 "    \"option-data\": ["
                 "        {"

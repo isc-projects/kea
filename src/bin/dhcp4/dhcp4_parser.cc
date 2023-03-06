@@ -1553,12 +1553,12 @@ namespace isc { namespace dhcp {
 #line 1554 "dhcp4_parser.cc"
     break;
 
-  case 181: // offer_lft: "offer-lft" ":" "integer"
+  case 181: // offer_lft: "offer-lifetime" ":" "integer"
 #line 797 "dhcp4_parser.yy"
                                    {
-    ctx.unique("offer-lft", ctx.loc2pos(yystack_[2].location));
+    ctx.unique("offer-lifetime", ctx.loc2pos(yystack_[2].location));
     ElementPtr offer_lft(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("offer-lft", offer_lft);
+    ctx.stack_.back()->set("offer-lifetime", offer_lft);
 }
 #line 1564 "dhcp4_parser.cc"
     break;
@@ -6017,7 +6017,7 @@ namespace isc { namespace dhcp {
   "\"service-sockets-max-retries\"", "\"sanity-checks\"",
   "\"lease-checks\"", "\"extended-info-checks\"", "\"echo-client-id\"",
   "\"match-client-id\"", "\"authoritative\"", "\"next-server\"",
-  "\"server-hostname\"", "\"boot-file-name\"", "\"offer-lft\"",
+  "\"server-hostname\"", "\"boot-file-name\"", "\"offer-lifetime\"",
   "\"lease-database\"", "\"hosts-database\"", "\"hosts-databases\"",
   "\"type\"", "\"memfile\"", "\"mysql\"", "\"postgresql\"", "\"user\"",
   "\"password\"", "\"host\"", "\"port\"", "\"persist\"",

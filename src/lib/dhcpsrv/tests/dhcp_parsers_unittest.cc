@@ -3426,14 +3426,14 @@ TEST_F(ParseConfigTest, selfEncapsulationTest) {
     cfg.runCfgOptionsTest(family_, config);
 }
 
-// This test verifies parsing offer-lft for Subnet4.
+// This test verifies parsing offer-lifetime for Subnet4.
 TEST_F(ParseConfigTest, subnet4OfferLft) {
     std::string config =
         "{"
         "    \"subnet4\": [ {"
         "        \"subnet\": \"192.0.2.0/24\","
         "        \"id\": 123,"
-        "        \"offer-lft\": 888"
+        "        \"offer-lifetime\": 888"
         "    } ]"
         "}";
 
@@ -3447,14 +3447,14 @@ TEST_F(ParseConfigTest, subnet4OfferLft) {
     EXPECT_EQ(888, subnet->getOfferLft().get());
 }
 
-// This test verifies parsing invalid offer-lft for Subnet4.
+// This test verifies parsing invalid offer-lifetime for Subnet4.
 TEST_F(ParseConfigTest, subnet4InvalidOfferLft) {
     std::string config =
         "{"
         "    \"subnet4\": [ {"
         "        \"subnet\": \"192.0.2.0/24\","
         "        \"id\": 123,"
-        "        \"offer-lft\": -77"
+        "        \"offer-lifetime\": -77"
         "    } ]"
         "}";
 

@@ -320,9 +320,9 @@ Network4::toElement() const {
         map->set("boot-file-name",Element::create(filename_.get()));
     }
 
-    // Set offer-lft
+    // Set offer-lifetime
     if (!offer_lft_.unspecified()) {
-        map->set("offer-lft",Element::create(offer_lft_.get()));
+        map->set("offer-lifetime",Element::create(offer_lft_.get()));
     }
 
     return (map);

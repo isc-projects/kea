@@ -100,7 +100,7 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
     { "allocator",                        Element::string },
-    { "offer-lft",                        Element::integer },
+    { "offer-lifetime",                   Element::integer },
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -143,7 +143,7 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-use-conflict-resolution",     Element::boolean, "true" },
     { "parked-packet-limit",              Element::integer, "256" },
     { "allocator",                        Element::string,  "iterative" },
-    { "offer-lft",                        Element::integer, "0" },
+    { "offer-lifetime",                   Element::integer, "0" },
 };
 
 /// @brief This table defines all option definition parameters.
@@ -257,7 +257,7 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "ddns-update-on-renew",           Element::boolean },
     { "ddns-use-conflict-resolution",   Element::boolean },
     { "allocator",                      Element::string },
-    { "offer-lft",                      Element::integer }
+    { "offer-lifetime",                 Element::integer }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -312,7 +312,7 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "cache-threshold",
     "cache-max-age",
     "allocator",
-    "offer-lft",
+    "offer-lifetime",
 };
 
 /// @brief This table defines all pool parameters.
@@ -377,7 +377,7 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "ddns-update-on-renew",           Element::boolean },
     { "ddns-use-conflict-resolution",   Element::boolean },
     { "allocator",                      Element::string },
-    { "offer-lft",                      Element::integer }
+    { "offer-lifetime",                 Element::integer }
 };
 
 /// @brief This table defines default values for each IPv4 shared network.

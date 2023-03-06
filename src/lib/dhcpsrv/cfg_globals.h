@@ -82,7 +82,7 @@ public:
         NEXT_SERVER,
         SERVER_HOSTNAME,
         BOOT_FILE_NAME,
-        OFFER_LFT,
+        OFFER_LIFETIME,
 
         // DHCPv6 specific parameters.
         DATA_DIRECTORY,

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,9 +12,10 @@
 #include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
-#include <util/triplet.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
+#include <util/triplet.h>
+#include <util/optional.h>
 
 #include <string>
 #include <unordered_map>
@@ -221,6 +222,21 @@ public:
         preferred_ = preferred;
     }
 
+    /// @brief Sets offer lifetime for the class.
+    ///
+    /// Will be used for the offer lifetime (may be empty if not defined)
+    void setOfferLft(const util::Optional<uint32_t>& offer_lft) {
+        offer_lft_ = offer_lft;
+    }
+
+    /// @brief Returns offer lifetime for the class.
+    ///
+    /// @param inheritance inheritance mode to be used.
+    /// @return offer lifetime value
+    util::Optional<uint32_t> getOfferLft() const {
+        return (offer_lft_);
+    }
+
     /// @brief Test method which checks if the packet belongs to the class
     ///
     /// If the packet belongs to the class, the class is added to the packet.
@@ -289,6 +305,9 @@ private:
 
     /// @brief a Triplet (min/default/max) holding allowed preferred lifetime values
     util::Triplet<uint32_t> preferred_;
+
+    /// @brief offer lifetime for this class (V4 only).
+    util::Optional<uint32_t> offer_lft_;
 };
 
 class TemplateClientClassDef : public ClientClassDef {
@@ -377,9 +396,10 @@ public:
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string(),
-                  const util::Triplet<uint32_t>&valid = util::Triplet<uint32_t>(),
-                  const util::Triplet<uint32_t>&preferred = util::Triplet<uint32_t>(),
-                  bool is_template = false);
+                  const util::Triplet<uint32_t>& valid = util::Triplet<uint32_t>(),
+                  const util::Triplet<uint32_t>& preferred = util::Triplet<uint32_t>(),
+                  bool is_template = false,
+                  const util::Optional<uint32_t>& offer_lft = util::Optional<uint32_t>());
 
     /// @brief Adds a new class to the list
     ///

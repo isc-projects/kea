@@ -78,7 +78,7 @@ using namespace std;
   NEXT_SERVER "next-server"
   SERVER_HOSTNAME "server-hostname"
   BOOT_FILE_NAME "boot-file-name"
-  OFFER_LFT "offer-lft"
+  OFFER_LFT "offer-lifetime"
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
@@ -795,9 +795,9 @@ reservations_lookup_first: RESERVATIONS_LOOKUP_FIRST COLON BOOLEAN {
 };
 
 offer_lft: OFFER_LFT COLON INTEGER {
-    ctx.unique("offer-lft", ctx.loc2pos(@1));
+    ctx.unique("offer-lifetime", ctx.loc2pos(@1));
     ElementPtr offer_lft(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("offer-lft", offer_lft);
+    ctx.stack_.back()->set("offer-lifetime", offer_lft);
 };
 
 interfaces_config: INTERFACES_CONFIG {

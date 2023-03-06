@@ -630,6 +630,7 @@ TEST(ClientClassDef, fixedFieldsDefaults) {
     ASSERT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
     EXPECT_EQ(empty, cclass->getSname());
     EXPECT_EQ(empty, cclass->getFilename());
+    EXPECT_TRUE(cclass->getOfferLft().unspecified());
 }
 
 // Tests basic operations of fixed fields

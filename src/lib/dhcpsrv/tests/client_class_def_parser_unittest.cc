@@ -1334,6 +1334,7 @@ TEST_F(ClientClassDefParserTest, noFixedFields4) {
     EXPECT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
     EXPECT_EQ(0, cclass->getSname().size());
     EXPECT_EQ(0, cclass->getFilename().size());
+    EXPECT_TRUE(cclass->getOfferLft().unspecified());
 
     // Nor option definitions
     CfgOptionDefPtr cfg = cclass->getCfgOptionDef();
@@ -1497,6 +1498,7 @@ TEST_F(ClientClassDefParserTest, nextServer) {
     EXPECT_EQ(IOAddress("192.0.2.254"), cclass->getNextServer());
     EXPECT_EQ(0, cclass->getSname().size());
     EXPECT_EQ(0, cclass->getFilename().size());
+    EXPECT_TRUE(cclass->getOfferLft().unspecified());
 }
 
 // Test verifies that the parser rejects bogus next-server value.
@@ -2051,6 +2053,39 @@ TEST_F(ClientClassDefParserTest, invalidUserContext) {
     ClientClassDefPtr cclass;
     ASSERT_THROW_MSG(cclass = parseClientClassDef(cfg_text, AF_INET),
                  DhcpConfigError, "User context has to be a map (<string>:3:21)");
+}
+
+// Test verifies that it is possible to define offer-lifetime field and it
+// is actually set in the class properly.
+TEST_F(ClientClassDefParserTest, offerLft) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"offer-lifetime\": 99\n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    auto offer_lft = cclass->getOfferLft();
+    ASSERT_FALSE(offer_lft.unspecified());
+    EXPECT_EQ(99, offer_lft);
+}
+
+// Test verifies that the parser rejects bogus server-hostname value.
+TEST_F(ClientClassDefParserTest, offerLftInvalid) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"offer-lifetime\": -24\n"
+        "} \n";
+
+    EXPECT_THROW_MSG(parseClientClassDef(cfg_text, AF_INET), DhcpConfigError,
+                     "the value of offer-lifetime '-24' must be a positive number"
+                     " (<string>:3:23)");
 }
 
 } // end of anonymous namespace

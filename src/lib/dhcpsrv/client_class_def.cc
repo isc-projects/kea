@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -259,6 +259,12 @@ ClientClassDef::toElement() const {
         result->set("server-hostname", Element::create(sname_));
         // Set boot-file-name
         result->set("boot-file-name", Element::create(filename_));
+
+        // Set offer-lifetime
+        if (!offer_lft_.unspecified()) {
+            result->set("offer-lifetime",
+                    Element::create(static_cast<long long>(offer_lft_.get())));
+        }
     } else {
         // V6 only
         // Set preferred-lifetime
@@ -346,7 +352,8 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const std::string& filename,
                                 const util::Triplet<uint32_t>& valid,
                                 const util::Triplet<uint32_t>& preferred,
-                                bool is_template) {
+                                bool is_template,
+                                const util::Optional<uint32_t>& offer_lft) {
     ClientClassDefPtr cclass;
     if (is_template) {
         cclass.reset(new TemplateClientClassDef(name, match_expr, cfg_option));
@@ -363,6 +370,7 @@ ClientClassDictionary::addClass(const std::string& name,
     cclass->setFilename(filename);
     cclass->setValid(valid);
     cclass->setPreferred(preferred);
+    cclass->setOfferLft(offer_lft);
     addClass(cclass);
 }
 

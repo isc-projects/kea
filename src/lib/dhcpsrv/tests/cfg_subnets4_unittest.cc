@@ -1133,7 +1133,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"pools\": [ ],\n"
         "    \"store-extended-info\": true,\n"
         "    \"cache-max-age\": 80,\n"
-        "    \"offer-lft\": 99\n"
+        "    \"offer-lifetime\": 99\n"
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"192.0.2.128/26\",\n"

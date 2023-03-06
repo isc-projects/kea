@@ -1325,7 +1325,7 @@ public:
     getOfferLft(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network4>(&Network4::getOfferLft, offer_lft_,
                                       inheritance,
-                                      CfgGlobals::OFFER_LFT));
+                                      CfgGlobals::OFFER_LIFETIME));
     }
 
     /// @brief Unparses network object.

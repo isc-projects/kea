@@ -301,12 +301,12 @@ BaseNetworkParser::parsePdAllocatorParams(const data::ConstElementPtr& network_d
 void
 BaseNetworkParser::parseOfferLft(const data::ConstElementPtr& network_data,
                                         Network4Ptr& network) {
-    if (network_data->contains("offer-lft")) {
-        auto value = getInteger(network_data, "offer-lft");
+    if (network_data->contains("offer-lifetime")) {
+        auto value = getInteger(network_data, "offer-lifetime");
         if (value < 0) {
-            isc_throw(DhcpConfigError, "the value of offer-lft '"
+            isc_throw(DhcpConfigError, "the value of offer-lifetime '"
                       << value << "' must be a positive number ("
-                      << getPosition("offer-lft", network_data) << ")");
+                      << getPosition("offer-lifetime", network_data) << ")");
         }
 
         network->setOfferLft(value);
