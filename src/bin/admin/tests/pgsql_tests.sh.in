@@ -770,6 +770,24 @@ pgsql_upgrade_13_to_14_test() {
     run_command \
         pgsql_execute "select cancelled from dhcp6_options;"
     assert_eq 0 "${EXIT_CODE}" "dhcp6_options is missing cancelled column. (expected status  code %d, returned %d)"
+
+    # Check if offer_lifetime was added to dhcp4_shared_network table.
+    qry="SELECT offer_lifetime from dhcp4_shared_network limit 1;"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if offer_lifetime was added to dhcp4_subnet table.
+    qry="SELECT offer_lifetime from dhcp4_subnet limit 1;"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if offer_lifetime was added to dhcp4_client_class table.
+    qry="SELECT offer_lifetime from dhcp4_client_class limit 1;"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 }
 
 pgsql_upgrade_test() {

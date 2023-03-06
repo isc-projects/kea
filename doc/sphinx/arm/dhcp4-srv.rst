@@ -4488,6 +4488,65 @@ i.e. the expiration date does not change. Other options based on the
 valid lifetime e.g. ``dhcp-renewal-time`` and ``dhcp-rebinding-time``,
 also depend on the reusable lifetime.
 
+Temporary Allocation on DHCPDISCOVER
+------------------------------------
+
+By default, kea-dhcp4 does not allocate or store a lease when offering an address
+to a client in response to a DHCPDISCOVER.  In general, kea-dhcp4, can fulfill client
+demands faster by deferring lease allocation and storage until it receives DHCPREQUESTs
+for them.  Release 2.3.6 added a new parameter to kea-dhcp4, ``offer-lifetime``, which
+(when not zero) instructs the server to allocate and persist a lease when generating an
+DHCPOFFER and:
+
+- The persisted lease's lifetime is equal to ``offer-lifetime`` (in seconds).
+
+- The lifetime sent to the client in the DHCPOFFER via option 51 will still be based
+  on ``valid-lifetime``.  This avoids issues with clients that may reject offers lifetimes they
+  perceive as too short.
+
+- DDNS updates are not performed. As with the default behavior, that occurs on DHCPREQUEST.
+
+- Updates are not sent to HA peers.
+
+- Assigned lease statistics are incremented.
+
+- Expiration processing and reclamation behave just as they do for leases allocated
+  during DHCPREQUEST processing.
+
+- Lease caching, if enabled, is honored.
+
+- In sites running multiple instances of kea-dhcp4 against a single, shared lease store, races
+  for given address values are lost during DHCPDISCOVER processing rather than during DHCPREQUEST
+  processing.  Servers that lose the race for the address will simply not respond the client
+  rather than NAK them.  The client in turn will simply retry DHCPDISCOVER.  This should reduce
+  the amount of traffic such conflicts incur.
+
+- Clients repeating DHCPDISCOVERs will be offered the same address each time.
+
+An example subnet configuration is shown below:
+
+::
+
+    "subnet4": [
+        {
+            "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+            "subnet": "192.0.2.0/24",
+            "offer-lifetime": 60,
+            "valid-lifetime": 2000,
+            ...
+        }
+    ],
+
+Here ``offer-lifetime`` has been configured to be 60 seconds with a ``valid-lifetime``
+of 2000 seconds.  This instructs kea-dhcp4 to persist leases for 60 seconds when
+sending them back in DHCPOFFERs and then extending them to 2000 seconds when clients
+DHCPREQUEST them.
+
+The value, which defaults to zero, is supported at the global, shared-network, subnet,
+and class levels. Choosing an appropriate value for offer-lifetime is extremely
+site-dependent but a value between 60 and 120 seconds would be a reasonable starting
+point.
+
 .. _host-reservation-v4:
 
 Host Reservations in DHCPv4

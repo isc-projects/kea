@@ -1,3 +1,9 @@
+2115.	[func]		tmark
+	Added the parameter, offer-lifetime, to kea-dhcp4.  When
+	greater than zero, the server temporarily allocates and
+	persists leases during DHCPOFFER processing.
+	(Gitlab #2719)
+
 2114.	[func]		razvan
 	Added the -T command line parameter to kea-dhcp4 and kea-dhcp6
 	for testing configuration files, similar to -t, but with extra

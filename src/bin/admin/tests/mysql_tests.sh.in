@@ -687,6 +687,34 @@ mysql_upgrade_13_to_14_test() {
     done
 }
 
+mysql_upgrade_14_to_15_test() {
+    # table: dhcp4_options new cancelled column.
+    qry="select cancelled from dhcp4_options"
+    run_statement "dhcp4_options" "$qry"
+
+    # table: dhcp6_options new cancelled column.
+    qry="select cancelled from dhcp6_options"
+    run_statement "dhcp6_options" "$qry"
+
+    # Check if offer_lifetime was added to dhcp4_shared_network table.
+    qry="SELECT offer_lifetime from dhcp4_shared_network limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if offer_lifetime was added to dhcp4_subnet table.
+    qry="SELECT offer_lifetime from dhcp4_subnet limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if offer_lifetime was added to dhcp4_client_class table.
+    qry="SELECT offer_lifetime from dhcp4_client_class limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1336,14 +1364,7 @@ SET @disable_audit = 0;"
     mysql_upgrade_13_to_14_test
 
     # Check upgrade from 14.0 to 15.0.
-
-    # table: dhcp4_options new cancelled column.
-    qry="select cancelled from dhcp4_options"
-    run_statement "dhcp4_options" "$qry"
-
-    # table: dhcp6_options new cancelled column.
-    qry="select cancelled from dhcp6_options"
-    run_statement "dhcp6_options" "$qry"
+    mysql_upgrade_14_to_15_test
 
     # Let's wipe the whole database
     mysql_wipe

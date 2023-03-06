@@ -5073,6 +5073,16 @@ ALTER TABLE dhcp4_options
 ALTER TABLE dhcp6_options
     ADD COLUMN cancelled TINYINT(1) NOT NULL DEFAULT 0;
 
+-- Add offer_lifetime column to v4 tables.
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN offer_lifetime INT(10) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN offer_lifetime INT(10) DEFAULT NULL;
+
+ALTER TABLE dhcp4_client_class
+    ADD COLUMN offer_lifetime INT(10) DEFAULT NULL;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '15', minor = '0';
