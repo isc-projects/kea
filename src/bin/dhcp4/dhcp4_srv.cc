@@ -1883,6 +1883,8 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // Special cases for vendor class and options which are identified
     // by the code/type and the vendor/enterprise id vs. the code/type only.
     if (requested_opts.count(DHO_VIVCO_SUBOPTIONS) > 0) {
+        // Keep vendor ids which are already in the response to insert
+        // VIVCO options at most once per vendor.
         set<uint32_t> vendor_ids;
         // Get what already exists in the response.
         for (auto opt : resp->getOptions(DHO_VIVCO_SUBOPTIONS)) {
@@ -1892,7 +1894,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
                 static_cast<void>(vendor_ids.insert(vendor_opts->getVendorId()));
             }
         }
-        // Iterate on the configured option list
+        // Iterate on the configured option list.
         for (auto const& copts : co_list) {
             for (OptionDescriptor desc : copts->getList(DHCP4_OPTION_SPACE,
                                                         DHO_VIVCO_SUBOPTIONS)) {
@@ -1917,6 +1919,8 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     }
 
     if (requested_opts.count(DHO_VIVSO_SUBOPTIONS) > 0) {
+        // Keep vendor ids which are already in the response to insert
+        // VIVSO options at most once per vendor.
         set<uint32_t> vendor_ids;
         // Get what already exists in the response.
         for (auto opt : resp->getOptions(DHO_VIVSO_SUBOPTIONS)) {
