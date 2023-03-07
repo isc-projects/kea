@@ -197,7 +197,7 @@ enum DHCPOptionType {
 //  DHO_IPV4_FQDN_MOS                = 140, /* RFC5678 */
     DHO_SIP_UA_CONF_SERVICE_DOMAINS  = 141, /* RFC6011 */
 //  DHO_IPV4_ADDR_ANDSF              = 142, /* RFC6153 */
-    // 143 is removed/unassigned
+//  DHO_V4_SZTP_REDIRECT             = 143, /* RFC8572 */
 //  DHO_GEOLOC                       = 144, /* RFC6225 */
 //  DHO_FORCERENEW_NONCE_CAPABLE     = 145, /* RFC6704 */
     DHO_RDNSS_SELECT                 = 146, /* RFC6731 */
