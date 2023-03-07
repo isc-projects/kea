@@ -7,6 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_client.h>
@@ -16,6 +17,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
+#include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
@@ -26,6 +28,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::dhcp_ddns;
+using namespace isc::stats;
 
 namespace {
 
@@ -299,6 +302,24 @@ const char* CONFIGS[] = {
     "           \"ddns-qualifying-suffix\": \"two.example.com.\" \n"
     "       }] \n"
     "   }] \n"
+    "}",
+    // 11
+    // D2 enabled
+    // offer-lifetime > 0
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"valid-lifetime\": 3000,\n"
+        "\"subnet4\": [ { \n"
+        "    \"subnet\": \"10.0.0.0/24\", \n"
+        "    \"id\": 1,\n"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ],\n"
+        "    \"offer-lifetime\": 45,\n"
+        "} ],\n"
+        "\"dhcp-ddns\": {\n"
+            "\"enable-updates\": true,\n"
+            "\"qualifying-suffix\": \"example.com.\"\n"
+        "}\n"
     "}"
 };
 
@@ -341,6 +362,8 @@ public:
         IfaceMgr::instance().openSockets4();
         // Config DDNS to be enabled, all controls off
         enableD2();
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
     }
 
     virtual ~NameDhcpv4SrvTest() {
@@ -846,6 +869,21 @@ public:
                                         subnet_->getValid(), true);
             }
         }
+    }
+
+
+    /// @brief Checks the value of statistic for a given subnet.
+    ///
+    /// @param subnet_id Identifier of a subnet for which statistics should be
+    /// @param name statistic name (e.g. "assigned-addresses", "total-addresses" ...)
+    /// @param exp_value expected value of the statistic
+    /// @return Number of assigned addresses for a subnet.
+    void checkSubnetStat(const SubnetID& subnet_id, const std::string& name, int64_t exp_value) const {
+        // Retrieve statistics name, e.g. subnet[1234].assigned-addresses.
+        const std::string stats_name = StatsMgr::generateName("subnet", subnet_id, name);
+        ObservationPtr obs =  StatsMgr::instance().getObservation(stats_name);
+        ASSERT_TRUE(obs) << "cannot find: " << stats_name;
+        EXPECT_EQ(exp_value, obs->getInteger().first);
     }
 };
 
@@ -2683,5 +2721,109 @@ TEST_F(NameDhcpv4SrvTest, ddnsSharedNetworkTest) {
     ASSERT_TRUE(lease);
     EXPECT_EQ("client2.two.example.com", lease->hostname_);
 }
+
+// Verifies the basic behavior for a DORA cycle when offer-lifetime is greater
+// than zero.
+TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use HW address that matches the reservation entry in the configuration.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server.
+    configure(CONFIGS[11], *client.getServer());
+
+    // Fetch the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
+                        selectSubnet(IOAddress("10.0.0.10"));
+    ASSERT_TRUE(subnet);
+
+    // Make sure that DDNS is enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client.includeFQDN(Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E,
+                                       "client-name", Option4ClientFqdn::PARTIAL));
+
+    checkSubnetStat(subnet->getID(), "total-addresses", 1);
+    checkSubnetStat(subnet->getID(), "cumulative-assigned-addresses", 0);
+    checkSubnetStat(subnet->getID(), "assigned-addresses", 0);
+
+    // Send the DHCPDISCOVER.
+    ASSERT_NO_THROW(client.doDiscover());
+
+    // Make sure that the server responded.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Lifetime in the OFFER should be valid lifetime.
+    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
+        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(subnet->getValid(), opt->getValue());
+
+    // Obtain the FQDN option sent in the response and make sure that the server
+    // has used the client supplied hostname for this client.
+    Option4ClientFqdnPtr fqdn;
+    fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("client-name.example.com.", fqdn->getDomainName());
+
+    // When receiving DHCPDISCOVER, no NCRs should be generated.
+    EXPECT_EQ(0, d2_mgr_.getQueueSize());
+
+    // Make sure thed lease was created with offer-lifetime, fqdn flags = false,
+    // and the FQDN.
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet->getOfferLft(), lease->valid_lft_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+    EXPECT_EQ("client-name.example.com.", lease->hostname_);
+
+    // Verify assigned stats were incremented.
+    checkSubnetStat(subnet->getID(), "total-addresses", 1);
+    checkSubnetStat(subnet->getID(), "cumulative-assigned-addresses", 1);
+    checkSubnetStat(subnet->getID(), "assigned-addresses", 1);
+
+    // Now send the DHCPREQUEST with including the FQDN option.
+    ASSERT_NO_THROW(client.doRequest());
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Lifetime in the DHCPACK should be valid lifetime.
+    opt = boost::dynamic_pointer_cast<OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(subnet->getValid(), opt->getValue());
+
+    // Once again check that the FQDN is as expected.
+    fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("client-name.example.com.", fqdn->getDomainName());
+
+    // There should be one NCR which adds the new DNS entry.
+    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            resp->getYiaddr().toText(),
+                            "client-name.example.com.",
+                            "0000011E5D6FA61FCBAC969FF4EF0EBCA3FDE554E"
+                            "B020A13F44859F30A108793564A97",
+                            time(NULL), subnet->getValid(), true);
+
+
+    // And that this FQDN has been stored in the lease database.
+    lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet->getValid(), lease->valid_lft_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("client-name.example.com.", lease->hostname_);
+
+    // Verify assigned states did not incremented again.
+    checkSubnetStat(subnet->getID(), "total-addresses", 1);
+    checkSubnetStat(subnet->getID(), "cumulative-assigned-addresses", 1);
+    checkSubnetStat(subnet->getID(), "assigned-addresses", 1);
+}
+
 
 } // end of anonymous namespace
