@@ -581,6 +581,23 @@ public:
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end);
 
+    /// @brief Factory to create option with tuple list with explict tuple's length field type.
+    ///
+    /// @param u option universe (V4 or V6).
+    /// @param type option type.
+    /// @param begin iterator pointing to the beginning of the buffer
+    /// with a list of tuples.
+    /// @param end iterator pointing to the end of the buffer with
+    /// a list of tuples.
+    /// @param lenFieldType explict tuple's length field type
+    ///
+    /// @return instance of the DHCP option.
+    static OptionPtr factoryOpaqueDataTuples(Option::Universe u,
+                                             uint16_t type,
+                                             OptionBufferConstIter begin,
+                                             OptionBufferConstIter end,
+                                             OpaqueDataTuple::LengthFieldType lenFieldType);
+
     /// @brief Factory function to create option with integer value.
     ///
     /// @param u universe (V4 or V6).

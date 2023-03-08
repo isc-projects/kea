@@ -55,6 +55,7 @@ public:
     /// in the DHCPv6 options have 2 byte long length fields, the tuples carried
     /// in DHCPv4 options have 1 byte long length fields.
     enum LengthFieldType {
+        LENGTH_EMPTY = -1,
         LENGTH_1_BYTE,
         LENGTH_2_BYTES
     };

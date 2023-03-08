@@ -772,6 +772,19 @@ OptionDefinition::factoryOpaqueDataTuples(Option::Universe u,
 }
 
 OptionPtr
+OptionDefinition::factoryOpaqueDataTuples(Option::Universe u,
+                                          uint16_t type,
+                                          OptionBufferConstIter begin,
+                                          OptionBufferConstIter end,
+                                          OpaqueDataTuple::LengthFieldType lenFieldType
+                                          ) {
+    boost::shared_ptr<OptionOpaqueDataTuples>
+        option(new OptionOpaqueDataTuples(u, type, begin, end, lenFieldType));
+
+    return (option);
+}
+
+OptionPtr
 OptionDefinition::factoryFqdnList(Option::Universe u,
                                   OptionBufferConstIter begin,
                                   OptionBufferConstIter end) const {
@@ -872,6 +885,11 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // Type uint32.
             // Vendor-Specific Information (option code 125).
             return (OptionPtr(new OptionVendor(Option::V4, begin, end)));
+
+        case DHO_V4_SZTP_REDIRECT:
+            // Array of tuples.
+            // DHCPv4 SZTP Redirect Option  (option code 143).
+            return (factoryOpaqueDataTuples(Option::V4, getCode(), begin, end, OpaqueDataTuple::LENGTH_2_BYTES));
 
         default:
             break;
