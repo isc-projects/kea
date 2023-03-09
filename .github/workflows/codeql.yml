@@ -49,11 +49,11 @@ jobs:
     - name: Inspect system CPU
       run: cat /proc/cpuinfo
 
+    # We want to enable shell, so python files are generated. And CodeQL can
+    # check them.
     - name: Build Kea
       run: |
         autoreconf -i
-    # We want to enable shell, so python files are generated. And CodeQL can
-    # check them.
         ./configure --enable-shell
         make -j2
 
