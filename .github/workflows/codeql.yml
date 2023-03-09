@@ -21,9 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp' ]
-        # language: ['cpp', 'python']
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
+        language: [ 'cpp', 'python' ]
 
     steps:
     - name: Checkout repository
@@ -54,8 +52,10 @@ jobs:
     - name: Build Kea
       run: |
         autoreconf -i
-        ./configure
-    #   make -j2
+    # We want to enable shell, so python files are generated. And CodeQL can
+    # check them.
+        ./configure --enable-shell
+        make -j2
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
