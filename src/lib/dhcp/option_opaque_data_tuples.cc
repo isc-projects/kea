@@ -33,7 +33,7 @@ OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
                                                OptionBufferConstIter end,
                                                OpaqueDataTuple::LengthFieldType lenFieldType)
     : Option(u, type) {
-    prefLenFieldType = lenFieldType;
+    prefLenFieldType_ = lenFieldType;
     unpack(begin, end);
 }
 

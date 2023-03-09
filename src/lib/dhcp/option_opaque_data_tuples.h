@@ -64,8 +64,10 @@ public:
 
     /// @brief Constructor.
     ///
-    /// This constructor creates an instance of the option using a buffer with
-    /// on-wire data. It may throw an exception if the @c unpack method throws.
+    /// This constructor creates an instance of an OpaqueDataTuple option using
+    /// a buffer with on-wire data. This constructor allows to explicitly set
+    /// tuple's length field type.
+    /// It may throw an exception if the @c unpack method throws.
     ///
     /// @param u universe (v4 or v6)
     /// @param type option type
@@ -154,9 +156,9 @@ public:
 private:
     /// @brief holds information of explicitly assigned tuple length field.
     /// Normally tuple length is evaluated basing on Option's universe.
-    /// But there may be cases when e.g. for v4 universe tuple length field is 2 bytes long
-    /// (e.g. DHCPv4 SZTP Redirect Option #143 bootstrap-server-list).
-    OpaqueDataTuple::LengthFieldType prefLenFieldType = OpaqueDataTuple::LENGTH_EMPTY;
+    /// But there may be cases when e.g. for v4 universe tuple length field
+    /// is 2 bytes long (e.g. DHCPv4 SZTP Redirect Option #143 bootstrap-server-list).
+    OpaqueDataTuple::LengthFieldType prefLenFieldType_ = OpaqueDataTuple::LENGTH_EMPTY;
 
     /// @brief Returns the tuple length field type for the given universe.
     ///
@@ -165,8 +167,8 @@ private:
     ///
     /// @return Tuple length field type for the universe this option belongs to.
     OpaqueDataTuple::LengthFieldType getLengthFieldType() const {
-        if (prefLenFieldType != OpaqueDataTuple::LENGTH_EMPTY) {
-            return (prefLenFieldType);
+        if (prefLenFieldType_ != OpaqueDataTuple::LENGTH_EMPTY) {
+            return (prefLenFieldType_);
         }
         return (universe_ == Option::V6 ? OpaqueDataTuple::LENGTH_2_BYTES :
                 OpaqueDataTuple::LENGTH_1_BYTE);

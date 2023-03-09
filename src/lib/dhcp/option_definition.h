@@ -581,7 +581,8 @@ public:
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end);
 
-    /// @brief Factory to create option with tuple list with explict tuple's length field type.
+    /// @brief Factory to create option with tuple list with explict
+    /// tuple's length field type.
     ///
     /// @param u option universe (V4 or V6).
     /// @param type option type.
