@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1006,6 +1006,21 @@ public:
         return ignore_rai_link_selection_;
     }
 
+    /// @brief Set exclude .0 and .255 addresses in subnets bigger than /24 flag.
+    ///
+    /// @param value the boolean value to be set when excluding .0 .255 from
+    /// subnets bigger than /24.
+    void setExcludeFirstLast24(bool const value) {
+        exclude_first_last_24_ = value;
+    }
+
+    /// @brief Get exclude .0 and .255 addresses in subnets bigger than /24 flag.
+    ///
+    /// @return the configured value for exclude .0 and .255 flag.
+    bool getExcludeFirstLast24() const {
+        return exclude_first_last_24_;
+    }
+
     /// @brief Convenience method to propagate configuration parameters through
     /// inversion of control.
     ///
@@ -1174,6 +1189,8 @@ private:
     bool lenient_option_parsing_;
     /// @brief Indicates whether RAI link-selection suboptions will be ignored
     bool ignore_rai_link_selection_;
+    /// @brief Indicates whether exclude .0 .255 from subnets bigger than /24.
+    bool exclude_first_last_24_;
     //@}
 
     /// @brief Flag which indicates if the server should do host reservations

@@ -4329,6 +4329,9 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             ++subnets_with_unavail_pools;
         }
 
+        bool exclude_first_last_24 = ((subnet->get().second <= 24) &&
+            CfgMgr::instance().getCurrentCfg()->getExcludeFirstLast24());
+
         CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
         for (uint64_t i = 0; i < max_attempts; ++i) {
@@ -4339,6 +4342,17 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             IOAddress candidate = allocator->pickAddress(classes,
                                                          client_id,
                                                          ctx.requested_address_);
+
+            if (exclude_first_last_24) {
+                // Exclude .0 and .255 addresses.
+                auto const& bytes = candidate.toBytes();
+                if ((bytes.size() != 4) ||
+                    (bytes[3] == 0) || (bytes[3] == 255U)) {
+                    // Don't allocate.
+                    continue;
+                }
+            }
+
             // First check for reservation when it is the choice.
             if (check_reservation_first && addressReserved(candidate, ctx)) {
                 // Don't allocate.

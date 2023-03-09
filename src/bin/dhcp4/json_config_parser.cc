@@ -597,10 +597,17 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 if (kv.first == "lenient-option-parsing") {
                     CfgMgr::instance().getStagingCfg()->setLenientOptionParsing(
                         kv.second->boolValue());
-                }
-                if (kv.first == "ignore-rai-link-selection") {
+                } else if (kv.first == "ignore-rai-link-selection") {
                     CfgMgr::instance().getStagingCfg()->setIgnoreRAILinkSelection(
                         kv.second->boolValue());
+                } else if (kv.first == "exclude-first-last-24") {
+                    CfgMgr::instance().getStagingCfg()->setExcludeFirstLast24(
+                        kv.second->boolValue());
+                } else {
+                    isc_throw(DhcpConfigError,
+                              "unsupported compatibility parameter: "
+                              << kv.first << " (" << kv.second->getPosition()
+                              << ")");
                 }
             }
         }

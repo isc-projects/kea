@@ -1288,6 +1288,21 @@ address) address from that pool. In the aforementioned example of pool
 assigned as well. This may be invalid in some network configurations. To
 avoid this, use the ``min-max`` notation.
 
+In a subnet whose prefix length is less 24, users may wish to exclude all
+addresses ending in .0 and .255 from being dynamically allocated.  For
+instance in the subnet 10.0.0.0/8, exclude 10.x.y.0 and 10.x.y.255 for all
+values of x and y even though only 10.0.0.0 and 10.255.255.255 must be
+excluded according to standards.  The `exclude-first-last-24`` configuration
+compatibility flag (:ref:`dhcp4-compatibility`)  was introduced in Kea version
+2.3.6 to do this
+automatically rather than having to explicitly configure many pools or
+reservations for fake hosts. When true it applies only to subnets
+prefix lengths less than 24 bits. It defaults to false.
+
+Note that here exclude means to skip them in the free address pickup
+routine of the allocation engine: if a client explicitly requests or
+has a host reservation for an address in .0 or .255 it will get it.
+
 .. note::
 
     Here are some liberties and limits to the values that subnets and pools can
@@ -7494,6 +7509,13 @@ and include incorrect Link Selection information.
         }
       }
     }
+
+Exclude First Last Addresses in Subnets bigger than /24
+-------------------------------------------------------
+
+The ``exclude-first-last-24`` compatibility flag is described in
+:ref:`dhcp4-address-config` (when true .0 and .255 addresses are excluded
+from subnets with prefix length less than 24).
 
 .. _dhcp4_allocation_strategies:
 

@@ -123,7 +123,13 @@
 
             // Parse options more leniently where fields can be deduced
             // deterministically even if against RFC or common practice.
-            "lenient-option-parsing": true
+            "lenient-option-parsing": true,
+
+            // Boolean flag indicating whether or not .0 and .255 addresses
+            // must be considered as never free in subnets with prefix length
+            // less than 24. The default is false as these addresses are not
+            // special: only the first and the last addresses are.
+            "exclude-first-last-24": false
         },
 
         // Command control socket configuration parameters for Kea DHCPv4 server.

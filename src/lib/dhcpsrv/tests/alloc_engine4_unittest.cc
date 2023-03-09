@@ -4883,6 +4883,440 @@ TEST_F(AllocEngine4Test, bootpDelete) {
     EXPECT_FALSE(from_mgr);
 }
 
+// This test verifies that all addresses in a pool can be allocated.
+TEST_F(AllocEngine4Test, fullPool) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    // Get rid of the default subnet configuration.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+
+    // Configure a larger subnet with a /24 pool.
+    subnet_ = Subnet4::create(IOAddress("10.0.0.0"), 8, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(IOAddress("10.0.1.0"), IOAddress("10.0.1.255")));
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set exclude-first-last to false.
+    cfg_mgr.getStagingCfg()->setExcludeFirstLast24(false);
+    cfg_mgr.commit();
+
+    size_t cnt = 0;
+    vector<bool> found(256, false);
+    while (true) {
+        vector<uint8_t> duid = clientid_->getClientId();
+        duid[6] = cnt >> 8;
+        duid[7] = cnt & 0xff;
+        ClientIdPtr clientid(new ClientId(duid));
+        HWAddrPtr hwaddr(new HWAddr(*hwaddr_));
+        hwaddr->hwaddr_[4] = cnt >> 8;
+        hwaddr->hwaddr_[5] = cnt & 0xff;
+        AllocEngine::ClientContext4 ctx(subnet_, clientid, hwaddr,
+                                        IOAddress("0.0.0.0"),
+                                        false, false, "foo.bar", false);
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234 + cnt));
+        Lease4Ptr lease = engine->allocateLease4(ctx);
+
+        if (!lease) {
+            break;
+        }
+        const vector<uint8_t>& addr = lease->addr_.toBytes();
+        ASSERT_EQ(4, addr.size());
+        EXPECT_EQ(10, addr[0]);
+        EXPECT_EQ(0, addr[1]);
+        EXPECT_EQ(1, addr[2]);
+        EXPECT_FALSE(found[addr[3]]);
+        found[addr[3]] = true;
+        ++cnt;
+        // Catch unbound loop.
+        ASSERT_LT(cnt, 1000);
+    }
+    EXPECT_EQ(256, cnt);
+    EXPECT_EQ(found, vector<bool>(256, true));
+}
+
+// This test verifies that all addresses in a subnet can be allocated.
+TEST_F(AllocEngine4Test, fullSubnet24) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    // Get rid of the default subnet configuration.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+
+    // Configure a larger subnet with a /24 pool.
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.0"),
+                               IOAddress("192.0.2.255")));
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set exclude-first-last to false.
+    cfg_mgr.getStagingCfg()->setExcludeFirstLast24(false);
+    cfg_mgr.commit();
+
+    size_t cnt = 0;
+    vector<bool> found(256, false);
+    while (true) {
+        vector<uint8_t> duid = clientid_->getClientId();
+        duid[6] = cnt >> 8;
+        duid[7] = cnt & 0xff;
+        ClientIdPtr clientid(new ClientId(duid));
+        HWAddrPtr hwaddr(new HWAddr(*hwaddr_));
+        hwaddr->hwaddr_[4] = cnt >> 8;
+        hwaddr->hwaddr_[5] = cnt & 0xff;
+        AllocEngine::ClientContext4 ctx(subnet_, clientid, hwaddr,
+                                        IOAddress("0.0.0.0"),
+                                        false, false, "foo.bar", false);
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234 + cnt));
+        Lease4Ptr lease = engine->allocateLease4(ctx);
+
+        if (!lease) {
+            break;
+        }
+        const vector<uint8_t>& addr = lease->addr_.toBytes();
+        ASSERT_EQ(4, addr.size());
+        EXPECT_EQ(192, addr[0]);
+        EXPECT_EQ(0, addr[1]);
+        EXPECT_EQ(2, addr[2]);
+        EXPECT_FALSE(found[addr[3]]);
+        found[addr[3]] = true;
+        ++cnt;
+        // Catch unbound loop.
+        ASSERT_LT(cnt, 1000);
+    }
+    EXPECT_EQ(256, cnt);
+    EXPECT_EQ(found, vector<bool>(256, true));
+}
+
+// This test verifies that not all addresses in a pool can be allocated when
+// exclude-first-last is true.
+TEST_F(AllocEngine4Test, excludeFirstLast) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    // Get rid of the default subnet configuration.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+
+    // Configure a larger subnet with a /24 pool.
+    subnet_ = Subnet4::create(IOAddress("10.0.0.0"), 8, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(IOAddress("10.0.1.0"), IOAddress("10.0.1.255")));
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set exclude-first-last to true.
+    cfg_mgr.getStagingCfg()->setExcludeFirstLast24(true);
+    cfg_mgr.commit();
+
+    size_t cnt = 0;
+    vector<bool> found(256, false);
+    while (true) {
+        vector<uint8_t> duid = clientid_->getClientId();
+        duid[6] = cnt >> 8;
+        duid[7] = cnt & 0xff;
+        ClientIdPtr clientid(new ClientId(duid));
+        HWAddrPtr hwaddr(new HWAddr(*hwaddr_));
+        hwaddr->hwaddr_[4] = cnt >> 8;
+        hwaddr->hwaddr_[5] = cnt & 0xff;
+        AllocEngine::ClientContext4 ctx(subnet_, clientid, hwaddr,
+                                        IOAddress("0.0.0.0"),
+                                        false, false, "foo.bar", false);
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234 + cnt));
+        Lease4Ptr lease = engine->allocateLease4(ctx);
+
+        if (!lease) {
+            break;
+        }
+        const vector<uint8_t>& addr = lease->addr_.toBytes();
+        ASSERT_EQ(4, addr.size());
+        EXPECT_EQ(10, addr[0]);
+        EXPECT_EQ(0, addr[1]);
+        EXPECT_EQ(1, addr[2]);
+        EXPECT_FALSE(found[addr[3]]);
+        found[addr[3]] = true;
+        ++cnt;
+        // Catch unbound loop.
+        ASSERT_LT(cnt, 1000);
+    }
+    EXPECT_EQ(254, cnt);
+    vector<bool> expected(256, true);
+    expected[0] = false;
+    expected[255] = false;
+    EXPECT_EQ(expected, found);
+}
+
+// This test verifies that not all addresses in a subnet can be allocated when
+// exclude-first-last is true.
+TEST_F(AllocEngine4Test, excludeFirstLast24) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    // Get rid of the default subnet configuration.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+
+    // Configure a larger subnet with a /24 pool.
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.0"),
+                               IOAddress("192.0.2.255")));
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set exclude-first-last to true.
+    cfg_mgr.getStagingCfg()->setExcludeFirstLast24(true);
+    cfg_mgr.commit();
+
+    size_t cnt = 0;
+    vector<bool> found(256, false);
+    while (true) {
+        vector<uint8_t> duid = clientid_->getClientId();
+        duid[6] = cnt >> 8;
+        duid[7] = cnt & 0xff;
+        ClientIdPtr clientid(new ClientId(duid));
+        HWAddrPtr hwaddr(new HWAddr(*hwaddr_));
+        hwaddr->hwaddr_[4] = cnt >> 8;
+        hwaddr->hwaddr_[5] = cnt & 0xff;
+        AllocEngine::ClientContext4 ctx(subnet_, clientid, hwaddr,
+                                        IOAddress("0.0.0.0"),
+                                        false, false, "foo.bar", false);
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234 + cnt));
+        Lease4Ptr lease = engine->allocateLease4(ctx);
+
+        if (!lease) {
+            break;
+        }
+        const vector<uint8_t>& addr = lease->addr_.toBytes();
+        ASSERT_EQ(4, addr.size());
+        EXPECT_EQ(192, addr[0]);
+        EXPECT_EQ(0, addr[1]);
+        EXPECT_EQ(2, addr[2]);
+        EXPECT_FALSE(found[addr[3]]);
+        found[addr[3]] = true;
+        ++cnt;
+        // Catch unbound loop.
+        ASSERT_LT(cnt, 1000);
+    }
+    EXPECT_EQ(254, cnt);
+    vector<bool> expected(256, true);
+    expected[0] = false;
+    expected[255] = false;
+    EXPECT_EQ(expected, found);
+}
+
+// This test verifies that all addresses in a subnet can be allocated when
+// exclude-first-last is true but the prefix length is greater than 24.
+TEST_F(AllocEngine4Test, excludeFirst25) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    // Get rid of the default subnet configuration.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+
+    // Configure a smaller subnet with a /25 pool.
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 25, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.0"),
+                               IOAddress("192.0.2.127")));
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set exclude-first-last to true.
+    cfg_mgr.getStagingCfg()->setExcludeFirstLast24(true);
+    cfg_mgr.commit();
+
+    size_t cnt = 0;
+    vector<bool> found(128, false);
+    while (true) {
+        vector<uint8_t> duid = clientid_->getClientId();
+        duid[6] = cnt >> 8;
+        duid[7] = cnt & 0xff;
+        ClientIdPtr clientid(new ClientId(duid));
+        HWAddrPtr hwaddr(new HWAddr(*hwaddr_));
+        hwaddr->hwaddr_[4] = cnt >> 8;
+        hwaddr->hwaddr_[5] = cnt & 0xff;
+        AllocEngine::ClientContext4 ctx(subnet_, clientid, hwaddr,
+                                        IOAddress("0.0.0.0"),
+                                        false, false, "foo.bar", false);
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234 + cnt));
+        Lease4Ptr lease = engine->allocateLease4(ctx);
+
+        if (!lease) {
+            break;
+        }
+        const vector<uint8_t>& addr = lease->addr_.toBytes();
+        ASSERT_EQ(4, addr.size());
+        EXPECT_EQ(192, addr[0]);
+        EXPECT_EQ(0, addr[1]);
+        EXPECT_EQ(2, addr[2]);
+        ASSERT_GT(128, addr[3]);
+        EXPECT_FALSE(found[addr[3]]);
+        found[addr[3]] = true;
+        ++cnt;
+        // Catch unbound loop.
+        ASSERT_LT(cnt, 1000);
+    }
+    EXPECT_EQ(128, cnt);
+    EXPECT_EQ(found, vector<bool>(128, true));
+}
+
+// This test verifies that all addresses in a subnet can be allocated when
+// exclude-first-last is true but the prefix length is greater than 24.
+TEST_F(AllocEngine4Test, excludeLast25) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    // Get rid of the default subnet configuration.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+
+    // Configure a smaller subnet with a /25 pool.
+    subnet_ = Subnet4::create(IOAddress("192.0.2.128"), 25, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.128"),
+                               IOAddress("192.0.2.255")));
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set exclude-first-last to true.
+    cfg_mgr.getStagingCfg()->setExcludeFirstLast24(true);
+    cfg_mgr.commit();
+
+    size_t cnt = 0;
+    vector<bool> found(128, false);
+    while (true) {
+        vector<uint8_t> duid = clientid_->getClientId();
+        duid[6] = cnt >> 8;
+        duid[7] = cnt & 0xff;
+        ClientIdPtr clientid(new ClientId(duid));
+        HWAddrPtr hwaddr(new HWAddr(*hwaddr_));
+        hwaddr->hwaddr_[4] = cnt >> 8;
+        hwaddr->hwaddr_[5] = cnt & 0xff;
+        AllocEngine::ClientContext4 ctx(subnet_, clientid, hwaddr,
+                                        IOAddress("0.0.0.0"),
+                                        false, false, "foo.bar", false);
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234 + cnt));
+        Lease4Ptr lease = engine->allocateLease4(ctx);
+
+        if (!lease) {
+            break;
+        }
+        const vector<uint8_t>& addr = lease->addr_.toBytes();
+        ASSERT_EQ(4, addr.size());
+        EXPECT_EQ(192, addr[0]);
+        EXPECT_EQ(0, addr[1]);
+        EXPECT_EQ(2, addr[2]);
+        ASSERT_LE(128, addr[3]);
+        EXPECT_FALSE(found[addr[3] - 128]);
+        found[addr[3] - 128] = true;
+        ++cnt;
+        // Catch unbound loop.
+        ASSERT_LT(cnt, 1000);
+    }
+    EXPECT_EQ(128, cnt);
+    EXPECT_EQ(found, vector<bool>(128, true));
+}
+
+// This test verifies that an excluded address can be allocated when requested
+// and exclude-first-last is true.
+TEST_F(AllocEngine4Test, excludeFirstLastRequested) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    // Get rid of the default subnet configuration.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+
+    // Configure a larger subnet with a /24 pool.
+    subnet_ = Subnet4::create(IOAddress("10.0.0.0"), 8, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(IOAddress("10.0.1.0"), IOAddress("10.0.1.255")));
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set exclude-first-last to true.
+    cfg_mgr.getStagingCfg()->setExcludeFirstLast24(true);
+    cfg_mgr.commit();
+
+    // Request the first address.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("10.0.1.0"),
+                                    false, false, "foo.bar", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.0.1.0", lease->addr_.toText());
+
+    // Request the last address.
+    AllocEngine::ClientContext4 ctx2(subnet_, clientid2_, hwaddr2_,
+                                     IOAddress("10.0.1.255"),
+                                    false, false, "bar.foo", false);
+    ctx2.query_.reset(new Pkt4(DHCPREQUEST, 2345));
+    lease = engine->allocateLease4(ctx2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.0.1.255", lease->addr_.toText());
+}
+
+// This test verifies that an excluded address can be allocated when reserved
+// and exclude-first-last is true.
+TEST_F(AllocEngine4Test, excludeFirstLastReserver) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    // Get rid of the default subnet configuration.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+
+    // Configure a larger subnet with a /24 pool.
+    subnet_ = Subnet4::create(IOAddress("10.0.0.0"), 8, 1, 2, 3);
+    pool_ = Pool4Ptr(new Pool4(IOAddress("10.0.1.0"), IOAddress("10.0.1.255")));
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set exclude-first-last to true.
+    cfg_mgr.getStagingCfg()->setExcludeFirstLast24(true);
+
+    // Add reservations.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SUBNET_ID_UNUSED, IOAddress("10.0.1.0")));
+    cfg_mgr.getStagingCfg()->getCfgHosts()->add(host);
+    HostPtr host2(new Host(&hwaddr2_->hwaddr_[0], hwaddr2_->hwaddr_.size(),
+                           Host::IDENT_HWADDR, subnet_->getID(),
+                           SUBNET_ID_UNUSED, IOAddress("10.0.1.255")));
+    cfg_mgr.getStagingCfg()->getCfgHosts()->add(host2);
+    subnet_->setReservationsInSubnet(true);
+    subnet_->setReservationsOutOfPool(false);
+    cfg_mgr.commit();
+
+    // Request the first address.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"),
+                                    false, false, "foo.bar", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    AllocEngine::findReservation(ctx);
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.0.1.0", lease->addr_.toText());
+
+    // Request the last address.
+    AllocEngine::ClientContext4 ctx2(subnet_, clientid2_, hwaddr2_,
+                                     IOAddress("0.0.0.0"),
+                                    false, false, "bar.foo", false);
+    ctx2.query_.reset(new Pkt4(DHCPREQUEST, 2345));
+    AllocEngine::findReservation(ctx2);
+    lease = engine->allocateLease4(ctx2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.0.1.255", lease->addr_.toText());
+}
+
 #ifdef HAVE_MYSQL
 /// @brief Extension of the fixture class to use the MySQL backend.
 class MySqlAllocEngine4Test : public AllocEngine4Test {
