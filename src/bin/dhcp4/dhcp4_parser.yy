@@ -257,6 +257,7 @@ using namespace std;
   COMPATIBILITY "compatibility"
   LENIENT_OPTION_PARSING "lenient-option-parsing"
   IGNORE_RAI_LINK_SEL "ignore-rai-link-selection"
+  EXCLUDE_FIRST_LAST_24 "exclude-first-last-24"
 
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
@@ -2918,6 +2919,7 @@ compatibility_params: compatibility_param
 
 compatibility_param: lenient_option_parsing
                    | ignore-rai-link-selection
+                   | exclude_first_last_24
                    | unknown_map_entry
                    ;
 
@@ -2932,6 +2934,12 @@ ignore-rai-link-selection: IGNORE_RAI_LINK_SEL COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ignore-rai-link-selection", b);
 }
+
+exclude_first_last_24: EXCLUDE_FIRST_LAST_24 COLON BOOLEAN {
+    ctx.unique("exclude-first-last-24", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("exclude-first-last-24", b);
+};
 
 %%
 

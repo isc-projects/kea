@@ -2075,6 +2075,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"exclude-first-last-24\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::COMPATIBILITY:
+        return isc::dhcp::Dhcp4Parser::make_EXCLUDE_FIRST_LAST_24(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("exclude-first-last-24", driver.loc_);
+    }
+}
+
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.
