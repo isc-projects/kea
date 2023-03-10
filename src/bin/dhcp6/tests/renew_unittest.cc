@@ -649,8 +649,7 @@ TEST_F(RenewTest, docsisORO) {
     ASSERT_TRUE(opt);
 
     // The vendor option must be a OptionVendor object.
-    boost::shared_ptr<OptionVendor> vendor =
-        boost::dynamic_pointer_cast<OptionVendor>(opt);
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
 
     // The vendor-id should be DOCSIS.
