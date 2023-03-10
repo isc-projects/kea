@@ -309,6 +309,38 @@ TEST_F(SrvConfigTest, echoClientId) {
     EXPECT_TRUE(conf1.getEchoClientId());
 }
 
+// This test verifies that compatibility flags are correctly managed.
+TEST_F(SrvConfigTest, compatibility) {
+    SrvConfig conf;
+
+    // Check that defaults are false.
+    EXPECT_FALSE(conf.getLenientOptionParsing());
+    EXPECT_FALSE(conf.getIgnoreRAILinkSelection());
+    EXPECT_FALSE(conf.getExcludeFirstLast24());
+
+    // Check that they can be modified to true.
+    conf.setLenientOptionParsing(true);
+    conf.setIgnoreRAILinkSelection(true);
+    conf.setExcludeFirstLast24(true);
+    EXPECT_TRUE(conf.getLenientOptionParsing());
+    EXPECT_TRUE(conf.getIgnoreRAILinkSelection());
+    EXPECT_TRUE(conf.getExcludeFirstLast24());
+
+    // Check that default values can be restored.
+    conf.setLenientOptionParsing(false);
+    conf.setIgnoreRAILinkSelection(false);
+    conf.setExcludeFirstLast24(false);
+    EXPECT_FALSE(conf.getLenientOptionParsing());
+    EXPECT_FALSE(conf.getIgnoreRAILinkSelection());
+    EXPECT_FALSE(conf.getExcludeFirstLast24());
+
+    // Check the other constructor has the same default.
+    SrvConfig conf1(1);
+    EXPECT_FALSE(conf1.getLenientOptionParsing());
+    EXPECT_FALSE(conf1.getIgnoreRAILinkSelection());
+    EXPECT_FALSE(conf1.getExcludeFirstLast24());
+}
+
 // This test verifies that host reservations lookup first flag can be configured.
 TEST_F(SrvConfigTest, reservationsLookupFirst) {
     SrvConfig conf;
@@ -600,10 +632,19 @@ TEST_F(SrvConfigTest, unparse) {
     CfgMgr::instance().setFamily(AF_INET);
     conf.setEchoClientId(false);
     conf.setDhcp4o6Port(6767);
+    // Add compatibility flags.
+    conf.setLenientOptionParsing(true);
+    conf.setIgnoreRAILinkSelection(true);
+    conf.setExcludeFirstLast24(true);
+    params  = "\"compatibility\": {\n";
+    params += " \"lenient-option-parsing\": true,\n";
+    params += " \"ignore-rai-link-selection\": true,\n";
+    params += " \"exclude-first-last-24\": true\n";
+    params += "},\n";
     // Add "configured globals"
     conf.addConfiguredGlobal("renew-timer", Element::create(777));
     conf.addConfiguredGlobal("comment", Element::create("bar"));
-    params = "\"echo-client-id\": false,\n";
+    params += "\"echo-client-id\": false,\n";
     params += "\"dhcp4o6-port\": 6767,\n";
     params += "\"renew-timer\": 777,\n";
     params += "\"comment\": \"bar\"\n";
@@ -612,7 +653,14 @@ TEST_F(SrvConfigTest, unparse) {
 
     // Verify direct non-default parameters and configured globals
     CfgMgr::instance().setFamily(AF_INET6);
-    params = ",\"dhcp4o6-port\": 6767,\n";
+    // Add compatibility flag.
+    conf.setIgnoreRAILinkSelection(false);
+    conf.setExcludeFirstLast24(false);
+    params  = ",\"compatibility\": {\n";
+    params += " \"lenient-option-parsing\": true\n";
+    params += "},\n";
+    // Add "configured globals"
+    params += "\"dhcp4o6-port\": 6767,\n";
     params += "\"renew-timer\": 777,\n";
     params += "\"comment\": \"bar\"\n";
     isc::test::runToElementTest<SrvConfig>

@@ -727,9 +727,20 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         ConstElementPtr compatibility = mutable_cfg->get("compatibility");
         if (compatibility) {
             for (auto kv : compatibility->mapValue()) {
+                if (!kv.second || (kv.second->getType() != Element::boolean)) {
+                    isc_throw(DhcpConfigError,
+                              "compatibility parameter values must be "
+                              << "boolean (" << kv.first << " at "
+                              << kv.second->getPosition() << ")");
+                }
                 if (kv.first == "lenient-option-parsing") {
                     CfgMgr::instance().getStagingCfg()->setLenientOptionParsing(
                         kv.second->boolValue());
+                } else {
+                    isc_throw(DhcpConfigError,
+                              "unsupported compatibility parameter: "
+                              << kv.first << " (" << kv.second->getPosition()
+                              << ")");
                 }
             }
         }

@@ -1680,16 +1680,104 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
     // Now check that "false" configuration is really applied.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json_false));
+    checkResult(status, 0);
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->getEchoClientId());
 
     CfgMgr::instance().clear();
 
     // Now check that "true" configuration is really applied.
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json_true));
+    checkResult(status, 0);
     ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getEchoClientId());
 
     // In any case revert back to the default value (true)
     CfgMgr::instance().getStagingCfg()->setEchoClientId(true);
+}
+
+// Check whether it is possible to configure compatibility flags.
+TEST_F(Dhcp4ParserTest, compatibility) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"compatibility\": { "
+        "    \"lenient-option-parsing\": true,"
+        "    \"ignore-rai-link-selection\": true,"
+        "    \"exclude-first-last-24\": true"
+        "},"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config)) << "bad config: " << config;
+    extractConfig(config);
+
+    // Check defaults: they should be false.
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getLenientOptionParsing());
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getIgnoreRAILinkSelection());
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getExcludeFirstLast24());
+
+    // Check the configuration was really applied.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+    checkResult(status, 0);
+
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getLenientOptionParsing());
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getIgnoreRAILinkSelection());
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getExcludeFirstLast24());
+}
+
+// Check that unknown compatibility flag raises error.
+TEST_F(Dhcp4ParserTest, compatibilityUnknown) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"compatibility\": { "
+        "    \"foo-bar\": true"
+        "},"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Syntax is incorrect.
+    EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseJSON(config));
+
+    // Unknown keyword is detected.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+    string expected = "unsupported compatibility parameter: ";
+    expected += "foo-bar (<string>:1:127)";
+    checkResult(status, 1, expected);
+}
+
+// Check that not boolean compatibility flag value raises error.
+TEST_F(Dhcp4ParserTest, compatibilityNotBool) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"compatibility\": { "
+        "    \"lenient-option-parsing\": 1"
+        "},"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Syntax is incorrect.
+    EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseJSON(config));
+
+    // Bad value type is detected.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+    string expected = "compatibility parameter values must be boolean ";
+    expected += "(lenient-option-parsing at <string>:1:142)";
+    checkResult(status, 1, expected);
 }
 
 // This test checks that the global match-client-id parameter is optional
@@ -7625,6 +7713,5 @@ TEST_F(Dhcp4ParserTest, parkedPacketLimit) {
     // Make sure an invalid limit fails to parse.
     ASSERT_THROW(parseDHCP4(bad_limit), std::exception);
 }
-
 
 }  // namespace

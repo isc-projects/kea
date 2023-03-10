@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +48,7 @@ SrvConfig::SrvConfig()
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(new CfgGlobals()), cfg_consist_(new CfgConsistency()),
       lenient_option_parsing_(false), ignore_rai_link_selection_(false),
-      reservations_lookup_first_(false) {
+      exclude_first_last_24_(false), reservations_lookup_first_(false) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -67,7 +67,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(new CfgGlobals()), cfg_consist_(new CfgConsistency()),
       lenient_option_parsing_(false), ignore_rai_link_selection_(false),
-      reservations_lookup_first_(false) {
+      exclude_first_last_24_(false), reservations_lookup_first_(false) {
 }
 
 std::string
@@ -630,6 +630,21 @@ SrvConfig::toElement() const {
         if (!datadir.unspecified()) {
             dhcp->set("data-directory", Element::create(datadir));
         }
+    }
+
+    // Set compatibility flags.
+    ElementPtr compatibility = Element::createMap();
+    if (getLenientOptionParsing()) {
+        compatibility->set("lenient-option-parsing", Element::create(true));
+    }
+    if (getIgnoreRAILinkSelection()) {
+        compatibility->set("ignore-rai-link-selection", Element::create(true));
+    }
+    if (getExcludeFirstLast24()) {
+        compatibility->set("exclude-first-last-24", Element::create(true));
+    }
+    if (compatibility->size() > 0) {
+        dhcp->set("compatibility", compatibility);
     }
 
     // Set decline-probation-period

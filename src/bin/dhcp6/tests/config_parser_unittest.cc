@@ -1688,6 +1688,89 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     EXPECT_EQ(4, (*++subnet)->getID());
 }
 
+// Check whether it is possible to configure compatibility flags.
+TEST_F(Dhcp6ParserTest, compatibility) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"compatibility\": { "
+        "    \"lenient-option-parsing\": true"
+        "},"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config)) << "bad config: " << config;
+    extractConfig(config);
+
+    // Check defaults: they should be false.
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getLenientOptionParsing());
+
+    // Check the configuration was really applied.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
+    checkResult(status, 0);
+
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getLenientOptionParsing());
+}
+
+// Check that unknown compatibility flag raises error.
+TEST_F(Dhcp6ParserTest, compatibilityUnknown) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"compatibility\": { "
+        "    \"foo-bar\": true"
+        "},"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Syntax is incorrect.
+    EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseJSON(config));
+
+    // Unknown keyword is detected.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
+    string expected = "unsupported compatibility parameter: ";
+    expected += "foo-bar (<string>:1:154)";
+    checkResult(status, 1, expected);
+}
+
+// Check that not boolean compatibility flag value raises error.
+TEST_F(Dhcp6ParserTest, compatibilityNotBool) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"compatibility\": { "
+        "    \"lenient-option-parsing\": 1"
+        "},"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Syntax is incorrect.
+    EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseJSON(config));
+
+    // Bad value type is detected.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
+    string expected = "compatibility parameter values must be boolean ";
+    expected += "(lenient-option-parsing at <string>:1:169)";
+    checkResult(status, 1, expected);
+}
+
 // This test checks if it is possible to override global values
 // on a per subnet basis.
 TEST_F(Dhcp6ParserTest, subnetLocal) {

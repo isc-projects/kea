@@ -1,3 +1,8 @@
+2109.	[bug]		fdupont
+	Compatibility flags e.g. lenient-option-parsing were not
+	saved by config-get and similar commands.
+	(Gitlab #2790)
+
 2108.	[func]		fdupont
 	Added a new exclude-first-last-24 DHCPv4 compatibility flag
 	which when set to true (default is false) skips addresses
