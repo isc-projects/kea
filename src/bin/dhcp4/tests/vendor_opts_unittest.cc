@@ -235,7 +235,7 @@ public:
             return;
         }
 
-        for (const auto& opt : tmp) {
+        for (auto const& opt : tmp) {
             // The response should be an OptionVendor.
             OptionVendorPtr vendor_resp;
 
@@ -327,7 +327,7 @@ public:
         }
         ASSERT_FALSE(configured_options.empty());
         ASSERT_EQ(configured_options[0], DOCSIS3_V4_TFTP_SERVERS);
-        // Create a config with a custom options.
+        // Create a config with custom options.
         string config = R"(
             {
                 "interfaces-config": {
@@ -592,7 +592,7 @@ public:
         result_vendor_ids = configured_vendor_ids;
         ASSERT_FALSE(configured_options.empty());
         ASSERT_EQ(configured_options[0], DOCSIS3_V4_TFTP_SERVERS);
-        // Create a config with a custom options.
+        // Create a config with custom options.
         string config = R"(
             {
                 "interfaces-config": {
