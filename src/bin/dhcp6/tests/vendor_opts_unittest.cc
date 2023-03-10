@@ -132,7 +132,7 @@ public:
         // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
         // That suboption has code 1 and is a docsis ORO option.
         boost::shared_ptr<OptionUint16Array> vendor_oro(new OptionUint16Array(Option::V6,
-                                                                            DOCSIS3_V6_ORO));
+                                                                              DOCSIS3_V6_ORO));
         vendor_oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33
         OptionPtr vendor(new OptionVendor(Option::V6, vendor_id));
         vendor->addOption(vendor_oro);
