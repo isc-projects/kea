@@ -1854,7 +1854,8 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
              desc != range.second; ++desc) {
             // Add the persistent option code to requested options
             if (desc->option_) {
-                static_cast<void>(requested_opts.insert(desc->option_->getType()));
+                uint16_t code = desc->option_->getType();
+                static_cast<void>(requested_opts.insert(code));
             }
         }
     }
@@ -1891,7 +1892,8 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
             OptionVendorClassPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_opts) {
-                static_cast<void>(vendor_ids.insert(vendor_opts->getVendorId()));
+                uint32_t vendor_id = vendor_opts->getVendorId();
+                static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
         // Iterate on the configured option list.
@@ -1927,7 +1929,8 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
-                static_cast<void>(vendor_ids.insert(vendor_opts->getVendorId()));
+                uint32_t vendor_id = vendor_opts->getVendorId();
+                static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
         // Iterate on the configured option list
@@ -1963,6 +1966,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     Subnet4Ptr subnet = ex.getContext()->subnet_;
 
     const CfgOptionList& co_list = ex.getCfgOptionList();
+
     // Leave if there is no subnet matching the incoming packet.
     // There is no need to log the error message here because
     // it will be logged in the assignLease() when it fails to
@@ -2000,6 +2004,17 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         if (vendor_req) {
             uint32_t vendor_id = vendor_req->getVendorId();
             vendor_reqs[vendor_id] = vendor_req;
+            static_cast<void>(vendor_ids.insert(vendor_id));
+        }
+    }
+
+    // Finally, try to get the vendor-id from the client packet's vendor-class
+    // option (124).
+    for (auto opt : query->getOptions(DHO_VIVCO_SUBOPTIONS)) {
+        OptionVendorClassPtr vendor_class;
+        vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+        if (vendor_class) {
+            uint32_t vendor_id = vendor_class->getVendorId();
             static_cast<void>(vendor_ids.insert(vendor_id));
         }
     }
@@ -2051,7 +2066,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
                     continue;
                 }
                 // Add the persistent option code to requested options
-                static_cast<void>(requested_opts[vendor_id].insert(desc->option_->getType()));
+                uint16_t code = desc->option_->getType();
+                static_cast<void>(requested_opts[vendor_id].insert(code));
             }
         }
 

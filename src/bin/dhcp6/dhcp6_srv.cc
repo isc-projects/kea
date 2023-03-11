@@ -1545,7 +1545,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                 static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
-        // Iterate on the configured option list
+        // Iterate on the configured option list.
         for (auto const& copts : co_list) {
             for (OptionDescriptor desc : copts->getList(DHCP6_OPTION_SPACE,
                                                         D6O_VENDOR_CLASS)) {

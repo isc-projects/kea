@@ -77,15 +77,15 @@ public:
     /// server: 4491 or both 4491 and 3561.
     /// @param requested_vendor_ids Then vendor IDs that are present in ORO.
     /// @param requested_options The requested options in ORO.
-    void testVendorOptionsORO(std::vector<uint32_t> configured_vendor_ids,
-                              std::vector<uint32_t> requested_vendor_ids,
-                              std::vector<uint16_t> requested_options) {
-        std::vector<uint32_t> result_vendor_ids;
+    void testVendorOptionsORO(std::set<uint32_t> configured_vendor_ids,
+                              std::set<uint32_t> requested_vendor_ids,
+                              std::set<uint16_t> requested_options) {
+        std::set<uint32_t> result_vendor_ids;
         ASSERT_FALSE(configured_vendor_ids.empty());
-        ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
+        ASSERT_TRUE(configured_vendor_ids.find(VENDOR_ID_CABLE_LABS) != configured_vendor_ids.end());
         for (uint32_t req : requested_vendor_ids) {
             if (req == VENDOR_ID_CABLE_LABS) {
-                result_vendor_ids.push_back(req);
+                result_vendor_ids.insert(req);
             }
         }
         // Create a config with custom options.
@@ -209,8 +209,7 @@ public:
 
         // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
         // That suboption has code 1 and is a docsis ORO option.
-        boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
-                                                                            DOCSIS3_V4_ORO));
+        OptionUint8ArrayPtr vendor_oro(new OptionUint8Array(Option::V4, DOCSIS3_V4_ORO));
         for (uint16_t option : requested_options) {
             vendor_oro->addValue(option);
         }
@@ -307,26 +306,24 @@ public:
     /// @param add_vendor_option The flag which indicates if the request should
     /// contain a OptionVendor option or should the server always send all the
     /// OptionVendor options and suboptions.
-    void testVendorOptionsPersistent(std::vector<uint32_t> configured_vendor_ids,
-                                     std::vector<uint32_t> requested_vendor_ids,
-                                     std::vector<uint16_t> configured_options,
+    void testVendorOptionsPersistent(std::set<uint32_t> configured_vendor_ids,
+                                     std::set<uint32_t> requested_vendor_ids,
+                                     std::set<uint16_t> configured_options,
                                      bool add_vendor_option) {
-        std::vector<uint32_t> result_vendor_ids;
+        std::set<uint32_t> result_vendor_ids;
         ASSERT_FALSE(configured_vendor_ids.empty());
-        ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
+        ASSERT_TRUE(configured_vendor_ids.find(VENDOR_ID_CABLE_LABS) != configured_vendor_ids.end());
         if (add_vendor_option) {
-            for (const auto& req : requested_vendor_ids) {
-                if (std::find(configured_vendor_ids.begin(),
-                              configured_vendor_ids.end(), req) !=
-                    configured_vendor_ids.end()) {
-                    result_vendor_ids.push_back(req);
+            for (uint32_t req : requested_vendor_ids) {
+                if (configured_vendor_ids.find(req) != configured_vendor_ids.end()) {
+                    result_vendor_ids.insert(req);
                 }
             }
         } else {
             result_vendor_ids = configured_vendor_ids;
         }
         ASSERT_FALSE(configured_options.empty());
-        ASSERT_EQ(configured_options[0], DOCSIS3_V4_TFTP_SERVERS);
+        ASSERT_TRUE(configured_options.find(DOCSIS3_V4_TFTP_SERVERS) != configured_options.end());
         // Create a config with custom options.
         string config = R"(
             {
@@ -502,8 +499,7 @@ public:
 
             for (uint16_t option : configured_options) {
                 if (add_vendor_option &&
-                    std::find(requested_vendor_ids.begin(), requested_vendor_ids.end(),
-                              vendor_resp->getVendorId()) == requested_vendor_ids.end()) {
+                    requested_vendor_ids.find(vendor_resp->getVendorId()) == requested_vendor_ids.end()) {
                     // If explicitly sending OptionVendor and the vendor is not
                     // configured, options should not be present.
                     if (option == DOCSIS3_V4_TFTP_SERVERS) {
@@ -582,16 +578,16 @@ public:
     /// @param requested_options The requested options in ORO.
     /// @param configured_options The configured options. The suboption 22 has
     /// always send flag set to true so it will always be sent.
-    void testVendorOptionsOROAndPersistent(std::vector<uint32_t> configured_vendor_ids,
-                                           std::vector<uint32_t> requested_vendor_ids,
-                                           std::vector<uint16_t> requested_options,
-                                           std::vector<uint16_t> configured_options) {
-        std::vector<uint32_t> result_vendor_ids;
+    void testVendorOptionsOROAndPersistent(std::set<uint32_t> configured_vendor_ids,
+                                           std::set<uint32_t> requested_vendor_ids,
+                                           std::set<uint16_t> requested_options,
+                                           std::set<uint16_t> configured_options) {
+        std::set<uint32_t> result_vendor_ids;
         ASSERT_FALSE(configured_vendor_ids.empty());
-        ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
+        ASSERT_TRUE(configured_vendor_ids.find(VENDOR_ID_CABLE_LABS) != configured_vendor_ids.end());
         result_vendor_ids = configured_vendor_ids;
         ASSERT_FALSE(configured_options.empty());
-        ASSERT_EQ(configured_options[0], DOCSIS3_V4_TFTP_SERVERS);
+        ASSERT_TRUE(configured_options.find(DOCSIS3_V4_TFTP_SERVERS) != configured_options.end());
         // Create a config with custom options.
         string config = R"(
             {
@@ -766,10 +762,8 @@ public:
             for (uint16_t option : configured_options) {
                 if (option == DOCSIS3_V4_TFTP_SERVERS) {
                     if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS &&
-                        std::find(requested_options.begin(), requested_options.end(),
-                                  option) != requested_options.end() &&
-                        std::find(requested_vendor_ids.begin(), requested_vendor_ids.end(),
-                                  vendor_resp->getVendorId()) != requested_vendor_ids.end()) {
+                        requested_options.find(option) != requested_options.end() &&
+                        requested_vendor_ids.find(vendor_resp->getVendorId()) != requested_vendor_ids.end()) {
                         // Option 2 should be present.
                         OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
                         ASSERT_TRUE(docsis2);
@@ -1504,7 +1498,7 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
         get(DHCP4_OPTION_SPACE, DHO_VIVSO_SUBOPTIONS);
     ASSERT_TRUE(cdesc.option_);
     // If the config was altered these two EXPECT will fail.
-    EXPECT_EQ(0, cdesc.option_->getOptions().size());
+    EXPECT_TRUE(cdesc.option_->getOptions().empty());
     EXPECT_FALSE(cdesc.option_->getOption(2));
 }
 
