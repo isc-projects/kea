@@ -1505,14 +1505,15 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
              desc != range.second; ++desc) {
             // Add the persistent option code to requested options
             if (desc->option_) {
-                static_cast<void>(requested_opts.insert(desc->option_->getType()));
+                uint16_t code = desc->option_->getType();
+                static_cast<void>(requested_opts.insert(code));
             }
         }
     }
 
     // For each requested option code get the first instance of the option
     // to be returned to the client.
-    for (auto const& opt : requested_opts) {
+    for (uint16_t opt : requested_opts) {
         // Add nothing when it is already there.
         // Skip special cases: D6O_VENDOR_OPTS
         if (opt == D6O_VENDOR_OPTS) {
@@ -1540,7 +1541,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_class) {
-                static_cast<void>(vendor_ids.insert(vendor_class->getVendorId()));
+                uint32_t vendor_id = vendor_class->getVendorId();
+                static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
         // Iterate on the configured option list
@@ -1574,7 +1576,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
-                static_cast<void>(vendor_ids.insert(vendor_opts->getVendorId()));
+                uint32_t vendor_id = vendor_opts->getVendorId();
+                static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
         // Iterate on the configured option list
@@ -1655,7 +1658,8 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         OptionVendorClassPtr vendor_class;
         vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (vendor_class) {
-            static_cast<void>(vendor_ids.insert(vendor_class->getVendorId()));
+            uint32_t vendor_id = vendor_class->getVendorId();
+            static_cast<void>(vendor_ids.insert(vendor_id));
         }
     }
 
@@ -1706,7 +1710,8 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
                     continue;
                 }
                 // Add the persistent option code to requested options
-                static_cast<void>(requested_opts[vendor_id].insert(desc->option_->getType()));
+                uint16_t code = desc->option_->getType();
+                static_cast<void>(requested_opts[vendor_id].insert(code));
             }
         }
 
