@@ -168,7 +168,7 @@ here ``default_conf``. So if the ``openssl_conf`` is not yet set please
 add at the beginning of the OpenSSL configuration file before the first
 section:
 
-.. code-block::
+.. code-block:: ini
 
    openssl_conf = default_conf
 
@@ -176,7 +176,7 @@ In the ``default_conf`` section the ``ssl_conf`` variable must be set
 to the name of the section which handles SSL/TLS defaults, for
 instance here ``ssl_sect``.
 
-.. code-block::
+.. code-block:: ini
 
    [ default_conf ]
    ssl_conf = ssl_sect
@@ -185,7 +185,7 @@ In the ``ssl_sect`` section the ``system_default`` variable must be
 set to the name of the section which handles system defaults, for
 instance here ``system_default_sect``.
 
-.. code-block::
+.. code-block:: ini
 
    [ ssl_sect ]
    system_default = system_default_sect
@@ -193,7 +193,7 @@ instance here ``system_default_sect``.
 In the ``system_default_sect`` section the ``MinProtocol``  variable must be
 set to the wanted minimal SSL/TLS version, for instance here ``TLSv1.2``.
 
-.. code-block::
+.. code-block:: ini
 
    [ system_default_sect ]
    MinProtocol = TLSv1.2
