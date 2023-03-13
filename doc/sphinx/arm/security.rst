@@ -148,6 +148,64 @@ often do not help to pinpoint the source of the problem.
 Both OpenSSL and Botan provide a command-line tool with a ``verify`` command
 which can be used to understand and fix handshake issues.
 
+OpenSSL Tuning
+--------------
+
+OpenSSL can be tuned for Kea: from OpenSSL for Kea defaults from the OpenSSL
+configuration apply. Here we explain how for instance to limit the TLS version.
+
+The OpenSSL configuration file is named ``openssl.cnf`` and is in a system
+dependent ``etc`` directory. It can be overriden using the ``OPENSSL_CONF``
+environment variable. For OpenSSL versions greater than 1.0.2 the
+``MinProtocol`` variable can be set to the wanted minimal protocol.
+
+Here we suppose that none of the variables are set or sections already exist.
+If it is not the case of course they should be reused.
+
+The default application is ``openssl_conf`` and the corresponding variable
+must be set to the name of the section which handles defaults, for instance
+here ``default_conf``. So if the ``openssl_conf`` is not yet set please
+add at the beginning of the OpenSSL configuration file before the first
+section:
+
+.. code-block::
+
+   openssl_conf = default_conf
+
+In the ``default_conf`` section the ``ssl_conf`` variable must be set
+to the name of the section which handles SSL/TLS defaults, for
+instance here ``ssl_sect``.
+
+.. code-block::
+
+   [ default_conf ]
+   ssl_conf = ssl_sect
+
+In the ``ssl_sect`` section the ``system_default`` variable must be
+set to the name of the section which handles system defaults, for
+instance here ``system_default_sect``.
+
+.. code-block::
+
+   [ ssl_sect ]
+   system_default = system_default_sect
+
+In the ``system_default_sect`` section the ``MinProtocol``  variable must be
+set to the wanted minimal SSL/TLS version, for instance here ``TLSv1.2``.
+
+.. code-block::
+
+   [ system_default_sect ]
+   MinProtocol = TLSv1.2
+
+The same procedure can be used to enforce other crypto paramaters if
+wanted or needed.
+
+Anyway it is highly recommended to read the manual page about ``openssl.cnf``,
+its location can vary but its usual name is ``config.5ssl`` so can be
+displayed using ``man config``.
+
+
 Securing a Kea Deployment
 =========================
 
