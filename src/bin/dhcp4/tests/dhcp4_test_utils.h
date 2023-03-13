@@ -639,12 +639,15 @@ public:
     /// @param expected_result SHOULD_PASS if the lease is expected to
     /// be successfully declined, or SHOULD_FAIL if the lease is expected
     /// to not be declined.
+    /// @param config_index specifies which config index should be used:
+    /// 0 - memfile, 1 - mysql, 2 - pgsql
     void acquireAndDecline(Dhcp4Client& client,
                            const std::string& hw_address_1,
                            const std::string& client_id_1,
                            const std::string& hw_address_2,
                            const std::string& client_id_2,
-                           ExpectedResult expected_result);
+                           ExpectedResult expected_result,
+                           uint8_t config_index = 0);
 
     /// @brief Checks if received relay agent info option is echoed back to the
     /// client.

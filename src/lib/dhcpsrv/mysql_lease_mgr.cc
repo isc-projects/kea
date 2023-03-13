@@ -630,7 +630,7 @@ public:
                 bind_[1].is_null = &hwaddr_null_;
             }
 
-            // client_id: varbinary(128)
+            // client_id: varbinary(255)
             if (lease_->client_id_) {
                 client_id_ = lease_->client_id_->getClientId();
                 client_id_length_ = client_id_.size();
@@ -742,7 +742,7 @@ public:
                 bind_[10].buffer_type = MYSQL_TYPE_NULL;
             }
 
-            // relay_id: varbinary(128)
+            // relay_id: varbinary(255)
             relay_id_ = lease_->relay_id_;
             if (!relay_id_.empty()) {
                 bind_[11].buffer_type = MYSQL_TYPE_BLOB;
@@ -757,7 +757,7 @@ public:
                 bind_[11].is_null = &relay_id_null_;
             }
 
-            // remote_id: varbinary(128)
+            // remote_id: varbinary(255)
             remote_id_ = lease_->remote_id_;
             if (!remote_id_.empty()) {
                 bind_[12].buffer_type = MYSQL_TYPE_BLOB;
@@ -819,7 +819,7 @@ public:
         // bind_[1].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
-        // client_id: varbinary(128)
+        // client_id: varbinary(255)
         client_id_length_ = sizeof(client_id_buffer_);
         bind_[2].buffer_type = MYSQL_TYPE_BLOB;
         bind_[2].buffer = reinterpret_cast<char*>(client_id_buffer_);
@@ -892,7 +892,7 @@ public:
         bind_[10].length = &user_context_length_;
         bind_[10].is_null = &user_context_null_;
 
-        // relay_id: varbinary(128)
+        // relay_id: varbinary(255)
         relay_id_length_ = sizeof(relay_id_buffer_);
         bind_[11].buffer_type = MYSQL_TYPE_BLOB;
         bind_[11].buffer = reinterpret_cast<char*>(relay_id_buffer_);
@@ -900,7 +900,7 @@ public:
         bind_[11].length = &relay_id_length_;
         bind_[11].is_null = &relay_id_null_;
 
-        // remote_id: varbinary(128)
+        // remote_id: varbinary(255)
         remote_id_length_ = sizeof(remote_id_buffer_);
         bind_[12].buffer_type = MYSQL_TYPE_BLOB;
         bind_[12].buffer = reinterpret_cast<char*>(remote_id_buffer_);
@@ -1159,7 +1159,7 @@ public:
             // bind_[0].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
 
-            // duid: varchar(128)
+            // duid: varchar(130)
             if (!lease_->duid_) {
                 isc_throw(DbOperationError, "lease6 for address " << addr6_
                           << " is missing mandatory client-id.");
@@ -1399,7 +1399,7 @@ public:
         // bind_[0].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
-        // client_id: varbinary(128)
+        // duid: varbinary(130)
         duid_length_ = sizeof(duid_buffer_);
         bind_[1].buffer_type = MYSQL_TYPE_BLOB;
         bind_[1].buffer = reinterpret_cast<char*>(duid_buffer_);

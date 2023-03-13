@@ -194,9 +194,9 @@ public:
 // This test verifies that expected identifier max length is returned.
 TEST_F(HostTest, getIdentifierMaxLength) {
     EXPECT_EQ(20, Host::getIdentifierMaxLength(Host::IDENT_HWADDR));
-    EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_DUID));
+    EXPECT_EQ(130, Host::getIdentifierMaxLength(Host::IDENT_DUID));
     EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_CIRCUIT_ID));
-    EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_CLIENT_ID));
+    EXPECT_EQ(255, Host::getIdentifierMaxLength(Host::IDENT_CLIENT_ID));
     EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_FLEX));
 }
 
@@ -317,12 +317,12 @@ TEST_F(HostTest, createFromDUIDString) {
     too_long += ":50:51:52:53:54:55:56:57:58:59:5a:5b:5c:5d:5e:5f";
     too_long += ":60:61:62:63:64:65:66:67:68:69:6a:6b:6c:6d:6e:6f";
     too_long += ":70:71:72:73:74:75:76:77:78:79:7a:7b:7c:7d:7e:7f";
-    too_long += ":ff";
-    expected = "too long client identifier type duid length 129";
+    too_long += ":80:81:ff";
+    expected = "too long client identifier type duid length 131";
     EXPECT_THROW_MSG(Host(too_long, "duid", SubnetID(1), SubnetID(2),
                           IOAddress("192.0.2.3"), "somehost.example.org"),
                      isc::BadValue, expected);
-    expected = "too long client identifier type circuit-id length 129";
+    expected = "too long client identifier type circuit-id length 131";
     EXPECT_THROW_MSG(Host(too_long, "circuit-id", SubnetID(1), SubnetID(2),
                           IOAddress("192.0.2.3"), "somehost.example.org"),
                      isc::BadValue, expected);
@@ -409,11 +409,11 @@ TEST_F(HostTest, createFromDuidBinary) {
     EXPECT_EQ("me.example.org", host->getHostname());
     EXPECT_FALSE(host->getContext());
 
-    uint8_t too_long[129];
-    for (uint8_t i = 0; i < 129; ++i) {
+    uint8_t too_long[DUID::MAX_DUID_LEN + 1];
+    for (uint8_t i = 0; i < sizeof(too_long); ++i) {
         too_long[i] = i;
     }
-    string expected = "too long client identifier type duid length 129";
+    string expected = "too long client identifier type duid length 131";
     EXPECT_THROW_MSG(host.reset(new Host(too_long,
                                          sizeof(too_long),
                                          Host::IDENT_DUID,

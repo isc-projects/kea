@@ -41,6 +41,46 @@ const char* DECLINE_CONFIGS[] = {
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
+        "\"valid-lifetime\": 4000 }",
+// Configuration 1
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+            "\"type\": \"mysql\","
+            "\"name\": \"keatest\","
+            "\"user\": \"keatest\","
+            "\"password\": \"keatest\""
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }",
+// Configuration 2
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+            "\"type\": \"postgresql\","
+            "\"name\": \"keatest\","
+            "\"user\": \"keatest\","
+            "\"password\": \"keatest\""
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
         "\"valid-lifetime\": 4000 }"
 };
 
@@ -59,7 +99,7 @@ public:
     uint32_t na_iaid_;
 };
 
-};
+}
 
 namespace isc {
 namespace dhcp {
@@ -72,7 +112,8 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
                                  const std::string& duid2,
                                  const uint32_t iaid2,
                                  AddressInclusion addr_type,
-                                 ExpectedResult expected_result) {
+                                 ExpectedResult expected_result,
+                                 uint8_t config_index) {
     // Set this global statistic explicitly to zero.
     StatsMgr::instance().setValue("declined-addresses", static_cast<int64_t>(0));
 
@@ -80,7 +121,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     client.requestAddress(iaid1);
 
     // Configure the server with a configuration.
-    ASSERT_NO_THROW(configure(DECLINE_CONFIGS[0], *client.getServer()));
+    ASSERT_NO_THROW(configure(DECLINE_CONFIGS[config_index], *client.getServer()));
 
     // Let's get the subnet-id and generate statistics name out of it.
     const Subnet6Collection* subnets =
@@ -170,6 +211,14 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     if (expected_result == SHOULD_PASS) {
         EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
 
+        ASSERT_FALSE(lease->hwaddr_);
+        ASSERT_TRUE(lease->duid_);
+        ASSERT_EQ(*lease->duid_, DUID::EMPTY());
+        ASSERT_EQ(lease->preferred_lft_, 0);
+        ASSERT_TRUE(lease->hostname_.empty());
+        ASSERT_FALSE(lease->fqdn_fwd_);
+        ASSERT_FALSE(lease->fqdn_rev_);
+
         // The decline succeeded, so the declined-addresses statistic should
         // be increased by one
         EXPECT_EQ(after, before + 1);
@@ -177,6 +226,13 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     } else {
         // the decline was supposed, to be rejected.
         EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+
+        ASSERT_TRUE(lease->hwaddr_);
+        ASSERT_TRUE(lease->duid_);
+        ASSERT_NE(*lease->duid_, DUID::EMPTY());
+        ASSERT_NE(lease->preferred_lft_, 0);
+        ASSERT_FALSE(lease->fqdn_fwd_);
+        ASSERT_FALSE(lease->fqdn_rev_);
 
         // The decline failed, so the declined-addresses should be the same
         // as before
@@ -186,15 +242,28 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
 }
 
 // This test checks that the client can acquire and decline the lease.
-TEST_F(DeclineTest, basic) {
+TEST_F(DeclineTest, basicMemfile) {
     Dhcp6Client client;
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS);
 }
 
-};
-};
-};
+// This test checks that the client can acquire and decline the lease.
+TEST_F(DeclineTest, basicMySQL) {
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_PASS, 1);
+}
+
+TEST_F(DeclineTest, basicPgSQL) {
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_PASS, 2);
+}
+
+}
+}
+}
 
 namespace {
 

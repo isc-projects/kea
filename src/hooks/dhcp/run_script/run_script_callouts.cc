@@ -155,7 +155,7 @@ int lease4_renew(CalloutHandle& handle) {
     RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4");
     ClientIdPtr clientid;
     handle.getArgument("clientid", clientid);
-    RunScriptImpl::extractDUID(vars, clientid, "PKT4_CLIENT_ID");
+    RunScriptImpl::extractClientId(vars, clientid, "PKT4_CLIENT_ID");
     HWAddrPtr hwaddr;
     handle.getArgument("hwaddr", hwaddr);
     RunScriptImpl::extractHWAddr(vars, hwaddr, "PKT4_HWADDR");

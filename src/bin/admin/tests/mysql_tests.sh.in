@@ -390,7 +390,7 @@ mysql_upgrade_12_to_13_test() {
 }
 
 mysql_upgrade_13_to_14_test() {
-   # Check function source code
+    # Check function source code
     run_command \
          mysql_execute "select action_statement from information_schema.TRIGGERS where trigger_schema = '${db_name}' and trigger_name = 'dhcp4_shared_network_BDEL'";
 
@@ -399,7 +399,7 @@ mysql_upgrade_13_to_14_test() {
     count=$(echo "${OUTPUT}" | grep -Eci 'UPDATE dhcp4_subnet SET shared_network_name = NULL') || true
     assert_eq 1 "${count}" "function func_dhcp4_shared_network_BDEL() is missing changed line. (expected count %d, returned %d)"
 
-   # Check function source code
+    # Check function source code
     run_command \
          mysql_execute "select action_statement from information_schema.TRIGGERS where trigger_schema = '${db_name}' and trigger_name = 'dhcp6_shared_network_BDEL'";
 
@@ -1431,6 +1431,26 @@ SET @disable_audit = 0;"
     # Check upgrade from 16.0 to 17.0.
     mysql_upgrade_16_to_17_test
 
+    # lease4 client_id should support 255 long strings.
+    qry="insert into lease4 (address, client_id, subnet_id) values (1, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
+    run_statement "lease4_255_long_client_id" "$qry"
+
+    # lease4 relay_id should support 255 long strings.
+    qry="insert into lease4 (address, remote_id, subnet_id) values (2, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
+    run_statement "lease4_255_long_relay_id" "$qry"
+
+    # lease4 remote_id should support 255 long strings.
+    qry="insert into lease4 (address, remote_id, subnet_id) values (3, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
+    run_statement "lease4_255_long_remote_id" "$qry"
+
+    # hosts dhcp_identifier should support 255 long strings.
+    qry="insert into hosts (dhcp_identifier, dhcp_identifier_type) values ('123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 0);"
+    run_statement "hosts_255_long_dhcp_identifier" "$qry"
+
+    #lease6 duid should support 130 long strings.
+    qry="insert into lease6 values('::10',12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);"
+    run_statement "lease6_130_long_duid" "$qry"
+
     # Let's wipe the whole database
     mysql_wipe
 
@@ -1535,9 +1555,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values('::10',20,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
-insert into lease6 values('::11',21,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }');\
-insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }');"
+insert into lease6 values('::10',203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+insert into lease6 values('::11',213,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }');\
+insert into lease6 values('::12',223,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }');"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -2161,13 +2181,13 @@ mysql_unused_subnet_id_test() {
 # that reservation_mode values in subnet and shared network tables are
 # converted to new reservations flags.
 mysql_reservation_mode_upgrade_test() {
-    test_start "mysql_reservation_mode_upgrade_test"
+    test_start "mysql.reservation_mode_upgrade_test"
 
     # Let's wipe the whole database
     mysql_wipe
 
     # We need to create an older database with lease data so we can
-    # verify the upgrade mechanisms which convert subnet id values
+    # verify the upgrade mechanisms which convert reservations values
     #
     # Initialize database to schema 1.0.
     mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
@@ -2317,13 +2337,14 @@ mysql_reservation_mode_upgrade_test() {
 mysql_client_class_test() {
     table_prefix="$1"
 
-    test_start "mysql_client_classes_test.${table_prefix}"
+    test_start "mysql.client_classes_test.${table_prefix}"
 
     # Let's wipe the whole database
     mysql_wipe
 
     # We need to create an older database with lease data so we can
-    # verify the upgrade mechanisms which convert subnet id values
+    # verify the upgrade mechanisms which validates client classes and
+    # dependencies behave correctly
     #
     # Initialize database to schema 1.0.
     mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
@@ -2442,7 +2463,7 @@ mysql_client_class_test() {
 # the tag column in the dhcp4_server and dhcp6_server tables.
 mysql_shrink_server_tag_test() {
 
-    test_start "mysql_shrink_server_tag_test"
+    test_start "mysql.shrink_server_tag_test"
 
     mysql_wipe
 
@@ -2481,6 +2502,47 @@ mysql_shrink_server_tag_test() {
     test_finish 0
 }
 
+# Verifies that you can upgrade from earlier version and that initial EMPTY DUID
+# (0x00) value in lease6 table is updated to proper value (0x000000).
+mysql_update_empty_duid_test() {
+    test_start "mysql.update_empty_duid_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert empty duid values
+    #
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 16.0
+    mysql_upgrade_schema_to_version 16.0
+
+    sql=\
+"insert into lease6 values('::10',203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+ insert into lease6 values('::11',UNHEX('00'),30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }');"
+
+    run_statement "insert v6 leases" "$sql"
+
+    # Ok, we have a 14.0 database with leases. Let's upgrade it to latest version.
+    run_command \
+        "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+
+    # leases count for declined state should be 1 with DUID updated (0x000000)
+    qry="select count(*) from lease6 where address = '::11' and duid = 0x000000 and state = 1";
+    run_statement "#2" "$qry" 1
+
+    # leases count for non declined state should be 1 with DUID unchanged (0x323033)
+    qry="select count(*) from lease6 where address = '::10' and duid = 0x323033 and state = 0";
+    run_statement "#3" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
 # Run tests.
 mysql_db_init_test
 mysql_host_reservation_init_test
@@ -2504,3 +2566,4 @@ mysql_reservation_mode_upgrade_test
 mysql_client_class_test dhcp4
 mysql_client_class_test dhcp6
 mysql_shrink_server_tag_test
+mysql_update_empty_duid_test

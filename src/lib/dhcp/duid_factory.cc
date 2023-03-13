@@ -151,7 +151,7 @@ DUIDFactory::createEN(const uint32_t enterprise_id,
 
     // Render DUID.
     std::vector<uint8_t> duid_out(DUID_TYPE_LEN + ENTERPRISE_ID_LEN);
-    writeUint16(DUID::DUID_EN, &duid_out[0], 2);
+    writeUint16(DUID::DUID_EN, &duid_out[0], DUID_TYPE_LEN);
     writeUint32(enterprise_id_out, &duid_out[2], ENTERPRISE_ID_LEN);
 
     // If no identifier specified, we'll have to use the one from the
@@ -379,7 +379,7 @@ DUIDFactory::readFromFile() {
     duid_.reset();
 
     std::ostringstream duid_str;
-   if (isStored()) {
+    if (isStored()) {
         std::ifstream ifs;
         ifs.open(storage_location_.c_str(), std::ifstream::in);
         if (ifs.good()) {
@@ -405,6 +405,5 @@ DUIDFactory::readFromFile() {
    }
 }
 
-
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace

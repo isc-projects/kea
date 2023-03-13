@@ -266,7 +266,7 @@ public:
             bind_[0].buffer = reinterpret_cast<char*>(&host_id_);
             bind_[0].is_unsigned = MLM_TRUE;
 
-            // dhcp_identifier : VARBINARY(128) NOT NULL
+            // dhcp_identifier : VARBINARY(255) NOT NULL
             dhcp_identifier_length_ = host->getIdentifier().size();
             memcpy(static_cast<void*>(dhcp_identifier_buffer_),
                    &(host->getIdentifier())[0],
@@ -422,7 +422,7 @@ public:
         bind_[0].buffer = reinterpret_cast<char*>(&host_id_);
         bind_[0].is_unsigned = MLM_TRUE;
 
-        // dhcp_identifier : VARBINARY(128) NOT NULL
+        // dhcp_identifier : VARBINARY(255) NOT NULL
         dhcp_identifier_length_ = sizeof(dhcp_identifier_buffer_);
         bind_[1].buffer_type = MYSQL_TYPE_BLOB;
         bind_[1].buffer = reinterpret_cast<char*>(dhcp_identifier_buffer_);
@@ -718,7 +718,7 @@ private:
 
     /// Buffer holding client's identifier (e.g. DUID, HW address)
     /// in the binary format.
-    uint8_t dhcp_identifier_buffer_[DUID::MAX_DUID_LEN];
+    uint8_t dhcp_identifier_buffer_[ClientId::MAX_CLIENT_ID_LEN];
 
     /// Length of a data in the dhcp_identifier_buffer_.
     unsigned long dhcp_identifier_length_;

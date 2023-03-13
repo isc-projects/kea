@@ -54,8 +54,8 @@ CREATE INDEX lease6_by_hostname ON lease6 (hostname);
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '9', minor = '0';
+    SET version = '9', minor = '0';
 
-# This line concludes database upgrade to version 9.0.
+# This line concludes the schema upgrade to version 9.0.
 
 EOF

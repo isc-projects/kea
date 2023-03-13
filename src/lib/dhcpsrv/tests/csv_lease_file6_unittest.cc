@@ -115,9 +115,9 @@ CSVLeaseFile6Test::writeSampleFile() const {
                   "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
                   "16,64,0,0,,,1,{ \"foobar\": true },,"
                   "1,0\n"
-                  "2001:db8:1::2,00,200,200,8,100,0,7,0,1,1,host.example.com,,0,,"
+                  "2001:db8:1::2,00:00:00,200,200,8,100,0,7,0,1,1,host.example.com,,0,,"
                   "1,0\n"
-                  "2001:db8:1::3,00,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
+                  "2001:db8:1::3,00:00:00,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
                   "1,0\n");
 }
 
@@ -239,7 +239,7 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // Verify that the lease is correct.
     EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
-    EXPECT_EQ("00", lease->duid_->toText());
+    EXPECT_EQ("00:00:00", lease->duid_->toText());
     EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
     }
 
@@ -325,7 +325,6 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     checkStats(lf, 0, 0, 0, 5, 4, 1);
     }
 
-
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
               "state,user_context,hwtype,hwaddr_source\n"
@@ -335,7 +334,7 @@ TEST_F(CSVLeaseFile6Test, recreate) {
               ",300,300,6,150,0,8,128,0,0,,,0,,,\n"
               "3000:1:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
               "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true },,\n"
-              "2001:db8:2::10,00,300,300,6,150,0,8,128,0,0,,,1,,,\n",
+              "2001:db8:2::10,00:00:00,300,300,6,150,0,8,128,0,0,,,1,,,\n",
               io_.readFile());
 }
 
@@ -519,7 +518,6 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
     EXPECT_EQ(util::VersionedCSVFile::NEEDS_DOWNGRADE,
               lf.getInputSchemaState());
 
-
     Lease6Ptr lease;
     {
     SCOPED_TRACE("First lease valid");
@@ -558,11 +556,11 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
                   "fqdn_rev,hostname,hwaddr,state,user_context,"
                   "hwtype,hwaddr_source\n"
-                  "2001:db8:1::1,00,"
+                  "2001:db8:1::1,00:00:00,"
                   "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,\n"
                   "2001:db8:1::1,,"
                   "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,\n"
-                  "2001:db8:1::1,00,"
+                  "2001:db8:1::1,00:00:00,"
                   "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,\n");
 
     CSVLeaseFile6 lf(filename_);
@@ -585,7 +583,7 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     EXPECT_FALSE(lf.next(lease));
     EXPECT_FALSE(lease);
     EXPECT_EQ(lf.getReadErrs(), 2);
-    EXPECT_EQ(lf.getReadMsg(), "Empty DUIDs are not allowed");
+    EXPECT_EQ(lf.getReadMsg(), "identifier is too short (0), at least 3 is required");
     }
 
     {
@@ -711,9 +709,6 @@ TEST_F(CSVLeaseFile6Test, embeddedEscapes) {
     EXPECT_EQ(hostname, lease->hostname_);
     EXPECT_EQ(context_str, lease->getContext()->str());
 }
-
-
-
 
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6

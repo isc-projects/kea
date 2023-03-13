@@ -52,7 +52,6 @@ then
 fi
 
 mysql "$@" <<EOF
--- This line starts the schema upgrade to version 14.
 
 -- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
@@ -823,4 +822,5 @@ UPDATE schema_version
     SET version = '14', minor = '0';
 
 -- This line concludes the schema upgrade to version 14.
+
 EOF

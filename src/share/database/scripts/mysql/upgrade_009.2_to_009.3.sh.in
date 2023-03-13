@@ -133,8 +133,8 @@ DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '9', minor = '3';
+    SET version = '9', minor = '3';
 
-# This line concludes database upgrade to version 9.3.
+# This line concludes the schema upgrade to version 9.3.
 
 EOF

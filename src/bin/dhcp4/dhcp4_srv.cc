@@ -407,7 +407,7 @@ Dhcpv4Exchange::setHostIdentifiers(AllocEngine::ClientContext4Ptr context) {
 
         case Host::IDENT_DUID:
             if (context->clientid_) {
-                const std::vector<uint8_t>& vec = context->clientid_->getDuid();
+                const std::vector<uint8_t>& vec = context->clientid_->getClientId();
                 if (!vec.empty()) {
                     // Client identifier type = DUID? Client identifier holding a DUID
                     // comprises Type (1 byte), IAID (4 bytes), followed by the actual
@@ -439,7 +439,7 @@ Dhcpv4Exchange::setHostIdentifiers(AllocEngine::ClientContext4Ptr context) {
 
         case Host::IDENT_CLIENT_ID:
             if (context->clientid_) {
-                const std::vector<uint8_t>& vec = context->clientid_->getDuid();
+                const std::vector<uint8_t>& vec = context->clientid_->getClientId();
                 if (!vec.empty()) {
                     context->addHostIdentifier(id_type, vec);
                 }

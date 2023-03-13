@@ -340,7 +340,6 @@ CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
     END $$
 DELIMITER ;
 
-
 -- -----------------------------------------------------
 --
 -- New version of the createOptionAuditDHCP4 stored
@@ -488,9 +487,9 @@ DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '8', minor = '2';
+    SET version = '8', minor = '2';
 
-# This line concludes database upgrade to version 8.2.
+# This line concludes the schema upgrade to version 8.2.
 
 EOF
 

@@ -361,7 +361,6 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet_server (
         ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
-
 # Modify the primary key to BINGINT as other tables have.
 #
 ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
@@ -657,8 +656,8 @@ DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '7', minor = '0';
+    SET version = '7', minor = '0';
 
-# This line concludes database upgrade to version 7.0.
+# This line concludes the schema upgrade to version 7.0.
 
 EOF

@@ -66,5 +66,6 @@ ALTER TABLE logs
 UPDATE schema_version
     SET version = '9', minor = '6';
 
-# This line concludes database upgrade to version 9.6.
+# This line concludes the schema upgrade to version 9.6.
+
 EOF

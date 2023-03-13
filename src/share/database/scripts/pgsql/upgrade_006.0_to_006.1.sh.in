@@ -37,6 +37,8 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
+-- Upgrade to schema 6.1 begins here:
+
 -- Fix v4 update trigger procedure
 CREATE OR REPLACE FUNCTION proc_stat_lease4_update () RETURNS trigger AS \$stat_lease4_update\$
 BEGIN

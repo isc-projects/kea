@@ -261,5 +261,6 @@ DELIMITER ;
 UPDATE schema_version
     SET version = '13', minor = '0';
 
--- This line concludes database upgrade to version 13.
+-- This line concludes the schema upgrade to version 13.
+
 EOF

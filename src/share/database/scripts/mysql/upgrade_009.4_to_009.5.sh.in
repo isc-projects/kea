@@ -163,8 +163,8 @@ SET @disable_audit = 0;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '9', minor = '5';
+    SET version = '9', minor = '5';
 
-# This line concludes database upgrade to version 9.5.
+# This line concludes the schema upgrade to version 9.5.
 
 EOF

@@ -88,7 +88,7 @@ IterativeAllocator::increaseAddress(const IOAddress& address,
 
 IOAddress
 IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
-                                        const DuidPtr&,
+                                        const IdentifierBaseTypePtr&,
                                         const IOAddress&) {
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
@@ -198,7 +198,7 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
 IOAddress
 IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                                        Pool6Ptr& pool6,
-                                       const DuidPtr&,
+                                       const IdentifierBaseTypePtr&,
                                        PrefixLenMatchType prefix_length_match,
                                        const IOAddress&,
                                        uint8_t hint_prefix_length) {

@@ -1200,13 +1200,14 @@ GenericLeaseMgrTest::testGetLease4ClientIdSize() {
     // Intermediate client_id_max is to overcome problem if
     // ClientId::MAX_CLIENT_ID_LEN is used in an EXPECT_EQ.
     int client_id_max = ClientId::MAX_CLIENT_ID_LEN;
-    EXPECT_EQ(128, client_id_max);
+    EXPECT_EQ(255, client_id_max);
 
     int client_id_min = ClientId::MIN_CLIENT_ID_LEN;
     EXPECT_EQ(2, client_id_min); // See RFC2132, section 9.14
 
-    for (uint8_t i = client_id_min; i <= client_id_max; i += 16) {
-        vector<uint8_t> clientid_vec(i, i);
+    for (uint16_t i = client_id_min; i <= client_id_max; i += 16) {
+        uint8_t data = static_cast<uint8_t>(i);
+        vector<uint8_t> clientid_vec(data, data);
         leases[1]->client_id_.reset(new ClientId(clientid_vec));
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
@@ -1525,10 +1526,10 @@ GenericLeaseMgrTest::testGetLeases6DuidSize() {
     // Now add leases with increasing DUID size can be retrieved.
     // For speed, go from 0 to 128 is steps of 16.
     int duid_max = DUID::MAX_DUID_LEN;
-    EXPECT_EQ(128, duid_max);
+    EXPECT_EQ(130, duid_max);
 
     int duid_min = DUID::MIN_DUID_LEN;
-    EXPECT_EQ(1, duid_min);
+    EXPECT_EQ(3, duid_min);
 
     for (uint8_t i = duid_min; i <= duid_max; i += 16) {
         vector<uint8_t> duid_vec(i, i);
@@ -1768,10 +1769,10 @@ GenericLeaseMgrTest::testGetLease6DuidIaidSubnetIdSize() {
     // Now add leases with increasing DUID size can be retrieved.
     // For speed, go from 0 to 128 is steps of 16.
     int duid_max = DUID::MAX_DUID_LEN;
-    EXPECT_EQ(128, duid_max);
+    EXPECT_EQ(130, duid_max);
 
     int duid_min = DUID::MIN_DUID_LEN;
-    EXPECT_EQ(1, duid_min);
+    EXPECT_EQ(3, duid_min);
 
     for (uint8_t i = duid_min; i <= duid_max; i += 16) {
         vector<uint8_t> duid_vec(i, i);

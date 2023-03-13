@@ -3002,7 +3002,7 @@ TEST_F(AllocEngine4Test, findReservation) {
                                     "", false);
     ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
     ctx.addHostIdentifier(Host::IDENT_HWADDR, hwaddr_->hwaddr_);
-    ctx.addHostIdentifier(Host::IDENT_DUID, clientid_->getDuid());
+    ctx.addHostIdentifier(Host::IDENT_DUID, clientid_->getClientId());
 
     // There is no reservation in the database so no host should be returned.
     ASSERT_NO_THROW(engine.findReservation(ctx));

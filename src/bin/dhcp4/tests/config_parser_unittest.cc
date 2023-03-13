@@ -5229,14 +5229,14 @@ TEST_F(Dhcp4ParserTest, reservations) {
 
     // Check that we can find reservation using client identifier.
     ClientIdPtr client_id = ClientId::fromText("05:01:02:03:04:05:06");
-    host = hosts_cfg->get4(542, Host::IDENT_CLIENT_ID, &client_id->getDuid()[0],
-                           client_id->getDuid().size());
+    host = hosts_cfg->get4(542, Host::IDENT_CLIENT_ID, &client_id->getClientId()[0],
+                           client_id->getClientId().size());
     ASSERT_TRUE(host);
     EXPECT_EQ("192.0.4.103", host->getIPv4Reservation().toText());
 
     // But this reservation should not be returned for other subnet.
-    host = hosts_cfg->get4(234, Host::IDENT_CLIENT_ID, &client_id->getDuid()[0],
-                           client_id->getDuid().size());
+    host = hosts_cfg->get4(234, Host::IDENT_CLIENT_ID, &client_id->getClientId()[0],
+                           client_id->getClientId().size());
     EXPECT_FALSE(host);
 }
 

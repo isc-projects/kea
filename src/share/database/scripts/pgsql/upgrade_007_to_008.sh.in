@@ -36,8 +36,10 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- This starts schema update to 8.0. It adds a few missing elements for CB and
--- functions for kea-admin's lease-dump and lease-upload commands.
+-- Upgrade to schema 8.0 begins here:
+
+-- Adds a few missing elements for CB and functions for kea-admin's lease-dump
+-- and lease-upload commands.
 
 -- -----------------------------------------------------------------------
 -- Extend the table holding DHCPv4 option definitions with a nullable
@@ -504,7 +506,7 @@ BEGIN
 END
 \$\$ LANGUAGE plpgsql;
 
--- Update the schema version number.
+-- Set 8.0 schema version.
 UPDATE schema_version
     SET version = '8', minor = '0';
 

@@ -299,8 +299,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
                         // as the lexical cast would expect a character, e.g.
                         // 'a', instead of prefix length, e.g. '64'.
                         try {
-                            prefix_len = boost::lexical_cast<
-                                unsigned int>(prefix.substr(len_pos + 1));
+                            prefix_len = boost::lexical_cast<unsigned int>(prefix.substr(len_pos + 1));
 
                         } catch (const boost::bad_lexical_cast&) {
                             isc_throw(DhcpConfigError, "prefix length value '"
@@ -318,8 +317,8 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
 
                     // Create a reservation for an address or prefix.
                     host->addReservation(IPv6Resrv(resrv_type,
-                                                    IOAddress(prefix),
-                                                    prefix_len));
+                                                   IOAddress(prefix),
+                                                   prefix_len));
 
                 } catch (const std::exception& ex) {
                     // Append line number where the error occurred.

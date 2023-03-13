@@ -101,6 +101,19 @@ RunScriptImpl::extractHWAddr(ProcessEnvVars& vars,
 }
 
 void
+RunScriptImpl::extractClientId(ProcessEnvVars& vars,
+                               const ClientIdPtr client_id,
+                               const string& prefix,
+                               const string& suffix) {
+    if (client_id) {
+        RunScriptImpl::extractString(vars, client_id->toText(),
+                                     prefix, suffix);
+    } else {
+        RunScriptImpl::extractString(vars, "", prefix, suffix);
+    }
+}
+
+void
 RunScriptImpl::extractDUID(ProcessEnvVars& vars,
                            const DuidPtr duid,
                            const string& prefix,
@@ -228,8 +241,8 @@ RunScriptImpl::extractLease4(ProcessEnvVars& vars,
                                       prefix + "_SUBNET_ID", suffix);
         RunScriptImpl::extractInteger(vars, lease4->valid_lft_,
                                       prefix + "_VALID_LIFETIME", suffix);
-        RunScriptImpl::extractDUID(vars, lease4->client_id_,
-                                   prefix + "_CLIENT_ID", suffix);
+        RunScriptImpl::extractClientId(vars, lease4->client_id_,
+                                       prefix + "_CLIENT_ID", suffix);
     } else {
         RunScriptImpl::extractString(vars, "", prefix + "_ADDRESS", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_CLTT", suffix);
@@ -238,7 +251,7 @@ RunScriptImpl::extractLease4(ProcessEnvVars& vars,
         RunScriptImpl::extractString(vars, "", prefix + "_STATE", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_SUBNET_ID", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_VALID_LIFETIME", suffix);
-        RunScriptImpl::extractDUID(vars, DuidPtr(), prefix + "_CLIENT_ID", suffix);
+        RunScriptImpl::extractClientId(vars, ClientIdPtr(), prefix + "_CLIENT_ID", suffix);
     }
 }
 

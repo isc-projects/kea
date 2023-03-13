@@ -56,7 +56,7 @@ const size_t OPTION_VALUE_MAX_LEN = 4096;
 const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::LAST_IDENTIFIER_TYPE);
 
 /// @brief Maximum length of DHCP identifier value.
-const size_t DHCP_IDENTIFIER_MAX_LEN = 128;
+const size_t DHCP_IDENTIFIER_MAX_LEN = ClientId::MAX_CLIENT_ID_LEN;
 
 /// @brief This class provides mechanisms for sending and retrieving
 /// information from the 'hosts' table.

@@ -70,8 +70,8 @@ ALTER TABLE dhcp6_subnet
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '9', minor = '1';
+    SET version = '9', minor = '1';
 
-# This line concludes database upgrade to version 9.1.
+# This line concludes the schema upgrade to version 9.1.
 
 EOF

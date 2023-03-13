@@ -2303,7 +2303,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              &client_id_->getClientId()[0], client_id_->getClientId().size(),
                               temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -2401,7 +2401,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              &client_id_->getClientId()[0], client_id_->getClientId().size(),
                               temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -2469,8 +2469,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
-                              client_id_->getDuid().size(), temp_valid,
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getClientId()[0],
+                              client_id_->getClientId().size(), temp_valid,
                               temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -2556,8 +2556,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleInfiniteLease) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
-                              client_id_->getDuid().size(), temp_valid,
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getClientId()[0],
+                              client_id_->getClientId().size(), temp_valid,
                               temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -2642,8 +2642,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleNoDelete) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
-                              client_id_->getDuid().size(), temp_valid,
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getClientId()[0],
+                              client_id_->getClientId().size(), temp_valid,
                               temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -2729,8 +2729,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
-                              client_id_->getDuid().size(), temp_valid,
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getClientId()[0],
+                              client_id_->getClientId().size(), temp_valid,
                               temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -2793,8 +2793,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getDuid()[0],
-                              client_id_->getDuid().size(), temp_valid,
+    Lease4Ptr used(new Lease4(addr, hw, &client_id_->getClientId()[0],
+                              client_id_->getClientId().size(), temp_valid,
                               temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 

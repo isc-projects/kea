@@ -122,7 +122,8 @@ ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) NULL;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '5', minor = '0';
-# This line concludes database upgrade to version 5.0.
+    SET version = '5', minor = '0';
+
+# This line concludes the schema upgrade to version 5.0.
 
 EOF

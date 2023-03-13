@@ -1806,7 +1806,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              &client_id_->getClientId()[0], client_id_->getClientId().size(),
                               temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -1967,7 +1967,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              &client_id_->getClientId()[0], client_id_->getClientId().size(),
                               temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -2054,8 +2054,8 @@ void prepare(struct ctx& c) {
     c.hwaddr.reset(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
 
     c.used.reset(new Lease4(c.addr, c.hwaddr,
-                            &c.test->client_id_->getDuid()[0],
-                            c.test->client_id_->getDuid().size(),
+                            &c.test->client_id_->getClientId()[0],
+                            c.test->client_id_->getClientId().size(),
                             c.temp_valid, c.temp_timestamp,
                             c.test->subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(c.used));
@@ -2312,7 +2312,7 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              &client_id_->getClientId()[0], client_id_->getClientId().size(),
                               temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 

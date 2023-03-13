@@ -35,6 +35,8 @@ fi
 
 psql "$@" >/dev/null <<EOF
 
+-- Upgrade to schema 6.2 begins here:
+
 -- Starting from this version we allow specifying multiple IP reservations
 -- for the same address in certain DHCP configurations. The server may check
 -- uniqueness of the IP addresses on its own. This is no longer checked at
@@ -59,7 +61,7 @@ ALTER TABLE ipv6_reservations DROP CONSTRAINT IF EXISTS key_dhcp6_address_prefix
 CREATE INDEX key_dhcp6_address_prefix_len
     ON ipv6_reservations (address ASC, prefix_len ASC);
 
--- Update the schema version number
+-- Set 6.2 schema version.
 UPDATE schema_version
     SET version = '6', minor = '2';
 

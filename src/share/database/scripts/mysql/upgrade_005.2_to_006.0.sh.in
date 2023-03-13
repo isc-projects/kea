@@ -210,7 +210,8 @@ INSERT INTO lease6_stat (subnet_id, lease_type, state, leases)
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '6', minor = '0';
-# This line concludes database upgrade to version 6.0.
+    SET version = '6', minor = '0';
+
+# This line concludes the schema upgrade to version 6.0.
 
 EOF

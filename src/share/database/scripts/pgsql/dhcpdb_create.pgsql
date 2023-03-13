@@ -88,9 +88,7 @@ CREATE TABLE schema_version (
 
 INSERT INTO schema_version VALUES (1, 0);
 
---
--- Schema 2.0 specification starts here.
---
+-- Upgrade to schema 2.0 begins here:
 
 -- Add state column to the lease4 table.
 ALTER TABLE lease4
@@ -635,7 +633,6 @@ CREATE TRIGGER stat_lease4_update
 AFTER UPDATE ON lease4
     FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease4_update();
 
-
 --
 -- Create the v4 delete trigger procedure
 CREATE OR REPLACE FUNCTION proc_stat_lease4_delete() RETURNS trigger AS $stat_lease4_delete$
@@ -870,7 +867,7 @@ CREATE INDEX address_id ON logs (address);
 -- Create auth_key in hosts table for storing keys for DHCPv6 reconfigure.
 ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
 
--- Set schema 5.0 version
+-- Set schema 5.0 version.
 UPDATE schema_version
    SET version = '5', minor = '0';
 
@@ -881,7 +878,7 @@ UPDATE schema_version
 -- Put the auth key in hexadecimal (double size but far more user friendly).
 ALTER TABLE hosts ALTER COLUMN auth_key TYPE VARCHAR(32);
 
--- Set schema 5.1 version
+-- Set schema 5.1 version.
 UPDATE schema_version
    SET version = '5', minor = '1';
 
@@ -1005,6 +1002,8 @@ UPDATE schema_version
 
 -- Schema 6.1 specification ends here.
 
+-- Upgrade to schema 6.2 begins here:
+
 -- Starting from this version we allow specifying multiple IP reservations
 -- for the same address in certain DHCP configurations. The server may check
 -- uniqueness of the IP addresses on its own. This is no longer checked at
@@ -1023,14 +1022,15 @@ ALTER TABLE ipv6_reservations DROP CONSTRAINT IF EXISTS key_dhcp6_address_prefix
 CREATE INDEX key_dhcp6_address_prefix_len
     ON ipv6_reservations (address ASC, prefix_len ASC);
 
--- Update the schema version number
+-- Set schema 6.2 version.
 UPDATE schema_version
     SET version = '6', minor = '2';
 
 -- Schema 6.2 specification ends here.
 
--- This starts schema update to 7.0. It adds a lot (20+) of tables for the config backend.
+-- Upgrade to schema 7.0 begins here:
 
+-- Add a lot (20+) of tables for the config backend.
 
 -- Adding on update trigger in MySQL is as easy as using this column definition in CREATE TABLE:
 -- modification_ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1049,7 +1049,6 @@ CREATE OR REPLACE FUNCTION modification_ts_update()
 -- Second, we need to specify which language it was written in.
 $modification_ts_update$ LANGUAGE plpgsql;
 
-
 -- Create table modification and insert values for modification types.
 CREATE TABLE modification (
   id smallint NOT NULL,
@@ -1057,8 +1056,6 @@ CREATE TABLE modification (
   PRIMARY KEY (id)
 );
 INSERT INTO modification VALUES (0,'create'), (1,'update'), (2,'delete');
-
-
 
 -- Now create the table that holds different parameter data types.
 CREATE TABLE parameter_data_type (
@@ -1072,8 +1069,6 @@ INSERT INTO parameter_data_type VALUES
     (2,'boolean'),
     (4,'string');
 
-
-
 -- This table doesn't exist in MySQL. However, it's nice to have an enum that explains what the values
 -- in ddns_replace_client_name field in the dhcp{4,6}_shared_network table means.
 CREATE TABLE ddns_replace_client_name_types (
@@ -1086,8 +1081,6 @@ INSERT INTO ddns_replace_client_name_types (type, name) VALUES
   (1, 'RCM_ALWAYS'),
   (2, 'RCM_WHEN_PRESENT'),
   (3, 'RCM_WHEN_NOT_PRESENT');
-
-
 
 -- Create table for DHCPv6 servers
 CREATE TABLE dhcp6_server (
@@ -1147,8 +1140,6 @@ CREATE INDEX dhcp6_shared_network_idx1 ON dhcp6_shared_network (name);
 CREATE TRIGGER dhcp6_shared_network_modification_ts_update
   AFTER UPDATE ON dhcp6_shared_network
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
-
 
 -- Now we need to create a relationship between defined shared networks and the servers
 CREATE TABLE dhcp6_shared_network_server (
@@ -1212,8 +1203,6 @@ CREATE TRIGGER dhcp6_subnet_modification_ts_update
 CREATE INDEX dhcp6_subnet_idx1 ON dhcp6_subnet (modification_ts);
 CREATE INDEX dhcp6_subnet_idx2 ON dhcp6_subnet (shared_network_name);
 
-
-
 -- Create a table that holds all address pools in IPv6.
 CREATE TABLE dhcp6_pool (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -1232,7 +1221,6 @@ CREATE INDEX dhcp6_pool_idx2 ON dhcp6_pool (subnet_id);
 CREATE TRIGGER dhcp6_pool_modification_ts_update
   AFTER UPDATE ON dhcp6_pool
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
 
 -- And now the same, but for PD pools.
 CREATE TABLE dhcp6_pd_pool (
@@ -1256,8 +1244,6 @@ CREATE TRIGGER dhcp6_pd_pool_modification_ts_update
   AFTER UPDATE ON dhcp6_pd_pool
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
-
 CREATE TABLE dhcp6_subnet_server (
   subnet_id BIGINT NOT NULL,
   server_id BIGINT NOT NULL,
@@ -1274,8 +1260,6 @@ CREATE INDEX dhcp6_subnet_server_idx2 ON dhcp6_subnet_server(modification_ts);
 CREATE TRIGGER dhcp6_subnet_server_modification_ts_update
   AFTER UPDATE ON dhcp6_subnet_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
-
 
 -- Create table for storing global DHCPv6 parameters.
 CREATE TABLE dhcp6_global_parameter (
@@ -1294,7 +1278,6 @@ CREATE TRIGGER dhcp6_global_parameter_modification_ts_update
   AFTER UPDATE ON dhcp6_global_parameter
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
 CREATE TABLE dhcp6_global_parameter_server (
   parameter_id BIGINT NOT NULL,
   server_id BIGINT NOT NULL,
@@ -1310,7 +1293,6 @@ CREATE INDEX key_dhcp6_global_parameter_server_idx1 ON dhcp6_global_parameter_se
 CREATE TRIGGER dhcp6_global_parameter_server_modification_ts_update
   AFTER UPDATE ON dhcp6_global_parameter_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
 
 -- Alter table for storing DHCPv6 options.
 ALTER TABLE dhcp6_options
@@ -1346,8 +1328,6 @@ CREATE TRIGGER dhcp6_options_server_modification_ts_update
   AFTER UPDATE ON dhcp6_options_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
-
 -- This table is for storing IPv6 option definitions
 CREATE TABLE dhcp6_option_def (
   id SERIAL PRIMARY KEY UNIQUE NOT NULL,
@@ -1367,7 +1347,6 @@ CREATE TRIGGER dhcp6_option_def_modification_ts_update
   AFTER UPDATE ON dhcp6_option_def
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
 -- and another table for storing relationship between option definitions and servers.
 CREATE TABLE dhcp6_option_def_server (
   option_def_id BIGINT NOT NULL REFERENCES dhcp6_option_def (id) ON DELETE CASCADE ON UPDATE NO ACTION,
@@ -1379,7 +1358,6 @@ CREATE TRIGGER dhcp6_option_def_server_modification_ts_update
   AFTER UPDATE ON dhcp6_option_def_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
 -- Now create two tables for audit revisions...
 CREATE TABLE dhcp6_audit_revision (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -1390,7 +1368,6 @@ CREATE TABLE dhcp6_audit_revision (
 CREATE TRIGGER dhcp6_audit_revision_modification_ts_update
   AFTER UPDATE ON dhcp6_audit_revision
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
 
 -- ... and the DHCPv6 audit itself.
 CREATE TABLE dhcp6_audit (
@@ -1409,7 +1386,6 @@ CREATE TRIGGER dhcp6_audit_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 CREATE INDEX dhcp6_audit_idx1 ON dhcp6_audit (modification_type);
 CREATE INDEX dhcp6_audit_idx2 ON dhcp6_audit (revision_id);
-
 
 -- Create table for DHCPv4 servers
 CREATE TABLE dhcp4_server (
@@ -1458,7 +1434,6 @@ CREATE TRIGGER dhcp4_global_parameter_server_modification_ts_update
   AFTER UPDATE ON dhcp4_global_parameter_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
 -- Create a table for storing IPv4 shared networks
 CREATE TABLE dhcp4_shared_network (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -1504,8 +1479,6 @@ CREATE TRIGGER dhcp4_shared_network_modification_ts_update
   AFTER UPDATE ON dhcp4_shared_network
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
-
 -- Now we need to create a relationship between defined shared networks and the servers
 CREATE TABLE dhcp4_shared_network_server (
   shared_network_id BIGINT NOT NULL,
@@ -1519,8 +1492,6 @@ CREATE TABLE dhcp4_shared_network_server (
 );
 CREATE INDEX dhcp4_shared_network_server_idx1 ON dhcp4_shared_network_server (modification_ts);
 CREATE INDEX dhcp4_shared_network_server_idx2 ON dhcp4_shared_network_server (server_id);
-
-
 
 -- Create a list of IPv4 subnets
 CREATE TABLE dhcp4_subnet (
@@ -1573,8 +1544,6 @@ CREATE TRIGGER dhcp4_subnet_modification_ts_update
 CREATE INDEX dhcp4_subnet_idx1 ON dhcp4_subnet (modification_ts);
 CREATE INDEX dhcp4_subnet_idx2 ON dhcp4_subnet (shared_network_name);
 
-
-
 CREATE TABLE dhcp4_subnet_server (
   subnet_id BIGINT NOT NULL,
   server_id BIGINT NOT NULL,
@@ -1591,8 +1560,6 @@ CREATE INDEX dhcp4_subnet_server_idx2 ON dhcp4_subnet_server(modification_ts);
 CREATE TRIGGER dhcp4_subnet_server_modification_ts_update
   AFTER UPDATE ON dhcp4_subnet_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
-
 
 -- Create a table that holds all address pools in IPv4.
 CREATE TABLE dhcp4_pool (
@@ -1613,7 +1580,6 @@ CREATE TRIGGER dhcp4_pool_modification_ts_update
   AFTER UPDATE ON dhcp4_pool
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
 -- ALTER table for storing DHCPv4 options.
 ALTER TABLE dhcp4_options
   ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
@@ -1627,8 +1593,6 @@ ALTER TABLE dhcp4_options
 CREATE TRIGGER dhcp4_options_modification_ts_update
   AFTER UPDATE ON dhcp4_options
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
-
 
 -- Now create a table for associating defined v4 options with servers.
 CREATE TABLE dhcp4_options_server (
@@ -1646,8 +1610,6 @@ CREATE INDEX dhcp4_options_server_idx2 ON dhcp4_options_server(modification_ts);
 CREATE TRIGGER dhcp4_options_server_modification_ts_update
   AFTER UPDATE ON dhcp4_options_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
-
 
 -- This table is for storing IPv4 option definitions
 CREATE TABLE dhcp4_option_def (
@@ -1668,7 +1630,6 @@ CREATE TRIGGER dhcp4_option_def_modification_ts_update
   AFTER UPDATE ON dhcp4_option_def
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
 -- and another table for storing relationship between option definitions and servers.
 CREATE TABLE dhcp4_option_def_server (
   option_def_id BIGINT NOT NULL REFERENCES dhcp6_option_def (id) ON DELETE CASCADE ON UPDATE NO ACTION,
@@ -1680,8 +1641,6 @@ CREATE TRIGGER dhcp4_option_def_server_modification_ts_update
   AFTER UPDATE ON dhcp4_option_def_server
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 
-
-
 -- Now create two tables for audit revisions...
 CREATE TABLE dhcp4_audit_revision (
   id SERIAL PRIMARY KEY NOT NULL,
@@ -1692,7 +1651,6 @@ CREATE TABLE dhcp4_audit_revision (
 CREATE TRIGGER dhcp4_audit_revision_modification_ts_update
   AFTER UPDATE ON dhcp4_audit_revision
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
-
 
 -- ... and the DHCPv4 audit itself.
 CREATE TABLE dhcp4_audit (
@@ -1711,7 +1669,6 @@ CREATE TRIGGER dhcp4_audit_modification_ts_update
   FOR EACH ROW EXECUTE PROCEDURE modification_ts_update();
 CREATE INDEX dhcp4_audit_idx1 ON dhcp4_audit (modification_type);
 CREATE INDEX dhcp4_audit_idx2 ON dhcp4_audit (revision_id);
-
 
 -- Stores a TEXT value to a session variable
 -- name name of session variable to set
@@ -1765,7 +1722,6 @@ BEGIN
         RAISE EXCEPTION 'set_session_value(%) : value:[%] failed, sqlstate: %', name, value, sqlstate;
 END;$$
 LANGUAGE plpgsql;
-
 
 -- Fetches a text value from the session configuration.
 -- param name name of the session variable to fetch
@@ -1840,7 +1796,6 @@ BEGIN
 
 END;$$
 LANGUAGE plpgsql;
-
 
 -- -----------------------------------------------------
 -- Stored procedure which creates a new entry in the
@@ -2007,7 +1962,6 @@ CREATE TABLE IF NOT EXISTS dhcp4_client_class_order (
 );
 
 CREATE INDEX key_dhcp4_client_class_order_index on dhcp4_client_class_order (order_index);
-
 
 -- -----------------------------------------------------------------------
 -- Stored procedure positioning an inserted or updated client class
@@ -2302,7 +2256,6 @@ BEGIN
     END IF;
     RETURN;
 END;$$;
-
 
 -- -----------------------------------------------------------------------
 -- Trigger verifying if class dependency is met. It includes checking
@@ -2908,7 +2861,6 @@ BEGIN
     RETURN;
 END;$$;
 
-
 -- -----------------------------------------------------------------------
 -- Trigger verifying if class dependency is met. It includes checking
 -- if referenced classes exist, are associated with the same server
@@ -3098,7 +3050,6 @@ CREATE TRIGGER dhcp4_global_parameter_AINS
     AFTER INSERT ON dhcp4_global_parameter
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_global_parameter_AINS();
 
-
 -- Trigger function for dhcp4_global_parameter_AUPD called AFTER UPDATE on dhcp4_global_parameter
 CREATE OR REPLACE FUNCTION func_dhcp4_global_parameter_AUPD() RETURNS TRIGGER AS $dhcp4_global_parameter_AUPD$
 BEGIN
@@ -3111,7 +3062,6 @@ LANGUAGE plpgsql;
 CREATE TRIGGER dhcp4_global_parameter_AUPD
     AFTER UPDATE ON dhcp4_global_parameter
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_global_parameter_AUPD();
-
 
 -- Trigger function for dhcp4_global_parameter_ADEL called AFTER DELETE on dhcp4_global_parameter
 CREATE OR REPLACE FUNCTION func_dhcp4_global_parameter_ADEL() RETURNS TRIGGER AS $dhcp4_global_parameter_ADEL$
@@ -3139,7 +3089,6 @@ CREATE TRIGGER dhcp4_subnet_AINS
     AFTER INSERT ON dhcp4_subnet
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_subnet_AINS();
 
-
 -- Trigger function for dhcp4_subnet_AUPD called AFTER UPDATE on dhcp4_subnet
 CREATE OR REPLACE FUNCTION func_dhcp4_subnet_AUPD() RETURNS TRIGGER AS $dhcp4_subnet_AUPD$
 BEGIN
@@ -3152,7 +3101,6 @@ LANGUAGE plpgsql;
 CREATE TRIGGER dhcp4_subnet_AUPD
     AFTER UPDATE ON dhcp4_subnet
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_subnet_AUPD();
-
 
 -- Trigger function for dhcp4_shared_network_AINS called AFTER INSERT on dhcp4_shared_network
 CREATE OR REPLACE FUNCTION func_dhcp4_shared_network_AINS() RETURNS TRIGGER AS $dhcp4_shared_network_AINS$
@@ -3338,7 +3286,6 @@ LANGUAGE plpgsql;
 CREATE TRIGGER dhcp4_options_AINS
     AFTER INSERT ON dhcp4_options
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_options_AINS();
-
 
 -- Trigger function for dhcp4_options_AUPD called AFTER UPDATE on dhcp4_options
 CREATE OR REPLACE FUNCTION func_dhcp4_options_AUPD() RETURNS TRIGGER AS $dhcp4_options_AUPD$
@@ -3619,7 +3566,6 @@ CREATE TRIGGER dhcp6_options_AUPD
     AFTER UPDATE ON dhcp6_options
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp6_options_AUPD();
 
-
 -- Trigger function for dhcp6_options_ADEL called AFTER DELETE on dhcp6_options
 CREATE OR REPLACE FUNCTION func_dhcp6_options_ADEL() RETURNS TRIGGER AS $dhcp6_options_ADEL$
 BEGIN
@@ -3635,7 +3581,6 @@ CREATE TRIGGER dhcp6_options_ADEL
     AFTER DELETE ON dhcp6_options
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp6_options_ADEL();
 
-
 -- Trigger function for dhcp4_server_AINS called AFTER INSERT on dhcp4_server
 CREATE OR REPLACE FUNCTION func_dhcp4_server_AINS() RETURNS TRIGGER AS $dhcp4_server_AINS$
 BEGIN
@@ -3648,7 +3593,6 @@ LANGUAGE plpgsql;
 CREATE TRIGGER dhcp4_server_AINS
     AFTER INSERT ON dhcp4_server
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_server_AINS();
-
 
 -- Trigger function for dhcp4_server_AUPD called AFTER UPDATE on dhcp4_server
 CREATE OR REPLACE FUNCTION func_dhcp4_server_AUPD() RETURNS TRIGGER AS $dhcp4_server_AUPD$
@@ -3663,7 +3607,6 @@ CREATE TRIGGER dhcp4_server_AUPD
     AFTER UPDATE ON dhcp4_server
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_server_AUPD();
 
-
 -- Trigger function for dhcp4_server_ADEL called AFTER DELETE on dhcp4_server
 CREATE OR REPLACE FUNCTION func_dhcp4_server_ADEL() RETURNS TRIGGER AS $dhcp4_server_ADEL$
 BEGIN
@@ -3677,7 +3620,6 @@ CREATE TRIGGER dhcp4_server_ADEL
     AFTER DELETE ON dhcp4_server
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp4_server_ADEL();
 
-
 -- Trigger function for dhcp6_server_AINS called AFTER INSERT on dhcp6_server
 CREATE OR REPLACE FUNCTION func_dhcp6_server_AINS() RETURNS TRIGGER AS $dhcp6_server_AINS$
 BEGIN
@@ -3690,7 +3632,6 @@ LANGUAGE plpgsql;
 CREATE TRIGGER dhcp6_server_AINS
     AFTER INSERT ON dhcp6_server
         FOR EACH ROW EXECUTE PROCEDURE func_dhcp6_server_AINS();
-
 
 -- Trigger function for dhcp6_server_AUPD called AFTER UPDATE on dhcp6_server
 CREATE OR REPLACE FUNCTION func_dhcp6_server_AUPD() RETURNS TRIGGER AS $dhcp6_server_AUPD$
@@ -3785,14 +3726,16 @@ END;
 $dhcp6_pd_pool_BDEL$
 LANGUAGE plpgsql;
 
--- Update the schema version number
+-- Set schema 7.0 version.
 UPDATE schema_version
     SET version = '7', minor = '0';
 
 -- Schema 7.0 specification ends here.
 
--- This starts schema update to 8.0. It adds a few missing elements for CB and
--- functions for kea-admin's lease-dump and lease-upload commands.
+-- Upgrade to schema 8.0 begins here:
+
+-- Add a few missing elements for CB and functions for kea-admin's lease-dump
+-- and lease-upload commands.
 
 -- -----------------------------------------------------------------------
 -- Extend the table holding DHCPv4 option definitions with a nullable
@@ -4258,13 +4201,13 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
--- Update the schema version number.
+-- Set schema 8.0 version.
 UPDATE schema_version
     SET version = '8', minor = '0';
 
 -- Schema 8.0 specification ends here.
 
--- This starts schema update to 9.0.
+-- Upgrade to schema 9.0 begins here:
 
 -- Add missing cascade to constraint on dhcp4/6_subnet_server tables.
 ALTER TABLE dhcp4_subnet_server
@@ -4510,13 +4453,14 @@ BEGIN
 END;$$
 LANGUAGE plpgsql;
 
--- Update the schema version number.
+-- Set schema 9.0 version.
 UPDATE schema_version
     SET version = '9', minor = '0';
 
 -- Schema 9.0 specification ends here.
 
--- This starts schema update to 10.0.
+-- Upgrade to schema 10.0 begins here:
+
 -- It adds corrections for client classes for CB
 
 -- Replace setClientClass4Order():
@@ -4805,13 +4749,13 @@ END;
 $dhcp6_client_class_check_dependency_BINS$
 LANGUAGE plpgsql;
 
--- Update the schema version number.
+-- Set schema 10.0 version.
 UPDATE schema_version
     SET version = '10', minor = '0';
 
 -- Schema 10.0 specification ends here.
 
--- This starts schema update to 11.0.
+-- Upgrade to schema 11.0 begins here:
 
 -- Replace createOptionAuditDHCP6() with a version corrected
 -- where clause when scope is 6 (i.e. PD pool)
@@ -4917,13 +4861,13 @@ BEGIN
     RETURN;
 END;$$;
 
--- Update the schema version number.
+-- Set schema 11.0 version.
 UPDATE schema_version
     SET version = '11', minor = '0';
 
 -- Schema 11.0 specification ends here.
 
--- This line starts the schema upgrade to version 12.
+-- Upgrade to schema 12.0 begins here:
 
 -- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
@@ -4981,13 +4925,13 @@ LANGUAGE plpgsql;
 ALTER TABLE dhcp4_client_class ADD COLUMN user_context JSON DEFAULT NULL;
 ALTER TABLE dhcp6_client_class ADD COLUMN user_context JSON DEFAULT NULL;
 
--- Update the schema version number.
+-- Set schema 12.0 version.
 UPDATE schema_version
     SET version = '12', minor = '0';
 
--- This line concludes the schema upgrade to version 12.
+-- Schema 12.0 specification ends here.
 
--- This line starts the schema upgrade to version 13.
+-- Upgrade to schema 13.0 begins here:
 
 -- JSON functions --
 
@@ -5620,13 +5564,13 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
         (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
     WHERE (dhcp6_subnet_id IS NOT NULL);
 
--- Update the schema version number.
+-- Set schema 13.0 version.
 UPDATE schema_version
     SET version = '13', minor = '0';
 
--- This line concludes the schema upgrade to version 13.
+-- Schema 13.0 specification ends here.
 
--- This line starts the schema upgrade to version 14.
+-- Upgrade to schema 14.0 begins here:
 
 -- Add cancelled (aka never-send) column to option tables.
 
@@ -5643,18 +5587,18 @@ ALTER TABLE dhcp4_subnet
 ALTER TABLE dhcp4_client_class
     ADD COLUMN offer_lifetime BIGINT DEFAULT NULL;
 
--- Update the schema version number.
+-- Set schema 14.0 version.
 UPDATE schema_version
     SET version = '14', minor = '0';
 
--- This line concludes the schema upgrade to version 14.
+-- Schema 14.0 specification ends here.
 
--- This line starts the schema upgrade to version 15.
+-- Upgrade to schema 15.0 begins here:
 
 -- Add relay and remote id columns to DHCPv4 leases.
 --
 -- Note: these columns are only used for indexes, in particular they are
--- not exported by lease4 dump as values are also in the user context 
+-- not exported by lease4 dump as values are also in the user context
 ALTER TABLE lease4
     ADD COLUMN relay_id BYTEA DEFAULT NULL,
     ADD COLUMN remote_id BYTEA DEFAULT NULL;
@@ -5663,11 +5607,21 @@ ALTER TABLE lease4
 CREATE INDEX lease4_by_relay_id ON lease4 (relay_id);
 CREATE INDEX lease4_by_remote_id ON lease4 (remote_id);
 
--- Update the schema version number.
+-- Set schema 15.0 version.
 UPDATE schema_version
     SET version = '15', minor = '0';
 
--- This line concludes the schema upgrade to version 15.
+-- Schema 15.0 specification ends here.
+
+-- Upgrade to schema 16.0 begins here:
+
+UPDATE lease6 SET duid = E'\\x000000' WHERE duid = E'\\x00';
+
+-- Set schema 16.0 version.
+UPDATE schema_version
+    SET version = '16', minor = '0';
+
+-- Schema 16.0 specification ends here.
 
 -- This line starts the schema upgrade to version 16.
 

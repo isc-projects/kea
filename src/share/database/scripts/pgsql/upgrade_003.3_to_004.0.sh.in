@@ -37,6 +37,8 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
+-- Upgrade to schema 4.0 begins here:
+
 -- Add a column holding hosts for user context.
 ALTER TABLE hosts ADD COLUMN user_context TEXT;
 

@@ -36,7 +36,7 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- This starts schema update to 11.0.
+-- Upgrade to schema 11.0 begins here:
 
 -- Replace createOptionAuditDHCP6() with a version corrected
 -- where clause when scope is 6 (i.e. PD pool)
@@ -142,9 +142,11 @@ BEGIN
     RETURN;
 END;\$\$;
 
--- Update the schema version number.
+-- Set 11.0 schema version.
 UPDATE schema_version
     SET version = '11', minor = '0';
+
+-- Schema 11.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

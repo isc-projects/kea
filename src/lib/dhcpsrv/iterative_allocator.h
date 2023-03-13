@@ -50,7 +50,7 @@ private:
     ///
     /// @return next offered address.
     virtual asiolink::IOAddress pickAddressInternal(const ClientClasses& client_classes,
-                                                    const DuidPtr& duid,
+                                                    const IdentifierBaseTypePtr& duid,
                                                     const asiolink::IOAddress& hint);
 
     /// @brief Picks a delegated prefix.
@@ -68,13 +68,12 @@ private:
     ///        pool will suffice.
     ///
     /// @return the next prefix.
-    virtual isc::asiolink::IOAddress
-    pickPrefixInternal(const ClientClasses& client_classes,
-                       Pool6Ptr& pool,
-                       const DuidPtr& duid,
-                       PrefixLenMatchType prefix_length_match,
-                       const isc::asiolink::IOAddress& hint,
-                       uint8_t hint_prefix_length);
+    virtual asiolink::IOAddress pickPrefixInternal(const ClientClasses& client_classes,
+                                                   Pool6Ptr& pool,
+                                                   const IdentifierBaseTypePtr& duid,
+                                                   PrefixLenMatchType prefix_length_match,
+                                                   const asiolink::IOAddress& hint,
+                                                   uint8_t hint_prefix_length);
 
     /// @brief Convenience function returning subnet allocation state instance.
     ///

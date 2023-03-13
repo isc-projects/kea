@@ -339,6 +339,7 @@ class DhcidTest : public ::testing::Test {
 public:
     /// @brief Constructor
     DhcidTest() {
+        // 0x000000066d79686f7374076578616d706c6503636f6d00
         const uint8_t fqdn_data[] = {
             6, 109, 121, 104, 111, 115, 116,     // myhost.
             7, 101, 120, 97, 109, 112, 108, 101, // example.
@@ -386,16 +387,16 @@ TEST_F(DhcidTest, fromMinDUID) {
     D2Dhcid dhcid;
 
     // Create DUID.
-    uint8_t duid_data[] = { 1 };
-    DUID duid(duid_data, sizeof(duid_data));
+    std::vector<uint8_t> duid_data(DUID::MIN_DUID_LEN, 1);
+    DUID duid(&duid_data[0], duid_data.size());
 
     // Create DHCID.
     ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn_));
 
     // The reference DHCID (represented as string of hexadecimal digits)
     // has been calculated using one of the online calculators.
-    std::string dhcid_ref = "000201F89004F73E60CAEDFF514E11CB91D"
-        "1F45C8F0A55D4BC4C688484A819F8EA4074";
+    std::string dhcid_ref = "000201202F813E7D9C88BADA41250F2A662"
+        "97742BB9B3EB37C0981D4A905745A30BDD3";
 
     // Make sure that the DHCID is valid.
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
@@ -406,7 +407,7 @@ TEST_F(DhcidTest, fromMaxDUID) {
     D2Dhcid dhcid;
 
     // Create DUID.
-    std::vector<uint8_t> duid_data(128, 1);
+    std::vector<uint8_t> duid_data(DUID::MAX_DUID_LEN, 1);
     DUID duid(&duid_data[0], duid_data.size());
 
     // Create DHCID.
@@ -414,8 +415,8 @@ TEST_F(DhcidTest, fromMaxDUID) {
 
     // The reference DHCID (represented as string of hexadecimal digits)
     // has been calculated using one of the online calculators.
-    std::string dhcid_ref = "00020137D8FBDC0585B44DFA03FAD2E36C6"
-        "159737D545A12EFB40B0D88D110A5748234";
+    std::string dhcid_ref = "0002015B9022851B4015AD78187BB9BDB98"
+        "7708C5EEA74140B28095ED36FE1EAFEE3F6";
 
     // Make sure that the DHCID is valid.
     EXPECT_EQ(dhcid_ref, dhcid.toStr());

@@ -81,12 +81,20 @@ generateHWAddr() {
     return (HWAddrPtr(new HWAddr({0, 1, 2 ,3}, HTYPE_ETHER)));
 }
 
+/// @brief Generate a valid ClientId.
+///
+/// @return The generated ClientId.
+ClientIdPtr
+generateClientId() {
+    return (ClientIdPtr(new ClientId({0, 1, 2, 3, 4, 5, 6})));
+}
+
 /// @brief Generate a valid DUID.
 ///
 /// @return The generated DUID.
-ClientIdPtr
+DuidPtr
 generateDUID() {
-    return (ClientIdPtr(new ClientId({0, 1, 2, 3, 4, 5, 6})));
+    return (DuidPtr(new DUID({0, 1, 2, 3, 4, 5, 6})));
 }
 
 /// @brief Generate a valid Option.
@@ -151,7 +159,7 @@ generateSubnet6() {
 Lease4Ptr
 generateLease4() {
     HWAddrPtr hwaddr = generateHWAddr();
-    ClientIdPtr clientid = generateDUID();
+    ClientIdPtr clientid = generateClientId();
 
     Lease4Ptr lease4(new Lease4(IOAddress("192.168.0.1"), hwaddr, clientid,
                                 2, 3, 4, false, false, "test.hostname"));
@@ -182,8 +190,8 @@ generateLease6() {
 Pkt4Ptr
 generatePkt4() {
     // A dummy MAC address, padded with 0s
-    const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
-                                     0, 0, 0, 0, 0, 0, 0, 0 };
+    const uint8_t dummyChaddr[16] = { 0, 1, 2, 3, 4, 5, 0, 0,
+                                      0, 0, 0, 0, 0, 0, 0, 0 };
 
     // Let's use some creative test content here (128 chars + \0)
     const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
@@ -836,7 +844,7 @@ TEST_F(RunScriptTest, lease4Renew) {
     handle.setArgument("query4", pkt4);
     Subnet4Ptr subnet4 = generateSubnet4();
     handle.setArgument("subnet4", subnet4);
-    ClientIdPtr clientid = generateDUID();
+    ClientIdPtr clientid = generateClientId();
     handle.setArgument("clientid", clientid);
     HWAddrPtr hwaddr = generateHWAddr();
     handle.setArgument("hwaddr", hwaddr);

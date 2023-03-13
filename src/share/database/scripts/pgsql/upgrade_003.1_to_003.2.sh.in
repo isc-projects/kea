@@ -37,6 +37,8 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
+-- Upgrade to schema 3.2 begins here:
+
 -- Remove constraints which perform too restrictive checks on the inserted
 -- host reservations. We want to be able to insert host reservations which
 -- include no specific IPv4 address or those that have repeating subnet

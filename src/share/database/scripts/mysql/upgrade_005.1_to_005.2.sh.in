@@ -41,7 +41,8 @@ ALTER TABLE dhcp6_options MODIFY dhcp6_subnet_id INT UNSIGNED;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '5', minor = '2';
-# This line concludes database upgrade to version 5.2.
+    SET version = '5', minor = '2';
+
+# This line concludes the schema upgrade to version 5.2.
 
 EOF

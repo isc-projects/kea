@@ -777,13 +777,16 @@ public:
     /// @param expected_result SHOULD_PASS if the lease is expected to
     /// be successfully declined, or SHOULD_FAIL if the lease is expected
     /// to not be declined.
+    /// @param config_index specifies which config index should be used:
+    /// 0 - memfile, 1 - mysql, 2 - pgsql
     void acquireAndDecline(Dhcp6Client& client,
                            const std::string& duid1,
                            const uint32_t iaid1,
                            const std::string& duid2,
                            const uint32_t iaid2,
                            AddressInclusion addr_type,
-                           ExpectedResult expected_result);
+                           ExpectedResult expected_result,
+                           uint8_t config_index = 0);
 
     /// @brief Performs basic (positive) RENEW test
     ///

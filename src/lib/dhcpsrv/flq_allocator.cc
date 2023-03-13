@@ -36,7 +36,7 @@ FreeLeaseQueueAllocator::FreeLeaseQueueAllocator(Lease::Type type, const WeakSub
 
 IOAddress
 FreeLeaseQueueAllocator::pickAddressInternal(const ClientClasses& client_classes,
-                                             const DuidPtr&,
+                                             const IdentifierBaseTypePtr&,
                                              const IOAddress&) {
     auto subnet = subnet_.lock();
     auto pools = subnet->getPools(pool_type_);
@@ -81,7 +81,7 @@ FreeLeaseQueueAllocator::pickAddressInternal(const ClientClasses& client_classes
 IOAddress
 FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                                             Pool6Ptr& pool6,
-                                            const DuidPtr&,
+                                            const IdentifierBaseTypePtr&,
                                             PrefixLenMatchType prefix_length_match,
                                             const IOAddress&,
                                             uint8_t hint_prefix_length) {

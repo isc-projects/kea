@@ -37,6 +37,8 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
+-- Upgrade to schema 5.0 begins here:
+
 -- Add a column holding leases for user context.
 ALTER TABLE lease4 ADD COLUMN user_context TEXT;
 ALTER TABLE lease6 ADD COLUMN user_context TEXT;

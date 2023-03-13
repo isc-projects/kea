@@ -36,7 +36,7 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- This line starts the schema upgrade to version 12.
+-- Upgrade to schema 12.0 begins here:
 
 -- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
@@ -94,11 +94,11 @@ LANGUAGE plpgsql;
 ALTER TABLE dhcp4_client_class ADD COLUMN user_context JSON DEFAULT NULL;
 ALTER TABLE dhcp6_client_class ADD COLUMN user_context JSON DEFAULT NULL;
 
--- Update the schema version number.
+-- Set 12.0 schema version.
 UPDATE schema_version
     SET version = '12', minor = '0';
 
--- This line concludes the schema upgrade to version 12.
+-- Schema 12.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

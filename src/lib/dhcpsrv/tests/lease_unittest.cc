@@ -1005,7 +1005,7 @@ TEST(Lease6Test, decline) {
     lease.decline(123);
 
     ASSERT_TRUE(lease.duid_);
-    ASSERT_EQ("00", lease.duid_->toText());
+    ASSERT_EQ("00:00:00", lease.duid_->toText());
     ASSERT_FALSE(lease.hwaddr_);
     EXPECT_EQ(0, lease.preferred_lft_);
 

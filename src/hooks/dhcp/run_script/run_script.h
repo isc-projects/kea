@@ -84,6 +84,16 @@ public:
                               const std::string& prefix = "",
                               const std::string& suffix = "");
 
+    /// @brief Extract ClientId data and append to environment.
+    ///
+    /// @param client_id The client id to be exported to target script environment.
+    /// @param prefix The prefix for the name of the environment variable.
+    /// @param suffix The suffix for the name of the environment variable.
+    static void extractClientId(isc::asiolink::ProcessEnvVars& vars,
+                                const isc::dhcp::ClientIdPtr client_id,
+                                const std::string& prefix = "",
+                                const std::string& suffix = "");
+
     /// @brief Extract DUID data and append to environment.
     ///
     /// @param duid The duid to be exported to target script environment.

@@ -35,7 +35,6 @@ fi
 
 mysql "$@" <<EOF
 
-
 ALTER TABLE dhcp4_options
     MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
     DEFAULT CURRENT_TIMESTAMP;
@@ -570,7 +569,6 @@ ALTER TABLE dhcp6_global_parameter
     ADD CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type)
         REFERENCES parameter_data_type (id);
 
-
 -- Rename dhcp6_subnet_id column of dhcp6_pool and dhcp6_pd_pool
 
 ALTER TABLE dhcp6_pool
@@ -989,8 +987,8 @@ DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '8', minor = '0';
+    SET version = '8', minor = '0';
 
-# This line concludes database upgrade to version 8.0.
+# This line concludes the schema upgrade to version 8.0.
 
 EOF

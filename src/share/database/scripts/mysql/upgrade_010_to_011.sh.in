@@ -81,5 +81,6 @@ ALTER TABLE dhcp6_client_class
 UPDATE schema_version
     SET version = '11', minor = '0';
 
--- This line concludes database upgrade to version 11.0
+-- This line concludes the schema upgrade to version 11.0
+
 EOF

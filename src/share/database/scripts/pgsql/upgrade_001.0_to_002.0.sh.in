@@ -34,6 +34,9 @@ if [ "$VERSION" != "1.0" ]; then
 fi
 
 psql "$@" >/dev/null <<EOF
+
+-- Upgrade to schema 2.0 begins here:
+
 -- Add state column to the lease4 table.
 ALTER TABLE lease4
     ADD COLUMN state INT8 DEFAULT 0;
@@ -169,5 +172,10 @@ CREATE FUNCTION lease6DumpData() RETURNS
 START TRANSACTION;
 UPDATE schema_version
     SET version = '2', minor = '0';
+
+-- Schema 2.0 specification ends here.
+
+-- Commit the script transaction
 COMMIT;
+
 EOF

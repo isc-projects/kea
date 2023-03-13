@@ -92,7 +92,7 @@ private:
     ///
     /// @return next offered address.
     virtual asiolink::IOAddress pickAddressInternal(const ClientClasses& client_classes,
-                                                    const DuidPtr& duid,
+                                                    const IdentifierBaseTypePtr& duid,
                                                     const asiolink::IOAddress& hint);
 
     /// @brief Returns next available delegated prefix from the queue.
@@ -113,7 +113,7 @@ private:
     virtual isc::asiolink::IOAddress
     pickPrefixInternal(const ClientClasses& client_classes,
                        Pool6Ptr& pool,
-                       const DuidPtr& duid,
+                       const IdentifierBaseTypePtr& duid,
                        PrefixLenMatchType prefix_length_match,
                        const isc::asiolink::IOAddress& hint,
                        uint8_t hint_prefix_length);

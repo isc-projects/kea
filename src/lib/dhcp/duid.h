@@ -8,6 +8,7 @@
 #define DUID_H
 
 #include <asiolink/io_address.h>
+#include <util/strutil.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <stdint.h>
@@ -15,6 +16,116 @@
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Base type used to define a common smart pointer for all derived types.
+class IdentifierBaseType {
+protected:
+    /// @brief Pure virtual destructor.
+    ///
+    /// This class can not be instantiated.
+    virtual ~IdentifierBaseType() = 0;
+};
+
+/// @brief Shared pointer to a IdentifierType
+typedef boost::shared_ptr<IdentifierBaseType> IdentifierBaseTypePtr;
+
+template<size_t min_size, size_t max_size>
+class IdentifierType : public IdentifierBaseType {
+public:
+
+    /// @brief Constructor from vector
+    ///
+    /// @param data The data used to create the IdentifierType
+    IdentifierType(const std::vector<uint8_t>& data) {
+        if (data.size() < min_size) {
+            isc_throw(isc::BadValue, "identifier is too short (" << data.size()
+                      << "), at least "<< min_size << " is required");
+        }
+        if (data.size() > max_size) {
+            isc_throw(isc::BadValue, "identifier is too large (" << data.size()
+                      << "), at most " << max_size << " is required");
+        }
+        data_ = data;
+    }
+
+    /// @brief Constructor from array and array size
+    ///
+    /// @param data The data used to create the Identifier
+    /// @param len The data len used to create the Identifier
+    IdentifierType(const uint8_t* data, size_t len) {
+        if (len < min_size) {
+            isc_throw(isc::BadValue, "identifier is too short (" << len
+                      << "), at least "<< min_size << " is required");
+        }
+        if (len > max_size) {
+            isc_throw(isc::BadValue, "identifier is too large (" << len
+                      << "), at most " << max_size << " is required");
+        }
+        data_ = std::vector<uint8_t>(data, data + len);
+    }
+
+    /// @brief Return the minimum size of the acceptable data.
+    ///
+    /// @return the minimum size of the acceptable data.
+    static constexpr size_t getMinSize() {
+        return (min_size);
+    }
+
+    /// @brief Return the maximum size of the acceptable data.
+    ///
+    /// @return the maximum size of the acceptable data.
+    static constexpr size_t getMaxSize() {
+        return (max_size);
+    }
+
+    /// @brief Returns textual representation of the identifier (e.g. 00:01:02:03:ff)
+    ///
+    /// @return textual representation of the identifier (e.g. 00:01:02:03:ff)
+    std::string toText() const {
+        std::stringstream tmp;
+        tmp << std::hex;
+        bool delim = false;
+        for (auto const data : data_) {
+            if (delim) {
+                tmp << ":";
+            }
+            tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(data);
+            delim = true;
+        }
+        return (tmp.str());
+    }
+
+    /// @brief This static function parses an Identifier specified in the
+    /// textual format.
+    ///
+    /// @param text Identifier in the hexadecimal format with digits
+    /// representing individual bytes separated by colons.
+    /// @return The data resulted from parsing the textual format.
+    static std::vector<uint8_t> fromText(const std::string& text) {
+        std::vector<uint8_t> binary;
+        util::str::decodeFormattedHexString(text, binary);
+        return (binary);
+    }
+
+    /// @brief Compares two identifiers for equality
+    ///
+    /// @return True if the two identifiers are equal, false otherwise.
+    bool operator==(const IdentifierType& other) const {
+        return (data_ == other.data_);
+    }
+
+    /// @brief Compares two identifiers for inequality
+    ///
+    /// @return True if the two identifiers are different, false otherwise.
+    bool operator!=(const IdentifierType& other) const {
+        return (data_ != other.data_);
+    }
+
+protected:
+
+   /// @brief The actual content of the Identifier
+   std::vector<uint8_t> data_;
+};
 
 /// @brief Shared pointer to a DUID
 class DUID;
@@ -24,15 +135,16 @@ typedef boost::shared_ptr<DUID> DuidPtr;
 ///
 /// This class holds DUID, that is used in client-id, server-id and
 /// several other options. It is used to identify DHCPv6 entity.
-class DUID {
- public:
-    /// @brief maximum duid size
-    /// As defined in RFC 8415, section 11.1
-    static const size_t MAX_DUID_LEN = 128;
+class DUID : public IdentifierType<3, 130> {
+public:
 
     /// @brief minimum duid size
     /// The minimal DUID size specified in RFC 8415 is 1.
-    static const size_t MIN_DUID_LEN = 1;
+    static constexpr size_t MIN_DUID_LEN = IdentifierType::getMinSize();
+
+    /// @brief maximum duid size
+    /// As defined in RFC 8415, section 11.1
+    static constexpr size_t MAX_DUID_LEN = IdentifierType::getMaxSize();
 
     /// @brief specifies DUID type
     typedef enum {
@@ -45,10 +157,15 @@ class DUID {
     } DUIDType;
 
     /// @brief Constructor from vector
-    DUID(const std::vector<uint8_t>& duid);
+    ///
+    /// @param data The data used to create the DUID
+    DUID(const std::vector<uint8_t>& data);
 
     /// @brief Constructor from array and array size
-    DUID(const uint8_t* duid, size_t len);
+    ///
+    /// @param data The data used to create the DUID
+    /// @param len The data len used to create the DUID
+    DUID(const uint8_t* data, size_t len);
 
     /// @brief Returns a const reference to the actual DUID value
     ///
@@ -83,20 +200,6 @@ class DUID {
     ///
     /// @throw isc::BadValue if parsing the DUID failed.
     static DUID fromText(const std::string& text);
-
-    /// @brief Returns textual representation of a DUID (e.g. 00:01:02:03:ff)
-    std::string toText() const;
-
-    /// @brief Compares two DUIDs for equality
-    bool operator==(const DUID& other) const;
-
-    /// @brief Compares two DUIDs for inequality
-    bool operator!=(const DUID& other) const;
-
- protected:
-
-    /// The actual content of the DUID
-    std::vector<uint8_t> duid_;
 };
 
 /// @brief Forward declaration to the @c ClientId class.
@@ -108,30 +211,31 @@ typedef boost::shared_ptr<ClientId> ClientIdPtr;
 ///
 /// This class is intended to be a generic IPv4 client identifier. It can hold
 /// a client-id
-class ClientId : public DUID {
+class ClientId : public IdentifierType<2, 255> {
 public:
 
     /// @brief Minimum size of a client ID
     ///
     /// Excerpt from RFC2132, section 9.14.
     /// The code for this option is 61, and its minimum length is 2.
-    static const size_t MIN_CLIENT_ID_LEN = 2;
+    static constexpr size_t MIN_CLIENT_ID_LEN = IdentifierType::getMinSize();
 
     /// @brief Maximum size of a client ID
     ///
-    /// This is the same as the maximum size of the underlying DUID.
-    ///
-    /// @note RFC 2131 does not specify an upper length of a client ID, the
-    ///       value chosen here just being that of the underlying DUID.  For
-    ///       some backend database, there may be a possible (minor)
-    ///       performance enhancement if this were smaller.
-    static const size_t MAX_CLIENT_ID_LEN = DUID::MAX_DUID_LEN;
+    /// @note RFC 2131 does not specify an upper length of a client ID, but the
+    /// byte used to specify the option size byte can only go up to 255.
+    static constexpr size_t MAX_CLIENT_ID_LEN = IdentifierType::getMaxSize();
 
     /// @brief Constructor based on vector<uint8_t>
-    ClientId(const std::vector<uint8_t>& clientid);
+    ///
+    /// @param data The data used to create the ClientId
+    ClientId(const std::vector<uint8_t>& data);
 
     /// @brief Constructor based on array and array size
-    ClientId(const uint8_t* clientid, size_t len);
+    ///
+    /// @param data The data used to create the ClientId
+    /// @param len The data len used to create the ClientId
+    ClientId(const uint8_t* data, size_t len);
 
     /// @brief Returns reference to the client-id data.
     ///
@@ -143,14 +247,10 @@ public:
     /// @return A reference to a vector holding a client identifier.
     const std::vector<uint8_t>& getClientId() const;
 
-    /// @brief Returns textual representation of a DUID (e.g. 00:01:02:03:ff)
-    std::string toText() const;
-
     /// @brief Create client identifier from the textual format.
     ///
     /// This static function creates the instance of the @c ClientId from the
-    /// textual format. Internally it calls @c DUID::fromText. The format of
-    /// the input must match the format of the DUID in @c DUID::fromText.
+    /// textual format.
     ///
     /// @param text Client identifier in the textual format.
     ///
@@ -158,15 +258,9 @@ public:
     /// @throw isc::BadValue if parsing the client identifier failed.
     /// @throw isc::OutOfRange if the client identifier is truncated.
     static ClientIdPtr fromText(const std::string& text);
-
-    /// @brief Compares two client-ids for equality
-    bool operator==(const ClientId& other) const;
-
-    /// @brief Compares two client-ids for inequality
-    bool operator!=(const ClientId& other) const;
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif /* DUID_H */

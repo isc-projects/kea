@@ -36,7 +36,8 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- This starts schema update to 10.0.
+-- Upgrade to schema 10.0 begins here:
+
 -- It adds corrections for client classes for CB
 
 -- Replace setClientClass4Order():
@@ -325,9 +326,11 @@ END;
 \$dhcp6_client_class_check_dependency_BINS\$
 LANGUAGE plpgsql;
 
--- Update the schema version number.
+-- Set 10.0 schema version.
 UPDATE schema_version
     SET version = '10', minor = '0';
+
+-- Schema 10.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

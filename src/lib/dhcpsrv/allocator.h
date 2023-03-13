@@ -100,7 +100,7 @@ public:
     /// @return the next address.
     virtual isc::asiolink::IOAddress
     pickAddress(const ClientClasses& client_classes,
-                const DuidPtr& duid,
+                const IdentifierBaseTypePtr& duid,
                 const asiolink::IOAddress& hint) {
         util::MultiThreadingLock lock(mutex_);
         return (pickAddressInternal(client_classes, duid, hint));
@@ -130,7 +130,7 @@ public:
     virtual isc::asiolink::IOAddress
     pickPrefix(const ClientClasses& client_classes,
                Pool6Ptr& pool,
-               const DuidPtr& duid,
+               const IdentifierBaseTypePtr& duid,
                PrefixLenMatchType prefix_length_match,
                const asiolink::IOAddress& hint,
                uint8_t hint_prefix_length) {
@@ -186,7 +186,7 @@ private:
     /// @return the next address.
     virtual isc::asiolink::IOAddress
     pickAddressInternal(const ClientClasses& client_classes,
-                        const DuidPtr& duid,
+                        const IdentifierBaseTypePtr& duid,
                         const isc::asiolink::IOAddress& hint) = 0;
 
     /// @brief Picks a delegated prefix.
@@ -209,7 +209,7 @@ private:
     virtual isc::asiolink::IOAddress
     pickPrefixInternal(const ClientClasses& client_classes,
                        Pool6Ptr& pool,
-                       const DuidPtr& duid,
+                       const IdentifierBaseTypePtr& duid,
                        PrefixLenMatchType prefix_length_match,
                        const isc::asiolink::IOAddress& hint,
                        uint8_t hint_prefix_length) = 0;

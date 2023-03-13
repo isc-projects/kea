@@ -36,7 +36,7 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- This line starts the schema upgrade to version 13.
+-- Upgrade to schema 13.0 begins here:
 
 -- JSON functions --
 
@@ -669,11 +669,11 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
         (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
     WHERE (dhcp6_subnet_id IS NOT NULL);
 
--- Update the schema version number.
+-- Set 13.0 schema version.
 UPDATE schema_version
     SET version = '13', minor = '0';
 
--- This line concludes the schema upgrade to version 13.
+-- Schema 13.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

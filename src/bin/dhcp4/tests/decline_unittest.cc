@@ -48,10 +48,52 @@ const char* DECLINE_CONFIGS[] = {
         "        \"data\": \"10.0.0.200,10.0.0.201\""
         "    } ]"
         " } ]"
-    "}"
+    "}",
+// Configuration 1
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+            "\"type\": \"mysql\","
+            "\"name\": \"keatest\","
+            "\"user\": \"keatest\","
+            "\"password\": \"keatest\""
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ]"
+        " } ]"
+    "}",
+// Configuration 2
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+            "\"type\": \"postgresql\","
+            "\"name\": \"keatest\","
+            "\"user\": \"keatest\","
+            "\"password\": \"keatest\""
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ]"
+        " } ]"
+    "}",
 };
 
-};
+}
 
 namespace isc {
 namespace dhcp {
@@ -83,7 +125,8 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
                                  const std::string& client_id_1,
                                  const std::string& hw_address_2,
                                  const std::string& client_id_2,
-                                 ExpectedResult expected_result) {
+                                 ExpectedResult expected_result,
+                                 uint8_t config_index) {
 
     // Set this global statistic explicitly to zero.
     isc::stats::StatsMgr::instance().setValue("declined-addresses",
@@ -93,7 +136,7 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
     CfgMgr::instance().clear();
 
     // Configure DHCP server.
-    configure(DECLINE_CONFIGS[0], *client.getServer());
+    configure(DECLINE_CONFIGS[config_index], *client.getServer());
     // Explicitly set the client id.
     client.includeClientId(client_id_1);
     // Explicitly set the HW address.
@@ -149,6 +192,13 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
     if (expected_result == SHOULD_PASS) {
         EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
 
+        ASSERT_TRUE(lease->hwaddr_);
+        ASSERT_TRUE(lease->hwaddr_->hwaddr_.empty());
+        ASSERT_FALSE(lease->client_id_);
+        ASSERT_TRUE(lease->hostname_.empty());
+        ASSERT_FALSE(lease->fqdn_fwd_);
+        ASSERT_FALSE(lease->fqdn_rev_);
+
         // The decline succeeded, so the declined-addresses statistic should
         // be increased by one
         EXPECT_EQ(after, before + 1);
@@ -158,6 +208,12 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
         // the decline was supposed, to be rejected.
         EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
 
+        ASSERT_TRUE(lease->hwaddr_);
+        ASSERT_FALSE(lease->hwaddr_->hwaddr_.empty());
+        ASSERT_TRUE(lease->client_id_);
+        ASSERT_FALSE(lease->fqdn_fwd_);
+        ASSERT_FALSE(lease->fqdn_rev_);
+
         // The decline failed, so the declined-addresses should be the same
         // as before
         EXPECT_EQ(before, after);
@@ -165,9 +221,9 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
     }
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 namespace {
 
@@ -192,11 +248,27 @@ public:
 };
 
 // This test checks that the client can acquire and decline the lease.
-TEST_F(DeclineTest, declineNoIdentifierChange) {
+TEST_F(DeclineTest, declineNoIdentifierChangeMemfile) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
+}
+
+// This test checks that the client can acquire and decline the lease.
+TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
+                      "01:02:03:04:05:06", "12:14",
+                      SHOULD_PASS, 1);
+}
+
+// This test checks that the client can acquire and decline the lease.
+TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
+                      "01:02:03:04:05:06", "12:14",
+                      SHOULD_PASS, 2);
 }
 
 // This test verifies the decline correctness in the following case:
@@ -289,4 +361,4 @@ TEST_F(DeclineTest, declineNonMatchingIPAddress) {
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace

@@ -215,6 +215,8 @@ Host::getIdentifierMaxLength(const IdentifierType& type) {
         return (HWAddr::MAX_HWADDR_LEN);
     case IDENT_DUID:
         return (DUID::MAX_DUID_LEN);
+    case IDENT_CLIENT_ID:
+        return (ClientId::MAX_CLIENT_ID_LEN);
     default:
         // In fact it is backend dependent but for compatibility we take
         // the lowest value.

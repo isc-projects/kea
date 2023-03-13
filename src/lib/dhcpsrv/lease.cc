@@ -558,7 +558,7 @@ Lease6::decline(uint32_t probation_period) {
     hostname_ = string("");
     fqdn_fwd_ = false;
     fqdn_rev_ = false;
-    state_ = Lease::STATE_DECLINED;
+    state_ = STATE_DECLINED;
 }
 
 std::string
