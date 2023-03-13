@@ -1486,14 +1486,15 @@ Parameter Request List option (or its equivalent for vendor options):
    }
 
 
-The ``domain-name-servers`` option is always added to responses (the
-always-send is "sticky"), but the value is the subnet one when the client
-is localized in the subnet.
+In the example above, the ``domain-name-servers`` option respects the global 
+``always-send`` flag and is always added to responses, but for subnet 
+``192.0.3.0/24``, the value is taken from the subnet-level option data 
+specification.
 
 At the opposite of ``always-send`` if the ``never-send`` flag is set to
 ``true`` for a particular option the server does not add it to the response.
 The effect is the same as if the client removed the option code in the
-Parameter Request List option Option (or its equivalent for vendor options):
+Parameter Request List option (or its equivalent for vendor options):
 
 ::
 
@@ -1522,9 +1523,9 @@ Parameter Request List option Option (or its equivalent for vendor options):
        ...
    }
 
-The ``domain-name-servers`` option is never added to responses (the
-never-send is "sticky" too). The ``never-send`` is as the precedence
-over ``always-send`` so if both are true the option is not added.
+In the example above, ``domain-name-servers`` option is never added to
+responses on subnet ``192.0.3.0/24``. ``never-send`` has precedence over
+``always-send`` so if both are true the option is not added.
 
 .. note::
 

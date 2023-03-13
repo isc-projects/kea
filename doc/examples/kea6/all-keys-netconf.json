@@ -463,7 +463,7 @@
         "option-data": [
             {
                 // Boolean flag indicating if the given option is always
-                // send in response or only when requested. The default
+                // sent in response or only when requested. The default
                 // value of false indicates that it is only sent when
                 // requested.
                 "always-send": false,
@@ -485,7 +485,7 @@
                 "name": "dns-servers",
 
                 // Boolean flag indicating if the given option is never
-                // send in response. The default value of false indicates
+                // sent in response. The default value of false indicates
                 // that it is sent when it should. When true the option
                 // is not sent despite of any other setting, i.e. it is
                 // a final flag.
@@ -837,7 +837,7 @@
                                 "name": "preference",
 
                                 // Boolean flag indicating if the given option is never
-                                // send in response.
+                                // sent in response.
                                 "never-send": false,
 
                                 // Option space. The default value "dhcp6" designates the

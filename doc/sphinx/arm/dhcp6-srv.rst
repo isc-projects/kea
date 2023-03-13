@@ -1413,9 +1413,10 @@ Option Request Option (or its equivalent for vendor options), as in:
    }
 
 
-The ``dns-servers`` option is always added to responses (the always-send is
-"sticky"), but the value is the subnet one when the client is localized
-in the subnet.
+In the example above, the ``dns-servers`` option respects the global
+``always-send`` flag and is always added to responses, but for subnet
+``2001:db8:1::/64``, the value is taken from the subnet-level option data
+specification.
 
 At the opposite of ``always-send`` if the ``never-send`` flag is set to
 ``true`` for a particular option the server does not add it to the response.
@@ -1449,9 +1450,9 @@ Option Request Option (or its equivalent for vendor options), as in:
        ...
    }
 
-The ``dns-server`` option is never added to responses (the never-send is
-"sticky" too). The ``never-send`` is as the precedence over ``always-send``
-so if both are true the option is not added.
+In the example above, the ``dns-server`` option is never added to responses
+on subnet ``2001:db8:1::/64``. ``never-send`` has precedence over
+``always-send`` so if both are true the option is not added.
 
 .. note::
 
