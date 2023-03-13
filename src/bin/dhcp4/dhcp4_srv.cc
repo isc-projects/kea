@@ -2008,8 +2008,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         }
     }
 
-    // Finally, try to get the vendor-id from the client packet's vendor-class
-    // option (124).
+    // Finally, try to get the vendor-id from the client packet's
+    // vendor-specific class option (124).
     for (auto opt : query->getOptions(DHO_VIVCO_SUBOPTIONS)) {
         OptionVendorClassPtr vendor_class;
         vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
