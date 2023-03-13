@@ -1327,6 +1327,8 @@ TEST_F(VendorOptsTest, vendorOptionsOROAndPersistentMultipleOptionDifferentVendo
                                       { 32768, 16384 },
                                       {},
                                       { DOCSIS3_V4_TFTP_SERVERS, 22 });
+}
+
 // This test checks if cancelled options are actually never assigned.
 TEST_F(VendorOptsTest, vendorCancelledOptions) {
     NakedDhcpv4Srv srv(0);
