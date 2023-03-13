@@ -50,7 +50,8 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
       match_expr_(ExpressionPtr()), test_(rhs.test_), required_(rhs.required_),
       depend_on_known_(rhs.depend_on_known_), cfg_option_(new CfgOption()),
       next_server_(rhs.next_server_), sname_(rhs.sname_),
-      filename_(rhs.filename_), valid_(rhs.valid_), preferred_(rhs.preferred_) {
+      filename_(rhs.filename_), valid_(rhs.valid_), preferred_(rhs.preferred_),
+      offer_lft_(rhs.offer_lft_) {
 
     if (rhs.match_expr_) {
         match_expr_.reset(new Expression());
@@ -371,6 +372,7 @@ ClientClassDictionary::addClass(const std::string& name,
     cclass->setValid(valid);
     cclass->setPreferred(preferred);
     cclass->setOfferLft(offer_lft);
+    std::cout << "OK WE called it!" << std::endl;
     addClass(cclass);
 }
 

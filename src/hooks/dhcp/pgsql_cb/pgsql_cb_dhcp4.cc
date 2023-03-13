@@ -501,7 +501,12 @@ public:
                     last_subnet->setCacheMaxAge(worker.getInt(69));
                 }
 
-                // server_tag at 70.
+                // offer_lifetime at 70.
+                if (!worker.isColumnNull(70)) {
+                    last_subnet->setOfferLft(worker.getInt(70));
+                }
+
+                // server_tag at 71.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -930,6 +935,7 @@ public:
         in_bindings.addOptional(subnet->getReservationsOutOfPool(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getCacheThreshold(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getCacheMaxAge(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getOfferLft(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1329,7 +1335,12 @@ public:
                     last_network->setCacheMaxAge(worker.getInt(44));
                 }
 
-                // server_tag at 45.
+                // offer_lifetime at 45.
+                if (!worker.isColumnNull(45)) {
+                    last_network->setOfferLft(worker.getInt(45));
+                }
+
+                // server_tag at 46.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1343,8 +1354,8 @@ public:
             }
 
             // Check for new server tags.
-            if (!worker.isColumnNull(45)) {
-                std::string new_tag = worker.getString(45);
+            if (!worker.isColumnNull(46)) {
+                std::string new_tag = worker.getString(46);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_network->hasServerTag(ServerTag(new_tag))) {
                         last_network->setServerTag(new_tag);
@@ -1495,6 +1506,7 @@ public:
         in_bindings.addOptional(shared_network->getReservationsOutOfPool(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getCacheThreshold(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getCacheMaxAge(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getOfferLft(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -2271,6 +2283,11 @@ public:
                     }
                 }
 
+                // offer_lifetime at 14.
+                if (!worker.isColumnNull(14)) {
+                    last_client_class->setOfferLft(worker.getInt(14));
+                }
+
                 class_list.push_back(last_client_class);
             }
 
@@ -2286,23 +2303,22 @@ public:
                 }
             }
 
-            // Parse client class specific option definition from 14 to 23.
-            if (!worker.isColumnNull(14) &&
-                (last_option_def_id < worker.getBigInt(14))) {
-                last_option_def_id = worker.getBigInt(14);
+            // Parse client class specific option definition from 15 to 24.
+            if (!worker.isColumnNull(15) &&
+                (last_option_def_id < worker.getBigInt(15))) {
+                last_option_def_id = worker.getBigInt(15);
 
-                auto def = processOptionDefRow(worker, 14);
+                auto def = processOptionDefRow(worker, 15);
                 if (def) {
                     last_client_class->getCfgOptionDef()->add(def);
                 }
             }
 
-            // Parse client class specific option from 24 to 36.
-            if (!worker.isColumnNull(24) &&
-                (last_option_id < worker.getBigInt(24))) {
-                last_option_id = worker.getBigInt(24);
-
-                OptionDescriptorPtr desc = processOptionRow(Option::V4, worker, 24);
+            // Parse client class specific option from 25 to 36.
+            if (!worker.isColumnNull(25) &&
+                (last_option_id < worker.getBigInt(25))) {
+                last_option_id = worker.getBigInt(25);
+                OptionDescriptorPtr desc = processOptionRow(Option::V4, worker, 25);
                 if (desc) {
                     last_client_class->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -2432,6 +2448,7 @@ public:
 
         in_bindings.addTimestamp(client_class->getModificationTime());
         in_bindings.add(client_class->getContext());
+        in_bindings.addOptional(client_class->getOfferLft());
 
         PgSqlTransaction transaction(conn_);
 
@@ -3276,7 +3293,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
-        36,
+        37,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3313,7 +3330,8 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 33 reservations_in_subnet
             OID_BOOL,       // 34 reservations_out_of_pool
             OID_TEXT,       // 35 cache_threshold - cast as float
-            OID_INT8        // 36 cache_max_age"
+            OID_INT8,       // 36 cache_max_age"
+            OID_INT8        // 37 offer_lifetime"
         },
         "INSERT_SUBNET4",
         "INSERT INTO dhcp4_subnet("
@@ -3352,12 +3370,13 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet,"
         "  reservations_out_of_pool,"
         "  cache_threshold,"
-        "  cache_max_age"
+        "  cache_max_age,"
+        "  offer_lifetime"
         ") VALUES ("
             "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, "
             "cast($11 as inet), $12, $13, $14, $15, $16, $17, $18, cast($19 as json), $20, "
             "$21, $22, $23, cast($24 as float), cast($25 as float), $26, $27, $28, $29, $30, "
-            "$31, $32, $33, $34, cast($35 as float), $36"
+            "$31, $32, $33, $34, cast($35 as float), $36, $37"
         ")"
     },
 
@@ -3394,7 +3413,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
-        31,
+        32,
         {
             OID_VARCHAR,    //  1 name,
             OID_VARCHAR,    //  2 client_class,
@@ -3426,7 +3445,8 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 28 reservations_in_subnet,
             OID_BOOL,       // 29 reservations_out_of_pool,
             OID_TEXT,       // 30 cache_threshold - cast as float
-            OID_INT8        // 31 cache_max_age
+            OID_INT8,       // 31 cache_max_age
+            OID_INT8        // 32 offer_lifetime
         },
         "INSERT_SHARED_NETWORK4",
         "INSERT INTO dhcp4_shared_network("
@@ -3460,12 +3480,13 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet,"
         "  reservations_out_of_pool,"
         "  cache_threshold,"
-        "  cache_max_age"
+        "  cache_max_age,"
+        "  offer_lifetime"
         ") VALUES ("
             "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10,"
             "cast($11 as json), $12, $13, $14, $15, "
             "cast($16 as float), cast($17 as float), $18, $19, cast($20 as inet), "
-            "$21, $22, $23, $24, $25, $26, $27, $28, $29, cast($30 as float), $31"
+            "$21, $22, $23, $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32"
         ")"
     },
 
@@ -3574,7 +3595,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert client class.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_CLIENT_CLASS4,
-        13,
+        14,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -3588,7 +3609,8 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 10 depend_on_known_directly
             OID_VARCHAR,    // 11 follow_class_name
             OID_TIMESTAMP,  // 12 modification_ts
-            OID_TEXT        // 13 user_context cast as JSON
+            OID_TEXT,       // 13 user_context cast as JSON
+            OID_INT8        //  14 offer_lifetime
         },
         "INSERT_CLIENT_CLASS4",
         "INSERT INTO dhcp4_client_class("
@@ -3604,9 +3626,10 @@ TaggedStatementArray tagged_statements = { {
         "  depend_on_known_directly,"
         "  follow_class_name,"
         "  modification_ts, "
-        "  user_context "
+        "  user_context, "
+        "  offer_lifetime "
         ") VALUES ("
-            "$1, $2, cast($3 as inet), $4, $5, $6, $7, $8, $9, $10, $11, $12, cast($13 as JSON)"
+            "$1, $2, cast($3 as inet), $4, $5, $6, $7, $8, $9, $10, $11, $12, cast($13 as JSON), $14"
         ")"
     },
 
@@ -3667,7 +3690,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
-        38,
+        39,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3705,8 +3728,9 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 34 reservations_out_of_pool
             OID_TEXT,       // 35 cache_threshold - cast as float
             OID_INT8,       // 36 cache_max_age"
-            OID_INT8,       // 37 subnet_id (of subnet to update)
-            OID_VARCHAR     // 38 subnet_prefix (of subnet to update)
+            OID_INT8,       // 37 offer_lifetime"
+            OID_INT8,       // 38 subnet_id (of subnet to update)
+            OID_VARCHAR     // 39 subnet_prefix (of subnet to update)
         },
         "UPDATE_SUBNET4,",
         "UPDATE dhcp4_subnet SET"
@@ -3745,14 +3769,15 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet = $33,"
         "  reservations_out_of_pool = $34,"
         "  cache_threshold = cast($35 as float),"
-        "  cache_max_age = $36 "
-        "WHERE subnet_id = $37 OR subnet_prefix = $38"
+        "  cache_max_age = $36,"
+        "  offer_lifetime = $37 "
+        "WHERE subnet_id = $38 OR subnet_prefix = $39"
     },
 
     // Update existing shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
-        32,
+        33,
         {
             OID_VARCHAR,    //  1 name,
             OID_VARCHAR,    //  2 client_class,
@@ -3785,7 +3810,8 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 29 reservations_out_of_pool,
             OID_TEXT,       // 30 cache_threshold - cast as float
             OID_INT8,       // 31 cache_max_age
-            OID_VARCHAR     // 32 name (of network to update)
+            OID_INT8,       // 32 offer_lifetime
+            OID_VARCHAR     // 33 name (of network to update)
         },
         "UPDATE_SHARED_NETWORK4",
         "UPDATE dhcp4_shared_network SET"
@@ -3819,8 +3845,9 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet = $28,"
         "  reservations_out_of_pool = $29,"
         "  cache_threshold = cast($30 as float),"
-        "  cache_max_age = $31 "
-        "WHERE name = $32"
+        "  cache_max_age = $31,"
+        "  offer_lifetime = $32 "
+        "WHERE name = $33"
     },
 
     // Update existing option definition.
@@ -4002,7 +4029,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing client class with specifying its position.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4,
-        14,
+        15,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -4017,7 +4044,8 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 follow_class_name
             OID_TIMESTAMP,  // 12 modification_ts
             OID_TEXT,       // 13 user_context cast as JSON
-            OID_VARCHAR     // 14 name (of class to update)
+            OID_INT8,       // 14 offer_lifetime
+            OID_VARCHAR     // 15 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS4",
         PGSQL_UPDATE_CLIENT_CLASS4("follow_class_name = $11,")
@@ -4026,7 +4054,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing client class without specifying its position.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_CLIENT_CLASS4_SAME_POSITION,
-        14,
+        15,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 test
@@ -4041,7 +4069,8 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 follow_class_name
             OID_TIMESTAMP,  // 12 modification_ts
             OID_TEXT,       // 13 user_context cast as JSON
-            OID_VARCHAR     // 14 name (of class to update)
+            OID_INT8,       // 14 offer_lifetime
+            OID_VARCHAR     // 15 name (of class to update)
         },
         "UPDATE_CLIENT_CLASS4_SAME_POSITION",
         PGSQL_UPDATE_CLIENT_CLASS4("")

@@ -116,6 +116,7 @@ namespace {
     "  s.reservations_out_of_pool," \
     "  s.cache_threshold," \
     "  s.cache_max_age," \
+    "  s.offer_lifetime," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -459,6 +460,7 @@ namespace {
     "  n.reservations_out_of_pool," \
     "  n.cache_threshold," \
     "  n.cache_max_age," \
+    "  n.offer_lifetime," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -683,6 +685,7 @@ namespace {
     "  o.depend_on_known_indirectly, " \
     "  gmt_epoch(c.modification_ts) as modification_ts, " \
     "  c.user_context," \
+    "  c.offer_lifetime," \
     "  d.id," \
     "  d.code," \
     "  d.name," \
@@ -1027,7 +1030,7 @@ namespace {
     "     " #table_prefix "_server as s " \
     "WHERE d.id = a.option_def_id AND " \
     "      a.server_id = s.id AND " \
-    "      d.class_id = (SELECT id FROM dhcp4_client_class WHERE name = $10) " \
+    "      d.class_id = (SELECT id FROM " #table_prefix "_client_class WHERE name = $10) " \
     "      AND s.tag = $11 AND d.code = $12 AND d.space = $13"
 #endif
 
@@ -1105,8 +1108,9 @@ namespace {
     "  depend_on_known_directly = $10," \
     follow_class_name_set \
     "  modification_ts = $12, " \
-    "  user_context = cast($13 as json)" \
-    "WHERE name = $14"
+    "  user_context = cast($13 as json), " \
+    "  offer_lifetime = $14 " \
+    "WHERE name = $15"
 #endif
 
 #ifndef PGSQL_UPDATE_CLIENT_CLASS6

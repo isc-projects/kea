@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -761,6 +761,9 @@ pgsql_upgrade_12_to_13_test() {
 }
 
 pgsql_upgrade_13_to_14_test() {
+    run_command \
+        pgsql_execute "$session_sql"
+
     # Added cancelled column to dhcp4_options
     run_command \
         pgsql_execute "select cancelled from dhcp4_options;"

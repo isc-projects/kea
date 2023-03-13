@@ -355,6 +355,7 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool
             MySqlBinding::createInteger<float>(), // cache_threshold
             MySqlBinding::createInteger<uint32_t>(), // cache_max_age
+            MySqlBinding::createInteger<uint32_t>(), // offer lifetime
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -610,6 +611,12 @@ public:
                 // cache_max_age at 69.
                 if (!out_bindings[69]->amNull()) {
                     last_subnet->setCacheMaxAge(out_bindings[69]->getInteger<uint32_t>());
+                }
+
+                // offer lifetime at 70.
+                if (!out_bindings[70]->amNull()) {
+                    Optional<uint32_t> offer_lft(out_bindings[70]->getInteger<uint32_t>());
+                    last_subnet->setOfferLft(offer_lft);
                 }
 
                 // server_tag at 70.
@@ -1102,7 +1109,8 @@ public:
             MySqlBinding::condCreateBool(subnet->getReservationsInSubnet(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getReservationsOutOfPool(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getCacheThreshold(Network::Inheritance::NONE)),
-            condCreateInteger<uint32_t>(subnet->getCacheMaxAge(Network::Inheritance::NONE))
+            condCreateInteger<uint32_t>(subnet->getCacheMaxAge(Network::Inheritance::NONE)),
+            condCreateInteger<uint32_t>(subnet->getOfferLft(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -1351,6 +1359,7 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool
             MySqlBinding::createInteger<float>(), // cache_threshold
             MySqlBinding::createInteger<uint32_t>(), // cache_max_age
+            MySqlBinding::createInteger<uint32_t>(), // offer lifetime
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1555,7 +1564,13 @@ public:
                     last_network->setCacheMaxAge(out_bindings[44]->getInteger<uint32_t>());
                 }
 
-                // server_tag at 45.
+                // offer lifetime at 45.
+                if (!out_bindings[45]->amNull()) {
+                    Optional<uint32_t> offer_lft(out_bindings[45]->getInteger<uint32_t>());
+                    last_network->setOfferLft(offer_lft);
+                }
+
+                // server_tag at 46.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1569,9 +1584,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[45]->amNull() &&
-                (last_tag != out_bindings[45]->getString())) {
-                last_tag = out_bindings[45]->getString();
+            if (!out_bindings[46]->amNull() &&
+                (last_tag != out_bindings[46]->getString())) {
+                last_tag = out_bindings[46]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
@@ -1724,7 +1739,8 @@ public:
             MySqlBinding::condCreateBool(shared_network->getReservationsInSubnet(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getReservationsOutOfPool(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(shared_network->getCacheThreshold(Network::Inheritance::NONE)),
-            condCreateInteger<uint32_t>(shared_network->getCacheMaxAge(Network::Inheritance::NONE))
+            condCreateInteger<uint32_t>(shared_network->getCacheMaxAge(Network::Inheritance::NONE)),
+            condCreateInteger<uint32_t>(shared_network->getOfferLft(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -2378,6 +2394,7 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // depend on known indirectly
             MySqlBinding::createTimestamp(), // modification_ts
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
+            MySqlBinding::createInteger<uint32_t>(), // offer lifetime
             MySqlBinding::createInteger<uint64_t>(), // option def: id
             MySqlBinding::createInteger<uint16_t>(), // option def: code
             MySqlBinding::createString(OPTION_NAME_BUF_LENGTH), // option def: name
@@ -2476,6 +2493,12 @@ public:
                     last_client_class->setContext(user_context);
                 }
 
+                // offer lifetime
+                if (!out_bindings[14]->amNull()) {
+                    Optional<uint32_t> offer_lft(out_bindings[14]->getInteger<uint32_t>());
+                    last_client_class->setOfferLft(offer_lft);
+                }
+
                 class_list.push_back(last_client_class);
             }
 
@@ -2488,23 +2511,22 @@ public:
                 }
             }
 
-            // Parse client class specific option definition from 14 to 23.
-            if (!out_bindings[14]->amNull() &&
-                (last_option_def_id < out_bindings[14]->getInteger<uint64_t>())) {
-                last_option_def_id = out_bindings[14]->getInteger<uint64_t>();
+            // Parse client class specific option definition from 15 to 24.
+            if (!out_bindings[15]->amNull() &&
+                (last_option_def_id < out_bindings[15]->getInteger<uint64_t>())) {
+                last_option_def_id = out_bindings[15]->getInteger<uint64_t>();
 
-                auto def = processOptionDefRow(out_bindings.begin() + 14);
+                auto def = processOptionDefRow(out_bindings.begin() + 15);
                 if (def) {
                     last_client_class->getCfgOptionDef()->add(def);
                 }
             }
 
-            // Parse client class specific option from 24 to 36.
-            if (!out_bindings[24]->amNull() &&
-                (last_option_id < out_bindings[24]->getInteger<uint64_t>())) {
-                last_option_id = out_bindings[24]->getInteger<uint64_t>();
-
-                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 24);
+            // Parse client class specific option from 25 to 36.
+            if (!out_bindings[25]->amNull() &&
+                (last_option_id < out_bindings[25]->getInteger<uint64_t>())) {
+                last_option_id = out_bindings[25]->getInteger<uint64_t>();
+                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 25);
                 if (desc) {
                     last_client_class->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -2629,7 +2651,8 @@ public:
             (follow_class_name.empty() ? MySqlBinding::createNull() :
              MySqlBinding::createString(follow_class_name)),
             MySqlBinding::createTimestamp(client_class->getModificationTime()),
-            createInputContextBinding(client_class)
+            createInputContextBinding(client_class),
+            condCreateInteger(client_class->getOfferLft())
         };
 
         MySqlTransaction transaction(conn_);
@@ -3202,9 +3225,10 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_in_subnet,"
       "  reservations_out_of_pool,"
       "  cache_threshold,"
-      "  cache_max_age"
+      "  cache_max_age,"
+      "  offer_lifetime"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
@@ -3249,9 +3273,10 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_in_subnet,"
       "  reservations_out_of_pool,"
       "  cache_threshold,"
-      "  cache_max_age"
+      "  cache_max_age,"
+      "  offer_lifetime"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -3298,8 +3323,9 @@ TaggedStatementArray tagged_statements = { {
       "  depend_on_known_directly,"
       "  follow_class_name,"
       "  modification_ts,"
-      "  user_context "
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "  user_context, "
+      "  offer_lifetime "
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     },
 
     // Insert association of a client class with a server.
@@ -3360,7 +3386,8 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_in_subnet = ?,"
       "  reservations_out_of_pool = ?,"
       "  cache_threshold = ?,"
-      "  cache_max_age = ? "
+      "  cache_max_age = ?, "
+      "  offer_lifetime = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -3396,7 +3423,8 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_in_subnet = ?,"
       "  reservations_out_of_pool = ?,"
       "  cache_threshold = ?,"
-      "  cache_max_age = ? "
+      "  cache_max_age = ?,"
+      "  offer_lifetime = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.

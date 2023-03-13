@@ -120,6 +120,7 @@ namespace {
     "  s.reservations_out_of_pool," \
     "  s.cache_threshold," \
     "  s.cache_max_age," \
+    "  s.offer_lifetime, " \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -463,6 +464,7 @@ namespace {
     "  n.reservations_out_of_pool," \
     "  n.cache_threshold," \
     "  n.cache_max_age," \
+    "  n.offer_lifetime, " \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -687,6 +689,7 @@ namespace {
     "  o.depend_on_known_indirectly, " \
     "  c.modification_ts," \
     "  c.user_context," \
+    "  c.offer_lifetime," \
     "  d.id," \
     "  d.code," \
     "  d.name," \
@@ -1028,7 +1031,7 @@ namespace {
     "  d.encapsulate = ?," \
     "  d.record_types = ?," \
     "  d.user_context = ? " \
-    "WHERE d.class_id = (SELECT id FROM dhcp4_client_class WHERE name = ?) " \
+    "WHERE d.class_id = (SELECT id FROM " #table_prefix "_client_class WHERE name = ?) " \
     "  AND s.tag = ? AND d.code = ? AND d.space = ?"
 #endif
 
@@ -1091,7 +1094,8 @@ namespace {
     "  depend_on_known_directly = ?," \
     follow_class_name_set \
     "  modification_ts = ?, " \
-    "  user_context = ? " \
+    "  user_context = ?," \
+    "  offer_lifetime = ? "\
     "WHERE name = ?"
 #endif
 

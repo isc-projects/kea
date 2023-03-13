@@ -127,7 +127,7 @@ public:
         if (value.unspecified()) {
             return (db::MySqlBinding::createNull());
         }
-        return (db::MySqlBinding::createInteger(value));
+        return (db::MySqlBinding::createInteger(value.get()));
     }
 
     /// @brief Creates MySQL binding from a @c Triplet.

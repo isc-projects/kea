@@ -125,6 +125,9 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->setT1Percent(0.345);
     subnet->setT2Percent(0.444);
     subnet->setDdnsSendUpdates(false);
+    subnet->setCacheThreshold(0.25);
+    subnet->setCacheMaxAge(20);
+    subnet->setOfferLft(77);
 
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"),
                              IOAddress("192.0.2.20")));
@@ -239,6 +242,9 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->setFilename("/dev/null");
     shared_network->setAuthoritative(true);
     shared_network->setDdnsSendUpdates(false);
+    shared_network->setCacheThreshold(0.26);
+    shared_network->setCacheMaxAge(21);
+    shared_network->setOfferLft(78);
 
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(test_options_[2]->option_,
@@ -399,6 +405,7 @@ GenericConfigBackendDHCPv4Test::initTestClientClasses() {
     ElementPtr user_context = Element::createMap();
     user_context->set("melon", Element::create("water"));
     class1->setContext(user_context);
+    class1->setOfferLft(20);
     test_client_classes_.push_back(class1);
 
     auto class2 = boost::make_shared<ClientClassDef>("bar", match_expr, cfg_option);
@@ -3994,6 +4001,7 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
                           "client class set",
                           ServerSelector::ONE("server1"));
     }
+
     // Create second class.
     auto class2 = test_client_classes_[1];
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass4(ServerSelector::ONE("server1"), class2, ""));
@@ -4024,9 +4032,11 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
                           "client class set",
                           ServerSelector::ONE("server1"));
     }
+
     // Only the first class should be returned for the server selector ALL.
     auto client_classes = cbptr_->getAllClientClasses4(ServerSelector::ALL());
     ASSERT_EQ(1, client_classes.getClasses()->size());
+
     // All three classes should be returned for the server1.
     client_classes = cbptr_->getAllClientClasses4(ServerSelector::ONE("server1"));
     auto classes_list = client_classes.getClasses();
