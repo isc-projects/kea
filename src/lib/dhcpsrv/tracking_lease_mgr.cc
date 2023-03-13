@@ -85,7 +85,7 @@ TrackingLeaseMgr::registerCallback(TrackingLeaseMgr::CallbackType type,
                                    std::string owner,
                                    Lease::Type lease_type,
                                    TrackingLeaseMgr::CallbackFn callback_fn) {
-    registerCallback(type, owner, 0, lease_type, callback_fn);
+    registerCallback(type, owner, SUBNET_ID_GLOBAL, lease_type, callback_fn);
 }
 
 void
@@ -126,7 +126,7 @@ TrackingLeaseMgr::callbackTypeToString(CallbackType type) {
 void
 TrackingLeaseMgr::runCallbacks(TrackingLeaseMgr::CallbackType type, const LeasePtr& lease,
                                bool mt_safe) {
-    runCallbacksForSubnetID(type, 0, lease, mt_safe);
+    runCallbacksForSubnetID(type, SUBNET_ID_GLOBAL, lease, mt_safe);
     runCallbacksForSubnetID(type, lease->subnet_id_, lease, mt_safe);
 }
 

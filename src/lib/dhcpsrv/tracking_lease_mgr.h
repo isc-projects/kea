@@ -232,7 +232,7 @@ public:
     /// @param type callback type.
     /// @param owner callback owner identifier.
     /// @param subnet_id subnet identifier; it can be set to 0 if the callback should be
-    /// called for subnets.
+    /// called for all subnets.
     /// @param lease_type a lease type.
     /// @param callback_fn callback function instance.
     /// @throw InvalidOperation when the callback has been already registered for the given owner and

@@ -99,13 +99,13 @@ TEST_F(TrackingLeaseMgrTest, registerCallbacks) {
     DatabaseConnection::ParameterMap pmap;
     ConcreteLeaseMgr mgr(pmap);
 
-    // Callback for lease add and subnet id 0.
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    // Callback for lease add and global subnet id.
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
     // Callback for lease add and subnet id 1.
     EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 1,
@@ -123,34 +123,34 @@ TEST_F(TrackingLeaseMgrTest, registerCallbacks) {
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
                                                    1,
                                                    ph::_1, ph::_2)));
-    // Callback for lease update and subnet id 0.
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    // Callback for lease update and global subnet id.
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_UPDATE_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
-    // Callback for lease delete and subnet id 0.
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    // Callback for lease delete and global subnet id.
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_DELETE_LEASE,
-                                                   1,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
 
     // This call should trigger the lease add callbacks for subnet id 0 and 1.
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, "192.0.2.1"), false));
     EXPECT_EQ(2, logs_.size());
-    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, Lease::TYPE_V4));
+    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 1, Lease::TYPE_V4));
 
     // This call should trigger the lease add callback for subnet id 0 only. That's
     // because we have no callback for the subnet id 3.
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(3, "192.0.2.1"), false));
     EXPECT_EQ(3, logs_.size());
-    EXPECT_EQ(2, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, Lease::TYPE_V4));
+    EXPECT_EQ(2, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 }
 
 /// Test that registering the callbacks of the same type, for the same subnet id by the
@@ -160,31 +160,32 @@ TEST_F(TrackingLeaseMgrTest, registerCallbacksConflicts) {
     ConcreteLeaseMgr mgr(pmap);
 
     // Add the callback for lease add and subnet id 0.
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_NA,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_NA,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
 
     // Another attempt should fail.
-    EXPECT_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                      Lease::TYPE_NA,
+    EXPECT_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                      SUBNET_ID_GLOBAL, Lease::TYPE_NA,
                                       std::bind(&TrackingLeaseMgrTest::logCallback,
                                                 this,
                                                 TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                0,
+                                                SUBNET_ID_GLOBAL,
                                                 ph::_1, ph::_2)),
                  InvalidOperation);
 
     // It should succeed for a different owner.
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "qlf", 0,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "qlf",
+                                         SUBNET_ID_GLOBAL,
                                          Lease::TYPE_NA,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
 
     // It should also succeed for a different subnet id.
@@ -221,41 +222,41 @@ TEST_F(TrackingLeaseMgrTest, trackAddLeaseDifferentLeaseTypes) {
     DatabaseConnection::ParameterMap pmap;
     ConcreteLeaseMgr mgr(pmap);
 
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
 
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_NA,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_NA,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
 
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_PD,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_PD,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
 
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, "192.0.2.1"), false));
     EXPECT_EQ(1, logs_.size());
-    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, Lease::TYPE_V4));
+    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, Lease::TYPE_NA, "2001:db8:1::1"), false));
     EXPECT_EQ(2, logs_.size());
-    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, Lease::TYPE_NA));
+    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_NA));
 
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, Lease::TYPE_PD, "3000::"), false));
     EXPECT_EQ(3, logs_.size());
-    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, Lease::TYPE_PD));
+    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_PD));
 }
 
 /// Test invoking the registered lease update callbacks.
@@ -263,26 +264,27 @@ TEST_F(TrackingLeaseMgrTest, trackUpdateLease) {
     DatabaseConnection::ParameterMap pmap;
     ConcreteLeaseMgr mgr(pmap);
 
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq", 0,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL,
                                          Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_UPDATE_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_DELETE_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
     EXPECT_NO_THROW(mgr.trackUpdateLease(initializeLease(1, "192.0.2.1"), false));
     EXPECT_EQ(1, logs_.size());
@@ -294,30 +296,30 @@ TEST_F(TrackingLeaseMgrTest, trackDeleteLease) {
     DatabaseConnection::ParameterMap pmap;
     ConcreteLeaseMgr mgr(pmap);
 
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_UPDATE_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_DELETE_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
     EXPECT_NO_THROW(mgr.trackDeleteLease(initializeLease(1, "192.0.2.1"), false));
     EXPECT_EQ(1, logs_.size());
-    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_DELETE_LEASE, 0, Lease::TYPE_V4));
+    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_DELETE_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 }
 
 // Test unregistering the callbacks by subnet id.
@@ -326,12 +328,12 @@ TEST_F(TrackingLeaseMgrTest, unregisterCallbacksBySubnetID) {
     ConcreteLeaseMgr mgr(pmap);
 
     // Register different callback types for different subnet identifiers.
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
     EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 1,
                                          Lease::TYPE_V4,
@@ -384,20 +386,20 @@ TEST_F(TrackingLeaseMgrTest, unregisterCallbacksBySubnetID) {
     EXPECT_NO_THROW(mgr.trackUpdateLease(initializeLease(1, "192.0.2.1"), false));
     EXPECT_NO_THROW(mgr.trackDeleteLease(initializeLease(1, "192.0.2.1"), false));
 
-    // It should only run the callback for the subnet id 0 that is still
+    // It should only run the callback for the global subnet id that is still
     // registered.
     EXPECT_EQ(1, logs_.size());
-    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 0, Lease::TYPE_V4));
+    EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 
     // Unregister this callback.
-    EXPECT_NO_THROW(mgr.unregisterCallbacks(SubnetID(0), Lease::TYPE_V4));
+    EXPECT_NO_THROW(mgr.unregisterCallbacks(SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 
     // Make sure it is no longer invoked.
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, "192.0.2.1"), false));
     EXPECT_EQ(1, logs_.size());
 
     // Unregistering it again should be no-op.
-    EXPECT_NO_THROW(mgr.unregisterCallbacks(SubnetID(0), Lease::TYPE_V4));
+    EXPECT_NO_THROW(mgr.unregisterCallbacks(SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 }
 
 /// Test unregistering all callbacks.
@@ -406,19 +408,19 @@ TEST_F(TrackingLeaseMgrTest, unregisterAllCallbacks) {
     ConcreteLeaseMgr mgr(pmap);
 
     // Register some callbacks.
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_UPDATE_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
     // Make sure they have been registered.
     EXPECT_TRUE(mgr.hasCallbacks());
@@ -434,12 +436,12 @@ TEST_F(TrackingLeaseMgrTest, hasCallbacks) {
     ConcreteLeaseMgr mgr(pmap);
     EXPECT_FALSE(mgr.hasCallbacks());
 
-    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq", 0,
-                                         Lease::TYPE_V4,
+    EXPECT_NO_THROW(mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
+                                         SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                                          std::bind(&TrackingLeaseMgrTest::logCallback,
                                                    this,
                                                    TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                                   0,
+                                                   SUBNET_ID_GLOBAL,
                                                    ph::_1, ph::_2)));
     EXPECT_TRUE(mgr.hasCallbacks());
 }

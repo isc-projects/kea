@@ -2230,6 +2230,9 @@ TEST(CfgSubnets4Test, initAllocatorsAfterConfigure) {
     cfg.add(subnet2);
     cfg.add(subnet3);
 
+    EXPECT_EQ(0, allocator0->callcount_);
+    EXPECT_EQ(0, allocator2->callcount_);
+
     cfg.initAllocatorsAfterConfigure();
 
     EXPECT_EQ(1, allocator0->callcount_);
