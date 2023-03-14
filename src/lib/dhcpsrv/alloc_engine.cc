@@ -2278,6 +2278,11 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
+        uint32_t current_preferred_lft = lease->preferred_lft_;
+        if (lease->valid_lft_ == 0) {
+            // The lease was expired by a release: reset zero lifetimes.
+            getLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+        }
         if (!ctx.fake_allocation_) {
             bool update_stats = false;
 
@@ -2298,7 +2303,6 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
 
             lease->cltt_ = time(NULL);
             if (!fqdn_changed) {
-                uint32_t current_preferred_lft = lease->preferred_lft_;
                 setLeaseReusable(lease, current_preferred_lft, ctx);
             }
             if (lease->reuseable_valid_lft_ == 0) {

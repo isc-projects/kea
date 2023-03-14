@@ -2073,6 +2073,34 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDelete) {
                      IOAddress("2001:db8:1:1::cafe:babe"), LEASE_AFFINITY_ENABLED);
 }
 
+// This test verifies that after a RELEASE which expired a lease the response
+// to a SOLICIT does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteSolicit) {
+    testReleaseNoDelete(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                        DHCPV6_SOLICIT);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a REQUEST does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteRequest) {
+    testReleaseNoDelete(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a RENEW does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteRenew) {
+    testReleaseNoDelete(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a REBIND does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteRebind) {
+    testReleaseNoDelete(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                        DHCPV6_REBIND);
+}
+
 // This test verifies that incoming (positive) RELEASE with prefix can be
 // handled properly, that a REPLY is generated, that the response has
 // status code and that the lease is indeed removed from the database.
@@ -2101,6 +2129,34 @@ TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
 TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDelete) {
     testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
                      IOAddress("2001:db8:1:2::"), LEASE_AFFINITY_ENABLED);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a SOLICIT does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDeleteSolicit) {
+    testReleaseNoDelete(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a REQUEST does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDeleteRequest) {
+    testReleaseNoDelete(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a RENEW does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDeleteRenew) {
+    testReleaseNoDelete(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a REBIND does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDeleteRebind) {
+    testReleaseNoDelete(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                        DHCPV6_REBIND);
 }
 
 // This test verifies that incoming (invalid) RELEASE with an address

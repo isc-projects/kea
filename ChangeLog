@@ -1,3 +1,8 @@
+2111.	[bug]		fdupont
+	Fixed a bug which advertised re-assigned released leases
+	with zero lifetimes.
+	(Gitlab #2766)
+
 2110.	[func]		fdupont
 	A new boolean configuration flag called "never-send" has been
 	added to the option data scope. When enabled, the option is not

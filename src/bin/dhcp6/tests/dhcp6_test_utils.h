@@ -208,10 +208,24 @@ public:
         isc::dhcp::LeaseMgrFactory::destroy();
     }
 
+    /// @brief Processes incoming Solicit message.
+    ///
+    /// @param request a message received from client
+    /// @return REPLY message or null
+    Pkt6Ptr processSolicit(const Pkt6Ptr& solicit) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = !earlyGHRLookup(solicit, ctx);
+        initContext(solicit, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        return (processSolicit(ctx));
+    }
+
     /// @brief Processes incoming Request message.
     ///
     /// @param request a message received from client
-    /// @return REPLY message or NULL
+    /// @return REPLY message or null
     Pkt6Ptr processRequest(const Pkt6Ptr& request) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(request, ctx);
@@ -225,7 +239,7 @@ public:
     /// @brief Processes incoming Renew message.
     ///
     /// @param renew a message received from client
-    /// @return REPLY message or NULL
+    /// @return REPLY message or null
     Pkt6Ptr processRenew(const Pkt6Ptr& renew) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(renew, ctx);
@@ -239,7 +253,7 @@ public:
     /// @brief Processes incoming Rebind message.
     ///
     /// @param rebind a message received from client
-    /// @return REPLY message or NULL
+    /// @return REPLY message or null
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(rebind, ctx);
@@ -253,7 +267,7 @@ public:
     /// @brief Processes incoming Release message.
     ///
     /// @param release a message received from client
-    /// @return REPLY message or NULL
+    /// @return REPLY message or null
     Pkt6Ptr processRelease(const Pkt6Ptr& release) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(release, ctx);
@@ -267,7 +281,7 @@ public:
     /// @brief Processes incoming Decline message.
     ///
     /// @param decline a message received from client
-    /// @return REPLY message or NULL
+    /// @return REPLY message or null
     Pkt6Ptr processDecline(const Pkt6Ptr& decline) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(decline, ctx);
@@ -742,8 +756,8 @@ public:
     /// two different instances of an option that has identical content
     /// will return true.
     ///
-    /// It is safe to pass NULL pointers. Two NULL pointers are equal.
-    /// NULL pointer and non-NULL pointers are obviously non-equal.
+    /// It is safe to pass null pointers. Two null pointers are equal.
+    /// null pointer and non-null pointers are obviously non-equal.
     ///
     /// @param option1 pointer to the first option
     /// @param option2
@@ -832,6 +846,19 @@ public:
                      const isc::asiolink::IOAddress& existing,
                      const isc::asiolink::IOAddress& release_addr,
                      const LeaseAffinity lease_affinity);
+
+    /// @brief Checks that reassignement of a released-expired lease
+    /// does not lead to zero lifetimes.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type lease type (TYPE_NA or TYPE_PD).
+    /// @param addr lease address.
+    /// @param qtype query type.
+    void
+    testReleaseNoDelete(isc::dhcp::Lease::Type type,
+                        const isc::asiolink::IOAddress& addr,
+                        uint8_t qtype);
 
     /// @brief Performs negative RELEASE test
     ///

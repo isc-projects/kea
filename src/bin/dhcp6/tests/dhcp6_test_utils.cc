@@ -676,6 +676,125 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 }
 
 void
+Dhcpv6SrvTest::testReleaseNoDelete(Lease::Type type, const IOAddress& addr,
+                                   uint8_t qtype) {
+    NakedDhcpv6Srv srv(0);
+
+    const uint32_t iaid = 234;
+
+    uint8_t prefix_len;
+    if (type == Lease::TYPE_NA) {
+        prefix_len = 128;
+    } else {
+        prefix_len = pd_pool_->getLength();
+    }
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(type, addr));
+
+    // Let's prepopulate the database
+    Lease6Ptr lease(new Lease6(type, addr, duid_, iaid,
+                               501, 502, subnet_->getID(),
+                               HWAddrPtr(), prefix_len));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, addr, prefix_len, iaid);
+    rel->addOption(clientid);
+    rel->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRelease(rel);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+    checkMsgStatusCode(reply, STATUS_Success);
+
+    // Check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+
+    // Check lease
+    l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
+                                              subnet_->getID());
+    ASSERT_TRUE(l);
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
+
+    // Create query
+    Pkt6Ptr query;
+    if (qtype != DHCPV6_SOLICIT) {
+        query = createMessage(qtype, type, addr, prefix_len, iaid);
+        query->addOption(srv.getServerID());
+    } else {
+        query = createMessage(qtype, type, IOAddress::IPV6_ZERO_ADDRESS(),
+                              prefix_len, iaid);
+    }
+    query->addOption(clientid);
+
+    // Process query
+    switch (qtype) {
+    case DHCPV6_SOLICIT:
+        reply = srv.processSolicit(query);
+        break;
+    case DHCPV6_REQUEST:
+        reply = srv.processRequest(query);
+        break;
+    case DHCPV6_RENEW:
+        reply = srv.processRenew(query);
+        break;
+    case DHCPV6_REBIND:
+        reply = srv.processRebind(query);
+        break;
+    default:
+        reply.reset();
+        break;
+    }
+
+    // Check reply
+    if (qtype == DHCPV6_SOLICIT) {
+        checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+    } else {
+        checkResponse(reply, DHCPV6_REPLY, 1234);
+    }
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+    checkMsgStatusCode(reply, STATUS_Success);
+    if (type == Lease::TYPE_NA) {
+        Option6IAAddrPtr iaaddr = checkIA_NA(reply, iaid, subnet_->getT1(),
+                                             subnet_->getT2());
+        ASSERT_TRUE(iaaddr);
+        checkIAAddr(iaaddr, addr, type, subnet_->getPreferred(),
+                    subnet_->getValid());
+    } else {
+        Option6IAPrefixPtr iapref = checkIA_PD(reply, iaid, subnet_->getT1(),
+                                             subnet_->getT2());
+        ASSERT_TRUE(iapref);
+        checkIAAddr(iapref, addr, type, subnet_->getPreferred(),
+                    subnet_->getValid());
+    }
+
+    // Check lease
+    l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
+                                              subnet_->getID());
+    ASSERT_TRUE(l);
+    if (qtype == DHCPV6_SOLICIT) {
+        EXPECT_EQ(l->valid_lft_, 0);
+        EXPECT_EQ(l->preferred_lft_, 0);
+    } else {
+        EXPECT_EQ(l->valid_lft_, subnet_->getValid());
+        EXPECT_EQ(l->preferred_lft_, subnet_->getPreferred());
+    }
+}
+
+void
 Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     NakedDhcpv6Srv srv(0);
 
