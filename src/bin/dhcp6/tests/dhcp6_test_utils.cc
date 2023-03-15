@@ -682,12 +682,7 @@ Dhcpv6SrvTest::testReleaseNoDelete(Lease::Type type, const IOAddress& addr,
 
     const uint32_t iaid = 234;
 
-    uint8_t prefix_len;
-    if (type == Lease::TYPE_NA) {
-        prefix_len = 128;
-    } else {
-        prefix_len = pd_pool_->getLength();
-    }
+    uint8_t prefix_len = (type == Lease::TYPE_NA ? 128 : pd_pool_->getLength());
 
     // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
