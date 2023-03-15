@@ -190,6 +190,14 @@ OptionDataTypeUtil::writeBinary(const std::string& hex_str,
     buf.insert(buf.end(), binary.begin(), binary.end());
 }
 
+OpaqueDataTuple::LengthFieldType
+OptionDataTypeUtil::getTupleLenFieldType(Option::Universe u) {
+    if (u == Option::V4) {
+        return OpaqueDataTuple::LENGTH_1_BYTE;
+    }
+    return OpaqueDataTuple::LENGTH_2_BYTES;
+}
+
 std::string
 OptionDataTypeUtil::readTuple(const std::vector<uint8_t>& buf,
                               OpaqueDataTuple::LengthFieldType lengthfieldtype) {

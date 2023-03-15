@@ -69,8 +69,7 @@ void
 OptionCustom::addArrayDataField(const std::string& value) {
     checkArrayType();
 
-    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
-        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    OpaqueDataTuple::LengthFieldType lft = OptionDataTypeUtil::getTupleLenFieldType(getUniverse());
     OptionBuffer buf;
     OptionDataTypeUtil::writeTuple(value, lft, buf);
     buffers_.push_back(buf);
@@ -256,9 +255,7 @@ OptionCustom::bufferLength(const OptionDataType data_type, bool in_array,
             data_size = sizeof(uint8_t) + (prefix.first.asUint8() + 7) / 8;
         } else if (data_type == OPT_TUPLE_TYPE) {
             OpaqueDataTuple::LengthFieldType lft =
-                getUniverse() == Option::V4 ?
-                OpaqueDataTuple::LENGTH_1_BYTE :
-                OpaqueDataTuple::LENGTH_2_BYTES;
+                OptionDataTypeUtil::getTupleLenFieldType(getUniverse());
             std::string value =
                 OptionDataTypeUtil::readTuple(OptionBuffer(begin, end), lft);
             data_size = value.size();
@@ -528,8 +525,7 @@ OptionCustom::writeBinary(const OptionBuffer& buf,
 std::string
 OptionCustom::readTuple(const uint32_t index) const {
     checkIndex(index);
-    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
-        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    OpaqueDataTuple::LengthFieldType lft = OptionDataTypeUtil::getTupleLenFieldType(getUniverse());
     return (OptionDataTypeUtil::readTuple(buffers_[index], lft));
 }
 
@@ -545,8 +541,7 @@ OptionCustom::writeTuple(const std::string& value, const uint32_t index) {
     checkIndex(index);
 
     buffers_[index].clear();
-    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
-        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    OpaqueDataTuple::LengthFieldType lft = OptionDataTypeUtil::getTupleLenFieldType(getUniverse());
     OptionDataTypeUtil::writeTuple(value, lft, buffers_[index]);
 }
 

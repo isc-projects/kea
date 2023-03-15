@@ -13,6 +13,7 @@
 #include <dhcp/option.h>
 #include <util/buffer.h>
 #include <boost/shared_ptr.hpp>
+#include "option_data_types.h"
 #include <stdint.h>
 
 namespace isc {
@@ -174,8 +175,7 @@ private:
         if (prefLenFieldType_ != OpaqueDataTuple::LENGTH_EMPTY) {
             return (prefLenFieldType_);
         }
-        return (universe_ == Option::V6 ? OpaqueDataTuple::LENGTH_2_BYTES :
-                OpaqueDataTuple::LENGTH_1_BYTE);
+        return (OptionDataTypeUtil::getTupleLenFieldType(getUniverse()));
     }
 
     /// @brief Returns minimal length of the option for the given universe.

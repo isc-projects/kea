@@ -13,6 +13,7 @@
 #include <dhcp/option.h>
 #include <util/buffer.h>
 #include <boost/shared_ptr.hpp>
+#include "option_data_types.h"
 #include <stdint.h>
 
 namespace isc {
@@ -162,17 +163,6 @@ private:
         } else {
             return (D6O_VENDOR_CLASS);
         }
-    }
-
-    /// @brief Returns the tuple length field type for the given universe.
-    ///
-    /// This function returns the length field type which should be used
-    /// for the opaque data tuples being added to this option.
-    ///
-    /// @return Tuple length field type for the universe this option belongs to.
-    OpaqueDataTuple::LengthFieldType getLengthFieldType() const {
-        return (getUniverse() == V4 ? OpaqueDataTuple::LENGTH_1_BYTE :
-                OpaqueDataTuple::LENGTH_2_BYTES);
     }
 
     /// @brief Returns minimal length of the option for the given universe.

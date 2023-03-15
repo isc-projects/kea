@@ -669,8 +669,12 @@ OptionDefinition::writeToBuffer(Option::Universe u,
         return;
     case OPT_TUPLE_TYPE:
     {
-        OpaqueDataTuple::LengthFieldType lft = u == Option::V4 ?
-            OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+        OpaqueDataTuple::LengthFieldType lft;
+        if (getCode() == DHO_V4_SZTP_REDIRECT) {
+            lft = OpaqueDataTuple::LENGTH_2_BYTES;
+        } else {
+            lft = OptionDataTypeUtil::getTupleLenFieldType(u);
+        }
         OptionDataTypeUtil::writeTuple(value, lft, buf);
         return;
     }

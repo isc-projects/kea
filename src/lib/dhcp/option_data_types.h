@@ -419,6 +419,16 @@ public:
     static void writeTuple(const OpaqueDataTuple& tuple,
                            std::vector<uint8_t>& buf);
 
+    /// @brief Returns Length Field Type for a tuple.
+    ///
+    /// Returns Length Field Type for a tuple basing on the given
+    /// Option v4/v6 Universe.
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @return By default 1 octet Length Field Type for V4 option
+    /// or 2 octets Length Field Type for V6 option
+    static OpaqueDataTuple::LengthFieldType getTupleLenFieldType(Option::Universe u);
+
     /// @brief Read boolean value from a buffer.
     ///
     /// @param buf input buffer.

@@ -70,7 +70,8 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
     size_t offset = 0;
     while (offset < std::distance(begin, end)) {
         // Parse a tuple.
-        OpaqueDataTuple tuple(getLengthFieldType(), begin + offset, end);
+        OpaqueDataTuple tuple(OptionDataTypeUtil::getTupleLenFieldType(getUniverse()),
+                              begin + offset, end);
         addTuple(tuple);
         // The tuple has been parsed correctly which implies that it is safe to
         // advance the offset by its total length.
@@ -105,7 +106,7 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
 
 void
 OptionVendorClass::addTuple(const OpaqueDataTuple& tuple) {
-    if (tuple.getLengthFieldType() != getLengthFieldType()) {
+    if (tuple.getLengthFieldType() != OptionDataTypeUtil::getTupleLenFieldType(getUniverse())) {
         isc_throw(isc::BadValue, "attempted to add opaque data tuple having"
                   " invalid size of the length field "
                   << tuple.getDataFieldSize() << " to Vendor Class option");
@@ -122,7 +123,7 @@ OptionVendorClass::setTuple(const size_t at, const OpaqueDataTuple& tuple) {
                   " vendor option at position " << at << " which is out of"
                   " range");
 
-    } else if (tuple.getLengthFieldType() != getLengthFieldType()) {
+    } else if (tuple.getLengthFieldType() != OptionDataTypeUtil::getTupleLenFieldType(getUniverse())) {
         isc_throw(isc::BadValue, "attempted to set opaque data tuple having"
                   " invalid size of the length field "
                   << tuple.getDataFieldSize() << " to Vendor Class option");
