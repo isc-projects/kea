@@ -1486,7 +1486,7 @@ Parameter Request List option (or its equivalent for vendor options):
    }
 
 
-In the example above, the ``domain-name-servers`` option respects the global 
+In the example above, the ``domain-name-servers`` option respects the global
 ``always-send`` flag and is always added to responses, but for subnet 
 ``192.0.3.0/24``, the value is taken from the subnet-level option data 
 specification.
