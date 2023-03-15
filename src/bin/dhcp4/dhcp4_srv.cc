@@ -1872,7 +1872,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
                 static_cast<void>(cancelled_opts.insert(code));
             }
         }
-        }
+    }
 
     // For each requested option code get the first instance of the option
     // to be returned to the client.

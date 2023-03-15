@@ -1,3 +1,10 @@
+2110.	[func]		fdupont
+	A new boolean configuration flag called "never-send" has been
+	added to the option data scope. When enabled, the option is not
+	sent in a response to the client, even if the client explicitly
+	requests it.
+	(Gitlab #719)
+
 2109.	[bug]		fdupont
 	Compatibility flags e.g. lenient-option-parsing were not
 	saved by config-get and similar commands.

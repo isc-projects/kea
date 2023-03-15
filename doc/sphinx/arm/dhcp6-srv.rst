@@ -1456,6 +1456,17 @@ on subnet ``2001:db8:1::/64``. ``never-send`` has precedence over
 
 .. note::
 
+    The ``always-send`` and ``never-send`` flags are sticky, meaning
+    they do not follow the usual configuration inheritance rules.
+    Instead, if they are enabled at least once along the configuration
+    inheritance chain, they get applied regardless of them being
+    disabled in other places which would usually be more prioritized.
+    For instance, if one of the flags is enabled in the global scope,
+    but disabled at the subnet level, it will act as enabled,
+    disregarding the subnet-level setting.
+
+.. note::
+
    The ``never-send`` is less powerful than the :ref:`hooks-flex-option`,
    for instance it has no effect on options managed by the server itself.
    Both ``always-send`` and ``never-send`` has no effect too on options

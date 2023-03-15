@@ -1529,6 +1529,17 @@ responses on subnet ``192.0.3.0/24``. ``never-send`` has precedence over
 
 .. note::
 
+    The ``always-send`` and ``never-send`` flags are sticky, meaning
+    they do not follow the usual configuration inheritance rules.
+    Instead, if they are enabled at least once along the configuration
+    inheritance chain, they get applied regardless of them being
+    disabled in other places which would usually be more prioritized.
+    For instance, if one of the flags is enabled in the global scope,
+    but disabled at the subnet level, it will act as enabled,
+    disregarding the subnet-level setting.
+
+.. note::
+
    The ``never-send`` is less powerful than the :ref:`hooks-flex-option`,
    for instance it has no effect on options managed by the server itself.
    Both ``always-send`` and ``never-send`` has no effect too on options
@@ -2620,7 +2631,7 @@ Unfortunately, for many other vendors, such as Genexis (25167, discussed above),
 Kea does not have such a mechanism, so it cannot send any sub-options on its own.
 To solve this issue, we devised the concept of persistent options. Kea can be
 told to always send options, even if the client did not request them. This can
-be achieved by adding ``"always-send": true`` to the option definition. Note
+be achieved by adding ``"always-send": true`` to the option data entry. Note
 that in this particular case an option is defined in vendor space 25167. With
 ``always-send`` enabled, the option is sent every time there is a need to deal
 with vendor space 25167.

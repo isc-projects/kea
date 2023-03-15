@@ -2012,8 +2012,8 @@ option_data_space: space;
 
 option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
     ctx.unique("csv-format", ctx.loc2pos(@1));
-    ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("csv-format", space);
+    ElementPtr csv(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("csv-format", csv);
 };
 
 option_data_always_send: ALWAYS_SEND COLON BOOLEAN {
@@ -2024,8 +2024,8 @@ option_data_always_send: ALWAYS_SEND COLON BOOLEAN {
 
 option_data_never_send: NEVER_SEND COLON BOOLEAN {
     ctx.unique("never-send", ctx.loc2pos(@1));
-    ElementPtr persist(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("never-send", persist);
+    ElementPtr cancel(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("never-send", cancel);
 };
 
 // ---- pools ------------------------------------
