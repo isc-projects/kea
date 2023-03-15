@@ -27,16 +27,6 @@ OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
     unpack(begin, end);
 }
 
-OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
-                                               const uint16_t type,
-                                               OptionBufferConstIter begin,
-                                               OptionBufferConstIter end,
-                                               OpaqueDataTuple::LengthFieldType lenFieldType)
-    : Option(u, type) {
-    prefLenFieldType_ = lenFieldType;
-    unpack(begin, end);
-}
-
 OptionPtr
 OptionOpaqueDataTuples::clone() const {
     return (cloneInternal<OptionOpaqueDataTuples>());

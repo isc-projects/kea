@@ -64,8 +64,8 @@ public:
 
     /// @brief Constructor.
     ///
-    /// This constructor creates an instance of an OpaqueDataTuple option using
-    /// a buffer with on-wire data. This constructor allows to explicitly set
+    /// This constructor creates an instance of an OptionOpaqueDataTuples option
+    /// using a buffer with on-wire data. This constructor allows to explicitly set
     /// tuple's length field type.
     /// It may throw an exception if the @c unpack method throws.
     ///
@@ -78,7 +78,10 @@ public:
     OptionOpaqueDataTuples(Option::Universe u, const uint16_t type,
                            OptionBufferConstIter begin,
                            OptionBufferConstIter end,
-                           OpaqueDataTuple::LengthFieldType lenFieldType);
+                           OpaqueDataTuple::LengthFieldType lenFieldType)
+        : Option(u, type), prefLenFieldType_(lenFieldType) {
+        unpack(begin, end);
+    }
 
     /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
@@ -155,6 +158,7 @@ public:
 
 private:
     /// @brief holds information of explicitly assigned tuple length field.
+    ///
     /// Normally tuple length is evaluated basing on Option's universe.
     /// But there may be cases when e.g. for v4 universe tuple length field
     /// is 2 bytes long (e.g. DHCPv4 SZTP Redirect Option #143 bootstrap-server-list).
