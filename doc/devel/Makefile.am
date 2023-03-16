@@ -8,6 +8,7 @@ EXTRA_DIST += cross-compile.dox
 EXTRA_DIST += doc.dox
 EXTRA_DIST += fuzz.dox
 EXTRA_DIST += mainpage.dox
+EXTRA_DIST += qa.dox
 EXTRA_DIST += terminology.dox
 EXTRA_DIST += unit-tests.dox
 

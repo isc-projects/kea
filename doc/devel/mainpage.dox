@@ -36,16 +36,21 @@
  * a patch to ISC and what happens next. Please read it if you are considering
  * sending us any code.
  *
- * @section buildingKeaWithUnitTests Building Kea with Unit tests
+ * @section qa Quality Assurance
+ * - @subpage qaIntro
  * - @subpage unitTests
  *   - @subpage unitTestsEnvironmentVariables
  *   - @subpage unitTestsSanitizers
  *   - @subpage unitTestsDatabaseConfig
  *   - @subpage unitTestsSysrepo
  *   - @subpage writingShellScriptsAndTests
- *
- * @section performance Performance
- * - @subpage perfdhcpInternals
+ * - @subpage Performance
+ *   - @subpage perfdhcpInternals
+ * - @subpage fuzzer
+ * - @subpage qa
+ *   - @subpage ciGithub
+ *   - @subpage ciGitlab
+ *   - @subpage ciJenkins
  *
  * @section hooksFramework Hooks Framework
  * - @subpage hooksdgDevelopersGuide
@@ -148,7 +153,6 @@
  *   - @subpage logNotes
  * - @subpage LoggingApi
  * - @subpage SocketSessionUtility
- * - @subpage fuzzer
  * - @subpage crossCompile
  * - @subpage docs
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
