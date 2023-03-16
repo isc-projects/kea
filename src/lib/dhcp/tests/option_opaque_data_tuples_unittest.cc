@@ -98,6 +98,25 @@ TEST(OptionOpaqueDataTuples, setTuple) {
     EXPECT_THROW(data_tuple.setTuple(2, tuple), isc::OutOfRange);
 }
 
+// Check that the returned length of the DHCPv4 option is correct when
+// LTF is passed explicitly in constructor.
+TEST(OptionOpaqueDataTuples, len4_constructor_with_ltf) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 0x0B,                         // tuple length is 11
+        0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, // Hello<space>
+        0x77, 0x6F, 0x72, 0x6C, 0x64,       // world
+        0x00, 0x03,                         // tuple length is 3
+        0x66, 0x6F, 0x6F                    // foo
+    };
+
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+    OptionOpaqueDataTuples data_tuple(
+        Option::V4, 143, buf.begin(), buf.end(), OpaqueDataTuple::LENGTH_2_BYTES);
+    // Expected len = 20 = 2 (v4 headers) + 2 (LFT) + 11 (1st tuple) + 2 (LFT) + 3 (2nd tuple)
+    ASSERT_EQ(20, data_tuple.len());
+}
+
 // Check that the returned length of the DHCPv6 option is correct.
 TEST(OptionOpaqueDataTuples, len6) {
     OptionOpaqueDataTuples data_tuple(Option::V6, 60);
@@ -145,6 +164,34 @@ TEST(OptionOpaqueDataTuples, pack6) {
     EXPECT_EQ(0, memcmp(static_cast<const void*>(ref),
                         static_cast<const void*>(buf.getData()),
                         buf.getLength()));
+}
+
+// This function checks that the DHCPv4 option with two opaque data tuples
+// is parsed correctly. Tuple's LTF is passed explicitly in constructor.
+TEST(OptionOpaqueDataTuples, unpack4_constructor_with_ltf) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 0x0B,                         // tuple length is 11
+        0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, // Hello<space>
+        0x77, 0x6F, 0x72, 0x6C, 0x64,       // world
+        0x00, 0x03,                         // tuple length is 3
+        0x66, 0x6F, 0x6F                    // foo
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    OptionOpaqueDataTuplesPtr data_tuple;
+    ASSERT_NO_THROW(
+        data_tuple = OptionOpaqueDataTuplesPtr(
+            new OptionOpaqueDataTuples(Option::V4,
+                                       143,
+                                       buf.begin(),
+                                       buf.end(),
+                                       OpaqueDataTuple::LENGTH_2_BYTES));
+    );
+    EXPECT_EQ(DHO_V4_SZTP_REDIRECT, data_tuple->getType());
+    ASSERT_EQ(2, data_tuple->getTuplesNum());
+    EXPECT_EQ("Hello world", data_tuple->getTuple(0).getText());
+    EXPECT_EQ("foo", data_tuple->getTuple(1).getText());
 }
 
 // This function checks that the DHCPv6 option with two opaque data tuples
