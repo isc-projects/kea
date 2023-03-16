@@ -1,3 +1,9 @@
+2112.	[doc]		fdupont
+	Added in the ARM security a section explaining how
+	to tune the OpenSSL configuration file for Kea service
+	accepting commands over HTTPS.
+	(Gitlab #2784)
+
 2111.	[bug]		fdupont
 	Fixed a bug which advertised re-assigned released leases
 	with zero lifetimes.
