@@ -1,3 +1,8 @@
+2135.	[build]		tomek
+	The CodeQL pipeline has been enabled on github. Developer's guide
+	updated with details.
+	(Gitlab #2760)
+
 2134.	[func]		andrei
 	Statistics total-nas and total-pds were increased from 64-bit
 	values to 128-bit values to accurately represent large pools.
