@@ -669,12 +669,12 @@ OptionDefinition::writeToBuffer(Option::Universe u,
         return;
     case OPT_TUPLE_TYPE:
     {
-        OpaqueDataTuple::LengthFieldType lft;
-        if (getCode() == DHO_V4_SZTP_REDIRECT) {
-            lft = OpaqueDataTuple::LENGTH_2_BYTES;
-        } else {
-            lft = OptionDataTypeUtil::getTupleLenFieldType(u);
-        }
+        // In case of V4_SZTP_REDIRECT option #143, bootstrap-server-list is formatted
+        // as a list of tuples "uri-length;URI" where uri-length is coded on 2 octets,
+        // which is not typical for V4 Universe.
+        OpaqueDataTuple::LengthFieldType lft = getCode() == DHO_V4_SZTP_REDIRECT
+                                                   ? OpaqueDataTuple::LENGTH_2_BYTES
+                                                   : OptionDataTypeUtil::getTupleLenFieldType(u);
         OptionDataTypeUtil::writeTuple(value, lft, buf);
         return;
     }

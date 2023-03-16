@@ -13,7 +13,7 @@
 #include <dhcp/option.h>
 #include <util/buffer.h>
 #include <boost/shared_ptr.hpp>
-#include "option_data_types.h"
+#include <dhcp/option_data_types.h>
 #include <stdint.h>
 
 namespace isc {
