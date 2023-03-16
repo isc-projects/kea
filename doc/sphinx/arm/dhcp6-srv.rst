@@ -42,6 +42,14 @@ the following command-line switches:
    comprehensive; certain checks are possible only when running the
    server.
 
+-  ``-T file`` - specifies a configuration file to be tested. ``kea-dhcp4``
+   loads it, checks it, and exits. It performs extra checks beside ``-t`` is
+   doing, like establising database connections (lease db, host db, CB db,
+   forensic logging db), hook libraries loading and configuration parsing, etc.
+   It does not open unix or TCP/UDP sockets, neither does it open or rotate
+   files, as all these actions could interfere with a running process on the
+   same machine.
+
 -  ``-v`` - displays the Kea version and exits.
 
 -  ``-V`` - displays the Kea extended version with additional parameters
@@ -51,6 +59,26 @@ the following command-line switches:
 -  ``-W`` - displays the Kea configuration report and exits. The report
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
+
+The ``config.report`` file may also be accessed directly, via the
+following command. The binary ``path`` may be found in the install
+directory or in the ``.libs`` subdirectory in the source tree. For
+example: ``kea/src/lib/process/.libs/``.
+
+::
+
+   strings path/libkea-process.so | sed -n 's/;;;; //p'
+
+::
+
+   strings path/libkea-process.a | sed -n 's/;;;; //p'
+
+The libcfgrpt.a library can also be used from the source tree with path:
+``src/lib/process/cfgrpt/.libs/``.
+
+::
+
+   strings path/libcfgrpt.a | sed -n 's/;;;; //p'
 
 On startup, the server detects available network interfaces and
 attempts to open UDP sockets on all interfaces listed in the

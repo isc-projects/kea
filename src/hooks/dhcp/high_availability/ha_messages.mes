@@ -186,7 +186,7 @@ is internal server error and a bug report should be created.
 
 % HA_DHCP6_START_SERVICE_FAILED failed to start DHCPv4 HA service in dhcp6_srv_configured callout: %1
 This error message is issued when an attempt to start High Availability service
-for the DHCPv4 server failed in the dhcp4_srv_configured callout. This
+for the DHCPv6 server failed in the dhcp6_srv_configured callout. This
 is internal server error and a bug report should be created.
 
 % HA_DHCP_DISABLE_COMMUNICATIONS_FAILED failed to send request to disable DHCP service of %1: %2
@@ -242,7 +242,7 @@ servers to resume the HA service.
 
 % HA_INIT_OK loading High Availability hooks library successful
 This informational message indicates that the High Availability hooks library
-has been loaded successfully.
+has been loaded successfully. Enjoy!
 
 % HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY partner is in the communication-recovery state unexpectedly
 This warning message is issued when a partner is in the communication-recovery

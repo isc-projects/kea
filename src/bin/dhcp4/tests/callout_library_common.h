@@ -33,6 +33,10 @@
 
 extern "C" {
 
+extern int (*do_load)(isc::hooks::LibraryHandle& handle);
+
+extern int (*do_unload)(isc::hooks::LibraryHandle& handle);
+
 /// @brief Append digit to marker file
 ///
 /// If the marker file does not exist, create it.  Then append the single
@@ -84,13 +88,23 @@ version() {
 }
 
 int
-load(isc::hooks::LibraryHandle&) {
-    return (appendDigit(LOAD_MARKER_FILE));
+load(isc::hooks::LibraryHandle& handle) {
+    int result = 0;
+    result = appendDigit(LOAD_MARKER_FILE);
+    if (result == 0 && do_load) {
+        result = do_load(handle);
+    }
+    return (result);
 }
 
 int
-unload() {
-    return (appendDigit(UNLOAD_MARKER_FILE));
+unload(isc::hooks::LibraryHandle& handle) {
+    int result = 0;
+    result = appendDigit(UNLOAD_MARKER_FILE);
+    if (result == 0 && do_unload) {
+        result = do_unload(handle);
+    }
+    return (result);
 }
 
 };

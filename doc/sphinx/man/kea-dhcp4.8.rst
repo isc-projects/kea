@@ -49,6 +49,14 @@ The arguments are as follows:
    service and control channel sockets are not opened, and hook
    libraries are not loaded.
 
+``-T config-file``
+   Checks the configuration file and reports the first error, if any.
+   It performs extra checks beside ``-t`` is doing, like establising database
+   connections (lease db, host db, CB db, forensic logging db), hook libraries
+   loading and configuration parsing, etc. It does not open unix or TCP/UDP
+   sockets, neither does it open or rotate files, as all these actions could
+   interfere with a running process on the same machine.
+
 ``-p server-port-number``
    Specifies the server port number (1-65535) on which the server listens. This is
    useful for testing purposes only.

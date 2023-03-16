@@ -1025,6 +1025,29 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // exception free.
     LibDHCP::commitRuntimeOptionDefs();
 
+    auto notify_libraries = ControlledDhcpv4Srv::finishConfigHookLibraries(config);
+    if (notify_libraries) {
+        return (notify_libraries);
+    }
+
+    // Apply multi threading settings.
+    // @note These settings are applied/updated only if no errors occur while
+    // applying the new configuration.
+    // @todo This should be fixed.
+    try {
+        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+    } catch (const std::exception& ex) {
+        err << "Error applying multi threading settings: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+    }
+
+    return (answer);
+}
+
+isc::data::ConstElementPtr
+ControlledDhcpv4Srv::finishConfigHookLibraries(isc::data::ConstElementPtr config) {
+    ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
     // This hook point notifies hooks libraries that the configuration of the
     // DHCPv4 server has completed. It provides the hook library with the pointer
     // to the common IO service object, new server configuration in the JSON
@@ -1053,27 +1076,11 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         }
     }
 
-    // Apply multi threading settings.
-    // @note These settings are applied/updated only if no errors occur while
-    // applying the new configuration.
-    // @todo This should be fixed.
-    try {
-        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
-    } catch (const std::exception& ex) {
-        err << "Error applying multi threading settings: "
-            << ex.what();
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
-    }
-
-    return (answer);
+    return (ConstElementPtr());
 }
 
 isc::data::ConstElementPtr
 ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
-
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
-        .arg(redactConfig(config)->str());
-
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 
     if (!srv) {
@@ -1081,6 +1088,9 @@ ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
             "Server object not initialized, can't process config.");
         return (no_srv);
     }
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
+        .arg(srv->redactConfig(config)->str());
 
     return (configureDhcp4Server(*srv, config, true));
 }

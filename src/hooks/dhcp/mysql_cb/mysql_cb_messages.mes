@@ -545,7 +545,7 @@ Debug message issued when triggered an action to retrieve type
 
 % MYSQL_CB_INIT_OK loading MYSQL CB hooks library successful
 This informational message indicates that the MySQL Configuration Backend hooks
-library has been loaded successfully.
+library has been loaded successfully. Enjoy!
 
 % MYSQL_CB_NO_TLS TLS was required but is not used
 This error message is issued when TLS for the connection was required but

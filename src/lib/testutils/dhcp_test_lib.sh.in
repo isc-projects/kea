@@ -41,6 +41,12 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 export KEA_LOCKFILE_DIR="@abs_top_builddir@/test_lockfile_dir"
 export KEA_PIDFILE_DIR="@abs_top_builddir@/test_pidfile_dir"
+KEA_DHCP4_LOAD_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/load_marker.txt"
+KEA_DHCP4_UNLOAD_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/unload_marker.txt"
+KEA_DHCP4_SRV_CONFIG_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/srv_config_marker_file.txt"
+KEA_DHCP6_LOAD_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/load_marker.txt"
+KEA_DHCP6_UNLOAD_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/unload_marker.txt"
+KEA_DHCP6_SRV_CONFIG_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/srv_config_marker_file.txt"
 
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
@@ -656,7 +662,13 @@ cleanup() {
         "${CFG_FILE-}" \
         "${D2_CFG_FILE-}" \
         "${DHCP4_CFG_FILE-}" \
+        "${KEA_DHCP4_LOAD_MARKER_FILE-}" \
+        "${KEA_DHCP4_UNLOAD_MARKER_FILE-}" \
+        "${KEA_DHCP4_SRV_CONFIG_MARKER_FILE-}" \
         "${DHCP6_CFG_FILE-}" \
+        "${KEA_DHCP6_LOAD_MARKER_FILE-}" \
+        "${KEA_DHCP6_UNLOAD_MARKER_FILE-}" \
+        "${KEA_DHCP6_SRV_CONFIG_MARKER_FILE-}" \
         "${KEACTRL_CFG_FILE-}" \
         "${KEA_LOCKFILE_DIR-}" \
         "${KEA_PIDFILE_DIR-}" \

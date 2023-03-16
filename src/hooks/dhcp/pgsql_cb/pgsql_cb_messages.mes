@@ -545,7 +545,7 @@ Debug message issued when triggered an action to retrieve type
 
 % PGSQL_CB_INIT_OK loading Postgres CB hooks library successful
 This informational message indicates that the Postgres Configuration Backend hooks
-library has been loaded successfully.
+library has been loaded successfully. Enjoy!
 
 % PGSQL_CB_NO_TLS_SUPPORT Attempt to configure TLS (unsupported for PostgreSQL): %1
 This error message is printed when TLS support was required in the Kea

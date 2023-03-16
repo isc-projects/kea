@@ -20,6 +20,10 @@ static const int LIBRARY_NUMBER = 1;
 // issues related to namespaces.
 extern "C" {
 
+int (*do_load)(isc::hooks::LibraryHandle& handle);
+
+int (*do_unload)(isc::hooks::LibraryHandle& handle);
+
 /// @brief This function is called to retrieve the multi-threading compatibility.
 ///
 /// @return 1 which means compatible with multi-threading.

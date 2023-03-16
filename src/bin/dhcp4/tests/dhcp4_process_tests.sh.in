@@ -24,6 +24,8 @@ LOG_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/test.log"
 LEASE_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/test_leases.csv"
 # Path to the Kea LFC application
 export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
+# Path to test hooks library
+HOOK_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/.libs/libco3.so"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
     \"Dhcp4\":
@@ -46,7 +48,7 @@ CONFIG="{
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
-       \"dhcp-ddns\": {
+        \"dhcp-ddns\": {
             \"enable-updates\": true,
             \"qualifying-suffix\": \"\"
         },
@@ -63,6 +65,7 @@ CONFIG="{
         ]
     }
 }"
+
 # Invalid configuration (syntax error) to check that Kea can check syntax.
 # This config has following errors:
 # - it should be interfaces-config/interfaces, not interfaces
@@ -168,6 +171,108 @@ CONFIG_INVALID="{
     }
 }"
 
+# Invalid configuration (hook explicitly fails to load) to check that performing
+# extra configuration checks detects the error.
+INVALID_CONFIG_HOOKS_LOAD="{
+    \"Dhcp4\":
+    {
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
+        \"multi-threading\": {
+          \"enable-multi-threading\": false
+        },
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": false,
+            \"lfc-interval\": 0
+        },
+        \"subnet4\": [
+        {
+            \"subnet\": \"10.0.0.0/8\",
+            \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
+        } ],
+        \"dhcp-ddns\": {
+            \"enable-updates\": true,
+            \"qualifying-suffix\": \"\"
+        },
+        \"hooks-libraries\": [
+        {
+            \"library\": \"$HOOK_PATH\",
+                \"parameters\": {
+                    \"mode\": \"fail-on-load\"
+            }
+        } ],
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp4\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# Invalid configuration (hook point returns error) to check that performing
+# extra configuration checks detects the error.
+INVALID_CONFIG_HOOKS_CALLOUT_FAIL="{
+    \"Dhcp4\":
+    {
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
+        \"multi-threading\": {
+          \"enable-multi-threading\": false
+        },
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": false,
+            \"lfc-interval\": 0
+        },
+        \"subnet4\": [
+        {
+            \"subnet\": \"10.0.0.0/8\",
+            \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
+        } ],
+        \"dhcp-ddns\": {
+            \"enable-updates\": true,
+            \"qualifying-suffix\": \"\"
+        },
+        \"hooks-libraries\": [
+        {
+            \"library\": \"$HOOK_PATH\",
+                \"parameters\": {
+                    \"mode\": \"fail-without-error\"
+            }
+        } ],
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp4\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
 # Set the location of the executable.
 bin="kea-dhcp4"
 bin_path="@abs_top_builddir@/src/bin/dhcp4"
@@ -184,15 +289,22 @@ syntax_check_test() {
     local test_name="${1}"
     local config="${2}"
     local expected_code="${3}"
+    local extra_check="${4}"
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
     # Create correct configuration file.
     create_config "${config}"
     # Check it
-    printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
-    run_command \
-        "${bin_path}/${bin}" -t "${CFG_FILE}"
+    if [ "${extra_check}" -eq 1 ]; then
+        printf "Running command %s.\n" "\"${bin_path}/${bin} -T ${CFG_FILE}\""
+        run_command \
+            "${bin_path}/${bin}" -T "${CFG_FILE}"
+    else
+        printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
+        run_command \
+            "${bin_path}/${bin}" -t "${CFG_FILE}"
+    fi
     if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
         printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
         clean_exit 1
@@ -471,7 +583,9 @@ shutdown_test "dhcpv4.sigint_test" 2
 version_test "dhcpv4.version"
 logger_vars_test "dhcpv4.variables"
 lfc_timer_test
-syntax_check_test "dhcpv4.syntax_check_success" "${CONFIG}" 0
-syntax_check_test "dhcpv4.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
-syntax_check_test "dhcpv4.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1
+syntax_check_test "dhcpv4.syntax_check_success" "${CONFIG}" 0 0
+syntax_check_test "dhcpv4.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1 0
+syntax_check_test "dhcpv4.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1 0
+syntax_check_test "dhcpv4.syntax_check_hooks_load_fail" "${INVALID_CONFIG_HOOKS_LOAD}" 1 1
+syntax_check_test "dhcpv4.syntax_check_hooks_callout_fail" "${INVALID_CONFIG_HOOKS_CALLOUT_FAIL}" 1 1
 password_redact_test "dhcpv4.password_redact_test" "$(kea_dhcp_config 4)" 0

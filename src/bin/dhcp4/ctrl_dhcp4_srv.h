@@ -105,21 +105,32 @@ public:
     /// As pointer to this method is used a callback in ASIO used in
     /// ModuleCCSession, it has to be static.
     ///
-    /// @param new_config textual representation of the new configuration
+    /// @param config textual representation of the new configuration
     ///
     /// @return status of the config update
     static isc::data::ConstElementPtr
-    processConfig(isc::data::ConstElementPtr new_config);
+    processConfig(isc::data::ConstElementPtr config);
 
     /// @brief Configuration checker
     ///
     /// This is a method for checking incoming configuration.
     ///
-    /// @param new_config JSON representation of the new configuration
+    /// @param config JSON representation of the new configuration
     ///
     /// @return status of the config check
-    isc::data::ConstElementPtr
-    checkConfig(isc::data::ConstElementPtr new_config);
+    static isc::data::ConstElementPtr
+    checkConfig(isc::data::ConstElementPtr config);
+
+    /// @brief Configuration checker for hook libraries
+    ///
+    /// This is a method for checking incoming configuration in the hooks
+    /// libraries. It calls dhcp4_srv_configured hook point for all hooks.
+    ///
+    /// @param config JSON representation of the new configuration
+    ///
+    /// @return status of the config check
+    static isc::data::ConstElementPtr
+    finishConfigHookLibraries(isc::data::ConstElementPtr config);
 
     /// @brief Returns pointer to the sole instance of Dhcpv4Srv
     ///

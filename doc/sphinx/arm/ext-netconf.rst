@@ -686,6 +686,26 @@ Starting and Stopping the NETCONF Agent
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
 
+The ``config.report`` file may also be accessed directly, via the
+following command. The binary ``path`` may be found in the install
+directory or in the ``.libs`` subdirectory in the source tree. For
+example: ``kea/src/lib/process/.libs/``.
+
+::
+
+   strings path/libkea-process.so | sed -n 's/;;;; //p'
+
+::
+
+   strings path/libkea-process.a | sed -n 's/;;;; //p'
+
+The libcfgrpt.a library can also be used from the source tree with path:
+``src/lib/process/cfgrpt/.libs/``.
+
+::
+
+   strings path/libcfgrpt.a | sed -n 's/;;;; //p'
+
 .. _operation-example:
 
 A Step-by-Step NETCONF Agent Operation Example

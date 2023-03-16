@@ -25,6 +25,23 @@ using namespace isc::hooks;
 // issues related to namespaces.
 extern "C" {
 
+int
+do_load_impl(LibraryHandle& handle) {
+    // Determine if this callout is configured to fail.
+    isc::dhcp::SrvConfigPtr config;
+    isc::data::ConstElementPtr const& parameters(handle.getParameters());
+    isc::data::ConstElementPtr mode_element(parameters ? parameters->get("mode") : 0);
+    std::string mode(mode_element ? mode_element->stringValue() : "");
+    if (mode == "fail-on-load") {
+        return (1);
+    }
+    return (0);
+}
+
+int (*do_load)(isc::hooks::LibraryHandle& handle) = do_load_impl;
+
+int (*do_unload)(isc::hooks::LibraryHandle& handle);
+
 /// @brief Callout which appends library number and provided arguments to
 /// the marker file for dhcp4_srv_configured callout.
 ///

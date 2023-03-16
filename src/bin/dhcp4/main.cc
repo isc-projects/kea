@@ -52,13 +52,15 @@ usage() {
          << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
-         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number] [-P number]" << endl;
+         << " -[v|V|W] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
     cerr << "  -c file: specify configuration file" << endl;
     cerr << "  -t file: check the configuration file syntax and exit" << endl;
+    cerr << "  -T file: check the configuration file doing hooks load and extra "
+         << "checks and exit" << endl;
     cerr << "  -p number: specify non-standard server port number 1-65535 "
          << "(useful for testing only)" << endl;
     cerr << "  -P number: specify non-standard client port number 1-65535 "
@@ -76,11 +78,12 @@ main(int argc, char* argv[]) {
     int client_port_number = 0;
     bool verbose_mode = false; // Should server be verbose?
     bool check_mode = false;   // Check syntax
+    bool load_hooks = false;   // Check hooks config
 
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -98,9 +101,16 @@ main(int argc, char* argv[]) {
             cout << isc::detail::getConfigReport() << endl;
             return (EXIT_SUCCESS);
 
+        case 'T':
+            load_hooks = true;
+            check_mode = true;
+            config_file = optarg;
+            break;
+
         case 't':
             check_mode = true;
-            // falls through
+            config_file = optarg;
+            break;
 
         case 'c': // config file
             config_file = optarg;
@@ -184,9 +194,11 @@ main(int argc, char* argv[]) {
             ControlledDhcpv4Srv server(0);
             ConstElementPtr answer;
 
+            server.setProcName(DHCP4_NAME);
+
             // Now we pass the Dhcp4 configuration to the server, but
             // tell it to check the configuration only (check_only = true)
-            answer = configureDhcp4Server(server, dhcp4, true);
+            answer = configureDhcp4Server(server, dhcp4, true, load_hooks);
 
             int status_code = 0;
             answer = isc::config::parseAnswer(status_code, answer);

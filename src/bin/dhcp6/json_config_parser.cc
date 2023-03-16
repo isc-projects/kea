@@ -11,9 +11,10 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <database/dbaccess_parser.h>
-#include <dhcp6/json_config_parser.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
@@ -867,7 +868,7 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
 
 isc::data::ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
-                     bool check_only) {
+                     bool check_only, bool extra_checks) {
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
                                                            "Can't parse NULL config");
@@ -877,21 +878,14 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_START)
         .arg(server.redactConfig(config_set)->str());
 
-    // Rollback informs whether error occurred and original data
-    // have to be restored to global storages.
-    bool rollback = false;
-
     auto answer = processDhcp6Config(config_set);
 
-    int status_code = 0;
+    int status_code = CONTROL_RESULT_SUCCESS;
     isc::config::parseAnswer(status_code, answer);
-    if (status_code != CONTROL_RESULT_SUCCESS) {
-        rollback = true;
-    }
 
     SrvConfigPtr srv_config;
 
-    if (!rollback) {
+    if (status_code == CONTROL_RESULT_SUCCESS) {
         if (!check_only) {
             string parameter_name;
             ElementPtr mutable_cfg;
@@ -932,20 +926,33 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
                           .arg(parameter_name).arg(ex.what());
                 answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-                // An error occurred, so make sure that we restore original data.
-                rollback = true;
+                status_code = CONTROL_RESULT_ERROR;
             } catch (...) {
                 // For things like bad_cast in boost::lexical_cast
                 LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(parameter_name);
                 answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                    " processing error");
-
-                // An error occurred, so make sure that we restore original data.
-                rollback = true;
+                status_code = CONTROL_RESULT_ERROR;
             }
         } else {
-            rollback = true;
+            if (extra_checks) {
+                // Re-open lease and host database with new parameters.
+                try {
+                    // Get the staging configuration.
+                    srv_config = CfgMgr::instance().getStagingCfg();
+
+                    CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+                    string params = "universe=6 persist=false";
+                    if (cfg_db->getExtendedInfoTablesEnabled()) {
+                        params += " extended-info-tables=true";
+                    }
+                    cfg_db->setAppendedParameters(params);
+                    cfg_db->createManagers();
+                } catch (const std::exception& ex) {
+                    answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+                    status_code = CONTROL_RESULT_ERROR;
+                }
+            }
         }
     }
 
@@ -953,12 +960,26 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // configuration. This will add created subnets and option values into
     // the server's configuration.
     // This operation should be exception safe but let's make sure.
-    if (!rollback) {
+    if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
         try {
 
             // Setup the command channel.
             configureCommandChannel();
+        } catch (const isc::Exception& ex) {
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+            status_code = CONTROL_RESULT_ERROR;
+        } catch (...) {
+            // For things like bad_cast in boost::lexical_cast
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+                                               " parsing error");
+            status_code = CONTROL_RESULT_ERROR;
+        }
+    }
 
+    if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
+        try {
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
@@ -966,7 +987,21 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             D2ClientConfigPtr cfg;
             cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
             CfgMgr::instance().setD2ClientConfig(cfg);
+        } catch (const isc::Exception& ex) {
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+            status_code = CONTROL_RESULT_ERROR;
+        } catch (...) {
+            // For things like bad_cast in boost::lexical_cast
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+                                               " parsing error");
+            status_code = CONTROL_RESULT_ERROR;
+        }
+    }
 
+    if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
+        try {
             // This occurs last as if it succeeds, there is no easy way to
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
@@ -978,35 +1013,32 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         } catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-            // An error occurred, so make sure to restore the original data.
-            rollback = true;
+            status_code = CONTROL_RESULT_ERROR;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                " parsing error");
-
-            // An error occurred, so make sure to restore the original data.
-            rollback = true;
+            status_code = CONTROL_RESULT_ERROR;
         }
     }
 
     // Moved from the commit block to add the config backend indication.
-    if (!rollback) {
+    if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
         try {
-
-            // If there are config backends, fetch and merge into staging config
-            server.getCBControl()->databaseConfigFetch(srv_config,
-                                                       CBControlDHCPv6::FetchMode::FETCH_ALL);
+            if (extra_checks) {
+                server.getCBControl()->databaseConfigConnect(srv_config);
+            } else {
+                // If there are config backends, fetch and merge into staging config
+                server.getCBControl()->databaseConfigFetch(srv_config,
+                                                           CBControlDHCPv6::FetchMode::FETCH_ALL);
+            }
         } catch (const isc::Exception& ex) {
             std::ostringstream err;
             err << "during update from config backend database: " << ex.what();
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-
-            // An error occurred, so make sure to restore the original data.
-            rollback = true;
+            status_code = CONTROL_RESULT_ERROR;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             std::ostringstream err;
@@ -1014,17 +1046,23 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 << "undefined configuration parsing error";
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-
-            // An error occurred, so make sure to restore the original data.
-            rollback = true;
+            status_code = CONTROL_RESULT_ERROR;
         }
     }
 
     // Rollback changes as the configuration parsing failed.
-    if (rollback) {
+    if (check_only || status_code != CONTROL_RESULT_SUCCESS) {
         // Revert to original configuration of runtime option definitions
         // in the libdhcp++.
         LibDHCP::revertRuntimeOptionDefs();
+
+        if (status_code == CONTROL_RESULT_SUCCESS && extra_checks) {
+            auto notify_libraries = ControlledDhcpv6Srv::finishConfigHookLibraries(config_set);
+            if (notify_libraries) {
+                return (notify_libraries);
+            }
+        }
+
         return (answer);
     }
 
