@@ -281,9 +281,10 @@ BaseNetworkParser::parseAllocatorParams(const data::ConstElementPtr& network_dat
                                         NetworkPtr& network) {
     if (network_data->contains("allocator")) {
         auto allocator_type = getString(network_data, "allocator");
-        if ((allocator_type != "iterative") && (allocator_type != "random")) {
+        if ((allocator_type != "iterative") && (allocator_type != "random") &&
+            (allocator_type != "flq")) {
             // Unsupported allocator type used.
-            isc_throw(DhcpConfigError, "supported allocators are: iterative and random");
+            isc_throw(DhcpConfigError, "supported allocators are: iterative, random and flq");
         }
         network->setAllocatorType(allocator_type);
     }
@@ -294,9 +295,10 @@ BaseNetworkParser::parsePdAllocatorParams(const data::ConstElementPtr& network_d
                                           Network6Ptr& network) {
     if (network_data->contains("pd-allocator")) {
         auto allocator_type = getString(network_data, "pd-allocator");
-        if ((allocator_type != "iterative") && (allocator_type != "random")) {
+        if ((allocator_type != "iterative") && (allocator_type != "random") &&
+            (allocator_type != "flq")) {
             // Unsupported allocator type used.
-            isc_throw(DhcpConfigError, "supported allocators are: iterative and random");
+            isc_throw(DhcpConfigError, "supported allocators are: iterative, random and flq");
         }
         network->setPdAllocatorType(allocator_type);
     }

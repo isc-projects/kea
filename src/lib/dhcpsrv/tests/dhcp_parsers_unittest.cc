@@ -18,6 +18,8 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/flq_allocator.h>
+#include <dhcpsrv/flq_allocation_state.h>
 #include <dhcpsrv/iterative_allocator.h>
 #include <dhcpsrv/iterative_allocation_state.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -3238,6 +3240,34 @@ TEST_F(ParseConfigTest, randomSubnetAllocator4) {
     EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
 }
 
+// This test verifies that Free Lease Queue allocator can be selected for
+// a subnet.
+TEST_F(ParseConfigTest, flqSubnetAllocator4) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"flq\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("flq", subnet->getAllocatorType().get());
+    auto allocator = subnet->getAllocator(Lease::TYPE_V4);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<FreeLeaseQueueAllocator>(allocator));
+}
+
 // This test verifies that unknown allocator is rejected.
 TEST_F(ParseConfigTest, invalidSubnetAllocator4) {
     std::string config =
@@ -3258,7 +3288,7 @@ TEST_F(ParseConfigTest, invalidSubnetAllocator4) {
     ASSERT_EQ(comment->getType(), Element::string);
     EXPECT_EQ(1, rcode);
     std::string expected = "Configuration parsing failed: ";
-    expected += "supported allocators are: iterative and random";
+    expected += "supported allocators are: iterative, random and flq";
     EXPECT_EQ(expected, comment->stringValue());
 }
 
@@ -3297,6 +3327,31 @@ TEST_F(ParseConfigTest, randomSubnetAllocator6) {
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
 }
 
+// This test verifies that FLQ allocator is not supported for
+// IPv6 address pools.
+TEST_F(ParseConfigTest, flqSubnetAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"flq\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "Free Lease Queue allocator is not supported for IPv6 address pools";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
 // This test verifies that unknown allocator is rejected.
 TEST_F(ParseConfigTest, invalidSubnetAllocator6) {
     std::string config =
@@ -3317,7 +3372,7 @@ TEST_F(ParseConfigTest, invalidSubnetAllocator6) {
     ASSERT_EQ(comment->getType(), Element::string);
     EXPECT_EQ(1, rcode);
     std::string expected = "Configuration parsing failed: ";
-    expected += "supported allocators are: iterative and random";
+    expected += "supported allocators are: iterative, random and flq";
     EXPECT_EQ(expected, comment->stringValue());
 }
 
@@ -3378,7 +3433,7 @@ TEST_F(ParseConfigTest, invalidSubnetPdAllocator6) {
     ASSERT_EQ(comment->getType(), Element::string);
     EXPECT_EQ(1, rcode);
     std::string expected = "Configuration parsing failed: ";
-    expected += "supported allocators are: iterative and random";
+    expected += "supported allocators are: iterative, random and flq";
     EXPECT_EQ(expected, comment->stringValue());
 }
 

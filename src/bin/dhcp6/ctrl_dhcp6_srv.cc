@@ -1102,6 +1102,16 @@ ControlledDhcpv6Srv::finishConfigHookLibraries(isc::data::ConstElementPtr config
     }
 
     return (ConstElementPtr());
+    // Initialize the allocators. If the user selected a Free Lease Queue Allocator
+    // for any of the subnets, the server will now populate free leases to the queue.
+    // It may take a while!
+    try {
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->initAllocatorsAfterConfigure();
+
+    } catch (const std::exception& ex) {
+        err << "Error initializing the lease allocators: " << ex.what();
+    }
+
 }
 
 isc::data::ConstElementPtr

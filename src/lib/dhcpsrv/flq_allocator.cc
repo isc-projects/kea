@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/addr_utilities.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/flq_allocator.h>
 #include <dhcpsrv/ip_range_permutation.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -179,6 +180,10 @@ FreeLeaseQueueAllocator::initAfterConfigure() {
 template<typename LeaseCollectionType>
 void
 FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& leases, const PoolCollection& pools) {
+    auto subnet = subnet_.lock();
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES)
+        .arg(subnet->toText());
+
     // Let's iterate over the lease queue and index them with the
     // unordered_set. Also, elminate the expired leases and those
     // in the expired-reclaimed state.
@@ -206,10 +211,16 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
             }
         }
     }
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE)
+        .arg(subnet->toText());
 }
 
 void
 FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collection& leases, const PoolCollection& pools) {
+    auto subnet = subnet_.lock();
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES)
+        .arg(subnet->toText());
+
     // Let's iterate over the lease queue and index them with the
     // unordered_set. Also, elminate the expired leases and those
     // in the expired-reclaimed state.
@@ -241,6 +252,8 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
             }
         }
     }
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE)
+        .arg(subnet->toText());
 }
 
 SubnetFreeLeaseQueueAllocationStatePtr

@@ -930,7 +930,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
         srv->getNetworkState()->reset(NetworkState::Origin::DB_CONNECTION);
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->initAllocatorsAfterConfigure();
+
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
@@ -1083,6 +1083,17 @@ ControlledDhcpv4Srv::finishConfigHookLibraries(isc::data::ConstElementPtr config
     }
 
     return (ConstElementPtr());
+    }
+
+    // Initialize the allocators. If the user selected a Free Lease Queue Allocator
+    // for any of the subnets, the server will now populate free leases to the queue.
+    // It may take a while!
+    try {
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->initAllocatorsAfterConfigure();
+
+    } catch (const std::exception& ex) {
+        err << "Error initializing the lease allocators: "
+            << ex.what();
 }
 
 isc::data::ConstElementPtr
