@@ -896,6 +896,14 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             string parameter_name;
             ElementPtr mutable_cfg;
 
+            // disable multi-threading (it will be applied by new configuration)
+            // this must be done in order to properly handle MT to ST transition
+            // when 'multi-threading' structure is missing from new config and
+            // to properly drop any task items stored in the thread pool which
+            // might reference some handles to loaded hooks, preventing them
+            // from being unloaded.
+            MultiThreadingMgr::instance().apply(false, 0, 0);
+
             // Close DHCP sockets and remove any existing timers.
             IfaceMgr::instance().closeSockets();
             TimerMgr::instance()->unregisterTimers();

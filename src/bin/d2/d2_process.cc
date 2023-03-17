@@ -232,7 +232,7 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
     // Set the base class's shutdown flag.
     setShutdownFlag(true);
     return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
-                                      "Shutdown initiated, type is: " +\
+                                      "Shutdown initiated, type is: " +
                                       type_str));
 }
 

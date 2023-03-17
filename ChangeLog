@@ -4,8 +4,8 @@
 	previously working configuration if the new configuration is
 	invalid. There are still cases that can leave the server in an
 	unrecoverable state, and such case is indicated by a FATAL
-	log message. The same functinality applies to the "config-set"
-	command available to the server through the control channel.
+	log message. The same logic applies to the "config-set" command
+	available to the server through the control channel.
 	(Gitlab #2722)
 
 2112.	[doc]		fdupont
