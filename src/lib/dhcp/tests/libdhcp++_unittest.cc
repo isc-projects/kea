@@ -2281,6 +2281,18 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     fqdn_buf.end(),
                                     typeid(OptionCustom));
 
+    // V4_SZTP_REDIRECT is using an array of tuples so let's create example data
+    const char opaque_tuple_data[] = {
+        0, 3, 1, 2, 3  // first 2 bytes are opaque data length, the rest is opaque data
+    };
+    std::vector<uint8_t> opaque_tuple_buf(opaque_tuple_data,
+                                          opaque_tuple_data + sizeof(opaque_tuple_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_SZTP_REDIRECT,
+                                    opaque_tuple_buf.begin(),
+                                    opaque_tuple_buf.end(),
+                                    typeid(OptionOpaqueDataTuples));
+
     std::vector<uint8_t> rdnss1_buf(begin, begin + 9);
     rdnss1_buf.insert(rdnss1_buf.end(), fqdn1_buf.begin(), fqdn1_buf.end());
 
@@ -2637,6 +2649,18 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_RELAY_SOURCE_PORT, begin, begin + 2,
                                     typeid(OptionInt<uint16_t>));
+
+    // V6_SZTP_REDIRECT is using an array of tuples so let's create example data
+    const char opaque_tuple_data[] = {
+        0, 3, 1, 2, 3  // first 2 bytes are opaque data length, the rest is opaque data
+    };
+    std::vector<uint8_t> opaque_tuple_buf(opaque_tuple_data,
+                                          opaque_tuple_data + sizeof(opaque_tuple_data));
+
+    LibDhcpTest::testStdOptionDefs6(D60_V6_SZTP_REDIRECT,
+                                    opaque_tuple_buf.begin(),
+                                    opaque_tuple_buf.end(),
+                                    typeid(OptionOpaqueDataTuples));
 
     LibDhcpTest::testStdOptionDefs6(D6O_IPV6_ADDRESS_ANDSF, begin, end,
                                     typeid(Option6AddrLst));
