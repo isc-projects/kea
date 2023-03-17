@@ -412,7 +412,7 @@ time. The structure of the command is as follows:
        "arguments":  {
            "<server>": {
            }
-        }
+       }
    }
 
 where <server> is the configuration element name for a given server, such
@@ -426,7 +426,7 @@ as "Dhcp4" or "Dhcp6". For example:
            "Dhcp6": {
                :
            }
-        }
+       }
    }
 
 The server's response contains a numeric code, ``result`` (0 for
@@ -553,7 +553,7 @@ configuration. The structure of the command is as follows:
        "arguments":  {
            "<server>": {
            }
-        }
+       }
    }
 
 where <server> is the configuration element name for a given server, such
@@ -567,7 +567,7 @@ as "Dhcp4" or "Dhcp6". For example:
            "Dhcp6": {
                :
            }
-        }
+       }
    }
 
 If the new configuration proves to be invalid, the server retains its

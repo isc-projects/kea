@@ -81,6 +81,14 @@ The server can be stopped using the ``kill`` command. When running in a
 console, the server can also be shut down by pressing Ctrl-c. Kea detects
 the key combination and shuts down gracefully.
 
+The reconfiguration of each Kea server is triggered by the SIGHUP signal.
+When a server receives the SIGHUP signal it rereads its configuration file and,
+if the new configuration is valid, uses the new configuration.
+If the new configuration proves to be invalid, the server retains its
+current configuration; however, in some cases a fatal error message is logged
+indicating that the server no longer provides any service: a working
+configuration must be loaded as soon as possible.
+
 .. _dhcp4-configuration:
 
 DHCPv4 Server Configuration
