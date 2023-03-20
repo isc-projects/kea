@@ -783,7 +783,7 @@ The ``lease4-del``, ``lease6-del`` Commands
 
 ``lease4-del`` and ``lease6-del`` can be used to delete a lease from the lease database.
 There are two types of parameters these commands support, similar to the
-``lease4-get``and ``lease6-get`` commands: (``address``) for both v4 and v6, (``subnet-id``,
+``lease4-get`` and ``lease6-get`` commands: (``address``) for both v4 and v6, (``subnet-id``,
 ``identifier-type``, ``identifier``) for v4, and (``subnet-id``, ``identifier-type``,
 ``identifier``, ``type``, ``IAID``) for v6. The first type of query is used when the
 address (either IPv4 or IPv6) is known, but the details of the lease are

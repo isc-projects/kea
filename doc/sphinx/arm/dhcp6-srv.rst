@@ -42,10 +42,11 @@ the following command-line switches:
    comprehensive; certain checks are possible only when running the
    server.
 
--  ``-T file`` - specifies a configuration file to be tested. ``kea-dhcp4``
-   loads it, checks it, and exits. It performs extra checks beside ``-t`` is
-   doing, like establising database connections (lease db, host db, CB db,
-   forensic logging db), hook libraries loading and configuration parsing, etc.
+-  ``-T file`` - specifies a configuration file to be tested. ``kea-dhcp6``
+   loads it, checks it, and exits. It performs extra checks beside what ``-t``
+   is doing, like establising database connections (lease backend,
+   host reservations backend, configuration backend and forensic logging
+   backend), hook libraries loading and configuration parsing, etc.
    It does not open unix or TCP/UDP sockets, neither does it open or rotate
    files, as all these actions could interfere with a running process on the
    same machine.
@@ -60,25 +61,22 @@ the following command-line switches:
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
 
-The ``config.report`` file may also be accessed directly, via the
-following command. The binary ``path`` may be found in the install
-directory or in the ``.libs`` subdirectory in the source tree. For
-example: ``kea/src/lib/process/.libs/``.
+   The contents of the ``config.report`` file may also be accessed by examining
+   certain libraries in the installation tree or in the source tree.
 
-::
+   .. code-block:: shell
 
-   strings path/libkea-process.so | sed -n 's/;;;; //p'
+    # from installation using libkea-process.so
+    $ strings ${prefix}/lib/libkea-process.so | sed -n 's/;;;; //p'
 
-::
+    # from sources using libkea-process.so
+    $ strings src/lib/process/.libs/libkea-process.so | sed -n 's/;;;; //p'
 
-   strings path/libkea-process.a | sed -n 's/;;;; //p'
+    # from sources using libkea-process.a
+    $ strings src/lib/process/.libs/libkea-process.a | sed -n 's/;;;; //p'
 
-The libcfgrpt.a library can also be used from the source tree with path:
-``src/lib/process/cfgrpt/.libs/``.
-
-::
-
-   strings path/libcfgrpt.a | sed -n 's/;;;; //p'
+    # from sources using libcfgrpt.a
+    $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
 On startup, the server detects available network interfaces and
 attempts to open UDP sockets on all interfaces listed in the
@@ -1100,8 +1098,8 @@ gives the range of addresses in the pool.
 It is possible to define more than one pool in a subnet; continuing the
 previous example, further assume that 2001:db8:1:0:5::/80 should also be
 managed by the server. It could be written as 2001:db8:1:0:5:: to
-2001:db8:1::5:ffff:ffff:ffff, but typing so many ``f``s is cumbersome. It
-can be expressed more simply as 2001:db8:1:0:5::/80. Both formats are
+2001:db8:1::5:ffff:ffff:ffff, but typing so many ``f`` characters is cumbersome.
+It can be expressed more simply as 2001:db8:1:0:5::/80. Both formats are
 supported by ``Dhcp6`` and can be mixed in the pool list. For example,
 the following pools could be defined:
 

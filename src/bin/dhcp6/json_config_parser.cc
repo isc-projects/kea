@@ -886,7 +886,45 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     SrvConfigPtr srv_config;
 
     if (status_code == CONTROL_RESULT_SUCCESS) {
-        if (!check_only) {
+        if (check_only) {
+            if (extra_checks) {
+                // Re-open lease and host database with new parameters.
+                try {
+                    // Get the staging configuration.
+                    srv_config = CfgMgr::instance().getStagingCfg();
+
+                    CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+                    string params = "universe=6 persist=false";
+                    if (cfg_db->getExtendedInfoTablesEnabled()) {
+                        params += " extended-info-tables=true";
+                    }
+                    cfg_db->setAppendedParameters(params);
+                    cfg_db->createManagers();
+                } catch (const std::exception& ex) {
+                    answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+                    status_code = CONTROL_RESULT_ERROR;
+                }
+
+                if (status_code == CONTROL_RESULT_SUCCESS) {
+                    std::ostringstream err;
+                    // Configure DHCP packet queueing
+                    try {
+                        data::ConstElementPtr qc;
+                        qc = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+                        if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, qc)) {
+                            LOG_INFO(dhcp6_logger, DHCP6_CONFIG_PACKET_QUEUE)
+                                     .arg(IfaceMgr::instance().getPacketQueue6()->getInfoStr());
+                        }
+
+                    } catch (const std::exception& ex) {
+                        err << "Error setting packet queue controls after server reconfiguration: "
+                            << ex.what();
+                        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
+                        status_code = CONTROL_RESULT_ERROR;
+                    }
+                }
+            }
+        } else {
             string parameter_name;
             ElementPtr mutable_cfg;
 
@@ -933,25 +971,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                    " processing error");
                 status_code = CONTROL_RESULT_ERROR;
-            }
-        } else {
-            if (extra_checks) {
-                // Re-open lease and host database with new parameters.
-                try {
-                    // Get the staging configuration.
-                    srv_config = CfgMgr::instance().getStagingCfg();
-
-                    CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
-                    string params = "universe=6 persist=false";
-                    if (cfg_db->getExtendedInfoTablesEnabled()) {
-                        params += " extended-info-tables=true";
-                    }
-                    cfg_db->setAppendedParameters(params);
-                    cfg_db->createManagers();
-                } catch (const std::exception& ex) {
-                    answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-                    status_code = CONTROL_RESULT_ERROR;
-                }
             }
         }
     }
@@ -1026,13 +1045,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // Moved from the commit block to add the config backend indication.
     if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
         try {
-            if (extra_checks) {
-                server.getCBControl()->databaseConfigConnect(srv_config);
-            } else {
-                // If there are config backends, fetch and merge into staging config
-                server.getCBControl()->databaseConfigFetch(srv_config,
-                                                           CBControlDHCPv6::FetchMode::FETCH_ALL);
-            }
+            // If there are config backends, fetch and merge into staging config
+            server.getCBControl()->databaseConfigFetch(srv_config,
+                                                       CBControlDHCPv6::FetchMode::FETCH_ALL);
         } catch (const isc::Exception& ex) {
             std::ostringstream err;
             err << "during update from config backend database: " << ex.what();

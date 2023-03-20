@@ -179,7 +179,7 @@ password these values can be read from files. The syntax was extended by:
 -  The ``directory`` authentication parameter which handles the common
    part of file paths. By default the value is the empty string.
 
--  The``password-file`` client parameter which with the ``directory``
+-  The ``password-file`` client parameter which with the ``directory``
    parameter specifies the path of a file where the password or when no
    user ID is given the whole basic HTTP authentication secret before
    encoding can be read.
@@ -388,25 +388,22 @@ Starting and Stopping the Control Agent
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
 
-The ``config.report`` file may also be accessed directly, via the
-following command. The binary ``path`` may be found in the install
-directory or in the ``.libs`` subdirectory in the source tree. For
-example: ``kea/src/lib/process/.libs/``.
+   The contents of the ``config.report`` file may also be accessed by examining
+   certain libraries in the installation tree or in the source tree.
 
-::
+   .. code-block:: shell
 
-   strings path/libkea-process.so | sed -n 's/;;;; //p'
+    # from installation using libkea-process.so
+    $ strings ${prefix}/lib/libkea-process.so | sed -n 's/;;;; //p'
 
-::
+    # from sources using libkea-process.so
+    $ strings src/lib/process/.libs/libkea-process.so | sed -n 's/;;;; //p'
 
-   strings path/libkea-process.a | sed -n 's/;;;; //p'
+    # from sources using libkea-process.a
+    $ strings src/lib/process/.libs/libkea-process.a | sed -n 's/;;;; //p'
 
-The libcfgrpt.a library can also be used from the source tree with path:
-``src/lib/process/cfgrpt/.libs/``.
-
-::
-
-   strings path/libcfgrpt.a | sed -n 's/;;;; //p'
+    # from sources using libcfgrpt.a
+    $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
 The CA is started by running its binary and specifying the configuration
 file it should use. For example:

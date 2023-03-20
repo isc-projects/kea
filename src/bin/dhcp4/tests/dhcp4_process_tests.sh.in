@@ -289,22 +289,16 @@ syntax_check_test() {
     local test_name="${1}"
     local config="${2}"
     local expected_code="${3}"
-    local extra_check="${4}"
+    local check_type="${4}"
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
     # Create correct configuration file.
     create_config "${config}"
     # Check it
-    if [ "${extra_check}" -eq 1 ]; then
-        printf "Running command %s.\n" "\"${bin_path}/${bin} -T ${CFG_FILE}\""
-        run_command \
-            "${bin_path}/${bin}" -T "${CFG_FILE}"
-    else
-        printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
-        run_command \
-            "${bin_path}/${bin}" -t "${CFG_FILE}"
-    fi
+    printf "Running command %s.\n" "\"${bin_path}/${bin} ${check_type} ${CFG_FILE}\""
+    run_command \
+        "${bin_path}/${bin}" "${check_type}" "${CFG_FILE}"
     if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
         printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
         clean_exit 1
@@ -583,9 +577,9 @@ shutdown_test "dhcpv4.sigint_test" 2
 version_test "dhcpv4.version"
 logger_vars_test "dhcpv4.variables"
 lfc_timer_test
-syntax_check_test "dhcpv4.syntax_check_success" "${CONFIG}" 0 0
-syntax_check_test "dhcpv4.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1 0
-syntax_check_test "dhcpv4.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1 0
-syntax_check_test "dhcpv4.syntax_check_hooks_load_fail" "${INVALID_CONFIG_HOOKS_LOAD}" 1 1
-syntax_check_test "dhcpv4.syntax_check_hooks_callout_fail" "${INVALID_CONFIG_HOOKS_CALLOUT_FAIL}" 1 1
+syntax_check_test "dhcpv4.syntax_check_success" "${CONFIG}" 0 -t
+syntax_check_test "dhcpv4.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1 -t
+syntax_check_test "dhcpv4.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1 -t
+syntax_check_test "dhcpv4.syntax_check_hooks_load_fail" "${INVALID_CONFIG_HOOKS_LOAD}" 1 -T
+syntax_check_test "dhcpv4.syntax_check_hooks_callout_fail" "${INVALID_CONFIG_HOOKS_CALLOUT_FAIL}" 1 -T
 password_redact_test "dhcpv4.password_redact_test" "$(kea_dhcp_config 4)" 0

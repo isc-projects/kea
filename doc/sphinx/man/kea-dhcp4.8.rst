@@ -51,8 +51,9 @@ The arguments are as follows:
 
 ``-T config-file``
    Checks the configuration file and reports the first error, if any.
-   It performs extra checks beside ``-t`` is doing, like establising database
-   connections (lease db, host db, CB db, forensic logging db), hook libraries
+   It performs extra checks beside what ``-t`` is doing, like establising
+   database connections (lease backend, host reservations backend, configuration
+   backend and forensic logging backend), hook libraries
    loading and configuration parsing, etc. It does not open unix or TCP/UDP
    sockets, neither does it open or rotate files, as all these actions could
    interfere with a running process on the same machine.
