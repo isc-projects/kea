@@ -12,6 +12,7 @@
 #include <dhcpsrv/ip_range_permutation.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
+#include <util/stopwatch.h>
 #include <unordered_set>
 
 using namespace isc::asiolink;
@@ -184,6 +185,8 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES)
         .arg(subnet->toText());
 
+    Stopwatch stopwatch;
+
     // Let's iterate over the lease queue and index them with the
     // unordered_set. Also, elminate the expired leases and those
     // in the expired-reclaimed state.
@@ -211,8 +214,12 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
             }
         }
     }
+
+    stopwatch.stop();
+
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE)
-        .arg(subnet->toText());
+        .arg(subnet->toText())
+        .arg(stopwatch.logFormatLastDuration());
 }
 
 void
@@ -220,6 +227,8 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
     auto subnet = subnet_.lock();
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES)
         .arg(subnet->toText());
+
+    Stopwatch stopwatch;
 
     // Let's iterate over the lease queue and index them with the
     // unordered_set. Also, elminate the expired leases and those
@@ -252,8 +261,12 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
             }
         }
     }
+
+    stopwatch.stop();
+
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE)
-        .arg(subnet->toText());
+        .arg(subnet->toText())
+        .arg(stopwatch.logFormatLastDuration());
 }
 
 SubnetFreeLeaseQueueAllocationStatePtr

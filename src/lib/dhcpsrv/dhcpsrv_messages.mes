@@ -86,18 +86,20 @@ This informational message is issued when the server begins building a queue
 of free address leases for the given subnet. It can take a considerable amount
 of time, depending on the size of the address pools.
 
-% DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE populating free address leases for the FLQ allocator in subnet %1 completed
+% DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE populating free address leases for the FLQ allocator in subnet %1 completed in %2
 This informational message is issued when the server ends building a queue
-of free address leases for a given subnet.
+of free address leases for a given subnet. The second argument logs the
+duration.
 
 % DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES populating free prefix leases for the FLQ allocator in subnet %1; it can take a while!
 This informational message is issued when the server begins building a queue
 of free leases for the given subnet. It can take a considerable amount of
 time, depending on the size of the delegated prefix pools.
 
-% DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE populating free prefix leases for the FLQ allocator in subnet %1 completed
+% DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE populating free prefix leases for the FLQ allocator in subnet %1 completed in %2
 This informational message is issued when the server ends building a queue
-of free prefix leases for a given subnet.
+of free prefix leases for a given subnet. The second argument logs the
+duration.
 
 % DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non-unique IP reservations in a subnet
 This warning message is issued when the server failed to use the new setting

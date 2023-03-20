@@ -296,6 +296,12 @@ TEST_F(StopwatchTest, logFormat) {
 
     duration = microseconds(2000);
     EXPECT_EQ("2.000 ms", StopwatchImpl::logFormat(duration));
+
+    duration = milliseconds(2100);
+    EXPECT_EQ("2.10 s", StopwatchImpl::logFormat(duration));
+
+    duration = milliseconds(3123);
+    EXPECT_EQ("3.12 s", StopwatchImpl::logFormat(duration));
 }
 
 } // end of anonymous namespace

@@ -12,7 +12,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <map>
+#include <unordered_map>
 #include <random>
 
 namespace isc {
@@ -128,7 +128,7 @@ private:
     /// Keeps the current permutation state. The state associates the
     /// swapped IP addresses or delegated prefixes with their positions in
     /// the permutation.
-    std::map<uint64_t, asiolink::IOAddress> state_;
+    std::unordered_map<uint64_t, asiolink::IOAddress> state_;
 
     /// Indicates if the addresses or delegated prefixes are exhausted.
     bool done_;

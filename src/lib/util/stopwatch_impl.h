@@ -77,10 +77,6 @@ public:
     /// @brief Returns the duration in the textual format which can be
     /// directly used in log messages.
     ///
-    /// @todo Currently this function returns the duration as fractional
-    /// milliseconds. We may come up with something more sophisticated
-    /// in the future.
-    ///
     /// @param duration Duration to be converted to the textual format.
     ///
     /// @return Converted value which can be used to log duration.
