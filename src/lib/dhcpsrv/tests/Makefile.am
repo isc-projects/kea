@@ -92,7 +92,6 @@ libdhcpsrv_unittests_SOURCES += duid_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += expiration_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += flq_allocation_state_unittest.cc
 libdhcpsrv_unittests_SOURCES += flq_allocator_unittest.cc
-libdhcpsrv_unittests_SOURCES += free_lease_queue_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_cache_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_data_source_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_mgr_unittest.cc

@@ -109,7 +109,6 @@ libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 libkea_dhcpsrv_la_SOURCES += flq_allocation_state.cc flq_allocation_state.h
 libkea_dhcpsrv_la_SOURCES += flq_allocator.cc flq_allocator.h
-libkea_dhcpsrv_la_SOURCES += free_lease_queue.h free_lease_queue.cc
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
 libkea_dhcpsrv_la_SOURCES += host_data_source_factory.cc host_data_source_factory.h
@@ -343,7 +342,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	db_type.h \
 	dhcp4o6_ipc.h \
 	dhcpsrv_log.h \
-	free_lease_queue.h \
+	flq_allocator.h \
 	host.h \
 	host_container.h \
 	host_data_source_factory.h \
