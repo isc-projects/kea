@@ -5624,25 +5624,7 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
 UPDATE schema_version
     SET version = '13', minor = '0';
 
--- This line concludes the schema upgrade to version 12.
-
--- This line starts the schema upgrade to version 14.
-
--- Add offer_lifetime column to v4 tables.
-ALTER TABLE dhcp4_shared_network
-    ADD COLUMN offer_lifetime BIGINT DEFAULT NULL;
-
-ALTER TABLE dhcp4_subnet
-    ADD COLUMN offer_lifetime BIGINT DEFAULT NULL;
-
-ALTER TABLE dhcp4_client_class
-    ADD COLUMN offer_lifetime BIGINT DEFAULT NULL;
-
--- Update the schema version number.
-UPDATE schema_version
-    SET version = '14', minor = '0';
-
--- This line concludes the schema upgrade to version 14.
+-- This line concludes the schema upgrade to version 13.
 
 -- This line starts the schema upgrade to version 14.
 

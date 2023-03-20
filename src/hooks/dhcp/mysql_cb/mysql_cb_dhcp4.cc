@@ -619,7 +619,7 @@ public:
                     last_subnet->setOfferLft(offer_lft);
                 }
 
-                // server_tag at 70.
+                // server_tag at 71.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -632,10 +632,10 @@ public:
                 }
             }
 
-            // Check for new server tags at 70.
-            if (!out_bindings[70]->amNull() &&
-                (last_tag != out_bindings[70]->getString())) {
-                last_tag = out_bindings[70]->getString();
+            // Check for new server tags at 71.
+            if (!out_bindings[71]->amNull() &&
+                (last_tag != out_bindings[71]->getString())) {
+                last_tag = out_bindings[71]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -2503,9 +2503,9 @@ public:
             }
 
             // server tag
-            if (!out_bindings[37]->amNull() &&
-                (last_tag != out_bindings[37]->getString())) {
-                last_tag = out_bindings[37]->getString();
+            if (!out_bindings[38]->amNull() &&
+                (last_tag != out_bindings[38]->getString())) {
+                last_tag = out_bindings[38]->getString();
                 if (!last_tag.empty() && !last_client_class->hasServerTag(ServerTag(last_tag))) {
                     last_client_class->setServerTag(last_tag);
                 }

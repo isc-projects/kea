@@ -519,9 +519,9 @@ public:
                 }
             }
 
-            // Check for new server tags at 70.
-            if (!worker.isColumnNull(70)) {
-                std::string new_tag = worker.getString(70);
+            // Check for new server tags at 71.
+            if (!worker.isColumnNull(71)) {
+                std::string new_tag = worker.getString(71);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_subnet->hasServerTag(ServerTag(new_tag))) {
                         last_subnet->setServerTag(new_tag);
@@ -2291,9 +2291,9 @@ public:
                 class_list.push_back(last_client_class);
             }
 
-            // Check for new server tags at 37.
-            if (!worker.isColumnNull(37)) {
-                std::string new_tag = worker.getString(37);
+            // Check for new server tags at 38.
+            if (!worker.isColumnNull(38)) {
+                std::string new_tag = worker.getString(38);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_client_class->hasServerTag(ServerTag(new_tag))) {
                         last_client_class->setServerTag(new_tag);
