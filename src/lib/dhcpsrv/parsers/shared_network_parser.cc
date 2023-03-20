@@ -388,6 +388,9 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         // Parse allocator params.
         parseAllocatorParams(shared_network_data, network);
+        if (network->getAllocatorType() == "flq") {
+            isc_throw(BadValue, "Free Lease Queue allocator is not supported for IPv6 address pools");
+        }
 
         // Parse prefix delegation allocator params.
         auto network6 = boost::dynamic_pointer_cast<Network6>(shared_network);

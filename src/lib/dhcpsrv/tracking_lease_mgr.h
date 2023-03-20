@@ -260,8 +260,6 @@ public:
     /// @brief Unregisters all callbacks.
     void unregisterAllCallbacks();
 
-protected:
-
     /// @brief Checks if any callbacks have been registered.
     ///
     /// It is a quick check to be performed by the backends whether or not
@@ -269,6 +267,8 @@ protected:
     ///
     /// @return true if any callbacks have been registered.
     bool hasCallbacks() const;
+
+protected:
 
     /// @brief Converts callback type to string for logging purposes.
     ///

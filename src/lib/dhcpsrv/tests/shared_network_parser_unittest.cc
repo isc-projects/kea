@@ -545,6 +545,24 @@ TEST_F(SharedNetwork4ParserTest, parseValidWithEqualRenewRebind) {
     ASSERT_TRUE(network);
 }
 
+// Test that FLQ allocator can be used for a shared network.
+TEST_F(SharedNetwork4ParserTest, parseFLQAllocator) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Basic configuration for shared network.
+    std::string config = "{ \"name\": \"lion\", \"allocator\": \"flq\" }";
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_EQ("flq", network->getAllocatorType().get());
+}
+
+
 /// @brief Test fixture class for SharedNetwork6Parser class.
 class SharedNetwork6ParserTest : public SharedNetworkParserTest {
 public:
@@ -1053,5 +1071,36 @@ TEST_F(SharedNetwork6ParserTest, iface) {
     EXPECT_FALSE(network->getIface().unspecified());
     EXPECT_EQ("eth1961", network->getIface().get());
 }
+
+// Test that the FLQ allocator can't be used for DHCPv6 address assignment.
+TEST_F(SharedNetwork6ParserTest, parseFLQAllocatorNA) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Basic configuration for shared network.
+    std::string config = "{ \"name\": \"lion\", \"allocator\": \"flq\" }";
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
+}
+
+// Test that FLQ allocator can be used for prefix delegation.
+TEST_F(SharedNetwork6ParserTest, parseFLQAllocatorPD) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Basic configuration for shared network.
+    std::string config = "{ \"name\": \"lion\", \"pd-allocator\": \"flq\" }";
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_EQ("flq", network->getPdAllocatorType().get());
+}
+
 
 } // end of anonymous namespace
