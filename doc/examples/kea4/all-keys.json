@@ -118,6 +118,13 @@
         // Parameters for triggering behaviors compatible with broken or
         // non-compliant clients, relays or other agents
         "compatibility": {
+            // Ignore DHCP Server Identifier option if set to true.
+            // Enabling this will cause Kea to accept any query even
+            // if the address in the option belongs to another server
+            // instead of dropping it. This config option defaults to
+            // false, as enabling it breaks RFC compliance.
+            "ignore-dhcp-server-identifier": false,
+
             // Ignore Relay Agent Information Link Selection suboption if set
             // to true. Enabling this will cause Kea use normal subnet
             // selection logic instead of attempting to use the subnet

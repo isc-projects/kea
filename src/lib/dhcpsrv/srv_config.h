@@ -991,6 +991,21 @@ public:
         return lenient_option_parsing_;
     }
 
+    /// @brief Set ignore DHCP Server Identifier compatibility flag.
+    ///
+    /// @param value the boolean value to be set when configuring DHCP
+    /// Server Identifier usage preferences.
+    void setIgnoreServerIdentifier(bool const value) {
+        ignore_dhcp_server_identifier_ = value;
+    }
+
+    /// @brief Get ignore DHCP Server Identifier compatibility flag.
+    ///
+    /// @return the configured value for DHCP Server Identifier usage preferences.
+    bool getIgnoreServerIdentifier() const {
+        return (ignore_dhcp_server_identifier_);
+    }
+
     /// @brief Set ignore RAI Link Selection compatibility flag.
     ///
     /// @param value the boolean value to be set when configuring RAI Link
@@ -1187,6 +1202,8 @@ private:
     //@{
     /// @brief Indicates whether lenient option parsing is enabled
     bool lenient_option_parsing_;
+    /// @brief Indicates whether DHCP server identifier option will be ignored
+    bool ignore_dhcp_server_identifier_;
     /// @brief Indicates whether RAI link-selection suboptions will be ignored
     bool ignore_rai_link_selection_;
     /// @brief Indicates whether exclude .0 .255 from subnets bigger than /24.

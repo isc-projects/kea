@@ -584,6 +584,9 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
                 if (kv.first == "lenient-option-parsing") {
                     CfgMgr::instance().getStagingCfg()->setLenientOptionParsing(
                         kv.second->boolValue());
+                } else if (kv.first == "ignore-dhcp-server-identifier") {
+                    CfgMgr::instance().getStagingCfg()->setIgnoreServerIdentifier(
+                        kv.second->boolValue());
                 } else if (kv.first == "ignore-rai-link-selection") {
                     CfgMgr::instance().getStagingCfg()->setIgnoreRAILinkSelection(
                         kv.second->boolValue());

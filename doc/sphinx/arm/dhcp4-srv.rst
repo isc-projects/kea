@@ -1521,8 +1521,8 @@ Parameter Request List option (or its equivalent for vendor options):
 
 
 In the example above, the ``domain-name-servers`` option respects the global
-``always-send`` flag and is always added to responses, but for subnet 
-``192.0.3.0/24``, the value is taken from the subnet-level option data 
+``always-send`` flag and is always added to responses, but for subnet
+``192.0.3.0/24``, the value is taken from the subnet-level option data
 specification.
 
 At the opposite of ``always-send`` if the ``never-send`` flag is set to
@@ -7637,6 +7637,24 @@ or in terms of the log message above, the tuple length ``y`` becomes ``x``.
         }
       }
     }
+
+Ignore DHCP Server Identifier
+-----------------------------
+
+With ``"ignore-dhcp-server-identifier": true``, the server does not check the
+address in the DHCP Server Identifier option i.e. whether a query is sent
+to this server or another one (and in the second case dropping the query).
+
+.. code-block:: json
+
+    {
+      "Dhcp4": {
+        "compatibility": {
+          "ignore-dhcp-server-identifier": true
+        }
+      }
+    }
+
 
 Ignore RAI Link Selection
 -------------------------

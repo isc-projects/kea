@@ -4036,6 +4036,12 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
         }
     }
 
+    // Skip address check if configured to ignore the server id.
+    SrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    if (cfg->getIgnoreServerIdentifier()) {
+        return (true);
+    }
+
     // This function iterates over all interfaces on which the
     // server is listening to find the one which has a socket bound
     // to the address carried in the server identifier option.
@@ -4066,8 +4072,6 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     /// overkill and is probably not needed. In fact, at this point we don't
     /// know the reservations for the client communicating with the server.
     /// We may revise some of these choices in the future.
-
-    SrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
 
     // Check if there is at least one subnet configured with this server
     // identifier.

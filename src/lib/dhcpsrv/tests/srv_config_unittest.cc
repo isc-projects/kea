@@ -315,28 +315,34 @@ TEST_F(SrvConfigTest, compatibility) {
 
     // Check that defaults are false.
     EXPECT_FALSE(conf.getLenientOptionParsing());
+    EXPECT_FALSE(conf.getIgnoreServerIdentifier());
     EXPECT_FALSE(conf.getIgnoreRAILinkSelection());
     EXPECT_FALSE(conf.getExcludeFirstLast24());
 
     // Check that they can be modified to true.
     conf.setLenientOptionParsing(true);
+    conf.setIgnoreServerIdentifier(true);
     conf.setIgnoreRAILinkSelection(true);
     conf.setExcludeFirstLast24(true);
     EXPECT_TRUE(conf.getLenientOptionParsing());
+    EXPECT_TRUE(conf.getIgnoreServerIdentifier());
     EXPECT_TRUE(conf.getIgnoreRAILinkSelection());
     EXPECT_TRUE(conf.getExcludeFirstLast24());
 
     // Check that default values can be restored.
     conf.setLenientOptionParsing(false);
+    conf.setIgnoreServerIdentifier(false);
     conf.setIgnoreRAILinkSelection(false);
     conf.setExcludeFirstLast24(false);
     EXPECT_FALSE(conf.getLenientOptionParsing());
+    EXPECT_FALSE(conf.getIgnoreServerIdentifier());
     EXPECT_FALSE(conf.getIgnoreRAILinkSelection());
     EXPECT_FALSE(conf.getExcludeFirstLast24());
 
     // Check the other constructor has the same default.
     SrvConfig conf1(1);
     EXPECT_FALSE(conf1.getLenientOptionParsing());
+    EXPECT_FALSE(conf.getIgnoreServerIdentifier());
     EXPECT_FALSE(conf1.getIgnoreRAILinkSelection());
     EXPECT_FALSE(conf1.getExcludeFirstLast24());
 }

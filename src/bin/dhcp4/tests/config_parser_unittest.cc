@@ -1701,6 +1701,7 @@ TEST_F(Dhcp4ParserTest, compatibility) {
         "\"renew-timer\": 1000, "
         "\"compatibility\": { "
         "    \"lenient-option-parsing\": true,"
+        "    \"ignore-dhcp-server-identifier\": true,"
         "    \"ignore-rai-link-selection\": true,"
         "    \"exclude-first-last-24\": true"
         "},"
@@ -1715,6 +1716,7 @@ TEST_F(Dhcp4ParserTest, compatibility) {
 
     // Check defaults: they should be false.
     EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getLenientOptionParsing());
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getIgnoreServerIdentifier());
     EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getIgnoreRAILinkSelection());
     EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getExcludeFirstLast24());
 
@@ -1724,6 +1726,7 @@ TEST_F(Dhcp4ParserTest, compatibility) {
     checkResult(status, 0);
 
     EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getLenientOptionParsing());
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getIgnoreServerIdentifier());
     EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getIgnoreRAILinkSelection());
     EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getExcludeFirstLast24());
 }
