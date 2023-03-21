@@ -7322,6 +7322,25 @@ when to use them.
    Allocator selection is currently not supported in the Kea Configuration
    Backend.
 
+Allocators Comparison
+---------------------
+
+In the table below, we briefly compare the supported allocators. The
+detailed allocators' descriptions are in further sections.
+
+.. table:: Comparison of the lease allocators supported by Kea DHCPv6
+
+   +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
+   | Allocator        | Low Utilization Performance | High Utilization Performance | Lease Randomization   | Startup/Configuration        | Memory Usage   |
+   +==================+=============================+==============================+=======================+==============================+================+
+   | Iterative        | very high                   | low                          | no                    | very fast                    | low            |
+   +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
+   | Random           | high                        | low                          | yes                   | very fast                    | high (varying) |
+   +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
+   | Free Lease Queue | high                        | high                         | yes                   | slow (depends on pool sizes) | high (varying) |
+   +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
+
+
 Iterative Allocator
 -------------------
 It is the default allocator used by the Kea DHCPv6 server. It remembers the
@@ -7355,3 +7374,79 @@ Moreover, it increases the server's memory consumption because it must remember
 randomized leases to avoid offering them repeatedly. Memory consumption grows
 with the number of offered leases. In other words, larger pools and more
 clients increase memory consumption by random allocation.
+
+Free Lease Queue Allocator (Prefix Delegation Only)
+---------------------------------------------------
+
+It is a sophisticated allocator whose use should be considered in the subnets
+with highly utilized delegated prefix pools. In such cases, it can take a
+considerable amount of time for the iterative and random allocator to find
+an available prefix because they have to repeatedly check if there is a
+valid lease for the prefix they will offer. The number of checks can be as
+high as the number of delegated prefixes in the subnet when the subnet pools
+are exhausted. It has a direct negative impact on the DHCP response time for
+each request.
+
+The Free Lease Queue (FLQ) allocator tracks lease allocations and de-allocations
+and maintains a running list of available delegated prefixes for each pool.
+It allows for picking an available lease in a constant time, regardless of
+the subnet pools' utilization. The allocator continuously updates the list of
+free leases by removing the allocated leases and adding the released or
+reclaimed ones.
+
+The following configuration snipet shows how to select the FLQ allocator
+for prefix delegation in a subnet:
+
+.. code-block:: json
+
+    {
+        "Dhcp6": {
+            "subnet6": [
+                {
+                    "id": 1,
+                    "subnet": "2001:db8:1::/64",
+                    "pd-allocator": "flq"
+                }
+            ]
+        }
+    }
+
+.. note::
+
+   The Free Lease Queue allocator can only be used for DHCPv6 prefix delegation.
+   An attempt to use this allocator for address assignment (with the ``allocator``
+   parameter) will cause the configuration error. The DHCPv6 address pools are
+   typically very large, and their utilization is low. In this case, the benefits
+   of using the FLQ allocator diminish, and the amount of time required for the
+   allocator to populate the free lease queue would cause the server to freeze
+   upon startup.
+
+
+There are several tradeoffs that the administrator should take into account
+before using this allocator for prefix delegation. Firstly, it can heavily
+impact the server's startup and reconfiguration time because the allocator
+has to populate the list of free leases for each subnet where it is used.
+The delays can be observed both during the configuration reload and when
+the subnets are created using the ``subnet_cmds`` hook. Secondly, the allocator
+increases the memory consumption to hold the list of free leases, and it
+is proportional to the total size of the pools for which this allocator is used.
+Finally, the lease reclamation must be enabled with a low value of the
+``reclaim-timer-wait-time`` parameter to ensure that the server frequently
+collects expired leases and makes them available for allocation via the
+allocator's free lease queue. Expired leases are not considered free by
+the allocator until they are reclaimed by the server. See
+:ref:`lease-reclamation` for more details about the lease reclamation process.
+
+Due to the above tradeoffs, we recommend that the FLQ allocator is selected
+consciously. The server puts no restrictions on the delegated prefix pool sizes
+used with the FLQ allocator. We recommend testing how long it takes for the
+server to load the pools before deploying the configuration using the FLQ
+allocator in production. We also recommend specifying some other allocator
+type in the global configuration settings and overriding this selection at
+the subnet or shared network level to use the FLQ allocator for selected
+subnets only. That way, when a new subnet is added without the allocator
+specification, the global setting is used, thus avoiding unnecessary impact
+on the server's startup time.
+
+Similarly to the random allocator, the FLQ allocator offers leases in
+random order, which makes it suitable for use with a shared lease database.
