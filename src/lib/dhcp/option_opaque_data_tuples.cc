@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,15 +15,23 @@ namespace isc {
 namespace dhcp {
 
 OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
-                                               const uint16_t type)
-    : Option(u, type) {
+                                               const uint16_t type,
+                                               OpaqueDataTuple::LengthFieldType length_field_type)
+    : Option(u, type), length_field_type_(length_field_type) {
+    if (length_field_type_ == OpaqueDataTuple::LENGTH_EMPTY) {
+        length_field_type_ = OptionDataTypeUtil::getTupleLenFieldType(u);
+    }
 }
 
 OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
                                                const uint16_t type,
                                                OptionBufferConstIter begin,
-                                               OptionBufferConstIter end)
-    : Option(u, type) {
+                                               OptionBufferConstIter end,
+                                               OpaqueDataTuple::LengthFieldType length_field_type)
+    : Option(u, type), length_field_type_(length_field_type) {
+    if (length_field_type_ == OpaqueDataTuple::LENGTH_EMPTY) {
+        length_field_type_ = OptionDataTypeUtil::getTupleLenFieldType(u);
+    }
     unpack(begin, end);
 }
 
@@ -56,7 +64,7 @@ OptionOpaqueDataTuples::unpack(OptionBufferConstIter begin,
     size_t offset = 0;
     while (offset < std::distance(begin, end)) {
         // Parse a tuple.
-        OpaqueDataTuple tuple(getLengthFieldType(), begin + offset, end);
+        OpaqueDataTuple tuple(length_field_type_, begin + offset, end);
         addTuple(tuple);
         // The tuple has been parsed correctly which implies that it is safe to
         // advance the offset by its total length.
@@ -66,7 +74,7 @@ OptionOpaqueDataTuples::unpack(OptionBufferConstIter begin,
 
 void
 OptionOpaqueDataTuples::addTuple(const OpaqueDataTuple& tuple) {
-    if (tuple.getLengthFieldType() != getLengthFieldType()) {
+    if (tuple.getLengthFieldType() != length_field_type_) {
         isc_throw(isc::BadValue, "attempted to add opaque data tuple having"
                   " invalid size of the length field "
                   << tuple.getDataFieldSize() << " to opaque data tuple option");
@@ -83,7 +91,7 @@ OptionOpaqueDataTuples::setTuple(const size_t at, const OpaqueDataTuple& tuple) 
                   " opaque data tuple option at position " << at << " which"
                   " is out of range");
 
-    } else if (tuple.getLengthFieldType() != getLengthFieldType()) {
+    } else if (tuple.getLengthFieldType() != length_field_type_) {
         isc_throw(isc::BadValue, "attempted to set opaque data tuple having"
                   " invalid size of the length field "
                   << tuple.getDataFieldSize() << " to opaque data tuple option");

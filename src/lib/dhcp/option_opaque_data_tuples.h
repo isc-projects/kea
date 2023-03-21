@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,12 +42,17 @@ public:
 
     /// @brief Constructor.
     ///
-    /// This constructor creates an instance of an OpaqueDataTuple that can
-    /// be used for an option such as DHCPv6 Bootfile Parameters (60).
+    /// This constructor creates an instance of an OptionOpaqueDataTuples
+    /// that can be used for an option such as DHCPv6 Bootfile Parameters (60).
     ///
     /// @param u universe (v4 or v6).
     /// @param type option type
-    OptionOpaqueDataTuples(Option::Universe u, const uint16_t type);
+    /// @param length_field_type Indicates a length of the field which holds
+    /// the size of the tuple. If not provided explicitly, it is evaluated
+    /// basing on Option's v4/v6 universe.
+    OptionOpaqueDataTuples(Option::Universe u,
+                           const uint16_t type,
+                           OpaqueDataTuple::LengthFieldType length_field_type = OpaqueDataTuple::LENGTH_EMPTY);
 
     /// @brief Constructor.
     ///
@@ -59,30 +64,13 @@ public:
     /// @param begin Iterator pointing to the beginning of the buffer holding an
     /// option.
     /// @param end Iterator pointing to the end of the buffer holding an option.
-    OptionOpaqueDataTuples(Option::Universe u, const uint16_t type,
-                           OptionBufferConstIter begin,
-                           OptionBufferConstIter end);
-
-    /// @brief Constructor.
-    ///
-    /// This constructor creates an instance of an OptionOpaqueDataTuples option
-    /// using a buffer with on-wire data. This constructor allows to explicitly set
-    /// tuple's length field type.
-    /// It may throw an exception if the @c unpack method throws.
-    ///
-    /// @param u universe (v4 or v6)
-    /// @param type option type
-    /// @param begin Iterator pointing to the beginning of the buffer holding an
-    /// option.
-    /// @param end Iterator pointing to the end of the buffer holding an option.
-    /// @param lenFieldType explict tuple's length field type
+    /// @param length_field_type Indicates a length of the field which holds
+    /// the size of the tuple. If not provided explicitly, it is evaluated
+    /// basing on Option's v4/v6 universe.
     OptionOpaqueDataTuples(Option::Universe u, const uint16_t type,
                            OptionBufferConstIter begin,
                            OptionBufferConstIter end,
-                           OpaqueDataTuple::LengthFieldType lenFieldType)
-        : Option(u, type), prefLenFieldType_(lenFieldType) {
-        unpack(begin, end);
-    }
+                           OpaqueDataTuple::LengthFieldType length_field_type = OpaqueDataTuple::LENGTH_EMPTY);
 
     /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
@@ -158,25 +146,8 @@ public:
     virtual std::string toText(int indent = 0) const;
 
 private:
-    /// @brief holds information of explicitly assigned tuple length field.
-    ///
-    /// Normally tuple length is evaluated basing on Option's universe.
-    /// But there may be cases when e.g. for v4 universe tuple length field
-    /// is 2 bytes long (e.g. DHCPv4 SZTP Redirect Option #143 bootstrap-server-list).
-    OpaqueDataTuple::LengthFieldType prefLenFieldType_ = OpaqueDataTuple::LENGTH_EMPTY;
-
-    /// @brief Returns the tuple length field type for the given universe.
-    ///
-    /// This function returns the length field type which should be used
-    /// for the opaque data tuples being added to this option.
-    ///
-    /// @return Tuple length field type for the universe this option belongs to.
-    OpaqueDataTuple::LengthFieldType getLengthFieldType() const {
-        if (prefLenFieldType_ != OpaqueDataTuple::LENGTH_EMPTY) {
-            return (prefLenFieldType_);
-        }
-        return (OptionDataTypeUtil::getTupleLenFieldType(getUniverse()));
-    }
+    /// @brief length of the field which holds he size of the tuple.
+    OpaqueDataTuple::LengthFieldType length_field_type_;
 
     /// @brief Returns minimal length of the option for the given universe.
     /// Currently this class is only used for a DHCPv6 option it may be expanded
