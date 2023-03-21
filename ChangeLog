@@ -1,3 +1,11 @@
+2117.	[func]		fdupont
+	Added a new ignore-dhcp-server-identifier DHCPv4 compatibility
+	flag which when set to true (default is false) makes any query
+	to be accepted even when the address in the DHCP Server
+	Identifier option belongs to another server (standard behavior
+	is to drop such queries).
+	(Gitlab #2785)
+
 2116.	[func]		piotrek
 	Added support of Secure Zero Touch Provisioning options as per
 	RFC8572. Kea can now handle DHCPv4 Option code #143 and DHCPv6

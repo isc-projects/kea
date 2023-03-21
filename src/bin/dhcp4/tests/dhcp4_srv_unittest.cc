@@ -2466,6 +2466,9 @@ TEST_F(Dhcpv4SrvTest, buildCfgOptionsList) {
 // identifiers used by a server is accepted,
 // - a message with a server identifier which doesn't match any server
 // identifier used by a server, is not accepted.
+// - a message with a server identifier which doesn't match any server
+// identifier used by a server is accepted when the DHCP Server Identifier
+// option is configured to be ignored.
 TEST_F(Dhcpv4SrvTest, acceptServerId) {
     configureServerIdentifier();
     IfaceMgrTestConfig test_config(true);
@@ -2489,6 +2492,15 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     OptionCustomPtr other_serverid(new OptionCustom(def, Option::V4));
     other_serverid->writeAddress(IOAddress("10.1.2.3"));
     pkt->addOption(other_serverid);
+    EXPECT_FALSE(srv.acceptServerId(pkt));
+
+    // Configure the DHCP Server Identifier to be ignored.
+    ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->getIgnoreServerIdentifier());
+    CfgMgr::instance().getCurrentCfg()->setIgnoreServerIdentifier(true);
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Restore the ignore-dhcp-server-identifier compatibility flag.
+    CfgMgr::instance().getCurrentCfg()->setIgnoreServerIdentifier(false);
     EXPECT_FALSE(srv.acceptServerId(pkt));
 
     // Remove the server identifier.
