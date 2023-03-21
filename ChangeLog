@@ -1,3 +1,9 @@
+2119.	[func]		tmark
+	Added a new parameter, ddns-ttl-percent, to kea-dhcp4
+	and kea-dhcp6, that may be used to calculate DNS TTL
+	as a simple percentage of the lease life time.
+	(Gitlab #225)
+
 2118.	[bug]		razvan
 	Fixed a bug which was changing the multi-threading settings when
 	running config-test command and the settings were different from

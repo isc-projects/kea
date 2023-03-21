@@ -3369,6 +3369,7 @@ DDNS-related parameters are split into two groups:
     -  ``ddns-qualifying-suffix``
     -  ``ddns-update-on-renew``
     -  ``ddns-use-conflict-resolution``
+    -  ``ddns-ttl-percent``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
 
@@ -3408,6 +3409,7 @@ The default configuration and values would appear as follows:
         "ddns-qualifying-suffix": "",
         "ddns-update-on-renew": false,
         "ddns-use-conflict-resolution": true,
+        "ddns-ttl-percent": 0.75,
         "hostname-char-set": "",
         "hostname-char-replacement": ""
         ...
@@ -3492,14 +3494,18 @@ conflict with existing entries owned by other DHCPv4 clients.
     reassigning either FQDNs or IP addresses. Doing so causes ``kea-dhcp4``
     to generate DNS removal requests to D2.
 
-.. note::
+The DNS entries Kea creates contain a value for TTL (time to live). Since
+Kea 1.9.3, ``kea-dhcp4`` calculates that value based on
+`RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
+which suggests that the TTL value be 1/3 of the lease's lifetime, with
+a minimum value of 10 minutes. In earlier versions, the server set the
+TTL value equal to the lease's valid lifetime.
 
-    The DNS entries Kea creates contain a value for TTL (time to live). Since
-    Kea 1.9.3, ``kea-dhcp4`` calculates that value based on
-    `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
-    which suggests that the TTL value be 1/3 of the lease's lifetime, with
-    a minimum value of 10 minutes. In earlier versions, the server set the TTL value
-    equal to the lease's valid lifetime.
+Kea 2.3.6 adds a new parameter, ``ddns-ttl-percent``. When specified
+it causes the TTL to be calculated as a simple percentage of the lease's
+life time, using the parameter's value as the percentage. It is specified
+as a decimal percent (e.g. .25, .75, 1.00) and may be specified at the
+global, shared-network, and subnet levels.  By default it is unspecified.
 
 .. _dhcpv4-d2-io-config:
 

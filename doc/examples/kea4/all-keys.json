@@ -776,7 +776,7 @@
                 "ddns-use-conflict-resolution": true,
 
                 // Shared network level value. See description at the global level.
-                "ddns-ttl-percent": 0.75,
+                "ddns-ttl-percent": 0.65,
 
                 // Shared network level value. See description at the global level.
                 "hostname-char-replacement": "x",
@@ -918,7 +918,7 @@
                         "ddns-use-conflict-resolution": true,
 
                         // Subnet level value. See description at the global level.
-                        "ddns-ttl-percent": 0.75,
+                        "ddns-ttl-percent": 0.55,
 
                         // Subnet level value. See description at the global level.
                         "hostname-char-replacement": "x",
