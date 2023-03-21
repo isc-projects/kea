@@ -2075,6 +2075,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"ignore-dhcp-server-identifier\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::COMPATIBILITY:
+        return isc::dhcp::Dhcp4Parser::make_IGNORE_DHCP_SERVER_ID(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ignore-dhcp-server-identifier", driver.loc_);
+    }
+}
+
 \"ignore-rai-link-selection\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::COMPATIBILITY:

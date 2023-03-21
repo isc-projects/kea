@@ -258,6 +258,7 @@ using namespace std;
 
   COMPATIBILITY "compatibility"
   LENIENT_OPTION_PARSING "lenient-option-parsing"
+  IGNORE_DHCP_SERVER_ID "ignore-dhcp-server-identifier"
   IGNORE_RAI_LINK_SEL "ignore-rai-link-selection"
   EXCLUDE_FIRST_LAST_24 "exclude-first-last-24"
 
@@ -2937,7 +2938,8 @@ compatibility_params: compatibility_param
                     ;
 
 compatibility_param: lenient_option_parsing
-                   | ignore-rai-link-selection
+                   | ignore_dhcp_server_identifier
+                   | ignore_rai_link_selection
                    | exclude_first_last_24
                    | unknown_map_entry
                    ;
@@ -2948,7 +2950,13 @@ lenient_option_parsing: LENIENT_OPTION_PARSING COLON BOOLEAN {
     ctx.stack_.back()->set("lenient-option-parsing", b);
 };
 
-ignore-rai-link-selection: IGNORE_RAI_LINK_SEL COLON BOOLEAN {
+ignore_dhcp_server_identifier: IGNORE_DHCP_SERVER_ID COLON BOOLEAN {
+    ctx.unique("ignore-dhcp-server-identifier", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ignore-dhcp-server-identifier", b);
+}
+
+ignore_rai_link_selection: IGNORE_RAI_LINK_SEL COLON BOOLEAN {
     ctx.unique("ignore-rai-link-selection", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ignore-rai-link-selection", b);
