@@ -51,6 +51,7 @@ CfgGlobals::nameToIndex = {
     { "ddns-use-conflict-resolution", DDNS_USE_CONFLICT_RESOLUTION },
     { "parked-packet-limit", PARKED_PACKET_LIMIT },
     { "allocator", ALLOCATOR },
+    { "ddns-ttl-percent", DDNS_TTL_PERCENT },
 
     // DHCPv4 specific parameters.
     { "echo-client-id", ECHO_CLIENT_ID },

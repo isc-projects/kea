@@ -30,6 +30,7 @@
 #include <cc/data.h>
 #include <cc/user_context.h>
 #include <cc/simple_parser.h>
+#include <util/optional.h>
 #include <util/strutil.h>
 
 #include <boost/shared_ptr.hpp>
@@ -148,6 +149,14 @@ public:
     ///
     /// @return True if conflict resolution should be used.
     bool getUseConflictResolution() const;
+
+    /// @brief Returns percent of lease lifetime to use for TTL
+    ///
+    /// This value, if greater than zero, is used to calculate the lease lifetime
+    /// passed to D2 in the NCR.  Otherwise the value is calculated per RFC 4702.
+    ///
+    /// @return True if conflict resolution should be used.
+    util::Optional<double> getTtlPercent() const;
 
     /// @brief Returns the subnet-id of the subnet associated with these parameters
     ///

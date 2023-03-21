@@ -236,6 +236,10 @@ Network::toElement() const {
         map->set("ddns-qualifying-suffix", Element::create(ddns_qualifying_suffix_));
     }
 
+    if (!ddns_ttl_percent_.unspecified()) {
+        map->set("ddns-ttl-percent", Element::create(ddns_ttl_percent_));
+    }
+
     if (!hostname_char_set_.unspecified()) {
         map->set("hostname-char-set", Element::create(hostname_char_set_));
     }

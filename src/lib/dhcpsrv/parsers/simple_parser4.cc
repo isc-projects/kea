@@ -101,6 +101,7 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "parked-packet-limit",              Element::integer },
     { "allocator",                        Element::string },
     { "offer-lifetime",                   Element::integer },
+    { "ddns-ttl-percent",                 Element::real },
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -256,7 +257,8 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "ddns-update-on-renew",           Element::boolean },
     { "ddns-use-conflict-resolution",   Element::boolean },
     { "allocator",                      Element::string },
-    { "offer-lifetime",                 Element::integer }
+    { "offer-lifetime",                 Element::integer },
+    { "ddns-ttl-percent",               Element::real },
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -376,7 +378,8 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "ddns-update-on-renew",           Element::boolean },
     { "ddns-use-conflict-resolution",   Element::boolean },
     { "allocator",                      Element::string },
-    { "offer-lifetime",                 Element::integer }
+    { "offer-lifetime",                 Element::integer },
+    { "ddns-ttl-percent",               Element::real },
 };
 
 /// @brief This table defines default values for each IPv4 shared network.

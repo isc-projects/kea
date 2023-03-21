@@ -1103,6 +1103,16 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"ddns-ttl-percent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_DDNS_TTL_PERCENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ddns_ttl-percent", driver.loc_);
+    }
+}
 
 \"subnet6\" {
     switch(driver.ctx_) {

@@ -219,7 +219,7 @@ public:
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
           cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
-          ddns_use_conflict_resolution_() {
+          ddns_use_conflict_resolution_(), ddns_ttl_percent_() {
     }
 
     /// @brief Virtual destructor.
@@ -661,6 +661,23 @@ public:
     /// @param ddns_qualifying_suffix New value to use.
     void setDdnsQualifyingSuffix(const util::Optional<std::string>& ddns_qualifying_suffix) {
         ddns_qualifying_suffix_ = ddns_qualifying_suffix;
+    }
+
+    /// @brief Returns ddns-ttl-percent
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<double>
+    getDdnsTtlPercent(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsTtlPercent,
+                                     ddns_ttl_percent_, inheritance,
+                                     CfgGlobals::DDNS_TTL_PERCENT));
+    }
+
+    /// @brief Sets new ddns-ttl-percent
+    ///
+    /// @param ddns_ttl_percent New value to use.
+    void setDdnsTtlPercent(const util::Optional<double>& ddns_ttl_percent) {
+        ddns_ttl_percent_ = ddns_ttl_percent;
     }
 
     /// @brief Return the char set regexp used to sanitize client hostnames.
@@ -1194,6 +1211,9 @@ protected:
 
     /// @brief Allocator used for IP address allocations.
     util::Optional<std::string> allocator_type_;
+
+    /// @brief Percentage of the lease lifetime to use for DNS TTL.
+    util::Optional<double> ddns_ttl_percent_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

@@ -270,6 +270,10 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
     if (network_data->contains("ddns-use-conflict-resolution")) {
         network->setDdnsUseConflictResolution(getBoolean(network_data, "ddns-use-conflict-resolution"));
     }
+
+    if (network_data->contains("ddns-ttl-percent")) {
+        network->setDdnsTtlPercent(getDouble(network_data, "ddns-ttl-percent"));
+    }
 }
 
 void

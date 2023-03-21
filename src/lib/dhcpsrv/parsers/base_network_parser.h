@@ -98,6 +98,8 @@ protected:
     /// - ddns-replace-client-name
     /// - ddns-generated-prefix
     /// - ddns-qualifying-suffix
+    /// - ddns-use-conflict-resolution
+    /// - ddns-ttl-percent
     ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.

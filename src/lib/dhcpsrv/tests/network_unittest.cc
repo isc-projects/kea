@@ -182,6 +182,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("ddns-use-conflict-resolution", Element::create(true));
     globals_->set("allocator", Element::create("random"));
     globals_->set("offer-lifetime", Element::create(45));
+    globals_->set("ddns-ttl-percent", Element::create(0.75));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -365,6 +366,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         testNetworkInheritance<TestNetwork4>(&Network4::getOfferLft,
                                              &Network4::setOfferLft,
                                              10, 45);
+    },
+    {
+        SCOPED_TRACE("ddns-ttl-percent");
+        testNetworkInheritance<TestNetwork4>(&Network::getDdnsTtlPercent,
+                                             &Network::setDdnsTtlPercent,
+                                             .33, .75);
     }
 }
 
@@ -387,6 +394,7 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("ddns-use-conflict-resolution", Element::create(true));
     globals_->set("allocator", Element::create("random"));
     globals_->set("pd-allocator", Element::create("random"));
+    globals_->set("ddns-ttl-percent", Element::create(0.55));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -476,6 +484,12 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network6::getPdAllocatorType,
                                              &Network6::setPdAllocatorType,
                                              "iterative", "random");
+    }
+    {
+        SCOPED_TRACE("ddns-ttl-percent");
+        testNetworkInheritance<TestNetwork6>(&Network::getDdnsTtlPercent,
+                                             &Network::setDdnsTtlPercent,
+                                             .22, .55);
     }
 
     // Interface-id requires special type of test.

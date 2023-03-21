@@ -132,6 +132,7 @@ using namespace std;
   DDNS_QUALIFYING_SUFFIX "ddns-qualifying-suffix"
   DDNS_UPDATE_ON_RENEW "ddns-update-on-renew"
   DDNS_USE_CONFLICT_RESOLUTION "ddns-use-conflict-resolution"
+  DDNS_TTL_PERCENT "ddns-ttl-percent"
   STORE_EXTENDED_INFO "store-extended-info"
   SUBNET4 "subnet4"
   SUBNET_4O6_INTERFACE "4o6-interface"
@@ -544,6 +545,7 @@ global_param: valid_lifetime
             | ddns_qualifying_suffix
             | ddns_update_on_renew
             | ddns_use_conflict_resolution
+            | ddns_ttl_percent
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
@@ -739,6 +741,12 @@ ddns_use_conflict_resolution: DDNS_USE_CONFLICT_RESOLUTION COLON BOOLEAN {
     ctx.unique("ddns-use-conflict-resolution", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ddns-use-conflict-resolution", b);
+};
+
+ddns_ttl_percent: DDNS_TTL_PERCENT COLON FLOAT {
+    ctx.unique("ddns-ttl-percent", ctx.loc2pos(@1));
+    ElementPtr ttl(new DoubleElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-ttl-percent", ttl);
 };
 
 hostname_char_set: HOSTNAME_CHAR_SET {
@@ -1565,6 +1573,7 @@ subnet4_param: valid_lifetime
              | ddns_qualifying_suffix
              | ddns_update_on_renew
              | ddns_use_conflict_resolution
+             | ddns_ttl_percent
              | hostname_char_set
              | hostname_char_replacement
              | store_extended_info
@@ -1753,6 +1762,7 @@ shared_network_param: name
                     | ddns_qualifying_suffix
                     | ddns_update_on_renew
                     | ddns_use_conflict_resolution
+                    | ddns_ttl_percent
                     | hostname_char_set
                     | hostname_char_replacement
                     | store_extended_info

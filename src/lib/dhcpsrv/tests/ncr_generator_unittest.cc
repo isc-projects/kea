@@ -686,6 +686,28 @@ TEST_F(NCRGenerator4Test, calculateDdnsTtl) {
 
     // A life time > 1800 should be 1/3 of the value.
     EXPECT_EQ(601, calculateDdnsTtl(1803));
+
+    // Now check permutations of values for ddns-ttl-percent.
+    util::Optional<double> ddns_ttl_percent;
+
+    // Unspecified percent should result in normal per RFC calculation.
+    EXPECT_EQ(601, calculateDdnsTtl(1803, ddns_ttl_percent));
+
+    // A percentage of zero should be ignored.
+    ddns_ttl_percent = 0.0;
+    EXPECT_EQ(601, calculateDdnsTtl(1803, ddns_ttl_percent));
+
+    // A percentage that results in near zero should be ignored.
+    ddns_ttl_percent = 0.000005;
+    EXPECT_EQ(601, calculateDdnsTtl(1803, ddns_ttl_percent));
+
+    // A large enough percentage should be used.
+    ddns_ttl_percent = 0.01;
+    EXPECT_EQ(18, calculateDdnsTtl(1803, ddns_ttl_percent));
+
+    // A large enough percentage should be used.
+    ddns_ttl_percent = 1.50;
+    EXPECT_EQ(2705, calculateDdnsTtl(1803, ddns_ttl_percent));
 }
 
 } // end of anonymous namespace

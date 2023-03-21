@@ -49,6 +49,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET6 = "DHCPSRV_CFGMGR
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS = "DHCPSRV_CFGMGR_USE_ADDRESS";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST = "DHCPSRV_CFGMGR_USE_UNICAST";
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB = "DHCPSRV_CLOSE_DB";
+extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL = "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL";
 extern const isc::log::MessageID DHCPSRV_DEPRECATED = "DHCPSRV_DEPRECATED";
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET = "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET";
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION = "DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION";
@@ -304,6 +305,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_USE_ADDRESS", "listening on address %1, on interface %2",
     "DHCPSRV_CFGMGR_USE_UNICAST", "listening on unicast address %1, on interface %2",
     "DHCPSRV_CLOSE_DB", "closing currently open %1 database",
+    "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL", "ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it",
     "DHCPSRV_DEPRECATED", "This configuration is using a deprecated feature: %1",
     "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET", "received bad DHCPv4o6 packet: %1",
     "DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION", "error handler for DHCP_DDNS IO generated an expected exception: %1",

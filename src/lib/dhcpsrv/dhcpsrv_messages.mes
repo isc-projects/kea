@@ -1279,3 +1279,13 @@ indicate an error in the source code, please submit a bug report.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
+
+% DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it
+A debug message issued when the DDNS TTL value calculated using the
+ddns-ttl-percent is zero.  Kea will ignore the value and calculate
+the DDNS TTL as though ddsn-ttl-percent were not specified. The
+value of ddns-ttl-percent and the lease lifetime are shown in
+the message details.
+
+
+

@@ -164,6 +164,10 @@
         // It may be specified at the global, shared-network and subnet levels.
         "ddns-use-conflict-resolution": true,
 
+        // When greater than 0.0, it is the percent of the lease's lifetime
+        // to use for the DNS TTL.
+        "ddns-ttl-percent": 0.75,
+
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 24 hours.
         "decline-probation-period": 86400,
@@ -713,6 +717,9 @@
                 "ddns-use-conflict-resolution": true,
 
                 // Shared network level value. See description at the global level.
+                "ddns-ttl-percent": 0.65,
+
+                // Shared network level value. See description at the global level.
                 "hostname-char-replacement": "x",
 
                 // Shared network level value. See description at the global level.
@@ -842,6 +849,9 @@
 
                         // Subnet level value. See description at the global level.
                         "ddns-use-conflict-resolution": true,
+
+                        // Subnet level value. See description at the global level.
+                        "ddns-ttl-percent": 0.55,
 
                         // Subnet level value. See description at the global level.
                         "hostname-char-replacement": "x",

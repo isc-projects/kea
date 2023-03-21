@@ -1031,5 +1031,14 @@ DdnsParams::getUseConflictResolution() const {
     return (subnet_->getDdnsUseConflictResolution().get());
 }
 
+util::Optional<double>
+DdnsParams::getTtlPercent() const {
+    if (!subnet_) {
+        return (util::Optional<double>());
+    }
+
+    return (subnet_->getDdnsTtlPercent());
+}
+
 } // namespace dhcp
 } // namespace isc

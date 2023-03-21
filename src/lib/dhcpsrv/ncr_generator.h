@@ -9,6 +9,7 @@
 
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/lease.h>
+#include <util/optional.h>
 
 namespace isc {
 namespace dhcp {
@@ -52,7 +53,9 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease)
 /// @param lease_life_time valid life time of the lease
 ///
 /// @return the calculated TTL.
-uint32_t calculateDdnsTtl(uint32_t lease_life_time);
+uint32_t calculateDdnsTtl(uint32_t lease_life_time,
+                          const util::Optional<double>& ddns_ttl_percent
+                          = util::Optional<double>());
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

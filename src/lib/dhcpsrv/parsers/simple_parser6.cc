@@ -101,7 +101,8 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
     { "allocator",                        Element::string },
-    { "pd-allocator",                     Element::string }
+    { "pd-allocator",                     Element::string },
+    { "ddns-ttl-percent",                 Element::real },
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -139,7 +140,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "ddns-use-conflict-resolution",     Element::boolean, "true" },
     { "parked-packet-limit",              Element::integer, "256" },
     { "allocator",                        Element::string,  "iterative" },
-    { "pd-allocator",                     Element::string,  "iterative" }
+    { "pd-allocator",                     Element::string,  "iterative" },
 };
 
 /// @brief This table defines all option definition parameters.
@@ -251,7 +252,8 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "ddns-update-on-renew",           Element::boolean },
     { "ddns-use-conflict-resolution",   Element::boolean },
     { "allocator",                      Element::string },
-    { "pd-allocator",                   Element::string }
+    { "pd-allocator",                   Element::string },
+    { "ddns-ttl-percent",               Element::real },
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -390,7 +392,8 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "ddns-update-on-renew",           Element::boolean },
     { "ddns-use-conflict-resolution",   Element::boolean },
     { "allocator",                      Element::string },
-    { "pd-allocator",                   Element::string }
+    { "pd-allocator",                   Element::string },
+    { "ddns-ttl-percent",               Element::real },
 };
 
 /// @brief This table defines default values for each IPv6 subnet.

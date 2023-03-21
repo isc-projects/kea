@@ -1453,6 +1453,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
     // Enable conflict resolution globally.
     conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(true));
+    // Configure TTL percent globally.
+    conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(20.0));
 
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
@@ -1492,6 +1494,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     subnet2->setHostnameCharSet("");
     subnet2->setDdnsUpdateOnRenew(true);
     subnet2->setDdnsUseConflictResolution(false);
+    subnet2->setDdnsTtlPercent(Optional<double>(40.0));
 
     // Get DDNS params for subnet1.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
@@ -1507,6 +1510,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_FALSE(params->getUpdateOnRenew());
     EXPECT_TRUE(params->getUseConflictResolution());
+    EXPECT_FALSE(params->getTtlPercent().unspecified());
+    EXPECT_EQ(20.0, params->getTtlPercent().get());
 
     // We inherited a non-blank hostname_char_set so we
     // should get a sanitizer instance.
@@ -1529,6 +1534,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_TRUE(params->getUpdateOnRenew());
     EXPECT_FALSE(params->getUseConflictResolution());
+    EXPECT_FALSE(params->getTtlPercent().unspecified());
+    EXPECT_EQ(40.0, params->getTtlPercent().get());
 
     // We have a blank hostname-char-set so we should not get a sanitizer instance.
     ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
@@ -1584,6 +1591,7 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
     conf.addConfiguredGlobal("ddns-update-on-renew", Element::create(true));
     conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(false));
+    conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(77.0));
 
     // Get DDNS params for no subnet.
     Subnet4Ptr subnet4;
@@ -1600,6 +1608,7 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
     EXPECT_TRUE(params->getHostnameCharReplacement().empty());
     EXPECT_FALSE(params->getUpdateOnRenew());
     EXPECT_TRUE(params->getUseConflictResolution());
+    EXPECT_TRUE(params->getTtlPercent().unspecified());
 }
 
 // Verifies that the scoped values for DDNS parameters can be fetched
@@ -1621,6 +1630,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
     // Enable conflict resolution globally.
     conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(true));
+    // Configure TTL percent globally.
+    conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(25.0));
 
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
@@ -1660,6 +1671,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     subnet2->setHostnameCharSet("");
     subnet2->setDdnsUpdateOnRenew(true);
     subnet2->setDdnsUseConflictResolution(false);
+    subnet2->setDdnsTtlPercent(Optional<double>(45.0));
 
     // Get DDNS params for subnet1.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
@@ -1675,6 +1687,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_FALSE(params->getUpdateOnRenew());
     EXPECT_TRUE(params->getUseConflictResolution());
+    EXPECT_FALSE(params->getTtlPercent().unspecified());
+    EXPECT_EQ(25.0, params->getTtlPercent().get());
 
     // We inherited a non-blank hostname_char_set so we
     // should get a sanitizer instance.
@@ -1697,6 +1711,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_TRUE(params->getUpdateOnRenew());
     EXPECT_FALSE(params->getUseConflictResolution());
+    EXPECT_FALSE(params->getTtlPercent().unspecified());
+    EXPECT_EQ(45.0, params->getTtlPercent().get());
 
     // We have a blank hostname-char-set so we should not get a sanitizer instance.
     ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
@@ -1752,6 +1768,7 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
     conf.addConfiguredGlobal("ddns-update-on-renew", Element::create(true));
     conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(false));
+    conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(77.0));
 
     // Get DDNS params for no subnet.
     Subnet6Ptr subnet6;
@@ -1766,6 +1783,9 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     EXPECT_TRUE(params->getQualifyingSuffix().empty());
     EXPECT_TRUE(params->getHostnameCharSet().empty());
     EXPECT_TRUE(params->getHostnameCharReplacement().empty());
+    EXPECT_FALSE(params->getUpdateOnRenew());
+    EXPECT_TRUE(params->getUseConflictResolution());
+    EXPECT_TRUE(params->getTtlPercent().unspecified());
 }
 
 // Verifies that adding multi threading settings works

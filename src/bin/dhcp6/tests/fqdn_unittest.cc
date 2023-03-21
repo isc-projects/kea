@@ -598,6 +598,8 @@ public:
     /// @param fqdn The expected string value of the FQDN, if blank the
     /// check is skipped
     /// @param exp_use_cr expected value of NCR::conflict_resolution_
+    /// @param ddns_ttl_percent expected value of ddns_ttl_percent used for
+    /// the NCR
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -605,7 +607,9 @@ public:
                                  const uint64_t expires,
                                  const uint16_t valid_lft,
                                  const std::string& fqdn = "",
-                                 const bool exp_use_cr = true) {
+                                 const bool exp_use_cr = true,
+                                 util::Optional<double> exp_ddns_ttl_percent
+                                 = util::Optional<double>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -618,7 +622,7 @@ public:
             EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
         }
 
-        uint32_t ttl = calculateDdnsTtl(valid_lft);
+        uint32_t ttl = calculateDdnsTtl(valid_lft, exp_ddns_ttl_percent);
         if (expires != 0) {
             EXPECT_EQ(expires + ttl, ncr->getLeaseExpiresOn());
         }
@@ -2139,5 +2143,40 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
         }
     }
 }
+
+// Verify that ddns-ttl-percent can be used to calculate
+// NCR lifetime.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
+    // Create Reply message with Client Id and Server id.
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
+
+    // Create an IA.
+    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+
+    // Use domain name in upper case. It should be converted to lower-case
+    // before DHCID is calculated. So, we should get the same result as if
+    // we typed domain name in lower-case.
+    Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                 "MYHOST.EXAMPLE.COM",
+                                                 Option6ClientFqdn::FULL);
+    answer->addOption(fqdn);
+
+    // Create NameChangeRequest for the first allocated address.
+    AllocEngine::ClientContext6 ctx;
+    subnet_->setDdnsUseConflictResolution(false);
+    subnet_->setDdnsTtlPercent(Optional<double>(0.10));
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    // Verify that NameChangeRequest is correct.
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1::1",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 500, "", false, subnet_->getDdnsTtlPercent());
+}
+
 
 } // end of anonymous namespace
