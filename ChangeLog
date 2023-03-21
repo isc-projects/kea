@@ -1,3 +1,10 @@
+2114.	[func]		razvan
+	Added the -T command line parameter to kea-dhcp4 and kea-dhcp6
+	for testing configuration files, similar to -t, but with extra
+	checks like checking database connections, checking hook
+	libraries parameters, and others.
+	(Gitlab #1671)
+
 2113.	[bug]		razvan
 	The reload functionality (by sending SIGHUP) of the kea-dhcp4
 	and kea-dhcp6 servers has been enhanced to rollback to
