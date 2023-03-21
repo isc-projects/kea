@@ -17,7 +17,8 @@ namespace isc {
 namespace hooks {
 
 void
-HooksConfig::verifyLibraries(const Element::Position& position) const {
+HooksConfig::verifyLibraries(const Element::Position& position,
+                             bool multi_threading_enabled) const {
     // The code used to follow this logic:
     //
     // Check if the list of libraries has changed.  If not, nothing is done
@@ -36,7 +37,8 @@ HooksConfig::verifyLibraries(const Element::Position& position) const {
 
     // Library list has changed, validate each of the libraries specified.
     vector<string> lib_names = isc::hooks::extractNames(libraries_);
-    vector<string> error_libs = HooksManager::validateLibraries(lib_names);
+    vector<string> error_libs = HooksManager::validateLibraries(lib_names,
+                                                                multi_threading_enabled);
     if (!error_libs.empty()) {
 
         // Construct the list of libraries in error for the message.
@@ -52,12 +54,12 @@ HooksConfig::verifyLibraries(const Element::Position& position) const {
 }
 
 void
-HooksConfig::loadLibraries() const {
+HooksConfig::loadLibraries(bool multi_threading_enabled) const {
     /// Commits the list of libraries to the configuration manager storage if
     /// the list of libraries has changed.
     /// @todo: Delete any stored CalloutHandles before reloading the
     /// libraries
-    if (!HooksManager::loadLibraries(libraries_)) {
+    if (!HooksManager::loadLibraries(libraries_, multi_threading_enabled)) {
         isc_throw(InvalidHooksLibraries,
                   "One or more hook libraries failed to load");
     }

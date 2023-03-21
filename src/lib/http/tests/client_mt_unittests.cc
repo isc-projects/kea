@@ -844,12 +844,6 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());
 
-    // Non-zero thread-pool-size means multi-threaded mode, should throw.
-    ASSERT_THROW_MSG(client.reset(new HttpClient(io_service_, 1)), InvalidOperation,
-                                  "HttpClient thread_pool_size must be zero"
-                                  "when Kea core multi-threading is disabled");
-    ASSERT_FALSE(client);
-
     // Enable Kea core multi-threading.
     MultiThreadingMgr::instance().setMode(true);
 

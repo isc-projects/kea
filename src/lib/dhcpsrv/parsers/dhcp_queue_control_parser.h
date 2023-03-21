@@ -34,19 +34,20 @@ namespace dhcp {
 class DHCPQueueControlParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief Constructor
-    ///
+    /// @brief Constructor.
     DHCPQueueControlParser(){};
 
     /// @brief Parses content of the "dhcp-queue-control".
     ///
     /// @param control_elem  MapElement containing the queue control values to
-    /// parse
+    /// parse.
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled.
     ///
     /// @return A copy of the of the input MapElement.
     ///
     /// @throw DhcpConfigError if any of the values are invalid.
-    data::ElementPtr parse(const isc::data::ConstElementPtr& control_elem);
+    data::ElementPtr parse(const isc::data::ConstElementPtr& control_elem,
+                           bool multi_threading_enabled);
 
 private:
 };

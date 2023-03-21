@@ -242,7 +242,12 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         HookLibsCollection loaded = HooksManager::getLibraryInfo();
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
-        bool status = HooksManager::loadLibraries(loaded);
+        bool multi_threading_enabled = true;
+        uint32_t thread_count = 0;
+        uint32_t queue_size = 0;
+        CfgMultiThreading::extract(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading(),
+                                   multi_threading_enabled, thread_count, queue_size);
+        bool status = HooksManager::loadLibraries(loaded, multi_threading_enabled);
         if (!status) {
             isc_throw(Unexpected, "Failed to reload hooks libraries"
                                   " (WARNING: libreload is deprecated).");

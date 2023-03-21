@@ -21,7 +21,8 @@ namespace isc {
 namespace dhcp {
 
 ElementPtr
-DHCPQueueControlParser::parse(const ConstElementPtr& control_elem) {
+DHCPQueueControlParser::parse(const ConstElementPtr& control_elem,
+                              bool multi_threading_enabled) {
     // All we really do here is verify that it is a map that
     // contains at least queue-type.  All other content depends
     // on the packet queue implementation of that type.
@@ -47,7 +48,7 @@ DHCPQueueControlParser::parse(const ConstElementPtr& control_elem) {
     ElementPtr result = data::copy(control_elem);
 
     // Currently not compatible with multi-threading.
-    if (MultiThreadingMgr::instance().getMode()) {
+    if (multi_threading_enabled) {
         // Silently disable it.
         result->set("enable-queue", Element::create(false));
     }

@@ -106,7 +106,7 @@ TEST_F(DHCPQueueControlParserTest, validContent) {
             // Parsing config into a queue control should succeed.
             DHCPQueueControlParser parser;
             try {
-                queue_control = parser.parse(config_elems);
+                queue_control = parser.parse(config_elems, false);
             } catch (const std::exception& ex) {
                 ADD_FAILURE() << "parser threw an exception: " << ex.what();
             }
@@ -170,7 +170,7 @@ TEST_F(DHCPQueueControlParserTest, invalidContent) {
 
             // Parsing config into a queue control should succeed.
             DHCPQueueControlParser parser;
-            EXPECT_THROW(parser.parse(config_elems), DhcpConfigError);
+            EXPECT_THROW(parser.parse(config_elems, false), DhcpConfigError);
         }
     }
 }
@@ -193,18 +193,16 @@ TEST_F(DHCPQueueControlParserTest, multiThreading) {
     // Parse config.
     DHCPQueueControlParser parser;
     ConstElementPtr queue_control;
-    ASSERT_FALSE(MultiThreadingMgr::instance().getMode());
-    ASSERT_NO_THROW(queue_control = parser.parse(config_elems))
+    ASSERT_NO_THROW(queue_control = parser.parse(config_elems, false))
         << "parse fails, test is broken";
+
     // Verify that queue is enabled.
     ASSERT_TRUE(queue_control);
     ASSERT_TRUE(queue_control->get("enable-queue"));
     EXPECT_EQ("true", queue_control->get("enable-queue")->str());
 
     // Retry with multi-threading.
-    MultiThreadingTest mt(true);
-    ASSERT_TRUE(MultiThreadingMgr::instance().getMode());
-    ASSERT_NO_THROW(queue_control = parser.parse(config_elems));
+    ASSERT_NO_THROW(queue_control = parser.parse(config_elems, true));
     ASSERT_TRUE(queue_control);
     ASSERT_TRUE(queue_control->get("enable-queue"));
     EXPECT_EQ("false", queue_control->get("enable-queue")->str());

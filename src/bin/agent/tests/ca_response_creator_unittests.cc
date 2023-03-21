@@ -359,7 +359,7 @@ TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
     ConstElementPtr auth_json;
     ASSERT_NO_THROW(auth_json = Element::fromJSON(auth_cfg));
     hooks_cfg.add(std::string(BASIC_AUTH_LIBRARY), auth_json);
-    ASSERT_NO_THROW(hooks_cfg.loadLibraries());
+    ASSERT_NO_THROW(hooks_cfg.loadLibraries(false));
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
@@ -434,7 +434,7 @@ TEST_F(CtrlAgentResponseCreatorTest, hookBasicAuth) {
     ConstElementPtr auth_json;
     ASSERT_NO_THROW(auth_json = Element::fromJSON(auth_cfg));
     hooks_cfg.add(std::string(BASIC_AUTH_LIBRARY), auth_json);
-    ASSERT_NO_THROW(hooks_cfg.loadLibraries());
+    ASSERT_NO_THROW(hooks_cfg.loadLibraries(false));
 
     HttpResponsePtr response;
     ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));

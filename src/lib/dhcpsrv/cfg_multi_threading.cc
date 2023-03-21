@@ -30,7 +30,7 @@ CfgMultiThreading::apply(ConstElementPtr value) {
 void
 CfgMultiThreading::extract(ConstElementPtr value, bool& enabled,
                            uint32_t& thread_count, uint32_t& queue_size) {
-    enabled = false;
+    enabled = true;
     thread_count = 0;
     queue_size = 0;
     if (value) {

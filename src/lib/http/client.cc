@@ -1949,14 +1949,6 @@ private:
 
 HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size,
                        bool defer_thread_start /* = false */) {
-    if (thread_pool_size > 0) {
-        if (!MultiThreadingMgr::instance().getMode()) {
-            isc_throw(InvalidOperation,
-                      "HttpClient thread_pool_size must be zero"
-                      "when Kea core multi-threading is disabled");
-        }
-    }
-
     impl_.reset(new HttpClientImpl(io_service, thread_pool_size,
                                    defer_thread_start));
 }

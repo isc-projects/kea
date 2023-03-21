@@ -286,7 +286,7 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
     if (hooks) {
         HooksLibrariesParser hooks_parser;
         hooks_parser.parse(libraries, hooks);
-        libraries.verifyLibraries(hooks->getPosition());
+        libraries.verifyLibraries(hooks->getPosition(), false);
     }
 
     // Attempt to create the new client config. This ought to fly as
@@ -302,7 +302,7 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
         // change causes problems when trying to roll back.
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
-        libraries.loadLibraries();
+        libraries.loadLibraries(false);
     }
 }
 

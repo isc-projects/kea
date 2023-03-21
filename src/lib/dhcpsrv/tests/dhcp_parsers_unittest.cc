@@ -91,7 +91,7 @@ TEST_F(DhcpParserTest, MacSources) {
     EXPECT_NO_THROW(parser.parse(sources, values));
 
     // Finally, check the sources that were configured
-    CfgMACSources configured_sources =  cfg->getMACSources().get();
+    CfgMACSources configured_sources = cfg->getMACSources().get();
     ASSERT_EQ(2, configured_sources.size());
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, configured_sources[0]);
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, configured_sources[1]);
@@ -230,11 +230,11 @@ public:
 
                 if (config_pair.first == "hooks-libraries") {
                     HooksLibrariesParser hook_parser;
-                    HooksConfig&  libraries =
+                    HooksConfig& libraries =
                         CfgMgr::instance().getStagingCfg()->getHooksConfig();
                     hook_parser.parse(libraries, config_pair.second);
-                    libraries.verifyLibraries(config_pair.second->getPosition());
-                    libraries.loadLibraries();
+                    libraries.verifyLibraries(config_pair.second->getPosition(), false);
+                    libraries.loadLibraries(false);
                     continue;
                 }
             }
@@ -512,8 +512,8 @@ const SimpleDefaults ParseConfigTest::OPTION4_DEF_DEFAULTS = {
 const SimpleDefaults ParseConfigTest::OPTION6_DEFAULTS = {
     { "space",        Element::string,  "dhcp6"},
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean,"false"},
-    { "never-send",   Element::boolean,"false"}
+    { "always-send",  Element::boolean, "false"},
+    { "never-send",   Element::boolean, "false"}
 };
 
 /// This table defines default values for options in DHCPv4
@@ -1697,7 +1697,7 @@ TEST_F(ParseConfigTest, hexOptionData) {
         "0C 00 03 01 C0 00 03 02", // spaces
         "0C:00:03:01:C0:00:03:02", // colons
         "0x0C000301C0000302",  // 0x
-        "C 0 3 1 C0 0 3 02",  // one or two digit octets
+        "C 0 3 1 C0 0 3 02",   // one or two digit octets
         "0x0c000301C0000302"   // upper or lower case digits
     };
 
@@ -2891,7 +2891,7 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, subnet->getDdnsReplaceClientNameMode().get());
 
     EXPECT_TRUE(subnet->getDdnsGeneratedPrefix().unspecified());
-    EXPECT_EQ("", subnet->getDdnsGeneratedPrefix().get());
+    EXPECT_TRUE(subnet->getDdnsGeneratedPrefix().empty());
 
     EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().unspecified());
     EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().empty());

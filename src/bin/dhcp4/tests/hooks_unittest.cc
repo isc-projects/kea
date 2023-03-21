@@ -3175,8 +3175,6 @@ TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
 
     ASSERT_NO_THROW(server_.reset(new NakedDhcpv4Srv()));
 
-    MultiThreadingMgr::instance().setMode(true);
-
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
@@ -3186,7 +3184,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
     libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_2),
                                   ConstElementPtr()));
 
-    ASSERT_FALSE(HooksManager::loadLibraries(libraries));
+    ASSERT_FALSE(HooksManager::loadLibraries(libraries, true));
 
     // The library is missing multi_threading_compatible function so loading
     // should fail
@@ -3197,7 +3195,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
     libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_3),
                                   ConstElementPtr()));
 
-    ASSERT_FALSE(HooksManager::loadLibraries(libraries));
+    ASSERT_FALSE(HooksManager::loadLibraries(libraries, true));
 
     // The library is not multi threading compatible so loading should fail
     EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));

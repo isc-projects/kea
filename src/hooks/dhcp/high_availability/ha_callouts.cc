@@ -51,6 +51,7 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_DHCP4_START_SERVICE_FAILED)
             .arg(ex.what());
+        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
         return (1);
     }
     return (0);
@@ -113,6 +114,7 @@ int dhcp6_srv_configured(CalloutHandle& handle) {
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_DHCP6_START_SERVICE_FAILED)
             .arg(ex.what());
+        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
         return (1);
     }
     return (0);

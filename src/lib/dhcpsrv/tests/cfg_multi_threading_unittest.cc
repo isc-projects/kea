@@ -77,7 +77,7 @@ TEST_F(CfgMultiThreadingTest, extract) {
     //check empty config
     ASSERT_NO_THROW(CfgMultiThreading::extract(param, enabled, thread_count,
                     queue_size));
-    EXPECT_EQ(enabled, false);
+    EXPECT_EQ(enabled, true);
     EXPECT_EQ(thread_count, 0);
     EXPECT_EQ(queue_size, 0);
 
@@ -87,7 +87,7 @@ TEST_F(CfgMultiThreadingTest, extract) {
     // check empty data
     ASSERT_NO_THROW(CfgMultiThreading::extract(ConstElementPtr(), enabled,
                     thread_count, queue_size));
-    EXPECT_EQ(enabled, false);
+    EXPECT_EQ(enabled, true);
     EXPECT_EQ(thread_count, 0);
     EXPECT_EQ(queue_size, 0);
 }

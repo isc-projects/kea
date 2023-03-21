@@ -18,6 +18,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
@@ -529,19 +530,25 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
             parser.parse(*srv_config, multi_threading);
         }
 
+        bool multi_threading_enabled = true;
+        uint32_t thread_count = 0;
+        uint32_t queue_size = 0;
+        CfgMultiThreading::extract(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading(),
+                                   multi_threading_enabled, thread_count, queue_size);
+
         /// depends on "multi-threading" being enabled, so it must come after.
         ConstElementPtr queue_control = mutable_cfg->get("dhcp-queue-control");
         if (queue_control) {
             parameter_name = "dhcp-queue-control";
             DHCPQueueControlParser parser;
-            srv_config->setDHCPQueueControl(parser.parse(queue_control));
+            srv_config->setDHCPQueueControl(parser.parse(queue_control, multi_threading_enabled));
         }
 
         /// depends on "multi-threading" being enabled, so it must come after.
         ConstElementPtr reservations_lookup_first = mutable_cfg->get("reservations-lookup-first");
         if (reservations_lookup_first) {
             parameter_name = "reservations-lookup-first";
-            if (MultiThreadingMgr::instance().getMode()) {
+            if (multi_threading_enabled) {
                 LOG_WARN(dhcp6_logger, DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED);
             }
             srv_config->setReservationsLookupFirst(reservations_lookup_first->boolValue());
@@ -595,7 +602,8 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
             HooksLibrariesParser hooks_parser;
             HooksConfig& libraries = srv_config->getHooksConfig();
             hooks_parser.parse(libraries, hooks_libraries);
-            libraries.verifyLibraries(hooks_libraries->getPosition());
+            libraries.verifyLibraries(hooks_libraries->getPosition(),
+                                      multi_threading_enabled);
         }
 
         // D2 client configuration.
@@ -1028,7 +1036,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             static_cast<void>(HooksManager::unloadLibraries());
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
-            libraries.loadLibraries();
+            bool multi_threading_enabled = true;
+            uint32_t thread_count = 0;
+            uint32_t queue_size = 0;
+            CfgMultiThreading::extract(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading(),
+                                       multi_threading_enabled, thread_count, queue_size);
+            libraries.loadLibraries(multi_threading_enabled);
         } catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());

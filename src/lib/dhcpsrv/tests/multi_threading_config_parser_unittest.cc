@@ -111,8 +111,6 @@ TEST_F(MultiThreadingConfigParserTest, validContent) {
             CfgMultiThreading::extract(multi_threading_config, enabled,
                                        thread_count, queue_size);
 
-            EXPECT_EQ(MultiThreadingMgr::instance().getMode(), enabled);
-
             EXPECT_TRUE(multi_threading_config->equals(*config_elems));
         }
     }

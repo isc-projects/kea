@@ -50,7 +50,7 @@ LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& lib
 // Load a set of libraries
 
 bool
-LibraryManagerCollection::loadLibraries() {
+LibraryManagerCollection::loadLibraries(bool multi_threading_enabled) {
 
     // There must be no libraries still in memory.
     if (!lib_managers_.empty()) {
@@ -90,7 +90,7 @@ LibraryManagerCollection::loadLibraries() {
         // libraries.  On failure, unload all currently loaded libraries,
         // leaving the object in the state it was in before loadLibraries was
         // called.
-        if (manager->loadLibrary()) {
+        if (manager->loadLibrary(multi_threading_enabled)) {
             lib_managers_.push_back(manager);
         } else {
             static_cast<void>(unloadLibraries());
@@ -136,12 +136,12 @@ LibraryManagerCollection::getLoadedLibraryCount() const {
 
 // Validate the libraries.
 std::vector<std::string>
-LibraryManagerCollection::validateLibraries(
-                          const std::vector<std::string>& libraries) {
+LibraryManagerCollection::validateLibraries(const std::vector<std::string>& libraries,
+                                            bool multi_threading_enabled) {
 
     std::vector<std::string> failures;
     for (size_t i = 0; i < libraries.size(); ++i) {
-        if (!LibraryManager::validateLibrary(libraries[i])) {
+        if (!LibraryManager::validateLibrary(libraries[i], multi_threading_enabled)) {
             failures.push_back(libraries[i]);
         }
     }

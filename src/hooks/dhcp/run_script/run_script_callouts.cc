@@ -95,6 +95,7 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
     } catch (const std::exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
             .arg(ex.what());
+        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
         return (1);
     }
     return (0);
@@ -112,6 +113,7 @@ int dhcp6_srv_configured(CalloutHandle& handle) {
     } catch (const std::exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
             .arg(ex.what());
+        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
         return (1);
     }
     return (0);
