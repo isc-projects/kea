@@ -197,6 +197,7 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
         }
     }
     // For each pool, check if the address is in the leases list.
+    size_t free_lease_count = 0;
     for (auto pool : pools) {
         // Create the pool permutation so the resulting lease queue is no
         // particular order.
@@ -213,11 +214,13 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
                 pool_state->addFreeLease(address);
             }
         }
+        free_lease_count += pool_state->getFreeLeaseCount();
     }
 
     stopwatch.stop();
 
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE)
+        .arg(free_lease_count)
         .arg(subnet->toText())
         .arg(stopwatch.logFormatLastDuration());
 }
@@ -240,6 +243,7 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
         }
     }
     // For each pool, check if the prefix is in the leases list.
+    size_t free_lease_count = 0;
     for (auto pool : pools) {
         auto pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
         if (!pool6) {
@@ -260,11 +264,13 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
                 pool_state->addFreeLease(prefix);
             }
         }
+        free_lease_count += pool_state->getFreeLeaseCount();
     }
 
     stopwatch.stop();
 
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE)
+        .arg(free_lease_count)
         .arg(subnet->toText())
         .arg(stopwatch.logFormatLastDuration());
 }

@@ -74,6 +74,14 @@ PoolFreeLeaseQueueAllocationState::offerFreeLease() {
     return (lease);
 }
 
+size_t
+PoolFreeLeaseQueueAllocationState::getFreeLeaseCount() const {
+    if (free_lease4_queue_) {
+        return (free_lease4_queue_->size());
+    }
+    return (free_lease6_queue_->size());
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
 

@@ -61,6 +61,11 @@ public:
     /// there are no free leases.
     asiolink::IOAddress offerFreeLease();
 
+    /// @brief Returns the current number of free leases in the queue.
+    ///
+    /// @return the number of free leases in the queue.
+    size_t getFreeLeaseCount() const;
+
 private:
 
     /// @brief A multi-index container holding free leases.
