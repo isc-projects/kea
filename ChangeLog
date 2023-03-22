@@ -1,3 +1,13 @@
+2121.	[func]		marcin
+	Implemented Free Lease Queue allocator. It can be used for
+	address assignment in DHCPv4 and prefix delegation in DHCPv6.
+	The allocator is suitable when the DHCP servers work with
+	nearly depleted pools, and the time to find an available
+	lease becomes long with other allocators. The new allocator,
+	however, slows down the server startup and reconfiguration.
+	It also uses more memory.
+	(Gitlab #2780, #2764)
+
 Kea 2.3.6 (development) released on March 29, 2023
 
 2120.	[build]		razvan
