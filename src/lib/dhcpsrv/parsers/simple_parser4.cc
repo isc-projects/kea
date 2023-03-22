@@ -143,7 +143,6 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-use-conflict-resolution",     Element::boolean, "true" },
     { "parked-packet-limit",              Element::integer, "256" },
     { "allocator",                        Element::string,  "iterative" },
-    { "offer-lifetime",                   Element::integer, "0" },
 };
 
 /// @brief This table defines all option definition parameters.
