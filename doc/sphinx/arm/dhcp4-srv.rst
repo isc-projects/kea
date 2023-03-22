@@ -4495,14 +4495,14 @@ By default, kea-dhcp4 does not allocate or store a lease when offering an addres
 to a client in response to a DHCPDISCOVER.  In general, kea-dhcp4, can fulfill client
 demands faster by deferring lease allocation and storage until it receives DHCPREQUESTs
 for them.  Release 2.3.6 added a new parameter to kea-dhcp4, ``offer-lifetime``, which
-(when not zero) instructs the server to allocate and persist a lease when generating an
+(when not zero) instructs the server to allocate and persist a lease when generating a
 DHCPOFFER and:
 
 - The persisted lease's lifetime is equal to ``offer-lifetime`` (in seconds).
 
 - The lifetime sent to the client in the DHCPOFFER via option 51 will still be based
-  on ``valid-lifetime``.  This avoids issues with clients that may reject offers lifetimes they
-  perceive as too short.
+  on ``valid-lifetime``.  This avoids issues with clients that may reject offers whose
+  lifetimes they perceive as too short.
 
 - DDNS updates are not performed. As with the default behavior, that occurs on DHCPREQUEST.
 
@@ -4517,7 +4517,7 @@ DHCPOFFER and:
 
 - In sites running multiple instances of kea-dhcp4 against a single, shared lease store, races
   for given address values are lost during DHCPDISCOVER processing rather than during DHCPREQUEST
-  processing.  Servers that lose the race for the address will simply not respond the client
+  processing.  Servers that lose the race for the address will simply not respond to the client
   rather than NAK them.  The client in turn will simply retry DHCPDISCOVER.  This should reduce
   the amount of traffic such conflicts incur.
 

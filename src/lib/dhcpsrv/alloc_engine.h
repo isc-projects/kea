@@ -1534,7 +1534,6 @@ public:
     /// If the client query is a BOOTP query or something other than
     /// DHCPDISCOVER, return 0.
     ///
-    /// @todo Classes not supported yet.
     /// Otherwise, the value will be selected from the first
     /// class matched to the query which defines it or from the subnet
     /// if none do. Classes are searched in the order they are assigned
