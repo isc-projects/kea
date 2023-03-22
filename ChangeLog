@@ -1,3 +1,8 @@
+2116.   [func]      piotrek
+    Added support of Secure Zero Touch Provisioning options as per
+    RFC8572. Kea can now handle DHCPv4 Option code #143 and DHCPv6
+    Option code #136.
+
 2115.	[func]		tmark
 	Added the parameter, offer-lifetime, to kea-dhcp4.  When
 	greater than zero, the server temporarily allocates and

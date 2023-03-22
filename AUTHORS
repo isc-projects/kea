@@ -31,7 +31,7 @@ Primary developers:
  - Slawek Figiel (documentation)
  - Dan Theisen (documentation, option handling, shell scripts)
  - Marcin Godzina (documentation, release engineering, testing)
- - Piotrek Zadroga (documentation)
+ - Piotrek Zadroga (documentation, options handling)
 
 Former developers who are no longer active:
  - Stephen Morris (Hooks, MySQL)

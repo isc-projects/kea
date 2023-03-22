@@ -55,10 +55,9 @@ OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf, bool check) const {
 void
 OptionOpaqueDataTuples::unpack(OptionBufferConstIter begin,
                                OptionBufferConstIter end) {
-    if (std::distance(begin, end) < getMinimalLength() - getHeaderLen()) {
-        isc_throw(OutOfRange, "parsed data tuples option data truncated to"
-                  " size " << std::distance(begin, end));
-    }
+    // We are skipping typical OutOfRange check for Option#unpack(begin, end),
+    // since empty collection of tuples is also a valid case where
+    // std::distance(begin, end) = 0
 
     // Start reading opaque data.
     size_t offset = 0;

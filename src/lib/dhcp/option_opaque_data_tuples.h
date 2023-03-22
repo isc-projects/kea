@@ -149,13 +149,6 @@ private:
     /// @brief length of the field which holds he size of the tuple.
     OpaqueDataTuple::LengthFieldType length_field_type_;
 
-    /// @brief Returns minimal length of the option for the given universe.
-    /// Currently this class is only used for a DHCPv6 option it may be expanded
-    /// for DHCPv4 in the future.
-    uint16_t getMinimalLength() const {
-        return (4);
-    }
-
     /// @brief Collection of opaque data tuples carried by the option.
     TuplesCollection tuples_;
 
