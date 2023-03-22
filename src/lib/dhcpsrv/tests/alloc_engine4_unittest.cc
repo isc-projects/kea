@@ -5711,6 +5711,81 @@ TEST_F(AllocEngine4Test, discoverOfferLft) {
     // Verify that we did not get a lease.
     lease = engine->allocateLease4(ctx2);
     ASSERT_FALSE(lease);
+
+    // Original client now does a DHCPREQUEST.  Make sure we get the
+    // previously offered lease with the proper valid lifetime.
+    AllocEngine::ClientContext4 ctx3(subnet_, clientid_, hwaddr_,
+                                     IOAddress("0.0.0.0"), true, true,
+                                     "one", false);
+    ctx3.query_.reset(new Pkt4(DHCPREQUEST, 1236));
+
+    lease = engine->allocateLease4(ctx3);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+    from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(subnet_->getValid(), from_mgr->valid_lft_);
+}
+
+// Verifies that when offer_lft is non-zero, that an existing lease is
+// whose remaining life is larger than offer_lft, is offered as is.
+TEST_F(AllocEngine4Test, discoverOfferLftUseExistingLease4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Get rid of the default test configuration.
+    cfg_mgr.clear();
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 300);
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+
+    // Set subnet's offer-lifetime to a non-zero, positive value.
+    uint32_t offer_lft = 100;
+    subnet_->setOfferLft(offer_lft);
+    ASSERT_EQ(offer_lft, subnet_->getOfferLft().get());
+
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    time_t now = time(NULL) - 5; // Allocated 5 seconds ago
+    Lease4Ptr lease(new Lease4(addr, hwaddr_, clientid_, 300, now,
+                               subnet_->getID(), true, true, "somehost"));
+
+    // Copy the lease, so as it can be compared with the old lease returned
+    // by the allocation engine.
+    Lease4 original_lease(*lease);
+
+    // Lease was assigned 5 seconds ago, its valid lifetime is 300, its
+    // remaining lifetime is still larger than offer_lft.
+    ASSERT_FALSE(lease->expired());
+    ASSERT_EQ(300, lease->valid_lft_);
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // CASE 1: Asking for any address
+    AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
+                                     IOAddress("0.0.0.0"), false, false,
+                                     "", true);
+    ctx1.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    lease = engine->allocateLease4(ctx1);
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+    EXPECT_EQ(300, lease->valid_lft_);
+
+    // We are reusing the existing lease, the old instance should be
+    // returned. The returned instance should be the same as the original
+    // lease.
+    ASSERT_TRUE(ctx1.old_lease_);
+    EXPECT_TRUE(original_lease == *ctx1.old_lease_);
+
+    // Check that the lease has not been modified by LeaseMgr.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_TRUE(original_lease == *from_mgr);
 }
 
 // Verifies that when offer_lft is non-zero, that an expired lease can
@@ -5778,6 +5853,20 @@ TEST_F(AllocEngine4Test, discoverOfferLftReuseExpiredLease4) {
     EXPECT_EQ(offer_lft, from_mgr->valid_lft_);
     EXPECT_FALSE(from_mgr->fqdn_fwd_);
     EXPECT_FALSE(from_mgr->fqdn_rev_);
+
+    // Client now does a DHCPREQUEST.  Make sure we get the
+    // previously offered lease with the proper valid lifetime.
+    AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
+                                     IOAddress("0.0.0.0"), true, true,
+                                     "one", false);
+    ctx2.query_.reset(new Pkt4(DHCPREQUEST, 1235));
+
+    lease = engine->allocateLease4(ctx2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+    from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(subnet_->getValid(), from_mgr->valid_lft_);
 }
 
 // Verifies that AllocEngine::getOfferLft(ctx4) returns the appropriate
@@ -5818,41 +5907,50 @@ TEST_F(AllocEngine4Test, getOfferLft4) {
         std::string desc_;                  // descriptive text for logging
         std::vector<std::string> classes_;  // class list of assigned classes
         uint32_t exp_valid_lft_;            // expected lease lifetime
+        bool exp_allocate_;                 // true if lease should be allocated
     };
+
+    bool exp_allocate = true;
 
     // Scenarios to test.
     std::vector<Scenario> scenarios = {
         {
             "BOOTP",
             { "BOOTP" },
-            Lease::INFINITY_LFT
+            Lease::INFINITY_LFT,
+            !exp_allocate,
         },
         {
             "no classes",
             {},
-            subnet_->getOfferLft()
+            subnet_->getOfferLft(),
+            exp_allocate
         },
         {
             "class unspecified",
             { "offer_lft_unspec" },
-            subnet_->getOfferLft()
+            subnet_->getOfferLft(),
+            exp_allocate
         },
         {
             "from last class",
             { "offer_lft_unspec", "offer_lft_one" },
-            offer_lft_one.get()
+            offer_lft_one.get(),
+            exp_allocate
         },
         {
             "from first class",
             { "offer_lft_two", "offer_lft_one" },
-            offer_lft_two.get()
+            offer_lft_two.get(),
+            exp_allocate
         },
         {
             // Useing class value of zero should override non-zero set at
             // subnet level, lease should have actual valid lft
             "zero from class",
             { "offer_lft_zero" },
-            subnet_->getValid()
+            subnet_->getValid(),
+            !exp_allocate
         }
     };
 
@@ -5873,6 +5971,15 @@ TEST_F(AllocEngine4Test, getOfferLft4) {
             Lease4Ptr lease = engine.allocateLease4(ctx);
             ASSERT_TRUE(lease);
             EXPECT_EQ(lease->valid_lft_, scenario.exp_valid_lft_);
+
+            Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+            if (!scenario.exp_allocate_) {
+                ASSERT_FALSE(from_mgr);
+            } else {
+                ASSERT_TRUE(from_mgr);
+                EXPECT_EQ(from_mgr->valid_lft_, scenario.exp_valid_lft_);
+                ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(from_mgr));
+            }
         }
     }
 }

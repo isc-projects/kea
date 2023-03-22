@@ -3628,6 +3628,14 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
                   ALLOC_ENGINE_V4_OFFER_EXISTING_LEASE)
             .arg(ctx.query_->getLabel());
 
+        // If offer-lifetime is shorter than the existing expiration, reset
+        // offer-lifetime to zero.  This allows us to simply return the
+        // existing lease without updating it in the lease store.
+        if ((ctx.offer_lft_) &&
+            (time(NULL) + ctx.offer_lft_ < client_lease->getExpirationTime())) {
+                ctx.offer_lft_ = 0;
+        }
+
         new_lease = renewLease4(client_lease, ctx);
     }
 

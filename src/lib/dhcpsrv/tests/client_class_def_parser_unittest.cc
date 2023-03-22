@@ -2075,7 +2075,7 @@ TEST_F(ClientClassDefParserTest, offerLft) {
     EXPECT_EQ(99, offer_lft);
 }
 
-// Test verifies that the parser rejects bogus server-hostname value.
+// Test verifies that the parser rejects bogus offer-lifetime value.
 TEST_F(ClientClassDefParserTest, offerLftInvalid) {
     std::string cfg_text =
         "{ \n"

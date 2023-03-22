@@ -2771,7 +2771,7 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
     // When receiving DHCPDISCOVER, no NCRs should be generated.
     EXPECT_EQ(0, d2_mgr_.getQueueSize());
 
-    // Make sure thed lease was created with offer-lifetime, fqdn flags = false,
+    // Make sure the lease was created with offer-lifetime, fqdn flags = false,
     // and the FQDN.
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
     ASSERT_TRUE(lease);
