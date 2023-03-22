@@ -372,7 +372,6 @@ ClientClassDictionary::addClass(const std::string& name,
     cclass->setValid(valid);
     cclass->setPreferred(preferred);
     cclass->setOfferLft(offer_lft);
-    std::cout << "OK WE called it!" << std::endl;
     addClass(cclass);
 }
 

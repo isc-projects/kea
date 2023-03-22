@@ -2111,9 +2111,9 @@ static const flex_int16_t yy_rule_linenum[224] =
      1867, 1877, 1887, 1897, 1907, 1917, 1927, 1937, 1946, 1955,
      1964, 1973, 1984, 1995, 2008, 2021, 2034, 2043, 2052, 2061,
 
-     2070, 2079, 2088, 2097, 2108, 2209, 2225, 2274, 2282, 2297,
-     2298, 2299, 2300, 2301, 2302, 2304, 2322, 2335, 2340, 2344,
-     2346, 2348, 2350
+     2070, 2079, 2088, 2097, 2109, 2210, 2226, 2275, 2283, 2298,
+     2299, 2300, 2301, 2302, 2303, 2305, 2323, 2336, 2341, 2345,
+     2347, 2349, 2351
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -5175,6 +5175,7 @@ YY_RULE_SETUP
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_OFFER_LFT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("offer-lifetime", driver.loc_);
@@ -5183,7 +5184,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-#line 2108 "dhcp4_lexer.ll"
+#line 2109 "dhcp4_lexer.ll"
 {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
@@ -5288,7 +5289,7 @@ YY_RULE_SETUP
 case 206:
 /* rule 206 can match eol */
 YY_RULE_SETUP
-#line 2209 "dhcp4_lexer.ll"
+#line 2210 "dhcp4_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     std::string raw(yytext+1);
@@ -5308,7 +5309,7 @@ YY_RULE_SETUP
 case 207:
 /* rule 207 can match eol */
 YY_RULE_SETUP
-#line 2225 "dhcp4_lexer.ll"
+#line 2226 "dhcp4_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     std::string raw(yytext+1);
@@ -5360,7 +5361,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-#line 2274 "dhcp4_lexer.ll"
+#line 2275 "dhcp4_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     std::string raw(yytext+1);
@@ -5371,7 +5372,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 2282 "dhcp4_lexer.ll"
+#line 2283 "dhcp4_lexer.ll"
 {
     /* Bad string with an open unicode escape at the end */
     std::string raw(yytext+1);
@@ -5389,37 +5390,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 2297 "dhcp4_lexer.ll"
+#line 2298 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 2298 "dhcp4_lexer.ll"
+#line 2299 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-#line 2299 "dhcp4_lexer.ll"
+#line 2300 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-#line 2300 "dhcp4_lexer.ll"
+#line 2301 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-#line 2301 "dhcp4_lexer.ll"
+#line 2302 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 215:
 YY_RULE_SETUP
-#line 2302 "dhcp4_lexer.ll"
+#line 2303 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 216:
 YY_RULE_SETUP
-#line 2304 "dhcp4_lexer.ll"
+#line 2305 "dhcp4_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -5440,7 +5441,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-#line 2322 "dhcp4_lexer.ll"
+#line 2323 "dhcp4_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -5456,7 +5457,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-#line 2335 "dhcp4_lexer.ll"
+#line 2336 "dhcp4_lexer.ll"
 {
     string tmp(yytext);
     return isc::dhcp::Dhcp4Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -5464,33 +5465,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 219:
 YY_RULE_SETUP
-#line 2340 "dhcp4_lexer.ll"
+#line 2341 "dhcp4_lexer.ll"
 {
    return isc::dhcp::Dhcp4Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 220:
 YY_RULE_SETUP
-#line 2344 "dhcp4_lexer.ll"
+#line 2345 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 221:
 YY_RULE_SETUP
-#line 2346 "dhcp4_lexer.ll"
+#line 2347 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 222:
 YY_RULE_SETUP
-#line 2348 "dhcp4_lexer.ll"
+#line 2349 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 223:
 YY_RULE_SETUP
-#line 2350 "dhcp4_lexer.ll"
+#line 2351 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 2352 "dhcp4_lexer.ll"
+#line 2353 "dhcp4_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp4Parser::make_END(driver.loc_);
@@ -5516,10 +5517,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 224:
 YY_RULE_SETUP
-#line 2375 "dhcp4_lexer.ll"
+#line 2376 "dhcp4_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 5523 "dhcp4_lexer.cc"
+#line 5524 "dhcp4_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -6624,7 +6625,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 2375 "dhcp4_lexer.ll"
+#line 2376 "dhcp4_lexer.ll"
 
 
 using namespace isc::dhcp;

@@ -1015,7 +1015,7 @@ namespace isc { namespace dhcp {
         S_early_global_reservations_lookup = 294, // early_global_reservations_lookup
         S_ip_reservations_unique = 295,          // ip_reservations_unique
         S_reservations_lookup_first = 296,       // reservations_lookup_first
-        S_offer_lft = 297,                       // offer_lft
+        S_offer_lifetime = 297,                  // offer_lifetime
         S_interfaces_config = 298,               // interfaces_config
         S_299_27 = 299,                          // $@27
         S_interfaces_config_params = 300,        // interfaces_config_params
@@ -5340,7 +5340,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 1313,     ///< Last index in yytable_.
+      yylast_ = 1315,     ///< Last index in yytable_.
       yynnts_ = 435,  ///< Number of nonterminal symbols.
       yyfinal_ = 28 ///< Termination state number.
     };

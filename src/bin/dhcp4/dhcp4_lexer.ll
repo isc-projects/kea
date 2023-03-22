@@ -2098,6 +2098,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_OFFER_LFT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("offer-lifetime", driver.loc_);

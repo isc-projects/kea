@@ -2522,7 +2522,7 @@ public:
                 }
             }
 
-            // Parse client class specific option from 25 to 36.
+            // Parse client class specific option from 25 to 37.
             if (!out_bindings[25]->amNull() &&
                 (last_option_id < out_bindings[25]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[25]->getInteger<uint64_t>();

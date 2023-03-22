@@ -2314,7 +2314,7 @@ public:
                 }
             }
 
-            // Parse client class specific option from 25 to 36.
+            // Parse client class specific option from 25 to 37.
             if (!worker.isColumnNull(25) &&
                 (last_option_id < worker.getBigInt(25))) {
                 last_option_id = worker.getBigInt(25);

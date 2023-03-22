@@ -553,7 +553,7 @@ global_param: valid_lifetime
             | compatibility
             | parked_packet_limit
             | allocator
-            | offer_lft
+            | offer_lifetime
             | unknown_map_entry
             ;
 
@@ -794,10 +794,10 @@ reservations_lookup_first: RESERVATIONS_LOOKUP_FIRST COLON BOOLEAN {
     ctx.stack_.back()->set("reservations-lookup-first", first);
 };
 
-offer_lft: OFFER_LFT COLON INTEGER {
+offer_lifetime: OFFER_LFT COLON INTEGER {
     ctx.unique("offer-lifetime", ctx.loc2pos(@1));
-    ElementPtr offer_lft(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("offer-lifetime", offer_lft);
+    ElementPtr offer_lifetime(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("offer-lifetime", offer_lifetime);
 };
 
 interfaces_config: INTERFACES_CONFIG {
@@ -1568,7 +1568,7 @@ subnet4_param: valid_lifetime
              | hostname_char_replacement
              | store_extended_info
              | allocator
-             | offer_lft
+             | offer_lifetime
              | unknown_map_entry
              ;
 
@@ -1756,7 +1756,7 @@ shared_network_param: name
                     | hostname_char_replacement
                     | store_extended_info
                     | allocator
-                    | offer_lft
+                    | offer_lifetime
                     | unknown_map_entry
                     ;
 
@@ -2405,6 +2405,7 @@ client_class_param: client_class_name
                   | valid_lifetime
                   | min_valid_lifetime
                   | max_valid_lifetime
+                  | offer_lifetime
                   ;
 
 client_class_name: name;
