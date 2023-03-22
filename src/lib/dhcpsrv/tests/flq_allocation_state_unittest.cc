@@ -124,7 +124,7 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseNA) {
 }
 
 // Test that duplicate leases are not added to the queue.
-TEST(PoolFreeLeaseAllocationState, addFreeLeasNASeveralTimes) {
+TEST(PoolFreeLeaseAllocationState, addFreeLeaseNASeveralTimes) {
     auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, IOAddress("2001:db8:1::"),
                                           IOAddress("2001:db8:1::10"));
     auto state = PoolFreeLeaseQueueAllocationState::create(pool);
@@ -146,6 +146,15 @@ TEST(PoolFreeLeaseAllocationState, addFreeLeasNASeveralTimes) {
 
     // Delete the sole lease and ensure there are no more leases.
     state->deleteFreeLease(IOAddress("2001:db8:1::5"));
+    EXPECT_TRUE(state->exhausted());
+}
+
+// Test creating a new free lease queue allocation state for an IPv6
+// prefix pool.
+TEST(PoolFreeLeaseAllocationState, createPD) {
+    auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("3000::"), 112, 120);
+    auto state = PoolFreeLeaseQueueAllocationState::create(pool);
+    ASSERT_TRUE(state);
     EXPECT_TRUE(state->exhausted());
 }
 
