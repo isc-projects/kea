@@ -224,14 +224,13 @@ public:
 
     /// @brief Sets offer lifetime for the class.
     ///
-    /// Will be used for the offer lifetime (may be empty if not defined)
+    /// @param offer_lft the offer lifetime assigned to the class (may be empty if not defined)
     void setOfferLft(const util::Optional<uint32_t>& offer_lft) {
         offer_lft_ = offer_lft;
     }
 
     /// @brief Returns offer lifetime for the class.
     ///
-    /// @param inheritance inheritance mode to be used.
     /// @return offer lifetime value
     util::Optional<uint32_t> getOfferLft() const {
         return (offer_lft_);

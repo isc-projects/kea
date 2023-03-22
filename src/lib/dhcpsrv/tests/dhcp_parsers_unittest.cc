@@ -426,7 +426,7 @@ public:
             // position of the data element which caused failure.
             if (rcode_ != 0) {
                 EXPECT_TRUE(errorContainsPosition(status, "<string>"))
-                            << "error text:" << error_text_;
+                            << "error text: " << error_text_;
             }
         }
 

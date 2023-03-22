@@ -1312,7 +1312,7 @@ public:
 
     /// @brief Sets offer lifetime for the network.
     ///
-    /// Will be used for the offer lifetime (may be empty if not defined)
+    /// @param offer_lft the offer lifetime assigned to the class (may be empty if not defined)
     void setOfferLft(const util::Optional<uint32_t>& offer_lft) {
         offer_lft_ = offer_lft;
     }

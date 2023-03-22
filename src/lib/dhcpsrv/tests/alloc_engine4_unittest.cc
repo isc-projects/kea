@@ -5782,7 +5782,7 @@ TEST_F(AllocEngine4Test, discoverOfferLftReuseExpiredLease4) {
 
 // Verifies that AllocEngine::getOfferLft(ctx4) returns the appropriate
 // lifetime value based on the context content.
-TEST_F(AllocEngine4Test, getOfferft4) {
+TEST_F(AllocEngine4Test, getOfferLft4) {
     AllocEngine engine(0);
 
     // Let's make three classes, two with offer-lifetime and one without,
