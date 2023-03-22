@@ -193,9 +193,9 @@ OptionDataTypeUtil::writeBinary(const std::string& hex_str,
 OpaqueDataTuple::LengthFieldType
 OptionDataTypeUtil::getTupleLenFieldType(Option::Universe u) {
     if (u == Option::V4) {
-        return OpaqueDataTuple::LENGTH_1_BYTE;
+        return (OpaqueDataTuple::LENGTH_1_BYTE);
     }
-    return OpaqueDataTuple::LENGTH_2_BYTES;
+    return (OpaqueDataTuple::LENGTH_2_BYTES);
 }
 
 std::string
