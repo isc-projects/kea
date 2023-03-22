@@ -13,16 +13,6 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-SubnetFreeLeaseQueueAllocationStatePtr
-SubnetFreeLeaseQueueAllocationState::create(const SubnetPtr& subnet) {
-    auto subnet_prefix = subnet->get();
-    return (boost::make_shared<SubnetFreeLeaseQueueAllocationState>());
-}
-
-SubnetFreeLeaseQueueAllocationState::SubnetFreeLeaseQueueAllocationState()
-    : SubnetAllocationState() {
-}
-
 PoolFreeLeaseQueueAllocationStatePtr
 PoolFreeLeaseQueueAllocationState::create(const PoolPtr& pool) {
     return (boost::make_shared<PoolFreeLeaseQueueAllocationState>(pool->getType()));

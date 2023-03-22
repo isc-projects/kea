@@ -269,15 +269,6 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
         .arg(stopwatch.logFormatLastDuration());
 }
 
-SubnetFreeLeaseQueueAllocationStatePtr
-FreeLeaseQueueAllocator::getSubnetState() const {
-    auto subnet = subnet_.lock();
-    if (!subnet->getAllocationState(pool_type_)) {
-        subnet->setAllocationState(pool_type_, SubnetFreeLeaseQueueAllocationState::create(subnet));
-    }
-    return (boost::dynamic_pointer_cast<SubnetFreeLeaseQueueAllocationState>(subnet->getAllocationState(pool_type_)));
-}
-
 PoolFreeLeaseQueueAllocationStatePtr
 FreeLeaseQueueAllocator::getPoolState(const PoolPtr& pool) const {
     if (!pool->getAllocationState()) {

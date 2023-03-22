@@ -111,14 +111,6 @@ private:
                        const isc::asiolink::IOAddress& hint,
                        uint8_t hint_prefix_length);
 
-    /// @brief Convenience function returning subnet allocation state instance.
-    ///
-    /// It creates a new subnet state instance and assigns it to the subnet
-    /// if it hasn't been initialized.
-    ///
-    /// @return allocation state instance for the subnet.
-    SubnetFreeLeaseQueueAllocationStatePtr getSubnetState() const;
-
     /// @brief Convenience function returning pool allocation state instance.
     ///
     /// It creates a new pool state instance and assigns it to the pool

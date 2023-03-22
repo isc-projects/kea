@@ -16,27 +16,6 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Forward declaration of the @c SubnetFreeLeaseQueueAllocationState.
-class SubnetFreeLeaseQueueAllocationState;
-
-/// @brief Type of the pointer to the @c SubnetFreeLeaseQueueAllocationState.
-typedef boost::shared_ptr<SubnetFreeLeaseQueueAllocationState> SubnetFreeLeaseQueueAllocationStatePtr;
-
-/// @brief Subnet allocation state used by the FLQ allocator.
-class SubnetFreeLeaseQueueAllocationState : public SubnetAllocationState {
-public:
-
-    /// @brief Factory function creating the state instance from subnet.
-    ///
-    /// @param subnet instance of the subnet for which the allocation
-    /// state should be instantiated.
-    /// @return new allocation state instance.
-    static SubnetFreeLeaseQueueAllocationStatePtr create(const SubnetPtr& subnet);
-
-    /// @brief Constructor.
-    SubnetFreeLeaseQueueAllocationState();
-};
-
 /// @brief Forward declaration of the @c PoolFreeLeaseQueueAllocationState.
 class PoolFreeLeaseQueueAllocationState;
 
