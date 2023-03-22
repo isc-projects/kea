@@ -9,7 +9,6 @@ sphinxopts += -v
 sphinxopts += -E
 sphinxopts += -a
 sphinxopts += -W
-sphinxopts += -j 2
 sphinxopts += -c "${abs_srcdir}"
 
 static_sources  =
