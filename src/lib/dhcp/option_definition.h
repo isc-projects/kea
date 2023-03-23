@@ -590,7 +590,7 @@ public:
     /// with a list of tuples.
     /// @param end iterator pointing to the end of the buffer with
     /// a list of tuples.
-    /// @param lenFieldType explict tuple's length field type
+    /// @param lenFieldType explicit tuple's length field type.
     ///
     /// @return instance of the DHCP option.
     static OptionPtr factoryOpaqueDataTuples(Option::Universe u,

@@ -1802,7 +1802,7 @@ TEST_F(OptionDefinitionTest, tuple4ArrayTokenized) {
 // This test also verifies specific v4 Option #143 where tuple's string length
 // is coded on 2 octets instead of 1 as usual.
 TEST_F(OptionDefinitionTest, tuple4ArrayOption143) {
-    OptionDefinition opt_def("option-tuple", 143, DHCP4_OPTION_SPACE, "tuple", true);
+    OptionDefinition opt_def("option-tuple", DHO_V4_SZTP_REDIRECT, DHCP4_OPTION_SPACE, "tuple", true);
 
     OptionPtr option;
 
@@ -1814,7 +1814,7 @@ TEST_F(OptionDefinitionTest, tuple4ArrayOption143) {
 
     // Create an instance of this option using the definition.
     ASSERT_NO_THROW(
-        option = opt_def.optionFactory(Option::V4, 143, values);
+        option = opt_def.optionFactory(Option::V4, DHO_V4_SZTP_REDIRECT, values);
     );
 
     // Make sure that the returned option class is correct.

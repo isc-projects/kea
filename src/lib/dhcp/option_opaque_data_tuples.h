@@ -67,7 +67,8 @@ public:
     /// @param length_field_type Indicates a length of the field which holds
     /// the size of the tuple. If not provided explicitly, it is evaluated
     /// basing on Option's v4/v6 universe.
-    OptionOpaqueDataTuples(Option::Universe u, const uint16_t type,
+    OptionOpaqueDataTuples(Option::Universe u,
+                           const uint16_t type,
                            OptionBufferConstIter begin,
                            OptionBufferConstIter end,
                            OpaqueDataTuple::LengthFieldType length_field_type = OpaqueDataTuple::LENGTH_EMPTY);

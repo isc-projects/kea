@@ -891,7 +891,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
 
         case DHO_V4_SZTP_REDIRECT:
             // Array of tuples.
-            // DHCPv4 SZTP Redirect Option  (option code 143).
+            // DHCPv4 SZTP Redirect Option (option code 143).
             return (factoryOpaqueDataTuples(Option::V4, getCode(), begin, end, OpaqueDataTuple::LENGTH_2_BYTES));
 
         default:

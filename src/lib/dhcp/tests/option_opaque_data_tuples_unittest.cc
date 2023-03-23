@@ -20,7 +20,18 @@ namespace {
 // This test checks that the DHCPv4 option constructor sets the default
 // properties to the expected values.
 TEST(OptionOpaqueDataTuples, constructor4) {
-    OptionOpaqueDataTuples data_tuple(Option::V4, 200);
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_VIVCO_SUBOPTIONS);
+    // Option length is 1 byte for option code + 1 byte for option size
+    EXPECT_EQ(2, data_tuple.len());
+    // There should be no tuples.
+    EXPECT_EQ(0, data_tuple.getTuplesNum());
+}
+
+// This test checks that the DHCPv4 option constructor sets the default
+// properties to the expected values.
+TEST(OptionOpaqueDataTuples, constructor4_with_ltf) {
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_V4_SZTP_REDIRECT,
+                                      OpaqueDataTuple::LENGTH_2_BYTES);
     // Option length is 1 byte for option code + 1 byte for option size
     EXPECT_EQ(2, data_tuple.len());
     // There should be no tuples.
@@ -30,7 +41,7 @@ TEST(OptionOpaqueDataTuples, constructor4) {
 // This test checks that the DHCPv6 option constructor sets the default
 // properties to the expected values.
 TEST(OptionOpaqueDataTuples, constructor6) {
-    OptionOpaqueDataTuples data_tuple(Option::V6, 60);
+    OptionOpaqueDataTuples data_tuple(Option::V6, D6O_BOOTFILE_PARAM);
     // Option length is 2 bytes for option code + 2 bytes for option size
     EXPECT_EQ(4, data_tuple.len());
     // There should be no tuples.
@@ -39,8 +50,47 @@ TEST(OptionOpaqueDataTuples, constructor6) {
 
 // This test verifies that it is possible to append the opaque data tuple
 // to the option and then retrieve it.
-TEST(OptionOpaqueDataTuples, addTuple) {
-    OptionOpaqueDataTuples data_tuple(Option::V6, 60);
+TEST(OptionOpaqueDataTuples, addTuple4) {
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_VIVCO_SUBOPTIONS);
+    // Initially there should be no tuples (for DHCPv4).
+    ASSERT_EQ(0, data_tuple.getTuplesNum());
+    // Create a new tuple and add it to the option.
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    tuple = "xyz";
+    data_tuple.addTuple(tuple);
+    // The option should now hold one tuple.
+    ASSERT_EQ(1, data_tuple.getTuplesNum());
+    EXPECT_EQ("xyz", data_tuple.getTuple(0).getText());
+    // Add another tuple.
+    tuple = "abc";
+    data_tuple.addTuple(tuple);
+    // The option should now hold exactly two tuples in the order in which
+    // they were added.
+    ASSERT_EQ(2, data_tuple.getTuplesNum());
+    EXPECT_EQ("xyz", data_tuple.getTuple(0).getText());
+    EXPECT_EQ("abc", data_tuple.getTuple(1).getText());
+
+    // Check that hasTuple correctly identifies existing tuples.
+    EXPECT_TRUE(data_tuple.hasTuple("xyz"));
+    EXPECT_TRUE(data_tuple.hasTuple("abc"));
+    EXPECT_FALSE(data_tuple.hasTuple("other"));
+
+    // Attempt to add the tuple with 2 byte long length field should fail
+    // for DHCPv4 option.
+    OpaqueDataTuple tuple2(OpaqueDataTuple::LENGTH_2_BYTES);
+    EXPECT_THROW(data_tuple.addTuple(tuple2), isc::BadValue);
+
+    // Similarly, adding a tuple with 1 bytes long length field should
+    // fail for DHCPv6 option.
+    OptionOpaqueDataTuples data_tuple2(Option::V6, D6O_BOOTFILE_PARAM);
+    OpaqueDataTuple tuple3(OpaqueDataTuple::LENGTH_1_BYTE);
+    EXPECT_THROW(data_tuple2.addTuple(tuple3), isc::BadValue);
+}
+
+// This test verifies that it is possible to append the opaque data tuple
+// to the option and then retrieve it.
+TEST(OptionOpaqueDataTuples, addTuple6) {
+    OptionOpaqueDataTuples data_tuple(Option::V6, D6O_BOOTFILE_PARAM);
     // Initially there should be no tuples (for DHCPv6).
     ASSERT_EQ(0, data_tuple.getTuplesNum());
     // Create a new tuple and add it to the option.
@@ -71,14 +121,46 @@ TEST(OptionOpaqueDataTuples, addTuple) {
 
     // Similarly, adding a tuple with 2 bytes long length field should
     // fail for DHCPv4 option.
-    OptionOpaqueDataTuples data_tuple2(Option::V4, 65);
+    OptionOpaqueDataTuples data_tuple2(Option::V4, DHO_VIVCO_SUBOPTIONS);
     OpaqueDataTuple tuple3(OpaqueDataTuple::LENGTH_2_BYTES);
     EXPECT_THROW(data_tuple2.addTuple(tuple3), isc::BadValue);
 }
 
 // This test checks that it is possible to replace existing tuple.
-TEST(OptionOpaqueDataTuples, setTuple) {
-    OptionOpaqueDataTuples data_tuple(Option::V6, 60);
+TEST(OptionOpaqueDataTuples, setTuple4) {
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_VIVCO_SUBOPTIONS);
+    // Initially there should be no tuples (for DHCPv4).
+    ASSERT_EQ(0, data_tuple.getTuplesNum());
+    // Add a tuple
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    tuple = "xyz";
+    data_tuple.addTuple(tuple);
+
+    // Add another one.
+    tuple = "abc";
+    data_tuple.addTuple(tuple);
+    ASSERT_EQ(2, data_tuple.getTuplesNum());
+    ASSERT_EQ("abc", data_tuple.getTuple(1).getText());
+
+    // Try to replace them with new tuples.
+    tuple = "new_xyz";
+    ASSERT_NO_THROW(data_tuple.setTuple(0, tuple));
+    ASSERT_EQ(2, data_tuple.getTuplesNum());
+    EXPECT_EQ("new_xyz", data_tuple.getTuple(0).getText());
+
+    tuple = "new_abc";
+    ASSERT_NO_THROW(data_tuple.setTuple(1, tuple));
+    ASSERT_EQ(2, data_tuple.getTuplesNum());
+    EXPECT_EQ("new_abc", data_tuple.getTuple(1).getText());
+
+    // For out of range position, exception should be thrown.
+    tuple = "foo";
+    EXPECT_THROW(data_tuple.setTuple(2, tuple), isc::OutOfRange);
+}
+
+// This test checks that it is possible to replace existing tuple.
+TEST(OptionOpaqueDataTuples, setTuple6) {
+    OptionOpaqueDataTuples data_tuple(Option::V6, D6O_BOOTFILE_PARAM);
     // Initially there should be no tuples (for DHCPv6).
     ASSERT_EQ(0, data_tuple.getTuplesNum());
     // Add a tuple
@@ -110,7 +192,7 @@ TEST(OptionOpaqueDataTuples, setTuple) {
 
 // Check that the returned length of the DHCPv4 option is correct.
 TEST(OptionOpaqueDataTuples, len4) {
-    OptionOpaqueDataTuples data_tuple(Option::V4, 200);
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_VIVCO_SUBOPTIONS);
     ASSERT_EQ(2, data_tuple.len());
     // Add first tuple.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
@@ -138,15 +220,15 @@ TEST(OptionOpaqueDataTuples, len4_constructor_with_ltf) {
     };
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
-    OptionOpaqueDataTuples data_tuple(
-        Option::V4, 143, buf.begin(), buf.end(), OpaqueDataTuple::LENGTH_2_BYTES);
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_V4_SZTP_REDIRECT, buf.begin(),
+                                      buf.end(), OpaqueDataTuple::LENGTH_2_BYTES);
     // Expected len = 20 = 2 (v4 headers) + 2 (LFT) + 11 (1st tuple) + 2 (LFT) + 3 (2nd tuple)
     ASSERT_EQ(20, data_tuple.len());
 }
 
 // Check that the returned length of the DHCPv6 option is correct.
 TEST(OptionOpaqueDataTuples, len6) {
-    OptionOpaqueDataTuples data_tuple(Option::V6, 60);
+    OptionOpaqueDataTuples data_tuple(Option::V6, D6O_BOOTFILE_PARAM);
     ASSERT_EQ(4, data_tuple.len());
     // Add first tuple.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
@@ -163,7 +245,7 @@ TEST(OptionOpaqueDataTuples, len6) {
 
 // Check that the DHCPv4 option is rendered to the buffer in wire format.
 TEST(OptionOpaqueDataTuples, pack4) {
-    OptionOpaqueDataTuples data_tuple(Option::V4, 200);
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_VIVCO_SUBOPTIONS);
     ASSERT_EQ(0, data_tuple.getTuplesNum());
     // Add tuple.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
@@ -180,7 +262,7 @@ TEST(OptionOpaqueDataTuples, pack4) {
 
     // Prepare reference data.
     const uint8_t ref[] = {
-        0xC8, 0x10,                         // option 200, length 16
+        0x7C, 0x10,                         // option 124, length 16
         0x0B,                               // tuple length is 11
         0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, // Hello<space>
         0x77, 0x6F, 0x72, 0x6C, 0x64,       // world
@@ -196,7 +278,8 @@ TEST(OptionOpaqueDataTuples, pack4) {
 // Check that the DHCPv4 option is rendered to the buffer in wire format,
 // when tuple's length field is coded on 2 octets.
 TEST(OptionOpaqueDataTuples, pack4_with_ltf) {
-    OptionOpaqueDataTuples data_tuple(Option::V4, 143, OpaqueDataTuple::LENGTH_2_BYTES);
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_V4_SZTP_REDIRECT,
+                                      OpaqueDataTuple::LENGTH_2_BYTES);
     ASSERT_EQ(0, data_tuple.getTuplesNum());
     // Add tuple.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
@@ -228,7 +311,7 @@ TEST(OptionOpaqueDataTuples, pack4_with_ltf) {
 
 // Check that the DHCPv6 option is rendered to the buffer in wire format.
 TEST(OptionOpaqueDataTuples, pack6) {
-    OptionOpaqueDataTuples data_tuple(Option::V6, 60);
+    OptionOpaqueDataTuples data_tuple(Option::V6, D6O_BOOTFILE_PARAM);
     ASSERT_EQ(0, data_tuple.getTuplesNum());
     // Add tuple.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
@@ -273,13 +356,12 @@ TEST(OptionOpaqueDataTuples, unpack4) {
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
-        data_tuple = OptionOpaqueDataTuplesPtr(
-            new OptionOpaqueDataTuples(Option::V4,
-                                       143,
-                                       buf.begin(),
-                                       buf.end()));
+        data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V4,
+                                                                          DHO_VIVCO_SUBOPTIONS,
+                                                                          buf.begin(),
+                                                                          buf.end()));
     );
-    EXPECT_EQ(DHO_V4_SZTP_REDIRECT, data_tuple->getType());
+    EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, data_tuple->getType());
     ASSERT_EQ(2, data_tuple->getTuplesNum());
     EXPECT_EQ("Hello world", data_tuple->getTuple(0).getText());
     EXPECT_EQ("foo", data_tuple->getTuple(1).getText());
@@ -300,12 +382,11 @@ TEST(OptionOpaqueDataTuples, unpack4_constructor_with_ltf) {
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
-        data_tuple = OptionOpaqueDataTuplesPtr(
-            new OptionOpaqueDataTuples(Option::V4,
-                                       143,
-                                       buf.begin(),
-                                       buf.end(),
-                                       OpaqueDataTuple::LENGTH_2_BYTES));
+        data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V4,
+                                                                          DHO_V4_SZTP_REDIRECT,
+                                                                          buf.begin(),
+                                                                          buf.end(),
+                                                                          OpaqueDataTuple::LENGTH_2_BYTES));
     );
     EXPECT_EQ(DHO_V4_SZTP_REDIRECT, data_tuple->getType());
     ASSERT_EQ(2, data_tuple->getTuplesNum());
@@ -329,7 +410,7 @@ TEST(OptionOpaqueDataTuples, unpack6) {
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
         data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V6,
-                                                                          60,
+                                                                          D6O_BOOTFILE_PARAM,
                                                                           buf.begin(),
                                                                           buf.end()));
     );
@@ -349,7 +430,7 @@ TEST(OptionOpaqueDataTuples, unpack4EmptyTuple) {
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
         data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V4,
-                                                                          124,
+                                                                          DHO_VIVCO_SUBOPTIONS,
                                                                           buf.begin(),
                                                                           buf.end()));
     );
@@ -367,12 +448,11 @@ TEST(OptionOpaqueDataTuples, unpack4EmptyTuple_constructor_with_ltf) {
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
-        data_tuple = OptionOpaqueDataTuplesPtr(
-            new OptionOpaqueDataTuples(Option::V4,
-                                       143,
-                                       buf.begin(),
-                                       buf.end(),
-                                       OpaqueDataTuple::LENGTH_2_BYTES));
+        data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V4,
+                                                                          DHO_V4_SZTP_REDIRECT,
+                                                                          buf.begin(),
+                                                                          buf.end(),
+                                                                          OpaqueDataTuple::LENGTH_2_BYTES));
     );
     EXPECT_EQ(DHO_V4_SZTP_REDIRECT, data_tuple->getType());
     ASSERT_EQ(1, data_tuple->getTuplesNum());
@@ -389,7 +469,7 @@ TEST(OptionOpaqueDataTuples, unpack6EmptyTuple) {
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
         data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V6,
-                                                                          60,
+                                                                          D6O_BOOTFILE_PARAM,
                                                                           buf.begin(),
                                                                           buf.end()));
     );
@@ -408,7 +488,10 @@ TEST(OptionOpaqueDataTuples, unpack4Truncated) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
-    EXPECT_THROW(OptionOpaqueDataTuples (Option::V4, 200, buf.begin(), buf.end()),
+    EXPECT_THROW(OptionOpaqueDataTuples(Option::V4,
+                                        DHO_VIVCO_SUBOPTIONS,
+                                        buf.begin(),
+                                        buf.end()),
                  isc::dhcp::OpaqueDataTupleError);
 }
 
@@ -423,8 +506,8 @@ TEST(OptionOpaqueDataTuples, unpack4Truncated_with_ltf) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
-    EXPECT_THROW(OptionOpaqueDataTuples (Option::V4,
-                                        143,
+    EXPECT_THROW(OptionOpaqueDataTuples(Option::V4,
+                                        DHO_V4_SZTP_REDIRECT,
                                         buf.begin(),
                                         buf.end(),
                                         OpaqueDataTuple::LENGTH_2_BYTES),
@@ -442,7 +525,10 @@ TEST(OptionOpaqueDataTuples, unpack6Truncated) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
-    EXPECT_THROW(OptionOpaqueDataTuples (Option::V6, 60, buf.begin(), buf.end()),
+    EXPECT_THROW(OptionOpaqueDataTuples(Option::V6,
+                                        D6O_BOOTFILE_PARAM,
+                                        buf.begin(),
+                                        buf.end()),
                  isc::dhcp::OpaqueDataTupleError);
 }
 
@@ -456,12 +542,30 @@ TEST(OptionOpaqueDataTuples, unpack4NoTuple) {
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
-        data_tuple = OptionOpaqueDataTuplesPtr(
-            new OptionOpaqueDataTuples(Option::V4,
-                                       143,
-                                       buf.begin(),
-                                       buf.end(),
-                                       OpaqueDataTuple::LENGTH_2_BYTES));
+        data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V4,
+                                                                          DHO_VIVCO_SUBOPTIONS,
+                                                                          buf.begin(),
+                                                                          buf.end()));
+    );
+    EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, data_tuple->getType());
+    EXPECT_EQ(0, data_tuple->getTuplesNum());
+}
+
+// This test checks that the DHCPv4 option containing no opaque
+// data is parsed correctly when tuple's length field is coded on 2 octets.
+TEST(OptionOpaqueDataTuples, unpack4NoTuple_with_ltf) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    OptionOpaqueDataTuplesPtr data_tuple;
+    ASSERT_NO_THROW(
+        data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V4,
+                                                                          DHO_V4_SZTP_REDIRECT,
+                                                                          buf.begin(),
+                                                                          buf.end(),
+                                                                          OpaqueDataTuple::LENGTH_2_BYTES));
     );
     EXPECT_EQ(DHO_V4_SZTP_REDIRECT, data_tuple->getType());
     EXPECT_EQ(0, data_tuple->getTuplesNum());
@@ -478,7 +582,7 @@ TEST(OptionOpaqueDataTuples, unpack6NoTuple) {
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
         data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V6,
-                                                                          60,
+                                                                          D6O_BOOTFILE_PARAM,
                                                                           buf.begin(),
                                                                           buf.end()));
     );
@@ -488,7 +592,32 @@ TEST(OptionOpaqueDataTuples, unpack6NoTuple) {
 
 // Verifies correctness of the text representation of the DHCPv4 option.
 TEST(OptionOpaqueDataTuples, toText4) {
-    OptionOpaqueDataTuples data_tuple(Option::V4, 143, OpaqueDataTuple::LENGTH_2_BYTES);
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_VIVCO_SUBOPTIONS);
+    ASSERT_EQ(0, data_tuple.getTuplesNum());
+    // Lets add a tuple
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    tuple = "Hello world";
+    data_tuple.addTuple(tuple);
+    // And add another tuple so as resulting option is a bit more complex.
+    tuple = "foo";
+    data_tuple.addTuple(tuple);
+    // Check that the text representation of the option is as expected.
+    EXPECT_EQ("type=124, len=16,"
+              " data-len0=11, data0='Hello world',"
+              " data-len1=3, data1='foo'",
+              data_tuple.toText());
+
+    // Check that indentation works.
+    EXPECT_EQ("  type=124, len=16,"
+              " data-len0=11, data0='Hello world',"
+              " data-len1=3, data1='foo'",
+              data_tuple.toText(2));
+}
+
+// Verifies correctness of the text representation of the DHCPv4 option when
+// tuple's length field is coded on 2 octets.
+TEST(OptionOpaqueDataTuples, toText4_with_ltf) {
+    OptionOpaqueDataTuples data_tuple(Option::V4, DHO_V4_SZTP_REDIRECT, OpaqueDataTuple::LENGTH_2_BYTES);
     ASSERT_EQ(0, data_tuple.getTuplesNum());
     // Lets add a tuple
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
@@ -512,7 +641,7 @@ TEST(OptionOpaqueDataTuples, toText4) {
 
 // Verifies correctness of the text representation of the DHCPv6 option.
 TEST(OptionOpaqueDataTuples, toText6) {
-    OptionOpaqueDataTuples data_tuple(Option::V6, 60);
+    OptionOpaqueDataTuples data_tuple(Option::V6, D6O_BOOTFILE_PARAM);
     ASSERT_EQ(0, data_tuple.getTuplesNum());
     // Lets add a tuple
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
