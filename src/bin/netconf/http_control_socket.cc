@@ -79,7 +79,7 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     }
 
     IOServicePtr io_service(new IOService());
-    HttpClient client(*io_service);
+    HttpClient client(*io_service, false);
     boost::system::error_code received_ec;
     string receive_errmsg;
     HttpResponseJsonPtr response(new HttpResponseJson());

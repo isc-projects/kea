@@ -1947,8 +1947,14 @@ private:
     IoServiceThreadPoolPtr thread_pool_;
 };
 
-HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size,
-                       bool defer_thread_start /* = false */) {
+HttpClient::HttpClient(IOService& io_service, bool multi_threading_enabled,
+                       size_t thread_pool_size, bool defer_thread_start) {
+    if (!multi_threading_enabled && thread_pool_size) {
+        isc_throw(InvalidOperation,
+                  "HttpClient thread_pool_size must be zero "
+                  "when Kea core multi-threading is disabled");
+    }
+
     impl_.reset(new HttpClientImpl(io_service, thread_pool_size,
                                    defer_thread_start));
 }

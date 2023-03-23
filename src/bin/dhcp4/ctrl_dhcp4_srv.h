@@ -45,17 +45,17 @@ public:
 
     /// @brief Configure DHCPv4 server using the configuration file specified.
     ///
-    /// This utility method is called whenever we know a filename of the config
-    /// and need to load it. It calls config-set command once the content of
-    /// the file has been loaded and verified to be a sane JSON configuration.
-    /// config-set handler will process the config file (load it as current
-    /// configuration).
-    ///
     /// This function is used to both configure the DHCP server on its startup
     /// and dynamically reconfigure the server when SIGHUP signal is received.
     ///
     /// It fetches DHCPv4 server's configuration from the 'Dhcp4' section of
     /// the JSON configuration file.
+    ///
+    /// This utility method is called whenever we know a filename of the config
+    /// and need to load it. It calls config-set command once the content of
+    /// the file has been loaded and verified to be a sane JSON configuration.
+    /// config-set handler will process the config file (apply it as current
+    /// configuration).
     ///
     /// @param file_name name of the file to be loaded
     /// @return status of the file loading and outcome of config-set
@@ -70,7 +70,7 @@ public:
 
     /// @brief Initiates shutdown procedure for the whole DHCPv4 server.
     /// @param exit_value integer value to the process should exit with.
-    void shutdownServer(int exit_value);
+    virtual void shutdownServer(int exit_value);
 
     /// @brief Command processor
     ///
@@ -80,11 +80,18 @@ public:
     /// in them.
     ///
     /// Currently supported commands are:
-    /// - config-reload
-    /// - config-test
     /// - shutdown
     /// - libreload
+    /// - config-reload
+    /// - config-set
+    /// - config-get
+    /// - config-test
+    /// - dhcp-disable
+    /// - dhcp-enable
+    /// - version-get
+    /// - build-report
     /// - leases-reclaim
+    /// - config-write
     /// ...
     ///
     /// @note It never throws.
@@ -140,7 +147,6 @@ public:
     }
 
 private:
-
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
     ///

@@ -359,7 +359,7 @@ public:
         ASSERT_NO_THROW(listener_->start());
 
         // Create a client and specify the URL on which the server can be reached.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
         Url url("http://127.0.0.1:18123");
 
         // Initiate request to the server.
@@ -421,7 +421,7 @@ public:
         ASSERT_NO_THROW(listener2_->start());
 
         // Create the client. It will be communicating with the two servers.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
 
         // Specify the URLs on which the servers are available.
         Url url1("http://127.0.0.1:18123");
@@ -482,7 +482,7 @@ public:
         ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
 
         // Create a second client context.
         TlsContextPtr client_context2;
@@ -550,7 +550,7 @@ public:
         ASSERT_NO_THROW(listener3_->start());
 
         // Create the client that will communicate with this server.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
 
         // Specify the URL of this server.
         Url url("http://127.0.0.1:18125");
@@ -609,7 +609,7 @@ public:
     /// server is unreachable.
     void testUnreachable () {
         // Create the client.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
 
         // Specify the URL of the server. This server is down.
         Url url("http://127.0.0.1:18123");
@@ -640,7 +640,7 @@ public:
         ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
 
         // Specify the URL of the server.
         Url url("http://127.0.0.1:18123");
@@ -679,7 +679,7 @@ public:
         ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
 
         // Specify the URL of the server.
         Url url("http://127.0.0.1:18123");
@@ -744,7 +744,7 @@ public:
         ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
 
         // Specify the URL of the server.
         Url url("http://127.0.0.1:18123");
@@ -818,7 +818,7 @@ public:
         ASSERT_NO_THROW(listener_->start());
 
         // Create the client.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
 
         // Specify the URL of the server.
         Url url("http://127.0.0.1:18123");
@@ -903,7 +903,7 @@ public:
         ASSERT_NO_THROW(listener_->start());
 
         // Create a client and specify the URL on which the server can be reached.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
         Url url("http://127.0.0.1:18123");
 
         // Initiate request to the server.
@@ -1002,7 +1002,7 @@ public:
         ASSERT_NO_THROW(listener_->start());
 
         // Create a client and specify the URL on which the server can be reached.
-        HttpClient client(io_service_);
+        HttpClient client(io_service_, false);
         Url url("http://127.0.0.1:18123");
 
         // Initiate request to the server.

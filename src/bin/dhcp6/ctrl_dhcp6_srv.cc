@@ -19,8 +19,8 @@
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
-#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <process/cfgrpt/config_report.h>
@@ -91,6 +91,41 @@ namespace dhcp {
 
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
+void
+ControlledDhcpv6Srv::init(const std::string& file_name) {
+    // Keep the call timestamp.
+    start_ = boost::posix_time::second_clock::universal_time();
+
+    // Configure the server using JSON file.
+    ConstElementPtr result = loadConfigFile(file_name);
+
+    int rcode;
+    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
+    if (rcode != CONTROL_RESULT_SUCCESS) {
+        string reason = comment ? comment->stringValue() :
+            "no details available";
+        isc_throw(isc::BadValue, reason);
+    }
+
+    // We don't need to call openActiveSockets() or startD2() as these
+    // methods are called in processConfig() which is called by
+    // processCommand("config-set", ...)
+
+    // Set signal handlers. When the SIGHUP is received by the process
+    // the server reconfiguration will be triggered. When SIGTERM or
+    // SIGINT will be received, the server will start shutting down.
+    signal_set_.reset(new IOSignalSet(getIOService(), signalHandler));
+
+    signal_set_->add(SIGINT);
+    signal_set_->add(SIGHUP);
+    signal_set_->add(SIGTERM);
+}
+
+void ControlledDhcpv6Srv::cleanup() {
+    signal_set_.reset();
+    getIOService()->poll();
+}
+
 ConstElementPtr
 ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
@@ -103,8 +138,8 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     try {
         if (file_name.empty()) {
             // Basic sanity check: file name must not be empty.
-            isc_throw(isc::BadValue, "JSON configuration file not specified. Please "
-                      "use -c command line option.");
+            isc_throw(isc::BadValue, "JSON configuration file not specified."
+                      " Please use -c command line option.");
         }
 
         // Read contents of the file and parse it as JSON
@@ -163,41 +198,6 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     return (result);
 }
 
-void
-ControlledDhcpv6Srv::init(const std::string& file_name) {
-    // Keep the call timestamp.
-    start_ = boost::posix_time::second_clock::universal_time();
-
-    // Configure the server using JSON file.
-    ConstElementPtr result = loadConfigFile(file_name);
-
-    int rcode;
-    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
-    if (rcode != CONTROL_RESULT_SUCCESS) {
-        string reason = comment ? comment->stringValue() :
-            "no details available";
-        isc_throw(isc::BadValue, reason);
-    }
-
-    // We don't need to call openActiveSockets() or startD2() as these
-    // methods are called in processConfig() which is called by
-    // processCommand("config-set", ...)
-
-    // Set signal handlers. When the SIGHUP is received by the process
-    // the server reconfiguration will be triggered. When SIGTERM or
-    // SIGINT will be received, the server will start shutting down.
-    signal_set_.reset(new IOSignalSet(getIOService(), signalHandler));
-
-    signal_set_->add(SIGINT);
-    signal_set_->add(SIGHUP);
-    signal_set_->add(SIGTERM);
-}
-
-void ControlledDhcpv6Srv::cleanup() {
-    signal_set_.reset();
-    getIOService()->poll();
-}
-
 ConstElementPtr
 ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr args) {
     if (!ControlledDhcpv6Srv::getInstance()) {
@@ -242,10 +242,15 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         HookLibsCollection loaded = HooksManager::getLibraryInfo();
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
-        bool status = HooksManager::loadLibraries(loaded);
+        bool multi_threading_enabled = true;
+        uint32_t thread_count = 0;
+        uint32_t queue_size = 0;
+        CfgMultiThreading::extract(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading(),
+                                   multi_threading_enabled, thread_count, queue_size);
+        bool status = HooksManager::loadLibraries(loaded, multi_threading_enabled);
         if (!status) {
-            isc_throw(Unexpected, "Failed to reload hooks libraries"
-                                  " (WARNING: libreload is deprecated).");
+            isc_throw(Unexpected, "Failed to reload hooks libraries "
+                                  "(WARNING: libreload is deprecated).");
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_HOOKS_LIBS_RELOAD_FAIL);
@@ -262,7 +267,7 @@ ConstElementPtr
 ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
                                                 ConstElementPtr /*args*/) {
     // Get configuration file name.
-    std::string file = ControlledDhcpv6Srv::getInstance()->getConfigFile();
+    string file = ControlledDhcpv6Srv::getInstance()->getConfigFile();
     try {
         LOG_INFO(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION).arg(file);
         auto result = loadConfigFile(file);
@@ -323,7 +328,7 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&,
         ConstElementPtr cfg = CfgMgr::instance().getCurrentCfg()->toElement();
         size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
-        return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config:")
+        return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config: ")
                              + ex.what()));
     }
     if (size == 0) {
@@ -1115,8 +1120,8 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
     return (configureDhcp6Server(*srv, config, true));
 }
 
-ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
-                                         uint16_t client_port)
+ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_PORT*/,
+                                         uint16_t client_port /*= 0*/)
     : Dhcpv6Srv(server_port, client_port), timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
         isc_throw(InvalidOperation,
@@ -1150,29 +1155,29 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("config-reload",
         std::bind(&ControlledDhcpv6Srv::commandConfigReloadHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("config-set",
+        std::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("config-test",
         std::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("config-write",
         std::bind(&ControlledDhcpv6Srv::commandConfigWriteHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("dhcp-enable",
+        std::bind(&ControlledDhcpv6Srv::commandDhcpEnableHandler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("dhcp-disable",
         std::bind(&ControlledDhcpv6Srv::commandDhcpDisableHandler, this, ph::_1, ph::_2));
 
-    CommandMgr::instance().registerCommand("dhcp-enable",
-        std::bind(&ControlledDhcpv6Srv::commandDhcpEnableHandler, this, ph::_1, ph::_2));
+    CommandMgr::instance().registerCommand("libreload",
+        std::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("leases-reclaim",
         std::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
         std::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, ph::_1, ph::_2));
-
-    CommandMgr::instance().registerCommand("libreload",
-        std::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, ph::_1, ph::_2));
-
-    CommandMgr::instance().registerCommand("config-set",
-        std::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("shutdown",
         std::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, ph::_1, ph::_2));
@@ -1187,17 +1192,17 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("statistic-get",
         std::bind(&StatsMgr::statisticGetHandler, ph::_1, ph::_2));
 
-    CommandMgr::instance().registerCommand("statistic-get-all",
-        std::bind(&StatsMgr::statisticGetAllHandler, ph::_1, ph::_2));
-
     CommandMgr::instance().registerCommand("statistic-reset",
         std::bind(&StatsMgr::statisticResetHandler, ph::_1, ph::_2));
 
-    CommandMgr::instance().registerCommand("statistic-reset-all",
-        std::bind(&StatsMgr::statisticResetAllHandler, ph::_1, ph::_2));
-
     CommandMgr::instance().registerCommand("statistic-remove",
         std::bind(&StatsMgr::statisticRemoveHandler, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("statistic-get-all",
+        std::bind(&StatsMgr::statisticGetAllHandler, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("statistic-reset-all",
+        std::bind(&StatsMgr::statisticResetAllHandler, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
         std::bind(&StatsMgr::statisticRemoveAllHandler, ph::_1, ph::_2));

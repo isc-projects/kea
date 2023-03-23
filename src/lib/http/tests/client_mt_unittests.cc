@@ -481,7 +481,9 @@ public:
         }
 
         // Create an MT client with num_threads
-        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads, true)));
+        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_,
+                                                         num_threads ? true : false,
+                                                         num_threads, true)));
         ASSERT_TRUE(client_);
 
         if (num_threads_ == 0) {
@@ -647,7 +649,7 @@ public:
         }
 
         // Create an instant start, MT client with num_threads
-        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads, true)));
+        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, true, num_threads, true)));
         ASSERT_TRUE(client_);
 
         // Start the requisite number of requests:
@@ -830,11 +832,10 @@ public:
 // Verifies we can construct and destruct, in both single
 // and multi-threaded modes.
 TEST_F(MultiThreadingHttpClientTest, basics) {
-    MultiThreadingMgr::instance().setMode(false);
     HttpClientPtr client;
 
     // Value of 0 for thread_pool_size means single-threaded.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 0)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, false)));
     ASSERT_TRUE(client);
 
     ASSERT_FALSE(client->getThreadIOService());
@@ -844,11 +845,14 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());
 
-    // Enable Kea core multi-threading.
-    MultiThreadingMgr::instance().setMode(true);
+    // Non-zero thread-pool-size means multi-threaded mode, should throw.
+    ASSERT_THROW_MSG(client.reset(new HttpClient(io_service_, false, 1)), InvalidOperation,
+                                  "HttpClient thread_pool_size must be zero "
+                                  "when Kea core multi-threading is disabled");
+    ASSERT_FALSE(client);
 
     // Multi-threaded construction should work now.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 3)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, true, 3)));
     ASSERT_TRUE(client);
 
     // Verify that it has an internal IOService and that thread pool size
@@ -884,7 +888,7 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
     ASSERT_NO_THROW_LOG(client.reset());
 
     // Create another multi-threaded instance.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 3)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, true, 3)));
 
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());
@@ -892,12 +896,11 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
 
 // Verifies we can construct with deferred start.
 TEST_F(MultiThreadingHttpClientTest, deferredStart) {
-    MultiThreadingMgr::instance().setMode(true);
     HttpClientPtr client;
     size_t thread_pool_size = 3;
 
     // Create MT client with deferred start.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, thread_pool_size, true)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, true, thread_pool_size, true)));
     ASSERT_TRUE(client);
 
     // Client should be STOPPED, with no threads.
@@ -936,12 +939,11 @@ TEST_F(MultiThreadingHttpClientTest, deferredStart) {
 
 // Verifies we can restart after stop.
 TEST_F(MultiThreadingHttpClientTest, restartAfterStop) {
-    MultiThreadingMgr::instance().setMode(true);
     HttpClientPtr client;
     size_t thread_pool_size = 3;
 
     // Create MT client with instant start.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, thread_pool_size)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, true, thread_pool_size)));
     ASSERT_TRUE(client);
 
     // Verify we're started.

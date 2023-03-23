@@ -239,7 +239,12 @@ ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         HookLibsCollection loaded = HooksManager::getLibraryInfo();
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
-        bool status = HooksManager::loadLibraries(loaded);
+        bool multi_threading_enabled = true;
+        uint32_t thread_count = 0;
+        uint32_t queue_size = 0;
+        CfgMultiThreading::extract(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading(),
+                                   multi_threading_enabled, thread_count, queue_size);
+        bool status = HooksManager::loadLibraries(loaded, multi_threading_enabled);
         if (!status) {
             isc_throw(Unexpected, "Failed to reload hooks libraries "
                                   "(WARNING: libreload is deprecated).");
@@ -259,7 +264,7 @@ ConstElementPtr
 ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
                                                 ConstElementPtr /*args*/) {
     // Get configuration file name.
-    std::string file = ControlledDhcpv4Srv::getInstance()->getConfigFile();
+    string file = ControlledDhcpv4Srv::getInstance()->getConfigFile();
     try {
         LOG_INFO(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION).arg(file);
         auto result = loadConfigFile(file);
@@ -320,7 +325,7 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
         ConstElementPtr cfg = CfgMgr::instance().getCurrentCfg()->toElement();
         size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
-        return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config:")
+        return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config: ")
                              + ex.what()));
     }
     if (size == 0) {

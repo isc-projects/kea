@@ -134,6 +134,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used by the HTTP client.
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled.
     /// @param thread_pool_size maximum number of threads in the thread pool.
     /// A value greater than zero enables multi-threaded mode and sets the
     /// maximum number of concurrent connections per URL.  A value of zero
@@ -144,7 +145,9 @@ public:
     /// the thread pool threads will be created and started, with the
     /// operational state being RUNNING.  Applicable only when thread-pool size
     /// is greater than zero.
-    explicit HttpClient(asiolink::IOService& io_service, size_t thread_pool_size = 0,
+    explicit HttpClient(asiolink::IOService& io_service,
+                        bool multi_threading_enabled,
+                        size_t thread_pool_size = 0,
                         bool defer_thread_start = false);
 
     /// @brief Destructor.

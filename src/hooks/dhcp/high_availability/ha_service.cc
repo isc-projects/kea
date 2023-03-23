@@ -93,10 +93,10 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
     // Create the client and(or) listener as appropriate.
     if (!config_->getEnableMultiThreading()) {
         // Not configured for multi-threading, start a client in ST mode.
-        client_.reset(new HttpClient(*io_service_, 0));
+        client_.reset(new HttpClient(*io_service_, false));
     } else {
         // Create an MT-mode client.
-        client_.reset(new HttpClient(*io_service_,
+        client_.reset(new HttpClient(*io_service_, true,
                       config_->getHttpClientThreads(), true));
 
         // If we're configured to use our own listener create and start it.
@@ -2263,7 +2263,7 @@ int
 HAService::synchronize(std::string& status_message, const std::string& server_name,
                        const unsigned int max_period) {
     IOService io_service;
-    HttpClient client(io_service);
+    HttpClient client(io_service, false);
 
     asyncSyncLeases(client, server_name, max_period, Lease4Ptr(),
                     [&](const bool success, const std::string& error_message,
@@ -2468,7 +2468,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
     }
 
     IOService io_service;
-    HttpClient client(io_service);
+    HttpClient client(io_service, false);
     auto remote_config = config_->getFailoverPeerConfig();
     bool updates_successful = true;
 
@@ -2553,7 +2553,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
 bool
 HAService::sendHAReset() {
     IOService io_service;
-    HttpClient client(io_service);
+    HttpClient client(io_service, false);
     auto remote_config = config_->getFailoverPeerConfig();
     bool reset_successful = true;
 
@@ -2656,7 +2656,7 @@ HAService::processMaintenanceStart() {
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     IOService io_service;
-    HttpClient client(io_service);
+    HttpClient client(io_service, false);
 
     boost::system::error_code captured_ec;
     std::string captured_error_message;
@@ -2780,7 +2780,7 @@ HAService::processMaintenanceCancel() {
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     IOService io_service;
-    HttpClient client(io_service);
+    HttpClient client(io_service, false);
 
     std::string error_message;
 

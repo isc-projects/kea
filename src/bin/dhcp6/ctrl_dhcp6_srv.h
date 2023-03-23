@@ -80,11 +80,18 @@ public:
     /// in them.
     ///
     /// Currently supported commands are:
-    /// - config-reload
-    /// - config-test
     /// - shutdown
     /// - libreload
+    /// - config-reload
+    /// - config-set
+    /// - config-get
+    /// - config-test
+    /// - dhcp-disable
+    /// - dhcp-enable
+    /// - version-get
+    /// - build-report
     /// - leases-reclaim
+    /// - config-write
     /// ...
     ///
     /// @note It never throws.
@@ -140,7 +147,6 @@ public:
     }
 
 private:
-
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
     ///
