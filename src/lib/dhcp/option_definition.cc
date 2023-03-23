@@ -780,9 +780,9 @@ OptionDefinition::factoryOpaqueDataTuples(Option::Universe u,
                                           uint16_t type,
                                           OptionBufferConstIter begin,
                                           OptionBufferConstIter end,
-                                          OpaqueDataTuple::LengthFieldType lenFieldType) {
+                                          OpaqueDataTuple::LengthFieldType length_field_type) {
     boost::shared_ptr<OptionOpaqueDataTuples>
-        option(new OptionOpaqueDataTuples(u, type, begin, end, lenFieldType));
+        option(new OptionOpaqueDataTuples(u, type, begin, end, length_field_type));
 
     return (option);
 }

@@ -590,14 +590,14 @@ public:
     /// with a list of tuples.
     /// @param end iterator pointing to the end of the buffer with
     /// a list of tuples.
-    /// @param lenFieldType explicit tuple's length field type.
+    /// @param length_field_type explicit tuple's length field type.
     ///
     /// @return instance of the DHCP option.
     static OptionPtr factoryOpaqueDataTuples(Option::Universe u,
                                              uint16_t type,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end,
-                                             OpaqueDataTuple::LengthFieldType lenFieldType);
+                                             OpaqueDataTuple::LengthFieldType length_field_type);
 
     /// @brief Factory function to create option with integer value.
     ///

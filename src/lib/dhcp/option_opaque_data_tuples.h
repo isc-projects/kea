@@ -147,7 +147,7 @@ public:
     virtual std::string toText(int indent = 0) const;
 
 private:
-    /// @brief length of the field which holds he size of the tuple.
+    /// @brief length of the field which holds the size of the tuple.
     OpaqueDataTuple::LengthFieldType length_field_type_;
 
     /// @brief Collection of opaque data tuples carried by the option.
