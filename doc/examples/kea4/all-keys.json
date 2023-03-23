@@ -58,7 +58,11 @@
                 "min-valid-lifetime": 4000,
 
                 // Class max valid lifetime.
-                "max-valid-lifetime": 8000
+                "max-valid-lifetime": 8000,
+
+                // If greater than zero, it is the lifetime of leases temporarily allocated
+                // on DISCOVER.  When zero (the default) leases are not allocated on DISCOVER.
+                "offer-lifetime" : 65
             },
             {
                 // Default value of the class specific bootfile name. Empty name

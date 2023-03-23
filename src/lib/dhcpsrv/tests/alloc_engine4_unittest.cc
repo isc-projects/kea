@@ -5945,7 +5945,7 @@ TEST_F(AllocEngine4Test, getOfferLft4) {
             exp_allocate
         },
         {
-            // Useing class value of zero should override non-zero set at
+            // Using class value of zero should override non-zero set at
             // subnet level, lease should have actual valid lft
             "zero from class",
             { "offer_lft_zero" },
