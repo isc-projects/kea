@@ -2144,8 +2144,8 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
     }
 }
 
-// Verify that ddns-ttl-percent can be used to calculate
-// NCR lifetime.
+// Verify that when specified ddns-ttl-percent is used to calculate
+// the lease length in an NCR.
 TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
@@ -2177,6 +2177,5 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 500, "", false, subnet_->getDdnsTtlPercent());
 }
-
 
 } // end of anonymous namespace

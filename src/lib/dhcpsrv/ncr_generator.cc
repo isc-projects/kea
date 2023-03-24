@@ -32,7 +32,6 @@ namespace {
 /// @param label Client identification information in the textual format.
 /// This is used for logging purposes.
 /// @param subnet subnet to which the lease belongs.
-/// use conflict resolution.
 ///
 /// @tparam LeasePtrType Pointer to a lease.
 /// @tparam IdentifierType HW Address, Client Identifier or DUID.
@@ -130,7 +129,7 @@ void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
 
 uint32_t calculateDdnsTtl(uint32_t lease_lft, const util::Optional<double>& ddns_ttl_percent) {
     //  If we have a configured percentage use it to calculate TTL.
-    if (!ddns_ttl_percent.unspecified() && (ddns_ttl_percent.get() > 0.0000)) {
+    if (!ddns_ttl_percent.unspecified() && (ddns_ttl_percent.get() > 0.0)) {
         uint32_t new_lft = static_cast<uint32_t>(round(ddns_ttl_percent.get() * lease_lft));
         if (new_lft > 0) {
             return (new_lft);

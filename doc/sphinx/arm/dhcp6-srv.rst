@@ -2992,7 +2992,6 @@ The default configuration and values would appear as follows:
         "ddns-qualifying-suffix": "",
         "ddns-update-on-renew": false,
         "ddns-use-conflict-resolution": true,
-        "ddns-ttl-percent": 0.75,
         "hostname-char-set": "",
         "hostname-char-replacement": ""
         ...

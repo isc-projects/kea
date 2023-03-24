@@ -2072,7 +2072,7 @@ TEST_F(ClientClassDefParserTest, offerLft) {
 
     auto offer_lft = cclass->getOfferLft();
     ASSERT_FALSE(offer_lft.unspecified());
-    EXPECT_EQ(99, offer_lft);
+    EXPECT_EQ(99, offer_lft.get());
 }
 
 // Test verifies that the parser rejects bogus offer-lifetime value.

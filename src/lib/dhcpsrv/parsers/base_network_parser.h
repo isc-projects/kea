@@ -99,6 +99,7 @@ protected:
     /// - ddns-generated-prefix
     /// - ddns-qualifying-suffix
     /// - ddns-use-conflict-resolution
+    /// - ddns-update-on-renew
     /// - ddns-ttl-percent
     ///
     /// @param network_data Data element holding shared network

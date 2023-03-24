@@ -155,7 +155,7 @@ public:
     /// This value, if greater than zero, is used to calculate the lease lifetime
     /// passed to D2 in the NCR.  Otherwise the value is calculated per RFC 4702.
     ///
-    /// @return True if conflict resolution should be used.
+    /// @return TTL percent as an Optional.
     util::Optional<double> getTtlPercent() const;
 
     /// @brief Returns the subnet-id of the subnet associated with these parameters
