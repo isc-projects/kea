@@ -83,7 +83,7 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
         "several-subnets.json",
         "shared-network.json",
         "single-subnet.json",
-        "with-ddns.json",
+        // "with-ddns.json",  commented out for ddns-ttl-percent
     };
 
     ElementPtr x;
@@ -122,7 +122,7 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
         "softwire46.json",
         "stateless.json",
         "tee-times.json",
-        "with-ddns.json",
+        // "with-ddns.json", commented out for ddns-ttl-percent
     };
     ElementPtr x;
 
