@@ -1,3 +1,15 @@
+2118.	[bug]		razvan
+	Fixed a bug which was changing the multi-threading settings when
+	running config-test command and the settings were different from
+	the server's configuration. This also fixes the rollback on the
+	multi-threading settings if there is a configuration error
+	detected. Also hooks now set DROP flag on the
+	dhcp4_srv_configured and dhcp6_srv_configured callouts if the
+	configuration is invalid or an error occured. Proper shutdown
+	of the HTTP listener is performed now instead of generating a
+	server crash if the provided address is not valid.
+	(Gitlab #2799)
+
 2117.	[func]		fdupont
 	Added a new ignore-dhcp-server-identifier DHCPv4 compatibility
 	flag which when set to true (default is false) makes any query
