@@ -12,6 +12,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/lease.h>
+#include <util/optional.h>
 
 #include <gtest/gtest.h>
 #include <ctime>
@@ -23,6 +24,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace {
@@ -226,13 +228,15 @@ public:
     /// @param exp_use_cr expected value of conflict resolution flag
     void testNCR(const NameChangeType chg_type, const bool fwd, const bool rev,
                  const std::string& fqdn, const std::string exp_dhcid,
-                 const bool exp_use_cr = true) {
+                 const bool exp_use_cr = true,
+                 const Optional<double> ttl_percent = Optional<double>()) {
         // Queue NCR.
         ASSERT_NO_FATAL_FAILURE(sendNCR(chg_type, fwd, rev, fqdn));
         // Expecting one NCR be generated.
         ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
-        uint32_t ttl = calculateDdnsTtl(lease_->valid_lft_);
+        // Calculate expected ttl.
+        uint32_t ttl = calculateDdnsTtl(lease_->valid_lft_, ttl_percent);
 
         // Check the details of the NCR.
         verifyNameChangeRequest(chg_type, rev, fwd, lease_->addr_.toText(), exp_dhcid,
@@ -709,5 +713,26 @@ TEST_F(NCRGenerator4Test, calculateDdnsTtl) {
     ddns_ttl_percent = 1.50;
     EXPECT_EQ(2705, calculateDdnsTtl(1803, ddns_ttl_percent));
 }
+
+// Verify that ddns-ttl-percent is used correctly by v4 queueNCR()
+TEST_F(NCRGenerator4Test, withTtlPercent) {
+    {
+        SCOPED_TRACE("Ttl percent of 0");
+        Optional<double> ttl_percent(0);
+        subnet_->setDdnsTtlPercent(ttl_percent);
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
+                "B03AB370BFF46BFA309AE7BFD", true, ttl_percent);
+    }
+    {
+        SCOPED_TRACE("Ttl percent of 1.5");
+        Optional<double> ttl_percent(1.5);
+        subnet_->setDdnsTtlPercent(ttl_percent);
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
+                "B03AB370BFF46BFA309AE7BFD", true, ttl_percent);
+    }
+}
+
 
 } // end of anonymous namespace
