@@ -1,3 +1,8 @@
+2120.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.3.6
+	development release.
+	(Gitlab #2807)
+
 2119.	[func]		tmark
 	Added a new parameter, ddns-ttl-percent, to kea-dhcp4
 	and kea-dhcp6, that may be used to calculate DNS TTL
