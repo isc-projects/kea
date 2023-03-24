@@ -366,7 +366,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         testNetworkInheritance<TestNetwork4>(&Network4::getOfferLft,
                                              &Network4::setOfferLft,
                                              10, 45);
-    },
+    }
     {
         SCOPED_TRACE("ddns-ttl-percent");
         testNetworkInheritance<TestNetwork4>(&Network::getDdnsTtlPercent,
