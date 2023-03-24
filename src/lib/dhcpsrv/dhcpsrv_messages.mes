@@ -706,6 +706,11 @@ This informational message is printed when removal of all leases from
 a specified IPv6 subnet has finished. The number of removed leases is
 printed.
 
+% DHCPSRV_MT_DISABLED_QUEUE_CONTROL disabling dhcp queue control when multi-threading is enabled.
+This warning message is issued when dhcp queue control is disabled automatically
+if multi-threading is enabled. These two options are incompatible and can not
+both be enabled at the same time.
+
 % DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple broadcast capable sockets on some interfaces and some DHCP messages may be duplicated
 A warning message issued when the current configuration indicates that multiple
 sockets, capable of receiving broadcast traffic, will be opened on some of the

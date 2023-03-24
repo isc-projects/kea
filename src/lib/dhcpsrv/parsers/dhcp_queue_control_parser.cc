@@ -51,6 +51,7 @@ DHCPQueueControlParser::parse(const ConstElementPtr& control_elem,
     if (multi_threading_enabled) {
         // Silently disable it.
         result->set("enable-queue", Element::create(false));
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_MT_DISABLED_QUEUE_CONTROL);
     }
 
     return (result);

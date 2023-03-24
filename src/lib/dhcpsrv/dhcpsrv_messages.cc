@@ -136,6 +136,7 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_WIPE_LEASES4 = "DHCPSRV_MEMFILE
 extern const isc::log::MessageID DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED = "DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_WIPE_LEASES6 = "DHCPSRV_MEMFILE_WIPE_LEASES6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED = "DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED";
+extern const isc::log::MessageID DHCPSRV_MT_DISABLED_QUEUE_CONTROL = "DHCPSRV_MT_DISABLED_QUEUE_CONTROL";
 extern const isc::log::MessageID DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE = "DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE";
 extern const isc::log::MessageID DHCPSRV_MYSQL_ADD_ADDR4 = "DHCPSRV_MYSQL_ADD_ADDR4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_ADD_ADDR6 = "DHCPSRV_MYSQL_ADD_ADDR6";
@@ -390,6 +391,7 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED", "removing all IPv4 leases from subnet %1 finished, removed %2 leases",
     "DHCPSRV_MEMFILE_WIPE_LEASES6", "removing all IPv6 leases from subnet %1",
     "DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED", "removing all IPv6 leases from subnet %1 finished, removed %2 leases",
+    "DHCPSRV_MT_DISABLED_QUEUE_CONTROL", "disabling dhcp queue control when multi-threading is enabled.",
     "DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE", "current configuration will result in opening multiple broadcast capable sockets on some interfaces and some DHCP messages may be duplicated",
     "DHCPSRV_MYSQL_ADD_ADDR4", "adding IPv4 lease with address %1",
     "DHCPSRV_MYSQL_ADD_ADDR6", "adding IPv6 lease with address %1, lease type %2",

@@ -137,6 +137,7 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_WIPE_LEASES4;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_WIPE_LEASES6;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED;
+extern const isc::log::MessageID DHCPSRV_MT_DISABLED_QUEUE_CONTROL;
 extern const isc::log::MessageID DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE;
 extern const isc::log::MessageID DHCPSRV_MYSQL_ADD_ADDR4;
 extern const isc::log::MessageID DHCPSRV_MYSQL_ADD_ADDR6;
