@@ -19,6 +19,7 @@
 #include <dhcpsrv/ncr_generator.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <util/optional.h>
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
@@ -29,6 +30,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::dhcp_ddns;
 using namespace isc::stats;
+using namespace isc::util;
 
 namespace {
 
@@ -315,6 +317,25 @@ const char* CONFIGS[] = {
         "    \"id\": 1,\n"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ],\n"
         "    \"offer-lifetime\": 45,\n"
+        "} ],\n"
+        "\"dhcp-ddns\": {\n"
+            "\"enable-updates\": true,\n"
+            "\"qualifying-suffix\": \"example.com.\"\n"
+        "}\n"
+    "}",
+    // 12
+    // D2 enabled
+    // ddns-ttl-percent specfied
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"valid-lifetime\": 3000,\n"
+        "\"subnet4\": [ { \n"
+        "    \"subnet\": \"10.0.0.0/24\", \n"
+        "    \"interface\": \"eth1\",\n"
+        "    \"id\": 1,\n"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ],\n"
+        "    \"ddns-ttl-percent\": .25\n"
         "} ],\n"
         "\"dhcp-ddns\": {\n"
             "\"enable-updates\": true,\n"
@@ -784,7 +805,8 @@ public:
                                  const time_t cltt,
                                  const uint16_t valid_lft,
                                  const bool not_strict_expire_check = false,
-                                 const bool exp_use_cr = true) {
+                                 const bool exp_use_cr = true,
+                                 Optional<double> ttl_percent = Optional<double>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -805,7 +827,7 @@ public:
         // current time as cltt but the it may not check the lease expiration
         // time for equality but rather check that the lease expiration time
         // is not greater than the current time + lease lifetime.
-        uint32_t ttl = calculateDdnsTtl(valid_lft);
+        uint32_t ttl = calculateDdnsTtl(valid_lft, ttl_percent);
         if (not_strict_expire_check) {
             EXPECT_GE(cltt + ttl, ncr->getLeaseExpiresOn());
         } else {
@@ -2825,5 +2847,43 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
     checkSubnetStat(subnet->getID(), "assigned-addresses", 1);
 }
 
+// Verifies the DNS TTL when ttl percent is specified
+// than zero.
+TEST_F(NameDhcpv4SrvTest, withDdnsTtlPercent) {
+    // Load a configuration with D2 enabled and ddns-ttl-percent
+    ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[12], *srv_));
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Create a client and get a lease.
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+    client1.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client1.includeHostname("client1"));
+
+    // Do the DORA.
+    ASSERT_NO_THROW(client1.doDORA());
+    Pkt4Ptr resp = client1.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Obtain the Hostname option sent in the response and make sure that the server
+    // has used the hostname reserved for this client.
+    OptionStringPtr hostname;
+    hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("client1.example.com", hostname->getValue());
+
+    // Make sure the lease is in the database and hostname is correct.
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("client1.example.com", lease->hostname_);
+
+    // Verify that an NCR was generated correctly.
+    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            resp->getYiaddr().toText(),
+                            "client1.example.com.", "",
+                            time(NULL), lease->valid_lft_, true, true, Optional<double>(.25));
+}
 
 } // end of anonymous namespace

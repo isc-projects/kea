@@ -1110,7 +1110,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_DDNS_TTL_PERCENT(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("ddns_ttl-percent", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("ddns-ttl-percent", driver.loc_);
     }
 }
 
