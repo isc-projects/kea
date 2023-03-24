@@ -18,6 +18,8 @@
 #include <dhcpsrv/subnet.h>
 #include <process/daemon.h>
 
+#include <string>
+
 namespace isc {
 namespace run_script {
 
@@ -34,6 +36,7 @@ using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::run_script;
 using namespace isc::util;
+using namespace std;
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
@@ -48,7 +51,7 @@ int load(LibraryHandle& handle) {
     try {
         // Make the hook library not loadable by d2 or ca.
         uint16_t family = CfgMgr::instance().getFamily();
-        const std::string& proc_name = Daemon::getProcName();
+        const string& proc_name = Daemon::getProcName();
         if (family == AF_INET) {
             if (proc_name != "kea-dhcp4") {
                 isc_throw(isc::Unexpected, "Bad process name: " << proc_name
@@ -63,7 +66,7 @@ int load(LibraryHandle& handle) {
 
         impl.reset(new RunScriptImpl());
         impl->configure(handle);
-    } catch (const std::exception& ex) {
+    } catch (const exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
             .arg(ex.what());
         return (1);
@@ -90,9 +93,16 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
     try {
         isc::asiolink::IOServicePtr io_service;
         handle.getArgument("io_context", io_service);
+        if (!io_service) {
+            // Should not happen!
+            handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
+            const string error("Error: io_context is null");
+            handle.setArgument("error", error);
+            return (1);
+        }
         RunScriptImpl::setIOService(io_service);
 
-    } catch (const std::exception& ex) {
+    } catch (const exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
             .arg(ex.what());
         handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
@@ -108,9 +118,16 @@ int dhcp6_srv_configured(CalloutHandle& handle) {
     try {
         isc::asiolink::IOServicePtr io_service;
         handle.getArgument("io_context", io_service);
+        if (!io_service) {
+            // Should not happen!
+            handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
+            const string error("Error: io_context is null");
+            handle.setArgument("error", error);
+            return (1);
+        }
         RunScriptImpl::setIOService(io_service);
 
-    } catch (const std::exception& ex) {
+    } catch (const exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
             .arg(ex.what());
         handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);

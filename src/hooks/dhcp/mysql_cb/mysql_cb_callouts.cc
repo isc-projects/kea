@@ -19,11 +19,15 @@
 #include <mysql_cb_dhcp6.h>
 #include <mysql_cb_log.h>
 
+#include <sstream>
+#include <string>
+
 using namespace isc::cb;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::log;
 using namespace isc::process;
+using namespace std;
 
 extern "C" {
 
@@ -65,6 +69,12 @@ int load(LibraryHandle& /* handle */) {
 int dhcp4_srv_configured(CalloutHandle& handle) {
     isc::asiolink::IOServicePtr io_service;
     handle.getArgument("io_context", io_service);
+    if (!io_service) {
+        const string error("Error: io_context is null");
+        handle.setArgument("error", error);
+        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
+        return (1);
+    }
     isc::dhcp::MySqlConfigBackendImpl::setIOService(io_service);
     return (0);
 }
@@ -78,6 +88,12 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 int dhcp6_srv_configured(CalloutHandle& handle) {
     isc::asiolink::IOServicePtr io_service;
     handle.getArgument("io_context", io_service);
+    if (!io_service) {
+        const string error("Error: io_context is null");
+        handle.setArgument("error", error);
+        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
+        return (1);
+    }
     isc::dhcp::MySqlConfigBackendImpl::setIOService(io_service);
     return (0);
 }
