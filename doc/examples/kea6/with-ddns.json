@@ -64,6 +64,7 @@
   "ddns-qualifying-suffix" : "test.suffix.",
   "ddns-update-on-renew" : false,
   "ddns-use-conflict-resolution" : true,
+  "ddns-ttl-percent" : 0.75,
   "hostname-char-set": "[^A-Za-z0-9.-]",
   "hostname-char-replacement": "x",
 
