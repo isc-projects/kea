@@ -39,7 +39,7 @@ For new stable releases or maintenance releases, please don't use `kea-dev` buil
 The following steps may involve changing files in the repository.
 
 1. [ ] Run [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) <br>
-   Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py 1.9.7 ~/isc/repos/kea/` <br>
+   Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py 1.9.7 --repo-dir ~/isc/repos/kea/` Use `--upload` to commit changes. <br>
    Help: `GITLAB_TOKEN="..." ./update-code-for-release.py --help`<br>
    This script makes the following changes and actions:
    1. run prepare_kea_release.sh that does:
@@ -101,7 +101,6 @@ This is the last moment to freeze code! :snowflake:
    1. In field "Release_Candidate" pick:
       1. rc1 if this is the first selected build for release, it will push the selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
       1. next rc# if this is a respin after some fixes (note: it is not possible to pick previous rc number - it will result in an error)
-      1. final if the last rc number was ok, this will push the selected tarball to repo.isc.org, to a directory with no suffixes
    1. Submit the job that will automatically:
       1. Upload the tarballs <br>
       and if this is not the final version:
@@ -117,29 +116,30 @@ This is the last moment to freeze code! :snowflake:
 ## Releasing Tarballs and Packages
 
 1. [ ] Update Release Notes with ChangeLog entries
+1. [ ] Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released kea (e.g. Kea-2.2.2): <br>
+   Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit description: <br>
+   1. [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/)
+   1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/)
 1. [ ] Upload final tarballs to repo.isc.org
    1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
    1. Click "Build with Parameters"
    1. In field "Tarball" select picked tarball build
    1. In field "Release_Candidate" pick final <br>
    This job will also:
-      - open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) requesting signing final tarballs on repo.isc.org
+      - open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) for signing final tarballs on repo.isc.org
       - create Git tags `Kea-a.b.c` in Kea main and premium repositories
-      - send a signing request issue link on the DHCP Mattermost channel
-   Wait until tarballs are signed.
+      - if release engineer is holding personal signing key, please use [sign, verify, and upload script](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign_kea_and_upload_asc.sh)
+      - if release enginner do NOT have signing key, please contact team member.
 1. [ ] Upload final RPM & DEB packages, tarballs and sign files to cloudsmith.io
    1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
    1. Click "Build with Parameters" link
-   1. Pick your selected pkg build in Packages field, and select `PrivPubRepos: "both"`, `TestProdRepos: "production"`, `TarballOrPkg: "both"` and click Build button.
+   1. Pick your selected pkg build in Packages field, and select `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build` button.
+      - this step is also veryfing sign files
    1. When it finishes run check: [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
 1. [ ] Update ReadTheDocs
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
    1. Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
    1. For stable releases, change the default version to point to this stable release.
-1. [ ] Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released kea (e.g. Kea-2.2.2): <br>
-   Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit description: <br>
-   1. [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/)
-   1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/)
 1. [ ] Create an issue and a merge request to bump up Kea version in `configure.ac` to next development version which could be, based on just released version `a.b.c`:
     * `a.b.z-git` where `z == c + 1` or
     * `a.y.0-git` where `y == b + 1` or
@@ -150,10 +150,7 @@ This is the last moment to freeze code! :snowflake:
 ### On the Day of Public Release
 
  - [ ] ***(Support)*** Wait for clearance from Security Officer to proceed with the public release (if applicable).
- - [ ] ***(Support)*** Wait for the signing ticket from the release engineer.
  - [ ] ***(Support)*** Confirm that the tarballs have the checksums mentioned on the signing ticket.
- - [ ] ***(Support)*** Sign the tarballs.
- - [ ] ***(Support)*** Upload signature files to repo.isc.org.
  - [ ] ***(Support)*** Place tarballs in public location on FTP site.
  - [ ] ***(Support)*** Publish links to downloads on ISC website.
  - [ ] ***(Support)*** Write release email to *kea-announce*.
@@ -161,7 +158,7 @@ This is the last moment to freeze code! :snowflake:
  - [ ] ***(Support)*** Send eligible customers updated links to the Subscription software FTP site.
  - [ ] ***(Support)*** If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Then update support customers that this new private repo exists.
  - [ ] ***(Support)*** Update tickets in case of waiting for support customers.
- - [ ] ***(QA)*** Inform Marketing of the release.
+ - [ ] ***(Support)*** Inform Marketing of the release.
  - [ ] ***(Marketing)*** If a new Cloudsmith repository is used, update the Zapier scripts.
  - [ ] ***(Marketing)*** Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version.
  - [ ] ***(Marketing)*** Announce on social media.
