@@ -254,6 +254,13 @@ the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
 
+% DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it
+A debug message issued when the DDNS TTL value calculated using the
+ddns-ttl-percent is zero.  Kea will ignore the value and calculate
+the DDNS TTL as though ddsn-ttl-percent were not specified. The
+value of ddns-ttl-percent and the lease lifetime are shown in
+the message details.
+
 % DHCPSRV_DEPRECATED This configuration is using a deprecated feature: %1
 This warning is printed every time a deprecated feature (identified by the parameter) is
 used. A deprecated feature is functional now, but there will be a future Kea release
@@ -349,6 +356,22 @@ and the attempt ended in error. The access string in question - which
 should be of the form 'keyword=value keyword=value...' is included in
 the message.
 
+% DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL extended info for lease %1 failed checks (%2)
+This error message is printed when a lease extended info failed to
+pass sanity checks. The detail of the found problem was displayed and
+the extended info deleted from the lease user context.
+
+% DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED extended info for lease %1 was upgraded
+This debug message is printed when a lease extended info was upgraded.
+
+% DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL extended info for lease %1 failed checks (%2)
+This error message is printed when a lease extended info failed to
+pass sanity checks. The detail of the found problem was displayed and
+the extended info deleted from the lease user context.
+
+% DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED extended info for lease %1 was upgraded
+This debug message is printed when a lease extended info was upgraded.
+
 % DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3: %4
 This warning message is printed when one of the callback functions registered
 in the lease manager causes an error. The callback functions can serve
@@ -367,22 +390,6 @@ indicates a callback type. The second argument prints the subnet id.
 The third argument prints the lease for which the error has occurred.
 This log message variant contains no error text because it is triggered
 by an unknown exception.
-
-% DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL extended info for lease %1 failed checks (%2)
-This error message is printed when a lease extended info failed to
-pass sanity checks. The detail of the found problem was displayed and
-the extended info deleted from the lease user context.
-
-% DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED extended info for lease %1 was upgraded
-This debug message is printed when a lease extended info was upgraded.
-
-% DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL extended info for lease %1 failed checks (%2)
-This error message is printed when a lease extended info failed to
-pass sanity checks. The detail of the found problem was displayed and
-the extended info deleted from the lease user context.
-
-% DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED extended info for lease %1 was upgraded
-This debug message is printed when a lease extended info was upgraded.
 
 % DHCPSRV_LEASE_SANITY_FAIL The lease %1 with subnet-id %2 failed subnet-id checks (%3).
 This warning message is printed when the lease being loaded does not match the
@@ -1279,13 +1286,3 @@ indicate an error in the source code, please submit a bug report.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
-
-% DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it
-A debug message issued when the DDNS TTL value calculated using the
-ddns-ttl-percent is zero.  Kea will ignore the value and calculate
-the DDNS TTL as though ddsn-ttl-percent were not specified. The
-value of ddns-ttl-percent and the lease lifetime are shown in
-the message details.
-
-
-

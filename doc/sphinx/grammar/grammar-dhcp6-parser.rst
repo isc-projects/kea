@@ -144,6 +144,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | ddns_qualifying_suffix
                  | ddns_update_on_renew
                  | ddns_use_conflict_resolution
+                 | ddns_ttl_percent
                  | store_extended_info
                  | statistic_default_sample_count
                  | statistic_default_sample_age
@@ -208,6 +209,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      ddns_update_on_renew ::= "ddns-update-on-renew" ":" BOOLEAN
 
      ddns_use_conflict_resolution ::= "ddns-use-conflict-resolution" ":" BOOLEAN
+
+     ddns_ttl_percent ::= "ddns-ttl-percent" ":" FLOAT
 
      hostname_char_set ::= "hostname-char-set" ":" STRING
 
@@ -521,6 +524,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | ddns_qualifying_suffix
                   | ddns_update_on_renew
                   | ddns_use_conflict_resolution
+                  | ddns_ttl_percent
                   | store_extended_info
                   | allocator
                   | pd_allocator
@@ -606,6 +610,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | ddns_qualifying_suffix
                          | ddns_update_on_renew
                          | ddns_use_conflict_resolution
+                         | ddns_ttl_percent
                          | store_extended_info
                          | allocator
                          | pd_allocator
@@ -688,6 +693,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                       | option_data_space
                       | option_data_csv_format
                       | option_data_always_send
+                      | option_data_never_send
                       | user_context
                       | comment
                       | unknown_map_entry
@@ -703,6 +709,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      option_data_csv_format ::= "csv-format" ":" BOOLEAN
 
      option_data_always_send ::= "always-send" ":" BOOLEAN
+
+     option_data_never_send ::= "never-send" ":" BOOLEAN
 
      pools_list ::= "pools" ":" "[" pools_list_content "]"
 
