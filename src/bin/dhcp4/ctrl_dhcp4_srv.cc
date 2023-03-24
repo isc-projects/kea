@@ -1208,6 +1208,7 @@ void ControlledDhcpv4Srv::shutdownServer(int exit_value) {
 
 ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     try {
+        MultiThreadingMgr::instance().apply(false, 0, 0);
         LeaseMgrFactory::destroy();
         HostMgr::create();
         cleanup();

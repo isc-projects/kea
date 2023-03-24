@@ -217,10 +217,10 @@ public:
     void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms,
                               std::function<bool()> cond = std::function<bool()>()) {
         IntervalTimer timer(*io_service);
-        bool stopped = false;
+        std::atomic<bool> stopped = false;
         timer.setup([&io_service, &stopped]() {
-            io_service->stop();
             stopped = true;
+            io_service->stop();
         }, timeout_ms, IntervalTimer::ONE_SHOT);
 
         // Run as long as the timeout hasn't occurred and the interrupting
