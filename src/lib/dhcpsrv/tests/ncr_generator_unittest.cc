@@ -732,10 +732,6 @@ TEST_F(NCRGenerator4Test, withTtlPercent) {
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
                 "B03AB370BFF46BFA309AE7BFD", true, ttl_percent);
     }
-
-    double dnum = -1.0;
-    uint32_t inum =  static_cast<uint32_t>(round(dnum * 3400));
-    std::cout << "inums is: " << inum << std::endl;
 }
 
 
