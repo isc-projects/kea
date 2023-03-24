@@ -65,7 +65,7 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
 
         // Calculate the TTL based on lease life time.
-        uint32_t ttl = calculateDdnsTtl(lease->valid_lft_);
+        uint32_t ttl = calculateDdnsTtl(lease->valid_lft_, ddns_ttl_percent);
 
         // Create name change request.
         NameChangeRequestPtr ncr
