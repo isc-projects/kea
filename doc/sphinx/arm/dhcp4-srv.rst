@@ -7844,11 +7844,11 @@ for a subnet:
 
 
 There are several tradeoffs that the administrator should take into account
-before using this allocator. Firstly, it can heavily impact the server's
+before using this allocator. It can heavily impact the server's
 startup and reconfiguration time because the allocator has to populate the
 list of free leases for each subnet where it is used. The delays can be
 observed both during the configuration reload and when the subnets are
-created using the ``subnet_cmds`` hook. Secondly, the allocator increases the
+created using the ``subnet_cmds`` hook. The allocator increases the
 memory consumption to hold the list of free leases, and it is proportional
 to the total size of the address pools for which this allocator is used.
 Finally, the lease reclamation must be enabled with a low value of the
@@ -7859,15 +7859,15 @@ the allocator until they are reclaimed by the server. See
 :ref:`lease-reclamation` for more details about the lease reclamation process.
 
 Due to the above tradeoffs, we recommend that the FLQ allocator is selected
-consciously. For example, using it for a subnet with ``/8`` pool may delay
-the server's startup by 15 seconds or more. On the other hand, the startup
-delay and the memory consumption increase should be acceptable for subnets
-with the ``/16`` pool or smaller. We also recommend specifying some other
-allocator type in the global configuration settings and overriding this
-selection at the subnet or shared network level to use the FLQ allocator
-for selected subnets only. That way, when a new subnet is added without
-the allocator specification, the global setting is used, thus avoiding
-unnecessary impact on the server's startup time.
+only after careful consideration. For example, using it for a subnet with
+``/8`` pool may delay the server's startup by 15 seconds or more. On the
+other hand, the startup delay and the memory consumption increase should
+be acceptable for subnets with the ``/16`` pool or smaller. We also recommend
+specifying some other allocator type in the global configuration settings
+and overriding this selection at the subnet or shared network level to use
+the FLQ allocator for selected subnets only. That way, when a new subnet is
+added without the allocator specification, the global setting is used, thus
+avoiding unnecessary impact on the server's startup time.
 
 Similarly to the random allocator, the FLQ allocator offers leases in
 random order, which makes it suitable for use with a shared lease database.
