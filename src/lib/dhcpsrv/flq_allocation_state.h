@@ -26,7 +26,7 @@ typedef boost::shared_ptr<PoolFreeLeaseQueueAllocationState> PoolFreeLeaseQueueA
 class PoolFreeLeaseQueueAllocationState : public AllocationState {
 public:
 
-    /// @brief Factory function creating the state instance from pool.
+    /// @brief Factory function creating the state instance from a pool.
     ///
     /// @param pool instance of the pool for which the allocation state
     /// should be instantiated.
@@ -35,12 +35,12 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Instantiates the allocator for the specified lease type.
+    /// Instantiates the allocation state for the specified lease type.
     ///
     /// @param type lease type.
     PoolFreeLeaseQueueAllocationState(Lease::Type type);
 
-    /// @brief Checks if the pool has any free leases.
+    /// @brief Checks if the pool has run out of free leases.
     ///
     /// @return true if the pool has no free leases, false otherwise.
     bool exhausted() const;
