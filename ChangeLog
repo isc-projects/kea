@@ -1,3 +1,10 @@
+2122.	[bug]		marcin
+	Fixed a bug in the HA hook library whereby the HA service could
+	sometimes terminate even after the partner's clock has been
+	corrected. The last clock skew is now ignored when a
+	communication failure with the partner occurs.
+	(Gitlab #2754)
+
 2121.	[func]		marcin
 	Implemented Free Lease Queue allocator. It can be used for
 	address assignment in DHCPv4 and prefix delegation in DHCPv6.
