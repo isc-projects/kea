@@ -1,3 +1,10 @@
+2124.	[perf]		andrei
+	When not explicitly configured, multi-threading mode and the HTTP
+	dedicated listener are enabled by default for the
+	high-availability hook library ("enable-multi-threading" and
+	"http-dedicated-listener" set to true).
+	(Gitlab #2749)
+
 2123.	[bug]		razvan
 	Fixed a bug which was truncating relay suboptions (circuit-id
 	code 1 and remote-id code 2) if the data ended in 0x0. The
