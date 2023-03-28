@@ -156,6 +156,9 @@ HATest::createValidJsonConfiguration(const HAConfig::HAMode& ha_mode) const {
         "         \"max-ack-delay\": 10000,"
         "         \"max-unacked-clients\": 10,"
         "         \"max-rejected-clients\": 10,"
+        "         \"multi-threading\": {"
+        "             \"enable-multi-threading\": false"
+        "         },"
         "         \"wait-backup-ack\": false,"
         "         \"peers\": ["
         "             {"
@@ -192,6 +195,9 @@ HATest::createValidPassiveBackupJsonConfiguration() const {
         "     {"
         "         \"this-server-name\": \"server1\","
         "         \"mode\": \"passive-backup\","
+        "         \"multi-threading\": {"
+        "             \"enable-multi-threading\": false"
+        "         },"
         "         \"wait-backup-ack\": false,"
         "         \"peers\": ["
         "             {"
@@ -367,6 +373,6 @@ HATest::makeHAMtJson(bool enable_multi_threading, bool http_dedicated_listener,
     return (ss.str());
 }
 
-} // end of namespace isc::ha::test
-} // end of namespace isc::ha
-} // end of namespace isc
+}  // namespace test
+}  // namespace ha
+}  // namespace isc

@@ -409,10 +409,10 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
 
     std::vector<Scenario> scenarios {
         {
-            "1 no ha+mt/default",
+            "1 ha+mt by default",
             "",
             dhcp_mt, 4,
-            !ha_mt, !listener, 0, 0
+            ha_mt, listener, 4, 4
         },
         {
             "2 dhcp mt enabled, ha mt disabled",
@@ -558,4 +558,4 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
     }
 }
 
-} // end of anonymous namespace
+}  // namespace

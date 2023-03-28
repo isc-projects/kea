@@ -32,10 +32,8 @@ namespace {
 /// configuration.
 class HAConfigTest : public HATest {
 public:
-
     /// @brief Constructor.
-    HAConfigTest()
-        : HATest() {
+    HAConfigTest() : HATest(), hardware_threads_(MultiThreadingMgr::detectThreadCount()) {
     }
 
     /// @brief Verifies if an exception is thrown if provided HA
@@ -59,6 +57,9 @@ public:
                 " exception type";
         }
     }
+
+    /// @brief number of threads the system reports as supported
+    uint32_t hardware_threads_;
 };
 
 // Verifies that load balancing configuration is parsed correctly.
@@ -209,11 +210,12 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(STATE_PAUSE_ONCE, state_cfg->getPausing());
 
-    // Verify multi-threading default values.
-    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
-    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
-    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
-    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
+    // Verify multi-threading default values. Default is 0 for the listener and client threads, but
+    // after MT is applied, HAImpl resolves them to the auto-detected values.
+    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
 }
 
 // Verifies that hot standby configuration is parsed correctly.
@@ -324,11 +326,12 @@ TEST_F(HAConfigTest, configureHotStandby) {
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
-    // Verify multi-threading default values.
-    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
-    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
-    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
-    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
+    // Verify multi-threading default values. Default is 0 for the listener and client threads, but
+    // after MT is applied, HAImpl resolves them to the auto-detected values.
+    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
 }
 
 // Verifies that passive-backup configuration is parsed correctly.
@@ -391,11 +394,12 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     ASSERT_TRUE(cfg->getBasicAuth());
     EXPECT_EQ("a2VhdGVzdDpLZWFUZXN0", cfg->getBasicAuth()->getCredential());
 
-    // Verify multi-threading default values.
-    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
-    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
-    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
-    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
+    // Verify multi-threading default values. Default is 0 for the listener and client threads, but
+    // after MT is applied, HAImpl resolves them to the auto-detected values.
+    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
 }
 
 // This server name must not be empty.
@@ -1730,15 +1734,12 @@ TEST_F(HAConfigTest, multiThreadingPermutations) {
     bool ha_mt = true;
     bool listener = true;
 
-    // Number of threads the system reports as supported.
-    uint32_t sys_threads = MultiThreadingMgr::detectThreadCount();
-
     std::vector<Scenario> scenarios {
         {
-            "1 no ha+mt/default",
+            "1 ha+mt by default",
             "",
             dhcp_mt, 4,
-            !ha_mt, !listener, 0, 0
+            ha_mt, listener, 4, 4
         },
         {
             "2 dhcp mt enabled, ha mt disabled",
@@ -1784,7 +1785,7 @@ TEST_F(HAConfigTest, multiThreadingPermutations) {
             // reported value.
             makeHAMtJson(ha_mt, listener, 0, 0),
             dhcp_mt, 0,
-            (sys_threads > 0), listener, sys_threads, sys_threads
+            (hardware_threads_ > 0), listener, hardware_threads_, hardware_threads_
         }
     };
 
@@ -1875,4 +1876,4 @@ TEST_F(HAConfigTest, ipv6Url) {
     EXPECT_EQ(impl->getConfig()->getThisServerConfig()->getUrl().toText(), "http://[2001:db8::1]:8080/");
 }
 
-} // end of anonymous namespace
+}  // namespace

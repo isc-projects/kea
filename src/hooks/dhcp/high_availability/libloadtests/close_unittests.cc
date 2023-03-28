@@ -24,6 +24,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/network_state.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
@@ -102,6 +103,8 @@ class CloseHATest : public ::testing::Test {
 public:
     /// @brief Constructor
     CloseHATest() {
+        // Simulate the application of MT config such as in ControlledDhcpvXSrv::processConfig().
+        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
     }
 
     /// @brief Destructor
@@ -122,7 +125,10 @@ public:
     ///
     /// Simulate partners by accepting connections. The HA will send
     /// lease updates and waits for answers so will own the query.
-    void runPartners();
+    ///
+    /// @param backup whether to run partner1 as a backup.
+    ///     If false, partner1 runs as primary.
+    void runPartners(bool const backup = true);
 
     /// @brief The watched thread.
     WatchedThreadPtr wthread_;
@@ -134,7 +140,7 @@ CloseHATest::createValidJsonConfiguration(bool backup) const {
     config_text <<
         "["
         "     {"
-        "         \"this-server-name\": \"" << (!backup ? "server1" : "server2") << "\","
+        "         \"this-server-name\": \"" << (backup ? "server2" : "server1") << "\","
         "         \"mode\": \"passive-backup\","
         "         \"wait-backup-ack\": true,"
         "         \"peers\": ["
@@ -161,9 +167,10 @@ CloseHATest::createValidJsonConfiguration(bool backup) const {
 }
 
 void
-CloseHATest::runPartners() {
+CloseHATest::runPartners(bool const backup /* = true */) {
     int accept_partner1 = -1;
     int accept_partner2 = -1;
+    int reuse_addr = 1;
     std::map<int, bool> readers;
 
     try {
@@ -177,6 +184,7 @@ CloseHATest::runPartners() {
         socklen_t slen = sizeof(partner);
 
 #define SA(x)   reinterpret_cast<const sockaddr*>(x)
+
         accept_partner1 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (accept_partner1 < 0) {
             isc_throw(Unexpected, "socket1 " << strerror(errno));
@@ -185,13 +193,12 @@ CloseHATest::runPartners() {
             isc_throw(Unexpected, "fcntl1 " << strerror(errno));
         }
 
-        int reuse_addr = 1;
         if (setsockopt(accept_partner1, SOL_SOCKET, SO_REUSEADDR,
                (char *)&reuse_addr, sizeof(reuse_addr)) < 0) {
             isc_throw(Unexpected, "partner1 setsocketopt SO_REUSEADDR failed: " << strerror(errno));
         }
 
-        partner.sin_port = htons(18124);
+        partner.sin_port = htons(backup ? 18124 : 18123);
         if (::bind(accept_partner1, SA(&partner), slen) < 0) {
             isc_throw(Unexpected, "bind1 " << strerror(errno));
         }
@@ -447,7 +454,7 @@ TEST_F(CloseHATest, close4) {
     }
 
     // Done: purge I/Os.
-    io_service->poll();
+    EXPECT_NO_THROW(io_service->poll());
     io_service->stop();
     io_service.reset();
 
@@ -477,13 +484,14 @@ TEST_F(CloseHATest, close4) {
 // 4. Unload the library which should not have any dangling resources.
 // 5. Verify that the network state is reset on unload.
 TEST_F(CloseHATest, close4Backup) {
-    // Start partners.
+    // Start the second backup server.
+    // The first backup server will be started when libraries are loaded.
     wthread_.reset(new WatchedThread());
-    wthread_->start([this] () { runPartners(); });
+    wthread_->start([this] () { runPartners(/* backup = */ false); });
 
     // Prepare parameters,
     ElementPtr params = Element::createMap();
-    params->set("high-availability", createValidJsonConfiguration(true));
+    params->set("high-availability", createValidJsonConfiguration(/* backup = */ true));
 
     // Set family and proc name.
     CfgMgr::instance().setFamily(AF_INET);
@@ -541,7 +549,7 @@ TEST_F(CloseHATest, close4Backup) {
     ASSERT_FALSE(network_state->isServiceEnabled());
 
     // Done: purge I/Os.
-    io_service->poll();
+    EXPECT_NO_THROW(io_service->poll());
     io_service->stop();
     io_service.reset();
 
@@ -685,7 +693,7 @@ TEST_F(CloseHATest, close6) {
     }
 
     // Done: purge I/Os.
-    io_service->poll();
+    EXPECT_NO_THROW(io_service->poll());
     io_service->stop();
     io_service.reset();
 
@@ -715,13 +723,14 @@ TEST_F(CloseHATest, close6) {
 // 4. Unload the library which should not have any dangling resources.
 // 5. Verify that the network state is reset on unload.
 TEST_F(CloseHATest, close6Backup) {
-    // Start partners.
+    // Start the second backup server.
+    // The first backup server will be started when libraries are loaded.
     wthread_.reset(new WatchedThread());
-    wthread_->start([this] () { runPartners(); });
+    wthread_->start([this] () { runPartners(/* backup = */ false); });
 
     // Prepare parameters,
     ElementPtr params = Element::createMap();
-    params->set("high-availability", createValidJsonConfiguration(true));
+    params->set("high-availability", createValidJsonConfiguration(/* backup = */ true));
 
     // Set family and proc name.
     CfgMgr::instance().setFamily(AF_INET6);
@@ -779,7 +788,7 @@ TEST_F(CloseHATest, close6Backup) {
     ASSERT_FALSE(network_state->isServiceEnabled());
 
     // Done: purge I/Os.
-    io_service->poll();
+    EXPECT_NO_THROW(io_service->poll());
     io_service->stop();
     io_service.reset();
 
@@ -795,4 +804,4 @@ TEST_F(CloseHATest, close6Backup) {
     wthread_->stop();
 }
 
-}
+}  // namespace
