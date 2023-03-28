@@ -177,7 +177,8 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
         IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
-        auto lease = createLease4(candidate, i);
+        auto lease = lease_mgr.getLease4(candidate);
+        lease->state_ = Lease::STATE_DEFAULT;
         EXPECT_NO_THROW(lease_mgr.updateLease4(lease));
     }
 
@@ -496,7 +497,8 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithReclamations) {
         IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_));
-        auto lease = createLease6(Lease::TYPE_NA, candidate, i);
+        auto lease = lease_mgr.getLease6(Lease::TYPE_NA, candidate);
+        lease->state_ = Lease::STATE_DEFAULT;
         EXPECT_NO_THROW(lease_mgr.updateLease6(lease));
     }
 
@@ -810,7 +812,8 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
         candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
-        auto lease = createLease6(Lease::TYPE_PD, candidate, i);
+        auto lease = lease_mgr.getLease6(Lease::TYPE_PD, candidate);
+        lease->state_ = Lease::STATE_DEFAULT;
         EXPECT_NO_THROW(lease_mgr.updateLease6(lease));
     }
 
