@@ -43,9 +43,9 @@ const SimpleDefaults HA_CONFIG_DEFAULTS = {
 
 /// @brief Default values for HA multi-threading configuration.
 const SimpleDefaults HA_CONFIG_MT_DEFAULTS = {
-    { "enable-multi-threading",    Element::boolean, "false" },
+    { "enable-multi-threading",    Element::boolean, "true" },
     { "http-client-threads",       Element::integer, "0" },
-    { "http-dedicated-listener",   Element::boolean, "false" },
+    { "http-dedicated-listener",   Element::boolean, "true" },
     { "http-listener-threads",     Element::integer, "0" }
 };
 
@@ -411,5 +411,5 @@ HAConfigParser::logConfigStatus(const HAConfigPtr& config_storage) const {
     }
 }
 
-} // end of namespace ha
-} // end of namespace isc
+}  // namespace ha
+}  // namespace isc

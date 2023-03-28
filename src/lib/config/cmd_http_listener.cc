@@ -161,5 +161,5 @@ CmdHttpListener::isPaused() {
     return (false);
 }
 
-} // namespace isc::config
-} // namespace isc
+}  // namespace config
+}  // namespace isc
