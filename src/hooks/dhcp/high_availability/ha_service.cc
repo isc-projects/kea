@@ -1443,7 +1443,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                     if (!lease_update_conflict) {
                         // If we were unable to communicate with the partner we set partner's
                         // state as unavailable.
-                        communication_state_->setPartnerState("unavailable");
+                        communication_state_->setPartnerUnavailable();
                     }
                 } else {
                     // Lease update successful and we may need to clear some previously
@@ -1796,7 +1796,7 @@ HAService::asyncSendHeartbeat() {
             } else {
                 // We were unable to retrieve partner's state, so let's mark it
                 // as unavailable.
-                communication_state_->setPartnerState("unavailable");
+                communication_state_->setPartnerUnavailable();
                 // Log if the communication is interrupted.
                 if (communication_state_->isCommunicationInterrupted()) {
                     LOG_WARN(ha_logger, HA_COMMUNICATION_INTERRUPTED)
@@ -1904,7 +1904,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
 
              // Invoke post request action if it was specified.
@@ -1981,7 +1981,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
 
              // Invoke post request action if it was specified.
@@ -2226,7 +2226,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
 
              } else if (last_lease) {
                  // This indicates that there are more leases to be fetched.
@@ -2706,7 +2706,7 @@ HAService::processMaintenanceStart() {
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
 
              captured_ec = ec;
@@ -2820,7 +2820,7 @@ HAService::processMaintenanceCancel() {
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
@@ -2916,7 +2916,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
 
              // Invoke post request action if it was specified.

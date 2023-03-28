@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8001,6 +8001,37 @@ TEST_F(HAServiceStateMachineTest, clearRejectedLeaseUpdatesPassiveBackup) {
     startService(config_storage);
 
     EXPECT_FALSE(expectClearRejectedLeases(MyState(HA_PASSIVE_BACKUP_ST)));
+}
+
+// Verifies that the server doesn't terminate when the partner is unavailable.
+TEST_F(HAServiceStateMachineTest, doNotTerminateWhenPartnerUnavailable) {
+    HAConfigPtr config_storage = createValidConfiguration();
+    ASSERT_NO_THROW_LOG(service_.reset(new TestHAService(io_service_, network_state_,
+                                                         config_storage)));
+    NakedCommunicationState4Ptr state(new NakedCommunicationState4(io_service_,
+                                                                   config_storage));
+    service_->communication_state_ = state;
+
+    // Begin in the load-balancing state and the partner is also in
+    // that state.
+    service_->verboseTransition(HA_LOAD_BALANCING_ST);
+    service_->runModel(HAService::NOP_EVT);
+    service_->communication_state_->poke();
+    service_->communication_state_->setPartnerState("load-balancing");
+
+    // Change the clock skew, so it is beyond the acceptable threshold.
+    state->clock_skew_ += boost::posix_time::time_duration(0, 1, 5);
+
+    // Send the heartbeat. We didn't setup the connection to the partner.
+    // The heartbeat should fail and our server should transition to the
+    // communication-recovery state. Earlier, the server had a bug that
+    // it would take the last known clock skew and transition to the
+    // terminated state instead. It was wrong because when the partner is
+    // unavailable we can't tell the current clock skew. The administrator
+    // may actually be fixing the time on the other server. Thus, we must
+    // not terminate.
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_COMMUNICATION_RECOVERY_ST, service_->getCurrState());
 }
 
 } // end of anonymous namespace

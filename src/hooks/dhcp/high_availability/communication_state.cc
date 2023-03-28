@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,6 +96,18 @@ CommunicationState::setPartnerState(const std::string& state) {
         setPartnerStateInternal(state);
     } else {
         setPartnerStateInternal(state);
+    }
+}
+
+void
+CommunicationState::setPartnerUnavailable() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        setPartnerStateInternal("unavailable");
+        resetPartnerTimeInternal();
+    } else {
+        setPartnerStateInternal("unavailable");
+        resetPartnerTimeInternal();
     }
 }
 
@@ -467,6 +479,14 @@ CommunicationState::setPartnerTimeInternal(const std::string& time_text) {
     partner_time_at_skew_ = HttpDateTime().fromRfc1123(time_text).getPtime();
     my_time_at_skew_ = HttpDateTime().getPtime();
     clock_skew_ = partner_time_at_skew_ - my_time_at_skew_;
+}
+
+void
+CommunicationState::resetPartnerTimeInternal() {
+    clock_skew_ = boost::posix_time::time_duration(0, 0, 0, 0);
+    last_clock_skew_warn_ = boost::posix_time::ptime();
+    my_time_at_skew_ = boost::posix_time::ptime();
+    partner_time_at_skew_ = boost::posix_time::ptime();
 }
 
 std::string

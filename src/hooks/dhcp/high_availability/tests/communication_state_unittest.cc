@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,6 +59,12 @@ public:
     /// @brief Verifies that the partner state is set and retrieved correctly.
     void partnerStateTest();
 
+    /// @brief Verifies that the partner state is set to unavailable.
+    ///
+    /// Whether or not the function under test also resets the clock skew is
+    /// tested in a different test case.
+    void partnerStateUnavailableTest();
+
     /// @brief Verifies that the partner's scopes are set and retrieved correctly.
     void partnerScopesTest();
 
@@ -93,6 +99,10 @@ public:
     /// @brief This test verifies that the clock skew is checked properly by the
     /// clockSkewShouldWarn and clockSkewShouldTerminate functions.
     void clockSkewTest();
+
+    /// @brief This test verifies that the clock skew calculations take into
+    /// account whether or not the partner is available.
+    void clockSkewPartnerUnavailableTest();
 
     /// @brief This test verifies that the clock skew value is formatted correctly
     /// for logging.
@@ -196,6 +206,20 @@ CommunicationStateTest::partnerStateTest() {
 
     // An attempt to set unsupported value should result in exception.
     EXPECT_THROW(state_.setPartnerState("unsupported"), BadValue);
+}
+
+// Verifies that the partner state is set to unavailable.
+void
+CommunicationStateTest::partnerStateUnavailableTest() {
+    // Initially the state is unknown.
+    EXPECT_LT(state_.getPartnerState(), 0);
+
+    // Set a valid state initially.
+    state_.setPartnerState("hot-standby");
+    EXPECT_EQ(HA_HOT_STANDBY_ST, state_.getPartnerState());
+
+    state_.setPartnerUnavailable();
+    EXPECT_EQ(HA_UNAVAILABLE_ST, state_.getPartnerState());
 }
 
 // Verifies that the partner's scopes are set and retrieved correctly.
@@ -553,6 +577,28 @@ CommunicationStateTest::clockSkewTest() {
     state_.last_clock_skew_warn_ = boost::posix_time::ptime();
     EXPECT_TRUE(state_.clockSkewShouldWarn());
     EXPECT_TRUE(state_.clockSkewShouldTerminate());
+}
+
+// This test verifies that the clock skew calculations take into
+// account whether or not the partner is available.
+void
+CommunicationStateTest::clockSkewPartnerUnavailableTest() {
+    // Default clock skew is 0.
+    EXPECT_FALSE(state_.clockSkewShouldWarn());
+    EXPECT_FALSE(state_.clockSkewShouldTerminate());
+
+    // Move the clock skew beyond the 60s limit. The alarms about the
+    // too high clock skew should be activated.
+    state_.setPartnerTime(HttpDateTime().rfc1123Format());
+    state_.clock_skew_ += boost::posix_time::time_duration(0, 1, 5);
+    EXPECT_TRUE(state_.clockSkewShouldWarn());
+    EXPECT_TRUE(state_.clockSkewShouldTerminate());
+
+    // Mark the partner as unavailable. It should reset the clock skew
+    // because we don't know the actual partner's time at the moment.
+    state_.setPartnerUnavailable();
+    EXPECT_FALSE(state_.clockSkewShouldWarn());
+    EXPECT_FALSE(state_.clockSkewShouldTerminate());
 }
 
 // This test verifies that the clock skew value is formatted correctly
@@ -1020,6 +1066,15 @@ TEST_F(CommunicationStateTest, clockSkewTest) {
 TEST_F(CommunicationStateTest, clockSkewTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     clockSkewTest();
+}
+
+TEST_F(CommunicationStateTest, clockSkewPartnerUnavailableTest) {
+    clockSkewPartnerUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, clockSkewPartnerUnavailableTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    clockSkewPartnerUnavailableTest();
 }
 
 TEST_F(CommunicationStateTest, rejectedLeaseUpdatesTerminateTest) {

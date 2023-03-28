@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,6 +105,14 @@ public:
     /// those returned in response to a ha-heartbeat command.
     /// @throw BadValue if unsupported state value was provided.
     void setPartnerState(const std::string& state);
+
+    /// @brief Sets partner state unavailable.
+    ///
+    /// This function should be called whenever there is a problem to
+    /// communicate with the partner. Besides setting the state, it also
+    /// resets some other communication states. In particular, it resets
+    /// the clock skew.
+    void setPartnerUnavailable();
 
 private:
     /// @brief Sets partner state.
@@ -544,6 +552,7 @@ public:
     void setPartnerTime(const std::string& time_text);
 
 private:
+
     /// @brief Provide partner's notion of time so the new clock skew can be
     /// calculated.
     ///
@@ -556,6 +565,12 @@ private:
     /// @todo Consider some other time formats which include millisecond
     /// precision.
     void setPartnerTimeInternal(const std::string& time_text);
+
+    /// @brief Resets the partner time and the clock skew to defaults.
+    ///
+    /// This function is called internally when the communication with the
+    /// partner fails.
+    void resetPartnerTimeInternal();
 
 public:
     /// @brief Returns current clock skew value in the logger friendly format.
