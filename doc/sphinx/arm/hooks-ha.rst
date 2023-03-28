@@ -1645,28 +1645,28 @@ HA+MT operation:
 
 -  ``enable-multi-threading`` - enables or disables multi-threading HA peer
    communication (HA+MT). Kea core multi-threading must be enabled for HA+MT to
-   operate. When ``false`` (the default), the server operates as in earlier
-   versions, relying on ``kea-ctrl-agent`` and using single-threaded HTTP client
-   processing.
+   operate. When ``false``, the server relies on ``kea-ctrl-agent`` for
+   communication with its peer, and uses single-threaded HTTP client processing.
+   The default is ``true``.
 
 -  ``http-dedicated-listener`` - enables or disables the creation of a dedicated,
    internal HTTP listener through which the server receives HA messages from its
    peers. The internal listener replaces the role of ``kea-ctrl-agent`` traffic,
    allowing peers to send their HA commands directly to each other. The listener
-   listens on the peer's ``url``. When ``false`` (the default), the server
+   listens on the peer's ``url``. When ``false``, the server
    relies on ``kea-ctrl-agent``. This parameter has been provided largely for
    flexibility and testing; running HA+MT without dedicated listeners enabled
-   will substantially limit HA throughput.
+   will substantially limit HA throughput. The default is ``true``.
 
 -  ``http-listener-threads`` - indicates the maximum number of threads the
-   dedicated listener should use. A value of 0 instructs the server to use the
+   dedicated listener should use. A value of ``0`` instructs the server to use the
    same number of threads that the Kea core is using for DHCP multi-threading.
-   The default is 0.
+   The default is ``0``.
 
 -  ``http-client-threads`` - indicates the maximum number of threads that should
-   be used to send HA messages to its peers. A value of 0 instructs the server
+   be used to send HA messages to its peers. A value of ``0`` instructs the server
    to use the same number of threads that the Kea core is using for DHCP
-   multi-threading. The default is 0.
+   multi-threading. The default is ``0``.
 
 These parameters are grouped together under a map element, ``multi-threading``,
 as illustrated below:

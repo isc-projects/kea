@@ -29,7 +29,7 @@
 
     // Multi-threading parameters.
     "multi-threading": {
-        // To enable multi-threading, this option can be set to 'true' value.
+        // By default, Kea processes packets on multiple threads if the hardware permits.
         "enable-multi-threading": true,
 
         // When multi-threading is enabled, Kea will process packets on a
@@ -138,6 +138,7 @@
                     // processing packets on multiple threads, the High Availability module
                     // must have multi-threading enabled.
                     "multi-threading": {
+                        // Enable High Availability to benefit from multi-threading. Default: true.
                         "enable-multi-threading": true,
                         // When running in MT mode, the dedicated listener is used to handle
                         // lease updates.

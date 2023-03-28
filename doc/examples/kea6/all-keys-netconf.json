@@ -578,10 +578,8 @@
 
         // Multi-threading parameters.
         "multi-threading": {
-            // By default Kea processes packets on a single thread (default
-            // 'false' value for this option). To enable multi-threading, this
-            // option can be set ('true' value).
-            "enable-multi-threading": false,
+            // By default, Kea processes packets on multiple threads if the hardware permits.
+            "enable-multi-threading": true,
 
             // When multi-threading is enabled, Kea will process packets on a
             // number of multiple threads configurable through this option. The
