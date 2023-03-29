@@ -1055,6 +1055,16 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (notify_libraries);
     }
 
+    // Initialize the allocators. If the user selected a Free Lease Queue Allocator
+    // for any of the subnets, the server will now populate free leases to the queue.
+    // It may take a while!
+    try {
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->initAllocatorsAfterConfigure();
+
+    } catch (const std::exception& ex) {
+        err << "Error initializing the lease allocators: " << ex.what();
+    }
+
     // Apply multi threading settings.
     // @note These settings are applied/updated only if no errors occur while
     // applying the new configuration.
@@ -1101,27 +1111,6 @@ ControlledDhcpv6Srv::finishConfigHookLibraries(isc::data::ConstElementPtr config
         }
     }
 
-    // Initialize the allocators. If the user selected a Free Lease Queue Allocator
-    // for any of the subnets, the server will now populate free leases to the queue.
-    // It may take a while!
-    try {
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->initAllocatorsAfterConfigure();
-
-    } catch (const std::exception& ex) {
-        err << "Error initializing the lease allocators: " << ex.what();
-    }
-
-    // Apply multi threading settings.
-    // @note These settings are applied/updated only if no errors occur while
-    // applying the new configuration.
-    // @todo This should be fixed.
-    try {
-        CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
-    } catch (const std::exception& ex) {
-        err << "Error applying multi threading settings: "
-            << ex.what();
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
-    }
     return (ConstElementPtr());
 }
 

@@ -20,6 +20,10 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED = "DHCPSR
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED = "DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET4 = "DHCPSRV_CFGMGR_DEL_SUBNET4";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET6 = "DHCPSRV_CFGMGR_DEL_SUBNET6";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES = "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE = "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES = "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE = "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED = "DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED = "DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE = "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE";
@@ -276,6 +280,10 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED", "dhcp-ddns:%1 is deprecated, moving it to global:%2",
     "DHCPSRV_CFGMGR_DEL_SUBNET4", "IPv4 subnet %1 removed",
     "DHCPSRV_CFGMGR_DEL_SUBNET6", "IPv6 subnet %1 removed",
+    "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES", "populating free address leases for the FLQ allocator in subnet %1; it can take a while!",
+    "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE", "populated %1 free address leases for the FLQ allocator in subnet %2 in %3",
+    "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES", "populating free prefix leases for the FLQ allocator in subnet %1; it can take a while!",
+    "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE", "populated %1 free prefix leases for the FLQ allocator in subnet %2 completed in %3",
     "DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non-unique IP reservations in a subnet",
     "DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non unique IP reservations in a subnet",
     "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE", "setting \"ip-reservations-unique\" from false to true poses a risk that some host backends may still contain multiple reservations for the same IP address",
