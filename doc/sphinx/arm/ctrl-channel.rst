@@ -254,7 +254,7 @@ contain responses from each service, in the order they were requested:
     ]
 
 An exception to this are authentication or authorization errors which cause CA
-to reject the command entirely.  The response to such an error will be formatted
+to reject the command entirely.  The response to such an error is formatted
 as a single entry (JSON map) as follows:
 
 ::
@@ -342,7 +342,7 @@ returned is roughly equal to the configuration that was loaded using the
 ``-c`` command-line option during server start-up, or was later set using the
 ``config-set`` command. However, there may be certain differences, as
 comments are not retained. If the original configuration used file
-inclusion, the returned configuration will include all parameters from
+inclusion, the returned configuration includes all parameters from
 all included files.
 
 .. warning::

@@ -38,24 +38,24 @@ Client classification can be used to change the behavior of almost any
 part of the DHCP message processing. There are currently nine
 mechanisms that take advantage of client classification:
 
-- dropping queries
+- Dropping queries.
 
-- subnet selection
+- Subnet selection.
 
-- pool selection
+- Pool selection.
 
-- lease limiting
+- Lease limiting.
 
-- rate limiting
+- Rate limiting.
 
-- DDNS tuning
+- DDNS tuning.
 
-- definition of DHCPv4 private (codes 224-254) and code 43 options
+- Defining DHCPv4 private (codes 224-254) and code 43 options.
 
-- assignment of different options
+- Assigning different options.
 
-- for DHCPv4 cable modems, the setting of specific options for use with the TFTP
-  server address and the boot file field
+- Setting specific options for use with the TFTP server address
+  and the boot file field for DHCPv4 cable modems.
 
 .. _classify-classification-steps:
 
@@ -88,9 +88,9 @@ The classification process is conducted in several steps:
     The ``pkt4_receive`` and ``pkt6_receive`` callouts are called here.
 
 6.  When the ``early-global-reservations-lookup`` global parameter is
-    configured to ``true`` global reservations are looked for and the 8, 9
-    and 10 steps are partially performed: the lookup is limited to
-    global reservations, if one is found the ``KNOWN`` class is set
+    configured to ``true``, the process looks global reservations and
+    partially performs steps 8, 9, and 10. The lookup is limited to
+    global reservations; if one is found the ``KNOWN`` class is set,
     but if none is found the ``UNKNOWN`` class is **not** set.
 
 7.  A subnet is chosen, possibly based on the class information when
@@ -694,40 +694,40 @@ Configuring Classes
 ===================
 
 A client class definition can contain the following properties:
- - ``name`` parameter is mandatory and must be unique among all classes.
- - ``test`` expression is not mandatory and represents a string containing the
+ - The ``name`` parameter is mandatory and must be unique among all classes.
+ - The ``test`` expression is not mandatory and represents a string containing the
    logical expression used to determine membership in the class. The entire
    expression is included in double quotes (``"``). The result should evaluate
    to a boolean value (``true`` or ``false``).
- - ``template-test`` expression is not mandatory and represents a string
+ - The ``template-test`` expression is not mandatory and represents a string
    containing the logical expression used to generate a spawning class. The
    entire expression is included in double quotes (``"``). The result should
    evaluate to a string value representing the variable part of the spawned
    class name. If the resulting string is empty, no spawning class is generated.
    The resulting spawned class has the following generated name format:
    ``SPAWN_<template-class-name>_<evaluated-value>``.
-   After classes are evaluated and spawned class is generated, the corresponding
+   After classes are evaluated and a spawned class is generated, the corresponding
    template class name is also associated with the packet.
- - ``option-data`` list is not mandatory and contains options that should be
+ - The ``option-data`` list is not mandatory and contains options that should be
    assigned to members of this class. In the case of a template class, these
-   options are assigned to the generated spawning class.
- - ``option-def`` list is not mandatory and is used to define custom options.
- - ``only-if-required`` flag is not mandatory and when the value is set to
-   ``false`` (the default) membership is determined during classification so is
-   available for instance for subnet selection. When the value is set to
+   options are assigned to the generated spawned class.
+ - The ``option-def`` list is not mandatory and is used to define custom options.
+ - The ``only-if-required`` flag is not mandatory; when its value is set to
+   ``false`` (the default), membership is determined during classification and is
+   available for subnet selection, for instance. When the value is set to
    ``true``, membership is evaluated only when required and is usable only for
    option configuration.
- - ``user-context`` is not mandatory and represents a map with user defined data
-   and possibly configuration options for hooks libraries.
- - ``next-server`` is not mandatory and configures the ``siaddr`` field in
+ - The ``user-context`` is not mandatory and represents a map with user-defined data
+   and possibly configuration options for hook libraries.
+ - The ``next-server`` parameter is not mandatory and configures the ``siaddr`` field in
    packets associated with this class. It is used in DHCPv4 only.
- - ``server-hostname`` is not mandatory and configures the ``sname`` field in
-   packets associated with this class. It is used in DHCPv4 only
- - ``boot-file-name`` is not mandatory and configures the ``file`` field in
+ - The ``server-hostname`` is not mandatory and configures the ``sname`` field in
    packets associated with this class. It is used in DHCPv4 only.
- - ``valid-lifetime``, ``min-valid-lifetime``, and ``max-valid-lifetime`` are
+ - The ``boot-file-name`` is not mandatory and configures the ``file`` field in
+   packets associated with this class. It is used in DHCPv4 only.
+ - The ``valid-lifetime``, ``min-valid-lifetime``, and ``max-valid-lifetime`` are
    not mandatory and configure the valid lifetime fields for this client class.
- - ``preferred-lifetime``, ``min-preferred-lifetime`` and
+ - The ``preferred-lifetime``, ``min-preferred-lifetime`` and
    ``max-preferred-lifetime`` are not mandatory and configure the preferred
    lifetime fields for this client class. It is used in DHCPv6 only.
 

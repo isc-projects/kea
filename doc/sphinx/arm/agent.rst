@@ -102,11 +102,11 @@ provided above, the RESTful service will be available at the URL
 ``https://10.20.30.40:8000/``. If these parameters are not specified, the
 default URL is ``http://127.0.0.1:8000/``.
 
-When using Kea's HA hook library with multi-threading, make sure
-that the address:port combination used for CA is
+When using Kea's HA hook library with multi-threading,
+the address:port combination used for CA must be
 different from the HA peer URLs, which are strictly
 for internal HA traffic between the peers. User commands should
-still be sent via CA.
+still be sent via the CA.
 
 The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
 parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters
@@ -147,7 +147,7 @@ ability to store comments or descriptions; the parser translates a
 "comment" entry into a user context with the entry, which allows a
 comment to be attached within the configuration itself.
 
-Basic HTTP authentication was added in Kea 1.9.0; it protects
+Basic HTTP authentication protects
 against unauthorized uses of the control agent by local users. For
 protection against remote attackers, HTTPS and reverse proxy of
 :ref:`agent-secure-connection` provide stronger security.
@@ -173,27 +173,26 @@ is used.
    in UTF-8, but the current Kea JSON syntax only supports the Latin-1
    (i.e. 0x00..0xff) Unicode subset.
 
-To avoid to expose the password or both the user ID and the associated
-password these values can be read from files. The syntax was extended by:
+To avoid exposing the user ID and/or the associated
+password, these values can be read from files. The syntax is extended by:
 
--  The ``directory`` authentication parameter which handles the common
-   part of file paths. By default the value is the empty string.
+-  The ``directory`` authentication parameter, which handles the common
+   part of file paths. The default value is the empty string.
 
--  The ``password-file`` client parameter which with the ``directory``
-   parameter specifies the path of a file where the password or when no
-   user ID is given the whole basic HTTP authentication secret before
-   encoding can be read.
+-  The ``password-file`` client parameter, which, alongside the ``directory``
+   parameter, specifies the path of a file that can contain the password,
+   or when no user ID is given, the whole basic HTTP authentication secret.
 
--  The ``user-file`` client parameter which with the ``directory`` parameter
+-  The ``user-file`` client parameter, which, with the ``directory`` parameter,
    specifies the path of a file where the user ID can be read.
 
-When files are used they are read when the configuration is loaded in order
+When files are used, they are read when the configuration is loaded,
 to detect configuration errors as soon as possible.
 
 Hook libraries can be loaded by the Control Agent in the same way as
 they are loaded by the DHCPv4 and DHCPv6 servers. The CA currently
 supports one hook point - ``control_command_receive`` - which makes it
-possible to delegate processing of some commands to the hook library.
+possible to delegate the processing of some commands to the hook library.
 The ``hooks-libraries`` list contains the list of hook libraries that
 should be loaded by the CA, along with their configuration information
 specified with ``parameters``.

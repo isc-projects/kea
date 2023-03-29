@@ -1,16 +1,16 @@
-Template: Secure High Availability Kea DHCP with multi-threading
+Template: Secure High Availability Kea DHCP with Multi-Threading
 ----------------------------------------------------------------
 
 Below are some templates to assist in configuring a secure Kea DHCP server with
 multi-threading. These templates make the following assumptions:
 
-- the administrator wants to set up High Availability with multi-threading.
-- the machines running Kea with multi-threading have at least 4 CPUs.
-- the connection to the peer is secured using TLS.
+- The administrator wants to set up High Availability (HA) with multi-threading.
+- The machines running Kea with multi-threading have at least four CPUs.
+- The connection to the peer is secured using TLS.
 
 The logical setup consists of two hosts, each running a Kea DHCPv4 server and a Control Agent (CA).
-In the multi-threading setup, the CA is not required, as the server is using it's
-own dedicated HTTP listener to communicate with the peer. However it can still
+In the multi-threading setup, the CA is not required, as the server is using its
+own dedicated HTTP listener to communicate with the peer. However, the CA can still
 be used to handle user commands.
 
 .. code-block:: none
@@ -25,21 +25,20 @@ be used to handle user commands.
    |        |       |        |
    +--------+       +--------+
 
-The CA on host-1 and CA on host-2 both listen on port 8001, and the server dedicated HTTP
+The CAs on host-1 and host-2 both listen on port 8001, and the server's dedicated HTTP
 listener uses port 8000. The DHCP servers communicate with each other via the dedicated HTTP
-listener, which forward only the lease updates commands to the peer server.
+listener, which forwards only the lease-update commands to the peer server.
 
 Deployment Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The setup is not expected to scale automatically. This example uses 4 threads for
-processing DHCP traffic, 4 threads for listening and handling HA peer HTTP requests
-and 4 threads for sending lease updates to the HA peer. The thread queue used to
-store incoming DHCP requests is set to 64, but specific values for better
-performance must be determined on the deployment setup by doing proper testing
-and benchmarks.
+The setup is not expected to scale automatically. This example uses four threads for
+processing DHCP traffic, four threads for listening and handling HA peer HTTP requests,
+and four threads for sending lease updates to the HA peer. The thread queue used to
+store incoming DHCP requests is set to 64, but proper testing and benchmarks are required
+to determine the appropriate values for best performance on the deployment setup.
 
-The assumption is that there are two hosts that are running the Kea setup:
+In this example, there are two hosts running Kea:
 
 - 192.168.1.2 - primary HA server (active, handles all the traffic)
 
@@ -54,16 +53,16 @@ The whole subnet is split into dynamic pools:
 
 To deploy this setup, follow the steps provided in the power user home setup with the following distinctions:
 
-1. Install CA only if the administrator is planning to manage Kea using RESTful API.
-   Otherwise, the High Availability Kea server with multi-threading does not require CA to run.
+1. Install the CA only if the administrator is planning to manage Kea using the RESTful API.
+   Otherwise, the CA is not required for the High Availability Kea server with multi-threading.
 
 2. Alter the following to match the local setup:
 
-   - the paths to ``trust-anchor``, ``cert-file``, ``key-file`` must be set to the
+   - The paths to ``trust-anchor``, ``cert-file``, and ``key-file`` must be set to the
      respective values corresponding to the deployment machine.
 
-   - the addressing, if using something other than 192.168.1.0/24. Make sure the CA port
-     configuration (``http-host`` and ``http-port`` in ``kea-ca.conf``) is different than the DHCPv4 server
+   - The addressing must be updated, if using something other than 192.168.1.0/24. Make sure the CA port
+     configuration (``http-host`` and ``http-port`` in ``kea-ca.conf``) is different from the DHCPv4 server
      configuration (``url`` in ``hook-libraries/parameters/high-availability/peers`` in ``kea-dhcp4.conf``).
      The CA is used to handle only management commands, as the HA module sends lease updates using
      the dedicated HTTP listener to the peer.
@@ -80,8 +79,9 @@ To deploy this setup, follow the steps provided in the power user home setup wit
 Possible Extensions
 ~~~~~~~~~~~~~~~~~~~
 
-The proposed configuration is somewhat basic, but functional. Once it is set up and running, administrators
+This sample configuration is basic but functional. Once it is set up and running, administrators
 may wish to consider the following changes:
 
-- if using a database, configuring TLS for the database backend (either for lease, host, configuration backend or forensic logging)
-  is also possible. See :ref:`database-connectivity` for more information.
+- If using a database, it is also possible to configure TLS for the database backend (for
+  lease, host, configuration backend, or forensic logging). See :ref:`database-connectivity`
+  for more information.
