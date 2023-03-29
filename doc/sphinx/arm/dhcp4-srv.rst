@@ -7810,7 +7810,7 @@ for a subnet:
 Free Lease Queue Allocator
 --------------------------
 
-It is a sophisticated allocator whose use should be considered in the subnets
+It is a sophisticated allocator whose use should be considered in subnets
 with highly utilized address pools. In such cases, it can take a considerable
 amount of time for the iterative and random allocator to find an available
 address because they have to repeatedly check if there is a valid lease for

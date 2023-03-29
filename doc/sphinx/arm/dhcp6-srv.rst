@@ -7378,7 +7378,7 @@ clients increase memory consumption by random allocation.
 Free Lease Queue Allocator (Prefix Delegation Only)
 ---------------------------------------------------
 
-It is a sophisticated allocator whose use should be considered in the subnets
+It is a sophisticated allocator whose use should be considered in subnets
 with highly utilized delegated prefix pools. In such cases, it can take a
 considerable amount of time for the iterative and random allocator to find
 an available prefix because they have to repeatedly check if there is a
