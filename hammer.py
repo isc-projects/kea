@@ -874,7 +874,7 @@ class VagrantEnv(object):
 
                 if self.system in ['ubuntu', 'debian']:
                     upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
-                    file_ext = '.deb'
+                    file_ext = 'deb' # include both '.deb' and '.ddeb' files
 
                 elif self.system in ['fedora', 'centos', 'rhel']:
                     upload_cmd += ' --upload-file %s '
@@ -3023,7 +3023,7 @@ def upload_to_repo(args, pkgs_dir):
     file_ext = ''
     if system in ['ubuntu', 'debian']:
         upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
-        file_ext = '.deb'
+        file_ext = 'deb' # include both '.deb' and '.ddeb' files
 
     elif system in ['fedora', 'centos', 'rhel']:
         upload_cmd += ' --upload-file %s '
