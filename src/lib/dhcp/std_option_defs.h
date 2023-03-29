@@ -111,8 +111,8 @@ RECORD_DECL(OPT_6RD_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
 //
 // DNR Instance Data Length (2 octets), Service Priority (2 octets), ADN Length (1 octet),
 // authentication-domain-name FQDN(s), Addr Length (1 octet), IPv4 address(es), SvcParams
-RECORD_DECL(V4_DNR_RECORDS, OPT_UINT16_TYPE, OPT_UINT16_TYPE, OPT_UINT8_TYPE, OPT_FQDN_TYPE,
-            OPT_UINT8_TYPE, OPT_IPV4_ADDRESS_TYPE, OPT_BINARY_TYPE);
+//RECORD_DECL(V4_DNR_RECORDS, OPT_UINT16_TYPE, OPT_UINT16_TYPE, OPT_UINT8_TYPE, OPT_FQDN_TYPE,
+//            OPT_UINT8_TYPE, OPT_IPV4_ADDRESS_TYPE, OPT_BINARY_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
@@ -373,8 +373,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
     { "v4-portparams", DHO_V4_PORTPARAMS, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE,
       false, RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
-    { "v4-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE,
-     true, RECORD_DEF(V4_DNR_RECORDS), "" },
+    { "v4-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, OPT_TUPLE_TYPE,
+     true, NO_RECORD_DEF, "" },
     { "option-6rd", DHO_6RD, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE, true,
       RECORD_DEF(OPT_6RD_RECORDS), "" },
     { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, DHCP4_OPTION_SPACE,

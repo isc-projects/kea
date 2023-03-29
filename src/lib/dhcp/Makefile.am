@@ -35,6 +35,7 @@ libkea_dhcp___la_SOURCES += option.cc option.h
 libkea_dhcp___la_SOURCES += option_custom.cc option_custom.h
 libkea_dhcp___la_SOURCES += option_data_types.cc option_data_types.h
 libkea_dhcp___la_SOURCES += option_definition.cc option_definition.h
+libkea_dhcp___la_SOURCES += option_dnr.cc option_dnr.h
 libkea_dhcp___la_SOURCES += option_int.h
 libkea_dhcp___la_SOURCES += option_int_array.h
 libkea_dhcp___la_SOURCES += option_opaque_data_tuples.cc option_opaque_data_tuples.h
