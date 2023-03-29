@@ -3414,7 +3414,7 @@ TEST_F(ParseConfigTest, randomSubnetPdAllocator6) {
 }
 
 // This test verifies that the FLQ allocator can be selected for
-// a subnet.
+// a v6 subnet's pd-allocator.
 TEST_F(ParseConfigTest, flqSubnetPdAllocator6) {
     std::string config =
         "{"
