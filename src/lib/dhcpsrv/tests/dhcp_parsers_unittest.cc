@@ -3413,6 +3413,43 @@ TEST_F(ParseConfigTest, randomSubnetPdAllocator6) {
     EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
 }
 
+// This test verifies that the FLQ allocator can be selected for
+// a subnet.
+TEST_F(ParseConfigTest, flqSubnetPdAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"pd-allocator\": \"flq\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("flq", subnet->getPdAllocatorType().get());
+
+    // Address allocators should be iterative.
+    auto allocator = subnet->getAllocator(Lease::TYPE_NA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+    allocator = subnet->getAllocator(Lease::TYPE_TA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+    // PD allocator should use FLQ.
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<FreeLeaseQueueAllocator>(allocator));
+}
+
 // This test verifies that unknown prefix delegation allocator is rejected.
 TEST_F(ParseConfigTest, invalidSubnetPdAllocator6) {
     std::string config =
