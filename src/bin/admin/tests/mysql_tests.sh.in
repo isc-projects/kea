@@ -344,7 +344,7 @@ mysql_upgrade_12_to_13_test() {
 
     # Check lease4Dump*().
     run_command \
-        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,(SELECT FROM_UNIXTIME(1678900000)),50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }');"
+        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,(SELECT FROM_UNIXTIME(1678900000)),50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }',NULL,NULL);"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease4 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -736,7 +736,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "15.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "16.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1366,6 +1366,30 @@ SET @disable_audit = 0;"
     # Check upgrade from 14.0 to 15.0.
     mysql_upgrade_14_to_15_test
 
+    # Check upgrade from 15.0 to 16.0.
+
+    # table: lease4 new relay_id remote_id column and index.
+    qry="select relay_id from lease4"
+    run_statement "lease4" "$qry"
+
+    qry="show indexes from lease4 where key_name = 'lease4_by_relay_id'";
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "show indexes from lease4 failed. (expected status code %d, returned %d)"
+    count=$(echo "${OUTPUT}" | grep -Fci lease4_by_relay_id)
+    assert_eq 1 "${count}" "lease4_by_relay_id  wrong or missing. (expected count %d, actual %d)"
+
+    # table: lease4 new remote_id column and index.
+    qry="select remote_id from lease4"
+    run_statement "lease4" "$qry"
+
+    qry="show indexes from lease4 where key_name = 'lease4_by_remote_id'";
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "show indexes from lease4 failed. (expected status code %d, returned %d)"
+    count=$(echo "${OUTPUT}" | grep -Fci lease4_by_remote_id)
+    assert_eq 1 "${count}" "lease4_by_remote_id  wrong or missing. (expected count %d, actual %d)"
+
     # Let's wipe the whole database
     mysql_wipe
 
@@ -1407,9 +1431,9 @@ mysql_lease4_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease4 values(10,20,30,40,(SELECT FROM_UNIXTIME(1642000000)),50,1,1,'one.example.com',0,NULL);
-insert into lease4 values(11,NULL,123,40,(SELECT FROM_UNIXTIME(1643210000)),50,1,1,'',1,'{  }');\
-insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,1,'three,example,com',2,'{ \"a\": 1, \"b\": \"c\" }');"
+insert into lease4 values(10,20,30,40,(SELECT FROM_UNIXTIME(1642000000)),50,1,1,'one.example.com',0,NULL,NULL,NULL);
+insert into lease4 values(11,NULL,123,40,(SELECT FROM_UNIXTIME(1643210000)),50,1,1,'',1,'{  }',NULL,NULL);\
+insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,1,'three,example,com',2,'{ \"a\": 1, \"b\": \"c\" }',NULL,NULL);"
 
     run_command \
         mysql_execute "$insert_sql"

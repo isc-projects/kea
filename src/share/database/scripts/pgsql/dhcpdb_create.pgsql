@@ -5649,6 +5649,23 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 14.
 
+-- This line starts the schema upgrade to version 15.
+
+-- Add relay and remote id colums to DHCPv4 leases.
+ALTER TABLE lease4
+    ADD COLUMN relay_id BYTEA DEFAULT NULL,
+    ADD COLUMN remote_id BYTEA DEFAULT NULL;
+
+-- Create relay and remote id indexes.
+CREATE INDEX lease4_by_relay_id ON lease4 (relay_id);
+CREATE INDEX lease4_by_remote_id ON lease4 (remote_id);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '15', minor = '0';
+
+-- This line concludes the schema upgrade to version 15.
+
 -- Commit the script transaction.
 COMMIT;
 

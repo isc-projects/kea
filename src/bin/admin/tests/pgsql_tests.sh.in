@@ -143,7 +143,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "14.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "15.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -793,6 +793,18 @@ pgsql_upgrade_13_to_14_test() {
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 }
 
+pgsql_upgrade_14_to_15_test() {
+    # Added relay_id column to lease4
+    run_command \
+        pgsql_execute "select relay_id from lease4;"
+    assert_eq 0 "${EXIT_CODE}" "lease4 is missing relay_id column. (expected status  code %d, returned %d)"
+
+    # Added remote_id column to lease4
+    run_command \
+        pgsql_execute "select remote_id from lease4;"
+    assert_eq 0 "${EXIT_CODE}" "lease4 is missing remote_id column. (expected status  code %d, returned %d)"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -810,7 +822,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "14.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "15.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0
@@ -847,6 +859,9 @@ pgsql_upgrade_test() {
 
     # Check 13 to 14 upgrade
     pgsql_upgrade_13_to_14_test
+
+    # Check 14 to 15 upgrade
+    pgsql_upgrade_14_to_15_test
 
     # Let's wipe the whole database
     pgsql_wipe
