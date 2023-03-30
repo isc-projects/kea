@@ -116,10 +116,12 @@ libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 libdhcpsrv_unittests_SOURCES += ncr_generator_unittest.cc
 if HAVE_MYSQL
 libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += mysql_lease_extended_info_unittest.cc
 libdhcpsrv_unittests_SOURCES += mysql_host_data_source_unittest.cc
 endif
 if HAVE_PGSQL
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += pgsql_lease_extended_info_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc

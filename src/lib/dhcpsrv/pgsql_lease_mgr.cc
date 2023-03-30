@@ -69,7 +69,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, relay_id, remote_id "
       "FROM lease4"},
 
     // GET_LEASE4_ADDR
@@ -78,7 +78,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE address = $1"},
 
@@ -88,7 +88,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE client_id = $1"},
 
@@ -98,7 +98,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE client_id = $1 AND subnet_id = $2"},
 
@@ -108,7 +108,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE hwaddr = $1"},
 
@@ -118,7 +118,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE hwaddr = $1 AND subnet_id = $2"},
 
@@ -128,7 +128,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE address > $1 "
       "ORDER BY address "
@@ -140,7 +140,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-      "state, user_context "
+      "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE subnet_id = $1"},
 
@@ -150,7 +150,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-      "state, user_context "
+      "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE lower(hostname) = $1"},
 
@@ -160,11 +160,123 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, relay_id, remote_id "
       "FROM lease4 "
       "WHERE state != $1 AND valid_lifetime != 4294967295 AND expire < $2 "
       "ORDER BY expire "
       "LIMIT $3"},
+
+    // GET_LEASE4_RELAYID
+    { 3, { OID_BYTEA, OID_INT8, OID_INT8 },
+      "get_lease4_relayid",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE relay_id = $1 and address > $2 "
+      "ORDER BY address "
+      "LIMIT $3"},
+
+    // GET_LEASE4_RELAYID_QST
+    { 4, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8 },
+      "get_lease4_relayid_qst",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE relay_id = $1 and address > $2 "
+      "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
+       "THEN 0 ELSE valid_lifetime END) >= $3 "
+      "ORDER BY address "
+      "LIMIT $4"},
+
+    // GET_LEASE4_RELAYID_QSET
+    { 5, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8, OID_INT8 },
+      "get_lease4_relayid_qset",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE relay_id = $1 and address > $2 "
+      "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
+       "THEN 0 ELSE valid_lifetime END) >= $3 "
+      "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
+       "THEN 0 ELSE valid_lifetime END) <= $4 "
+      "ORDER BY address "
+      "LIMIT $5"},
+
+    // GET_LEASE4_RELAYID_QET
+    { 4, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8 },
+      "get_lease4_relayid_qet",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE relay_id = $1 and address > $2 "
+      "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
+       "THEN 0 ELSE valid_lifetime END) <= $3 "
+      "ORDER BY address "
+      "LIMIT $4"},
+
+    // GET_LEASE4_REMOTEID
+    { 3, { OID_BYTEA, OID_INT8, OID_INT8 },
+      "get_lease4_remoteid",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE remote_id = $1 and address > $2 "
+      "ORDER BY address "
+      "LIMIT $3"},
+
+    // GET_LEASE4_REMOTEID_QST
+    { 4, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8 },
+      "get_lease4_remoteid_qst",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE remote_id = $1 and address > $2 "
+      "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
+       "THEN 0 ELSE valid_lifetime END) >= $3 "
+      "ORDER BY address "
+      "LIMIT $4"},
+
+    // GET_LEASE4_REMOTEID_QSET
+    { 5, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8, OID_INT8 },
+      "get_lease4_remoteid_qset",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE remote_id = $1 and address > $2 "
+      "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
+       "THEN 0 ELSE valid_lifetime END) >= $3 "
+      "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
+       "THEN 0 ELSE valid_lifetime END) <= $4 "
+      "ORDER BY address "
+      "LIMIT $5"},
+
+    // GET_LEASE4_REMOTEID_QET
+    { 4, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8 },
+      "get_lease4_remoteid_qet",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE remote_id = $1 and address > $2 "
+      "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
+       "THEN 0 ELSE valid_lifetime END) <= $3 "
+      "ORDER BY address "
+      "LIMIT $4"},
 
     // GET_LEASE6
     { 0, { OID_NONE },
@@ -271,13 +383,14 @@ PgSqlTaggedStatement tagged_statements[] = {
       "LIMIT $3"},
 
     // INSERT_LEASE4
-    { 11, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT },
+    { 13, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT, OID_BYTEA,
+            OID_BYTEA },
       "insert_lease4",
       "INSERT INTO lease4(address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"},
+        "state, user_context, relay_id, remote_id) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"},
 
     // INSERT_LEASE6
     { 17, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
@@ -292,14 +405,15 @@ PgSqlTaggedStatement tagged_statements[] = {
       "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)"},
 
     // UPDATE_LEASE4
-    { 13, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT, OID_INT8, OID_TIMESTAMP },
+    { 15, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT, OID_BYTEA,
+            OID_BYTEA, OID_INT8, OID_TIMESTAMP },
       "update_lease4",
       "UPDATE lease4 SET address = $1, hwaddr = $2, "
         "client_id = $3, valid_lifetime = $4, expire = $5, "
         "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9, "
-        "state = $10, user_context = $11 "
-      "WHERE address = $12 AND expire = $13"},
+        "state = $10, user_context = $11, relay_id = $12, remote_id = $13 "
+      "WHERE address = $14 AND expire = $15"},
 
     // UPDATE_LEASE6
     { 19, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
@@ -457,19 +571,24 @@ private:
     static const size_t HOSTNAME_COL = 8;
     static const size_t STATE_COL = 9;
     static const size_t USER_CONTEXT_COL = 10;
+    static const size_t RELAY_ID_COL = 11;
+    static const size_t REMOTE_ID_COL = 12;
     /// @brief Number of columns in the table holding DHCPv4 leases.
-    static const size_t LEASE_COLUMNS = 11;
+    static const size_t LEASE_COLUMNS = 13;
 
 public:
 
     /// @brief Constructor
     PgSqlLease4Exchange()
-        : lease_(), addr4_(0), client_id_length_(0) {
+        : lease_(), addr4_(0), client_id_length_(0),
+          relay_id_length_(0), remote_id_length_(0) {
 
         BOOST_STATIC_ASSERT(9 < LEASE_COLUMNS);
 
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
+        memset(relay_id_buffer_, 0, sizeof(relay_id_buffer_));
+        memset(remote_id_buffer_, 0, sizeof(remote_id_buffer_));
 
         // Set the column names (for error messages)
         columns_.push_back("address");
@@ -483,6 +602,8 @@ public:
         columns_.push_back("hostname");
         columns_.push_back("state");
         columns_.push_back("user_context");
+        columns_.push_back("relay_id");
+        columns_.push_back("remote_id");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -565,6 +686,19 @@ public:
                 user_context_ = "";
             }
             bind_array.add(user_context_);
+
+            if (!lease->relay_id_.empty()) {
+                bind_array.add(lease->relay_id_);
+            } else {
+                bind_array.addNull();
+            }
+
+            if (!lease->remote_id_.empty()) {
+                bind_array.add(lease->remote_id_);
+            } else {
+                bind_array.addNull();
+            }
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease4: "
@@ -626,6 +760,12 @@ public:
                 }
             }
 
+            convertFromBytea(r, row, RELAY_ID_COL, relay_id_buffer_,
+                             sizeof(relay_id_buffer_), relay_id_length_);
+
+            convertFromBytea(r, row, REMOTE_ID_COL, remote_id_buffer_,
+                             sizeof(remote_id_buffer_), remote_id_length_);
+
             Lease4Ptr result(boost::make_shared<Lease4>(addr4_, hwaddr,
                                                         client_id_buffer_,
                                                         client_id_length_,
@@ -637,6 +777,16 @@ public:
 
             if (ctx) {
                 result->setContext(ctx);
+            }
+
+            if (relay_id_length_) {
+                result->relay_id_.assign(relay_id_buffer_,
+                                         relay_id_buffer_ + relay_id_length_);
+            }
+
+            if (remote_id_length_) {
+                result->remote_id_.assign(remote_id_buffer_,
+                                          remote_id_buffer_ + remote_id_length_);
             }
 
             return (result);
@@ -658,6 +808,10 @@ private:
     uint32_t addr4_;
     size_t   client_id_length_;
     uint8_t  client_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
+    size_t   relay_id_length_;
+    uint8_t  relay_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
+    size_t   remote_id_length_;
+    uint8_t  remote_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
 };
 
 /// @brief Supports exchanging IPv6 leases with PostgreSQL.
@@ -2657,22 +2811,203 @@ PgSqlLeaseMgr::addRemoteId6(const IOAddress& /* lease_addr */,
     isc_throw(NotImplemented, "PgSqlLeaseMgr::addRemoteId6 not implemented");
 }
 
+namespace {
+
+std::string
+idToText(const OptionBuffer& id) {
+    std::stringstream tmp;
+    tmp << std::hex;
+    bool delim = false;
+    for (std::vector<uint8_t>::const_iterator it = id.begin();
+         it != id.end(); ++it) {
+        if (delim) {
+            tmp << ":";
+        }
+        tmp << std::setw(2) << std::setfill('0')
+            << static_cast<unsigned int>(*it);
+        delim = true;
+    }
+    return (tmp.str());
+}
+
+} // anonymous namespace
+
 Lease4Collection
-PgSqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& /* relay_id */,
-                                   const IOAddress& /* lower_bound_address */,
-                                   const LeasePageSize& /* page_size */,
-                                   const time_t& /* qry_start_time = 0 */,
-                                   const time_t& /* qry_end_time = 0 */) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases4ByRelayId not implemented");
+PgSqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
+                                   const IOAddress& lower_bound_address,
+                                   const LeasePageSize& page_size,
+                                   const time_t& qry_start_time /* = 0 */,
+                                   const time_t& qry_end_time /* = 0 */) {
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    // Catch 2038 bug with 32 bit time_t.
+    if ((qry_start_time < 0) || (qry_end_time < 0)) {
+        isc_throw(BadValue, "negative time value");
+    }
+
+    bool have_qst = (qry_start_time > 0);
+    bool have_qet = (qry_end_time > 0);
+
+    // Start time must be before end time.
+    if (have_qst && have_qet && (qry_start_time > qry_end_time)) {
+        isc_throw(BadValue, "start time must be before end time");
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_RELAYID4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(relay_id))
+        .arg(qry_start_time)
+        .arg(qry_end_time);
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // Bind relay id
+    if (!relay_id.empty()) {
+        bind_array.add(relay_id);
+    } else {
+        bind_array.add("");
+    }
+
+    // Bind lower bound address
+    std::string lb_address_data =
+        boost::lexical_cast<std::string>(lower_bound_address.toUint32());
+    bind_array.add(lb_address_data);
+
+    // Bind query start time.
+    std::string start_time_str;
+    if (have_qst) {
+        start_time_str = boost::lexical_cast<std::string>(qry_start_time);
+        bind_array.add(start_time_str);
+    }
+
+    // Bind query end time.
+    std::string end_time_str;
+    if (have_qet) {
+        end_time_str = boost::lexical_cast<std::string>(qry_end_time);
+        bind_array.add(end_time_str);
+    }
+
+    // Bind page size value
+    std::string page_size_data =
+        boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array.add(page_size_data);
+
+    StatementIndex stindex = GET_LEASE4_RELAYID;
+    if (have_qst && !have_qet) {
+        stindex = GET_LEASE4_RELAYID_QST;
+    } else if (have_qst && have_qet) {
+        stindex = GET_LEASE4_RELAYID_QSET;
+    } else if (!have_qst && have_qet) {
+        stindex = GET_LEASE4_RELAYID_QET;
+    }
+
+    // Get the leases
+    Lease4Collection result;
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, stindex, bind_array, result);
+
+    return (result);
 }
 
 Lease4Collection
-PgSqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
-                                    const IOAddress& /* lower_bound_address */,
-                                    const LeasePageSize& /* page_size */,
-                                    const time_t& /* qry_start_time = 0 */,
-                                    const time_t& /* qry_end_time = 0 */) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases4ByRemoteId not implemented");
+PgSqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
+                                    const IOAddress& lower_bound_address,
+                                    const LeasePageSize& page_size,
+                                    const time_t& qry_start_time /* = 0 */,
+                                    const time_t& qry_end_time /* = 0 */) {
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    // Catch 2038 bug with 32 bit time_t.
+    if ((qry_start_time < 0) || (qry_end_time < 0)) {
+        isc_throw(BadValue, "negative time value");
+    }
+
+    bool have_qst = (qry_start_time > 0);
+    bool have_qet = (qry_end_time > 0);
+
+    // Start time must be before end time.
+    if (have_qst && have_qet && (qry_start_time > qry_end_time)) {
+        isc_throw(BadValue, "start time must be before end time");
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_REMOTEID4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(remote_id))
+        .arg(qry_start_time)
+        .arg(qry_end_time);
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // Bind remote id
+    if (!remote_id.empty()) {
+        bind_array.add(remote_id);
+    } else {
+        bind_array.add("");
+    }
+
+    // Bind lower bound address
+    std::string lb_address_data =
+        boost::lexical_cast<std::string>(lower_bound_address.toUint32());
+    bind_array.add(lb_address_data);
+
+    // Bind query start time.
+    std::string start_time_str;
+    if (have_qst) {
+        start_time_str = boost::lexical_cast<std::string>(qry_start_time);
+        bind_array.add(start_time_str);
+    }
+
+    // Bind query end time.
+    std::string end_time_str;
+    if (have_qet) {
+        end_time_str = boost::lexical_cast<std::string>(qry_end_time);
+        bind_array.add(end_time_str);
+    }
+
+    // Bind page size value
+    std::string page_size_data =
+        boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array.add(page_size_data);
+
+    StatementIndex stindex = GET_LEASE4_REMOTEID;
+    if (have_qst && !have_qet) {
+        stindex = GET_LEASE4_REMOTEID_QST;
+    } else if (have_qst && have_qet) {
+        stindex = GET_LEASE4_REMOTEID_QSET;
+    } else if (!have_qst && have_qet) {
+        stindex = GET_LEASE4_REMOTEID_QET;
+    }
+
+    // Get the leases
+    Lease4Collection result;
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, stindex, bind_array, result);
+
+    return (result);
 }
 
 Lease6Collection

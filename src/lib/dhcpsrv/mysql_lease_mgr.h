@@ -705,6 +705,14 @@ public:
         GET_LEASE4_SUBID,            // Get IPv4 leases by subnet ID
         GET_LEASE4_HOSTNAME,         // Get IPv4 leases by hostname
         GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
+        GET_LEASE4_RELAYID,          // Get page of lease by relay ID.
+        GET_LEASE4_RELAYID_QST,      // Get page of leases by relay ID and query start time.
+        GET_LEASE4_RELAYID_QSET,     // Get page of leases by relay ID and query start and end times.
+        GET_LEASE4_RELAYID_QET,      // Get page of leases by relay ID and query end time.
+        GET_LEASE4_REMOTEID,         // Get page of lease by remote ID.
+        GET_LEASE4_REMOTEID_QST,     // Get page of leases by remote ID and query start time.
+        GET_LEASE4_REMOTEID_QSET,    // Get page of leases by remote ID and query start and end times.
+        GET_LEASE4_REMOTEID_QET,     // Get page of leases by remote ID and query end time.
         GET_LEASE6,                  // Get all IPv6 leases
         GET_LEASE6_ADDR,             // Get lease6 by address
         GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
