@@ -22,14 +22,13 @@ namespace isc {
 namespace dhcp {
 
 // Enum flags to define a target of the host manager functions.
-enum class HostMgrOperationTarget : uint8_t {
-    NONE = 0, // 1 << 0
+enum HostMgrOperationTarget {
     // Consider only the CfgHosts instance.
-    CONFIG_HOSTS = 1, // 1 << 1
+    PRIMARY_SOURCE = 1, // 1 << 1
     // Consider only the alternate sources.
     ALTERNATE_SOURCES = 2, // 1 << 2
     // Consider both CfgInstance and alternate sources.
-    ALL = 3  // CONFIG_HOSTS & ALTERNATE_SOURCES
+    ALL_SOURCES = 3  // PRIMARY_SOURCE & ALTERNATE_SOURCES
 };
 
 /// @brief Host Manager.
@@ -144,12 +143,14 @@ public:
     /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
-           const size_t identifier_len) const;
+           const size_t identifier_len,
+           const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Return all hosts in a DHCPv4 subnet.
     ///
@@ -164,10 +165,11 @@ public:
     /// reservations from the alternate source.
     ///
     /// @param subnet_id Subnet identifier.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
-    getAll4(const SubnetID& subnet_id) const;
+    getAll4(const SubnetID& subnet_id, const HostMgrOperationTarget target) const;
 
     /// @brief Return all hosts in a DHCPv6 subnet.
     ///
@@ -182,10 +184,12 @@ public:
     /// reservations from the alternate source.
     ///
     /// @param subnet_id Subnet identifier.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
-    getAll6(const SubnetID& subnet_id) const;
+    getAll6(const SubnetID& subnet_id,
+            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Return all hosts with a hostname.
     ///
@@ -193,10 +197,12 @@ public:
     /// using a specified hostname.
     ///
     /// @param hostname The lower case hostname.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
-    getAllbyHostname(const std::string& hostname) const;
+    getAllbyHostname(const std::string& hostname,
+                     const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Return all hosts with a hostname in a DHCPv4 subnet.
     ///
@@ -205,10 +211,12 @@ public:
     ///
     /// @param hostname The lower case hostname.
     /// @param subnet_id Subnet identifier.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
-    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id) const;
+    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id,
+                      const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Return all hosts with a hostname in a DHCPv6 subnet.
     ///
@@ -217,10 +225,12 @@ public:
     ///
     /// @param hostname The lower case hostname.
     /// @param subnet_id Subnet identifier.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
-    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id) const;
+    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id,
+                      const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns range of hosts in a DHCPv4 subnet.
     ///
@@ -347,10 +357,12 @@ public:
     /// alternate source.
     ///
     /// @param address IPv4 address for which the @c Host object is searched.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
-    getAll4(const asiolink::IOAddress& address) const;
+    getAll4(const asiolink::IOAddress& address,
+            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns any host connected to the IPv4 subnet.
     ///
@@ -364,6 +376,7 @@ public:
     /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
@@ -371,7 +384,8 @@ public:
     get4Any(const SubnetID& subnet_id,
             const Host::IdentifierType& identifier_type,
             const uint8_t* identifier_begin,
-            const size_t identifier_len) const;
+            const size_t identifier_len,
+            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
@@ -383,12 +397,14 @@ public:
     /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
     ConstHostPtr
     get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
-         const uint8_t* identifier_begin, const size_t identifier_len) const;
+         const uint8_t* identifier_begin, const size_t identifier_len,
+         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns a host connected to the IPv4 subnet and having
     /// a reservation for a specified IPv4 address.
@@ -399,10 +415,12 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param address reserved IPv4 address.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Const @c Host object using a specified IPv4 address.
     ConstHostPtr
-    get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+    get4(const SubnetID& subnet_id, const asiolink::IOAddress& address,
+         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns all hosts connected to the IPv4 subnet and having
     /// a reservation for a specified address.
@@ -425,11 +443,13 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param address reserved IPv4 address.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAll4(const SubnetID& subnet_id,
-            const asiolink::IOAddress& address) const;
+            const asiolink::IOAddress& address,
+            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns any host connected to the IPv6 subnet.
     ///
@@ -443,6 +463,7 @@ public:
     /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
@@ -450,7 +471,8 @@ public:
     get6Any(const SubnetID& subnet_id,
             const Host::IdentifierType& identifier_type,
             const uint8_t* identifier_begin,
-            const size_t identifier_len) const;
+            const size_t identifier_len,
+            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
@@ -462,12 +484,14 @@ public:
     /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
     ConstHostPtr
     get6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
-         const uint8_t* identifier_begin, const size_t identifier_len) const;
+         const uint8_t* identifier_begin, const size_t identifier_len,
+         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns a host using the specified IPv6 prefix.
     ///
@@ -476,19 +500,23 @@ public:
     ///
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Const @c Host object using a specified IPv6 prefix.
     ConstHostPtr
-    get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
+    get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
+         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns a host from specific subnet and reserved address.
     ///
     /// @param subnet_id subnet identifier.
     /// @param addr specified address.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Const @c host object that has a reservation for specified address.
     ConstHostPtr
-    get6(const SubnetID& subnet_id, const asiolink::IOAddress& addr) const;
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
+         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Returns all hosts connected to the IPv6 subnet and having
     /// a reservation for a specified address or delegated prefix (lease).
@@ -511,11 +539,13 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param address reserved IPv6 address/prefix.
+    /// @param target The host data source being a target of the operation.
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAll6(const SubnetID& subnet_id,
-            const asiolink::IOAddress& address) const;
+            const asiolink::IOAddress& address,
+            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Adds a new host to the alternate data source.
     ///
@@ -523,7 +553,9 @@ public:
     /// in use.
     ///
     /// @param host Pointer to the new @c Host object being added.
-    void add(const HostPtr& host);
+    /// @param target The host data source being a target of the operation.
+    void add(const HostPtr& host,
+             const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
 
     /// @brief Attempts to delete hosts by address.
     ///
@@ -536,8 +568,10 @@ public:
     ///
     /// @param subnet_id subnet identifier.
     /// @param addr specified address.
+    /// @param target The host data source being a target of the operation.
     /// @return true if deletion was successful, false otherwise.
-    bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+    bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
+             const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
 
     /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
     ///
@@ -548,10 +582,12 @@ public:
     /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
+    /// @param target The host data source being a target of the operation.
     /// @return true if deletion was successful, false otherwise.
     bool
     del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
-         const uint8_t* identifier_begin, const size_t identifier_len);
+         const uint8_t* identifier_begin, const size_t identifier_len,
+         const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
 
     /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
     ///
@@ -562,10 +598,12 @@ public:
     /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
+    /// @param target The host data source being a target of the operation.
     /// @return true if deletion was successful, false otherwise.
     bool
     del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
-         const uint8_t* identifier_begin, const size_t identifier_len);
+         const uint8_t* identifier_begin, const size_t identifier_len,
+         const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
 
     /// @brief Implements @ref BaseHostDataSource::update() for alternate sources.
     ///
