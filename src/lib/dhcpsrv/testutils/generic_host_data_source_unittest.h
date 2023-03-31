@@ -724,6 +724,19 @@ protected:
                   const SubnetID& subnet_id,
                   const isc::asiolink::IOAddress& address);
 
+    /// @brief Inserts IPv4 reservation into the host manager.
+    ///
+    /// @param host_manager Reference to the host manager to which the reservation
+    /// should be inserted.
+    /// @param hwaddr Pointer to the hardware address to be associated with the
+    /// reservation.
+    /// @param subnet_id IPv4 subnet id.
+    /// @param address IPv4 address to be reserved.
+    void addHost4(HostMgr& host_manager,
+                  const HWAddrPtr& hwaddr,
+                  const SubnetID& subnet_id,
+                  const isc::asiolink::IOAddress& address);
+
     /// @brief Inserts IPv6 reservation into the host data source.
     ///
     /// @param data_source Reference to the data source to which the reservation
@@ -735,6 +748,22 @@ protected:
     /// indicates that the reservation is for an IPv6 address rather than a
     /// prefix.
     void addHost6(BaseHostDataSource& data_source,
+                  const DuidPtr& duid,
+                  const SubnetID& subnet_id,
+                  const isc::asiolink::IOAddress& address,
+                  const uint8_t prefix_len = 128);
+
+/// @brief Inserts IPv6 reservation into the host manger.
+    ///
+    /// @param host_manager Reference to the host manager to which the
+    // reservation should be inserted.
+    /// @param duid Pointer to the DUID to be associated with the reservation.
+    /// @param subnet_id IPv6 subnet id.
+    /// @param address IPv6 address/prefix to be reserved.
+    /// @param prefix_len Prefix length. The default value is 128 which
+    /// indicates that the reservation is for an IPv6 address rather than a
+    /// prefix.
+    void addHost6(HostMgr& host_manager,
                   const DuidPtr& duid,
                   const SubnetID& subnet_id,
                   const isc::asiolink::IOAddress& address,

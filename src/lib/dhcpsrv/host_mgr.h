@@ -52,7 +52,7 @@ namespace dhcp {
 /// the use of alternate datasources, e.g. as a result of server's
 /// reconfiguration. However, the use of the primary host data source (i.e.
 /// reservations specified in the configuration file) can't be disabled.
-class HostMgr : public boost::noncopyable, public BaseHostDataSource {
+class HostMgr : public boost::noncopyable {
 public:
 
     /// @brief Creates new instance of the @c HostMgr.
@@ -134,7 +134,7 @@ public:
     /// @param identifier_len Identifier length.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
            const size_t identifier_len) const;
@@ -154,7 +154,7 @@ public:
     /// @param subnet_id Subnet identifier.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAll4(const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts in a DHCPv6 subnet.
@@ -172,7 +172,7 @@ public:
     /// @param subnet_id Subnet identifier.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAll6(const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts with a hostname.
@@ -183,7 +183,7 @@ public:
     /// @param hostname The lower case hostname.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAllbyHostname(const std::string& hostname) const;
 
     /// @brief Return all hosts with a hostname in a DHCPv4 subnet.
@@ -195,7 +195,7 @@ public:
     /// @param subnet_id Subnet identifier.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts with a hostname in a DHCPv6 subnet.
@@ -207,7 +207,7 @@ public:
     /// @param subnet_id Subnet identifier.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id) const;
 
     /// @brief Returns range of hosts in a DHCPv4 subnet.
@@ -234,7 +234,7 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Host collection (may be empty).
-    virtual ConstHostCollection
+    ConstHostCollection
     getPage4(const SubnetID& subnet_id,
              size_t& source_index,
              uint64_t lower_host_id,
@@ -264,7 +264,7 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Host collection (may be empty).
-    virtual ConstHostCollection
+    ConstHostCollection
     getPage6(const SubnetID& subnet_id,
              size_t& source_index,
              uint64_t lower_host_id,
@@ -292,7 +292,7 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Host collection (may be empty).
-    virtual ConstHostCollection
+    ConstHostCollection
     getPage4(size_t& source_index,
              uint64_t lower_host_id,
              const HostPageSize& page_size) const;
@@ -319,7 +319,7 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Host collection (may be empty).
-    virtual ConstHostCollection
+    ConstHostCollection
     getPage6(size_t& source_index,
              uint64_t lower_host_id,
              const HostPageSize& page_size) const;
@@ -337,7 +337,7 @@ public:
     /// @param address IPv4 address for which the @c Host object is searched.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
 
     /// @brief Returns any host connected to the IPv4 subnet.
@@ -355,7 +355,7 @@ public:
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
-    virtual ConstHostPtr
+    ConstHostPtr
     get4Any(const SubnetID& subnet_id,
             const Host::IdentifierType& identifier_type,
             const uint8_t* identifier_begin,
@@ -374,7 +374,7 @@ public:
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
-    virtual ConstHostPtr
+    ConstHostPtr
     get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len) const;
 
@@ -389,7 +389,7 @@ public:
     /// @param address reserved IPv4 address.
     ///
     /// @return Const @c Host object using a specified IPv4 address.
-    virtual ConstHostPtr
+    ConstHostPtr
     get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
 
     /// @brief Returns all hosts connected to the IPv4 subnet and having
@@ -415,7 +415,7 @@ public:
     /// @param address reserved IPv4 address.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAll4(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
@@ -434,7 +434,7 @@ public:
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
-    virtual ConstHostPtr
+    ConstHostPtr
     get6Any(const SubnetID& subnet_id,
             const Host::IdentifierType& identifier_type,
             const uint8_t* identifier_begin,
@@ -453,7 +453,7 @@ public:
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
-    virtual ConstHostPtr
+    ConstHostPtr
     get6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len) const;
 
@@ -466,7 +466,7 @@ public:
     /// @param prefix_len IPv6 prefix length.
     ///
     /// @return Const @c Host object using a specified IPv6 prefix.
-    virtual ConstHostPtr
+    ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
     /// @brief Returns a host from specific subnet and reserved address.
@@ -475,7 +475,7 @@ public:
     /// @param addr specified address.
     ///
     /// @return Const @c host object that has a reservation for specified address.
-    virtual ConstHostPtr
+    ConstHostPtr
     get6(const SubnetID& subnet_id, const asiolink::IOAddress& addr) const;
 
     /// @brief Returns all hosts connected to the IPv6 subnet and having
@@ -501,7 +501,7 @@ public:
     /// @param address reserved IPv6 address/prefix.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
+    ConstHostCollection
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
@@ -511,7 +511,7 @@ public:
     /// in use.
     ///
     /// @param host Pointer to the new @c Host object being added.
-    virtual void add(const HostPtr& host);
+    void add(const HostPtr& host);
 
     /// @brief Attempts to delete hosts by address.
     ///
@@ -525,7 +525,7 @@ public:
     /// @param subnet_id subnet identifier.
     /// @param addr specified address.
     /// @return true if deletion was successful, false otherwise.
-    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+    bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
 
     /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
     ///
@@ -537,7 +537,7 @@ public:
     /// an identifier.
     /// @param identifier_len Identifier length.
     /// @return true if deletion was successful, false otherwise.
-    virtual bool
+    bool
     del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len);
 
@@ -551,7 +551,7 @@ public:
     /// an identifier.
     /// @param identifier_len Identifier length.
     /// @return true if deletion was successful, false otherwise.
-    virtual bool
+    bool
     del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len);
 
@@ -567,7 +567,7 @@ public:
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
     ///
     /// @return Type of the backend.
-    virtual std::string getType() const {
+    std::string getType() const {
         return (std::string("host_mgr"));
     }
 
@@ -628,7 +628,7 @@ public:
     /// unique or can be non-unique.
     /// @return true if the new setting was accepted by the backend or false
     /// otherwise.
-    virtual bool setIPReservationsUnique(const bool unique);
+    bool setIPReservationsUnique(const bool unique);
 
     /// @brief Returns the boolean flag indicating if the IP reservations
     /// must be unique or can be non-unique.
@@ -670,7 +670,7 @@ protected:
     /// @brief Cache an answer.
     ///
     /// @param host Pointer to the missed host.
-    virtual void cache(ConstHostPtr host) const;
+    void cache(ConstHostPtr host) const;
 
     /// @brief Cache a negative answer.
     ///
@@ -679,7 +679,7 @@ protected:
     /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a beginning of the Identifier.
     /// @param identifier_len Identifier length.
-    virtual void cacheNegative(const SubnetID& ipv4_subnet_id,
+    void cacheNegative(const SubnetID& ipv4_subnet_id,
                                const SubnetID& ipv6_subnet_id,
                                const Host::IdentifierType& identifier_type,
                                const uint8_t* identifier_begin,

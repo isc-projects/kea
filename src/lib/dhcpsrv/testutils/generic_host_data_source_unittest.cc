@@ -2972,11 +2972,21 @@ HostMgrTest::getCfgHosts() const {
 }
 
 void
-HostMgrTest::addHost4(BaseHostDataSource& data_source,
+HostMgrTest::addHost4(BaseHostDataSource& host_manager,
                       const HWAddrPtr& hwaddr,
                       const SubnetID& subnet_id,
                       const IOAddress& address) {
-    data_source.add(HostPtr(new Host(hwaddr->toText(false),
+    host_manager.add(HostPtr(new Host(hwaddr->toText(false),
+                                     "hw-address", subnet_id, SUBNET_ID_UNUSED,
+                                     address)));
+}
+
+void
+HostMgrTest::addHost4(HostMgr& host_manager,
+                      const HWAddrPtr& hwaddr,
+                      const SubnetID& subnet_id,
+                      const IOAddress& address) {
+    host_manager.add(HostPtr(new Host(hwaddr->toText(false),
                                      "hw-address", subnet_id, SUBNET_ID_UNUSED,
                                      address)));
 }
@@ -2995,6 +3005,19 @@ HostMgrTest::addHost6(BaseHostDataSource& data_source,
     data_source.add(new_host);
 }
 
+void
+HostMgrTest::addHost6(HostMgr& data_source,
+                      const DuidPtr& duid,
+                      const SubnetID& subnet_id,
+                      const IOAddress& address,
+                      const uint8_t prefix_len) {
+    HostPtr new_host(new Host(duid->toText(), "duid", SubnetID(1),
+                              subnet_id, IOAddress::IPV4_ZERO_ADDRESS()));
+    new_host->addReservation(IPv6Resrv(prefix_len == 128 ? IPv6Resrv::TYPE_NA :
+                                       IPv6Resrv::TYPE_PD,
+                                       address, prefix_len));
+    data_source.add(new_host);
+}
 
 void
 HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
@@ -3264,8 +3287,8 @@ HostMgrTest::testGetAllbyHostnameSubnet6(BaseHostDataSource& data_source1,
 
 void
 HostMgrTest::testGetPage4(bool use_database) {
-    BaseHostDataSource& data_source1 = *getCfgHosts();
-    BaseHostDataSource& data_source2 = HostMgr::instance();
+    auto& data_source1 = *getCfgHosts();
+    auto& data_source2 = HostMgr::instance();
 
     // Initially, no reservations should be present.
     size_t idx(0);
@@ -3281,8 +3304,11 @@ HostMgrTest::testGetPage4(bool use_database) {
 
     // Add two reservations for the same subnet.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost4(use_database ? data_source2 : data_source1,
-             hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.6"));
+    if (use_database) {
+        addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.6"));
+    } else {
+        addHost4(data_source1, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.6"));
+    }
 
     CfgMgr::instance().commit();
 
@@ -3346,8 +3372,8 @@ HostMgrTest::testGetPage4(bool use_database) {
 
 void
 HostMgrTest::testGetPage6(bool use_database) {
-    BaseHostDataSource& data_source1 = *getCfgHosts();
-    BaseHostDataSource& data_source2 = HostMgr::instance();
+    auto& data_source1 = *getCfgHosts();
+    auto& data_source2 = HostMgr::instance();
 
     // Initially, no reservations should be present.
     size_t idx(0);
@@ -3363,8 +3389,13 @@ HostMgrTest::testGetPage6(bool use_database) {
 
     // Add two reservations for the same subnet.
     addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
-    addHost6(use_database ? data_source2 : data_source1,
-             duids_[1], SubnetID(1), IOAddress("2001:db8:1::6"));
+    if (use_database) {
+        addHost6(data_source2,
+                duids_[1], SubnetID(1), IOAddress("2001:db8:1::6"));
+    } else {
+        addHost6(data_source1,
+                duids_[1], SubnetID(1), IOAddress("2001:db8:1::6"));
+    }
 
     CfgMgr::instance().commit();
 
@@ -3432,8 +3463,8 @@ HostMgrTest::testGetPage6(bool use_database) {
 
 void
 HostMgrTest::testGetPage4All(bool use_database) {
-    BaseHostDataSource& data_source1 = *getCfgHosts();
-    BaseHostDataSource& data_source2 = HostMgr::instance();
+    auto& data_source1 = *getCfgHosts();
+    auto& data_source2 = HostMgr::instance();
 
     // Initially, no reservations should be present.
     size_t idx(0);
@@ -3449,8 +3480,13 @@ HostMgrTest::testGetPage4All(bool use_database) {
 
     // Add two reservations.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost4(use_database ? data_source2 : data_source1,
+    if (use_database) {
+        addHost4(data_source2,
              hwaddrs_[1], SubnetID(2), IOAddress("192.0.2.6"));
+    } else {
+        addHost4(data_source1,
+             hwaddrs_[1], SubnetID(2), IOAddress("192.0.2.6"));
+    }
 
     CfgMgr::instance().commit();
 
@@ -3509,8 +3545,8 @@ HostMgrTest::testGetPage4All(bool use_database) {
 
 void
 HostMgrTest::testGetPage6All(bool use_database) {
-    BaseHostDataSource& data_source1 = *getCfgHosts();
-    BaseHostDataSource& data_source2 = HostMgr::instance();
+    auto& data_source1 = *getCfgHosts();
+    auto& data_source2 = HostMgr::instance();
 
     // Initially, no reservations should be present.
     size_t idx(0);
@@ -3526,8 +3562,13 @@ HostMgrTest::testGetPage6All(bool use_database) {
 
     // Add two reservations.
     addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
-    addHost6(use_database ? data_source2 : data_source1,
+    if (use_database) {
+        addHost6(data_source2,
              duids_[1], SubnetID(2), IOAddress("2001:db8:1::6"));
+    } else {
+        addHost6(data_source1,
+             duids_[1], SubnetID(2), IOAddress("2001:db8:1::6"));
+    }
 
     CfgMgr::instance().commit();
 
