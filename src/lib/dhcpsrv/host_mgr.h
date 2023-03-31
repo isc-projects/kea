@@ -16,9 +16,21 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <string>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
+
+// Enum flags to define a target of the host manager functions.
+enum class HostMgrOperationTarget : uint8_t {
+    NONE = 0, // 1 << 0
+    // Consider only the CfgHosts instance.
+    CONFIG_HOSTS = 1, // 1 << 1
+    // Consider only the alternate sources.
+    ALTERNATE_SOURCES = 2, // 1 << 2
+    // Consider both CfgInstance and alternate sources.
+    ALL = 3  // CONFIG_HOSTS & ALTERNATE_SOURCES
+};
 
 /// @brief Host Manager.
 ///
