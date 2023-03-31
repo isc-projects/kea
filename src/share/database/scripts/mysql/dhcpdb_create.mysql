@@ -5092,6 +5092,9 @@ UPDATE schema_version
 -- This line starts the schema upgrade to version 16.
 
 -- Add relay and remote id colums to DHCPv4 leases.
+--
+-- Note: these columns are only used for indexes, in particular they are
+-- not exported by lease4 dump as values are also in the user context 
 ALTER TABLE lease4
     ADD COLUMN relay_id VARBINARY(128) DEFAULT NULL,
     ADD COLUMN remote_id VARBINARY(128) DEFAULT NULL;
