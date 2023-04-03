@@ -645,7 +645,7 @@ HostMgr::add(const HostPtr& host, const HostMgrOperationTarget target) {
 
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
         // Don't throw if all targets were selected.
-        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::ALL_SOURCES)) {
+        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to add new host because there is "
                     "no hosts-database configured.");
             
@@ -673,7 +673,7 @@ HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
 
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
         // Don't throw if all targets were selected.
-        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::ALL_SOURCES)) {
+        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to delete a host because there is "
                     "no hosts-database configured.");
         }
@@ -701,7 +701,7 @@ HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
 
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
         // Don't throw if all targets were selected.
-        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::ALL_SOURCES)) {
+        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to delete a host because there is "
                     "no hosts-database configured.");
         }
@@ -729,7 +729,7 @@ HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
 
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
         // Don't throw if all targets were selected.
-        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::ALL_SOURCES)) {
+        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to delete a host because there is "
                     "no hosts-database configured.");
         }

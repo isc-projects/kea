@@ -169,7 +169,7 @@ public:
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
-    getAll4(const SubnetID& subnet_id, const HostMgrOperationTarget target) const;
+    getAll4(const SubnetID& subnet_id, const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
 
     /// @brief Return all hosts in a DHCPv6 subnet.
     ///
