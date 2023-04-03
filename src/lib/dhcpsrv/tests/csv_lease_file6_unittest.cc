@@ -103,22 +103,22 @@ CSVLeaseFile6Test::writeSampleFile() const {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
                   "fqdn_rev,hostname,hwaddr,state,user_context,"
-                  "hwtype,hwaddr_source\n"
+                  "hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                   "200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
-                  "1,0\n"
+                  "1,0,0\n"
                   "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
-                  "1,0\n"
+                  "1,0,0\n"
                   "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
                   "0,8,0,0,0,,,1,,"
-                  "1,0\n"
+                  "1,0,0\n"
                   "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
                   "16,64,0,0,,,1,{ \"foobar\": true },,"
-                  "1,0\n"
+                  "1,0,0\n"
                   "2001:db8:1::2,00:00:00,200,200,8,100,0,7,0,1,1,host.example.com,,0,,"
-                  "1,0\n"
+                  "1,0,0\n"
                   "2001:db8:1::3,00:00:00,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
-                  "1,0\n");
+                  "1,0,0\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -220,7 +220,6 @@ TEST_F(CSVLeaseFile6Test, parse) {
     ASSERT_TRUE(lease->getContext());
     EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
-
 
     // Fifth lease is invalid - DUID is empty, state is not DECLINED
     {
@@ -327,14 +326,14 @@ TEST_F(CSVLeaseFile6Test, recreate) {
 
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
-              "state,user_context,hwtype,hwaddr_source\n"
+              "state,user_context,hwtype,hwaddr_source,pool_id\n"
               "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "200,200,8,100,0,7,128,1,1,host.example.com,,0,,,\n"
+              "200,200,8,100,0,7,128,1,1,host.example.com,,0,,,,0\n"
               "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05"
-              ",300,300,6,150,0,8,128,0,0,,,0,,,\n"
+              ",300,300,6,150,0,8,128,0,0,,,0,,,,0\n"
               "3000:1:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true },,\n"
-              "2001:db8:2::10,00:00:00,300,300,6,150,0,8,128,0,0,,,1,,,\n",
+              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true },,,0\n"
+              "2001:db8:2::10,00:00:00,300,300,6,150,0,8,128,0,0,,,1,,,,0\n",
               io_.readFile());
 }
 
@@ -501,15 +500,15 @@ TEST_F(CSVLeaseFile6Test, invalidHeaderColumn) {
 TEST_F(CSVLeaseFile6Test, downGrade) {
     // Create a mixed schema file
     io_.writeFile(
-             // schema 4.0 header
+              // schema 5.0 header
               "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-              "hwaddr,state,user_context,hwtype,hwaddr_source,FUTURE_COLUMN\n"
+              "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id,FUTURE_COLUMN\n"
 
-              // schema 4.0 record
+              // schema 5.0 record
               "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
               "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,"
-              "{ \"foobar\": true },1,0,FUTURE_VALUE\n");
+              "{ \"foobar\": true },1,0,0,FUTURE_VALUE\n");
 
     // Open should succeed in the event someone is downgrading.
     CSVLeaseFile6 lf(filename_);
@@ -555,13 +554,13 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
                   "fqdn_rev,hostname,hwaddr,state,user_context,"
-                  "hwtype,hwaddr_source\n"
+                  "hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::1,00:00:00,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,\n"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,,0\n"
                   "2001:db8:1::1,,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,\n"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,,0\n"
                   "2001:db8:1::1,00:00:00,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,\n");
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,,0\n");
 
     CSVLeaseFile6 lf(filename_);
     ASSERT_NO_THROW(lf.open());
@@ -594,7 +593,6 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     EXPECT_EQ(lf.getReadMsg(), "validation not started");
     }
 }
-
 
 // Verifies that it is possible to output a lease with very high valid
 // lifetime (infinite in RFC2131 terms) and current time, and then read

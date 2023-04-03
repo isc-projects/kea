@@ -153,6 +153,11 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// Specifies the identification of the subnet to which the lease belongs.
     SubnetID subnet_id_;
 
+    /// @brief The pool id
+    ///
+    /// Specifies the identification of the pool from a subnet to which the lease belongs.
+    uint32_t pool_id_;
+
     /// @brief Client hostname
     ///
     /// This field is in lower case and may be empty.

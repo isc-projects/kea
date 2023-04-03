@@ -159,7 +159,7 @@ CfgOption::createOptions(CfgOptionDefPtr cfg_def) {
         for (auto opt_desc : *(getAll(space))) {
             if (createDescriptorOption(cfg_def, space, opt_desc)) {
                 // Option was recreated, let's replace the descriptor.
-                replace(opt_desc,space);
+                replace(opt_desc, space);
             }
         }
     }

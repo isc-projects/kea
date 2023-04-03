@@ -28,7 +28,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
                                      const IdentifierBaseTypePtr&,
                                      const IOAddress&) {
     auto subnet = subnet_.lock();
-    auto pools = subnet->getPools(pool_type_);
+    const auto& pools = subnet->getPools(pool_type_);
 
     // Let's first iterate over the pools and identify the ones that
     // meet client class criteria. Then, segregate these pools into
@@ -59,7 +59,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
     if (!available.empty()) {
         // There are pools with available addresses. Let's randomly
         // pick one of these pools and get next available address.
-        pool = pools[available[getRandomNumber(available.size()-1)]];
+        pool = pools[available[getRandomNumber(available.size() - 1)]];
 
     } else if (!exhausted.empty()) {
         // All pools have been exhausted. We will start offering the same
@@ -69,7 +69,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
             getPoolState(pools[e])->getPermutation()->reset();
         }
         // Get random pool from those we just reset.
-        pool = pools[exhausted[getRandomNumber(exhausted.size()-1)]];
+        pool = pools[exhausted[getRandomNumber(exhausted.size() - 1)]];
     }
 
     // If pool has been found, let's get next address.
@@ -91,7 +91,7 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                                     const IOAddress&,
                                     uint8_t hint_prefix_length) {
     auto subnet = subnet_.lock();
-    auto pools = subnet->getPools(pool_type_);
+    const auto& pools = subnet->getPools(pool_type_);
 
     // Let's first iterate over the pools and identify the ones that
     // meet client class criteria. Then, segragate these pools into

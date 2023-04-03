@@ -3658,6 +3658,17 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                         StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
                         static_cast<int64_t>(-1));
 
+                    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+                    if (subnet) {
+                        const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+                        if (pool) {
+                            StatsMgr::instance().addValue(
+                                StatsMgr::generateName("subnet", subnet->getID(),
+                                                       StatsMgr::generateName(".pool", pool->getID(), "assigned-addresses")),
+                                static_cast<int64_t>(-1));
+                        }
+                    }
+
                     // Remove existing DNS entries for the lease, if any.
                     queueNCR(CHG_REMOVE, lease);
                 }
@@ -3818,6 +3829,17 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     StatsMgr::instance().addValue(
         StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
         static_cast<int64_t>(1));
+
+    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+    if (subnet) {
+        const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+        if (pool) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", subnet->getID(),
+                                       StatsMgr::generateName(".pool", pool->getID(), "declined-addresses")),
+                static_cast<int64_t>(1));
+        }
+    }
 
     // Global declined addresses counter.
     StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));

@@ -384,7 +384,7 @@ public:
             // Context flags are normally set during lease allocation. Since that
             // hasn't occurred we'll set them here to match the expected values.
             // Call createNameChangeRequests
-            ctx.fwd_dns_update_ =  exp_fwd.value_;
+            ctx.fwd_dns_update_ = exp_fwd.value_;
             ctx.rev_dns_update_ = exp_rev.value_;
             ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
             if (exp_fwd.value_ || exp_rev.value_) {
@@ -422,13 +422,13 @@ public:
             "{ \"interfaces-config\": { \n"
             "  \"interfaces\": [ \"eth0\" ] \n"
             "}, \n"
-            "\"valid-lifetime\": 4000,  \n"
+            "\"valid-lifetime\": 4000, \n"
             "\"preferred-lifetime\": 3000, \n"
-            "\"rebind-timer\": 2000,  \n"
-            "\"renew-timer\": 1000,  \n"
-            "\"subnet6\": [ {  \n"
+            "\"rebind-timer\": 2000, \n"
+            "\"renew-timer\": 1000, \n"
+            "\"subnet6\": [ { \n"
             "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
-            "    \"subnet\": \"2001:db8:1::/48\",  \n"
+            "    \"subnet\": \"2001:db8:1::/48\", \n"
             "    \"interface\": \"eth0\" \n"
             " } ], \n"
             "\"dhcp-ddns\": { \n"
@@ -665,7 +665,7 @@ public:
 
         const PoolCollection& pool_col = subnet_->getPools(type);
         ASSERT_EQ(pool_idx + 1, pool_col.size());
-        PoolPtr pool  = (subnet_->getPools(type)).at(pool_idx);
+        PoolPtr pool = (subnet_->getPools(type)).at(pool_idx);
         ASSERT_TRUE(pool);
         pool_ = boost::dynamic_pointer_cast<Pool6>(pool);
         ASSERT_TRUE(pool);

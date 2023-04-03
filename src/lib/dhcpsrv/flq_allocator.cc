@@ -63,7 +63,7 @@ FreeLeaseQueueAllocator::pickAddressInternal(const ClientClasses& client_classes
         return (pool_type_ == Lease::TYPE_V4 ? IOAddress::IPV4_ZERO_ADDRESS() : IOAddress::IPV6_ZERO_ADDRESS());
     }
     // Get a random pool from the available ones.
-    auto pool = pools[available[getRandomNumber(available.size()-1)]];
+    auto pool = pools[available[getRandomNumber(available.size() - 1)]];
 
     // Get or create the pool state.
     auto pool_state = getPoolState(pool);
@@ -114,7 +114,7 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         return (IOAddress::IPV6_ZERO_ADDRESS());
     }
     // Get a random pool from the available ones.
-    auto pool = pools[available[getRandomNumber(available.size()-1)]];
+    auto pool = pools[available[getRandomNumber(available.size() - 1)]];
     pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
     if (!pool6) {
         // Something is gravely wrong here
@@ -180,7 +180,8 @@ FreeLeaseQueueAllocator::initAfterConfigureInternal() {
 
 template<typename LeaseCollectionType>
 void
-FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& leases, const PoolCollection& pools) {
+FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& leases,
+                                                   const PoolCollection& pools) {
     auto subnet = subnet_.lock();
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES)
         .arg(subnet->toText());
@@ -226,7 +227,8 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
 }
 
 void
-FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collection& leases, const PoolCollection& pools) {
+FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collection& leases,
+                                                            const PoolCollection& pools) {
     auto subnet = subnet_.lock();
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES)
         .arg(subnet->toText());
@@ -251,7 +253,9 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
         }
         // Create the pool permutation so the resulting lease queue is no
         // particular order.
-        IPRangePermutation perm(PrefixRange(pool->getFirstAddress(), pool->getLastAddress(), pool6->getLength()));
+        IPRangePermutation perm(PrefixRange(pool->getFirstAddress(),
+                                            pool->getLastAddress(),
+                                            pool6->getLength()));
         auto pool_state = getPoolState(pool);
         auto done = false;
         while (!done) {

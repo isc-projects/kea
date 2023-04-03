@@ -204,7 +204,7 @@ public:
         std::stringstream file_content;
         file_content << v4_hdr_ << lease << ",dd:de:ba:0d:1b:2e,"
                      << "0a:00:01:04,100,100," << static_cast<int>(lease_id)
-                     << ",0,0,,1,\n";
+                     << ",0,0,,1,,0\n";
 
         ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getConsistency()
                     ->setLeaseSanityCheck(sanity));
@@ -223,7 +223,7 @@ public:
         }
 
         // Check how many leases were actually loaded.
-        ASSERT_EQ( (exp_present ? 1 : 0), storage4_.size());
+        ASSERT_EQ((exp_present ? 1 : 0), storage4_.size());
 
         Lease4Ptr l = getLease<Lease4Ptr>(lease, storage4_);
 
@@ -268,7 +268,7 @@ public:
         file_content << v6_hdr_ << lease << ",dd:de:ba:0d:1b:2e,"
                      << "300,300," << static_cast<int>(lease_id) << ",150,"
                      << (prefix_len > 0 ? Lease::TYPE_PD : Lease::TYPE_NA)
-                     << ",8," << prefix_len << ",0,0,,,1,\n";
+                     << ",8," << prefix_len << ",0,0,,,1,,,,0\n";
 
         ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getConsistency()
                     ->setLeaseSanityCheck(sanity));
@@ -287,7 +287,7 @@ public:
         }
 
         // Check how many leases were actually loaded.
-        ASSERT_EQ( (exp_present ? 1 : 0), storage6_.size());
+        ASSERT_EQ((exp_present ? 1 : 0), storage6_.size());
 
         Lease6Ptr l = getLease<Lease6Ptr>(lease, storage6_);
 
@@ -303,12 +303,12 @@ protected:
     /// @brief Sets up the header strings
     virtual void SetUp() {
         v4_hdr_ = "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
 
         v6_hdr_ = "address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
                   "fqdn_rev,hostname,hwaddr,state,user_context,"
-                  "hwtype,hwaddr_source\n";
+                  "hwtype,hwaddr_source,pool_id\n";
     }
 };
 
@@ -338,18 +338,18 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
                       "200,200,8,1,1,host.example.com,1,"
-                      "{ \"foobar\": true }\n";
+                      "{ \"foobar\": true },0\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
                       "200,500,8,1,1,host.example.com,1,"
-                      "{ \"foobar\": true }\n";
+                      "{ \"foobar\": true },0\n";
 
     std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,100,7,0,0,,1,\n";
+                      "100,100,7,0,0,,1,,0\n";
     std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,135,7,0,0,,1,\n";
+                      "100,135,7,0,0,,1,,0\n";
 
     std::string c_1 = "192.0.2.3,,,"
-                      "200,200,8,1,1,host.example.com,0,\n";
+                      "200,200,8,1,1,host.example.com,0,,0\n";
 
     // Create lease file with leases for 192.0.2.1, 192.0.3.15. The lease
     // entry for the 192.0.2.3 is invalid (lacks HW address and client id)
@@ -415,14 +415,14 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
 TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com,1,\n";
+                      "200,200,8,1,1,host.example.com,1,,0\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "0,500,8,1,1,host.example.com,1,\n";
+                      "0,500,8,1,1,host.example.com,1,,0\n";
 
     std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,100,7,0,0,,1,\n";
+                      "100,100,7,0,0,,1,,0\n";
     std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,135,7,0,0,,1,\n";
+                      "100,135,7,0,0,,1,,0\n";
 
 
     // Create lease file in which one of the entries for 192.0.2.1
@@ -466,7 +466,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
 TEST_F(LeaseFileLoaderTest, maxRowErrors4) {
     // We have 9 rows: 2 that are good, 7 that are flawed (too few fields).
     std::vector<std::string> rows = {
-        "192.0.2.100,08:00:27:25:d3:f4,31:31:31:31,3600,1565356064,1,0,0,,0,\n",
+        "192.0.2.100,08:00:27:25:d3:f4,31:31:31:31,3600,1565356064,1,0,0,,0,,0\n",
         "192.0.2.101,FF:FF:FF:FF:FF:01,32:32:32:31,3600,1565356073,1,0,0\n",
         "192.0.2.102,FF:FF:FF:FF:FF:02,32:32:32:32,3600,1565356073,1,0,0\n",
         "192.0.2.103,FF:FF:FF:FF:FF:03,32:32:32:33,3600,1565356073,1,0,0\n",
@@ -474,7 +474,7 @@ TEST_F(LeaseFileLoaderTest, maxRowErrors4) {
         "192.0.2.105,FF:FF:FF:FF:FF:05,32:32:32:35,3600,1565356073,1,0,0\n",
         "192.0.2.106,FF:FF:FF:FF:FF:06,32:32:32:36,3600,1565356073,1,0,0\n",
         "192.0.2.107,FF:FF:FF:FF:FF:07,32:32:32:37,3600,1565356073,1,0,0\n",
-        "192.0.2.108,08:00:27:25:d3:f4,32:32:32:32,3600,1565356073,1,0,0,,0,\n"
+        "192.0.2.108,08:00:27:25:d3:f4,32:32:32:32,3600,1565356073,1,0,0,,0,,0\n"
     };
 
     std::ostringstream os;
@@ -524,20 +524,20 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     std::string test_str;
     std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                       "200,200,8,100,0,7,0,1,1,host.example.com,,1,"
-                      "{ \"foobar\": true },,\n";
+                      "{ \"foobar\": true },,,0\n";
     std::string a_2 = "2001:db8:1::1,,"
                       "200,200,8,100,0,7,0,1,1,host.example.com,,1,"
-                      "{ \"foobar\": true },,\n";
+                      "{ \"foobar\": true },,,0\n";
     std::string a_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                       "200,400,8,100,0,7,0,1,1,host.example.com,,1,"
-                      "{ \"foobar\": true },,\n";
+                      "{ \"foobar\": true },,,0\n";
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,300,6,150,0,8,0,0,0,,,1,,,\n";
+                      "300,300,6,150,0,8,0,0,0,,,1,,,,0\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,800,6,150,0,8,0,0,0,,,1,,,\n";
+                      "300,800,6,150,0,8,0,0,0,,,1,,,,0\n";
 
     std::string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "100,200,8,0,2,16,64,0,0,,,1,,,\n";
+                      "100,200,8,0,2,16,64,0,0,,,1,,,,0\n";
 
 
     // Create a lease file with three valid leases: 2001:db8:1::1,
@@ -604,14 +604,14 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
 TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     std::string test_str;
     std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,,0\n";
     std::string a_2 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "0,400,8,100,0,7,0,1,1,host.example.com,,1,,,\n";
+                      "0,400,8,100,0,7,0,1,1,host.example.com,,1,,,,0\n";
 
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,300,6,150,0,8,0,0,0,,,1,,,\n";
+                      "300,300,6,150,0,8,0,0,0,,,1,,,,0\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,800,6,150,0,8,0,0,0,,,1,,,\n";
+                      "300,800,6,150,0,8,0,0,0,,,1,,,,0\n";
 
     // Create lease file in which one of the entries for the 2001:db8:1::1
     // has valid lifetime set to 0, in which case the lease should be
@@ -656,7 +656,7 @@ TEST_F(LeaseFileLoaderTest, maxRowErrors6) {
     // We have 9 rows: 2 that are good, 7 that are flawed (too few fields).
     std::vector<std::string> rows = {
         "3002::01,00:03:00:01:08:00:27:25:d3:01,30,1565361388,2,20,0,"
-        "11189196,128,0,0,,08:00:27:25:d3:f4,0,\n",
+        "11189196,128,0,0,,08:00:27:25:d3:f4,0,,,,0\n",
         "3002::02,00:03:00:01:08:00:27:25:d3:02,30,1565361388,2,20,0\n",
         "3002::03,00:03:00:01:08:00:27:25:d3:03,30,1565361388,2,20,0\n",
         "3002::04,00:03:00:01:08:00:27:25:d3:04,30,1565361388,2,20,0\n",
@@ -665,7 +665,7 @@ TEST_F(LeaseFileLoaderTest, maxRowErrors6) {
         "3002::07,00:03:00:01:08:00:27:25:d3:07,30,1565361388,2,20,0\n",
         "3002::08,00:03:00:01:08:00:27:25:d3:08,30,1565361388,2,20,0\n",
         "3002::09,00:03:00:01:08:00:27:25:d3:09,30,1565361388,2,20,0,"
-        "11189196,128,0,0,,08:00:27:25:d3:f4,0,\n"
+        "11189196,128,0,0,,08:00:27:25:d3:f4,0,,,,0\n"
     };
 
     std::ostringstream os;
@@ -713,8 +713,8 @@ TEST_F(LeaseFileLoaderTest, maxRowErrors6) {
 // and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     std::string test_str;
-    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,,1,\n";
-    std::string b_2 = "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,,1,\n";
+    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,,1,,0\n";
+    std::string b_2 = "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,,1,,0\n";
 
     // Create lease file. The second lease has a valid lifetime of 0.
     test_str = v4_hdr_ + a_1 + b_2;

@@ -14,7 +14,6 @@
 #include <sstream>
 #include <iostream>
 
-
 using namespace isc::util;
 using namespace isc::data;
 using namespace std;
@@ -43,11 +42,10 @@ Lease::Lease(const isc::asiolink::IOAddress& addr,
              const std::string& hostname, const HWAddrPtr& hwaddr)
     : addr_(addr), valid_lft_(valid_lft), current_valid_lft_(valid_lft),
       reuseable_valid_lft_(0),
-      cltt_(cltt), current_cltt_(cltt), subnet_id_(subnet_id),
+      cltt_(cltt), current_cltt_(cltt), subnet_id_(subnet_id), pool_id_(0),
       hostname_(boost::algorithm::to_lower_copy(hostname)), fqdn_fwd_(fqdn_fwd),
       fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
 }
-
 
 std::string
 Lease::typeToText(Lease::Type type) {
@@ -142,7 +140,6 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
         isc_throw(BadValue, "parsed lease data is not a JSON map");
     }
 
-
     if (!lease) {
         isc_throw(Unexpected, "pointer to parsed lease is null");
     }
@@ -181,6 +178,24 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     }
 
     lease->subnet_id_ = SubnetID(subnet_id->intValue());
+
+    // Pool identifier.
+    ConstElementPtr pool_id = element->get("pool-id");
+    if (pool_id) {
+        if (pool_id->getType() != Element::integer) {
+            isc_throw(BadValue, "pool-id is not a number");
+        }
+
+        if (pool_id->intValue() < 0) {
+            isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
+                      << " a positive integer");
+        } else if (pool_id->intValue() > numeric_limits<uint32_t>::max()) {
+            isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
+                      << " a 32 bit unsigned integer");
+        }
+
+        lease->pool_id_ = pool_id->intValue();
+    }
 
     // Hardware address.
     ConstElementPtr hw_address = element->get("hw-address");
@@ -311,10 +326,8 @@ Lease4::Lease4(const Lease4& other)
 
     if (other.client_id_) {
         client_id_.reset(new ClientId(other.client_id_->getClientId()));
-
     } else {
         client_id_.reset();
-
     }
 
     if (other.getContext()) {
@@ -402,6 +415,7 @@ Lease4::operator=(const Lease4& other) {
         cltt_ = other.cltt_;
         current_cltt_ = other.current_cltt_;
         subnet_id_ = other.subnet_id_;
+        pool_id_ = other.pool_id_;
         hostname_ = other.hostname_;
         fqdn_fwd_ = other.fqdn_fwd_;
         fqdn_rev_ = other.fqdn_rev_;
@@ -436,6 +450,7 @@ Lease4::toElement() const {
     contextToElement(map);
     map->set("ip-address", Element::create(addr_.toText()));
     map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
+    map->set("pool-id", Element::create(static_cast<long int>(pool_id_)));
     map->set("hw-address", Element::create(hwaddr_->toText(false)));
 
     if (client_id_) {
@@ -470,7 +485,6 @@ Lease4::fromElement(const ConstElementPtr& element) {
     if (!lease->hwaddr_) {
         isc_throw(BadValue, "hw-address not present in the parsed lease");
     }
-
 
     // Client identifier is IPv4 specific.
     ConstElementPtr client_id = element->get("client-id");
@@ -577,6 +591,7 @@ Lease6::toText() const {
            << "DUID:          " << (duid_?duid_->toText():"(none)") << "\n"
            << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
+           << "Pool ID:       " << pool_id_ << "\n"
            << "State:         " << statesToText(state_) << "\n";
 
     if (getContext()) {
@@ -596,6 +611,7 @@ Lease4::toText() const {
            << "Hardware addr: " << (hwaddr_ ? hwaddr_->toText(false) : "(none)") << "\n"
            << "Client id:     " << (client_id_ ? client_id_->toText() : "(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
+           << "Pool ID:       " << pool_id_ << "\n"
            << "State:         " << statesToText(state_) << "\n"
            << "Relay ID:      " << (relay_id_.empty() ? "(none)" :
                                     str::dumpAsHex(&relay_id_[0], relay_id_.size())) << "\n"
@@ -609,13 +625,13 @@ Lease4::toText() const {
     return (stream.str());
 }
 
-
 bool
 Lease4::operator==(const Lease4& other) const {
     return (nullOrEqualValues(hwaddr_, other.hwaddr_) &&
             nullOrEqualValues(client_id_, other.client_id_) &&
             addr_ == other.addr_ &&
             subnet_id_ == other.subnet_id_ &&
+            pool_id_ == other.pool_id_ &&
             valid_lft_ == other.valid_lft_ &&
             current_valid_lft_ == other.current_valid_lft_ &&
             reuseable_valid_lft_ == other.reuseable_valid_lft_ &&
@@ -644,6 +660,7 @@ Lease6::operator==(const Lease6& other) const {
             cltt_ == other.cltt_ &&
             current_cltt_ == other.current_cltt_ &&
             subnet_id_ == other.subnet_id_ &&
+            pool_id_ == other.pool_id_ &&
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
@@ -664,6 +681,7 @@ Lease6::toElement() const {
     map->set("iaid", Element::create(static_cast<long int>(iaid_)));
     map->set("duid", Element::create(duid_->toText()));
     map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
+    map->set("pool-id", Element::create(static_cast<long int>(pool_id_)));
 
     map->set("cltt", Element::create(cltt_));
     map->set("preferred-lft", Element::create(static_cast<long int>(preferred_lft_)));

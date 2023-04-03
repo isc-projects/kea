@@ -21,10 +21,12 @@ DROP FUNCTION IF EXISTS lease4DumpData();
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 DROP FUNCTION IF EXISTS lease6DumpData();
 DROP TABLE IF EXISTS lease4_stat CASCADE;
+DROP TABLE IF EXISTS lease4_pool_stat CASCADE;
 DROP FUNCTION IF EXISTS proc_stat_lease4_insert ();
 DROP FUNCTION IF EXISTS proc_stat_lease4_update ();
 DROP FUNCTION IF EXISTS proc_stat_lease4_delete ();
 DROP TABLE IF EXISTS lease6_stat CASCADE;
+DROP TABLE IF EXISTS lease6_pool_stat CASCADE;
 DROP FUNCTION IF EXISTS proc_stat_lease6_insert ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_update ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_delete ();
@@ -202,6 +204,21 @@ DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat(old_state BIGINT,
         new_subnet_id BIGINT, new_lease_type SMALLINT);
 DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat(old_state BIGINT,
         old_subnet_id BIGINT, old_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease4_AINS_lease4_pool_stat(new_state BIGINT,
+        new_subnet_id BIGINT, new_pool_id BIGINT);
+DROP FUNCTION IF EXISTS lease4_AUPD_lease4_pool_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_pool_id BIGINT, new_state BIGINT,
+        new_subnet_id BIGINT, new_pool_id BIGINT);
+DROP FUNCTION IF EXISTS lease4_ADEL_lease4_pool_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_pool_id BIGINT);
+DROP FUNCTION IF EXISTS lease6_AINS_lease6_pool_stat(new_state BIGINT,
+        new_subnet_id BIGINT, new_pool_id BIGINT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_AUPD_lease6_pool_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_pool_id BIGINT, old_lease_type SMALLINT,
+        new_state BIGINT, new_subnet_id BIGINT, new_pool_id BIGINT,
+        new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_ADEL_lease6_pool_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_pool_id BIGINT, old_lease_type SMALLINT);
 DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat_by_client_class(
         new_state BIGINT, new_user_context TEXT);
 DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat_by_client_class(

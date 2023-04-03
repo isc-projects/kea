@@ -136,6 +136,40 @@ LeaseMgr::recountLeaseStats4() {
                                        "reclaimed-leases"),
                 zero);
         }
+
+        for (const auto & pool : (*subnet)->getPools(Lease::TYPE_V4)) {
+            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                      StatsMgr::generateName(".pool", pool->getID(),
+                                                                             "assigned-addresses")),
+                               zero);
+
+            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                      StatsMgr::generateName(".pool", pool->getID(),
+                                                                             "declined-addresses")),
+                               zero);
+
+            if (!stats_mgr.getObservation(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "reclaimed-declined-addresses")))) {
+                stats_mgr.setValue(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "reclaimed-declined-addresses")),
+                    zero);
+            }
+
+            if (!stats_mgr.getObservation(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "reclaimed-leases")))) {
+                stats_mgr.setValue(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "reclaimed-leases")),
+                    zero);
+            }
+        }
     }
 
     // Get counts per state per subnet. Iterate over the result set
@@ -163,6 +197,8 @@ LeaseMgr::recountLeaseStats4() {
                                row.state_count_);
         }
     }
+    // Can not update counters at pool level. This would require retrieving all
+    // leases and matching them one by one to one possible pool.
 }
 
 LeaseStatsQuery::LeaseStatsQuery()
@@ -267,6 +303,10 @@ LeaseMgr::recountLeaseStats6() {
                            zero);
 
         stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "assigned-pds"),
+                           zero);
+
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
                                                   "declined-addresses"),
                            zero);
 
@@ -279,10 +319,6 @@ LeaseMgr::recountLeaseStats6() {
                 zero);
         }
 
-        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                  "assigned-pds"),
-                           zero);
-
         if (!stats_mgr.getObservation(
                 StatsMgr::generateName("subnet", subnet_id,
                                        "reclaimed-leases"))) {
@@ -290,6 +326,58 @@ LeaseMgr::recountLeaseStats6() {
                 StatsMgr::generateName("subnet", subnet_id,
                                        "reclaimed-leases"),
                 zero);
+        }
+
+        for (const auto& pool : (*subnet)->getPools(Lease::TYPE_NA)) {
+            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                      StatsMgr::generateName(".pool", pool->getID(),
+                                                                             "assigned-nas")),
+                               zero);
+
+            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                      StatsMgr::generateName(".pool", pool->getID(),
+                                                                             "declined-addresses")),
+                               zero);
+
+            if (!stats_mgr.getObservation(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "reclaimed-declined-addresses")))) {
+                stats_mgr.setValue(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "reclaimed-declined-addresses")),
+                    zero);
+            }
+
+            if (!stats_mgr.getObservation(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "reclaimed-leases")))) {
+                stats_mgr.setValue(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "reclaimed-leases")),
+                    zero);
+            }
+        }
+
+        for (const auto& pool : (*subnet)->getPools(Lease::TYPE_PD)) {
+            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                      StatsMgr::generateName(".pd-pool", pool->getID(),
+                                                                             "assigned-pds")),
+                               zero);
+
+            if (!stats_mgr.getObservation(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pd-pool", pool->getID(),
+                                                                  "reclaimed-leases")))) {
+                stats_mgr.setValue(
+                    StatsMgr::generateName("subnet", subnet_id,
+                                           StatsMgr::generateName(".pd-pool", pool->getID(),
+                                                                  "reclaimed-leases")),
+                    zero);
+            }
         }
     }
 
@@ -301,15 +389,13 @@ LeaseMgr::recountLeaseStats6() {
             case Lease::TYPE_NA:
                 if (row.lease_state_ == Lease::STATE_DEFAULT) {
                     // Add to subnet level value.
-                    stats_mgr.addValue(StatsMgr::
-                                       generateName("subnet", row.subnet_id_,
-                                                    "assigned-nas"),
+                    stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              "assigned-nas"),
                                        row.state_count_);
                 } else if (row.lease_state_ == Lease::STATE_DECLINED) {
                     // Set subnet level value.
-                    stats_mgr.setValue(StatsMgr::
-                                       generateName("subnet", row.subnet_id_,
-                                                    "declined-addresses"),
+                    stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              "declined-addresses"),
                                        row.state_count_);
 
                     // Add to the global value.
@@ -317,9 +403,8 @@ LeaseMgr::recountLeaseStats6() {
 
                     // Add to subnet level value.
                     // Declined leases also count as assigned.
-                    stats_mgr.addValue(StatsMgr::
-                                       generateName("subnet", row.subnet_id_,
-                                                    "assigned-nas"),
+                    stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              "assigned-nas"),
                                        row.state_count_);
                 }
                 break;
@@ -327,9 +412,8 @@ LeaseMgr::recountLeaseStats6() {
             case Lease::TYPE_PD:
                 if (row.lease_state_ == Lease::STATE_DEFAULT) {
                     // Set subnet level value.
-                    stats_mgr.setValue(StatsMgr::
-                                       generateName("subnet", row.subnet_id_,
-                                                    "assigned-pds"),
+                    stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              "assigned-pds"),
                                        row.state_count_);
                 }
                 break;
@@ -339,6 +423,8 @@ LeaseMgr::recountLeaseStats6() {
                 break;
         }
     }
+    // Can not update counters at pool level. This would require retrieving all
+    // leases and matching them one by one to one possible pool.
 }
 
 LeaseStatsQueryPtr

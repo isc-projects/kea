@@ -155,7 +155,7 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
         other_subnet->getCfgOption()->createOptions(cfg_def);
 
         // Create the options for pool based on the given definitions.
-        for (auto const& pool : other_subnet->getPoolsWritable(Lease::TYPE_V4)) {
+        for (const auto& pool : other_subnet->getPoolsWritable(Lease::TYPE_V4)) {
             pool->getCfgOption()->createOptions(cfg_def);
         }
 
@@ -540,6 +540,32 @@ CfgSubnets4::removeStatistics() {
 
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                              "reclaimed-leases"));
+
+        for (const auto& pool : subnet4->getPools(Lease::TYPE_V4)) {
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                                        "total-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                                        "assigned-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                                        "cumulative-assigned-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                                        "declined-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                                        "reclaimed-declined-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                                        "reclaimed-leases")));
+        }
     }
 }
 
@@ -568,6 +594,20 @@ CfgSubnets4::updateStatistics() {
         name = StatsMgr::generateName("subnet", subnet_id, "v4-reservation-conflicts");
         if (!stats_mgr.getObservation(name)) {
             stats_mgr.setValue(name, static_cast<int64_t>(0));
+        }
+
+        for (const auto& pool : subnet4->getPools(Lease::TYPE_V4)) {
+            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                      StatsMgr::generateName(".pool", pool->getID(),
+                                                                             "total-addresses")),
+                               static_cast<int64_t>(pool->getCapacity()));
+
+            name = StatsMgr::generateName("subnet", subnet_id,
+                                          StatsMgr::generateName(".pool", pool->getID(),
+                                                                 "cumulative-assigned-addresses"));
+            if (!stats_mgr.getObservation(name)) {
+                stats_mgr.setValue(name, static_cast<int64_t>(0));
+            }
         }
     }
 

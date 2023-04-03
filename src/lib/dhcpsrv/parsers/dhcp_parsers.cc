@@ -187,7 +187,7 @@ OptionDefParser::parse(ConstElementPtr option_def) {
 
         } else {
             def.reset(new OptionDefinition(name, code, space, type,
-                        encapsulates.c_str()));
+                      encapsulates.c_str()));
         }
 
     } else {
@@ -630,10 +630,9 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     initSubnet(params, addr, len);
 
     // Add pools to it.
-    for (PoolStorage::iterator it = pools_->begin(); it != pools_->end();
-         ++it) {
+    for (const auto& it : *pools_) {
         try {
-            subnet_->addPool(*it);
+            subnet_->addPool(it);
         } catch (const BadValue& ex) {
             // addPool() can throw BadValue if the pool is overlapping or
             // is out of bounds for the subnet.

@@ -314,7 +314,7 @@ DELIMITER $$
 CREATE PROCEDURE lease4DumpHeader()
 BEGIN
 SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state';
-END  $$
+END $$
 DELIMITER ;
 
 # Procedure that returns a result set containing the data for lease4 dumps
@@ -346,7 +346,7 @@ DELIMITER $$
 CREATE PROCEDURE lease6DumpHeader()
 BEGIN
 SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state';
-END  $$
+END $$
 DELIMITER ;
 
 # Procedure that returns a result set containing the data for lease6 dumps
@@ -705,7 +705,7 @@ DELIMITER $$
 CREATE PROCEDURE lease4DumpHeader()
 BEGIN
 SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context';
-END  $$
+END $$
 DELIMITER ;
 
 # Procedure that returns a result set containing the data for lease4 dumps
@@ -737,7 +737,7 @@ DELIMITER $$
 CREATE PROCEDURE lease6DumpHeader()
 BEGIN
 SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state,user_context';
-END  $$
+END $$
 DELIMITER ;
 
 # Procedure that returns a result set containing the data for lease6 dumps
@@ -4184,7 +4184,7 @@ DELIMITER $$
 CREATE PROCEDURE lease6DumpHeader()
 BEGIN
     SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source';
-END  $$
+END $$
 DELIMITER ;
 
 -- Modify the procedure to output a memfile-ready CSV file.
@@ -5324,6 +5324,456 @@ CREATE TABLE lease6_remote_id (
     INDEX key_lease6_remote_id_by_id (remote_id, lease_addr ASC),
     INDEX key_lease6_remote_id_by_address (lease_addr)
 )  ENGINE = INNODB;
+
+# Add pool_id column to the lease4 table.
+ALTER TABLE lease4
+    ADD COLUMN pool_id INT UNSIGNED NOT NULL DEFAULT 0;
+
+# Add pool_id column to the lease6 table.
+ALTER TABLE lease6
+    ADD COLUMN pool_id INT UNSIGNED NOT NULL DEFAULT 0;
+
+# Create lease4_pool_stat table
+CREATE TABLE lease4_pool_stat (
+    subnet_id INT UNSIGNED NOT NULL,
+    pool_id INT UNSIGNED NOT NULL,
+    state INT UNSIGNED NOT NULL,
+    leases BIGINT,
+    PRIMARY KEY (subnet_id, pool_id, state)
+) ENGINE = INNODB;
+
+# Create lease6_pool_stat table
+CREATE TABLE lease6_pool_stat (
+    subnet_id INT UNSIGNED NOT NULL,
+    pool_id INT UNSIGNED NOT NULL,
+    lease_type INT UNSIGNED NOT NULL,
+    state INT UNSIGNED NOT NULL,
+    leases BIGINT,
+    PRIMARY KEY (subnet_id, pool_id, lease_type, state)
+) ENGINE = INNODB;
+
+DROP PROCEDURE IF EXISTS lease4_AINS_lease4_pool_stat;
+DELIMITER $$
+CREATE PROCEDURE lease4_AINS_lease4_pool_stat(IN new_state TINYINT,
+                                              IN new_subnet_id INT UNSIGNED,
+                                              IN new_pool_id INT UNSIGNED)
+BEGIN
+    IF new_state = 0 OR new_state = 1 THEN
+        -- Update the state count if it exists.
+        UPDATE lease4_pool_stat SET leases = leases + 1
+            WHERE subnet_id = new_subnet_id AND pool_id = new_pool_id
+            AND state = new_state;
+
+        -- Insert the state count record if it does not exist.
+        IF ROW_COUNT() <= 0 THEN
+            INSERT INTO lease4_pool_stat
+            VALUES (new_subnet_id, new_pool_id, new_state, 1);
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease4_AUPD_lease4_pool_stat;
+DELIMITER $$
+CREATE PROCEDURE lease4_AUPD_lease4_pool_stat(IN old_state TINYINT,
+                                              IN old_subnet_id INT UNSIGNED,
+                                              IN old_pool_id INT UNSIGNED,
+                                              IN new_state TINYINT,
+                                              IN new_subnet_id INT UNSIGNED,
+                                              IN new_pool_id INT UNSIGNED)
+BEGIN
+    IF old_subnet_id != new_subnet_id OR
+       old_pool_id != new_pool_id OR
+       old_state != new_state THEN
+        IF old_state = 0 OR old_state = 1 THEN
+            -- Decrement the old state count if record exists.
+            UPDATE lease4_pool_stat
+                SET leases = IF(leases > 0, leases - 1, 0)
+                WHERE subnet_id = old_subnet_id AND pool_id = old_pool_id
+                AND state = old_state;
+        END IF;
+
+        IF new_state = 0 OR new_state = 1 THEN
+            -- Increment the new state count if record exists.
+            UPDATE lease4_pool_stat SET leases = leases + 1
+                WHERE subnet_id = new_subnet_id AND pool_id = new_pool_id
+                AND state = new_state;
+
+            -- Insert new state record if it does not exist.
+            IF ROW_COUNT() <= 0 THEN
+                INSERT INTO lease4_pool_stat
+                VALUES (new_subnet_id, new_pool_id, new_state, 1);
+            END IF;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease4_ADEL_lease4_pool_stat;
+DELIMITER $$
+CREATE PROCEDURE lease4_ADEL_lease4_pool_stat(IN old_state TINYINT,
+                                              IN old_subnet_id INT UNSIGNED,
+                                              IN old_pool_id INT UNSIGNED)
+BEGIN
+    IF old_state = 0 OR old_state = 1 THEN
+        -- Decrement the state count if record exists.
+        UPDATE lease4_pool_stat
+            SET leases = IF(leases > 0, leases - 1, 0)
+            WHERE subnet_id = old_subnet_id AND pool_id = old_pool_id
+            AND old_state = state;
+    END IF;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6_AINS_lease6_pool_stat;
+DELIMITER $$
+CREATE PROCEDURE lease6_AINS_lease6_pool_stat(IN new_state TINYINT,
+                                              IN new_subnet_id INT UNSIGNED,
+                                              IN new_pool_id INT UNSIGNED,
+                                              IN new_lease_type TINYINT)
+BEGIN
+    IF new_state = 0 OR new_state = 1 THEN
+        -- Update the state count if it exists.
+        UPDATE lease6_pool_stat SET leases = leases + 1
+            WHERE subnet_id = new_subnet_id AND pool_id = new_pool_id
+            AND lease_type = new_lease_type AND state = new_state;
+
+        -- Insert the state count record if it does not exist.
+        IF ROW_COUNT() <= 0 THEN
+            INSERT INTO lease6_pool_stat
+            VALUES (new_subnet_id, new_pool_id, new_lease_type, new_state, 1);
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6_AUPD_lease6_pool_stat;
+DELIMITER $$
+CREATE PROCEDURE lease6_AUPD_lease6_pool_stat(IN old_state TINYINT,
+                                              IN old_subnet_id INT UNSIGNED,
+                                              IN old_pool_id INT UNSIGNED,
+                                              IN old_lease_type TINYINT,
+                                              IN new_state TINYINT,
+                                              IN new_subnet_id INT UNSIGNED,
+                                              IN new_pool_id INT UNSIGNED,
+                                              IN new_lease_type TINYINT)
+BEGIN
+    IF old_subnet_id != new_subnet_id OR
+       old_pool_id != new_pool_id OR
+       old_lease_type != new_lease_type OR
+       old_state != new_state THEN
+        IF old_state = 0 OR old_state = 1 THEN
+            -- Decrement the old state count if record exists.
+            UPDATE lease6_pool_stat
+                SET leases = IF(leases > 0, leases - 1, 0)
+                WHERE subnet_id = old_subnet_id AND pool_id = old_pool_id
+                AND lease_type = old_lease_type AND state = old_state;
+        END IF;
+
+        IF new_state = 0 OR new_state = 1 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease6_pool_stat SET leases = leases + 1
+                WHERE subnet_id = new_subnet_id AND pool_id = new_pool_id
+                AND lease_type = new_lease_type AND state = new_state;
+
+            -- Insert new state record if it does not exist
+            IF ROW_COUNT() <= 0 THEN
+                INSERT INTO lease6_pool_stat
+                VALUES (new_subnet_id, new_pool_id, new_lease_type, new_state, 1);
+            END IF;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6_ADEL_lease6_pool_stat;
+DELIMITER $$
+CREATE PROCEDURE lease6_ADEL_lease6_pool_stat(IN old_state TINYINT,
+                                              IN old_subnet_id INT UNSIGNED,
+                                              IN old_pool_id INT UNSIGNED,
+                                              IN old_lease_type TINYINT)
+BEGIN
+    IF old_state = 0 OR old_state = 1 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease6_pool_stat
+            SET leases = IF(leases > 0, leases - 1, 0)
+            WHERE subnet_id = old_subnet_id AND pool_id = old_pool_id
+            AND lease_type = old_lease_type AND state = old_state;
+    END IF;
+END $$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS lease4_AINS;
+DELIMITER $$
+CREATE TRIGGER lease4_AINS AFTER INSERT ON lease4 FOR EACH ROW
+BEGIN
+    CALL lease4_AINS_lease4_stat(NEW.state, NEW.subnet_id);
+    CALL lease4_AINS_lease4_pool_stat(NEW.state, NEW.subnet_id, NEW.pool_id);
+    IF @json_supported IS NULL THEN
+        SELECT isJsonSupported() INTO @json_supported;
+    END IF;
+    IF @json_supported = 1 THEN
+        CALL lease4_AINS_lease4_stat_by_client_class(NEW.state, NEW.user_context);
+    END IF;
+END $$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS lease4_AUPD;
+DELIMITER $$
+CREATE TRIGGER lease4_AUPD AFTER UPDATE ON lease4 FOR EACH ROW
+BEGIN
+    CALL lease4_AUPD_lease4_stat(OLD.state, OLD.subnet_id, NEW.state, NEW.subnet_id);
+    CALL lease4_AUPD_lease4_pool_stat(OLD.state, OLD.subnet_id, OLD.pool_id, NEW.state, NEW.subnet_id, NEW.pool_id);
+    IF @json_supported IS NULL THEN
+        SELECT isJsonSupported() INTO @json_supported;
+    END IF;
+    IF @json_supported = 1 THEN
+        CALL lease4_AUPD_lease4_stat_by_client_class(OLD.state, OLD.user_context, NEW.state, NEW.user_context);
+    END IF;
+END $$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS lease4_ADEL;
+DELIMITER $$
+CREATE TRIGGER lease4_ADEL AFTER DELETE ON lease4 FOR EACH ROW
+BEGIN
+    CALL lease4_ADEL_lease4_stat(OLD.state, OLD.subnet_id);
+    CALL lease4_ADEL_lease4_pool_stat(OLD.state, OLD.subnet_id, OLD.pool_id);
+    IF @json_supported IS NULL THEN
+        SELECT isJsonSupported() INTO @json_supported;
+    END IF;
+    IF @json_supported = 1 THEN
+        CALL lease4_ADEL_lease4_stat_by_client_class(OLD.state, OLD.user_context);
+    END IF;
+END $$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS lease6_AINS;
+DELIMITER $$
+CREATE TRIGGER lease6_AINS AFTER INSERT ON lease6 FOR EACH ROW
+BEGIN
+    CALL lease6_AINS_lease6_stat(NEW.state, NEW.subnet_id, NEW.lease_type);
+    CALL lease6_AINS_lease6_pool_stat(NEW.state, NEW.subnet_id, NEW.pool_id, NEW.lease_type);
+    IF @json_supported IS NULL THEN
+        SELECT isJsonSupported() INTO @json_supported;
+    END IF;
+    IF @json_supported = 1 THEN
+        CALL lease6_AINS_lease6_stat_by_client_class(NEW.state, NEW.user_context, NEW.lease_type);
+    END IF;
+END $$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS lease6_AUPD;
+DELIMITER $$
+CREATE TRIGGER lease6_AUPD AFTER UPDATE ON lease6 FOR EACH ROW
+BEGIN
+    CALL lease6_AUPD_lease6_stat(OLD.state, OLD.subnet_id, OLD.lease_type, NEW.state, NEW.subnet_id, NEW.lease_type);
+    CALL lease6_AUPD_lease6_pool_stat(OLD.state, OLD.subnet_id, OLD.pool_id, OLD.lease_type, NEW.state, NEW.subnet_id, NEW.pool_id, NEW.lease_type);
+    IF @json_supported IS NULL THEN
+        SELECT isJsonSupported() INTO @json_supported;
+    END IF;
+    IF @json_supported = 1 THEN
+        CALL lease6_AUPD_lease6_stat_by_client_class(OLD.state, OLD.user_context, OLD.lease_type, NEW.state, NEW.user_context, NEW.lease_type);
+    END IF;
+END $$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS lease6_ADEL;
+DELIMITER $$
+CREATE TRIGGER lease6_ADEL AFTER DELETE ON lease6 FOR EACH ROW
+BEGIN
+    CALL lease6_ADEL_lease6_stat(OLD.state, OLD.subnet_id, OLD.lease_type);
+    CALL lease6_ADEL_lease6_pool_stat(OLD.state, OLD.subnet_id, OLD.pool_id, OLD.lease_type);
+    IF @json_supported IS NULL THEN
+        SELECT isJsonSupported() INTO @json_supported;
+    END IF;
+    IF @json_supported = 1 THEN
+        CALL lease6_ADEL_lease6_stat_by_client_class(OLD.state, OLD.user_context, OLD.lease_type);
+    END IF;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease4DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpHeader()
+BEGIN
+SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id';
+END $$
+DELIMITER ;
+
+-- Modify the procedure to output a memfile-ready CSV file.
+DROP PROCEDURE IF EXISTS lease4DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpData()
+BEGIN
+    SELECT
+        INET_NTOA(address),
+        IFNULL(colonSeparatedHex(HEX(hwaddr)), ''),
+        IFNULL(colonSeparatedHex(HEX(client_id)), ''),
+        valid_lifetime,
+        UNIX_TIMESTAMP(expire),
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, ',', '&#x2c'),
+        state,
+        REPLACE(IFNULL(user_context, ''), ',', '&#x2c'),
+        pool_id
+    FROM lease4
+    ORDER BY address;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpHeader()
+BEGIN
+    SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source,pool_id';
+END $$
+DELIMITER ;
+
+-- Modify the procedure to output a memfile-ready CSV file.
+DROP PROCEDURE IF EXISTS lease6DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpData()
+BEGIN
+    SELECT
+        address,
+        IFNULL(colonSeparatedHex(HEX(duid)), ''),
+        valid_lifetime,
+        UNIX_TIMESTAMP(expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, ',', '&#x2c'),
+        IFNULL(colonSeparatedHex(HEX(hwaddr)), ''),
+        state,
+        REPLACE(IFNULL(user_context, ''), ',', '&#x2c'),
+        hwtype,
+        hwaddr_source,
+        pool_id
+    FROM lease6
+    ORDER BY address;
+END $$
+DELIMITER ;
+
+-- Create a procedure that inserts a v4 lease from memfile data.
+DROP PROCEDURE IF EXISTS lease4Upload;
+DELIMITER $$
+CREATE PROCEDURE lease4Upload(
+    IN address VARCHAR(15),
+    IN hwaddr VARCHAR(20),
+    IN client_id VARCHAR(128),
+    IN valid_lifetime INT UNSIGNED,
+    IN expire BIGINT UNSIGNED,
+    IN subnet_id INT UNSIGNED,
+    IN fqdn_fwd TINYINT,
+    IN fqdn_rev TINYINT,
+    IN hostname VARCHAR(255),
+    IN state INT UNSIGNED,
+    IN user_context TEXT,
+    IN pool_id INT UNSIGNED
+)
+BEGIN
+    INSERT INTO lease4 (
+        address,
+        hwaddr,
+        client_id,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        state,
+        user_context,
+        pool_id
+    ) VALUES (
+        INET_ATON(address),
+        UNHEX(REPLACE(hwaddr, ':', '')),
+        UNHEX(REPLACE(client_id, ':', '')),
+        valid_lifetime,
+        FROM_UNIXTIME(expire),
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, '&#x2c', ','),
+        state,
+        REPLACE(user_context, '&#x2c', ','),
+        pool_id
+    );
+END $$
+DELIMITER ;
+
+-- Create a procedure that inserts a v6 lease from memfile data.
+DROP PROCEDURE IF EXISTS lease6Upload;
+DELIMITER $$
+CREATE PROCEDURE lease6Upload(
+    IN address VARCHAR(39),
+    IN duid VARCHAR(128),
+    IN valid_lifetime INT UNSIGNED,
+    IN expire BIGINT UNSIGNED,
+    IN subnet_id INT UNSIGNED,
+    IN pref_lifetime INT UNSIGNED,
+    IN lease_type TINYINT,
+    IN iaid INT UNSIGNED,
+    IN prefix_len TINYINT UNSIGNED,
+    IN fqdn_fwd TINYINT,
+    IN fqdn_rev TINYINT,
+    IN hostname VARCHAR(255),
+    IN hwaddr VARCHAR(64),
+    IN state INT UNSIGNED,
+    IN user_context TEXT,
+    IN hwtype SMALLINT,
+    IN hwaddr_source INT UNSIGNED,
+    IN pool_id INT UNSIGNED
+)
+BEGIN
+    INSERT INTO lease6 (
+        address,
+        duid,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        hwaddr,
+        state,
+        user_context,
+        hwtype,
+        hwaddr_source,
+        pool_id
+    ) VALUES (
+        address,
+        UNHEX(REPLACE(duid, ':', '')),
+        valid_lifetime,
+        FROM_UNIXTIME(expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, '&#x2c', ','),
+        UNHEX(REPLACE(hwaddr, ':', '')),
+        state,
+        REPLACE(user_context, '&#x2c', ','),
+        hwtype,
+        hwaddr_source,
+        pool_id
+    );
+END $$
+DELIMITER ;
 
 -- Update the schema version number.
 UPDATE schema_version

@@ -101,6 +101,7 @@ private:
     /// - hostname
     /// - state
     /// - user_context
+    /// - pool_id
     void initColumns();
 
     ///
@@ -138,6 +139,11 @@ private:
     /// @param row CSV file row holding lease information.
     SubnetID readSubnetID(const util::CSVRow& row);
 
+    /// @brief Reads pool id from the CSV file row.
+    ///
+    /// @param row CSV file row holding lease information.
+    uint32_t readPoolID(const util::CSVRow& row);
+
     /// @brief Reads the FQDN forward flag from the CSV file row.
     ///
     /// @param row CSV file row holding lease information.
@@ -163,7 +169,6 @@ private:
     /// @param row CSV file row holding lease information.
     data::ConstElementPtr readContext(const util::CSVRow& row);
     //@}
-
 };
 
 } // namespace isc::dhcp

@@ -2928,7 +2928,7 @@ TEST_F(HAServiceTest, recurringHeartbeatControlResultUnauthorized) {
 
 // This test verifies that IPv4 leases can be fetched from the peer and inserted
 // or updated in the local lease database.
-TEST_F(HAServiceTest, asyncSyncLeases) {
+TEST_F(HAServiceTest, asyncSyncLeases4) {
     // Create lease manager.
     ASSERT_NO_THROW(LeaseMgrFactory::create("universe=4 type=memfile persist=false"));
 
@@ -3047,7 +3047,7 @@ TEST_F(HAServiceTest, asyncSyncLeases) {
 
 // This test verifies that IPv4 leases can be fetched from the peer and inserted
 // or updated in the local lease database.
-TEST_F(HAServiceTest, asyncSyncLeasesAuthorized) {
+TEST_F(HAServiceTest, asyncSyncLeases4Authorized) {
     // Update config to provide authentication.
     user2_ = "foo";
     password2_ = "bar";
@@ -3176,7 +3176,7 @@ TEST_F(HAServiceTest, asyncSyncLeasesAuthorized) {
 
 // Test that there is no exception thrown during leases synchronization
 // when server returns a wrong answer.
-TEST_F(HAServiceTest, asyncSyncLeasesWrongAnswer) {
+TEST_F(HAServiceTest, asyncSyncLeases4WrongAnswer) {
     // Create lease manager.
     ASSERT_NO_THROW(LeaseMgrFactory::create("universe=4 type=memfile persist=false"));
 
@@ -3214,7 +3214,7 @@ TEST_F(HAServiceTest, asyncSyncLeasesWrongAnswer) {
 
 // Test that there is no exception thrown during leases synchronization
 // when servers are offline.
-TEST_F(HAServiceTest, asyncSyncLeasesServerOffline) {
+TEST_F(HAServiceTest, asyncSyncLeases4ServerOffline) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
     // Setting the heartbeat delay to 0 disables the recurring heartbeat.
@@ -3232,7 +3232,7 @@ TEST_F(HAServiceTest, asyncSyncLeasesServerOffline) {
 
 // Test that there is no exception thrown during leases synchronization
 // when servers require not provided authentication.
-TEST_F(HAServiceTest, asyncSyncLeasesServerUnauthorized) {
+TEST_F(HAServiceTest, asyncSyncLeases4ServerUnauthorized) {
     // Instruct servers to require authentication.
     factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
     factory3_->getResponseCreator()->addBasicAuth("test", "1234");

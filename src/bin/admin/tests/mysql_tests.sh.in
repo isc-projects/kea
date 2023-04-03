@@ -344,47 +344,47 @@ mysql_upgrade_12_to_13_test() {
 
     # Check lease4Dump*().
     run_command \
-        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,(SELECT FROM_UNIXTIME(1678900000)),50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }',NULL,NULL);"
+        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,(SELECT FROM_UNIXTIME(1678900000)),50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }',NULL,NULL,0);"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease4 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     run_command \
         mysql_execute "CALL lease4DumpHeader();"
     assert_eq 0 "${EXIT_CODE}" 'lease4DumpHeader() failed, expected exit code %d, actual %d'
-    assert_str_eq 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context' "${OUTPUT}"
+    assert_str_eq 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id' "${OUTPUT}"
 
     run_command \
         mysql_execute "CALL lease4DumpData();"
     assert_eq 0 "${EXIT_CODE}" 'lease4DumpData() failed, expected exit code %d, actual %d'
     output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
-    assert_str_eq '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 }' "${output}"
+    assert_str_eq '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 },0' "${output}"
 
     # Check lease6Dump*().
     run_command \
-        mysql_execute "INSERT INTO lease6 VALUES('::10',20,30,(SELECT FROM_UNIXTIME(1678900000)),40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }',NULL);"
+        mysql_execute "INSERT INTO lease6 VALUES('::10',20,30,(SELECT FROM_UNIXTIME(1678900000)),40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }',NULL,0);"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     run_command \
         mysql_execute "CALL lease6DumpHeader();"
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpHeader() failed, expected exit code %d, actual %d'
-    assert_str_eq 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source' "${OUTPUT}"
+    assert_str_eq 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source,pool_id' "${OUTPUT}"
 
     run_command \
         mysql_execute "CALL lease6DumpData();"
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpData() failed, expected exit code %d, actual %d'
     output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
-    assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16' "${output}"
+    assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16,0' "${output}"
 
     # Check lease4Upload().
     run_command \
-        mysql_execute "CALL lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'');"
+        mysql_execute "CALL lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'',0);"
     assert_eq 0 "${EXIT_CODE}" 'lease4Upload() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     # Check lease6Upload().
     run_command \
-        mysql_execute "CALL lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'',90,16);"
+        mysql_execute "CALL lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'',90,16,0);"
     assert_eq 0 "${EXIT_CODE}" 'lease6Upload() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 }
@@ -771,7 +771,7 @@ mysql_upgrade_17_to_18_test() {
     run_statement "hosts_255_long_dhcp_identifier" "$qry"
 
     #lease6 duid should support 130 long strings.
-    qry="insert into lease6 values('::10',12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,NULL);"
+    qry="insert into lease6 values('::10',12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,NULL,0);"
     run_statement "lease6_130_long_duid" "$qry"
 
     #lease6 new binaddr column.
@@ -1520,9 +1520,9 @@ mysql_lease4_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease4 values(10,20,30,40,(SELECT FROM_UNIXTIME(1642000000)),50,1,1,'one.example.com',0,NULL,NULL,NULL);
-insert into lease4 values(11,NULL,123,40,(SELECT FROM_UNIXTIME(1643210000)),50,1,1,'',1,'{  }',NULL,NULL);\
-insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,1,'three,example,com',2,'{ \"a\": 1, \"b\": \"c\" }',NULL,NULL);"
+insert into lease4 values(10,20,30,40,(SELECT FROM_UNIXTIME(1642000000)),50,1,1,'one.example.com',0,NULL,NULL,NULL,0);
+insert into lease4 values(11,NULL,123,40,(SELECT FROM_UNIXTIME(1643210000)),50,1,1,'',1,'{  }',NULL,NULL,0);\
+insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,1,'three,example,com',2,'{ \"a\": 1, \"b\": \"c\" }',NULL,NULL,0);"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -1583,9 +1583,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values('::10',203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,NULL);\
-insert into lease6 values('::11',213,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }',NULL);\
-insert into lease6 values('::12',223,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }',NULL);"
+insert into lease6 values('::10',203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,NULL,0);\
+insert into lease6 values('::11',213,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }',NULL,0);\
+insert into lease6 values('::12',223,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }',NULL,0);"
 
     run_command \
         mysql_execute "$insert_sql"

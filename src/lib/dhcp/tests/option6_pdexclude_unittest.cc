@@ -11,7 +11,6 @@
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/option6_pdexclude.h>
-#include <dhcpsrv/pool.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
 #include <gtest/gtest.h>

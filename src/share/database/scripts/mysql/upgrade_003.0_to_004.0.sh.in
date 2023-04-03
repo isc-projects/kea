@@ -105,7 +105,7 @@ DELIMITER $$
 CREATE PROCEDURE lease4DumpHeader()
 BEGIN
 SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state';
-END  $$
+END $$
 DELIMITER ;
 
 # FUNCTION that returns a result set containing the data for lease4 dumps
@@ -136,7 +136,7 @@ DELIMITER $$
 CREATE PROCEDURE lease6DumpHeader()
 BEGIN
 SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state';
-END  $$
+END $$
 DELIMITER ;
 
 # FUNCTION that returns a result set containing the data for lease6 dumps

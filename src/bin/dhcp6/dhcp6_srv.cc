@@ -3266,6 +3266,17 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                 StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
                 static_cast<int64_t>(-1));
 
+            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+            if (subnet) {
+                const auto& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
+                if (pool) {
+                    StatsMgr::instance().addValue(
+                        StatsMgr::generateName("subnet", subnet->getID(),
+                                               StatsMgr::generateName(".pool", pool->getID(), "assigned-nas")),
+                        static_cast<int64_t>(-1));
+                }
+            }
+
             // Check if a lease has flags indicating that the FQDN update has
             // been performed. If so, create NameChangeRequest which removes
             // the entries.
@@ -3462,6 +3473,17 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
                 static_cast<int64_t>(-1));
+
+            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+            if (subnet) {
+                const auto& pool = subnet->getPool(Lease::TYPE_PD, lease->addr_, false);
+                if (pool) {
+                    StatsMgr::instance().addValue(
+                        StatsMgr::generateName("subnet", subnet->getID(),
+                                               StatsMgr::generateName(".pd-pool", pool->getID(), "assigned-pds")),
+                        static_cast<int64_t>(-1));
+                }
+            }
         }
     }
 
@@ -4044,6 +4066,17 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     StatsMgr::instance().addValue(
         StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
         static_cast<int64_t>(1));
+
+    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+    if (subnet) {
+        const auto& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
+        if (pool) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", subnet->getID(),
+                                       StatsMgr::generateName(".pool", pool->getID(), "declined-addresses")),
+                static_cast<int64_t>(1));
+        }
+    }
 
     // Global declined addresses counter.
     StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));

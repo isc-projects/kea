@@ -488,6 +488,7 @@ TEST_F(Lease4Test, toText) {
              << "Hardware addr: " << hwaddr_->toText(false) << "\n"
              << "Client id:     " << clientid_->toText() << "\n"
              << "Subnet ID:     789\n"
+             << "Pool ID:       0\n"
              << "State:         default\n"
              << "Relay ID:      (none)\n"
              << "Remote ID:     (none)\n"
@@ -507,6 +508,7 @@ TEST_F(Lease4Test, toText) {
              << "Hardware addr: (none)\n"
              << "Client id:     (none)\n"
              << "Subnet ID:     789\n"
+             << "Pool ID:       0\n"
              << "State:         default\n"
              << "Relay ID:      (none)\n"
              << "Remote ID:     (none)\n";
@@ -532,6 +534,7 @@ TEST_F(Lease4Test, toElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
+        "\"pool-id\": 0,"
         "\"user-context\": { \"foobar\": 1234 },"
         "\"valid-lft\": 3600 "
         "}";
@@ -551,6 +554,7 @@ TEST_F(Lease4Test, toElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
+        "\"pool-id\": 0,"
         "\"valid-lft\": 3600 "
         "}";
 
@@ -569,6 +573,7 @@ TEST_F(Lease4Test, toElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
+        "\"pool-id\": 0,"
         "\"valid-lft\": 3600 "
         "}";
 
@@ -587,6 +592,7 @@ TEST_F(Lease4Test, fromElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
+        "\"pool-id\": 5,"
         "\"user-context\": { \"foo\": \"bar\" },"
         "\"valid-lft\": 3600 "
         "}";
@@ -598,6 +604,7 @@ TEST_F(Lease4Test, fromElement) {
 
     EXPECT_EQ("192.0.2.3", lease->addr_.toText());
     EXPECT_EQ(789, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     ASSERT_TRUE(lease->client_id_);
@@ -649,6 +656,9 @@ TEST_F(Lease4Test, fromElementInvalidValues) {
     testInvalidElement<Lease4>(json, "subnet-id", std::string("xyz"));
     testInvalidElement<Lease4>(json, "subnet-id", -5, false);
     testInvalidElement<Lease4>(json, "subnet-id", 0x100000000, false);
+    testInvalidElement<Lease4>(json, "pool-id", std::string("xyz"), false);
+    testInvalidElement<Lease4>(json, "pool-id", -5, false);
+    testInvalidElement<Lease4>(json, "pool-id", 0x100000000, false);
     testInvalidElement<Lease4>(json, "valid-lft", std::string("xyz"));
     testInvalidElement<Lease4>(json, "valid-lft", -3, false);
     testInvalidElement<Lease4>(json, "user-context", "[ ]", false);
@@ -710,7 +720,7 @@ Lease6 createLease6(const std::string& hostname, const bool fqdn_fwd,
 
 // Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
 // This test checks if the Lease6 structure can be instantiated correctly
-TEST(Lease6Test, Lease6ConstructorDefault) {
+TEST(Lease6Test, constructorDefault) {
 
     // check a variety of addresses with different bits set.
     const char* ADDRESS[] = {
@@ -755,7 +765,7 @@ TEST(Lease6Test, Lease6ConstructorDefault) {
 
 // This test verifies that the Lease6 constructor which accepts FQDN data,
 // sets the data correctly for the lease.
-TEST(Lease6Test, Lease6ConstructorWithFQDN) {
+TEST(Lease6Test, constructorWithFQDN) {
 
     // check a variety of addresses with different bits set.
     const char* ADDRESS[] = {
@@ -935,7 +945,7 @@ TEST(Lease6Test, operatorEquals) {
 }
 
 // Checks if lease expiration is calculated properly
-TEST(Lease6Test, Lease6Expired) {
+TEST(Lease6Test, lease6Expired) {
     const IOAddress addr("2001:db8:1::456");
     const uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     const DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
@@ -1064,6 +1074,7 @@ TEST(Lease6Test, toText) {
              << "DUID:          00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\n"
              << "Hardware addr: " << hwaddr->toText(false) << "\n"
              << "Subnet ID:     5678\n"
+             << "Pool ID:       0\n"
              << "State:         declined\n"
              << "User context:  { \"foobar\": 1234 }\n";
 
@@ -1083,6 +1094,7 @@ TEST(Lease6Test, toText) {
              << "DUID:          00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\n"
              << "Hardware addr: (none)\n"
              << "Subnet ID:     5678\n"
+             << "Pool ID:       0\n"
              << "State:         declined\n";
     EXPECT_EQ(expected.str(), lease.toText());
 }
@@ -1115,6 +1127,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
+        "\"pool-id\": 0,"
         "\"type\": \"IA_NA\","
         "\"user-context\": { \"foobar\": 1234 },"
         "\"valid-lft\": 800"
@@ -1137,6 +1150,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
+        "\"pool-id\": 0,"
         "\"type\": \"IA_NA\","
         "\"valid-lft\": 800"
         "}";
@@ -1158,6 +1172,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
+        "\"pool-id\": 0,"
         "\"type\": \"IA_NA\","
         "\"valid-lft\": 800"
         "}";
@@ -1214,6 +1229,9 @@ TEST(Lease6Test, toElementPrefix) {
     ASSERT_TRUE(l->contains("subnet-id"));
     EXPECT_EQ(5678, l->get("subnet-id")->intValue());
 
+    ASSERT_TRUE(l->contains("pool-id"));
+    EXPECT_EQ(0, l->get("pool-id")->intValue());
+
     ASSERT_TRUE(l->contains("state"));
     EXPECT_EQ(static_cast<int>(Lease::STATE_DEFAULT),
               l->get("state")->intValue());
@@ -1263,6 +1281,7 @@ TEST(Lease6Test, fromElementNA) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
+        "\"pool-id\": 5,"
         "\"type\": \"IA_NA\","
         "\"user-context\": { \"foobar\": 1234 },"
         "\"valid-lft\": 800"
@@ -1275,6 +1294,7 @@ TEST(Lease6Test, fromElementNA) {
 
     EXPECT_EQ("2001:db8::1", lease->addr_.toText());
     EXPECT_EQ(5678, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
@@ -1312,6 +1332,7 @@ TEST(Lease6Test, fromElementPD) {
         "\"prefix-len\": 32,"
         "\"state\": 0,"
         "\"subnet-id\": 1234,"
+        "\"pool-id\": 5,"
         "\"type\": \"IA_PD\","
         "\"valid-lft\": 600"
         "}";
@@ -1323,6 +1344,7 @@ TEST(Lease6Test, fromElementPD) {
 
     EXPECT_EQ("3000::", lease->addr_.toText());
     EXPECT_EQ(1234, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
@@ -1390,6 +1412,9 @@ TEST(Lease6Test, fromElementInvalidValues) {
     testInvalidElement<Lease6>(json, "subnet-id", std::string("xyz"));
     testInvalidElement<Lease6>(json, "subnet-id", -5, false);
     testInvalidElement<Lease6>(json, "subnet-id", 0x100000000, false);
+    testInvalidElement<Lease6>(json, "pool-id", std::string("xyz"), false);
+    testInvalidElement<Lease6>(json, "pool-id", -5, false);
+    testInvalidElement<Lease6>(json, "pool-id", 0x100000000, false);
     testInvalidElement<Lease6>(json, "type", std::string("IA_XY"));
     testInvalidElement<Lease6>(json, "type", -3, false);
     testInvalidElement<Lease6>(json, "valid-lft", std::string("xyz"));

@@ -25,7 +25,7 @@ using namespace isc::asiolink;
 
 namespace {
 
-TEST(Pool4Test, constructor_first_last) {
+TEST(Pool4Test, constructorFirstLast) {
 
     // let's construct 192.0.2.1-192.0.2.255 pool
     Pool4 pool1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
@@ -45,7 +45,7 @@ TEST(Pool4Test, constructor_first_last) {
                  BadValue);
 }
 
-TEST(Pool4Test, constructor_prefix_len) {
+TEST(Pool4Test, constructorPrefixLen) {
 
     // let's construct 2001:db8:1::/96 pool
     Pool4 pool1(IOAddress("192.0.2.0"), 25);
@@ -89,26 +89,6 @@ TEST(Pool4Test, leasesCount) {
 
     Pool4 pool4(IOAddress("10.0.0.0"), IOAddress("10.255.255.255"));
     EXPECT_EQ(16777216, pool4.getCapacity());
-}
-
-// This test creates 100 pools and verifies that their IDs are unique.
-TEST(Pool4Test, unique_id) {
-
-    const int num_pools = 100;
-    std::vector<Pool4Ptr> pools;
-
-    for (int i = 0; i < num_pools; ++i) {
-        pools.push_back(Pool4Ptr(new Pool4(IOAddress("192.0.2.0"),
-                                           IOAddress("192.0.2.255"))));
-    }
-
-    for (int i = 0; i < num_pools; ++i) {
-        for (int j = i + 1; j < num_pools; ++j) {
-            if (pools[i]->getId() == pools[j]->getId()) {
-                FAIL() << "Pool-ids must be unique";
-            }
-        }
-    }
 }
 
 // Simple check if toText returns reasonable values
@@ -334,7 +314,7 @@ TEST(Pool6Test, constructorPrefixLen) {
                  BadValue);
 }
 
-TEST(Pool6Test, in_range) {
+TEST(Pool6Test, inRange) {
    Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                IOAddress("2001:db8:1::f"));
 
@@ -477,27 +457,6 @@ TEST(Pool6Test, TA) {
     EXPECT_EQ(128, pool2->getLength()); // singular addresses, not prefixes
     EXPECT_EQ("2001:db8:1::1", pool2->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::f", pool2->getLastAddress().toText());
-}
-
-// This test creates 100 pools and verifies that their IDs are unique.
-TEST(Pool6Test, uniqueID) {
-
-    const int num_pools = 100;
-    std::vector<Pool6Ptr> pools;
-
-    for (int i = 0; i < num_pools; ++i) {
-        pools.push_back(Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"),
-                                           IOAddress("2001:db8:1::ffff:ffff:ffff:ffff"))));
-    }
-
-    for (int i = 0; i < num_pools; ++i) {
-        for (int j = i + 1; j < num_pools; ++j) {
-            if (pools[i]->getId() == pools[j]->getId()) {
-                FAIL() << "Pool-ids must be unique";
-            }
-        }
-    }
-
 }
 
 // Simple check if toText returns reasonable values
@@ -710,4 +669,4 @@ TEST(Pool6Test, requiredClasses) {
     EXPECT_TRUE(pool.getRequiredClasses().contains("foo"));
 }
 
-}; // end of anonymous namespace
+}  // end of anonymous namespace

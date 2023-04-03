@@ -69,6 +69,7 @@ CSVLeaseFile6::append(const Lease6& lease) {
     if (lease.getContext()) {
         row.writeAtEscaped(getColumnIndex("user_context"), lease.getContext()->str());
     }
+    row.writeAt(getColumnIndex("pool_id"), lease.pool_id_);
     try {
         VersionedCSVFile::append(row);
     } catch (const std::exception&) {
@@ -106,20 +107,25 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
                                readSubnetID(row),
                                readHWAddr(row),
                                readPrefixLen(row)));
+
         lease->cltt_ = readCltt(row);
         lease->fqdn_fwd_ = readFqdnFwd(row);
         lease->fqdn_rev_ = readFqdnRev(row);
         lease->hostname_ = readHostname(row);
         lease->state_ = readState(row);
+
         if ((*lease->duid_ == DUID::EMPTY())
             && lease->state_ != Lease::STATE_DECLINED) {
             isc_throw(isc::BadValue,
                       "The Empty DUID is only valid for declined leases");
         }
+
         ConstElementPtr ctx = readContext(row);
         if (ctx) {
             lease->setContext(ctx);
         }
+
+        lease->pool_id_ = readPoolID(row);
     } catch (const std::exception& ex) {
         // bump the read error count
         ++read_errs_;
@@ -154,13 +160,13 @@ CSVLeaseFile6::initColumns() {
     addColumn("hwaddr", "2.0");
     addColumn("state", "3.0", "0" /* == STATE_DEFAULT */);
     addColumn("user_context", "3.1");
-
     // Default not added for hwtype and hwaddr_source, because they depend on
     // hwaddr having value. When a CSV lease having a hwaddr is upgraded to 4.0,
     // hwtype will have value "1" meaning HTYPE_ETHER and
     // hwaddr_source will have value "0" meaning HWADDR_SOURCE_UNKNOWN.
     addColumn("hwtype", "4.0");
     addColumn("hwaddr_source", "4.0");
+    addColumn("pool_id", "5.0", "0");
 
     // Any file with less than hostname is invalid
     setMinimumValidColumns("hostname");
@@ -217,6 +223,13 @@ CSVLeaseFile6::readSubnetID(const CSVRow& row) {
     SubnetID subnet_id =
         row.readAndConvertAt<SubnetID>(getColumnIndex("subnet_id"));
     return (subnet_id);
+}
+
+uint32_t
+CSVLeaseFile6::readPoolID(const CSVRow& row) {
+    uint32_t pool_id =
+        row.readAndConvertAt<uint32_t>(getColumnIndex("pool_id"));
+    return (pool_id);
 }
 
 uint8_t

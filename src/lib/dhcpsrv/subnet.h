@@ -80,7 +80,9 @@ public:
      /// @brief Returns unique ID for that subnet.
     ///
     /// @return unique ID for that subnet
-    SubnetID getID() const { return (id_); }
+    SubnetID getID() const {
+        return (id_);
+    }
 
     /// @brief Returns subnet parameters (prefix and prefix length).
     ///
@@ -128,7 +130,7 @@ public:
     /// If there is no pool that the address belongs to (hint is invalid), other
     /// pool of specified type will be returned.
     ///
-    /// With anypool set to true, this is means give me a pool, preferably
+    /// With anypool set to true, this means give me a pool, preferably
     /// the one that addr belongs to. With anypool set to false, it means
     /// give me a pool that addr belongs to (or NULL if here is no such pool)
     ///
@@ -791,6 +793,7 @@ private:
     Subnet6& operator=(const Subnet6&) = delete;
 
     /// @brief Returns default address for pool selection
+    ///
     /// @return ANY IPv6 address
     virtual isc::asiolink::IOAddress default_pool() const {
         return (isc::asiolink::IOAddress("::"));

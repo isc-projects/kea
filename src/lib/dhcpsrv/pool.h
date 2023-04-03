@@ -35,12 +35,24 @@ public:
     /// @note:
     /// PoolType enum was removed. Please use Lease::Type instead
 
-    /// @brief returns Pool-id
+    /// @brief Returns Pool-id
+    ///
+    /// Pool-id is an unique value that can be used to identify a pool within a
+    /// subnet or shared network.
     ///
     /// @return pool-id value
-    /// Pool-id is an unique value that can be used to identify a pool.
-    uint32_t getId() const {
+    uint64_t getID() const {
         return (id_);
+    }
+
+    /// @brief Sets Pool-id
+    ///
+    /// Pool-id is an unique value that can be used to identify a pool within a
+    /// subnet or shared network.
+    ///
+    /// @param id value to be set
+    void setID(const uint64_t id) {
+        id_ = id;
     }
 
     /// @brief Returns the first address in a pool.
@@ -77,8 +89,7 @@ public:
     /// We need Pool to be a polymorphic class, so we could dynamic cast
     /// from PoolPtr to Pool6Ptr if we need to. A class becomes polymorphic,
     /// when there is at least one virtual method.
-    virtual ~Pool() {
-    }
+    virtual ~Pool() = default;
 
     /// @brief Returns the number of all leases in this pool.
     ///
@@ -181,18 +192,11 @@ protected:
          const isc::asiolink::IOAddress& first,
          const isc::asiolink::IOAddress& last);
 
-    /// @brief returns the next unique Pool-ID
-    ///
-    /// @return the next unique Pool-ID
-    static uint32_t getNextID() {
-        static uint32_t id = 0;
-        return (id++);
-    }
-
     /// @brief pool-id
     ///
-    /// This ID is used to identify this specific pool.
-    uint32_t id_;
+    /// This id is an unique value that can be used to identify a pool within a
+    /// subnet or shared network.
+    uint64_t id_;
 
     /// @brief The first address in a pool
     isc::asiolink::IOAddress first_;
@@ -494,9 +498,7 @@ typedef boost::shared_ptr<Pool> PoolPtr;
 /// @brief a container for either IPv4 or IPv6 Pools
 typedef std::vector<PoolPtr> PoolCollection;
 
-
 } // end of isc::dhcp namespace
 } // end of isc namespace
-
 
 #endif // POOL_H

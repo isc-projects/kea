@@ -116,48 +116,48 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4"},
     {MySqlLeaseMgr::GET_LEASE4_ADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE address = ?"},
     {MySqlLeaseMgr::GET_LEASE4_CLIENTID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE client_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE client_id = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HWADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE hwaddr = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HWADDR_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE hwaddr = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_PAGE,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE address > ? "
                             "ORDER BY address "
@@ -175,21 +175,21 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HOSTNAME,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE hostname = ?"},
     {MySqlLeaseMgr::GET_LEASE4_EXPIRE,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE state != ? "
                             "AND valid_lifetime != 4294967295 "
@@ -200,7 +200,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE relay_id = ? and address > ? "
                             "ORDER BY address "
@@ -209,7 +209,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE relay_id = ? and address > ? "
                             " and UNIX_TIMESTAMP(expire) - IF"
@@ -221,7 +221,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE relay_id = ? and address > ? "
                             " and UNIX_TIMESTAMP(expire) - IF"
@@ -236,7 +236,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE relay_id = ? and address > ? "
                             " and UNIX_TIMESTAMP(expire) - IF"
@@ -248,7 +248,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE remote_id = ? and address > ? "
                             "ORDER BY address "
@@ -257,7 +257,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE remote_id = ? and address > ? "
                             " and UNIX_TIMESTAMP(expire) - IF"
@@ -269,7 +269,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE remote_id = ? and address > ? "
                             " and UNIX_TIMESTAMP(expire) - IF"
@@ -284,7 +284,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE remote_id = ? and address > ? "
                             " and UNIX_TIMESTAMP(expire) - IF"
@@ -298,7 +298,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6"},
     {MySqlLeaseMgr::GET_LEASE6_ADDR,
                     "SELECT address, duid, valid_lifetime, "
@@ -306,7 +306,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE address = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
@@ -315,7 +315,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID,
@@ -324,7 +324,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
                             "AND lease_type = ?"},
@@ -334,7 +334,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE address > ? "
                             "ORDER BY address "
@@ -367,7 +367,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID,
@@ -376,7 +376,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE duid = ?"},
     {MySqlLeaseMgr::GET_LEASE6_HOSTNAME,
@@ -385,7 +385,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE hostname = ?"},
     {MySqlLeaseMgr::GET_LEASE6_EXPIRE,
@@ -394,7 +394,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE state != ? "
                             "AND valid_lifetime != 4294967295 "
@@ -417,15 +417,15 @@ tagged_statements = { {
                     "INSERT INTO lease4(address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+                        "state, user_context, relay_id, remote_id, pool_id) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::INSERT_LEASE6,
                     "INSERT INTO lease6(address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context, binaddr) "
+                        "state, user_context, binaddr, pool_id) "
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::UPDATE_LEASE4,
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
@@ -433,7 +433,7 @@ tagged_statements = { {
                         "subnet_id = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, "
                         "state = ?, user_context = ?, "
-                        "relay_id = ?, remote_id = ? "
+                        "relay_id = ?, remote_id = ?, pool_id = ? "
                             "WHERE address = ? AND expire = ?"},
     {MySqlLeaseMgr::UPDATE_LEASE6,
                     "UPDATE lease6 SET address = ?, duid = ?, "
@@ -441,7 +441,7 @@ tagged_statements = { {
                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
                         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ?, "
-                        "state = ?, user_context = ?, binaddr = ? "
+                        "state = ?, user_context = ?, binaddr = ?, pool_id = ? "
                             "WHERE address = ? AND expire = ?"},
     {MySqlLeaseMgr::ALL_LEASE4_STATS,
                     "SELECT subnet_id, state, leases as state_count "
@@ -566,7 +566,7 @@ public:
 
 class MySqlLease4Exchange : public MySqlLeaseExchange {
     /// @brief Set number of database columns for this lease structure
-    static const size_t LEASE_COLUMNS = 13;
+    static const size_t LEASE_COLUMNS = 14;
 
 public:
 
@@ -576,11 +576,11 @@ public:
     /// all variables are initialized/set in the methods before they are used.
     MySqlLease4Exchange() : addr4_(0), hwaddr_length_(0), hwaddr_null_(MLM_FALSE),
                             client_id_length_(0), client_id_null_(MLM_FALSE),
-                            subnet_id_(0), valid_lifetime_(0),
+                            subnet_id_(0), pool_id_(0), valid_lifetime_(0),
                             fqdn_fwd_(false), fqdn_rev_(false), hostname_length_(0),
                             state_(0), user_context_length_(0),
-                            user_context_null_(MLM_FALSE),
-                            relay_id_null_(MLM_FALSE),
+                            user_context_null_(MLM_FALSE), relay_id_length_(0),
+                            relay_id_null_(MLM_FALSE), remote_id_length_(0),
                             remote_id_null_(MLM_FALSE) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -604,7 +604,8 @@ public:
         columns_[10] = "user_context";
         columns_[11] = "relay_id";
         columns_[12] = "remote_id";
-        BOOST_STATIC_ASSERT(12 < LEASE_COLUMNS);
+        columns_[13] = "pool_id";
+        BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease4 Pointer
@@ -815,11 +816,19 @@ public:
                 bind_[12].is_null = &remote_id_null_;
             }
 
+            // pool_id: unsigned int
+            // Can use lease_->pool_id_ directly as it is of type uint32_t.
+            bind_[13].buffer_type = MYSQL_TYPE_LONG;
+            bind_[13].buffer = reinterpret_cast<char*>(&lease_->pool_id_);
+            bind_[13].is_unsigned = MLM_TRUE;
+            // bind_[13].is_null = &MLM_FALSE; // commented out for performance
+                                               // reasons, see memset() above
+
             // Add the error flags
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(10 < LEASE_COLUMNS);
+            BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -951,11 +960,18 @@ public:
         bind_[12].length = &remote_id_length_;
         bind_[12].is_null = &remote_id_null_;
 
+        // pool_id: unsigned int
+        bind_[13].buffer_type = MYSQL_TYPE_LONG;
+        bind_[13].buffer = reinterpret_cast<char*>(&pool_id_);
+        bind_[13].is_unsigned = MLM_TRUE;
+        // bind_[13].is_null = &MLM_FALSE; // commented out for performance
+                                           // reasons, see memset() above
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(10 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -1041,6 +1057,9 @@ public:
                                      remote_id_buffer_ + remote_id_length_);
         }
 
+        // Set pool ID
+        lease->pool_id_ = pool_id_;
+
         return (lease);
     }
 
@@ -1078,6 +1097,7 @@ private:
     my_bool              client_id_null_;                                ///< Used when Client ID is null
     MYSQL_TIME           expire_;                                        ///< Lease expire time
     uint32_t             subnet_id_;                                     ///< Subnet identification
+    uint32_t             pool_id_;                                       ///< Pool identification
     uint32_t             valid_lifetime_;                                ///< Lease time
     my_bool              fqdn_fwd_;                                      ///< Has forward DNS update been performed
     my_bool              fqdn_rev_;                                      ///< Has reverse DNS update been performed
@@ -1112,7 +1132,7 @@ private:
 
 class MySqlLease6Exchange : public MySqlLeaseExchange {
     /// @brief Set number of database columns for this lease structure
-    static const size_t LEASE_COLUMNS = 18;
+    static const size_t LEASE_COLUMNS = 19;
 
 public:
 
@@ -1123,8 +1143,8 @@ public:
     MySqlLease6Exchange() : addr6_length_(0), hwaddr_length_(0),
                             hwaddr_null_(MLM_FALSE), duid_length_(0),
                             iaid_(0), lease_type_(0), prefix_len_(0),
-                            pref_lifetime_(0), subnet_id_(0), valid_lifetime_(0),
-                            fqdn_fwd_(false), fqdn_rev_(false),
+                            pref_lifetime_(0), subnet_id_(0), pool_id_(0),
+                            valid_lifetime_(0), fqdn_fwd_(false), fqdn_rev_(false),
                             hostname_length_(0), hwtype_(0), hwaddr_source_(0),
                             state_(0), user_context_length_(0),
                             user_context_null_(MLM_FALSE), binaddr_length_(16) {
@@ -1154,7 +1174,8 @@ public:
         columns_[15] = "state";
         columns_[16] = "user_context";
         columns_[17] = "binaddr";
-        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
+        columns_[18] = "pool_id";
+        BOOST_STATIC_ASSERT(18 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
@@ -1411,11 +1432,19 @@ public:
             // bind_[17].is_null = &MLM_FALSE; // commented out for performance
                                                // reasons, see memset() above
 
+	    // pool_id: unsigned int
+            // Can use lease_->pool_id_ directly as it is of type uint32_t.
+            bind_[18].buffer_type = MYSQL_TYPE_LONG;
+            bind_[18].buffer = reinterpret_cast<char*>(&lease_->pool_id_);
+            bind_[18].is_unsigned = MLM_TRUE;
+            // bind_[18].is_null = &MLM_FALSE; // commented out for performance
+                                               // reasons, see memset() above
+
             // Add the error flags
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
+            BOOST_STATIC_ASSERT(18 < LEASE_COLUMNS);
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1573,11 +1602,18 @@ public:
         bind_[16].length = &user_context_length_;
         bind_[16].is_null = &user_context_null_;
 
+        // pool_id: unsigned int
+        bind_[17].buffer_type = MYSQL_TYPE_LONG;
+        bind_[17].buffer = reinterpret_cast<char*>(&pool_id_);
+        bind_[17].is_unsigned = MLM_TRUE;
+        // bind_[17].is_null = &MLM_FALSE; // commented out for performance
+                                           // reasons, see memset() above
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS - 1);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(16 < LEASE_COLUMNS - 1);
+        BOOST_STATIC_ASSERT(18 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -1683,6 +1719,9 @@ public:
             result->setContext(ctx);
         }
 
+        // Set pool ID.
+        result->pool_id_ = pool_id_;
+
         return (result);
     }
 
@@ -1725,6 +1764,7 @@ private:
     uint8_t              prefix_len_;                              ///< Prefix length
     uint32_t             pref_lifetime_;                           ///< Preferred lifetime
     uint32_t             subnet_id_;                               ///< Subnet identification
+    uint32_t             pool_id_;                                 ///< Pool identification
     uint32_t             valid_lifetime_;                          ///< Lease time
     my_bool              fqdn_fwd_;                                ///< Has forward DNS update been performed
     my_bool              fqdn_rev_;                                ///< Has reverse DNS update been performed

@@ -34,14 +34,17 @@ struct DuidIaidTypeIndexTag { };
 /// @brief Tag for indexes by expiration time.
 struct ExpirationIndexTag { };
 
-/// @brief Tag for indexes by HW address, subnet identifier tuple.
+/// @brief Tag for indexes by HW address, subnet-id tuple.
 struct HWAddressSubnetIdIndexTag { };
 
-/// @brief Tag for indexes by client and subnet identifiers.
+/// @brief Tag for indexes by client-id, subnet-id tuple.
 struct ClientIdSubnetIdIndexTag { };
 
 /// @brief Tag for indexes by subnet-id.
 struct SubnetIdIndexTag { };
+
+/// @brief Tag for indexes by subnet-id and pool-id.
+struct SubnetIdPoolIdIndexTag { };
 
 /// @brief Tag for index using DUID.
 struct DuidIndexTag { };
@@ -142,6 +145,26 @@ typedef boost::multi_index_container<
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<HostnameIndexTag>,
             boost::multi_index::member<Lease, std::string, &Lease::hostname_>
+        >,
+
+        // Specification of the seventh index starts here.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetIdPoolIdIndexTag>,
+            // This is a composite index that combines two attributes of the
+            // Lease6 object: subnet id and pool id.
+            boost::multi_index::composite_key<
+                Lease6,
+                // The subnet id is held in the subnet_id_ member of Lease6
+                // class. Note that the subnet_id_ is defined in the base
+                // class (Lease) so we have to point to this class rather
+                // than derived class: Lease6.
+                boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>,
+                // The pool id is held in the pool_id_ member of Lease6
+                // class. Note that the pool_id_ is defined in the base
+                // class (Lease) so we have to point to this class rather
+                // than derived class: Lease6.
+                boost::multi_index::member<Lease, uint32_t, &Lease::pool_id_>
+            >
         >
     >
 > Lease6Storage; // Specify the type name of this container.
@@ -272,6 +295,26 @@ typedef boost::multi_index_container<
                                            isc::asiolink::IOAddress,
                                            &Lease::addr_>
             >
+        >,
+
+        // Specification of the ninth index starts here.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetIdPoolIdIndexTag>,
+            // This is a composite index that combines two attributes of the
+            // Lease4 object: subnet id and pool id.
+            boost::multi_index::composite_key<
+                Lease4,
+                // The subnet id is held in the subnet_id_ member of Lease4
+                // class. Note that the subnet_id_ is defined in the base
+                // class (Lease) so we have to point to this class rather
+                // than derived class: Lease4.
+                boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>,
+                // The pool id is held in the pool_id_ member of Lease4
+                // class. Note that the pool_id_ is defined in the base
+                // class (Lease) so we have to point to this class rather
+                // than derived class: Lease4.
+                boost::multi_index::member<Lease, uint32_t, &Lease::pool_id_>
+            >
         >
     >
 > Lease4Storage; // Specify the type name for this container.
@@ -291,8 +334,11 @@ typedef Lease6Storage::index<DuidIaidTypeIndexTag>::type Lease6StorageDuidIaidTy
 /// @brief DHCPv6 lease storage index by expiration time.
 typedef Lease6Storage::index<ExpirationIndexTag>::type Lease6StorageExpirationIndex;
 
-/// @brief DHCPv6 lease storage index by Subnet-id.
+/// @brief DHCPv6 lease storage index by subnet-id.
 typedef Lease6Storage::index<SubnetIdIndexTag>::type Lease6StorageSubnetIdIndex;
+
+/// @brief DHCPv6 lease storage index subnet-id and pool-id.
+typedef Lease6Storage::index<SubnetIdPoolIdIndexTag>::type Lease6StorageSubnetIdPoolIdIndex;
 
 /// @brief DHCPv6 lease storage index by DUID.
 typedef Lease6Storage::index<DuidIndexTag>::type Lease6StorageDuidIndex;
@@ -306,28 +352,31 @@ typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;
 /// @brief DHCPv4 lease storage index by expiration time.
 typedef Lease4Storage::index<ExpirationIndexTag>::type Lease4StorageExpirationIndex;
 
-/// @brief DHCPv4 lease storage index by HW address and subnet identifier.
+/// @brief DHCPv4 lease storage index by HW address and subnet-id.
 typedef Lease4Storage::index<HWAddressSubnetIdIndexTag>::type
 Lease4StorageHWAddressSubnetIdIndex;
 
-/// @brief DHCPv4 lease storage index by client and subnet identifier.
+/// @brief DHCPv4 lease storage index by client-id and subnet-id.
 typedef Lease4Storage::index<ClientIdSubnetIdIndexTag>::type
 Lease4StorageClientIdSubnetIdIndex;
 
-/// @brief DHCPv4 lease storage index subnet identifier.
+/// @brief DHCPv4 lease storage index subnet-id.
 typedef Lease4Storage::index<SubnetIdIndexTag>::type Lease4StorageSubnetIdIndex;
+
+/// @brief DHCPv4 lease storage index subnet-id and pool-id.
+typedef Lease4Storage::index<SubnetIdPoolIdIndexTag>::type Lease4StorageSubnetIdPoolIdIndex;
 
 /// @brief DHCPv4 lease storage index by hostname.
 typedef Lease4Storage::index<HostnameIndexTag>::type Lease4StorageHostnameIndex;
 
-/// @brief DHCPv4 lease storage index by remote identifier.
+/// @brief DHCPv4 lease storage index by remote-id.
 typedef Lease4Storage::index<RemoteIdIndexTag>::type Lease4StorageRemoteIdIndex;
 
-/// @brief DHCPv4 lease storage range by remote identifier.
+/// @brief DHCPv4 lease storage range by remote-id.
 typedef std::pair<Lease4StorageRemoteIdIndex::const_iterator,
                   Lease4StorageRemoteIdIndex::const_iterator> Lease4StorageRemoteIdRange;
 
-/// @brief DHCPv4 lease storage index by relay identifier.
+/// @brief DHCPv4 lease storage index by relay-id.
 typedef Lease4Storage::index<RelayIdIndexTag>::type Lease4StorageRelayIdIndex;
 
 //@}

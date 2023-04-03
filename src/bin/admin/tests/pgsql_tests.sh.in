@@ -381,12 +381,12 @@ pgsql_upgrade_7_0_to_8_0_test() {
     run_command \
         pgsql_execute "SELECT * FROM lease4DumpHeader();"
     assert_eq 0 "${EXIT_CODE}" 'lease4DumpHeader() failed, expected exit code %d, actual %d'
-    assert_str_eq 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context' "${OUTPUT}"
+    assert_str_eq 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id' "${OUTPUT}"
 
     run_command \
         pgsql_execute "SELECT * FROM lease4DumpData();" --field-separator=','
     assert_eq 0 "${EXIT_CODE}" 'lease4DumpData() failed, expected exit code %d, actual %d'
-    assert_str_eq '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 }' "${OUTPUT}"
+    assert_str_eq '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 },0' "${OUTPUT}"
 
     # Check lease6Dump*().
     run_command \
@@ -397,22 +397,22 @@ pgsql_upgrade_7_0_to_8_0_test() {
     run_command \
         pgsql_execute "SELECT * FROM lease6DumpHeader();"
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpHeader() failed, expected exit code %d, actual %d'
-    assert_str_eq 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source' "${OUTPUT}"
+    assert_str_eq 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source,pool_id' "${OUTPUT}"
 
     run_command \
         pgsql_execute "SELECT * FROM lease6DumpData();" --field-separator=','
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpData() failed, expected exit code %d, actual %d'
-    assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },16,0' "${OUTPUT}"
+    assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },16,0,0' "${OUTPUT}"
 
     # Check lease4Upload().
     run_command \
-        pgsql_execute "SELECT lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'');"
+        pgsql_execute "SELECT lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'',0);"
     assert_eq 0 "${EXIT_CODE}" 'lease4Upload() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     # Check lease6Upload().
     run_command \
-        pgsql_execute "SELECT lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'',90,16);"
+        pgsql_execute "SELECT lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'',90,16,0);"
     assert_eq 0 "${EXIT_CODE}" 'lease6Upload() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 }

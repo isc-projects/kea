@@ -86,13 +86,14 @@ public:
     /// 1.0 - initial version (released in Kea 0.9)
     /// 2.0 - hwaddr column added (released in Kea 0.9.1)
     /// 2.1 - user context column added (released in Kea 1.4.0)
+    /// 3.0 - pool_id column added (released in Kea 2.3.8)
     ///
     /// @{
     /// @brief the major version of the v4 memfile backend
-    static const int MAJOR_VERSION_V4 = 2;
+    static const int MAJOR_VERSION_V4 = 3;
 
     /// @brief the minor version of the v4 memfile backend
-    static const int MINOR_VERSION_V4 = 1;
+    static const int MINOR_VERSION_V4 = 0;
     /// @}
 
     /// @defgroup v6 memfile backend versions
@@ -103,10 +104,11 @@ public:
     /// 3.0 - state column added (released in Kea 0.9.2)
     /// 3.1 - user context column added (released in Kea 1.4.0)
     /// 4.0 - hwtype,hwaddr_source columns added (released in Kea 2.1.2)
+    /// 5.0 - pool_id column added (released in Kea 2.3.8)
     ///
     /// @{
     /// @brief the major version of the v6 memfile backend
-    static const int MAJOR_VERSION_V6 = 4;
+    static const int MAJOR_VERSION_V6 = 5;
 
     /// @brief the minor version of the v6 memfile backend
     static const int MINOR_VERSION_V6 = 0;
