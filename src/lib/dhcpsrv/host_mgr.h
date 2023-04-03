@@ -23,6 +23,8 @@ namespace dhcp {
 
 // Enum flags to define a target of the host manager functions.
 enum HostMgrOperationTarget {
+    // The operation target not specified. Consider nothing.
+    UNSPECIFIED_SOURCE = 0,
     // Consider only the CfgHosts instance.
     PRIMARY_SOURCE = 1, // 1 << 1
     // Consider only the alternate sources.
@@ -573,7 +575,8 @@ public:
     bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
              const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
 
-    /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
+    /// @brief Attempts to delete a host by (subnet4-id, identifier,
+    /// identifier-type, operation-target)
     ///
     /// This method supports v4 only.
     ///
@@ -589,7 +592,8 @@ public:
          const uint8_t* identifier_begin, const size_t identifier_len,
          const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
 
-    /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
+    /// @brief Attempts to delete a host by (subnet6-id, identifier,
+    /// identifier-type, operation-target)
     ///
     /// This method supports v6 only.
     ///
