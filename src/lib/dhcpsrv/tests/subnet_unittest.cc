@@ -14,6 +14,12 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/flq_allocator.h>
+#include <dhcpsrv/flq_allocation_state.h>
+#include <dhcpsrv/iterative_allocator.h>
+#include <dhcpsrv/iterative_allocation_state.h>
+#include <dhcpsrv/random_allocator.h>
+#include <dhcpsrv/random_allocation_state.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
@@ -761,6 +767,70 @@ TEST(Subnet4Test, getServerId) {
     // correct.
     OptionBuffer server_id_buf = { 1, 2, 3, 4 };
     EXPECT_EQ("1.2.3.4", subnet.getServerId().toText());
+}
+
+// This test verifies that an iterative allocator and the corresponding
+// states are instantiated for a subnet.
+TEST(Subnet4Test, createAllocatorsIterative) {
+    // Create a subnet.
+    auto subnet = Subnet4::create(IOAddress("192.2.0.0"), 16, 1, 2, 3);
+    ASSERT_TRUE(subnet);
+    // Create a pool.
+    auto pool = boost::make_shared<Pool4>(IOAddress("192.2.0.0"), 16);
+    subnet->addPool(pool);
+    // Instantiate the allocator.
+    ASSERT_NO_THROW(subnet->createAllocators());
+    // Expect iterative allocator.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>
+                (subnet->getAllocator(Lease::TYPE_V4)));
+    // Expect iterative allocation state for the subnet.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+                (subnet->getAllocationState(Lease::TYPE_V4)));
+    // Expect iterative allocation state for the pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolIterativeAllocationState>
+                (pool->getAllocationState()));
+}
+
+// This test verifies that a random allocator and the corresponding
+// states are instantiated for a subnet.
+TEST(Subnet4Test, createAllocatorsRandom) {
+    // Create a subnet.
+    auto subnet = Subnet4::create(IOAddress("192.2.0.0"), 16, 1, 2, 3);
+    ASSERT_TRUE(subnet);
+    // Create a pool.
+    auto pool = boost::make_shared<Pool4>(IOAddress("192.2.0.0"), 16);
+    subnet->addPool(pool);
+    // Select the random allocator.
+    subnet->setAllocatorType("random");
+    // Instantiate the allocator.
+    ASSERT_NO_THROW(subnet->createAllocators());
+    // Expect random allocator.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                (subnet->getAllocator(Lease::TYPE_V4)));
+    // Expect random allocation state for the pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
+                (pool->getAllocationState()));
+}
+
+// This test verifies that an FLQ allocator and the corresponding
+// states are instantiated for a subnet.
+TEST(Subnet4Test, createAllocatorsFreeLeaseQueue) {
+    // Create a subnet.
+    auto subnet = Subnet4::create(IOAddress("192.2.0.0"), 16, 1, 2, 3);
+    ASSERT_TRUE(subnet);
+    // Create a pool.
+    auto pool = boost::make_shared<Pool4>(IOAddress("192.2.0.0"), 16);
+    subnet->addPool(pool);
+    // Select the FLQ allocator.
+    subnet->setAllocatorType("flq");
+    // Instantiate the allocator.
+    ASSERT_NO_THROW(subnet->createAllocators());
+    // Expect FLQ allocator.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<FreeLeaseQueueAllocator>
+                (subnet->getAllocator(Lease::TYPE_V4)));
+    // Expect FLQ allocation state for the pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolFreeLeaseQueueAllocationState>
+                (pool->getAllocationState()));
 }
 
 // Tests for Subnet6
@@ -1699,6 +1769,142 @@ TEST(Subnet6Test, rapidCommit) {
     // Disable again.
     subnet.setRapidCommit(false);
     EXPECT_FALSE(subnet.getRapidCommit());
+}
+
+// This test verifies that an iterative allocator and the corresponding
+// states are instantiated for a subnet.
+TEST(Subnet6Test, createAllocatorsIterative) {
+    // Create a subnet.
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+    ASSERT_TRUE(subnet);
+    // NA pool.
+    auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 112);
+    subnet->addPool(pool);
+    // TA pool.
+    auto ta_pool = boost::make_shared<Pool6>(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 112);
+    subnet->addPool(ta_pool);
+    // PD pool.
+    auto pd_pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("3000::"), 112, 120);
+    subnet->addPool(pd_pool);
+    // Instantiate the allocators.
+    ASSERT_NO_THROW(subnet->createAllocators());
+    // Expect iterative allocator for NA.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>
+                (subnet->getAllocator(Lease::TYPE_NA)));
+    // Expect iterative allocator for TA.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>
+                (subnet->getAllocator(Lease::TYPE_TA)));
+    // Expect iterative allocator for PD.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>
+                (subnet->getAllocator(Lease::TYPE_PD)));
+    // Expect iterative allocation state for NA.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+                (subnet->getAllocationState(Lease::TYPE_NA)));
+    // Expect iterative allocation state for TA.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+                (subnet->getAllocationState(Lease::TYPE_TA)));
+    // Expect iterative allocation state for PD.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
+                (subnet->getAllocationState(Lease::TYPE_PD)));
+    // Expect iterative allocation state for the NA pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolIterativeAllocationState>
+                (pool->getAllocationState()));
+    // Expect iterative allocation state for the TA pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolIterativeAllocationState>
+                (pool->getAllocationState()));
+    // Expect iterative allocation state for the PD pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolIterativeAllocationState>
+                (pd_pool->getAllocationState()));
+}
+
+// This test verifies that a random allocator and the corresponding
+// states are instantiated for a subnet.
+TEST(Subnet6Test, createAllocatorsRandom) {
+    // Create a subnet.
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+    ASSERT_TRUE(subnet);
+    // NA pool.
+    auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 112);
+    subnet->addPool(pool);
+    // TA pool.
+    auto ta_pool = boost::make_shared<Pool6>(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 112);
+    subnet->addPool(ta_pool);
+    // PD pool.
+    auto pd_pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("3000::"), 112, 120);
+    subnet->addPool(pd_pool);
+    // Select the random allocators.
+    subnet->setAllocatorType("random");
+    subnet->setPdAllocatorType("random");
+    // Instantiate the allocators.
+    ASSERT_NO_THROW(subnet->createAllocators());
+    // Expect random allocator for NA.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                (subnet->getAllocator(Lease::TYPE_NA)));
+    // Expect random allocator for TA.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                (subnet->getAllocator(Lease::TYPE_TA)));
+    // Expect random allocator for PD.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                (subnet->getAllocator(Lease::TYPE_PD)));
+    // Expect random allocation state for the NA pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
+                (pool->getAllocationState()));
+    // Expect random allocation state for the TA pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
+                (pool->getAllocationState()));
+    // Expect random allocation state for the PD pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
+                (pd_pool->getAllocationState()));
+}
+
+// This test verifies that a FLQ allocator and the corresponding
+// states are instantiated for a subnet.
+TEST(Subnet6Test, createAllocatorsFreeLeaseQueue) {
+    // Create a subnet.
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+    ASSERT_TRUE(subnet);
+    // NA pool.
+    auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 112);
+    subnet->addPool(pool);
+    // TA pool.
+    auto ta_pool = boost::make_shared<Pool6>(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 112);
+    subnet->addPool(ta_pool);
+    // PD pool.
+    auto pd_pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("3000::"), 112, 120);
+    subnet->addPool(pd_pool);
+    // Select the random allocator for addresses.
+    subnet->setAllocatorType("random");
+    // Select the FLQ allocator for the prefix delegation.
+    subnet->setPdAllocatorType("flq");
+    // Instantiate the allocators.
+    ASSERT_NO_THROW(subnet->createAllocators());
+    // Expect random allocator for NA.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                (subnet->getAllocator(Lease::TYPE_NA)));
+    // Expect random allocator for TA.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                (subnet->getAllocator(Lease::TYPE_TA)));
+    // Expect FLQ allocator for PD.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<FreeLeaseQueueAllocator>
+                (subnet->getAllocator(Lease::TYPE_PD)));
+    // Expect random allocation state for the NA pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
+                (pool->getAllocationState()));
+    // Expect random allocation state for the TA pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
+                (pool->getAllocationState()));
+    // Expect FLQ allocation state for the PD pool.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolFreeLeaseQueueAllocationState>
+                (pd_pool->getAllocationState()));
+}
+
+// Test that it is not allowed to use the FLQ allocator for the address pools.
+TEST(Subnet6Test, createAllocatorsFreeLeaseQueueNotAllowed) {
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+    ASSERT_TRUE(subnet);
+
+    subnet->setAllocatorType("flq");
+    EXPECT_THROW(subnet->createAllocators(), BadValue);
 }
 
 // This test verifies that the IPv4 subnet can be fetched by id.

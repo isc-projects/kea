@@ -9,7 +9,12 @@
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/flq_allocation_state.h>
+#include <dhcpsrv/flq_allocator.h>
+#include <dhcpsrv/iterative_allocation_state.h>
 #include <dhcpsrv/iterative_allocator.h>
+#include <dhcpsrv/random_allocation_state.h>
+#include <dhcpsrv/random_allocator.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <util/multi_threading_mgr.h>
@@ -743,6 +748,33 @@ Subnet::toElement() const {
     return (map);
 }
 
+void
+Subnet4::createAllocators() {
+    if (getAllocatorType() == "random") {
+        setAllocator(Lease::TYPE_V4,
+                     boost::make_shared<RandomAllocator>
+                     (Lease::TYPE_V4, shared_from_this()));
+        setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
+
+        for (auto pool : pools_) {
+            pool->setAllocationState(PoolRandomAllocationState::create(pool));
+        }
+
+    } else if (getAllocatorType() == "flq") {
+        setAllocator(Lease::TYPE_V4,
+                     boost::make_shared<FreeLeaseQueueAllocator>
+                     (Lease::TYPE_V4, shared_from_this()));
+        for (auto pool : pools_) {
+            pool->setAllocationState(PoolFreeLeaseQueueAllocationState::create(pool));
+        }
+
+    } else {
+        for (auto pool : pools_) {
+            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+        }
+    }
+}
+
 data::ElementPtr
 Subnet4::toElement() const {
     // Prepare the map
@@ -775,6 +807,66 @@ Subnet4::parsePrefix(const std::string& prefix) {
         isc_throw(BadValue, "unable to parse invalid IPv4 prefix " << prefix);
     }
     return (parsed);
+}
+
+void
+Subnet6::createAllocators() {
+    // If we use the random allocator we need to create its instance and
+    // the state instance for it. There is no need to do it for the iterative
+    // allocator because it is configured by default.
+    if (getAllocatorType() == "random") {
+        setAllocator(Lease::TYPE_NA,
+                     boost::make_shared<RandomAllocator>
+                     (Lease::TYPE_NA, shared_from_this()));
+        setAllocator(Lease::TYPE_TA,
+                     boost::make_shared<RandomAllocator>
+                     (Lease::TYPE_TA, shared_from_this()));
+        setAllocationState(Lease::TYPE_NA, SubnetAllocationStatePtr());
+        setAllocationState(Lease::TYPE_TA, SubnetAllocationStatePtr());
+
+    } else if (getAllocatorType() == "flq") {
+        isc_throw(BadValue, "Free Lease Queue allocator is not supported for IPv6 address pools");
+    }
+
+    // Repeat the same for the delegated prefix allocator.
+    if (getPdAllocatorType() == "random") {
+        setAllocator(Lease::TYPE_PD,
+                     boost::make_shared<RandomAllocator>
+                     (Lease::TYPE_PD, shared_from_this()));
+        setAllocationState(Lease::TYPE_PD, SubnetAllocationStatePtr());
+
+    } else  if (getPdAllocatorType() == "flq") {
+        setAllocator(Lease::TYPE_PD,
+                     boost::make_shared<FreeLeaseQueueAllocator>
+                     (Lease::TYPE_PD, shared_from_this()));
+        setAllocationState(Lease::TYPE_PD, SubnetAllocationStatePtr());
+    }
+    // Create allocation states for NA pools.
+    for (auto pool : pools_) {
+        if (getAllocatorType() == "random") {
+            pool->setAllocationState(PoolRandomAllocationState::create(pool));
+        } else {
+            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+        }
+    }
+    // Create allocation states for TA pools.
+    for (auto pool : pools_ta_) {
+        if (getAllocatorType() == "random") {
+            pool->setAllocationState(PoolRandomAllocationState::create(pool));
+        } else {
+            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+        }
+    }
+    // Create allocation states for PD pools.
+    for (auto pool : pools_pd_) {
+        if (getPdAllocatorType() == "random") {
+            pool->setAllocationState(PoolRandomAllocationState::create(pool));
+        } else if (getPdAllocatorType() == "flq") {
+            pool->setAllocationState(PoolFreeLeaseQueueAllocationState::create(pool));
+        } else {
+            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+        }
+    }
 }
 
 data::ElementPtr

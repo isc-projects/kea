@@ -20,6 +20,7 @@
 #include <util/dhcp_space.h>
 #include <util/triplet.h>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -316,6 +317,15 @@ public:
     /// @param allocation_state allocation state instance.
     void setAllocationState(Lease::Type type, const SubnetAllocationStatePtr& allocation_state);
 
+    /// @brief Instantiates the allocators and their states.
+    ///
+    /// It determines the types of the allocators to create using the list of
+    /// the allocator types specified with the @c Network::setAllocatorType method.
+    ///
+    /// This function is called from the subnet parsers and after fetching
+    /// the subnet configuration from a configuration backend.
+    virtual void createAllocators() = 0;
+
     /// @brief Calls @c initAfterConfigure for each allocator.
     void initAllocatorsAfterConfigure();
 
@@ -490,7 +500,7 @@ typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 /// This class represents an IPv4 subnet.
 /// @note Subnet and Network use virtual inheritance to avoid
 /// a diamond issue with UserContext
-class Subnet4 : public Subnet, public Network4 {
+class Subnet4 : public Subnet, public Network4, public boost::enable_shared_from_this<Subnet4> {
 public:
 
     /// @brief Constructor with all parameters.
@@ -601,6 +611,15 @@ public:
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
 
+    /// @brief Instantiates the allocator and its state.
+    ///
+    /// It uses the type of the allocator specified with the
+    /// @c Network::setAllocatorType method.
+    ///
+    /// This function is called from the subnet parsers and after fetching
+    /// the subnet configuration from a configuration backend.
+    virtual void createAllocators();
+
     /// @brief Converts subnet prefix to a pair of prefix/length pair.
     ///
     /// @param prefix Prefix to be parsed.
@@ -648,7 +667,7 @@ typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 /// This class represents an IPv6 subnet.
 /// @note Subnet and Network use virtual inheritance to avoid
 /// a diamond issue with UserContext
-class Subnet6 : public Subnet, public Network6 {
+class Subnet6 : public Subnet, public Network6, public boost::enable_shared_from_this<Subnet6> {
 public:
 
     /// @brief Constructor with all parameters.
@@ -741,6 +760,15 @@ public:
     /// @return true if client can be supported, false otherwise.
     virtual bool
     clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+
+    /// @brief Instantiates the allocators and their states.
+    ///
+    /// It determines the types of the allocators to create using the list of
+    /// the allocator types specified with the @c Network::setAllocatorType method.
+    ///
+    /// This function is called from the subnet parsers and after fetching
+    /// the subnet configuration from a configuration backend.
+    virtual void createAllocators();
 
     /// @brief Unparse a subnet object.
     ///
