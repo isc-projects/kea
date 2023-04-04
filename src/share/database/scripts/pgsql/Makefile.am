@@ -29,6 +29,7 @@ pgsql_SCRIPTS += upgrade_011_to_012.sh
 pgsql_SCRIPTS += upgrade_012_to_013.sh
 pgsql_SCRIPTS += upgrade_013_to_014.sh
 pgsql_SCRIPTS += upgrade_014_to_015.sh
+pgsql_SCRIPTS += upgrade_015_to_016.sh
 pgsql_SCRIPTS += wipe_data.sh
 
 DISTCLEANFILES = ${pgsql_SCRIPTS}

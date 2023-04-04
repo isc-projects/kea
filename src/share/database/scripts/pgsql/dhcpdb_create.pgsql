@@ -5669,6 +5669,26 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 15.
 
+-- This line starts the schema upgrade to version 16.
+
+-- Add the allocator column to the DHCPv4 tables.
+ALTER TABLE dhcp4_subnet ADD COLUMN allocator TEXT DEFAULT NULL;
+ALTER TABLE dhcp4_shared_network ADD COLUMN allocator TEXT DEFAULT NULL;
+
+-- Add allocator and pd_allocator to the DHCPv6 subnet tables.
+ALTER TABLE dhcp6_subnet ADD COLUMN allocator TEXT DEFAULT NULL;
+ALTER TABLE dhcp6_subnet ADD COLUMN pd_allocator TEXT DEFAULT NULL;
+
+-- Add allocator and pd_allocator to the DHCPv6 shared network tables.
+ALTER TABLE dhcp6_shared_network ADD COLUMN allocator TEXT DEFAULT NULL;
+ALTER TABLE dhcp6_shared_network ADD COLUMN pd_allocator TEXT DEFAULT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '16', minor = '0';
+
+-- This line concludes the schema upgrade to version 16.
+
 -- Commit the script transaction.
 COMMIT;
 
