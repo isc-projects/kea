@@ -13,11 +13,9 @@ namespace isc {
 namespace dhcp {
 
 class OptionDNR6 : public Option {
-    OptionDNR6(const uint16_t type);
-
-    OptionDNR6(const uint16_t type, OptionBufferConstIter begin, OptionBufferConstIter end);
-
 public:
+    OptionDNR6();
+    OptionDNR6(OptionBufferConstIter begin, OptionBufferConstIter end);
     virtual OptionPtr clone() const;
     virtual void pack(util::OutputBuffer& buf, bool check) const;
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
@@ -26,11 +24,9 @@ public:
 };
 
 class OptionDNR4 : public Option {
-    OptionDNR4(const uint16_t type);
-
-    OptionDNR4(const uint16_t type, OptionBufferConstIter begin, OptionBufferConstIter end);
-
 public:
+    OptionDNR4();
+    OptionDNR4(OptionBufferConstIter begin, OptionBufferConstIter end);
     virtual OptionPtr clone() const;
     virtual void pack(util::OutputBuffer& buf, bool check) const;
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);

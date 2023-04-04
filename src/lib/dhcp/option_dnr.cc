@@ -6,17 +6,18 @@
 
 #include <config.h>
 
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/option_dnr.h>
 
 namespace isc {
 namespace dhcp {
 
-OptionDNR6::OptionDNR6(const uint16_t type) : Option(Universe::V6, type) {
+OptionDNR6::OptionDNR6() : Option(V6, D6O_V6_DNR) {
 }
 
-OptionDNR6::OptionDNR6(const uint16_t type,
-                       OptionBufferConstIter begin,
-                       OptionBufferConstIter end) : Option(Universe::V6, type)  {
+OptionDNR6::OptionDNR6(OptionBufferConstIter begin, OptionBufferConstIter end)
+    : Option(V6, D6O_V6_DNR) {
     unpack(begin, end);
 }
 
@@ -45,12 +46,11 @@ OptionDNR6::len() const {
     return Option::len();
 }
 
-OptionDNR4::OptionDNR4(const uint16_t type) : Option(V4, type) {
+OptionDNR4::OptionDNR4() : Option(V4, DHO_V4_DNR) {
 }
 
-OptionDNR4::OptionDNR4(const uint16_t type,
-                       OptionBufferConstIter begin,
-                       OptionBufferConstIter end) : Option(V4, type) {
+OptionDNR4::OptionDNR4(OptionBufferConstIter begin, OptionBufferConstIter end)
+    : Option(V4, DHO_V4_DNR) {
     unpack(begin, end);
 }
 

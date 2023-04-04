@@ -107,13 +107,6 @@ RECORD_DECL(V4_PORTPARAMS_RECORDS, OPT_UINT8_TYPE, OPT_PSID_TYPE);
 RECORD_DECL(OPT_6RD_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
             OPT_IPV6_ADDRESS_TYPE, OPT_IPV4_ADDRESS_TYPE);
 
-// RFC-draft-ietf-add-dnr DHCPv4 DNR option.
-//
-// DNR Instance Data Length (2 octets), Service Priority (2 octets), ADN Length (1 octet),
-// authentication-domain-name FQDN(s), Addr Length (1 octet), IPv4 address(es), SvcParams
-//RECORD_DECL(V4_DNR_RECORDS, OPT_UINT16_TYPE, OPT_UINT16_TYPE, OPT_UINT8_TYPE, OPT_FQDN_TYPE,
-//            OPT_UINT8_TYPE, OPT_IPV4_ADDRESS_TYPE, OPT_BINARY_TYPE);
-
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "subnet-mask", DHO_SUBNET_MASK, DHCP4_OPTION_SPACE,
@@ -373,7 +366,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
     { "v4-portparams", DHO_V4_PORTPARAMS, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE,
       false, RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
-    { "v4-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, OPT_TUPLE_TYPE,
+    { "v4-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, OPT_BINARY_TYPE,
      true, NO_RECORD_DEF, "" },
     { "option-6rd", DHO_6RD, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE, true,
       RECORD_DEF(OPT_6RD_RECORDS), "" },
@@ -499,9 +492,10 @@ RECORD_DECL(CLIENT_NII_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 // RFC-draft-ietf-add-dnr DHCPv6 DNR option.
 //
 // Service Priority (2 octets), ADN Length (2 octets),
-// authentication-domain-name FQDN(s), Addr Length (2 octets), IPv6 address(es), SvcParams
-RECORD_DECL(V6_DNR_RECORDS, OPT_UINT16_TYPE, OPT_UINT16_TYPE, OPT_FQDN_TYPE, OPT_UINT16_TYPE,
-            OPT_IPV6_ADDRESS_TYPE, OPT_BINARY_TYPE);
+// Opaque data is represented here by the binary data field.
+// It must contain at least authentication-domain-name FQDN(s).
+// It may contain Addr Length (2 octets), IPv6 address(es), SvcParams.
+RECORD_DECL(V6_DNR_RECORDS, OPT_UINT16_TYPE, OPT_UINT16_TYPE, OPT_BINARY_TYPE);
 
 /// Standard DHCPv6 option definitions.
 ///

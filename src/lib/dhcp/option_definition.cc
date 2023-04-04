@@ -19,6 +19,7 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/option_dnr.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
@@ -866,6 +867,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // Prefix Exclude (option code 67),
             return (OptionPtr(new Option6PDExclude(begin, end)));
 
+        case D6O_V6_DNR:
+            return (OptionPtr(new OptionDNR6(begin, end)));
+
         default:
             break;
         }
@@ -893,6 +897,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // Array of tuples.
             // DHCPv4 SZTP Redirect Option (option code 143).
             return (factoryOpaqueDataTuples(Option::V4, getCode(), begin, end, OpaqueDataTuple::LENGTH_2_BYTES));
+
+        case DHO_V4_DNR:
+            return (OptionPtr(new OptionDNR4(begin, end)));
 
         default:
             break;
