@@ -506,7 +506,12 @@ public:
                     last_subnet->setOfferLft(worker.getInt(70));
                 }
 
-                // server_tag at 71.
+                // allocator at 71.
+                if (!worker.isColumnNull(71)) {
+                    last_subnet->setAllocatorType(worker.getString(71));
+                }
+
+                // server_tag at 72.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -520,8 +525,8 @@ public:
             }
 
             // Check for new server tags at 71.
-            if (!worker.isColumnNull(71)) {
-                std::string new_tag = worker.getString(71);
+            if (!worker.isColumnNull(72)) {
+                std::string new_tag = worker.getString(72);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_subnet->hasServerTag(ServerTag(new_tag))) {
                         last_subnet->setServerTag(new_tag);
@@ -936,6 +941,7 @@ public:
         in_bindings.addOptional(subnet->getCacheThreshold(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getCacheMaxAge(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getOfferLft(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getAllocatorType(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1340,7 +1346,12 @@ public:
                     last_network->setOfferLft(worker.getInt(45));
                 }
 
-                // server_tag at 46.
+                // allocator at 46.
+                if (!worker.isColumnNull(46)) {
+                    last_network->setAllocatorType(worker.getString(46));
+                }
+
+                // server_tag at 47.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1354,8 +1365,8 @@ public:
             }
 
             // Check for new server tags.
-            if (!worker.isColumnNull(46)) {
-                std::string new_tag = worker.getString(46);
+            if (!worker.isColumnNull(47)) {
+                std::string new_tag = worker.getString(47);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_network->hasServerTag(ServerTag(new_tag))) {
                         last_network->setServerTag(new_tag);
@@ -1507,6 +1518,7 @@ public:
         in_bindings.addOptional(shared_network->getCacheThreshold(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getCacheMaxAge(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getOfferLft(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getAllocatorType(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -3293,7 +3305,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
-        37,
+        38,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3330,8 +3342,9 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 33 reservations_in_subnet
             OID_BOOL,       // 34 reservations_out_of_pool
             OID_TEXT,       // 35 cache_threshold - cast as float
-            OID_INT8,       // 36 cache_max_age"
-            OID_INT8        // 37 offer_lifetime"
+            OID_INT8,       // 36 cache_max_age
+            OID_INT8,       // 37 offer_lifetime
+            OID_VARCHAR     // 38 allocator
         },
         "INSERT_SUBNET4",
         "INSERT INTO dhcp4_subnet("
@@ -3371,12 +3384,13 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_out_of_pool,"
         "  cache_threshold,"
         "  cache_max_age,"
-        "  offer_lifetime"
+        "  offer_lifetime,"
+        "  allocator"
         ") VALUES ("
             "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, "
             "cast($11 as inet), $12, $13, $14, $15, $16, $17, $18, cast($19 as json), $20, "
             "$21, $22, $23, cast($24 as float), cast($25 as float), $26, $27, $28, $29, $30, "
-            "$31, $32, $33, $34, cast($35 as float), $36, $37"
+            "$31, $32, $33, $34, cast($35 as float), $36, $37, $38"
         ")"
     },
 
@@ -3413,7 +3427,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
-        32,
+        33,
         {
             OID_VARCHAR,    //  1 name,
             OID_VARCHAR,    //  2 client_class,
@@ -3446,7 +3460,8 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 29 reservations_out_of_pool,
             OID_TEXT,       // 30 cache_threshold - cast as float
             OID_INT8,       // 31 cache_max_age
-            OID_INT8        // 32 offer_lifetime
+            OID_INT8,       // 32 offer_lifetime
+            OID_VARCHAR     // 33 allocator
         },
         "INSERT_SHARED_NETWORK4",
         "INSERT INTO dhcp4_shared_network("
@@ -3481,12 +3496,13 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_out_of_pool,"
         "  cache_threshold,"
         "  cache_max_age,"
-        "  offer_lifetime"
+        "  offer_lifetime,"
+        "  allocator"
         ") VALUES ("
             "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10,"
             "cast($11 as json), $12, $13, $14, $15, "
             "cast($16 as float), cast($17 as float), $18, $19, cast($20 as inet), "
-            "$21, $22, $23, $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32"
+            "$21, $22, $23, $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32, $33"
         ")"
     },
 
@@ -3690,7 +3706,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
-        39,
+        40,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3729,8 +3745,9 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 35 cache_threshold - cast as float
             OID_INT8,       // 36 cache_max_age"
             OID_INT8,       // 37 offer_lifetime"
-            OID_INT8,       // 38 subnet_id (of subnet to update)
-            OID_VARCHAR     // 39 subnet_prefix (of subnet to update)
+            OID_VARCHAR,    // 38 allocator
+            OID_INT8,       // 39 subnet_id (of subnet to update)
+            OID_VARCHAR,    // 40 subnet_prefix (of subnet to update)
         },
         "UPDATE_SUBNET4,",
         "UPDATE dhcp4_subnet SET"
@@ -3770,14 +3787,15 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_out_of_pool = $34,"
         "  cache_threshold = cast($35 as float),"
         "  cache_max_age = $36,"
-        "  offer_lifetime = $37 "
-        "WHERE subnet_id = $38 OR subnet_prefix = $39"
+        "  offer_lifetime = $37,"
+        "  allocator = $38 "
+        "WHERE subnet_id = $39 OR subnet_prefix = $40"
     },
 
     // Update existing shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
-        33,
+        34,
         {
             OID_VARCHAR,    //  1 name,
             OID_VARCHAR,    //  2 client_class,
@@ -3811,7 +3829,8 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 30 cache_threshold - cast as float
             OID_INT8,       // 31 cache_max_age
             OID_INT8,       // 32 offer_lifetime
-            OID_VARCHAR     // 33 name (of network to update)
+            OID_VARCHAR,    // 33 name (of network to update)
+            OID_VARCHAR     // 34 allocator
         },
         "UPDATE_SHARED_NETWORK4",
         "UPDATE dhcp4_shared_network SET"
@@ -3846,8 +3865,9 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_out_of_pool = $29,"
         "  cache_threshold = cast($30 as float),"
         "  cache_max_age = $31,"
-        "  offer_lifetime = $32 "
-        "WHERE name = $33"
+        "  offer_lifetime = $32,"
+        "  allocator = $33 "
+        "WHERE name = $34"
     },
 
     // Update existing option definition.

@@ -117,6 +117,7 @@ namespace {
     "  s.cache_threshold," \
     "  s.cache_max_age," \
     "  s.offer_lifetime," \
+    "  s.allocator," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -248,6 +249,8 @@ namespace {
     "  s.reservations_out_of_pool," \
     "  s.cache_threshold," \
     "  s.cache_max_age," \
+    "  s.allocator," \
+    "  s.pd_allocator," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -461,6 +464,7 @@ namespace {
     "  n.cache_threshold," \
     "  n.cache_max_age," \
     "  n.offer_lifetime," \
+    "  n.allocator," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -542,6 +546,8 @@ namespace {
     "  n.reservations_out_of_pool," \
     "  n.cache_threshold," \
     "  n.cache_max_age," \
+    "  n.allocator," \
+    "  n.pd_allocator," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     server_join \

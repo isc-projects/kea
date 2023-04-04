@@ -497,7 +497,17 @@ public:
                     last_subnet->setCacheMaxAge(worker.getInt(93));
                 }
 
-                // server_tag at 94.
+                // allocator at 94.
+                if (!worker.isColumnNull(94)) {
+                    last_subnet->setAllocatorType(worker.getString(94));
+                }
+
+                // pd_allocator at 95.
+                if (!worker.isColumnNull(95)) {
+                    last_subnet->setPdAllocatorType(worker.getString(95));
+                }
+
+                // server_tag at 96.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -510,9 +520,9 @@ public:
                 }
             }
 
-            // Check for new server tags at 94.
-            if (!worker.isColumnNull(94)) {
-                std::string new_tag = worker.getString(94);
+            // Check for new server tags at 96.
+            if (!worker.isColumnNull(96)) {
+                std::string new_tag = worker.getString(96);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_subnet->hasServerTag(ServerTag(new_tag))) {
                         last_subnet->setServerTag(new_tag);
@@ -1098,6 +1108,8 @@ public:
         in_bindings.addOptional(subnet->getReservationsOutOfPool(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getCacheThreshold(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getCacheMaxAge(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getAllocatorType(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getPdAllocatorType(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1566,7 +1578,17 @@ public:
                     last_network->setCacheMaxAge(worker.getInt(45));
                 }
 
-                // server_tag at 46.
+                // allocator at 46.
+                if (!worker.isColumnNull(46)) {
+                    last_network->setAllocatorType(worker.getString(46));
+                }
+
+                // pd_allocator at 47.
+                if (!worker.isColumnNull(47)) {
+                    last_network->setPdAllocatorType(worker.getString(47));
+                }
+
+                // server_tag at 48.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1580,8 +1602,8 @@ public:
             }
 
             // Check for new server tags.
-            if (!worker.isColumnNull(46)) {
-                std::string new_tag = worker.getString(46);
+            if (!worker.isColumnNull(48)) {
+                std::string new_tag = worker.getString(48);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_network->hasServerTag(ServerTag(new_tag))) {
                         last_network->setServerTag(new_tag);
@@ -1732,6 +1754,8 @@ public:
         in_bindings.addOptional(shared_network->getReservationsOutOfPool(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getCacheThreshold(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getCacheMaxAge(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getAllocatorType(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getPdAllocatorType(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -3682,7 +3706,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::INSERT_SUBNET6,
-        33,
+        35,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3716,7 +3740,9 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 30 reservations_in_subnet
             OID_BOOL,       // 31 reservations_out_of_pool
             OID_TEXT,       // 32 cache_threshold - cast as float
-            OID_INT8        // 33 cache_max_age"
+            OID_INT8,       // 33 cache_max_age
+            OID_VARCHAR,    // 34 allocator
+            OID_VARCHAR     // 35 pd_allocator
         },
         "INSERT_SUBNET6",
         "INSERT INTO dhcp6_subnet("
@@ -3752,12 +3778,14 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet,"
         "  reservations_out_of_pool,"
         "  cache_threshold,"
-        "  cache_max_age"
+        "  cache_max_age,"
+        "  allocator,"
+        "  pd_allocator"
         ") VALUES ("
         "   $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, "
         "   $11, $12, $13, $14, $15, cast($16 as json), $17, $18, $19, $20, "
         "   cast($21 as float), cast($22 as float), $23, $24, $25, $26, $27, $28, $29, $30, "
-        "   $31, cast($32 as float), $33"
+        "   $31, cast($32 as float), $33, $34, $35"
         ")"
     },
 
@@ -3814,7 +3842,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a shared network.
     {
         // PgSqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6,
-        31,
+        33,
         {
             OID_VARCHAR,    //  1 name
             OID_VARCHAR,    //  2 client_class
@@ -3846,7 +3874,9 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 28 reservations_in_subnet
             OID_BOOL,       // 29 reservations_out_of_pool
             OID_TEXT,       // 30 cache_threshold - cast as float
-            OID_INT8        // 31 cache_max_age
+            OID_INT8,       // 31 cache_max_age
+            OID_VARCHAR,    // 32 allocator
+            OID_VARCHAR     // 33 pd_allocator
         },
         "INSERT_SHARED_NETWORK6",
         "INSERT INTO dhcp6_shared_network("
@@ -3880,12 +3910,14 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet,"
         "  reservations_out_of_pool,"
         "  cache_threshold,"
-        "  cache_max_age"
+        "  cache_max_age,"
+        "  allocator,"
+        "  pd_allocator"
         ") VALUES ("
         "   $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, "
         "   $11, $12, $13, cast($14 as json), $15, $16, $17, $18,"
         "   cast($19 as float), cast($20 as float), $21, $22, $23,"
-        "   $24, $25, $26, $27, $28, $29, cast($30 as float), $31"
+        "   $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32, $33"
         ")"
     },
 
@@ -4088,7 +4120,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_SUBNET6,
-        35,
+        37,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -4122,7 +4154,9 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 30 reservations_in_subnet
             OID_BOOL,       // 31 reservations_out_of_pool
             OID_TEXT,       // 32 cache_threshold - cast as float
-            OID_INT8        // 33 cache_max_age"
+            OID_INT8,       // 33 cache_max_age
+            OID_VARCHAR,    // 34 allocator
+            OID_VARCHAR     // 35 pd_allocator
         },
         "UPDATE_SUBNET6",
         "UPDATE dhcp6_subnet SET"
@@ -4158,14 +4192,16 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet = $30,"
         "  reservations_out_of_pool = $31,"
         "  cache_threshold = cast($32 as float),"
-        "  cache_max_age =  $33 "
-        "WHERE subnet_id = $34 OR subnet_prefix = $35"
+        "  cache_max_age =  $33,"
+        "  allocator = $34,"
+        "  pd_allocator = $35 "
+        "WHERE subnet_id = $36 OR subnet_prefix = $37"
     },
 
     // Update existing shared network.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_SHARED_NETWORK6,
-        32,
+        34,
         {
             OID_VARCHAR,    //  1 name
             OID_VARCHAR,    //  2 client_class
@@ -4197,7 +4233,9 @@ TaggedStatementArray tagged_statements = { {
             OID_BOOL,       // 28 reservations_in_subnet
             OID_BOOL,       // 29 reservations_out_of_pool
             OID_TEXT,       // 30 cache_threshold - cast as float
-            OID_INT8        // 31 cache_max_age
+            OID_INT8,       // 31 cache_max_age
+            OID_VARCHAR,    // 32 allocator
+            OID_VARCHAR     // 33 pd_allocator
         },
         "UPDATE_SHARED_NETWORK6",
         "UPDATE dhcp6_shared_network SET"
@@ -4231,8 +4269,10 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_in_subnet = $28,"
         "  reservations_out_of_pool = $29,"
         "  cache_threshold = cast($30 as float),"
-        "  cache_max_age = $31 "
-        "WHERE name = $32"
+        "  cache_max_age = $31,"
+        "  allocator = $32,"
+        "  pd_allocator = $33 "
+        "WHERE name = $34"
     },
 
     // Update existing option definition.
