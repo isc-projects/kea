@@ -356,6 +356,7 @@ public:
             MySqlBinding::createInteger<float>(), // cache_threshold
             MySqlBinding::createInteger<uint32_t>(), // cache_max_age
             MySqlBinding::createInteger<uint32_t>(), // offer lifetime
+            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -619,7 +620,12 @@ public:
                     last_subnet->setOfferLft(offer_lft);
                 }
 
-                // server_tag at 71.
+                // allocator at 71.
+                if (!out_bindings[71]->amNull()) {
+                    last_subnet->setAllocatorType(out_bindings[71]->getString());
+                }
+
+                // server_tag at 72.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -633,9 +639,9 @@ public:
             }
 
             // Check for new server tags at 71.
-            if (!out_bindings[71]->amNull() &&
-                (last_tag != out_bindings[71]->getString())) {
-                last_tag = out_bindings[71]->getString();
+            if (!out_bindings[72]->amNull() &&
+                (last_tag != out_bindings[72]->getString())) {
+                last_tag = out_bindings[72]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -1110,7 +1116,8 @@ public:
             MySqlBinding::condCreateBool(subnet->getReservationsOutOfPool(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getCacheThreshold(Network::Inheritance::NONE)),
             condCreateInteger<uint32_t>(subnet->getCacheMaxAge(Network::Inheritance::NONE)),
-            condCreateInteger<uint32_t>(subnet->getOfferLft(Network::Inheritance::NONE))
+            condCreateInteger<uint32_t>(subnet->getOfferLft(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getAllocatorType(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -1360,6 +1367,7 @@ public:
             MySqlBinding::createInteger<float>(), // cache_threshold
             MySqlBinding::createInteger<uint32_t>(), // cache_max_age
             MySqlBinding::createInteger<uint32_t>(), // offer lifetime
+            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1570,7 +1578,12 @@ public:
                     last_network->setOfferLft(offer_lft);
                 }
 
-                // server_tag at 46.
+                // allocator at 46.
+                if (!out_bindings[46]->amNull()) {
+                    last_network->setAllocatorType(out_bindings[46]->getString());
+                }
+
+                // server_tag at 47.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1584,9 +1597,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[46]->amNull() &&
-                (last_tag != out_bindings[46]->getString())) {
-                last_tag = out_bindings[46]->getString();
+            if (!out_bindings[47]->amNull() &&
+                (last_tag != out_bindings[47]->getString())) {
+                last_tag = out_bindings[47]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
@@ -1740,7 +1753,8 @@ public:
             MySqlBinding::condCreateBool(shared_network->getReservationsOutOfPool(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(shared_network->getCacheThreshold(Network::Inheritance::NONE)),
             condCreateInteger<uint32_t>(shared_network->getCacheMaxAge(Network::Inheritance::NONE)),
-            condCreateInteger<uint32_t>(shared_network->getOfferLft(Network::Inheritance::NONE))
+            condCreateInteger<uint32_t>(shared_network->getOfferLft(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getAllocatorType(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -3226,9 +3240,10 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_out_of_pool,"
       "  cache_threshold,"
       "  cache_max_age,"
-      "  offer_lifetime"
+      "  offer_lifetime,"
+      "  allocator"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
@@ -3274,9 +3289,10 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_out_of_pool,"
       "  cache_threshold,"
       "  cache_max_age,"
-      "  offer_lifetime"
+      "  offer_lifetime,"
+      "  allocator"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -3387,7 +3403,8 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_out_of_pool = ?,"
       "  cache_threshold = ?,"
       "  cache_max_age = ?, "
-      "  offer_lifetime = ? "
+      "  offer_lifetime = ?, "
+      "  allocator = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -3424,7 +3441,8 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_out_of_pool = ?,"
       "  cache_threshold = ?,"
       "  cache_max_age = ?,"
-      "  offer_lifetime = ? "
+      "  offer_lifetime = ?, "
+      "  allocator = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.

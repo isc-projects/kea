@@ -128,6 +128,7 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->setCacheThreshold(0.25);
     subnet->setCacheMaxAge(20);
     subnet->setOfferLft(77);
+    subnet->setAllocatorType("random");
 
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"),
                              IOAddress("192.0.2.20")));
@@ -245,6 +246,7 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->setCacheThreshold(0.26);
     shared_network->setCacheMaxAge(21);
     shared_network->setOfferLft(78);
+    shared_network->setAllocatorType("iterative");
 
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(test_options_[2]->option_,

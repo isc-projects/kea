@@ -122,6 +122,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->setT1Percent(0.345);
     subnet->setT2Percent(0.444);
     subnet->setDdnsSendUpdates(false);
+    subnet->setAllocatorType("random");
+    subnet->setPdAllocatorType("iterative");
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_NA,
                              IOAddress("2001:db8::10"),
@@ -276,6 +278,8 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->setT1Percent(0.345);
     shared_network->setT2Percent(0.444);
     shared_network->setDdnsSendUpdates(false);
+    shared_network->setAllocatorType("iterative");
+    shared_network->setPdAllocatorType("random");
 
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(test_options_[2]->option_,

@@ -388,6 +388,8 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool
             MySqlBinding::createInteger<float>(), // cache_threshold
             MySqlBinding::createInteger<uint32_t>(), // cache_max_age
+            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator
+            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // pd_allocator
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -635,7 +637,17 @@ public:
                     last_subnet->setCacheMaxAge(out_bindings[93]->getInteger<uint32_t>());
                 }
 
-                // server_tag (94 / last)
+                // allocator (94)
+                if (!out_bindings[94]->amNull()) {
+                    last_subnet->setAllocatorType(out_bindings[94]->getString());
+                }
+
+                // pd_allocator (95)
+                if (!out_bindings[95]->amNull()) {
+                    last_subnet->setPdAllocatorType(out_bindings[95]->getString());
+                }
+
+                // server_tag (96 / last)
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -649,9 +661,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[94]->amNull() &&
-                (last_tag != out_bindings[94]->getString())) {
-                last_tag = out_bindings[94]->getString();
+            if (!out_bindings[96]->amNull() &&
+                (last_tag != out_bindings[96]->getString())) {
+                last_tag = out_bindings[96]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -1353,7 +1365,9 @@ public:
             MySqlBinding::condCreateBool(subnet->getReservationsInSubnet(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getReservationsOutOfPool(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getCacheThreshold(Network::Inheritance::NONE)),
-            condCreateInteger<uint32_t>(subnet->getCacheMaxAge(Network::Inheritance::NONE))
+            condCreateInteger<uint32_t>(subnet->getCacheMaxAge(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getAllocatorType(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getPdAllocatorType(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -1680,6 +1694,8 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool
             MySqlBinding::createInteger<float>(), // cache_threshold
             MySqlBinding::createInteger<uint32_t>(), // cache_max_age
+            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator
+            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // pd_allocator
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1885,7 +1901,17 @@ public:
                     last_network->setCacheMaxAge(out_bindings[45]->getInteger<uint32_t>());
                 }
 
-                // server_tag at 46.
+                // allocator at 46.
+                if (!out_bindings[46]->amNull()) {
+                    last_network->setAllocatorType(out_bindings[46]->getString());
+                }
+
+                // pd_allocator at 47.
+                if (!out_bindings[47]->amNull()) {
+                    last_network->setPdAllocatorType(out_bindings[47]->getString());
+                }
+
+                // server_tag at 48.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1899,9 +1925,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[46]->amNull() &&
-                (last_tag != out_bindings[46]->getString())) {
-                last_tag = out_bindings[46]->getString();
+            if (!out_bindings[48]->amNull() &&
+                (last_tag != out_bindings[48]->getString())) {
+                last_tag = out_bindings[48]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
@@ -2065,7 +2091,9 @@ public:
             MySqlBinding::condCreateBool(shared_network->getReservationsInSubnet(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getReservationsOutOfPool(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(shared_network->getCacheThreshold(Network::Inheritance::NONE)),
-            condCreateInteger<uint32_t>(shared_network->getCacheMaxAge(Network::Inheritance::NONE))
+            condCreateInteger<uint32_t>(shared_network->getCacheMaxAge(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getAllocatorType(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getPdAllocatorType(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -3651,9 +3679,11 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_in_subnet,"
       "  reservations_out_of_pool,"
       "  cache_threshold,"
-      "  cache_max_age"
+      "  cache_max_age,"
+      "  allocator,"
+      "  pd_allocator"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
@@ -3703,9 +3733,11 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_in_subnet,"
       "  reservations_out_of_pool,"
       "  cache_threshold,"
-      "  cache_max_age"
+      "  cache_max_age,"
+      "  allocator,"
+      "  pd_allocator"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6_SERVER,
@@ -3811,7 +3843,9 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_in_subnet = ?,"
       "  reservations_out_of_pool = ?,"
       "  cache_threshold = ?,"
-      "  cache_max_age = ? "
+      "  cache_max_age = ?,"
+      "  allocator = ?,"
+      "  pd_allocator = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -3847,7 +3881,9 @@ TaggedStatementArray tagged_statements = { {
       "  reservations_in_subnet = ?,"
       "  reservations_out_of_pool = ?,"
       "  cache_threshold = ?,"
-      "  cache_max_age = ? "
+      "  cache_max_age = ?,"
+      "  allocator = ?,"
+      "  pd_allocator = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.
