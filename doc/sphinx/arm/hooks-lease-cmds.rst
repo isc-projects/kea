@@ -79,9 +79,9 @@ This library provides the following commands:
 
 -  ``lease6-del`` - deletes an IPv6 lease with the specified parameters.
 
--  ``lease4-update`` - updates an IPv4 lease.
+-  ``lease4-update`` - updates (replaces) an existing IPv4 lease.
 
--  ``lease6-update`` - updates an IPv6 lease.
+-  ``lease6-update`` - updates (replaces) an existing IPv6 lease.
 
 -  ``lease4-wipe`` - removes all leases from a specific IPv4 subnet or
    from all subnets.
@@ -901,6 +901,16 @@ An example of a command to update an IPv6 lease is:
        "force-create": false
      }
    }
+
+As with other update commands, this command overwrites all the contents of the
+entry. If the lease previously had a resource assigned to it, and the
+``lease4-update``/``lease6-update`` command is missing the resource, it is
+deleted from the lease database. If an incremental update of the lease is
+desired, then this can be achieved by doing a
+`lease4-get <command-lease4-get_>`_ / `lease6-get <command-lease6-get_>`_
+command to get the full picture of the lease, picking the lease out of the
+response, modifying it to the required outcome, and then issuing the
+``lease4-update``/``lease6-update`` command with the resulting lease attached.
 
 .. _command-lease4-wipe:
 
