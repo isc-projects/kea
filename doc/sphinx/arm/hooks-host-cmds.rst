@@ -42,13 +42,16 @@ Currently, the following commands are supported:
 - ``reservation-del``, which attempts to delete a reservation matching specified
   criteria.
 
+- ``reservation-update``, which updates (replaces) an existing reservation
+  matching the given identifiers in a subnet.
+
 To use the commands that change reservation information
-(i.e. ``reservation-add`` and ``reservation-del``), the hosts database must be
-specified and it must not operate in read-only mode (for details, see
-the ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4`
+(i.e. ``reservation-add``, ``reservation-del``, and ``reservation-update``),
+the hosts database must be specified and it must not operate in read-only mode
+(for details, see the ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4`
 and :ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not specified or are
 running in read-only mode, the ``host_cmds`` library will load, but any
-attempts to use ``reservation-add`` or ``reservation-del`` will fail.
+attempts to use ``reservation-add``, ``reservation-del``, or ``reservation-update`` will fail.
 
 For a description of proposed future commands, see the `Control API
 Requirements <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands>`__
@@ -110,8 +113,23 @@ pertain to host reservation are permitted here. For details regarding
 IPv4 reservations, see :ref:`host-reservation-v4`; for IPv6 reservations, see
 :ref:`host-reservation-v6`. The ``subnet-id`` is mandatory. Use a
 value of zero (0) to add a global reservation, or the ID of the subnet
-to which the reservation should be added. An example command can be as
-simple as:
+to which the reservation should be added. The command can be as simple as having
+only the two mandatory entries:
+
+.. code-block:: json
+
+   {
+       "command": "reservation-add",
+       "arguments": {
+           "reservation": {
+               "subnet-id": 1,
+               "hw-address": "1a:1b:1c:1d:1e:1f"
+           }
+       }
+   }
+
+In that case, however, it does not assign any resources to the host. An IPv4
+address can be assigned like so:
 
 .. code-block:: json
 
@@ -126,7 +144,7 @@ simple as:
        }
    }
 
-but it can also take many more parameters, for example:
+But it can also take many more parameters, for example:
 
 .. code-block:: json
 
@@ -184,15 +202,22 @@ or failure (result 1). A failed command always includes a text parameter
 that explains the cause of the failure. Here's an example of a successful
 addition:
 
-::
+.. code-block:: json
 
-   { "result": 0, "text": "Host added." }
+   {
+       "result": 0,
+       "text": "Host added."
+   }
 
 And here's an example of a failure:
 
-::
+.. code-block:: json
 
-   { "result": 1, "text": "Mandatory 'subnet-id' parameter missing." }
+   {
+       "result": 1,
+       "text": "Mandatory 'subnet-id' parameter missing."
+   }
+
 
 As ``reservation-add`` is expected to store the host, the ``hosts-databases``
 parameter must be specified in the configuration, and databases must not
@@ -686,6 +711,142 @@ an error. Here are some examples of possible results:
        "text": "Unable to delete a host because there is no hosts-database
                 configured."
    }
+
+.. _command-reservation-update:
+
+The ``reservation-update`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``reservation-update`` allows for the update of an existing host. It takes the
+same set of arguments as :ref:``command-reservation-add``, and just as well,
+requires a host identifier and a subnet ID to identify the host that is being
+updated. The command can be as simple as having only the two mandatory entries:
+
+.. code-block:: json
+
+   {
+       "command": "reservation-update",
+       "arguments": {
+           "reservation": {
+               "subnet-id": 1,
+               "hw-address": "1a:1b:1c:1d:1e:1f"
+           }
+       }
+   }
+
+In that case, however, it does not assign any resources to the host. An IPv4
+address can be assigned like so:
+
+.. code-block:: json
+
+    {
+        "command": "reservation-update",
+        "arguments": {
+            "reservation": {
+                "subnet-id": 1,
+                "hw-address": "1a:1b:1c:1d:1e:1f",
+                "ip-address": "192.0.2.202"
+            }
+        }
+    }
+
+But it can also take many more parameters, for example:
+
+.. code-block:: json
+
+    {
+        "command": "reservation-update",
+        "arguments": {
+            "reservation": {
+                "subnet-id": 1,
+                "client-id": "01:0a:0b:0c:0d:0e:0f",
+                "ip-address": "192.0.2.205",
+                "next-server": "192.0.2.1",
+                "server-hostname": "hal9000",
+                "boot-file-name": "/dev/null",
+                "option-data": [
+                    {
+                        "name": "domain-name-servers",
+                        "data": "10.1.1.202,10.1.1.203"
+                    }
+                ],
+                "client-classes": [
+                    "office",
+                    "special_snowflake"
+                ]
+            }
+        }
+    }
+
+Here is an example of a complex IPv6 reservation update:
+
+.. code-block:: json
+
+    {
+        "command": "reservation-update",
+        "arguments": {
+            "reservation": {
+                "subnet-id": 1,
+                "duid": "01:02:03:04:05:06:07:08:09:0A",
+                "ip-addresses": [
+                    "2001:db8:1:cafe::1"
+                ],
+                "prefixes": [
+                    "2001:db8:2:abcd::/64"
+                ],
+                "hostname": "foo.example.com",
+                "option-data": [
+                    {
+                        "name": "vendor-opts",
+                        "data": "4491"
+                    },
+                    {
+                        "name": "tftp-servers",
+                        "space": "vendor-4491",
+                        "data": "3000:1::234"
+                    }
+                ]
+            }
+        }
+    }
+
+The command returns a status that indicates either success (result ``0``) or
+failure (result ``1``) and a text parameter that confirms success or explains
+the cause of the failure. Here's an example of a successful update:
+
+.. code-block:: json
+
+   {
+       "result": 0,
+       "text": "Host updated."
+   }
+
+And here's an example of a failure:
+
+.. code-block:: json
+
+   {
+       "result": 1,
+       "text": "Mandatory 'subnet-id' parameter missing."
+   }
+
+As ``reservation-update`` is expected to store the host, the ``hosts-databases``
+parameter must be specified in the configuration, and databases must not run in
+read-only mode.
+
+As with other update and set commands, this command overwrites all the contents
+of the entry. If the host previously had a resource assigned to it, and the
+``reservation-update`` command is missing the resource, it is deleted from the
+database. If an incremental update of the host is desired, then this can be
+achieved by doing a ``reservation-get-by-id`` to get the full picture of the
+host, picking the host out of the response, modifying it to the required
+outcome, and then issuing the ``reservation-update`` command with the resulting
+host attached.
+
+.. _hooks-host-cmds-general-mentions:
+
+General Mentions
+~~~~~~~~~~~~~~~~
 
 .. note::
 

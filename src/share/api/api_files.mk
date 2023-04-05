@@ -160,6 +160,7 @@ api_files += $(top_srcdir)/src/share/api/reservation-get-by-hostname.json
 api_files += $(top_srcdir)/src/share/api/reservation-get-by-id.json
 api_files += $(top_srcdir)/src/share/api/reservation-get-page.json
 api_files += $(top_srcdir)/src/share/api/reservation-get.json
+api_files += $(top_srcdir)/src/share/api/reservation-update.json
 api_files += $(top_srcdir)/src/share/api/server-tag-get.json
 api_files += $(top_srcdir)/src/share/api/shutdown.json
 api_files += $(top_srcdir)/src/share/api/stat-lease4-get.json
