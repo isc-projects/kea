@@ -451,6 +451,9 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    /// @brief Implements @ref BaseHostDataSource::update() for PostgreSQL.
+    void update(HostPtr const& host);
+
     /// @brief Return backend type
     ///
     /// Returns the type of database as the string "postgresql".  This is

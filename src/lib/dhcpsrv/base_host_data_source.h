@@ -25,6 +25,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when a @c Host object is expected, but none are found.
+class HostNotFound : public Exception {
+public:
+    HostNotFound(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Exception thrown when an address is already reserved by a @c Host
 /// object (DuplicateHost is same identity, ReservedAddress same address).
 class ReservedAddress : public Exception {
@@ -452,6 +459,13 @@ public:
                       const Host::IdentifierType& identifier_type,
                       const uint8_t* identifier_begin, const size_t identifier_len) = 0;
 
+    /// @brief Attempts to update an existing host entry.
+    ///
+    /// @param host the host up to date with the requested changes
+    ///
+    /// @return true if deletion was successful, false if the host was not there.
+    virtual void update(HostPtr const& host) = 0;
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
@@ -516,7 +530,7 @@ typedef boost::shared_ptr<BaseHostDataSource> HostDataSourcePtr;
 /// @brief HostDataSource list
 typedef std::vector<HostDataSourcePtr> HostDataSourceList;
 
-}
-}
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // BASE_HOST_DATA_SOURCE_H

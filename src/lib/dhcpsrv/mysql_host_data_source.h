@@ -403,6 +403,9 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    /// @brief Implements @ref BaseHostDataSource::update() for MySQL.
+    void update(HostPtr const& host);
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)

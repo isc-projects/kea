@@ -3921,6 +3921,45 @@ MySqlHostDataSource::getAll6(const SubnetID& subnet_id,
     return (collection);
 }
 
+void
+MySqlHostDataSource::update(HostPtr const& host) {
+    // Get a context.
+    MySqlHostContextAlloc const context(*impl_);
+    MySqlHostContextPtr ctx(context.ctx_);
+
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly(ctx);
+
+    // Initiate MySQL transaction as we will have to make multiple queries
+    // to update host information into multiple tables. If that fails on
+    // any stage, the transaction will be rolled back by the destructor of
+    // the MySqlTransaction class.
+    MySqlTransaction transaction(ctx->conn_);
+
+    // As much as having dedicated prepared statements for updating tables would be consistent with
+    // the implementation of other commands, it's difficult if not impossible to cover all cases for
+    // updating the host to exactly as is described in the command, which may involve inserts and
+    // deletes alongside updates. So let's delete and add. The delete cascades into all tables. The
+    // add explicitly adds into all tables.
+    bool deleted(false);
+    if (CfgMgr::instance().getFamily() == AF_INET) {
+        vector<uint8_t> const& identifier(host->getIdentifier());
+        deleted = del4(host->getIPv4SubnetID(), host->getIdentifierType(), identifier.data(),
+             identifier.size());
+    } else {
+        vector<uint8_t> const& identifier(host->getIdentifier());
+        deleted = del6(host->getIPv6SubnetID(), host->getIdentifierType(), identifier.data(),
+             identifier.size());
+    }
+    if (!deleted) {
+        isc_throw(NoRowsAffected, "Host not updated (not found).");
+    }
+    add(host);
+
+    // Everything went fine, so explicitly commit the transaction.
+    transaction.commit();
+}
+
 // Miscellaneous database methods.
 
 std::string

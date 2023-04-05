@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,6 +82,14 @@ public:
 class AmbiguousDatabase :  public Exception {
 public:
     AmbiguousDatabase(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Thrown when it is expected that some rows are affected,
+/// usually during a DELETE or an UPDATE, but none are.
+class NoRowsAffected : public Exception {
+public:
+    NoRowsAffected(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 

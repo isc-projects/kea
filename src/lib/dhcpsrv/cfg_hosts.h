@@ -589,6 +589,9 @@ public:
                       const Host::IdentifierType& identifier_type,
                       const uint8_t* identifier_begin, const size_t identifier_len);
 
+    /// @brief Implements @ref BaseHostDataSource::update() for config hosts.
+    void update(HostPtr const& host);
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
