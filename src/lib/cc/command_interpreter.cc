@@ -173,11 +173,12 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
         isc_throw(CtrlChannelError, "No command specified");
     }
     if (command->getType() != Element::map) {
-        isc_throw(CtrlChannelError, "Invalid command Element specified, expected map");
+        isc_throw(CtrlChannelError, "invalid command: expected toplevel entry to be a map, got "
+                                        << Element::typeToName(command->getType()) << " instead");
     }
     if (!command->contains(CONTROL_COMMAND)) {
         isc_throw(CtrlChannelError,
-                  "Invalid answer specified, does not contain mandatory 'command'");
+                  "invalid command: does not contain mandatory '" << CONTROL_COMMAND << "'");
     }
 
     // Make sure that all specified parameters are supported.
@@ -187,15 +188,16 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
             (param.first != CONTROL_ARGUMENTS) &&
             (param.first != CONTROL_SERVICE) &&
             (param.first != CONTROL_REMOTE_ADDRESS)) {
-            isc_throw(CtrlChannelError, "Received command contains unsupported "
-                      "parameter '" << param.first << "'");
+            isc_throw(CtrlChannelError,
+                      "invalid command: unsupported parameter '" << param.first << "'");
         }
     }
 
     ConstElementPtr cmd = command->get(CONTROL_COMMAND);
     if (cmd->getType() != Element::string) {
-        isc_throw(CtrlChannelError,
-                  "'command' element in command message is not a string");
+        isc_throw(CtrlChannelError, "invalid command: expected '"
+                                        << CONTROL_COMMAND << "' to be a string, got "
+                                        << Element::typeToName(command->getType()) << " instead");
     }
 
     arg = command->get(CONTROL_ARGUMENTS);
