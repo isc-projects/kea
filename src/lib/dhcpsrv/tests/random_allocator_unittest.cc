@@ -23,6 +23,12 @@ namespace test {
 
 using RandomAllocatorTest4 = AllocEngine4Test;
 
+// Test that the allocator returns the correct type.
+TEST_F(RandomAllocatorTest4, getType) {
+    RandomAllocator alloc(Lease::TYPE_V4, subnet_);
+    EXPECT_EQ("random", alloc.getType());
+}
+
 // Test allocating IPv4 addresses when a subnet has a single pool.
 TEST_F(RandomAllocatorTest4, singlePool) {
     RandomAllocator alloc(Lease::TYPE_V4, subnet_);
@@ -177,6 +183,12 @@ TEST_F(RandomAllocatorTest4, clientClasses) {
 }
 
 using RandomAllocatorTest6 = AllocEngine6Test;
+
+// Test that the allocator returns the correct type.
+TEST_F(RandomAllocatorTest6, getType) {
+    RandomAllocator alloc(Lease::TYPE_NA, subnet_);
+    EXPECT_EQ("random", alloc.getType());
+}
 
 // Test allocating IPv6 addresses when a subnet has a single pool.
 TEST_F(RandomAllocatorTest6, singlePool) {

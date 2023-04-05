@@ -265,6 +265,10 @@ specified IPv6 subnet in its current configuration. Subnet ID and result
 A message issued when the server is configured to listen on the explicitly specified
 IP address on the given interface.
 
+% DHCPSRV_CFGMGR_USE_ALLOCATOR using the %1 allocator for %2 leases in subnet %3
+A message issued when the configuration manager starts using a given allocator
+for a subnet.
+
 % DHCPSRV_CFGMGR_USE_UNICAST listening on unicast address %1, on interface %2
 An info message issued when configuring the DHCP server to listen on the unicast
 address on the specific interface.

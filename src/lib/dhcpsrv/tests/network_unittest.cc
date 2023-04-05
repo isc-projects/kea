@@ -362,6 +362,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              "iterative", "random");
     }
     {
+        SCOPED_TRACE("default-allocator-type");
+        testNetworkInheritance<TestNetwork4>(&Network::getDefaultAllocatorType,
+                                             &Network::setDefaultAllocatorType,
+                                             "random", "flq", false);
+    }
+    {
         SCOPED_TRACE("offer-lifetime");
         testNetworkInheritance<TestNetwork4>(&Network4::getOfferLft,
                                              &Network4::setOfferLft,
@@ -484,6 +490,18 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network6::getPdAllocatorType,
                                              &Network6::setPdAllocatorType,
                                              "iterative", "random");
+    }
+    {
+        SCOPED_TRACE("default-allocator-type");
+        testNetworkInheritance<TestNetwork6>(&Network::getDefaultAllocatorType,
+                                             &Network::setDefaultAllocatorType,
+                                             "random", "iterative", false);
+    }
+    {
+        SCOPED_TRACE("default-pd-allocator-type");
+        testNetworkInheritance<TestNetwork6>(&Network6::getDefaultPdAllocatorType,
+                                             &Network6::setDefaultPdAllocatorType,
+                                             "random", "iterative", false);
     }
     {
         SCOPED_TRACE("ddns-ttl-percent");

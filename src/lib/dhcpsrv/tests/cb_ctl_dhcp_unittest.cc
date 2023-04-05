@@ -14,6 +14,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/random_allocator.h>
 #include <dhcpsrv/testutils/memory_host_data_source.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
@@ -372,6 +373,7 @@ public:
         // Insert subnets into the database.
         Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.3.0"), 26, 1, 2, 3, SubnetID(1)));
         subnet->setModificationTime(getTimestamp("dhcp4_subnet"));
+        subnet->setAllocatorType("random");
         subnet->setSharedNetworkName("one");
         mgr.getPool()->createUpdateSubnet4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
                                            subnet);
@@ -611,6 +613,8 @@ public:
             (getTimestamp("dhcp4_subnet") > lb_modification_time)) {
             ASSERT_TRUE(found_subnet);
             EXPECT_TRUE(found_subnet->hasFetchGlobalsFn());
+            EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                        (found_subnet->getAllocator(Lease::TYPE_V4)));
 
         } else {
             EXPECT_FALSE(found_subnet);
@@ -1088,6 +1092,90 @@ TEST_F(CBControlDHCPv4Test, ipReservationsNonUniqueRefused) {
     EXPECT_TRUE(HostMgr::instance().getIPReservationsUnique());
 }
 
+// This test verifies that the allocator type is inherited from the global to
+// shared network to subnet level.
+TEST_F(CBControlDHCPv4Test, allocatorInheritance) {
+    remoteStoreTestConfiguration();
+
+    // Set non-default global allocator.
+    StampedValuePtr global_parameter = StampedValue::create("allocator",
+                                                            Element::create("flq"));
+    auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(BackendSelector::UNSPEC(),
+                                                                ServerSelector::ALL(),
+                                                                global_parameter));
+    addCreateAuditEntry("dhcp4_global_parameter", 1);
+    addCreateAuditEntry("dhcp4_shared_network", 1);
+    addCreateAuditEntry("dhcp4_subnet", 2);
+
+    // Merge the configuration including the allocator setting into the current
+    // configuration.
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet that has no allocator specification. The global allocator should
+    // be used for this subnet.
+    auto srv_cfg = CfgMgr::instance().getCurrentCfg();
+    auto subnet = srv_cfg->getCfgSubnets4()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    auto allocator = subnet->getAllocator(Lease::TYPE_V4);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("flq", allocator->getType());
+
+    // Update the shared network but use a different allocator type for it.
+    auto updated_network = boost::make_shared<SharedNetwork4>("one");
+    updated_network->setId(1);
+    updated_network->setModificationTime(getTimestamp("dhcp4_shared_network"));
+    updated_network->setAllocatorType("random");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSharedNetwork4(BackendSelector::UNSPEC(),
+                                                              ServerSelector::ALL(),
+                                                              updated_network));
+
+
+    // Include our subnet in this shared network.
+    auto updated_subnet = boost::make_shared<Subnet4>(IOAddress("192.0.4.0"), 26, 1, 2, 3,
+                                                      SubnetID(2));
+    updated_subnet->setSharedNetworkName("one");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSubnet4(BackendSelector::UNSPEC(),
+                                                       ServerSelector::ALL(),
+                                                       updated_subnet));
+    // Merge the updated configuration.
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet again. Expect that the subnet uses the shared network-level allocator.
+    subnet = srv_cfg->getCfgSubnets4()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    allocator = subnet->getAllocator(Lease::TYPE_V4);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("random", allocator->getType());
+
+    // Override the allocator at the subnet level.
+    updated_subnet = boost::make_shared<Subnet4>(IOAddress("192.0.4.0"), 26, 1, 2, 3, SubnetID(2));
+    updated_subnet->setModificationTime(getTimestamp("dhcp4_subnet"));
+    updated_subnet->setAllocatorType("iterative");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSubnet4(BackendSelector::UNSPEC(),
+                                                       ServerSelector::ALL(),
+                                                       updated_subnet));
+
+    addCreateAuditEntry("dhcp4_subnet", 2);
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet again and expect the subnet-level allocator.
+    subnet = srv_cfg->getCfgSubnets4()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    allocator = subnet->getAllocator(Lease::TYPE_V4);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("iterative", allocator->getType());
+}
+
 // ************************ V6 tests *********************
 
 /// @brief Naked @c CBControlDHCPv6 class exposing protected methods.
@@ -1212,6 +1300,8 @@ public:
 
         // Insert subnets into the database.
         Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4, SubnetID(1)));
+        subnet->setAllocatorType("random");
+        subnet->setPdAllocatorType("random");
         subnet->setModificationTime(getTimestamp("dhcp6_subnet"));
         subnet->setSharedNetworkName("one");
         mgr.getPool()->createUpdateSubnet6(BackendSelector::UNSPEC(), ServerSelector::ALL(),
@@ -1435,6 +1525,10 @@ public:
         if (hasConfigElement("dhcp6_subnet") &&
             (getTimestamp("dhcp6_subnet") > lb_modification_time)) {
             ASSERT_TRUE(found_subnet);
+            EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                        (found_subnet->getAllocator(Lease::TYPE_NA)));
+            EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
+                        (found_subnet->getAllocator(Lease::TYPE_PD)));
             EXPECT_TRUE(found_subnet->hasFetchGlobalsFn());
 
         } else {
@@ -1888,5 +1982,176 @@ TEST_F(CBControlDHCPv6Test, ipReservationsNonUniqueRefused) {
     EXPECT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique());
     EXPECT_TRUE(HostMgr::instance().getIPReservationsUnique());
 }
+
+// This test verifies that the allocator type is inherited from the global to
+// shared network to subnet level.
+TEST_F(CBControlDHCPv6Test, allocatorInheritance) {
+    remoteStoreTestConfiguration();
+
+    // Set non-default global allocator.
+    StampedValuePtr global_parameter = StampedValue::create("allocator",
+                                                            Element::create("random"));
+    auto& mgr = ConfigBackendDHCPv6Mgr::instance();
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter6(BackendSelector::UNSPEC(),
+                                                                ServerSelector::ALL(),
+                                                                global_parameter));
+    addCreateAuditEntry("dhcp6_global_parameter", 1);
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    addCreateAuditEntry("dhcp6_subnet", 2);
+
+    // Merge the configuration including the allocator setting into the current
+    // configuration.
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet that has no allocator specification. The global allocator should
+    // be used for this subnet.
+    auto srv_cfg = CfgMgr::instance().getCurrentCfg();
+    auto subnet = srv_cfg->getCfgSubnets6()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    auto allocator = subnet->getAllocator(Lease::TYPE_NA);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("random", allocator->getType());
+
+    // Update the shared network but use a different allocator type for it.
+    auto updated_network = boost::make_shared<SharedNetwork6>("one");
+    updated_network->setId(1);
+    updated_network->setModificationTime(getTimestamp("dhcp6_shared_network"));
+    updated_network->setAllocatorType("iterative");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSharedNetwork6(BackendSelector::UNSPEC(),
+                                                              ServerSelector::ALL(),
+                                                              updated_network));
+
+    // Include our subnet in this shared network.
+    auto updated_subnet = boost::make_shared<Subnet6>(IOAddress("2001:db8:2::"), 26, 1, 2, 3, 4,
+                                                      SubnetID(2));
+    updated_subnet->setSharedNetworkName("one");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSubnet6(BackendSelector::UNSPEC(),
+                                                       ServerSelector::ALL(),
+                                                       updated_subnet));
+    // Merge the updated configuration.
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet again. Expect that the subnet uses the shared network-level allocator.
+    subnet = srv_cfg->getCfgSubnets6()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    allocator = subnet->getAllocator(Lease::TYPE_NA);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("iterative", allocator->getType());
+
+    // Override the allocator at the subnet level.
+    updated_subnet = boost::make_shared<Subnet6>(IOAddress("2001:db8:2::"), 26, 1, 2, 3, 4,
+                                                 SubnetID(2));
+    updated_subnet->setSharedNetworkName("one");
+    updated_subnet->setModificationTime(getTimestamp("dhcp6_subnet"));
+    updated_subnet->setAllocatorType("random");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSubnet6(BackendSelector::UNSPEC(),
+                                                       ServerSelector::ALL(),
+                                                       updated_subnet));
+
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet again and expect the subnet-level allocator.
+    subnet = srv_cfg->getCfgSubnets6()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    allocator = subnet->getAllocator(Lease::TYPE_NA);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("random", allocator->getType());
+}
+
+// This test verifies that the prefix delegation allocator type is inherited from the
+// global to shared network to subnet level.
+TEST_F(CBControlDHCPv6Test, pdAllocatorInheritance) {
+    remoteStoreTestConfiguration();
+
+    // Set non-default global allocator.
+    StampedValuePtr global_parameter = StampedValue::create("pd-allocator",
+                                                            Element::create("flq"));
+    auto& mgr = ConfigBackendDHCPv6Mgr::instance();
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter6(BackendSelector::UNSPEC(),
+                                                                ServerSelector::ALL(),
+                                                                global_parameter));
+    addCreateAuditEntry("dhcp6_global_parameter", 1);
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    addCreateAuditEntry("dhcp6_subnet", 2);
+
+    // Merge the configuration including the allocator setting into the current
+    // configuration.
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet that has no allocator specification. The global allocator should
+    // be used for this subnet.
+    auto srv_cfg = CfgMgr::instance().getCurrentCfg();
+    auto subnet = srv_cfg->getCfgSubnets6()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    auto allocator = subnet->getAllocator(Lease::TYPE_PD);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("flq", allocator->getType());
+
+    // Update the shared network but use a different allocator type for it.
+    auto updated_network = boost::make_shared<SharedNetwork6>("one");
+    updated_network->setId(1);
+    updated_network->setModificationTime(getTimestamp("dhcp6_shared_network"));
+    updated_network->setPdAllocatorType("iterative");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSharedNetwork6(BackendSelector::UNSPEC(),
+                                                              ServerSelector::ALL(),
+                                                              updated_network));
+
+    // Include our subnet in this shared network.
+    auto updated_subnet = boost::make_shared<Subnet6>(IOAddress("2001:db8:2::"), 26, 1, 2, 3, 4,
+                                                      SubnetID(2));
+    updated_subnet->setSharedNetworkName("one");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSubnet6(BackendSelector::UNSPEC(),
+                                                       ServerSelector::ALL(),
+                                                       updated_subnet));
+    // Merge the updated configuration.
+    addCreateAuditEntry("dhcp6_shared_network", 1);
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet again. Expect that the subnet uses the shared network-level allocator.
+    subnet = srv_cfg->getCfgSubnets6()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("iterative", allocator->getType());
+
+    // Override the allocator at the subnet level.
+    updated_subnet = boost::make_shared<Subnet6>(IOAddress("2001:db8:2::"), 26, 1, 2, 3, 4,
+                                                 SubnetID(2));
+    updated_subnet->setSharedNetworkName("one");
+    updated_subnet->setModificationTime(getTimestamp("dhcp6_subnet"));
+    updated_subnet->setPdAllocatorType("random");
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateSubnet6(BackendSelector::UNSPEC(),
+                                                       ServerSelector::ALL(),
+                                                       updated_subnet));
+
+    ASSERT_NO_THROW(ctl_.databaseConfigApply(BackendSelector::UNSPEC(),
+                                             ServerSelector::ALL(),
+                                             getTimestamp(-5),
+                                             audit_entries_));
+
+    // Get the subnet again and expect the subnet-level allocator.
+    subnet = srv_cfg->getCfgSubnets6()->getBySubnetId(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    ASSERT_TRUE(allocator);
+    EXPECT_EQ("random", allocator->getType());
+}
+
 
 }

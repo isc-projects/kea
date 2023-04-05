@@ -44,13 +44,20 @@ public:
     /// @param subnet weak pointer to the subnet owning the allocator.
     FreeLeaseQueueAllocator(Lease::Type type, const WeakSubnetPtr& subnet);
 
+    /// @brief Returns the allocator type string.
+    ///
+    /// @return flq string.
+    virtual std::string getType() const {
+        return ("flq");
+    }
+
+private:
+
     /// @brief Performs allocator initialization after server's reconfiguration.
     ///
     /// The allocator installs the callbacks in the lease manager to keep track of
     /// the lease allocations and maintain the free leases queue.
-    virtual void initAfterConfigure();
-
-private:
+    virtual void initAfterConfigureInternal();
 
     /// @brief Populates the queue of free addresses (IPv4 and IPv6).
     ///

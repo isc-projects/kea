@@ -178,6 +178,8 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
                           << ", network does not exist");
             }
         }
+        // Instantiate the configured allocator and its state.
+        other_subnet->createAllocators();
     }
 }
 

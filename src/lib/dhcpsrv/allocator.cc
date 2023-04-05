@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcpsrv/allocator.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 
 using namespace isc::util;
 
@@ -14,7 +15,8 @@ namespace isc {
 namespace dhcp {
 
 Allocator::Allocator(Lease::Type type, const WeakSubnetPtr& subnet)
-    : pool_type_(type),
+    : inited_(false),
+      pool_type_(type),
       subnet_id_(0),
       subnet_(subnet) {
     // Remember subnet ID in a separate variable. It may be needed in
@@ -61,6 +63,20 @@ Allocator::isValidPrefixPool(Allocator::PrefixLenMatchType prefix_length_match,
     }
 
     return (true);
+}
+
+void
+Allocator::initAfterConfigure() {
+    if (inited_) {
+        return;
+    }
+    auto subnet = subnet_.lock();
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_USE_ALLOCATOR)
+        .arg(getType())
+        .arg(Lease::typeToText(pool_type_))
+        .arg(subnet->toText());
+    initAfterConfigureInternal();
+    inited_ = true;
 }
 
 }

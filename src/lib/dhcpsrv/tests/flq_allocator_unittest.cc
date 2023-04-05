@@ -41,6 +41,12 @@ public:
     }
 };
 
+// Test that the allocator returns the correct type.
+TEST_F(FreeLeaseQueueAllocatorTest4, getType) {
+    FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
+    EXPECT_EQ("flq", alloc.getType());
+}
+
 // Test populating free DHCPv4 leases to the queue.
 TEST_F(FreeLeaseQueueAllocatorTest4, populateFreeAddressLeases) {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
@@ -352,6 +358,12 @@ public:
     }
 
 };
+
+// Test that the allocator returns the correct type.
+TEST_F(FreeLeaseQueueAllocatorTest6, getType) {
+    FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
+    EXPECT_EQ("flq", alloc.getType());
+}
 
 // Test populating free DHCPv6 address leases to the queue.
 TEST_F(FreeLeaseQueueAllocatorTest6, populateFreeAddressLeases) {

@@ -21,6 +21,12 @@ namespace test {
 
 using IterativeAllocatorTest4 = AllocEngine4Test;
 
+// Test that the allocator returns the correct type.
+TEST_F(IterativeAllocatorTest4, getType) {
+    IterativeAllocator alloc(Lease::TYPE_V4, subnet_);
+    EXPECT_EQ("iterative", alloc.getType());
+}
+
 // This test verifies that the allocator picks addresses that belong to the
 // pool
 TEST_F(IterativeAllocatorTest4, basic) {
@@ -110,6 +116,12 @@ TEST_F(IterativeAllocatorTest4, manyPools) {
 }
 
 using IterativeAllocatorTest6 = AllocEngine6Test;
+
+// Test that the allocator returns the correct type.
+TEST_F(IterativeAllocatorTest6, getType) {
+    IterativeAllocator alloc(Lease::TYPE_NA, subnet_);
+    EXPECT_EQ("iterative", alloc.getType());
+}
 
 // This test verifies that the allocator picks addresses that belong to the
 // pool

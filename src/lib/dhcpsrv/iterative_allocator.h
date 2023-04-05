@@ -31,6 +31,13 @@ public:
     /// @param subnet weak pointer to the subnet owning the allocator.
     IterativeAllocator(Lease::Type type, const WeakSubnetPtr& subnet);
 
+    /// @brief Returns the allocator type string.
+    ///
+    /// @return iterative string.
+    virtual std::string getType() const {
+        return ("iterative");
+    }
+
 private:
 
     /// @brief Returns the next address from the pools in the subnet.

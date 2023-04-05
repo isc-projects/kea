@@ -219,7 +219,8 @@ public:
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
           cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
-          ddns_use_conflict_resolution_(), ddns_ttl_percent_() {
+          ddns_use_conflict_resolution_(), ddns_ttl_percent_(), allocator_type_(),
+          default_allocator_type_() {
     }
 
     /// @brief Virtual destructor.
@@ -818,6 +819,26 @@ public:
         allocator_type_ = allocator_type;
     }
 
+    /// @brief Returns a default allocator type.
+    ///
+    /// This allocator type is used when the allocator type is neither specified
+    /// at the shared network nor subnet level.
+    ///
+    /// @return an allocator type as a string.
+    util::Optional<std::string>
+    getDefaultAllocatorType(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDefaultAllocatorType,
+                                     default_allocator_type_,
+                                     inheritance));
+    }
+
+    /// @brief Sets a defalt allocator type.
+    ///
+    /// @param allocator_type a new default allocator type.
+    void setDefaultAllocatorType(const std::string& allocator_type) {
+        default_allocator_type_ = allocator_type;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1209,11 +1230,14 @@ protected:
     /// @brief Used to to tell kea-dhcp-ddns whether or not to use conflict resolution.
     util::Optional<bool> ddns_use_conflict_resolution_;
 
+    /// @brief Percentage of the lease lifetime to use for DNS TTL.
+    util::Optional<double> ddns_ttl_percent_;
+
     /// @brief Allocator used for IP address allocations.
     util::Optional<std::string> allocator_type_;
 
-    /// @brief Percentage of the lease lifetime to use for DNS TTL.
-    util::Optional<double> ddns_ttl_percent_;
+    /// @brief Default allocator type.
+    util::Optional<std::string> default_allocator_type_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///
@@ -1395,7 +1419,8 @@ public:
 
     /// @brief Constructor.
     Network6()
-        : Network(), preferred_(), interface_id_(), rapid_commit_() {
+        : Network(), preferred_(), interface_id_(), rapid_commit_(),
+          default_pd_allocator_type_(){
     }
 
     /// @brief Returns preferred lifetime (in seconds)
@@ -1478,6 +1503,26 @@ public:
         pd_allocator_type_ = allocator_type;
     }
 
+    /// @brief Returns a default allocator type for prefix delegation.
+    ///
+    /// This allocator type is used when the allocator type is neither specified
+    /// at the shared network nor subnet level.
+    ///
+    /// @return an allocator type as a string.
+    util::Optional<std::string>
+    getDefaultPdAllocatorType(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network6>(&Network6::getDefaultPdAllocatorType,
+                                      default_pd_allocator_type_,
+                                      inheritance));
+    }
+
+    /// @brief Sets a defalt allocator type for prefix delegation.
+    ///
+    /// @param allocator_type a new default allocator type.
+    void setDefaultPdAllocatorType(const std::string& allocator_type) {
+        default_pd_allocator_type_ = allocator_type;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1500,6 +1545,9 @@ private:
 
     /// @brief Allocator used for prefix delegation.
     util::Optional<std::string> pd_allocator_type_;
+
+    // @brief Default allocator type for prefix delegation.
+    util::Optional<std::string> default_pd_allocator_type_;
 };
 
 } // end of namespace isc::dhcp

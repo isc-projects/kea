@@ -135,7 +135,7 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
 }
 
 void
-FreeLeaseQueueAllocator::initAfterConfigure() {
+FreeLeaseQueueAllocator::initAfterConfigureInternal() {
     auto subnet = subnet_.lock();
     auto pools = subnet->getPools(pool_type_);
     if (pools.empty()) {

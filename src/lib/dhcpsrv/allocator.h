@@ -78,6 +78,11 @@ public:
     /// Removes all LeaseMgr callbacks it installed.
     virtual ~Allocator();
 
+    /// @brief Returns allocator type string.
+    ///
+    /// @return allocator-specific type string.
+    virtual std::string getType() const = 0;
+
     /// @brief Picks an address.
     ///
     /// This method returns one address from the available pools in the
@@ -156,7 +161,15 @@ public:
     /// reconfiguration). Such callbacks can be installed in this function.
     ///
     /// In this function, the allocators can also re-build their allocation states.
-    virtual void initAfterConfigure() {};
+    void initAfterConfigure();
+
+protected:
+
+    /// @brief Allocator-specific initialization function.
+    ///
+    /// It is called by the @c initAfterConfigure and can be overridden in the
+    /// derived allocators.
+    virtual void initAfterConfigureInternal() {};
 
 private:
 
@@ -202,6 +215,12 @@ private:
                        uint8_t hint_prefix_length) = 0;
 
 protected:
+
+    /// @brief Indicates if the allocator has been initialized.
+    ///
+    /// It is set to true when @c initAfterConfigure has been called.
+    /// It prevents initializing the allocator several times.
+    bool inited_;
 
     /// @brief Defines pool type allocation
     Lease::Type pool_type_;

@@ -36,6 +36,13 @@ public:
     /// @param subnet weak pointer to the subnet owning the allocator.
     RandomAllocator(Lease::Type type, const WeakSubnetPtr& subnet);
 
+    /// @brief Returns the allocator type string.
+    ///
+    /// @return random string.
+    virtual std::string getType() const {
+        return ("random");
+    }
+
 private:
 
     /// @brief Returns a random address from the pools in the subnet.
