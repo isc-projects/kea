@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1435,6 +1435,16 @@ TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6MultiThreading) {
     testMultipleHosts6();
 }
 
+/// @brief Tests that hosts can be updated.
+TEST_F(PgSqlHostDataSourceTest, update) {
+    testUpdate();
+}
+
+/// @brief Tests that hosts can be updated.
+TEST_F(PgSqlHostDataSourceTest, updateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testUpdate();
+}
 /// @brief Test fixture class for validating @c HostMgr using
 /// PostgreSQL as alternate host data source.
 class PgSQLHostMgrTest : public HostMgrTest {

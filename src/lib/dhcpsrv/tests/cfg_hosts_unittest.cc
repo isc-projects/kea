@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -12,7 +13,10 @@
 #include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <testutils/gtest_utils.h>
+
 #include <gtest/gtest.h>
+
 #include <sstream>
 #include <set>
 
@@ -1200,5 +1204,69 @@ TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
                                              "foo.example.com"))));
 }
 
+// Checks that updates work correctly.
+TEST_F(CfgHostsTest, update) {
+    CfgHosts cfg;
 
-} // end of anonymous namespace
+    HostPtr const host(boost::make_shared<Host>(duids_[0]->toText(), "duid", SUBNET_ID_UNUSED,
+                                                SubnetID(1), IOAddress("0.0.0.0"),
+                                                "foo.example.com"));
+
+    // Updating any host currently throws because it relies on delete being
+    // implemented which is not.
+    EXPECT_THROW_MSG(cfg.update(host), NotImplemented, "sorry, not implemented");
+
+    // Temporary return. Remove it and the preceding EXPECT_THROW_MSG when delete gets implemented.
+    return;
+
+    // Updating a host that doesn't exist should throw.
+    EXPECT_THROW_MSG(cfg.update(host), HostNotFound, "Host not updated (not found).");
+
+    // There should be no hosts.
+    HostCollection hosts(cfg.getAll6(SubnetID(1)));
+    EXPECT_EQ(0, hosts.size());
+
+    // Add a host.
+    EXPECT_NO_THROW(cfg.add(host));
+
+    // The host should be in the config.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=foo.example.com "
+              "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
+              "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
+
+    // Update the host. Change nothing.
+    EXPECT_NO_THROW(cfg.update(host));
+
+    // The same host should be in the config.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=foo.example.com "
+              "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
+              "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
+
+    // Update the host with new hostname.
+    host->setHostname("bar.example.com");
+    EXPECT_NO_THROW(cfg.update(host));
+
+    // The change should be reflected in the config.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=bar.example.com "
+              "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
+              "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
+
+    // Remove hostname from host.
+    host->setHostname("");
+    EXPECT_NO_THROW(cfg.update(host));
+
+    // The change should be reflected in the config.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=(empty) "
+              "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
+              "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
+}
+
+}  // namespace

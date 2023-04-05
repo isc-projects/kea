@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -512,6 +512,11 @@ public:
     ///
     /// Uses gtest macros to report failures.
     void testMultipleHosts6();
+
+    /// @brief Tests that hosts can be updated.
+    ///
+    /// Uses gtest macros to report failures.
+    void testUpdate();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///

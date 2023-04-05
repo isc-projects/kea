@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -12,8 +13,10 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
+
 #include <vector>
 
 using namespace isc;
@@ -21,7 +24,6 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::asiolink;
-
 namespace {
 
 // The tests in this file only address the in memory hosts.
@@ -152,7 +154,7 @@ TEST_F(HostMgrTest, get6ByPrefix) {
 }
 
 // This test verifies that without a host data source an exception is thrown.
-TEST_F(HostMgrTest, addNoDataSource) {
+TEST_F(HostMgrTest, noDataSource) {
     // Remove all configuration.
     CfgMgr::instance().clear();
     // Recreate HostMgr instance.
@@ -160,7 +162,11 @@ TEST_F(HostMgrTest, addNoDataSource) {
 
     HostPtr host(new Host(hwaddrs_[0]->toText(false), "hw-address",
                           SubnetID(1), SUBNET_ID_UNUSED, IOAddress("192.0.2.5")));
-    EXPECT_THROW(HostMgr::instance().add(host), NoHostDataSourceManager);
+    EXPECT_THROW_MSG(HostMgr::instance().add(host), NoHostDataSourceManager,
+                     "Unable to add new host because there is no hosts-database configured.");
+    EXPECT_THROW_MSG(HostMgr::instance().update(host), NoHostDataSourceManager,
+                     "Unable to update existing host because there is no hosts-database "
+                     "configured.");
 }
 
 }  // namespace

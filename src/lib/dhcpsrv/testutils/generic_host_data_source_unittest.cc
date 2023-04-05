@@ -20,17 +20,16 @@
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <database/testutils/schema.h>
+#include <testutils/gtest_utils.h>
 #include <util/buffer.h>
 
-#include <boost/foreach.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/replace.hpp>
+
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <cstring>
-#include <list>
 #include <sstream>
 #include <string>
-#include <typeinfo>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -3890,6 +3889,81 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
     EXPECT_TRUE(hosts[1]->hasReservation(
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+}
+
+void
+GenericHostDataSourceTest::testUpdate() {
+    // Make sure the host data source is initialized.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host with an IPv4 address reservation.
+    HostPtr const host(HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_HWADDR));
+    SubnetID const v4_subnet(host->getIPv4SubnetID());
+    SubnetID const v6_subnet(host->getIPv6SubnetID());
+    string hwaddr(host->getHWAddress()->toText(false));
+    boost::replace_all(hwaddr, ":", "");
+    boost::to_upper(hwaddr);
+
+    // Updating a host that doesn't exist should throw.
+    EXPECT_THROW_MSG(hdsptr_->update(host), NoRowsAffected, "Host not updated (not found).");
+
+    // There should be no hosts.
+    ConstHostCollection hosts(hdsptr_->getAll4(v4_subnet));
+    EXPECT_EQ(0, hosts.size());
+
+    // Add the host.
+    EXPECT_NO_THROW(hdsptr_->add(host));
+
+    // The host should be there.
+    hosts = hdsptr_->getAll4(v4_subnet);
+    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ("hwaddr=" + hwaddr + " ipv4_subnet_id=" + to_string(v4_subnet) +
+                  " ipv6_subnet_id=" + to_string(v6_subnet) +
+                  " hostname=(empty) "
+                  "ipv4_reservation=192.0.2.1 siaddr=(no) sname=(empty) file=(empty) key=(empty) "
+                  "ipv6_reservations=(none)",
+              hosts[0]->toText());
+
+    // Update the host. Change nothing.
+    EXPECT_NO_THROW(hdsptr_->update(host));
+
+    // The same host should be in the data source.
+    hosts = hdsptr_->getAll4(v4_subnet);
+    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ("hwaddr=" + hwaddr + " ipv4_subnet_id=" + to_string(v4_subnet) +
+                  " ipv6_subnet_id=" + to_string(v6_subnet) +
+                  " hostname=(empty) "
+                  "ipv4_reservation=192.0.2.1 siaddr=(no) sname=(empty) file=(empty) key=(empty) "
+                  "ipv6_reservations=(none)",
+              hosts[0]->toText());
+
+    // Update the host with new hostname.
+    host->setHostname("foo.example.com");
+    EXPECT_NO_THROW(hdsptr_->update(host));
+
+    // The change should be reflected in the data source.
+    hosts = hdsptr_->getAll4(v4_subnet);
+    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ("hwaddr=" + hwaddr + " ipv4_subnet_id=" + to_string(v4_subnet) +
+                  " ipv6_subnet_id=" + to_string(v6_subnet) +
+                  " hostname=foo.example.com "
+                  "ipv4_reservation=192.0.2.1 siaddr=(no) sname=(empty) file=(empty) key=(empty) "
+                  "ipv6_reservations=(none)",
+              hosts[0]->toText());
+
+    // Remove hostname from host.
+    host->setHostname("");
+    EXPECT_NO_THROW(hdsptr_->update(host));
+
+    // The change should be reflected in the data source.
+    hosts = hdsptr_->getAll4(v4_subnet);
+    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ("hwaddr=" + hwaddr + " ipv4_subnet_id=" + to_string(v4_subnet) +
+                  " ipv6_subnet_id=" + to_string(v6_subnet) +
+                  " hostname=(empty) "
+                  "ipv4_reservation=192.0.2.1 siaddr=(no) sname=(empty) file=(empty) key=(empty) "
+                  "ipv6_reservations=(none)",
+              hosts[0]->toText());
 }
 
 }  // namespace test

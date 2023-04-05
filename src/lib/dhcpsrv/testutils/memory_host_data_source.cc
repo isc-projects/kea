@@ -375,6 +375,17 @@ MemHostDataSource::del6(const SubnetID& subnet_id,
     return (false);
 }
 
+void
+MemHostDataSource::update(HostPtr const& host) {
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        if ((*h)->getHostId() == host->getHostId()) {
+            store_.erase(h);
+            break;
+        }
+    }
+    store_.push_back(host);
+}
+
 size_t
 MemHostDataSource::size() const {
     return (store_.size());

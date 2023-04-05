@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1465,6 +1465,17 @@ TEST_F(MySqlHostDataSourceTest, testMultipleHosts6) {
 TEST_F(MySqlHostDataSourceTest, testMultipleHosts6MultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleHosts6();
+}
+
+/// @brief Tests that hosts can be updated.
+TEST_F(MySqlHostDataSourceTest, update) {
+    testUpdate();
+}
+
+/// @brief Tests that hosts can be updated.
+TEST_F(MySqlHostDataSourceTest, updateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testUpdate();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using

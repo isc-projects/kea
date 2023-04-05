@@ -698,6 +698,9 @@ public:
         return (false);
     }
 
+    void update(HostPtr const&) {
+    }
+
     std::string getType() const {
         return ("one");
     }
