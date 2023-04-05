@@ -1086,10 +1086,18 @@ CfgHosts::add6(const HostPtr& host) {
 }
 
 bool
-CfgHosts::del(const SubnetID& /*subnet_id*/, const asiolink::IOAddress& /*addr*/) {
-    /// @todo: Implement host removal
-    isc_throw(NotImplemented, "sorry, not implemented");
-    return (false);
+CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
+    bool erased = false;
+    if (addr.isV4()) {
+        HostContainerIndex1& idx = hosts_.get<1>();
+        erased = idx.erase(addr) != 0;
+    } else {
+        HostContainer6Index1& idx = hosts6_.get<1>();
+        auto range = idx.equal_range(boost::make_tuple(subnet_id, addr));
+        auto eraseIt = idx.erase(range.first, range.second);
+        erased = eraseIt != idx.end();
+    }
+    return (erased);
 }
 
 size_t
