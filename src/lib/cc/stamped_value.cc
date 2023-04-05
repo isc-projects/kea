@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -169,7 +169,7 @@ StampedValue::validateConstruct() const {
         (value_->getType() != Element::real)) {
         isc_throw(TypeError, "StampedValue: provided value of the '"
                   << name_ << "' parameter has invalid type: "
-                  << Element::typeToName(static_cast<Element::types>(value_->getType())));
+                  << Element::typeToName(value_->getType()));
     }
 }
 
@@ -184,7 +184,7 @@ StampedValue::validateAccess(Element::types type) const {
         isc_throw(TypeError, "StampedValue: attempt to access a '"
                   << name_ << "' parameter as " << Element::typeToName(type)
                   << ", but this parameter has "
-                  << Element::typeToName(static_cast<Element::types>(value_->getType()))
+                  << Element::typeToName(value_->getType())
                   << " type");
     }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -229,9 +229,9 @@ operator<(Element const& a, Element const& b) {
         return b.boolValue() || !a.boolValue();
     case Element::string:
         return std::strcmp(a.stringValue().c_str(), b.stringValue().c_str()) < 0;
+    default:
+        isc_throw(BadValue, "cannot compare Elements of type " << to_string(a.getType()));
     }
-    isc_throw(BadValue, "cannot compare Elements of type " <<
-                            std::to_string(a.getType()));
 }
 
 //

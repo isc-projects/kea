@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -126,11 +126,15 @@ public:
         return (position);
     }
 
+    // any is a special type used in list specifications, specifying
+    // that the elements can be of any type
+    enum types { integer, real, boolean, null, string, list, map, any };
+
 private:
     // technically the type could be omitted; is it useful?
     // should we remove it or replace it with a pure virtual
     // function getType?
-    int type_;
+    types type_;
 
     /// @brief Position of the element in the configuration string.
     Position position_;
@@ -143,21 +147,17 @@ protected:
     /// @param pos Structure holding position of the value of the data element.
     /// It comprises the line number and the position within this line. The values
     /// held in this structure are used for error logging purposes.
-    Element(int t, const Position& pos = ZERO_POSITION())
+    Element(types t, const Position& pos = ZERO_POSITION())
         : type_(t), position_(pos) {
     }
 
 
 public:
-
-    // any is a special type used in list specifications, specifying
-    // that the elements can be of any type
-    enum types { integer, real, boolean, null, string, list, map, any };
     // base class; make dtor virtual
     virtual ~Element() {};
 
     /// @return the type of this element
-    int getType() const { return (type_); }
+    types getType() const { return (type_); }
 
     /// @brief Returns position where the data element's value starts in a
     /// configuration string.
