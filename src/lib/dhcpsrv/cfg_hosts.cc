@@ -1087,17 +1087,28 @@ CfgHosts::add6(const HostPtr& host) {
 
 bool
 CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
-    bool erased = false;
+    size_t erased_host_count = 0;
+    size_t erased_reservation_count = 0;
     if (addr.isV4()) {
         HostContainerIndex1& idx = hosts_.get<1>();
-        erased = idx.erase(addr) != 0;
+        erased_host_count = idx.erase(addr);
+        erased_reservation_count = erased_host_count;
     } else {
-        HostContainer6Index1& idx = hosts6_.get<1>();
-        auto range = idx.equal_range(boost::make_tuple(subnet_id, addr));
-        auto eraseIt = idx.erase(range.first, range.second);
-        erased = eraseIt != idx.end();
+        HostContainer6Index1& idx6 = hosts6_.get<1>();
+        HostContainerIndex4& idx = hosts_.get<4>();
+
+        const auto& range = idx6.equal_range(boost::make_tuple(subnet_id, addr));
+        idx6.erase(range.first, range.second);
+
+        for (auto key = range.first; key != range.second; ++key) {
+            erased_reservation_count++;
+            erased_host_count += idx.erase(key->host_->getHostId());
+        }
     }
-    return (erased);
+
+    // ToDo: Log message.
+
+    return (erased_host_count != 0);
 }
 
 size_t
