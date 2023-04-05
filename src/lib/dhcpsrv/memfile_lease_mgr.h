@@ -1508,6 +1508,12 @@ public:
     /// @param filename File name to write leases.
     virtual void writeLeases6(const std::string& filename) override;
 
+    /// @brief Upgrade extended info (v4).
+    ///
+    /// @param page_size The page size used for retrieval.
+    /// @return Always return 0.
+    virtual size_t upgradeExtendedInfo(const LeasePageSize& page_size) override;
+
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.

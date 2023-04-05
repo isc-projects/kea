@@ -3033,6 +3033,11 @@ Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
 }
 
 size_t
+Memfile_LeaseMgr::upgradeExtendedInfo(const LeasePageSize& /* page_size */) {
+    return (0);
+}
+
+size_t
 Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
     CfgConsistencyPtr cfg;
     if (current) {

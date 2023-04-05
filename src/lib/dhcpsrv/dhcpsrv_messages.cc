@@ -192,6 +192,9 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_START_TRANSACTION = "DHCPSRV_MYSQ
 extern const isc::log::MessageID DHCPSRV_MYSQL_TLS_CIPHER = "DHCPSRV_MYSQL_TLS_CIPHER";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPDATE_ADDR4 = "DHCPSRV_MYSQL_UPDATE_ADDR4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPDATE_ADDR6 = "DHCPSRV_MYSQL_UPDATE_ADDR6";
+extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4 = "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4";
+extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_ERROR = "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_ERROR";
+extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_PAGE = "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_PAGE";
 extern const isc::log::MessageID DHCPSRV_NOTYPE_DB = "DHCPSRV_NOTYPE_DB";
 extern const isc::log::MessageID DHCPSRV_NO_SOCKETS_OPEN = "DHCPSRV_NO_SOCKETS_OPEN";
 extern const isc::log::MessageID DHCPSRV_OPEN_SOCKET_FAIL = "DHCPSRV_OPEN_SOCKET_FAIL";
@@ -243,6 +246,9 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_START_TRANSACTION = "DHCPSRV_PGSQ
 extern const isc::log::MessageID DHCPSRV_PGSQL_TLS_SUPPORT = "DHCPSRV_PGSQL_TLS_SUPPORT";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPDATE_ADDR4 = "DHCPSRV_PGSQL_UPDATE_ADDR4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPDATE_ADDR6 = "DHCPSRV_PGSQL_UPDATE_ADDR6";
+extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4 = "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4";
+extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR = "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR";
+extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE = "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR = "DHCPSRV_QUEUE_NCR";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR_FAILED = "DHCPSRV_QUEUE_NCR_FAILED";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR_SKIP = "DHCPSRV_QUEUE_NCR_SKIP";
@@ -457,6 +463,9 @@ const char* values[] = {
     "DHCPSRV_MYSQL_TLS_CIPHER", "TLS cipher: %1",
     "DHCPSRV_MYSQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_MYSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
+    "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4", "upgrading IPv4 leases done in %1 pages with %2 updated leases",
+    "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_ERROR", "upgrading extending info for IPv4 lease at %1 failed with %2",
+    "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_PAGE", "upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)",
     "DHCPSRV_NOTYPE_DB", "no 'type' keyword to determine database backend: %1",
     "DHCPSRV_NO_SOCKETS_OPEN", "no interface configured to listen to DHCP traffic",
     "DHCPSRV_OPEN_SOCKET_FAIL", "failed to open socket: %1",
@@ -508,6 +517,9 @@ const char* values[] = {
     "DHCPSRV_PGSQL_TLS_SUPPORT", "Attempt to configure TLS: %1",
     "DHCPSRV_PGSQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_PGSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
+    "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4", "upgrading IPv4 leases done in %1 pages with %2 updated leases",
+    "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR", "upgrading extending info for IPv4 lease at %1 failed with %2",
+    "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE", "upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)",
     "DHCPSRV_QUEUE_NCR", "%1: Name change request to %2 DNS entry queued: %3",
     "DHCPSRV_QUEUE_NCR_FAILED", "%1: queuing %2 name change request failed for lease %3: %4",
     "DHCPSRV_QUEUE_NCR_SKIP", "%1: skip queuing name change request for lease: %2",

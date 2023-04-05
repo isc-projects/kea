@@ -960,6 +960,12 @@ public:
     /// @param filename File name to write leases.
     virtual void writeLeases6(const std::string& filename) = 0;
 
+    /// @brief Upgrade extended info (v4).
+    ///
+    /// @param page_size The page size used for retrieval.
+    /// @return The number of updates in the database.
+    virtual size_t upgradeExtendedInfo(const LeasePageSize& page_size) = 0;
+
     /// @brief Returns the setting indicating if lease extended info tables
     /// are enabled.
     ///

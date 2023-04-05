@@ -292,6 +292,11 @@ ConcreteLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
 }
 
 size_t
+ConcreteLeaseMgr::upgradeExtendedInfo(const LeasePageSize& /* page_size */) {
+    return (0);
+}
+
+size_t
 ConcreteLeaseMgr::buildExtendedInfoTables6(bool /* update */,
                                            bool /* current */) {
     isc_throw(isc::NotImplemented, "ConcreteLeaseMgr:buildExtendedInfoTables6 not implemented");

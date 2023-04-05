@@ -134,6 +134,18 @@ PgSqlTaggedStatement tagged_statements[] = {
       "ORDER BY address "
       "LIMIT $2"},
 
+    // GET_LEASE4_UCTX_PAGE
+    { 2, { OID_INT8, OID_INT8 },
+      "get_lease4_uctx_page",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context, relay_id, remote_id "
+      "FROM lease4 "
+      "WHERE address > $1 AND user_context IS NOT NULL "
+      "ORDER BY address "
+      "LIMIT $2"},
+
     // GET_LEASE4_SUBID
     { 1, { OID_INT8 },
       "get_lease4_subid",
@@ -332,6 +344,19 @@ PgSqlTaggedStatement tagged_statements[] = {
         "state, user_context "
       "FROM lease6 "
       "WHERE address > $1 "
+      "ORDER BY address "
+      "LIMIT $2"},
+
+    // GET_LEASE6_UCTX_PAGE
+    { 2, { OID_VARCHAR, OID_INT8 },
+      "get_lease6_uctx_page",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context "
+      "FROM lease6 "
+      "WHERE address > $1 AND user_context IS NOT NULL "
       "ORDER BY address "
       "LIMIT $2"},
 
@@ -3008,6 +3033,91 @@ PgSqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
     getLeaseCollection(ctx, stindex, bind_array, result);
 
     return (result);
+}
+
+size_t
+PgSqlLeaseMgr::upgradeExtendedInfo(const LeasePageSize& page_size) {
+    auto check = CfgMgr::instance().getCurrentCfg()->
+        getConsistency()->getExtendedInfoSanityCheck();
+
+    size_t pages = 0;
+    size_t updated = 0;
+    IOAddress start_addr = IOAddress::IPV4_ZERO_ADDRESS();
+    for (;;) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE)
+            .arg(pages)
+            .arg(start_addr.toText())
+            .arg(updated);
+
+        // Prepare WHERE clause.
+        PsqlBindArray bind_array;
+
+        // Bind start address.
+        uint32_t start_addr_data = start_addr.toUint32();
+        bind_array.add(start_addr_data);
+
+        // Bind page size value.
+        std::string page_size_data =
+            boost::lexical_cast<std::string>(page_size.page_size_);
+        bind_array.add(page_size_data);
+
+        Lease4Collection leases;
+
+        // Get a context.
+        {
+            PgSqlLeaseContextAlloc get_context(*this);
+            PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+            getLeaseCollection(ctx, GET_LEASE4_UCTX_PAGE, bind_array, leases);
+        }
+
+        if (leases.empty()) {
+            // Done.
+            break;
+        }
+
+        ++pages;
+        start_addr = leases.back()->addr_;
+        for (auto lease : leases) {
+            ConstElementPtr previous_user_context = lease->getContext();
+            vector<uint8_t> previous_relay_id = lease->relay_id_;
+            vector<uint8_t> previous_remote_id = lease->remote_id_;
+            if (!previous_user_context &&
+                previous_relay_id.empty() &&
+                previous_remote_id.empty()) {
+                continue;
+            }
+            bool modified = upgradeLease4ExtendedInfo(lease, check);
+            try {
+                lease->relay_id_.clear();
+                lease->remote_id_.clear();
+                extractLease4ExtendedInfo(lease, false);
+                if (modified ||
+                    (previous_relay_id != lease->relay_id_) ||
+                    (previous_remote_id != lease->remote_id_)) {
+                    updateLease4(lease);
+                    ++updated;
+                }
+            } catch (const NoSuchLease&) {
+                // The lease was modified in parallel:
+                // as its extended info was processed just ignore.
+                continue;
+            } catch (const std::exception& ex) {
+                // Something when wrong, for instance extract failed.
+                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                          DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR)
+                    .arg(lease->addr_.toText())
+                    .arg(ex.what());
+            }
+        }
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4)
+        .arg(pages)
+        .arg(updated);
+
+    return (updated);
 }
 
 Lease6Collection

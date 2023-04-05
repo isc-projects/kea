@@ -8,6 +8,8 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <dhcpsrv/cfg_consistency.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <pgsql/testutils/pgsql_schema.h>
@@ -121,6 +123,10 @@ public:
 
     /// @brief Test getLease4ByRemoteId.
     void testGetLeases4ByRemoteId();
+
+    /// @brief Test upgradeExtendedInfo.
+    void testUpgradeExtendedInfo(const CfgConsistency::ExtendedInfoSanity& check,
+                                 const LeasePageSize& page_size);
 
     /// @brief Lease manager.
     LeaseMgr* lease_mgr_;
@@ -612,6 +618,351 @@ TEST_F(PgSqlExtendedInfoTest, getLeases4ByRemoteId) {
 TEST_F(PgSqlExtendedInfoTest, getLeases4ByRemoteIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases4ByRemoteId();
+}
+
+void
+PgSqlExtendedInfoTest::testUpgradeExtendedInfo(const CfgConsistency::ExtendedInfoSanity& check,
+                                               const LeasePageSize& page_size) {
+    // Lease manager is created with empty tables.
+    initLease4(false);
+
+    // Create leases.
+    IOAddress addr0(ADDRESS4[0]);
+    IOAddress addr1(ADDRESS4[1]);
+    IOAddress addr2(ADDRESS4[2]);
+    IOAddress addr3(ADDRESS4[3]);
+    IOAddress addr4(ADDRESS4[4]);
+    IOAddress addr5(ADDRESS4[5]);
+    IOAddress addr6(ADDRESS4[6]);
+    IOAddress addr7(ADDRESS4[7]);
+    IOAddress zero = IOAddress::IPV4_ZERO_ADDRESS();
+    vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    vector<uint8_t> relay_id2 = { 0xdd, 0xee, 0xff };
+    vector<uint8_t> remote_id = { 1, 2, 3, 4 };
+    vector<uint8_t> remote_id2 = { 5, 6, 7, 8 };
+    string user_context_txt = "{ \"ISC\": { \"relay-agent-info\": {";
+    user_context_txt += " \"sub-options\": \"0204010203040C03AABBCC\",";
+    user_context_txt += " \"relay-id\": \"AABBCC\",";
+    user_context_txt += " \"remote-id\": \"01020304\" } } }";
+    ElementPtr user_context;
+    ASSERT_NO_THROW(user_context = Element::fromJSON(user_context_txt));
+    string user_context_txt_old = "{ \"ISC\": { \"relay-agent-info\":";
+    user_context_txt_old += " \"0204010203040C03AABBCC\" } }";
+    ElementPtr user_context_old;
+    ASSERT_NO_THROW(user_context_old = Element::fromJSON(user_context_txt_old));
+    string user_context_list_txt = "{ \"ISC\": { \"relay-agent-info\": [ ] } }";
+    ElementPtr user_context_list;
+    ASSERT_NO_THROW(user_context_list = Element::fromJSON(user_context_list_txt));
+    string user_context_lower_txt = "{ \"isc\": { \"relay-agent-info\":";
+    user_context_lower_txt += " \"0204010203040c03aabbcc\" } }";
+    ElementPtr user_context_lower;
+    ASSERT_NO_THROW(user_context_lower = Element::fromJSON(user_context_lower_txt));
+    string user_context_badsub_txt = "{ \"ISC\": { \"relay-agent-info\": {";
+    user_context_badsub_txt += " \"sub-options\": \"foobar\",";
+    user_context_badsub_txt += " \"relay-id\": \"AABBCC\",";
+    user_context_badsub_txt += " \"remote-id\": \"01020304\" } } }";
+    ElementPtr user_context_badsub;
+    ASSERT_NO_THROW(user_context_badsub = Element::fromJSON(user_context_badsub_txt));
+    string user_context_extra_txt = "{ \"ISC\": { \"relay-agent-info\": {";
+    user_context_extra_txt += " \"foo\": \"bar\", ";
+    user_context_extra_txt += " \"sub-options\": \"0204010203040C03AABBCC\",";
+    user_context_extra_txt += " \"relay-id\": \"AABBCC\",";
+    user_context_extra_txt += " \"remote-id\": \"01020304\" } } }";
+    ElementPtr user_context_extra;
+    ASSERT_NO_THROW(user_context_extra = Element::fromJSON(user_context_extra_txt));
+
+    Lease4Ptr lease;
+    // lease0: addr0, ids, before: always not updated.
+    lease = leases4[0];
+    ASSERT_TRUE(lease);
+    lease->relay_id_ = relay_id;
+    lease->remote_id_ = remote_id;
+    lease->setContext(user_context);
+    lease->cltt_ = now_ - 500;
+
+    // lease1: addr1, ids, after: always not updated.
+    lease = leases4[1];
+    ASSERT_TRUE(lease);
+    lease->relay_id_ = relay_id;
+    lease->remote_id_ = remote_id;
+    lease->setContext(user_context);
+    lease->cltt_ = now_ + 500;
+
+    // lease2: addr2, no id, old user context: updated on check > NONE.
+    lease = leases4[2];
+    ASSERT_TRUE(lease);
+    lease->setContext(user_context_old);
+
+    // lease3: addr3, ids, lower case old user context: always updated.
+    lease = leases4[3];
+    ASSERT_TRUE(lease);
+    lease->relay_id_ = relay_id;
+    lease->remote_id_ = remote_id;
+    lease->setContext(user_context_lower);
+
+    // Lease4: addr4, ids, bad (list) user context: updated on check > NONE.
+    lease = leases4[4];
+    ASSERT_TRUE(lease);
+    lease->relay_id_ = relay_id;
+    lease->remote_id_ = remote_id;
+    lease->setContext(user_context_list);
+
+    // Lease5: addr5, other ids: always updated.
+    lease = leases4[5];
+    ASSERT_TRUE(lease);
+    lease->relay_id_ = relay_id2;
+    lease->remote_id_ = remote_id2;
+    lease->setContext(user_context);
+
+    // Lease6: addr6, ids, bad sub-options: updated on check > FIX.
+    lease = leases4[6];
+    ASSERT_TRUE(lease);
+    lease->relay_id_ = relay_id;
+    lease->remote_id_ = remote_id;
+    lease->setContext(user_context_badsub);
+
+    // Lease7: addr7, ids, extra in ISC: updated on check > STRICT.
+    lease = leases4[7];
+    ASSERT_TRUE(lease);
+    lease->relay_id_ = relay_id;
+    lease->remote_id_ = remote_id;
+    lease->setContext(user_context_extra);
+
+    // Add leases.
+    for (size_t i = 0; i < leases4.size(); ++i) {
+        EXPECT_TRUE(lease_mgr_->addLease(leases4[i]));
+    }
+
+    // Set extended info consistency.
+    CfgMgr::instance().getCurrentCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(check);
+
+    size_t updated;
+    ASSERT_NO_THROW(updated = lease_mgr_->upgradeExtendedInfo(page_size));
+
+    // Verify result.
+    switch (check) {
+    case CfgConsistency::EXTENDED_INFO_CHECK_NONE:
+        // Updated leases: 3, 5.
+        EXPECT_EQ(updated, 2);
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_FIX:
+        // Updated leases: 2, 3, 4, 5.
+        EXPECT_EQ(updated, 4);
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_STRICT:
+        // Updated leases: 2, 3, 4, 5, 6.
+        EXPECT_EQ(updated, 5);
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC:
+    default:
+        // Updated leases: 2, 3, 4, 5, 6, 7.
+        EXPECT_EQ(updated, 6);
+        break;
+    }
+
+    // Verify stored leases.
+    Lease4Collection got;
+    // Use the page version as it returns leases in order.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases4(zero, LeasePageSize(100)));
+    ASSERT_EQ(leases4.size(), got.size());
+
+    // Check lease0.
+    lease = got[0];
+    EXPECT_EQ(*lease, *leases4[0]);
+    EXPECT_EQ(relay_id, lease->relay_id_);
+    EXPECT_EQ(remote_id, lease->remote_id_);
+
+    // Check lease1.
+    lease = got[1];
+    EXPECT_EQ(*lease, *leases4[1]);
+    EXPECT_EQ(relay_id, lease->relay_id_);
+    EXPECT_EQ(remote_id, lease->remote_id_);
+
+    // Check lease2.
+    lease = got[2];
+    Lease4Ptr expected2(new Lease4(*leases4[2]));
+    if (check == CfgConsistency::EXTENDED_INFO_CHECK_NONE) {
+        EXPECT_EQ(*lease, *expected2);
+        EXPECT_TRUE(lease->relay_id_.empty());
+        EXPECT_TRUE(lease->remote_id_.empty());
+    } else {
+        expected2->setContext(user_context);
+        expected2->relay_id_ = relay_id;
+        expected2->remote_id_ = remote_id;
+        EXPECT_EQ(*lease, *expected2);
+        EXPECT_EQ(relay_id, lease->relay_id_);
+        EXPECT_EQ(remote_id, lease->remote_id_);
+    }
+
+    // Check lease3.
+    lease = got[3];
+    Lease4Ptr expected3(new Lease4(*leases4[3]));
+    expected3->relay_id_.clear();
+    expected3->remote_id_.clear();
+    EXPECT_EQ(*lease, *expected3);
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+
+    // Check lease4.
+    lease = got[4];
+    Lease4Ptr expected4(new Lease4(*leases4[4]));
+    if (check == CfgConsistency::EXTENDED_INFO_CHECK_NONE) {
+        EXPECT_EQ(*lease, *expected4);
+        EXPECT_EQ(relay_id, lease->relay_id_);
+        EXPECT_EQ(remote_id, lease->remote_id_);
+    } else {
+        expected4->relay_id_.clear();
+        expected4->remote_id_.clear();
+        expected4->setContext(ElementPtr());
+        EXPECT_EQ(*lease, *expected4);
+        EXPECT_TRUE(lease->relay_id_.empty());
+        EXPECT_TRUE(lease->remote_id_.empty());
+    }
+
+    // Check lease5.
+    lease = got[5];
+    Lease4Ptr expected5(new Lease4(*leases4[5]));
+    expected5->relay_id_ = relay_id;
+    expected5->remote_id_ = remote_id;
+    EXPECT_EQ(*lease, *expected5);
+    EXPECT_EQ(relay_id, lease->relay_id_);
+    EXPECT_EQ(remote_id, lease->remote_id_);
+
+    // Check lease6.
+    lease = got[6];
+    Lease4Ptr expected6(new Lease4(*leases4[6]));
+    if ((check != CfgConsistency::EXTENDED_INFO_CHECK_STRICT) &&
+        (check != CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC)) {
+        EXPECT_EQ(*lease, *expected6);
+        EXPECT_EQ(relay_id, lease->relay_id_);
+        EXPECT_EQ(remote_id, lease->remote_id_);
+    } else {
+        expected6->relay_id_.clear();
+        expected6->remote_id_.clear();
+        expected6->setContext(ElementPtr());
+        EXPECT_EQ(*lease, *expected6);
+        EXPECT_TRUE(lease->relay_id_.empty());
+        EXPECT_TRUE(lease->remote_id_.empty());
+    }
+
+    // Check lease7.
+    lease = got[7];
+    Lease4Ptr expected7(new Lease4(*leases4[7]));
+    if (check != CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC) {
+        EXPECT_EQ(*lease, *expected7);
+        EXPECT_EQ(relay_id, lease->relay_id_);
+        EXPECT_EQ(remote_id, lease->remote_id_);
+    } else {
+        expected7->relay_id_.clear();
+        expected7->remote_id_.clear();
+        expected7->setContext(ElementPtr());
+        EXPECT_EQ(*lease, *expected7);
+        EXPECT_TRUE(lease->relay_id_.empty());
+        EXPECT_TRUE(lease->remote_id_.empty());
+    }
+
+    // Verify getLeases4ByRelayId.
+    Lease4Collection by_relay_id;
+    EXPECT_NO_THROW(by_relay_id =
+                    lease_mgr_->getLeases4ByRelayId(relay_id,
+                                                    zero,
+                                                    LeasePageSize(100)));
+    switch (check) {
+    case CfgConsistency::EXTENDED_INFO_CHECK_NONE:
+        // Got leases: 0, 1, 4, 5, 6, 7.
+        EXPECT_EQ(6, by_relay_id.size());
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_FIX:
+        // Got leases: 0, 1, 2, 5, 6, 7.
+        EXPECT_EQ(6, by_relay_id.size());
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_STRICT:
+        // Got leases: 0, 1, 2, 4, 7.
+        EXPECT_EQ(5, by_relay_id.size());
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC:
+    default:
+        // Got leases: 0, 1, 2, 4.
+        EXPECT_EQ(4, by_relay_id.size());
+        break;
+    }
+
+    // Verify getLeases4ByRemoteId.
+    Lease4Collection by_remote_id;
+    EXPECT_NO_THROW(by_remote_id =
+                    lease_mgr_->getLeases4ByRemoteId(remote_id,
+                                                     zero,
+                                                     LeasePageSize(100)));
+    switch (check) {
+    case CfgConsistency::EXTENDED_INFO_CHECK_NONE:
+        // Got leases: 0, 1, 4, 5, 6, 7.
+        EXPECT_EQ(6, by_remote_id.size());
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_FIX:
+        // Got leases: 0, 1, 2, 5, 6, 7.
+        EXPECT_EQ(6, by_remote_id.size());
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_STRICT:
+        // Got leases: 0, 1, 2, 4, 7.
+        EXPECT_EQ(5, by_remote_id.size());
+        break;
+
+    case CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC:
+    default:
+        // Got leases: 0, 1, 2, 4.
+        EXPECT_EQ(4, by_remote_id.size());
+        break;
+    }
+
+}
+
+TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfoNone) {
+    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_NONE,
+                            LeasePageSize(100));
+}
+
+TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfoFix) {
+    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                            LeasePageSize(100));
+}
+
+TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfoStrict) {
+    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+                            LeasePageSize(100));
+}
+
+TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfoPedantic) {
+    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+                            LeasePageSize(100));
+}
+
+TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo10) {
+    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                            LeasePageSize(10));
+}
+
+TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo5) {
+    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                            LeasePageSize(5));
+}
+
+TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo2) {
+    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                            LeasePageSize(2));
+}
+
+TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo1) {
+    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                            LeasePageSize(1));
 }
 
 }  // namespace

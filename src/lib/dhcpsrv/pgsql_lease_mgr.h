@@ -678,6 +678,7 @@ public:
         GET_LEASE4_HWADDR,           // Get lease4 by HW address
         GET_LEASE4_HWADDR_SUBID,     // Get lease4 by HW address & subnet ID
         GET_LEASE4_PAGE,             // Get page of leases beginning with an address
+        GET_LEASE4_UCTX_PAGE,        // Get page of leases with user context
         GET_LEASE4_SUBID,            // Get IPv4 leases by subnet ID
         GET_LEASE4_HOSTNAME,         // Get IPv4 leases by hostname
         GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
@@ -694,6 +695,7 @@ public:
         GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
         GET_LEASE6_PAGE,             // Get page of leases beginning with an address
+        GET_LEASE6_UCTX_PAGE,        // Get page of leases with user context
         GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_DUID,             // Get IPv6 leases by DUID
         GET_LEASE6_HOSTNAME,         // Get IPv6 leases by hostname
@@ -1072,6 +1074,12 @@ private:
                      uint8_t link_len,
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
+
+    /// @brief Upgrade extended info (v4).
+    ///
+    /// @param page_size The page size used for retrieval.
+    /// @return The number of updates in the database.
+    virtual size_t upgradeExtendedInfo(const LeasePageSize& page_size) override;
 
     /// @brief Build extended info v6 tables.
     ///
