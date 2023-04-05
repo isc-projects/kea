@@ -8,13 +8,11 @@
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_dnr.h>
 
 namespace isc {
 namespace dhcp {
-
-OptionDNR6::OptionDNR6() : Option(V6, D6O_V6_DNR) {
-}
 
 OptionDNR6::OptionDNR6(OptionBufferConstIter begin, OptionBufferConstIter end)
     : Option(V6, D6O_V6_DNR) {
@@ -28,12 +26,51 @@ OptionDNR6::clone() const {
 
 void
 OptionDNR6::pack(util::OutputBuffer& buf, bool check) const {
-    Option::pack(buf, check);
+    packHeader(buf, check);
+
+    buf.writeUint16(service_priority_);
+    // TBD
 }
 
 void
 OptionDNR6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
-    Option::unpack(begin, end);
+    if (std::distance(begin, end) < getMinimalLength()) {
+        isc_throw(OutOfRange, "parsed DHCPv6 Encrypted DNS Option ("
+                              << D6O_V6_DNR << ") data truncated to"
+                              " size " << std::distance(begin, end));
+    }
+    setData(begin, end);
+    // First two octets of Option data is Service Priority - this is mandatory field.
+    service_priority_ = isc::util::readUint16((&*begin), SERVICE_PRIORITY_SIZE);
+    begin += sizeof(service_priority_);
+
+    // Next comes two octets of ADN Length plus the ADN data itself (variable length).
+    // This is Opaque Data Tuple so let's use this class to retrieve the ADN data.
+    OpaqueDataTuple adn_tuple(OpaqueDataTuple::LENGTH_2_BYTES, begin, end);
+    adn_length_ = adn_tuple.getLength();
+    if (adn_length_ > 0) {
+        // Let's try to extract ADN FQDN data
+        isc::util::InputBuffer name_buf(&adn_tuple.getData(),
+                                        adn_length_);
+        try {
+            adn_.reset(new isc::dns::Name(name_buf, true));
+        } catch (const Exception&) {
+            isc_throw(InvalidOptionDNR6DomainName, "failed to parse "
+                                                    "fully qualified domain-name from wire format");
+        }
+    }
+    begin += adn_tuple.getTotalLength();
+
+    if (begin == end) {
+        // ADN only mode, other fields are not included
+        return;
+    }
+    if (std::distance(begin, end) < ADDR_LENGTH_SIZE) {
+        isc_throw(OutOfRange, "truncated DHCPv6 Encrypted DNS Option (" << D6O_V6_DNR << ") - after"
+                              " ADN field, there should be at least 2 bytes long Addr Length field");
+    }
+    addr_length_ = isc::util::readUint16((&*begin), ADDR_LENGTH_SIZE);
+    // TBD
 }
 
 std::string
