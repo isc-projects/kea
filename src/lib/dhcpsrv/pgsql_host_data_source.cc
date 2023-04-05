@@ -1179,10 +1179,9 @@ private:
     static const int DHCP_CLIENT_CLASS_COL = 8;
     static const int DHCP_SUBNET_ID_COL = 9;
     static const int HOST_ID_COL = 10;
-    static const int SCOPE_ID_COL = 11;
 
-    /// @brief Number of columns in the tables holding options.
-    static const size_t OPTION_COLUMNS = 12;
+    /// @brief Number of columns in the option tables holding bindable values.
+    static const size_t OPTION_COLUMNS = 11;
 
 public:
 
@@ -1201,9 +1200,8 @@ public:
         columns_[DHCP_CLIENT_CLASS_COL] = "dhcp_client_class";
         columns_[DHCP_SUBNET_ID_COL] = "dhcp_subnet_id";
         columns_[HOST_ID_COL] = "host_id";
-        columns_[SCOPE_ID_COL] = "scope_id";
 
-        BOOST_STATIC_ASSERT(11 < OPTION_COLUMNS);
+        BOOST_STATIC_ASSERT(11 <= OPTION_COLUMNS);
     }
 
     /// @brief Creates binding array to insert option data into database.

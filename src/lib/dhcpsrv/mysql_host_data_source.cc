@@ -1761,8 +1761,8 @@ private:
 class MySqlOptionExchange {
 private:
 
-    /// @brief Number of columns in the tables holding options.
-    static const size_t OPTION_COLUMNS = 11;
+    /// @brief Number of columns in the option tables holding bindable values.
+    static const size_t OPTION_COLUMNS = 10;
 
 public:
 
@@ -1773,7 +1773,7 @@ public:
           user_context_(), user_context_len_(0), subnet_id_(SUBNET_ID_UNUSED),
           host_id_(0), option_() {
 
-        BOOST_STATIC_ASSERT(10 < OPTION_COLUMNS);
+        BOOST_STATIC_ASSERT(10 <= OPTION_COLUMNS);
     }
 
     /// @brief Creates binding array to insert option data into database.
