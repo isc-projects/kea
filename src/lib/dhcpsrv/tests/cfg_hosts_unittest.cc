@@ -277,6 +277,34 @@ TEST_F(CfgHostsTest, getAll6BySubnet) {
     }
 }
 
+// This test checks that hosts with the same reserved address can be retrieved
+// from the host configuration.
+TEST_F(CfgHostsTest, getAll6ByAddress) {
+    CfgHosts cfg;
+    // Add 25 hosts identified by DUID in the same subnet.
+    for (unsigned i = 0; i < 25; ++i) {
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        SUBNET_ID_UNUSED, SubnetID(1),
+                                        IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:1::1"),
+                                                i % 5)));
+        cfg.add(host);
+    }
+
+    // Try to retrieve all added reservations with IP equals 2001:db8:1::1.
+    auto hosts = cfg.getAll6(IOAddress("2001:db8:1::1"));
+    EXPECT_EQ(5, hosts.size());
+    for (unsigned i = 0; i < 5; ++i) {
+        EXPECT_EQ(1 + 5 * i, hosts[i]->getIPv6SubnetID());
+        IPv6ResrvRange reservations =
+            hosts[i]->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+        ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
+        EXPECT_EQ(IOAddress("2001:db8:1::1"),
+                  reservations.first->second.getPrefix());
+    }
+}
+
 // This test checks that hosts in the same subnet can be retrieved from
 // the host configuration by pages.
 TEST_F(CfgHostsTest, getPage4) {
