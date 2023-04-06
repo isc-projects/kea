@@ -1179,13 +1179,40 @@ CfgHosts::delAll6(const SubnetID& subnet_id) {
 }
 
 bool
-CfgHosts::del6(const SubnetID& /*subnet_id*/,
-               const Host::IdentifierType& /*identifier_type*/,
-               const uint8_t* /*identifier_begin*/,
-               const size_t /*identifier_len*/) {
-    /// @todo: Implement host removal
-    isc_throw(NotImplemented, "sorry, not implemented");
-    return (false);
+CfgHosts::del6(const SubnetID& subnet_id,
+               const Host::IdentifierType& identifier_type,
+               const uint8_t* identifier_begin,
+               const size_t identifier_len) {
+    HostContainerIndex0& idx = hosts_.get<0>();
+    HostContainer6Index3& idx6 = hosts6_.get<3>();
+
+    const auto t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
+                                                          identifier_begin + identifier_len),
+                                                          identifier_type);
+    const auto& range = idx.equal_range(t);    
+    size_t erased_hosts = 0;
+    size_t erased_reservations = 0;
+    for (auto key = range.first; key != range.second;) {
+        if ((*key)->getIPv6SubnetID() != subnet_id) {
+            ++key;
+            // Skip hosts from other subnets.
+            continue;
+        }
+
+        // Delete host.
+        key = idx.erase(key);
+        erased_hosts++;
+        // Delete reservations.
+        erased_reservations += idx6.erase((*key)->getHostId());
+    }
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL6)
+        .arg(erased_hosts)
+        .arg(erased_reservations)
+        .arg(subnet_id)
+        .arg(Host::getIdentifierAsText(identifier_type, identifier_begin, identifier_len));
+
+    return (erased_hosts != 0);
 }
 
 bool

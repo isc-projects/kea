@@ -39,10 +39,17 @@ The third argument is the subnet identifier. The fourth argument is the IP
 address.
 
 % HOSTS_CFG_DEL4 deleted %1 host(s) for subnet id %2 and identifier %3
-This debug message is issued when reservations are deleted for the specified
+This debug message is issued when IPv4 reservations are deleted for the specified
 subnet and identifier. The first argument specifies how many hosts have been
 deleted. The second argument is the subnet identifier. The third argument is 
 the identifier.
+
+% HOSTS_CFG_DEL6 deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and identifier %4
+This debug message is issued when IPv6 reservations are deleted for the
+specified subnet and identifier. The first argument specifies how many hosts
+have been deleted. The second argument specifies how many reservations have
+been deleted. The third argument is the subnet identifier. The fourth argument
+is the identifier.
 
 % HOSTS_CFG_DEL_ALL_SUBNET4 deleted all %1 host(s) for subnet id %2
 This debug message is issued when all IPv4 reservations are deleted for

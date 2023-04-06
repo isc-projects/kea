@@ -503,7 +503,7 @@ TEST_F(CfgHostsTest, deleteForIPv6) {
     {
         HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
                                         SUBNET_ID_UNUSED, subnet_id,
-                                        IOAddress("0.0.0.0")));
+                                        IOAddress::IPV4_ZERO_ADDRESS()));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        increase(IOAddress(address), i)));
         cfg.add(host);
@@ -593,6 +593,65 @@ TEST_F(CfgHostsTest, del4) {
     hosts_by_subnet = cfg.getAll4(subnet_id);
     hosts_by_address = cfg.getAll4(increase(address, host_id));
     host = cfg.get4(subnet_id, Host::IdentifierType::IDENT_DUID,
+                                             &duids_[host_id]->getDuid()[0],
+                                             duids_[host_id]->getDuid().size());
+    EXPECT_EQ((host_count / 2)-1, hosts_by_subnet.size());
+    EXPECT_EQ(host_count / 2, hosts_by_address.size());
+    EXPECT_FALSE(host);
+}
+
+// This test checks that the host and its reservations for the specified IPv6
+// subnet and identifier can be deleted.
+TEST_F(CfgHostsTest, del6) {
+    CfgHosts cfg;
+
+    // Add hosts.
+    size_t host_count = 20;
+    size_t host_id = 5;
+    SubnetID subnet_id(42);
+    IOAddress address("2001:db8:1::1");
+
+    // Add half of the hosts with the same subnet ID but differ with DUID and
+    // address.
+    for (size_t i = 0; i < host_count / 2; i++) {
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        SUBNET_ID_UNUSED, subnet_id,
+                                        IOAddress::IPV4_ZERO_ADDRESS()));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress(address), i)));
+        cfg.add(host);
+    }
+    // Add half of the hosts with the same subnet DUID and address but
+    // differ with address.
+    for (size_t i = 0; i < host_count / 2; i++) {
+        HostPtr host = HostPtr(new Host(duids_[host_id]->toText(), "duid",
+                                        SUBNET_ID_UNUSED, SubnetID(subnet_id + i + 1),
+                                        IOAddress::IPV4_ZERO_ADDRESS()));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(address, host_id)));
+        cfg.add(host);
+    }
+
+
+    // Get all inserted hosts.
+    HostCollection hosts_by_subnet = cfg.getAll6(subnet_id);
+    HostCollection hosts_by_address = cfg.getAll6(increase(address, host_id));
+    HostPtr host = cfg.get6(subnet_id, Host::IdentifierType::IDENT_DUID,
+                                             &duids_[host_id]->getDuid()[0],
+                                             duids_[host_id]->getDuid().size());
+    // Make sure the hosts and IP reservations were added.
+    ASSERT_EQ(host_count / 2, hosts_by_subnet.size());
+    ASSERT_EQ(host_count / 2 + 1, hosts_by_address.size());
+    ASSERT_TRUE(host);
+
+    // Delete one host.
+    EXPECT_TRUE(cfg.del6(subnet_id, Host::IdentifierType::IDENT_DUID,
+                         &duids_[host_id]->getDuid()[0], duids_[host_id]->getDuid().size()));
+    
+    // Check if the host is actually deleted.
+    hosts_by_subnet = cfg.getAll6(subnet_id);
+    hosts_by_address = cfg.getAll6(increase(address, host_id));
+    host = cfg.get6(subnet_id, Host::IdentifierType::IDENT_DUID,
                                              &duids_[host_id]->getDuid()[0],
                                              duids_[host_id]->getDuid().size());
     EXPECT_EQ((host_count / 2)-1, hosts_by_subnet.size());

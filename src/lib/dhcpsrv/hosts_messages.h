@@ -16,6 +16,7 @@ extern const isc::log::MessageID HOSTS_CFG_CACHE_HOST_DATA_SOURCE;
 extern const isc::log::MessageID HOSTS_CFG_CLOSE_HOST_DATA_SOURCE;
 extern const isc::log::MessageID HOSTS_CFG_DEL;
 extern const isc::log::MessageID HOSTS_CFG_DEL4;
+extern const isc::log::MessageID HOSTS_CFG_DEL6;
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET4;
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET6;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL;
