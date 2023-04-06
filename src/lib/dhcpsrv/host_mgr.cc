@@ -128,9 +128,8 @@ HostMgr::getAll(const Host::IdentifierType& identifier_type,
                 const HostMgrOperationTarget target) const {
     ConstHostCollection hosts;
     if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
-        hosts = getCfgHosts()->getAll(identifier_type,
-                                                        identifier_begin,
-                                                        identifier_len);
+        hosts = getCfgHosts()->getAll(identifier_type, identifier_begin,
+                                      identifier_len);
     }
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
         for (auto source : alternate_sources_) {
