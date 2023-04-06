@@ -644,16 +644,16 @@ CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
                   " for a host, specified address was " << address);
     }
     // Search for the Host using the reserved IPv6 address as a key.
-    const HostContainerIndex1& idx = hosts_.get<1>();
-    HostContainerIndex1Range r = idx.equal_range(address);
+    const HostContainer6Index4& idx = hosts6_.get<4>();
+    HostContainer6Index4Range r = idx.equal_range(address);
     // Append each Host object to the storage.
-    for (HostContainerIndex1::iterator host = r.first; host != r.second;
-         ++host) {
+    for (HostContainer6Index4::iterator reservation = r.first; reservation != r.second;
+         ++reservation) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
                   HOSTS_CFG_GET_ALL_ADDRESS6_HOST)
             .arg(address.toText())
-            .arg((*host)->toText());
-        storage.push_back(*host);
+            .arg(reservation->host_->toText());
+        storage.push_back(reservation->host_);
     }
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_ADDRESS6_COUNT)

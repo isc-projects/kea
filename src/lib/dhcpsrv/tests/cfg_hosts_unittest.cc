@@ -284,7 +284,7 @@ TEST_F(CfgHostsTest, getAll6ByAddress) {
     // Add 25 hosts identified by DUID in the same subnet.
     for (unsigned i = 0; i < 25; ++i) {
         HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
-                                        SUBNET_ID_UNUSED, SubnetID(1),
+                                        SUBNET_ID_UNUSED, SubnetID(i+1),
                                         IOAddress("0.0.0.0")));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        increase(IOAddress("2001:db8:1::1"),

@@ -249,6 +249,14 @@ typedef boost::multi_index_container<
             // Index using values returned by the @c Host::getHostId
             boost::multi_index::const_mem_fun<HostResrv6Tuple, uint64_t,
                                               &HostResrv6Tuple::getHostId>
+        >,
+
+        // Fifth index is used to search by the reserved address.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::const_mem_fun<
+                HostResrv6Tuple, const asiolink::IOAddress&,
+                &HostResrv6Tuple::getPrefix
+            >
         >
     >
 > HostContainer6;
@@ -291,6 +299,15 @@ typedef HostContainer6::nth_index<3>::type HostContainer6Index3;
 /// @brief Results range returned using the @c HostContainer6Index3.
 typedef std::pair<HostContainer6Index3::iterator,
                   HostContainer6Index3::iterator> HostContainer6Index3Range;
+
+/// @brief Fifth index type in the @c HostContainer6.
+///
+/// This index allows for searching for @c Host objects using an IP address.
+typedef HostContainer6::nth_index<4>::type HostContainer6Index4;
+
+/// @brief Results range returned using the @c HostContainer6Index4.
+typedef std::pair<HostContainer6Index4::iterator,
+                  HostContainer6Index4::iterator> HostContainer6Index4Range;
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
