@@ -1087,28 +1087,35 @@ CfgHosts::add6(const HostPtr& host) {
 
 bool
 CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
-    size_t erased_host_count = 0;
-    size_t erased_reservation_count = 0;
+    size_t erased_hosts = 0;
+    size_t erased_addresses = 0;
     if (addr.isV4()) {
+        // Delete IPv4 reservation and host.
         HostContainerIndex1& idx = hosts_.get<1>();
-        erased_host_count = idx.erase(addr);
-        erased_reservation_count = erased_host_count;
+        erased_hosts = idx.erase(addr);
+        erased_addresses = erased_hosts;
     } else {
         HostContainer6Index1& idx6 = hosts6_.get<1>();
         HostContainerIndex4& idx = hosts_.get<4>();
 
+        // Delete IPv6 reservations.
         const auto& range = idx6.equal_range(boost::make_tuple(subnet_id, addr));
         idx6.erase(range.first, range.second);
+        erased_addresses = boost::distance(range.first, range.second);
 
+        // Delete hosts.
         for (auto key = range.first; key != range.second; ++key) {
-            erased_reservation_count++;
-            erased_host_count += idx.erase(key->host_->getHostId());
+            erased_hosts += idx.erase(key->host_->getHostId());
         }
     }
 
-    // ToDo: Log message.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL)
+        .arg(erased_hosts)
+        .arg(erased_addresses)
+        .arg(subnet_id)
+        .arg(addr.toText());
 
-    return (erased_host_count != 0);
+    return (erased_hosts != 0);
 }
 
 size_t

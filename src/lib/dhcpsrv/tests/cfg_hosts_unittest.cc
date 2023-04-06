@@ -467,13 +467,10 @@ TEST_F(CfgHostsTest, deleteForIPv4) {
 
     for (size_t i = 0; i < host_count; i++)
     {
-        std::ostringstream s;
-        s << "hostname" << i;
-
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                 "hw-address",
                                 subnet_id, SUBNET_ID_UNUSED,
-                                increase(address, i), s.str())));
+                                increase(address, i))));
     }
 
     // Get all inserted hosts.
@@ -504,13 +501,9 @@ TEST_F(CfgHostsTest, deleteForIPv6) {
 
     for (size_t i = 0; i < host_count; i++)
     {
-        std::ostringstream s;
-        s << "hostname" << i;
-
         HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
                                         SUBNET_ID_UNUSED, subnet_id,
-                                        IOAddress("0.0.0.0"),
-                                        s.str()));
+                                        IOAddress("0.0.0.0")));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        increase(IOAddress(address), i)));
         cfg.add(host);
@@ -521,7 +514,7 @@ TEST_F(CfgHostsTest, deleteForIPv6) {
     auto hostsBySubnetAndAddress = cfg.getAll6(subnet_id, address);
     auto hostsBySubnet = cfg.getAll6(subnet_id);
     // Make sure the hosts and IP reservations were added.
-    EXPECT_EQ(1, hostsBySubnetAndAddress.size());
+    ASSERT_EQ(1, hostsBySubnetAndAddress.size());
     ASSERT_EQ(host_count, hostsBySubnet.size());
     
     // Delete one host.
@@ -532,6 +525,24 @@ TEST_F(CfgHostsTest, deleteForIPv6) {
     hostsBySubnet = cfg.getAll6(subnet_id);
     EXPECT_EQ(0, hostsBySubnetAndAddress.size());
     EXPECT_EQ(host_count-1, hostsBySubnet.size());
+}
+
+// This test checks that false is returned for deleting the IPv4 reservation
+// that doesn't exist.
+TEST_F(CfgHostsTest, deleteForMissingIPv4) {
+    CfgHosts cfg;
+
+    // Delete non-existent host.
+    EXPECT_FALSE(cfg.del(SubnetID(42), IOAddress(("10.0.0.42"))));
+}
+
+// This test checks that false is returned for deleting the IPv6 reservation
+// that doesn't exist.
+TEST_F(CfgHostsTest, deleteForMissingIPv6) {
+    CfgHosts cfg;
+
+    // Delete non-existent host.
+    EXPECT_FALSE(cfg.del(SubnetID(42), IOAddress(("2001:db8:1::1"))));
 }
 
 // This test checks that all reservations for the specified IPv4 subnet can
