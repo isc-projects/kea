@@ -14,16 +14,15 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Exception thrown when invalid domain name is specified.
-class InvalidOptionDNR6DomainName : public Exception {
+class InvalidOptionDnr6DomainName : public Exception {
 public:
-    InvalidOptionDNR6DomainName(const char* file, size_t line,
-                                 const char* what) :
-          isc::Exception(file, line, what) {}
+    InvalidOptionDnr6DomainName(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {
+    }
 };
 
-class OptionDNR6 : public Option {
+class OptionDnr6 : public Option {
 public:
-
     /// @brief Size in octets of Service Priority field
     static const uint8_t SERVICE_PRIORITY_SIZE = 2;
 
@@ -33,23 +32,49 @@ public:
     /// @brief Size in octets of Addr Length field
     static const uint8_t ADDR_LENGTH_SIZE = 2;
 
-    OptionDNR6() : Option(V6, D6O_V6_DNR) {
-          };
-    OptionDNR6(OptionBufferConstIter begin, OptionBufferConstIter end);
+    OptionDnr6(OptionBufferConstIter begin, OptionBufferConstIter end);
     virtual OptionPtr clone() const;
     virtual void pack(util::OutputBuffer& buf, bool check) const;
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
     virtual std::string toText(int indent) const;
     virtual uint16_t len() const;
 
+    /// @brief Getter of the @c service_priority_
+    ///
+    /// @return The priority of this OPTION_V6_DNR instance compared to other instances.
+    uint16_t getServicePriority() const {
+        return service_priority_;
+    }
+
+    /// @brief Getter of the @c adn_length_
+    ///
+    /// @return Length of the authentication-domain-name data in octets.
+    uint16_t getAdnLength() const {
+        return adn_length_;
+    }
+
+    /// @brief Returns the Authentication domain name in the text format.
+    ///
+    /// FQDN data stored in @c adn_ is converted into text format and returned.
+    ///
+    /// @return Authentication domain name in the text format.
+    std::string getAdn() const;
+
+    /// @brief Getter of the @c addr_length_
+    ///
+    /// @return  Length of enclosed IPv6 addresses in octets.
+    uint16_t getAddrLength() const {
+        return addr_length_;
+    }
+
 private:
     /// @brief The priority of this OPTION_V6_DNR instance compared to other instances.
     uint16_t service_priority_;
 
-    /// @brief Length of the authentication-domain-name field in octets.
+    /// @brief Length of the authentication-domain-name data in octets.
     uint16_t adn_length_;
 
-    /// @brief Authentication domain name field of variable length
+    /// @brief Authentication domain name field of variable length.
     ///
     /// Authentication domain name field of variable length holding
     /// a fully qualified domain name of the encrypted DNS resolver.
@@ -72,16 +97,22 @@ private:
     };
 };
 
-class OptionDNR4 : public Option {
+class OptionDnr4 : public Option {
 public:
-    OptionDNR4();
-    OptionDNR4(OptionBufferConstIter begin, OptionBufferConstIter end);
+    OptionDnr4();
+    OptionDnr4(OptionBufferConstIter begin, OptionBufferConstIter end);
     virtual OptionPtr clone() const;
     virtual void pack(util::OutputBuffer& buf, bool check) const;
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
     virtual std::string toText(int indent) const;
     virtual uint16_t len() const;
 };
+
+/// A pointer to the @c OptionDnr6 object.
+typedef boost::shared_ptr<OptionDnr6> OptionDnr6Ptr;
+
+/// A pointer to the @c OptionDnr4 object.
+typedef boost::shared_ptr<OptionDnr4> OptionDnr4Ptr;
 
 }  // namespace dhcp
 }  // namespace isc

@@ -14,18 +14,18 @@
 namespace isc {
 namespace dhcp {
 
-OptionDNR6::OptionDNR6(OptionBufferConstIter begin, OptionBufferConstIter end)
-    : Option(V6, D6O_V6_DNR) {
+OptionDnr6::OptionDnr6(OptionBufferConstIter begin, OptionBufferConstIter end)
+    : Option(V6, D6O_V6_DNR), addr_length_(0) {
     unpack(begin, end);
 }
 
 OptionPtr
-OptionDNR6::clone() const {
+OptionDnr6::clone() const {
     return Option::clone();
 }
 
 void
-OptionDNR6::pack(util::OutputBuffer& buf, bool check) const {
+OptionDnr6::pack(util::OutputBuffer& buf, bool check) const {
     packHeader(buf, check);
 
     buf.writeUint16(service_priority_);
@@ -33,7 +33,7 @@ OptionDNR6::pack(util::OutputBuffer& buf, bool check) const {
 }
 
 void
-OptionDNR6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
+OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     if (std::distance(begin, end) < getMinimalLength()) {
         isc_throw(OutOfRange, "parsed DHCPv6 Encrypted DNS Option ("
                               << D6O_V6_DNR << ") data truncated to"
@@ -50,13 +50,13 @@ OptionDNR6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     adn_length_ = adn_tuple.getLength();
     if (adn_length_ > 0) {
         // Let's try to extract ADN FQDN data
-        isc::util::InputBuffer name_buf(&adn_tuple.getData(),
-                                        adn_length_);
+        isc::util::InputBuffer name_buf(&adn_tuple.getData()[0], adn_length_);
         try {
             adn_.reset(new isc::dns::Name(name_buf, true));
-        } catch (const Exception&) {
-            isc_throw(InvalidOptionDNR6DomainName, "failed to parse "
-                                                    "fully qualified domain-name from wire format");
+        } catch (const Exception& ex) {
+            isc_throw(InvalidOptionDnr6DomainName, "failed to parse "
+                                                   "fully qualified domain-name from wire format "
+                                                   "- " << ex.what());
         }
     }
     begin += adn_tuple.getTotalLength();
@@ -74,45 +74,53 @@ OptionDNR6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
 }
 
 std::string
-OptionDNR6::toText(int indent) const {
+OptionDnr6::toText(int indent) const {
     return Option::toText(indent);
 }
 
 uint16_t
-OptionDNR6::len() const {
+OptionDnr6::len() const {
     return Option::len();
 }
 
-OptionDNR4::OptionDNR4() : Option(V4, DHO_V4_DNR) {
+std::string
+OptionDnr6::getAdn() const {
+    if (adn_) {
+        return adn_->toText();
+    }
+    return "";
 }
 
-OptionDNR4::OptionDNR4(OptionBufferConstIter begin, OptionBufferConstIter end)
+OptionDnr4::OptionDnr4() : Option(V4, DHO_V4_DNR) {
+}
+
+OptionDnr4::OptionDnr4(OptionBufferConstIter begin, OptionBufferConstIter end)
     : Option(V4, DHO_V4_DNR) {
     unpack(begin, end);
 }
 
 OptionPtr
-OptionDNR4::clone() const {
+OptionDnr4::clone() const {
     return Option::clone();
 }
 
 void
-OptionDNR4::pack(util::OutputBuffer& buf, bool check) const {
+OptionDnr4::pack(util::OutputBuffer& buf, bool check) const {
     Option::pack(buf, check);
 }
 
 void
-OptionDNR4::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
+OptionDnr4::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     Option::unpack(begin, end);
 }
 
 std::string
-OptionDNR4::toText(int indent) const {
+OptionDnr4::toText(int indent) const {
     return Option::toText(indent);
 }
 
 uint16_t
-OptionDNR4::len() const {
+OptionDnr4::len() const {
     return Option::len();
 }
 

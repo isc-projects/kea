@@ -367,7 +367,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "v4-portparams", DHO_V4_PORTPARAMS, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE,
       false, RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
     { "v4-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, OPT_BINARY_TYPE,
-     true, NO_RECORD_DEF, "" },
+     false, NO_RECORD_DEF, "" },
     { "option-6rd", DHO_6RD, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE, true,
       RECORD_DEF(OPT_6RD_RECORDS), "" },
     { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, DHCP4_OPTION_SPACE,
