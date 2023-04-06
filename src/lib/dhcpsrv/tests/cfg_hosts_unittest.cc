@@ -687,6 +687,22 @@ TEST_F(CfgHostsTest, del6) {
     EXPECT_FALSE(host);
 }
 
+// This test checks that false is returned for deleting the IPv4 host that
+// doesn't exist.
+TEST_F(CfgHostsTest, del4MissingHost) {
+    CfgHosts cfg;
+    EXPECT_FALSE(cfg.del4(SubnetID(42), Host::IdentifierType::IDENT_DUID,
+                         &duids_[0]->getDuid()[0], duids_[0]->getDuid().size()));
+}
+
+// This test checks that false is returned for deleting the IPv6 host that
+// doesn't exist.
+TEST_F(CfgHostsTest, del6MissingHost) {
+    CfgHosts cfg;
+    EXPECT_FALSE(cfg.del6(SubnetID(42), Host::IdentifierType::IDENT_DUID,
+                         &duids_[0]->getDuid()[0], duids_[0]->getDuid().size()));
+}
+
 // This test checks that all reservations for the specified IPv4 subnet can
 // be deleted.
 TEST_F(CfgHostsTest, deleteAll4) {
