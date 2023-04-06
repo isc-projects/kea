@@ -14,6 +14,7 @@ extern const isc::log::MessageID HOSTS_CFG_ADD_HOST = "HOSTS_CFG_ADD_HOST";
 extern const isc::log::MessageID HOSTS_CFG_CACHE_HOST_DATA_SOURCE = "HOSTS_CFG_CACHE_HOST_DATA_SOURCE";
 extern const isc::log::MessageID HOSTS_CFG_CLOSE_HOST_DATA_SOURCE = "HOSTS_CFG_CLOSE_HOST_DATA_SOURCE";
 extern const isc::log::MessageID HOSTS_CFG_DEL = "HOSTS_CFG_DEL";
+extern const isc::log::MessageID HOSTS_CFG_DEL4 = "HOSTS_CFG_DEL4";
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET4 = "HOSTS_CFG_DEL_ALL_SUBNET4";
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET6 = "HOSTS_CFG_DEL_ALL_SUBNET6";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL = "HOSTS_CFG_GET_ALL";
@@ -87,6 +88,7 @@ const char* values[] = {
     "HOSTS_CFG_CACHE_HOST_DATA_SOURCE", "get host cache data source: %1",
     "HOSTS_CFG_CLOSE_HOST_DATA_SOURCE", "Closing host data source: %1",
     "HOSTS_CFG_DEL", "deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and address %4",
+    "HOSTS_CFG_DEL4", "deleted %1 host(s) for subnet id %2 and identifier %3",
     "HOSTS_CFG_DEL_ALL_SUBNET4", "deleted all %1 host(s) for subnet id %2",
     "HOSTS_CFG_DEL_ALL_SUBNET6", "deleted all %1 host(s) having %2 IPv6 reservation(s) for subnet id %3",
     "HOSTS_CFG_GET_ALL", "get all hosts with reservations",

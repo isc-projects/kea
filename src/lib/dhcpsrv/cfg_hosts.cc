@@ -1131,13 +1131,33 @@ CfgHosts::delAll4(const SubnetID& subnet_id) {
 }
 
 bool
-CfgHosts::del4(const SubnetID& /*subnet_id*/,
-               const Host::IdentifierType& /*identifier_type*/,
-               const uint8_t* /*identifier_begin*/,
-               const size_t /*identifier_len*/) {
-    /// @todo: Implement host removal
-    isc_throw(NotImplemented, "sorry, not implemented");
-    return (false);
+CfgHosts::del4(const SubnetID& subnet_id,
+               const Host::IdentifierType& identifier_type,
+               const uint8_t* identifier_begin,
+               const size_t identifier_len) {
+    HostContainerIndex0& idx = hosts_.get<0>();
+    const auto t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
+                                                    identifier_begin + identifier_len),
+                                                    identifier_type);
+    const auto& range = idx.equal_range(t);    
+    size_t erased = 0;
+    for (auto key = range.first; key != range.second;) {
+        if ((*key)->getIPv4SubnetID() != subnet_id) {
+            ++key;
+            // Skip hosts from other subnets.
+            continue;
+        }
+
+        key = idx.erase(key);
+        erased++;
+    }
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL4)
+        .arg(erased)
+        .arg(subnet_id)
+        .arg(Host::getIdentifierAsText(identifier_type, identifier_begin, identifier_len));
+
+    return (erased != 0);
 }
 
 size_t

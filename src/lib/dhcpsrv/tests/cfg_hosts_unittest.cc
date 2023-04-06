@@ -474,20 +474,20 @@ TEST_F(CfgHostsTest, deleteForIPv4) {
     }
 
     // Get all inserted hosts.
-    HostCollection hostsBySubnet = cfg.getAll4(subnet_id);
-    HostCollection hostsByAddress = cfg.getAll4(address);
+    HostCollection hosts_by_subnet = cfg.getAll4(subnet_id);
+    HostCollection hosts_by_address = cfg.getAll4(address);
     // Make sure the hosts and IP reservations were added.
-    ASSERT_EQ(host_count, hostsBySubnet.size());
-    ASSERT_EQ(1, hostsByAddress.size());
+    ASSERT_EQ(host_count, hosts_by_subnet.size());
+    ASSERT_EQ(1, hosts_by_address.size());
     
     // Delete one host.
     EXPECT_TRUE(cfg.del(subnet_id, address));
 
     // Check if the host is actually deleted.
-    hostsBySubnet = cfg.getAll4(subnet_id);
-    hostsByAddress = cfg.getAll4(address);
-    EXPECT_EQ(host_count-1, hostsBySubnet.size());
-    EXPECT_EQ(0, hostsByAddress.size());
+    hosts_by_subnet = cfg.getAll4(subnet_id);
+    hosts_by_address = cfg.getAll4(address);
+    EXPECT_EQ(host_count-1, hosts_by_subnet.size());
+    EXPECT_EQ(0, hosts_by_address.size());
 }
 
 // This test checks that the IPv6 reservation for the specified subnet ID and
@@ -511,20 +511,20 @@ TEST_F(CfgHostsTest, deleteForIPv6) {
     
 
     // Get all inserted hosts.
-    auto hostsBySubnetAndAddress = cfg.getAll6(subnet_id, address);
-    auto hostsBySubnet = cfg.getAll6(subnet_id);
+    auto hosts_by_subnet_and_address = cfg.getAll6(subnet_id, address);
+    auto hosts_by_subnet = cfg.getAll6(subnet_id);
     // Make sure the hosts and IP reservations were added.
-    ASSERT_EQ(1, hostsBySubnetAndAddress.size());
-    ASSERT_EQ(host_count, hostsBySubnet.size());
+    ASSERT_EQ(1, hosts_by_subnet_and_address.size());
+    ASSERT_EQ(host_count, hosts_by_subnet.size());
     
     // Delete one host.
     EXPECT_TRUE(cfg.del(subnet_id, address));
 
     // Check if the host is actually deleted.
-    hostsBySubnetAndAddress = cfg.getAll6(subnet_id, address);
-    hostsBySubnet = cfg.getAll6(subnet_id);
-    EXPECT_EQ(0, hostsBySubnetAndAddress.size());
-    EXPECT_EQ(host_count-1, hostsBySubnet.size());
+    hosts_by_subnet_and_address = cfg.getAll6(subnet_id, address);
+    hosts_by_subnet = cfg.getAll6(subnet_id);
+    EXPECT_EQ(0, hosts_by_subnet_and_address.size());
+    EXPECT_EQ(host_count-1, hosts_by_subnet.size());
 }
 
 // This test checks that false is returned for deleting the IPv4 reservation
@@ -543,6 +543,61 @@ TEST_F(CfgHostsTest, deleteForMissingIPv6) {
 
     // Delete non-existent host.
     EXPECT_FALSE(cfg.del(SubnetID(42), IOAddress(("2001:db8:1::1"))));
+}
+
+// This test checks that the reservation for the specified IPv4 subnet and
+// identifier can be deleted.
+TEST_F(CfgHostsTest, del4) {
+    CfgHosts cfg;
+
+    // Add hosts.
+    size_t host_count = 20;
+    size_t host_id = 5;
+    SubnetID subnet_id(42);
+    IOAddress address("10.0.0.1");
+
+    // Add half of the hosts with the same subnet ID but differ with DUID and
+    // address.
+    for (size_t i = 0; i < host_count / 2; i++) {
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        subnet_id, SUBNET_ID_UNUSED,
+                                        increase(address, i)));
+        cfg.add(host);
+    }
+    // Add half of the hosts with the same subnet DUID and address but
+    // differ with address.
+    for (size_t i = 0; i < host_count / 2; i++) {
+        HostPtr host = HostPtr(new Host(duids_[host_id]->toText(), "duid",
+                                        SubnetID(subnet_id + i + 1), SUBNET_ID_UNUSED,
+                                        increase(address, host_id)));
+        cfg.add(host);
+    }
+
+
+    // Get all inserted hosts.
+    HostCollection hosts_by_subnet = cfg.getAll4(subnet_id);
+    HostCollection hosts_by_address = cfg.getAll4(increase(address, host_id));
+    HostPtr host = cfg.get4(subnet_id, Host::IdentifierType::IDENT_DUID,
+                                             &duids_[host_id]->getDuid()[0],
+                                             duids_[host_id]->getDuid().size());
+    // Make sure the hosts and IP reservations were added.
+    ASSERT_EQ(host_count / 2, hosts_by_subnet.size());
+    ASSERT_EQ(host_count / 2 + 1, hosts_by_address.size());
+    ASSERT_TRUE(host);
+
+    // Delete one host.
+    EXPECT_TRUE(cfg.del4(subnet_id, Host::IdentifierType::IDENT_DUID,
+                         &duids_[host_id]->getDuid()[0], duids_[host_id]->getDuid().size()));
+    
+    // Check if the host is actually deleted.
+    hosts_by_subnet = cfg.getAll4(subnet_id);
+    hosts_by_address = cfg.getAll4(increase(address, host_id));
+    host = cfg.get4(subnet_id, Host::IdentifierType::IDENT_DUID,
+                                             &duids_[host_id]->getDuid()[0],
+                                             duids_[host_id]->getDuid().size());
+    EXPECT_EQ((host_count / 2)-1, hosts_by_subnet.size());
+    EXPECT_EQ(host_count / 2, hosts_by_address.size());
+    EXPECT_FALSE(host);
 }
 
 // This test checks that all reservations for the specified IPv4 subnet can
