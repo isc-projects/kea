@@ -75,6 +75,7 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         // ADN only mode, other fields are not included.
         return;
     }
+    adn_only_mode_ = false;
     if (std::distance(begin, end) < ADDR_LENGTH_SIZE) {
         isc_throw(OutOfRange, "DHCPv6 Encrypted DNS Option (" << type_ << ") malformed: after"
                               " ADN field, there should be at least "
@@ -99,6 +100,7 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
 
     // SvcParams (variable length) field is last
     svc_params_length_ = std::distance(begin, end);
+    // TBD svcParams unpack
 }
 
 std::string
@@ -108,15 +110,18 @@ OptionDnr6::toText(int indent) const {
 
 uint16_t
 OptionDnr6::len() const {
-    return Option::len();
+    return adn_only_mode_ ?
+               (OPTION6_HDR_LEN + SERVICE_PRIORITY_SIZE + adn_length_ + ADN_LENGTH_SIZE) :
+               (OPTION6_HDR_LEN + SERVICE_PRIORITY_SIZE + adn_length_ + ADN_LENGTH_SIZE +
+                addr_length_ + ADDR_LENGTH_SIZE + svc_params_length_);
 }
 
 std::string
 OptionDnr6::getAdn() const {
     if (adn_) {
-        return adn_->toText();
+        return (adn_->toText());
     }
-    return "";
+    return ("");
 }
 
 OptionDnr4::OptionDnr4() : Option(V4, DHO_V4_DNR) {

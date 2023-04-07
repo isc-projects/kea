@@ -47,14 +47,14 @@ public:
     ///
     /// @return The priority of this OPTION_V6_DNR instance compared to other instances.
     uint16_t getServicePriority() const {
-        return service_priority_;
+        return (service_priority_);
     }
 
     /// @brief Getter of the @c adn_length_
     ///
     /// @return Length of the authentication-domain-name data in octets.
     uint16_t getAdnLength() const {
-        return adn_length_;
+        return (adn_length_);
     }
 
     /// @brief Returns the Authentication domain name in the text format.
@@ -68,14 +68,14 @@ public:
     ///
     /// @return  Length of enclosed IPv6 addresses in octets.
     uint16_t getAddrLength() const {
-        return addr_length_;
+        return (addr_length_);
     }
 
     /// @brief Getter of the @c svc_params_length_
     ///
     /// @return Length of Service Parameters field in octets.
     uint16_t getSvcParamsLength() const {
-        return svc_params_length_;
+        return (svc_params_length_);
     }
 
     /// @brief Returns vector with addresses.
@@ -87,7 +87,7 @@ public:
     ///
     /// @return address container with addresses
     AddressContainer getAddresses() const {
-        return ipv6_addresses_;
+        return (ipv6_addresses_);
     }
 
 private:
@@ -115,6 +115,8 @@ private:
 
     /// @brief Length of Service Parameters field in octets.
     uint16_t svc_params_length_ = 0;
+
+    bool adn_only_mode_ = true;
 
     /// @brief Returns minimal length of the option data (without headers) in octets.
     ///
