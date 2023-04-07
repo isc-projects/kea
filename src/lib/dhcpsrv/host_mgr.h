@@ -65,7 +65,7 @@ enum HostMgrOperationTarget {
 /// the use of alternate datasources, e.g. as a result of server's
 /// reconfiguration. However, the use of the primary host data source (i.e.
 /// reservations specified in the configuration file) can't be disabled.
-class HostMgr : public boost::noncopyable {
+class HostMgr : public boost::noncopyable, public BaseHostDataSource {
 public:
 
     /// @brief Creates new instance of the @c HostMgr.
@@ -152,7 +152,14 @@ public:
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
            const size_t identifier_len,
-           const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+           const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAll compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAll(const Host::IdentifierType& identifier_type,
+           const uint8_t* identifier_begin,
+           const size_t identifier_len) const;
 
     /// @brief Return all hosts in a DHCPv4 subnet.
     ///
@@ -171,7 +178,12 @@ public:
     ///
     /// @return Collection of const @c Host objects.
     ConstHostCollection
-    getAll4(const SubnetID& subnet_id, const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+    getAll4(const SubnetID& subnet_id, const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAll4 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts in a DHCPv6 subnet.
     ///
@@ -191,7 +203,12 @@ public:
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAll6(const SubnetID& subnet_id,
-            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+            const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAll6 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts with a hostname.
     ///
@@ -204,7 +221,12 @@ public:
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAllbyHostname(const std::string& hostname,
-                     const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+                     const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAllbyHostname compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAllbyHostname(const std::string& hostname) const;
 
     /// @brief Return all hosts with a hostname in a DHCPv4 subnet.
     ///
@@ -218,7 +240,12 @@ public:
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id,
-                      const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+                      const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAllbyHostname4 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts with a hostname in a DHCPv6 subnet.
     ///
@@ -232,7 +259,12 @@ public:
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id,
-                      const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+                      const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAllbyHostname6 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id) const;
 
     /// @brief Returns range of hosts in a DHCPv4 subnet.
     ///
@@ -258,7 +290,7 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Host collection (may be empty).
-    ConstHostCollection
+    virtual ConstHostCollection
     getPage4(const SubnetID& subnet_id,
              size_t& source_index,
              uint64_t lower_host_id,
@@ -288,7 +320,7 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Host collection (may be empty).
-    ConstHostCollection
+    virtual ConstHostCollection
     getPage6(const SubnetID& subnet_id,
              size_t& source_index,
              uint64_t lower_host_id,
@@ -316,7 +348,7 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Host collection (may be empty).
-    ConstHostCollection
+    virtual ConstHostCollection
     getPage4(size_t& source_index,
              uint64_t lower_host_id,
              const HostPageSize& page_size) const;
@@ -343,7 +375,7 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Host collection (may be empty).
-    ConstHostCollection
+    virtual ConstHostCollection
     getPage6(size_t& source_index,
              uint64_t lower_host_id,
              const HostPageSize& page_size) const;
@@ -364,7 +396,12 @@ public:
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAll4(const asiolink::IOAddress& address,
-            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+            const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAll4 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAll4(const asiolink::IOAddress& address) const;
 
     /// @brief Returns any host connected to the IPv4 subnet.
     ///
@@ -387,7 +424,15 @@ public:
             const Host::IdentifierType& identifier_type,
             const uint8_t* identifier_begin,
             const size_t identifier_len,
-            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+            const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::get4Any compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostPtr
+    get4Any(const SubnetID& subnet_id,
+            const Host::IdentifierType& identifier_type,
+            const uint8_t* identifier_begin,
+            const size_t identifier_len) const;
 
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
@@ -406,7 +451,13 @@ public:
     ConstHostPtr
     get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len,
-         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+         const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::get4 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostPtr
+    get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len) const;
 
     /// @brief Returns a host connected to the IPv4 subnet and having
     /// a reservation for a specified IPv4 address.
@@ -422,7 +473,12 @@ public:
     /// @return Const @c Host object using a specified IPv4 address.
     ConstHostPtr
     get4(const SubnetID& subnet_id, const asiolink::IOAddress& address,
-         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+         const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::get4 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostPtr
+    get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
 
     /// @brief Returns all hosts connected to the IPv4 subnet and having
     /// a reservation for a specified address.
@@ -451,7 +507,13 @@ public:
     ConstHostCollection
     getAll4(const SubnetID& subnet_id,
             const asiolink::IOAddress& address,
-            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+            const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAll4 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id,
+            const asiolink::IOAddress& address) const;
 
     /// @brief Returns any host connected to the IPv6 subnet.
     ///
@@ -474,7 +536,15 @@ public:
             const Host::IdentifierType& identifier_type,
             const uint8_t* identifier_begin,
             const size_t identifier_len,
-            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+            const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::get6Any compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostPtr
+    get6Any(const SubnetID& subnet_id,
+            const Host::IdentifierType& identifier_type,
+            const uint8_t* identifier_begin,
+            const size_t identifier_len) const;
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
@@ -493,7 +563,13 @@ public:
     ConstHostPtr
     get6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len,
-         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+         const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::get6 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len) const;
 
     /// @brief Returns a host using the specified IPv6 prefix.
     ///
@@ -507,7 +583,12 @@ public:
     /// @return Const @c Host object using a specified IPv6 prefix.
     ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
-         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+         const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::get6 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostPtr
+    get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
     /// @brief Returns a host from specific subnet and reserved address.
     ///
@@ -518,7 +599,12 @@ public:
     /// @return Const @c host object that has a reservation for specified address.
     ConstHostPtr
     get6(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
-         const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+         const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::get6 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& addr) const;
 
     /// @brief Returns all hosts connected to the IPv6 subnet and having
     /// a reservation for a specified address or delegated prefix (lease).
@@ -547,7 +633,13 @@ public:
     ConstHostCollection
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address,
-            const HostMgrOperationTarget target=HostMgrOperationTarget::ALL_SOURCES) const;
+            const HostMgrOperationTarget target) const;
+
+    /// @brief The @c HostMgr::getAll6 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id,
+            const asiolink::IOAddress& address) const;
 
     /// @brief Adds a new host to the alternate data source.
     ///
@@ -556,8 +648,11 @@ public:
     ///
     /// @param host Pointer to the new @c Host object being added.
     /// @param target The host data source being a target of the operation.
-    void add(const HostPtr& host,
-             const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
+    void add(const HostPtr& host, const HostMgrOperationTarget target);
+
+    /// @brief The @c HostMgr::add compatible with @c BaseHostDataSource
+    /// interfaces. Operates on alternate host sources only.
+    virtual void add(const HostPtr& host);
 
     /// @brief Attempts to delete hosts by address.
     ///
@@ -573,7 +668,11 @@ public:
     /// @param target The host data source being a target of the operation.
     /// @return true if deletion was successful, false otherwise.
     bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
-             const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
+             const HostMgrOperationTarget target);
+
+    /// @brief The @c HostMgr::del compatible with @c BaseHostDataSource
+    /// interfaces. Operates on alternate host sources only.
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
 
     /// @brief Attempts to delete a host by (subnet4-id, identifier,
     /// identifier-type, operation-target)
@@ -590,7 +689,13 @@ public:
     bool
     del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len,
-         const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
+         const HostMgrOperationTarget target);
+
+    /// @brief The @c HostMgr::del4 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on alternate host sources only.
+    virtual bool
+    del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len);
 
     /// @brief Attempts to delete a host by (subnet6-id, identifier,
     /// identifier-type, operation-target)
@@ -607,7 +712,13 @@ public:
     bool
     del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len,
-         const HostMgrOperationTarget target=HostMgrOperationTarget::ALTERNATE_SOURCES);
+         const HostMgrOperationTarget target);
+
+    /// @brief The @c HostMgr::del6 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on alternate host sources only.
+    virtual bool
+    del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len);
 
     /// @brief Implements @ref BaseHostDataSource::update() for alternate sources.
     ///
@@ -621,7 +732,7 @@ public:
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
     ///
     /// @return Type of the backend.
-    std::string getType() const {
+    virtual std::string getType() const {
         return (std::string("host_mgr"));
     }
 
@@ -682,7 +793,7 @@ public:
     /// unique or can be non-unique.
     /// @return true if the new setting was accepted by the backend or false
     /// otherwise.
-    bool setIPReservationsUnique(const bool unique);
+    virtual bool setIPReservationsUnique(const bool unique);
 
     /// @brief Returns the boolean flag indicating if the IP reservations
     /// must be unique or can be non-unique.
@@ -724,7 +835,7 @@ protected:
     /// @brief Cache an answer.
     ///
     /// @param host Pointer to the missed host.
-    void cache(ConstHostPtr host) const;
+    virtual void cache(ConstHostPtr host) const;
 
     /// @brief Cache a negative answer.
     ///
@@ -733,7 +844,7 @@ protected:
     /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a beginning of the Identifier.
     /// @param identifier_len Identifier length.
-    void cacheNegative(const SubnetID& ipv4_subnet_id,
+    virtual void cacheNegative(const SubnetID& ipv4_subnet_id,
                                const SubnetID& ipv6_subnet_id,
                                const Host::IdentifierType& identifier_type,
                                const uint8_t* identifier_begin,

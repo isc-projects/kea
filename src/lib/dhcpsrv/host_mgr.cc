@@ -142,6 +142,14 @@ HostMgr::getAll(const Host::IdentifierType& identifier_type,
 }
 
 ConstHostCollection
+HostMgr::getAll(const Host::IdentifierType& identifier_type,
+                const uint8_t* identifier_begin,
+                const size_t identifier_len) const {
+    return getAll(identifier_type, identifier_begin, identifier_len, 
+                  HostMgrOperationTarget::ALL_SOURCES);
+}
+
+ConstHostCollection
 HostMgr::getAll4(const SubnetID& subnet_id, const HostMgrOperationTarget target) const {
     ConstHostCollection hosts;
     if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
@@ -156,6 +164,10 @@ HostMgr::getAll4(const SubnetID& subnet_id, const HostMgrOperationTarget target)
     return (hosts);
 }
 
+ConstHostCollection
+HostMgr::getAll4(const SubnetID& subnet_id) const {
+    return getAll4(subnet_id, HostMgrOperationTarget::ALL_SOURCES);
+}
 
 ConstHostCollection
 HostMgr::getAll6(const SubnetID& subnet_id, const HostMgrOperationTarget target) const {
@@ -173,6 +185,11 @@ HostMgr::getAll6(const SubnetID& subnet_id, const HostMgrOperationTarget target)
 }
 
 ConstHostCollection
+HostMgr::getAll6(const SubnetID& subnet_id) const {
+    return getAll6(subnet_id, HostMgrOperationTarget::ALL_SOURCES);
+}
+
+ConstHostCollection
 HostMgr::getAllbyHostname(const std::string& hostname, const HostMgrOperationTarget target) const {
     ConstHostCollection hosts;
     if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
@@ -185,6 +202,11 @@ HostMgr::getAllbyHostname(const std::string& hostname, const HostMgrOperationTar
         }
     }
     return (hosts);
+}
+
+ConstHostCollection
+HostMgr::getAllbyHostname(const std::string& hostname) const {
+    return getAllbyHostname(hostname, HostMgrOperationTarget::ALL_SOURCES);
 }
 
 ConstHostCollection
@@ -206,6 +228,12 @@ HostMgr::getAllbyHostname4(const std::string& hostname,
 }
 
 ConstHostCollection
+HostMgr::getAllbyHostname4(const std::string& hostname,
+                           const SubnetID& subnet_id) const {
+    return getAllbyHostname4(hostname, subnet_id, HostMgrOperationTarget::ALL_SOURCES);
+}
+
+ConstHostCollection
 HostMgr::getAllbyHostname6(const std::string& hostname,
                            const SubnetID& subnet_id,
                            const HostMgrOperationTarget target) const {
@@ -221,6 +249,12 @@ HostMgr::getAllbyHostname6(const std::string& hostname,
         }
     }
     return (hosts);
+}
+
+ConstHostCollection
+HostMgr::getAllbyHostname6(const std::string& hostname,
+                           const SubnetID& subnet_id) const {
+    return getAllbyHostname6(hostname, subnet_id, HostMgrOperationTarget::ALL_SOURCES);
 }
 
 ConstHostCollection
@@ -360,6 +394,11 @@ HostMgr::getAll4(const IOAddress& address, const HostMgrOperationTarget target) 
     return (hosts);
 }
 
+ConstHostCollection
+HostMgr::getAll4(const IOAddress& address) const {
+    return getAll4(address, HostMgrOperationTarget::ALL_SOURCES);
+}
+
 ConstHostPtr
 HostMgr::get4Any(const SubnetID& subnet_id,
                  const Host::IdentifierType& identifier_type,
@@ -416,6 +455,15 @@ HostMgr::get4Any(const SubnetID& subnet_id,
 }
 
 ConstHostPtr
+HostMgr::get4Any(const SubnetID& subnet_id,
+                 const Host::IdentifierType& identifier_type,
+                 const uint8_t* identifier_begin,
+                 const size_t identifier_len) const {
+    return get4Any(subnet_id, identifier_type, identifier_begin, identifier_len,
+                   HostMgrOperationTarget::ALL_SOURCES);
+}
+
+ConstHostPtr
 HostMgr::get4(const SubnetID& subnet_id,
               const Host::IdentifierType& identifier_type,
               const uint8_t* identifier_begin,
@@ -430,6 +478,15 @@ HostMgr::get4(const SubnetID& subnet_id,
                       identifier_type, identifier_begin, identifier_len);
     }
     return (host);
+}
+
+ConstHostPtr
+HostMgr::get4(const SubnetID& subnet_id,
+              const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin,
+              const size_t identifier_len) const {
+    return get4(subnet_id, identifier_type, identifier_begin, identifier_len,
+                HostMgrOperationTarget::ALL_SOURCES);
 }
 
 ConstHostPtr
@@ -463,6 +520,12 @@ HostMgr::get4(const SubnetID& subnet_id,
     return (ConstHostPtr());
 }
 
+ConstHostPtr
+HostMgr::get4(const SubnetID& subnet_id,
+              const asiolink::IOAddress& address) const {
+    return get4(subnet_id, address, HostMgrOperationTarget::ALL_SOURCES);
+}
+
 ConstHostCollection
 HostMgr::getAll4(const SubnetID& subnet_id,
                  const asiolink::IOAddress& address,
@@ -484,6 +547,12 @@ HostMgr::getAll4(const SubnetID& subnet_id,
         }
     }
     return (hosts);
+}
+
+ConstHostCollection
+HostMgr::getAll4(const SubnetID& subnet_id,
+                 const asiolink::IOAddress& address) const {
+    return getAll4(subnet_id, address, HostMgrOperationTarget::ALL_SOURCES);
 }
 
 ConstHostPtr
@@ -512,6 +581,11 @@ HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len,
         }
     }
     return (ConstHostPtr());
+}
+
+ConstHostPtr
+HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
+    return get6(prefix, prefix_len, HostMgrOperationTarget::ALL_SOURCES);
 }
 
 ConstHostPtr
@@ -566,6 +640,15 @@ HostMgr::get6Any(const SubnetID& subnet_id,
 }
 
 ConstHostPtr
+HostMgr::get6Any(const SubnetID& subnet_id,
+                 const Host::IdentifierType& identifier_type,
+                 const uint8_t* identifier_begin,
+                 const size_t identifier_len) const {
+    return get6Any(subnet_id, identifier_type, identifier_begin, identifier_len,
+                   HostMgrOperationTarget::ALL_SOURCES);
+}
+
+ConstHostPtr
 HostMgr::get6(const SubnetID& subnet_id,
               const Host::IdentifierType& identifier_type,
               const uint8_t* identifier_begin,
@@ -580,6 +663,15 @@ HostMgr::get6(const SubnetID& subnet_id,
                       identifier_type, identifier_begin, identifier_len);
     }
     return (host);
+}
+
+ConstHostPtr
+HostMgr::get6(const SubnetID& subnet_id,
+              const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin,
+              const size_t identifier_len) const {
+    return get6(subnet_id, identifier_type, identifier_begin, identifier_len,
+                HostMgrOperationTarget::ALL_SOURCES);
 }
 
 ConstHostPtr
@@ -612,6 +704,12 @@ HostMgr::get6(const SubnetID& subnet_id,
     return (ConstHostPtr());
 }
 
+ConstHostPtr
+HostMgr::get6(const SubnetID& subnet_id,
+              const asiolink::IOAddress& addr) const {
+    return get6(subnet_id, addr, HostMgrOperationTarget::ALL_SOURCES);
+}
+
 ConstHostCollection
 HostMgr::getAll6(const SubnetID& subnet_id,
                  const asiolink::IOAddress& address,
@@ -634,6 +732,12 @@ HostMgr::getAll6(const SubnetID& subnet_id,
         }
     }
     return (hosts);
+}
+
+ConstHostCollection
+HostMgr::getAll6(const SubnetID& subnet_id,
+                 const asiolink::IOAddress& address) const {
+        return getAll6(subnet_id, address, HostMgrOperationTarget::ALL_SOURCES);
 }
 
 void
@@ -661,6 +765,11 @@ HostMgr::add(const HostPtr& host, const HostMgrOperationTarget target) {
     }
 }
 
+void
+HostMgr::add(const HostPtr& host) {
+    return add(host, HostMgrOperationTarget::ALTERNATE_SOURCES);
+}
+
 bool
 HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
              const HostMgrOperationTarget target) {
@@ -685,6 +794,11 @@ HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
     }
 
     return (false);
+}
+
+bool
+HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
+    return del(subnet_id, addr, HostMgrOperationTarget::ALTERNATE_SOURCES);
 }
 
 bool
@@ -716,6 +830,13 @@ HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
 }
 
 bool
+HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin, const size_t identifier_len) {
+    return del4(subnet_id, identifier_type, identifier_begin, identifier_len,
+                HostMgrOperationTarget::ALTERNATE_SOURCES);
+}
+
+bool
 HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
               const uint8_t* identifier_begin, const size_t identifier_len,
               const HostMgrOperationTarget target) {
@@ -741,6 +862,13 @@ HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
         }
     }
     return (false);
+}
+
+bool
+HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin, const size_t identifier_len) {
+    return del6(subnet_id, identifier_type, identifier_begin, identifier_len,
+                HostMgrOperationTarget::ALTERNATE_SOURCES);
 }
 
 void
