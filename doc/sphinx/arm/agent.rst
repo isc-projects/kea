@@ -203,123 +203,15 @@ the example above.
 
 .. _agent-secure-connection:
 
-Secure Connections (in Versions Prior to Kea 1.9.6)
-===================================================
+Secure Connections
+==================
 
-The Control Agent does not natively support secure HTTP connections, like
-SSL or TLS, before Kea 1.9.6.
-
-To set up a secure connection, please use one of the
-available third-party HTTP servers and configure it to run as a reverse
-proxy to the Control Agent. Kea has been tested with two major HTTP
-server implementations working as a reverse proxy: Apache2 and nginx.
-Example configurations, including extensive comments, are provided in
-the ``doc/examples/https/`` directory.
-
-The reverse proxy forwards HTTP requests received over a secure
-connection to the Control Agent using unsecured HTTP. Typically, the
-reverse proxy and the Control Agent are running on the same machine, but
-it is possible to configure them to run on separate machines as well. In
-this case, security depends on the protection of the communications
-between the reverse proxy and the Control Agent.
-
-Apart from providing the encryption layer for the control channel, a
-reverse proxy server is also often used for authentication of the
-controlling clients. In this case, the client must present a valid
-certificate when it connects via reverse proxy. The proxy server
-authenticates the client by checking whether the presented certificate
-is signed by the certificate authority used by the server.
-
-To illustrate this, the following is a sample configuration for the
-nginx server running as a reverse proxy to the Kea Control Agent. The
-server enables authentication of the clients using certificates.
-
-::
-
-   #   The server certificate and key can be generated as follows:
-   #
-   #   openssl genrsa -des3 -out kea-proxy.key 4096
-   #   openssl req -new -x509 -days 365 -key kea-proxy.key -out kea-proxy.crt
-   #
-   #   The CA certificate and key can be generated as follows:
-   #
-   #   openssl genrsa -des3 -out ca.key 4096
-   #   openssl req -new -x509 -days 365 -key ca.key -out ca.crt
-   #
-   #
-   #   The client certificate needs to be generated and signed:
-   #
-   #   openssl genrsa -des3 -out kea-client.key 4096
-   #   openssl req -new -key kea-client.key -out kea-client.csr
-   #   openssl x509 -req -days 365 -in kea-client.csr -CA ca.crt \
-   #           -CAkey ca.key -set_serial 01 -out kea-client.crt
-   #
-   #   Note that the "common name" value used when generating the client
-   #   and the server certificates must differ from the value used
-   #   for the CA certificate.
-   #
-   #   The client certificate must be deployed on the client system.
-   #   In order to test the proxy configuration with "curl", run a
-   #   command similar to the following:
-   #
-   #   curl -k --key kea-client.key --cert kea-client.crt -X POST \
-   #        -H Content-Type:application/json -d '{ "command": "list-commands" }' \
-   #         https://kea.example.org/kea
-   #
-   #   curl syntax for basic authentication is -u user:password
-   #
-   #
-   #   nginx configuration starts here.
-
-   events {
-   }
-
-   http {
-           #   HTTPS server
-       server {
-           #     Use default HTTPS port.
-           listen 443 ssl;
-           #     Set server name.
-           server_name kea.example.org;
-
-           #   Server certificate and key.
-           ssl_certificate /path/to/kea-proxy.crt;
-           ssl_certificate_key /path/to/kea-proxy.key;
-
-           #   Certificate Authority. Client certificates must be signed by the CA.
-           ssl_client_certificate /path/to/ca.crt;
-
-           # Enable verification of the client certificate.
-           ssl_verify_client on;
-
-           # For URLs such as https://kea.example.org/kea, forward the
-           # requests to http://127.0.0.1:8000.
-           location /kea {
-               proxy_pass http://127.0.0.1:8000;
-           }
-       }
-   }
-
-.. note::
-
-   The configuration snippet provided above is for testing
-   purposes only. It should be modified according to the security
-   policies and best practices of the administrator's organization.
-
-When using an HTTP client without TLS support, such as ``kea-shell``, it
-is possible to use an HTTP/HTTPS translator such as ``stunnel`` in client mode. A
-sample configuration is provided in the ``doc/examples/https/shell/``
-directory.
-
-Secure Connections (in Kea 1.9.6 and Newer)
-===========================================
-
-Since Kea 1.9.6, the Control Agent natively supports secure
+The Kea Control Agent natively supports secure
 HTTP connections using TLS. This allows protection against users from
 the node where the agent runs, something that a reverse proxy cannot
 provide. More about TLS/HTTPS support in Kea can be found in :ref:`tls`.
 
-TLS is configured using three string parameters, giving file names and
+TLS is configured using three string parameters with file names, and
 a boolean parameter:
 
 -  The ``trust-anchor`` specifies the Certification Authority file name or
@@ -352,7 +244,7 @@ Configuring only one or two string parameters results in an error.
    mutually authenticated, but there is no proof they are the same as
    for the HTTP authentication.
 
-Since Kea 1.9.6, the ``kea-shell`` tool supports TLS.
+The ``kea-shell`` tool also supports TLS.
 
 .. _agent-launch:
 
