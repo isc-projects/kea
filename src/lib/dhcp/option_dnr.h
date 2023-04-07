@@ -7,6 +7,7 @@
 #ifndef OPTION_DNR_H
 #define OPTION_DNR_H
 
+#include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dns/name.h>
 
@@ -23,6 +24,9 @@ public:
 
 class OptionDnr6 : public Option {
 public:
+    /// a container for (IPv6) addresses
+    typedef std::vector<isc::asiolink::IOAddress> AddressContainer;
+
     /// @brief Size in octets of Service Priority field
     static const uint8_t SERVICE_PRIORITY_SIZE = 2;
 
@@ -67,6 +71,25 @@ public:
         return addr_length_;
     }
 
+    /// @brief Getter of the @c svc_params_length_
+    ///
+    /// @return Length of Service Parameters field in octets.
+    uint16_t getSvcParamsLength() const {
+        return svc_params_length_;
+    }
+
+    /// @brief Returns vector with addresses.
+    ///
+    /// We return a copy of our list. Although this includes overhead,
+    /// it also makes this list safe to use after this option object
+    /// is no longer available. As options are expected to hold only
+    /// a few (1-3) addresses, the overhead is not that big.
+    ///
+    /// @return address container with addresses
+    AddressContainer getAddresses() const {
+        return ipv6_addresses_;
+    }
+
 private:
     /// @brief The priority of this OPTION_V6_DNR instance compared to other instances.
     uint16_t service_priority_;
@@ -82,7 +105,16 @@ private:
     boost::shared_ptr<isc::dns::Name> adn_;
 
     /// @brief Length of enclosed IPv6 addresses in octets.
-    uint16_t addr_length_;
+    uint16_t addr_length_ = 0;
+
+    /// @brief Vector container holding one or more IPv6 addresses
+    ///
+    /// One or more IPv6 addresses to reach the encrypted DNS resolver.
+    /// An address can be link-local, ULA, or GUA.
+    AddressContainer ipv6_addresses_;
+
+    /// @brief Length of Service Parameters field in octets.
+    uint16_t svc_params_length_ = 0;
 
     /// @brief Returns minimal length of the option data (without headers) in octets.
     ///
