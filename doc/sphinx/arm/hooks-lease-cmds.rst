@@ -1015,19 +1015,18 @@ Here's an example of a result returned when the lease was found:
 The ``lease4-write``, ``lease6-write`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``lease4-write`` and ``lease6-write`` can be used to recover emergency
-situations where the memfile lease file is damage, e.g. removed by
-accident or truncated by a full file system but the in memory database
+``lease4-write`` and ``lease6-write`` can be used for recovery in emergency
+situations where the memfile lease file is damaged, e.g. removed by
+accident or truncated by a full file system, but the in-memory database
 is still valid. These commands are supported only by the memfile database
 backend and write the lease database into a CSV file. They take the path
 of the file as the ``filename`` argument. If the specified output file
-is the same as the configured memfile one the backend close and reopen
-the file in an attempt to synchronize both file and in memory images
-of the lease database. The previous file is renamed by appending ``.bak``
-to its name.
+is the same as the configured memfile one, the backend closes and reopens
+the file in an attempt to synchronize both the files and the in-memory images
+of the lease database. The extension ``.bak`` is added to the previous filename.
 
 .. note::
 
-   These commands do not replace the LFC mechanism: they should be used
+   These commands do not replace the LFC mechanism; they should be used
    only in exceptional circumstances, such as when recovering after
    running out of disk space.

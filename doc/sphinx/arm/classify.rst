@@ -88,7 +88,7 @@ The classification process is conducted in several steps:
     The ``pkt4_receive`` and ``pkt6_receive`` callouts are called here.
 
 6.  When the ``early-global-reservations-lookup`` global parameter is
-    configured to ``true``, the process looks global reservations and
+    configured to ``true``, the process looks up global reservations and
     partially performs steps 8, 9, and 10. The lookup is limited to
     global reservations; if one is found the ``KNOWN`` class is set,
     but if none is found the ``UNKNOWN`` class is **not** set.
@@ -196,11 +196,11 @@ server uses an appropriate pool or subnet to allocate IP addresses
 (and/or prefixes), based on the assigned client classes. The details can
 be found in :ref:`hooks-high-availability`.
 
-The ``SPAWN_`` prefix is used by template classes to generate spawn classes
+The ``SPAWN_`` prefix is used by template classes to generate spawned class
 names at runtime. The spawned class name is constructed by prepending the
 ``SPAWN_`` prefix to the template class name and the evaluated value:
 ``SPAWN_<template-class-name>_<evaluated-value>``.
-The details can be found in :ref:`classification-configuring`.
+More details can be found in :ref:`classification-configuring`.
 
 The ``BOOTP`` class is used by the BOOTP hook library to classify and
 respond to inbound BOOTP queries.
@@ -654,8 +654,8 @@ fields, the result will be an empty string. Some examples follow:
 
 .. note::
 
-   To use a hard to escape character as a delimiter, you can use its ASCII hex value.
-   For example you can split by ``single quote`` using ``0x27``:
+   To use a hard-to-escape character as a delimiter, use its ASCII hex value.
+   For example, split by ``single quote`` using ``0x27``:
    ``split(option[39].text, 0x27, 1)``
 
 Ifelse
@@ -727,13 +727,13 @@ A client class definition can contain the following properties:
    packets associated with this class. It is used in DHCPv4 only.
  - The ``valid-lifetime``, ``min-valid-lifetime``, and ``max-valid-lifetime`` are
    not mandatory and configure the valid lifetime fields for this client class.
- - The ``preferred-lifetime``, ``min-preferred-lifetime`` and
+ - The ``preferred-lifetime``, ``min-preferred-lifetime``, and
    ``max-preferred-lifetime`` are not mandatory and configure the preferred
    lifetime fields for this client class. It is used in DHCPv6 only.
 
-A valid configuration contains at most one of ``test`` or ``template-test``
-parameters. The ``template-test`` parameter also indicates if the class is a
-template class. If both are provided, the configuration is rejected.
+A valid configuration contains either the ``test`` or ``template-test``
+parameters, or neither, but not both. The ``template-test`` parameter also indicates
+if the class is a template class. If both are provided, the configuration is rejected.
 
 ::
 
@@ -749,10 +749,10 @@ template class. If both are provided, the configuration is rejected.
        ...
    }
 
-If the received DHCPv4 packet contains option 61, then the first 3 bytes represent
-value ``foo`` in ASCII, then the spawned class will used the
+If the received DHCPv4 packet contains option 61, then the first three bytes represent
+the value ``foo`` in ASCII, and the spawned class uses the
 ``SPAWN_Client-ID_foo`` name.
-Both ``SPAWN_Client-ID_foo`` and ``Client-ID`` classes will be associated with
+Both the ``SPAWN_Client-ID_foo`` and ``Client-ID`` classes are associated with
 the packet.
 
 .. note ::
@@ -784,11 +784,11 @@ the packet.
    }
 
 If the received DHCPv6 packet contains option 1 (client identifier) with hex
-value ``0x0002AABBCCDD``, then the ``SPAWN_Client-ID_foobar`` will be associated
-with the packet. Moreover, if the first 6 bytes represent value ``foobar`` in
-ASCII, then the spawned class will use the ``SPAWN_Client-ID_foobar`` name
+value ``0x0002AABBCCDD``, then the ``SPAWN_Client-ID_foobar`` is associated
+with the packet. Moreover, if the first six bytes represent value ``foobar`` in
+ASCII, then the spawned class uses the ``SPAWN_Client-ID_foobar`` name,
 effectively associating the regular class to the packet. In this second case,
-both ``SPAWN_Client-ID_foobar`` and ``Client-ID`` classes will be associated
+both the ``SPAWN_Client-ID_foobar`` and ``Client-ID`` classes are associated
 with the packet.
 The ``test`` expression on the regular class ``SPAWN_Client-ID_foobar`` is not
 mandatory and can be omitted, but it is used here with a different match
@@ -797,16 +797,16 @@ expression for example purposes.
 Usually the ``test`` and ``template-test`` expressions are evaluated before
 subnet selection, but in some cases it is useful to evaluate it later when the
 subnet, shared network, or pools are known but output-option processing has not
-yet been done.  For this purpose, the ``only-if-required`` flag, which is
+yet been done. For this purpose, the ``only-if-required`` flag, which is
 ``false`` by default, allows the evaluation of the ``test`` expression or the
 ``template-test`` expression only when it is required, i.e. in a
 ``require-client-classes`` list of the selected subnet, shared network, or pool.
 
 The ``require-client-classes`` list, which is valid for shared-network, subnet,
 and pool scope, specifies the classes which are evaluated in the second pass
-before output-option processing. The list is built in the reversed precedence
-order of option data, i.e. an option data item in a subnet takes precedence over
-one in a shared network, but required class in a subnet is added after one in a
+before output-option processing. The list is built in reverse-precedence
+order of the option data, i.e. an option data item in a subnet takes precedence over
+one in a shared network, but a required class in a subnet is added after one in a
 shared network. The mechanism is related to the ``only-if-required`` flag but it
 is not mandatory that the flag be set to ``true``.
 
@@ -833,16 +833,16 @@ is not mandatory that the flag be set to ``true``.
 .. note ::
 
    The template classes can be used to configure limits which, just like
-   options, are associated with the spawned class. This permits configuring
-   limits which apply for all packets associated with a class spawned at
+   options, are associated with the spawned class. This permits the configuration of
+   limits that apply to all packets associated with a class spawned at
    runtime, according to the ``template-test`` expression in the parent template
-   class. For a more detailed description on how to configure limits using the
-   limits hooks library see the :ref:`hooks-limits-configuration`.
+   class. For a more detailed description of how to configure limits using the
+   limits hooks library, see :ref:`hooks-limits-configuration`.
    For example, using the configuration below, ingress DHCPv6 packets that have
    client ID values (in the format expressed by the Kea evaluator) ``foobar``
    and ``foofoo`` both amount to the same limit of 60 packets per day, while
    other packets that have the first three hextets different than ``foo`` are put
-   in separate rate limiting buckets.
+   in separate rate-limiting buckets.
 
 ::
 
@@ -921,9 +921,9 @@ hex string (which would indicate a DUID based on an enterprise ID of
 
 It is also possible to have both left and right operands of the evaluated
 expression processed at runtime. Expressions related to packets can appear in
-the expression as many times as needed. There is no limit. However, each token
-has a small impact on performance and exceedingly complex expressions may be a
-major bottleneck.
+the expression as many times as needed; there is no limit. However, each token
+has a small impact on performance and excessively complex expressions may cause a
+bottleneck.
 
 ::
 

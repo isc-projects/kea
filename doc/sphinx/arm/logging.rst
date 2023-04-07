@@ -102,15 +102,15 @@ To illustrate this, suppose we are using the DHCPv4 server with the
 root logger ``kea-dhcp4`` logging at the INFO level. In order to enable
 DEBUG verbosity for DHCPv4 packet drops, we must create a configuration
 entry for the logger with ``"name": "kea-dhcp4.bad-packets”``,
-``"severity": "DEBUG"`` and an explicit debug level. All other configuration
+``"severity": "DEBUG"``, and an explicit debug level. All other configuration
 parameters may be omitted for this logger if it should use the default values
 specified in the root logger's configuration.
 
 ``debuglevel`` is inherited only if ``severity`` is missing as well. For
 predictable results, if ``severity`` is ``"DEBUG"``, these two attributes
 should always be explicitly specified or omitted together. An entry with an
-explicit ``"DEBUG"`` severity will not inherit ``debuglevel`` from the root
-logger, and will default to ``0`` if missing, resulting in no debug messages
+explicit ``"DEBUG"`` severity does not inherit ``debuglevel`` from the root
+logger and defaults to ``0`` if missing, resulting in no debug messages
 being logged. This is a consequence of relying on the log4cplus inheritance
 mechanism.
 

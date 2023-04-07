@@ -231,12 +231,12 @@ In DHCPv6, the corresponding query looks something like this:
 The ``ignore-iaid`` Flag
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-When ``ignore-iaid`` is set to ``true`` (default value is ``false``), the
-``flex-id`` hooks library will make the Kea DHCPv6 server ignore IAID value
+When ``ignore-iaid`` is set to ``true`` (the default value is ``false``), the
+``flex-id`` hook library causes the Kea DHCPv6 server to ignore the IAID value
 from incoming IPv6 packets. This parameter is ignored by the Kea DHCPv4 server.
 
 If the packet contains only one IA_NA, the IAID value will be changed to ``0``
-and stored as such in the lease storage. Similarly if the packet contains only
+and stored as such in the lease storage. Similarly, if the packet contains only
 one IA_PD, the IAID value will be changed to ``0`` and stored as such in the
 lease storage. The IAID is restored to its initial value in the response back
 to the client. The change is visible in the identifier expression if the IAID is
@@ -245,9 +245,9 @@ part of the expression.
 .. note::
 
    To avoid lease conflicts, if the incoming packet contains more than one
-   IA_NA, the IAID value will not be changed on any of the IA_NAs. Similarly,
-   if the incoming packet contains more than one IA_PD, the IAID value will not
-   be changed on any of the IA_PDs.
+   IA_NA, the IAID value is not changed on any of the IA_NAs. Similarly,
+   if the incoming packet contains more than one IA_PD, the IAID value is not
+   changed on any of the IA_PDs.
 
 .. warning::
 

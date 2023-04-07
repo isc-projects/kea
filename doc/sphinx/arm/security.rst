@@ -151,60 +151,59 @@ which can be used to understand and fix handshake issues.
 OpenSSL Tuning
 --------------
 
-OpenSSL can be tuned for Kea: from OpenSSL for Kea defaults from the OpenSSL
-configuration apply. Here we explain how for instance to limit the TLS version.
+Kea accepts the default OpenSSL configuration parameters, but administrators can
+also fine-tune the OpenSSL settings. For example, it may be desirable to limit
+the TLS version.
 
-The OpenSSL configuration file is named ``openssl.cnf`` and is in a system
-dependent ``etc`` directory. It can be overriden using the ``OPENSSL_CONF``
-environment variable. For OpenSSL versions greater than 1.0.2 the
-``MinProtocol`` variable can be set to the wanted minimal protocol.
+The default OpenSSL configuration file is named ``openssl.cnf``. It can
+be found in a system-dependent ``etc`` directory, and the location can be overridden
+using the ``OPENSSL_CONF`` environment variable. For OpenSSL versions greater than
+1.0.2, the minimum acceptable protocol can be set via the ``MinProtocol`` variable.
 
-Here we suppose that none of the variables are set or sections already exist.
-If it is not the case of course they should be reused.
+For these examples, we assume that no variables are already set and no sections already
+exist; it is, of course, possible to reuse existing variables and sections.
 
-The default application is ``openssl_conf`` and the corresponding variable
-must be set to the name of the section which handles defaults, for instance
-here ``default_conf``. So if the ``openssl_conf`` is not yet set please
-add at the beginning of the OpenSSL configuration file before the first
-section:
+In the default application, ``openssl_conf``, the corresponding variable
+must be set to the name of the section that handles defaults: in this example,
+``default_conf``. If ``openssl_conf`` is not yet set, add this command
+at the beginning of the OpenSSL configuration file (before the first
+section):
 
 .. code-block:: ini
 
    openssl_conf = default_conf
 
-In the ``default_conf`` section the ``ssl_conf`` variable must be set
-to the name of the section which handles SSL/TLS defaults, for
-instance here ``ssl_sect``.
+In the ``default_conf`` section, the ``ssl_conf`` variable must be set
+to the name of the section that handles SSL/TLS defaults: in this
+example, ``ssl_sect``.
 
 .. code-block:: ini
 
    [ default_conf ]
    ssl_conf = ssl_sect
 
-In the ``ssl_sect`` section the ``system_default`` variable must be
-set to the name of the section which handles system defaults, for
-instance here ``system_default_sect``.
+In the ``ssl_sect`` section, the ``system_default`` variable must be
+set to the name of the section that handles system defaults: in
+this example, ``system_default_sect``.
 
 .. code-block:: ini
 
    [ ssl_sect ]
    system_default = system_default_sect
 
-In the ``system_default_sect`` section the ``MinProtocol``  variable must be
-set to the wanted minimal SSL/TLS version, for instance here ``TLSv1.2``.
+In the ``system_default_sect`` section, the ``MinProtocol``  variable must be
+set to the desired minimal SSL/TLS version: in this example, ``TLSv1.2``.
 
 .. code-block:: ini
 
    [ system_default_sect ]
    MinProtocol = TLSv1.2
 
-The same procedure can be used to enforce other crypto paramaters if
-wanted or needed.
+The same steps can be used to enforce other crypto parameters if
+desired.
 
-Anyway it is highly recommended to read the manual page about ``openssl.cnf``,
-its location can vary but its usual name is ``config.5ssl`` so can be
-displayed using ``man config``.
-
+It is highly recommended to read the ``openssl.cnf`` manual page,
+normally called ``config.5ssl`` and displayed using ``man config``.
 
 Securing a Kea Deployment
 =========================

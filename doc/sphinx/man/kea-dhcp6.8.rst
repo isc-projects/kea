@@ -51,12 +51,12 @@ The arguments are as follows:
 
 ``-T config-file``
    Checks the configuration file and reports the first error, if any.
-   It performs extra checks beside what ``-t`` is doing, like establising
-   database connections (lease backend, host reservations backend, configuration
-   backend and forensic logging backend), hook libraries
-   loading and configuration parsing, etc. It does not open unix or TCP/UDP
-   sockets, neither does it open or rotate files, as all these actions could
-   interfere with a running process on the same machine.
+   It performs extra checks beyond what -t offers, such as establishing
+   database connections (for the lease backend, host reservations backend,
+   configuration backend, and forensic logging backend), loading hook libraries,
+   parsing configurations, etc. It does not open UNIX or TCP/UDP sockets, nor
+   does it open or rotate files, as any of these actions could interfere with
+   a running process on the same machine.
 
 ``-p server-port-number``
    Specifies the server port number (1-65535) on which the server listens. This is

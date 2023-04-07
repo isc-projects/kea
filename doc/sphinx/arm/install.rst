@@ -21,13 +21,13 @@ instructions.
 Installation From Cloudsmith Packages
 -------------------------------------
 ISC provides Kea packages for Alpine, CentOS, Debian, Fedora, RHEL, and Ubuntu.
-The recommended method for installing Kea on any of these systems from the
-Cloudsmith repository for Kea release 2.3.1 is to install the ``isc-kea``
-metapackage. This metapackage is included on all supported distros and will
-install all of the services offered by the Kea software suite.
+The recommended method for installing Kea on any of these systems, from the
+Cloudsmith repository for Kea release 2.3.1 or later, is to install the ``isc-kea``
+metapackage. This metapackage is included on all supported distros and
+installs all of the services offered by the Kea software suite.
 
-If you would only like to install specific components offered by Kea, this
-can be accomplished by installing any of the following packages:
+Specific Kea components
+can be installed individually, with any of the following packages:
 
 - ``isc-kea-dhcp4`` — Kea DHCPv4 server package
 
@@ -37,46 +37,44 @@ can be accomplished by installing any of the following packages:
 
 - ``isc-kea-ctrl-agent`` — Kea Control Agent for remote configuration
 
-- ``isc-kea-admin`` — Kea Database administration tools
+- ``isc-kea-admin`` — Kea database administration tools
 
-- ``isc-kea-hooks`` — Kea open-source DHCP hooks
+- ``isc-kea-hooks`` — Kea open source DHCP hooks
 
 Kea Premium hook packages are not included in the ``isc-kea-hooks`` package.
-If you have access to the premium hooks, the packages will have the
+For ISC customers with access to the premium hooks, those packages have the
 ``isc-kea-premium-`` prefix.
 
-Once installed, the services can be managed through your distribution's
-service manager. The services will be named: ``kea-dhcp4``, ``kea-dhcp6``,
+Once installed, the services can be managed through the distribution's
+service manager. The services are named: ``kea-dhcp4``, ``kea-dhcp6``,
 ``kea-dhcp-ddns``, and ``kea-ctrl-agent``.
 
 .. note::
    The real service names on Debian and Ubuntu follow the names of the older
-   packages in order to maintain compatibility in pre-existing scripts. A
+   packages, to maintain compatibility with pre-existing scripts. A
    systemd service alias is used to allow users to refer to them with shorter
-   names. In order to call ``systemctl enable`` on these services, you must
-   use the real service names, which are: ``isc-kea-dhcp4-server``,
+   names. Calling ``systemctl enable`` on these services requires
+   the real service names, which are: ``isc-kea-dhcp4-server``,
    ``isc-kea-dhcp6-server``, ``isc-kea-dhcp-ddns-server``, and
    ``isc-kea-ctrl-agent``.
 
-Caveats for Upgrading Kea Packages
-----------------------------------
+Caveats When Upgrading Kea Packages
+-----------------------------------
 
-To upgrade to Kea 2.3.2 or later on Debian and Ubuntu systems, you need to
-run ``apt dist-upgrade``, instead of the usual ``apt upgrade``. This is only
-required to upgrade from an earlier version of Kea to a version greater than
-2.3.2. Once this upgrade has been done, you can upgrade to later versions
+To upgrade to Kea 2.3.2 or later from an earlier version of Kea on Debian
+and Ubuntu systems, run ``apt dist-upgrade`` instead of the usual ``apt upgrade``.
+Once this upgrade has been completed, it is possible to upgrade to later versions
 normally using  ``apt upgrade`` on Debian and Ubuntu systems.
 
-After upgrading to Kea 2.3.2 or later, it is possible that some Kea packages
-are removed from Debian and Ubuntu systems. This was an unavoidable side
-effect of overhauling our distribution packaging in 2.3.1 and 2.3.2. In order
-to ensure that the upgrade goes as smoothly as possible, pay attention to
+Users may notice differences in the packages distributed in Kea versions prior to
+2.3.2 and those distributed with 2.3.2 and later. As a result of an overhaul of our
+package design with that release, some packages were renamed or removed.
+To ensure that upgrades go as smoothly as possible, pay attention to
 which packages are being removed and installed by the upgrade transaction,
-and ensure that all of the packages that your deployment requires get
-reinstalled.
+and ensure that all required packages are reinstalled.
 
 Specifically, there is a possibility for the following packages to be removed
-during upgrade depending on which packages were originally installed:
+during the upgrade, depending on which packages were originally installed:
 
 - ``isc-kea-dhcp4``
 
@@ -86,14 +84,15 @@ during upgrade depending on which packages were originally installed:
 
 - ``isc-kea-hooks``
 
-If your goal is to have the entire Kea software suite installed, it is
-recommended that you simply ``apt install isc-kea`` after upgrading, which
+To install the entire Kea software suite, simply run
+``apt install isc-kea`` after upgrading, which
 will install all of the relevant subpackages that make up Kea.
 
-This upgrade path hiccup is not present on RPM and Alpine systems, however
-if you experience issues with upgrading past 2.3.1, please inform us on the
-Kea Users mailing list, or contact customer support if you have a support
-contract with ISC.
+This upgrade path issue does not apply to RPM and Alpine systems; however,
+customers with ISC support contracts who experience difficulties with upgrading
+past 2.3.1 are invited to open a ticket in their support queue. Other users
+are encouraged to describe their situation on the kea-users mailing list for
+best-effort support from other list members.
 
 .. _install-hierarchy:
 
@@ -637,17 +636,14 @@ to current users to plan a migration. New users should not rely on deprecated fe
 Sysrepo 0.x or 1.x
 ------------------
 
-Kea versions 1.9.9 and earlier required Sysrepo 0.7.x to run, when optional
-support for NETCONF was enabled. Kea versions 1.9.10 and later required Sysrepo
-1.4.x and the related libyang 1.x library to run. The earlier Sysrepo versions
-are no longer supported. Kea 2.3.2 introduced support for Sysrepo 2.x. Sadly,
-the Sysrepo continues to undergo major changes that are backwards-incompatible.
-As such, Kea versions 2.3.2 and later dropped support for Sysrepo versions 1.x.
+Kea 2.3.2 introduced support for Sysrepo 2.x. Unfortunately,
+Sysrepo continues to undergo major changes that are backward-incompatible,
+and Kea versions 2.3.2 do not support Sysrepo earlier than versions 2.x.
 
-libreload command
------------------
+``libreload`` command
+---------------------
 
-The libreload was deprecated in Kea 2.3.4. The code to handle this command is
+The ``libreload`` command was deprecated in Kea 2.3.4. The code to handle this command is
 still there, but there are reports of it being buggy and not really usable.
-Kea 2.3 and upcoming 2.4 versions will produce a warning when this command
-is used. It will be removed some time in 2.5 timeframe.
+Kea 2.3 and 2.4 versions will produce a warning when this command
+is used, and it will be removed entirely sometime in the 2.5 branch.

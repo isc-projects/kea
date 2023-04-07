@@ -9,7 +9,7 @@ Role-Based Access Control (RBAC) Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before the processing of commands in received HTTP requests, the ``rbac`` hook
-takes specific parameters, e.g. the common name part of the client
+takes specific parameters, e.g. the common-name part of the client
 certificate subject name, to assign a role to the request.
 The configuration associated with this role is used to accept or reject
 the command. After processing, the response can be rewritten, e.g.
@@ -23,7 +23,7 @@ Here is a summary of the steps in processing a request:
  - The command is extracted from the request.
  - A role is assigned using recorded information in the request.
  - The role is used to accept (pass through) or reject (send
-   a forbidden response) the command.
+   a forbidden response to) the command.
 
 Here is a summary of the steps in processing a response:
  - The information attached to the request is retrieved during the
@@ -47,9 +47,9 @@ Role assignment is governed by the configured role-assignment method.
    +----------------------+---------------------------------------------------------+
    | remote-address       | remote/client IP address                                |
    +----------------------+---------------------------------------------------------+
-   | cert-subject         | common name part of the client certificate subject name |
+   | cert-subject         | common-name part of the client certificate subject name |
    +----------------------+---------------------------------------------------------+
-   | cert-issuer          | common name part of the client certificate issuer name  |
+   | cert-issuer          | common-name part of the client certificate issuer name  |
    +----------------------+---------------------------------------------------------+
    | basic-authentication | user ID of basic HTTP authentication                    |
    +----------------------+---------------------------------------------------------+
@@ -64,7 +64,7 @@ Role Configuration
    +------------------+----------------------------------------------------+
    | Name             | Description                                        |
    +------------------+----------------------------------------------------+
-   | name             | the role name (at the exception of the default     |
+   | name             | the role name (with the exception of the default   |
    |                  | and unknown roles)                                 |
    +------------------+----------------------------------------------------+
    | accept-commands  | the accept access list                             |
@@ -72,27 +72,27 @@ Role Configuration
    | reject-commands  | the reject access list                             |
    +------------------+----------------------------------------------------+
    | other-commands   | specifies what to do for commands not matching     |
-   |                  | accept and reject lists (default reject)           |
+   |                  | accept and reject lists (default: reject)          |
    +------------------+----------------------------------------------------+
    | list-match-first | specifies what to do for commands matching both    |
-   |                  | accept and reject list by giving the list to check |
-   |                  | and apply first (default accept)                   |
+   |                  | the accept and reject list by giving the list to   |
+   |                  | check and apply first (default: accept)            |
    +------------------+----------------------------------------------------+
    | response-filters | the filters to apply to responses                  |
    +------------------+----------------------------------------------------+
 
 .. note::
 
-   The role assignment can fail, for instance with ``cert-subject`` when
-   the client certificate was not required, or it has no subject common
-   name and instead a DNS alternative subject name. In this case the role
+   The role assignment may fail, for instance with ``cert-subject`` when
+   the client certificate was not required, or it may have no subject common
+   name and instead have a DNS alternative subject name. In this case, the role
    assignment returns the empty role and the ``default-role`` entry is used.
 
-   The role assignment can return an unexpected value e.g. with an
+   The role assignment can return an unexpected value, e.g. with an
    unregistered role name or a typing error. In this case the ``unknown-role``
    entry is used.
 
-   Both ``default-role`` and ``unknown-role`` default to reject all commands.
+   The default for both ``default-role`` and ``unknown-role`` is to reject all commands.
 
 API Commands
 ------------
@@ -100,14 +100,14 @@ API Commands
 All commands of the REST API are described in files in the source directory
 ``src/share/api``, or in installed Kea
 in ``.../share/kea/api``. The ``rbac`` hook reads these files to take the name,
-the access right (i.e. ``read`` or ``write``), and the hook name. Access right
-can be modified in the file but changes will be applied after Control Agent
-restart. Removing command definitions from ``.../share/kea/api`` has its
-consequences. If the access control list is based on ``read`` or ``write`` and
-the definition file is missing, the Control Agent will always reject such
-a command.  If the access controls list is using ``commands`` to specify the
+the access right (i.e. ``read`` or ``write``), and the hook name. The access right
+can be modified in the file but changes are only applied after the Control Agent
+restarts. Removing command definitions from ``.../share/kea/api`` has
+consequences: if the access control list is based on ``read`` or ``write`` and
+the definition file is missing, the Control Agent always rejects such
+a command. If the access controls list is using ``commands`` to specify the
 name of a command and the definition file from ``.../share/kea/api`` of this
-particular command is missing, the Control Agent will log an error on startup
+particular command is missing, the Control Agent logs an error on startup
 and exit.
 
 
@@ -203,7 +203,7 @@ The global parameters are:
 -  ``access-control-lists``: the named access control list definitions
    (each definition is a single entry map; the name of the entry is
    the name of the access list, and the value is the specification).
-   The name is used in other parts of configuration e.g. accept-commands.
+   The name is used in other parts of the configuration, such as "accept-commands".
 
 -  ``roles``: the role configurations.
 
@@ -346,12 +346,13 @@ This is the pseudo-code of the accept/reject decision algorithm which returns
        }
    }
 
-Custom hook commands, commands redefinition.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-It is possible to have a custom hook with new commands. In this case managing
-a new command via Role Based Access Control can be done in two ways.
+Custom Hook Commands and Command Redefinition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is possible to have a custom hook with new commands. In this case,
+Role Based Access Control can be used to manage a new command in two ways.
 
-Using the ``command`` global parameter:
+The ``command`` global parameter can be used to define its name, access type,
+and hook name:
 
 .. code-block:: javascript
 
@@ -364,8 +365,7 @@ Using the ``command`` global parameter:
             }
         ]
 
-to define its name, access type, and hook name. And in ``roles`` the new
-command can then be specified:
+The new command can then be specified in ``roles``:
 
 .. code-block:: javascript
 
@@ -389,7 +389,7 @@ command can then be specified:
 The second method is to create a custom file in ``.../share/kea/api`` and define
 the access type of the custom command(s).
 
-It is also possible to redefine existing an command by removing its definition
+It is also possible to redefine an existing command by removing its definition
 file from ``.../share/kea/api`` and defining it in the ``commands`` global parameter:
 
 .. code-block:: javascript
@@ -403,7 +403,7 @@ file from ``.../share/kea/api`` and defining it in the ``commands`` global param
             }
         ]
 
-With this approach an administrator can put configurations of all existing
+With this approach, an administrator can put the configurations of all existing
 commands inside the Control Agent's configuration file.
 
 Extensive Example
@@ -440,7 +440,7 @@ list and to reject anything else:
     ],
     ...
 
-A common alternative is to not set the "reject-commands" list, i.e. leave
+A common alternative is not to set the "reject-commands" list, i.e. leave
 it empty and rely on "other-commands" to reject anything else.
 
 .. code-block:: javascript
@@ -509,7 +509,7 @@ response filter, which shows errors such as missing (rejected) commands
 and extra (accepted) commands.
 
 ``access-control-lists`` can be used for definitions of access control lists
-and later reused in roles:
+and later reused in ``roles``:
 
  .. code-block:: javascript
 

@@ -266,7 +266,7 @@ parameters described in :ref:`lease-reclaim-config`, but the reclaimed leases
 are held in the database for a specified amount of time rather than removed.
 If both ``flush-reclaimed-timer-wait-time`` and ``hold-reclaimed-time`` are
 greater than zero, the lease is expired immediately when the client sends a
-release message instead of being deleted from the lease storage. When the client
+release message, instead of being deleted from the lease storage. When the client
 returns, the server first verifies whether there are any reclaimed leases
 associated with this client and then reassigns them if possible. However, it is
 important to note that any reclaimed lease may be assigned to another client if

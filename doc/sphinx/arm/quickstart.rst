@@ -65,10 +65,10 @@ easier to install Kea using native packages.
   For example, the Debian setup instructions for Kea 2.3 can be found here:
   https://cloudsmith.io/~isc/repos/kea-2-3/setup/#formats-deb
 
-  You can use the dropdown near the top of the page to get instructions for
-  another OS.
+  The dropdown near the top of the page offers instructions for
+  other operating systems.
 
-3. Update system repositories. For example on Debian/Ubuntu:
+3. Update system repositories. For example, on Debian/Ubuntu:
 
     .. code-block:: console
 
@@ -88,7 +88,7 @@ easier to install Kea using native packages.
 
 4. Kea is split into various packages. The entire list is available on
    `cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum/dnf.
-   For example on Debian/Ubuntu:
+   For example, on Debian/Ubuntu:
 
     .. code-block:: console
 
@@ -119,8 +119,8 @@ easier to install Kea using native packages.
 
         $ sudo apt install isc-kea-dhcp6
 
-   or every single Kea related package, including development headers, debug
-   symbols, and premium hooks (if they are available to you):
+   or every single Kea-related package, including development headers, debug
+   symbols, and premium hooks (if available):
 
     .. code-block:: console
 
@@ -130,14 +130,14 @@ easier to install Kea using native packages.
 
     .. code-block:: console
 
-        $ sudo apt install isc-kea*=1.8.1-isc0000920201106154401
+        $ sudo apt install isc-kea*=2.4.0-isc0000920201106154401
 
 .. note::
   Not all package managers support installing packages with a glob (``*``),
-  please refer to your package managers manual before attempting to do so.
+  please refer to the specific package manager's manual before attempting this.
 
-  - On CentOS/Fedora systems, replace ``apt install`` with ``yum install``
-  - On Alpine systems, replace ``apt install`` with ``apk add``
+  - On CentOS/Fedora systems, replace ``apt install`` with ``yum install``.
+  - On Alpine systems, replace ``apt install`` with ``apk add``.
 
 6. All installed packages should be now available directly; for example:
 
@@ -158,11 +158,11 @@ easier to install Kea using native packages.
         # service kea-dhcp6 restart
 
 .. note::
-  ``keactrl`` is not available in packages as similar functionality is provided
+  ``keactrl`` is not available in packages, as similar functionality is provided
   by the native systemctl scripts.
 
-7. On CentOS, Fedora, and Alpine, you will need to enable the service at boot
-   time if that is desirable. This is done automatically at package
+7. On CentOS, Fedora, and Alpine, the service must be enabled at boot
+   time if desired; this is done automatically at package
    installation time on Debian and Ubuntu systems. For example, with systemd
    on CentOS/Fedora:
 

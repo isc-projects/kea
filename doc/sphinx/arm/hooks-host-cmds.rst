@@ -690,6 +690,6 @@ an error. Here are some examples of possible results:
 .. note::
 
    The host cache and RADIUS hook libraries are two host backends that do not
-   contribute to commands returning a collection of host reservations, such as
+   respond to commands that return a collection of host reservations, such as
    ``reservation-get-all``. Commands returning one host entry or dedicated host
    cache commands should be used instead.

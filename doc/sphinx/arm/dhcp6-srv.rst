@@ -43,12 +43,12 @@ the following command-line switches:
    server.
 
 -  ``-T file`` - specifies a configuration file to be tested. ``kea-dhcp6``
-   loads it, checks it, and exits. It performs extra checks beside what ``-t``
-   is doing, like establising database connections (lease backend,
-   host reservations backend, configuration backend and forensic logging
-   backend), hook libraries loading and configuration parsing, etc.
-   It does not open unix or TCP/UDP sockets, neither does it open or rotate
-   files, as all these actions could interfere with a running process on the
+   loads it, checks it, and exits. It performs extra checks beyond what ``-t``
+   offers, such as establising database connections (for the lease backend,
+   host reservations backend, configuration backend, and forensic logging
+   backend), loading hook libraries, parsing configurations, etc.
+   It does not open UNIX or TCP/UDP sockets, nor does it open or rotate
+   files, as any of these actions could interfere with a running process on the
    same machine.
 
 -  ``-v`` - displays the Kea version and exits.
@@ -112,7 +112,7 @@ When a server receives the SIGHUP signal it rereads its configuration file and,
 if the new configuration is valid, uses the new configuration.
 If the new configuration proves to be invalid, the server retains its
 current configuration; however, in some cases a fatal error message is logged
-indicating that the server no longer provides any service: a working
+indicating that the server is no longer providing any service: a working
 configuration must be loaded as soon as possible.
 
 .. _dhcp6-configuration:
@@ -544,11 +544,11 @@ string ``""``. (This is the default.)
 Tuning Database Timeouts
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-In rare cases, reading or writing to the database may hang. It can be
-caused by a temporary network issue or misconfiguration of the proxy
+In rare cases, reading or writing to the database may hang. This can be
+caused by a temporary network issue, or by misconfiguration of the proxy
 server switching the connection between different database instances.
-These situations are rare, but we have received reports from the users
-that Kea can sometimes hang while performing the database IO operations.
+These situations are rare, but users have reported
+that Kea sometimes hangs while performing database IO operations.
 Setting appropriate timeout values can mitigate such issues.
 
 MySQL exposes two distinct connection options to configure the read and
@@ -560,18 +560,18 @@ configuration parameters specify the timeouts in seconds. For example:
    "Dhcp6": { "lease-database": { "read-timeout" : 10, "write-timeout": 20, ... }, ... }
 
 
-Setting these parameters to 0 is equivalent to not specifying them and
+Setting these parameters to 0 is equivalent to not specifying them, and
 causes the Kea server to establish a connection to the database with the
-MySQL defaults. In this case, Kea waits infinitely for the completion of
+MySQL defaults. In this case, Kea waits indefinitely for the completion of
 the read and write operations.
 
-MySQL versions earlier than 5.6 do not support setting timeouts for the
+MySQL versions earlier than 5.6 do not support setting timeouts for
 read and write operations. Moreover, the ``read-timeout`` and ``write-timeout``
-parameters can only be specified for the MySQL backend. Setting them for
-any other backend type causes a configuration error.
+parameters can only be specified for the MySQL backend; setting them for
+any other backend database type causes a configuration error.
 
-Use the ``tcp-user-timeout`` parameter to set a timeout for PostgreSQL
-in seconds. For example:
+To set a timeout in seconds for PostgreSQL, use the ``tcp-user-timeout``
+parameter. For example:
 
 ::
 
@@ -586,7 +586,7 @@ error.
     The timeouts described here are only effective for TCP connections.
     Please note that the MySQL client library used by the Kea servers
     typically connects to the database via a UNIX domain socket when the
-    ``host`` parameter is ``localhost`` but establishes a TCP connection
+    ``host`` parameter is ``localhost``, but establishes a TCP connection
     for ``127.0.0.1``.
 
 
@@ -1099,8 +1099,8 @@ It is possible to define more than one pool in a subnet; continuing the
 previous example, further assume that 2001:db8:1:0:5::/80 should also be
 managed by the server. It could be written as 2001:db8:1:0:5:: to
 2001:db8:1::5:ffff:ffff:ffff, but typing so many ``f`` characters is cumbersome.
-It can be expressed more simply as 2001:db8:1:0:5::/80. Both formats are
-supported by ``Dhcp6`` and can be mixed in the pool list. For example,
+The pool can be expressed more simply as 2001:db8:1:0:5::/80. Both formats are
+supported by ``Dhcp6`` and they can be mixed in the pool list. For example,
 the following pools could be defined:
 
 ::
@@ -1452,10 +1452,10 @@ In the example above, the ``dns-servers`` option respects the global
 ``2001:db8:1::/64``, the value is taken from the subnet-level option data
 specification.
 
-At the opposite of ``always-send`` if the ``never-send`` flag is set to
-``true`` for a particular option the server does not add it to the response.
+Contrary to ``always-send``, if the ``never-send`` flag is set to
+``true`` for a particular option, the server does not add it to the response.
 The effect is the same as if the client removed the option code in the
-Option Request Option (or its equivalent for vendor options), as in:
+Option Request Option (or its equivalent for vendor options):
 
 ::
 
@@ -1486,24 +1486,24 @@ Option Request Option (or its equivalent for vendor options), as in:
 
 In the example above, the ``dns-server`` option is never added to responses
 on subnet ``2001:db8:1::/64``. ``never-send`` has precedence over
-``always-send`` so if both are true the option is not added.
+``always-send``, so if both are ``true`` the option is not added.
 
 .. note::
 
     The ``always-send`` and ``never-send`` flags are sticky, meaning
     they do not follow the usual configuration inheritance rules.
     Instead, if they are enabled at least once along the configuration
-    inheritance chain, they get applied regardless of them being
-    disabled in other places which would usually be more prioritized.
+    inheritance chain, they are applied - even if they are
+    disabled in other places which would normally receive a higher priority.
     For instance, if one of the flags is enabled in the global scope,
-    but disabled at the subnet level, it will act as enabled,
+    but disabled at the subnet level, it will be enabled,
     disregarding the subnet-level setting.
 
 .. note::
 
-   The ``never-send`` is less powerful than the :ref:`hooks-flex-option`,
-   for instance it has no effect on options managed by the server itself.
-   Both ``always-send`` and ``never-send`` has no effect too on options
+   The ``never-send`` flag is less powerful than :ref:`hooks-flex-option`;
+   for instance, it has no effect on options managed by the server itself.
+   Both ``always-send`` and ``never-send`` have no effect on options
    which cannot be requested, for instance from a custom space.
 
 It is possible to override options on a per-subnet basis. If clients
@@ -2268,9 +2268,9 @@ vendor option is sent even when the client did not specify it in the query.
 .. note::
 
    Multiple instances of the ``vendor-class`` (code 16) and
-   instances  of the ``vendor-opts`` (code 17) options can be
+   ``vendor-opts`` (code 17) options can be
    specified. Specifying multiple options with different enterprise
-   numbers is now supported by Kea.
+   numbers is supported by Kea.
 
 .. _dhcp6-option-spaces:
 
@@ -3076,16 +3076,15 @@ conflict with existing entries owned by other DHCPv6 clients.
     reassigning either FQDNs or IP addresses. Doing so causes ``kea-dhcp6``
     to generate DNS removal requests to D2.
 
-The DNS entries Kea creates contain a value for TTL (time to live). Since
-Kea 1.9.3, ``kea-dhcp6`` calculates that value based on
+The DNS entries Kea creates contain a value for TTL (time to live).
+``kea-dhcp6`` calculates that value based on
 `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
 which suggests that the TTL value be 1/3 of the lease's lifetime, with
-a minimum value of 10 minutes. In earlier versions, the server set the
-TTL value equal to the lease's valid lifetime.
+a minimum value of 10 minutes.
 
-Kea 2.3.6 adds a new parameter, ``ddns-ttl-percent``. When specified
-it causes the TTL to be calculated as a simple percentage of the lease's
-life time, using the parameter's value as the percentage. It is specified
+The parameter ``ddns-ttl-percent``, when specified,
+causes the TTL to be calculated as a simple percentage of the lease's
+lifetime, using the parameter's value as the percentage. It is specified
 as a decimal percent (e.g. .25, .75, 1.00) and may be specified at the
 global, shared-network, and subnet levels.  By default it is unspecified.
 
@@ -3655,7 +3654,7 @@ pretty-printed for clarity):
 
 .. note::
 
-   Before Kea version 2.3.2 the entry was named ``relays``, remote and relay
+   Prior to Kea version 2.3.2, this entry was named ``relays``; remote and relay
    identifier options were not decoded.
 
 .. note::
@@ -3677,20 +3676,20 @@ and supports these levels:
 
 -  ``fix`` - fix some common inconsistencies and upgrade extended info
    using the old format to the new one. It is the default level and is
-   convenient when Lease Query hook library is not loaded.
+   convenient when the Leasequery hook library is not loaded.
 
 -  ``strict`` - fix all inconsistencies which have an impact on the (Bulk)
-   Lease Query hook library.
+   Leasequery hook library.
 
 -  ``pedantic`` - enforce full conformance to the format produced by the
-   Kea code, for instance no extra entries are allowed with the exception
+   Kea code; for instance, no extra entries are allowed with the exception
    of ``comment``.
 
 .. note::
 
-   Currently this feature is implemented only for the memfile
+   This feature is currently implemented only for the memfile
    backend. The sanity check applies to the lease database in memory,
-   not to the lease file, i.e. inconsistent leases will stay in the lease
+   not to the lease file, i.e. inconsistent leases stay in the lease
    file.
 
 .. _dhcp6-multi-threading-settings:
@@ -3706,12 +3705,12 @@ represented by:
    parallel. The default is ``true``.
 
 -  ``thread-pool-size`` - specify the number of threads to process packets in
-   parallel. It may be set to ``0`` (auto-detect), or any positive number which
+   parallel. It may be set to ``0`` (auto-detect), or any positive number that
    explicitly sets the thread count. The default is ``0``.
 
 -  ``packet-queue-size`` - specify the size of the queue used by the thread
    pool to process packets. It may be set to ``0`` (unlimited), or any positive
-   number explicitly sets the queue size. The default is ``64``.
+   number that explicitly sets the queue size. The default is ``64``.
 
 An example configuration that sets these parameters looks as follows:
 
@@ -4666,18 +4665,19 @@ addresses or prefixes.
 
 An address assigned via global host reservation must be feasible for the
 subnet the server selects for the client. In other words, the address must
-lie within the subnet otherwise it will be ignored and the server will
-attempt to dynamically allocate an address.  In the event the selected subnet
-belongs to a shared-network the server will check for feasibility against
-the subnet's siblings, selecting the first in-range subnet.  If no such
-subnet exists, the server will fallback to dynamically allocating the address.
+lie within the subnet; otherwise, it is ignored and the server will
+attempt to dynamically allocate an address. If the selected subnet
+belongs to a shared network, the server checks for feasibility against
+the subnet's siblings, selecting the first in-range subnet. If no such
+subnet exists, the server falls back to dynamically allocating the address.
 This does not apply to globally reserved prefixes.
 
 .. note::
 
     Prior to release 2.3.5, the server did not perform feasibility checks on
-    globally reserved addresses. This allowed the server to be configured to
-    hand out nonsensical leases for arbitrary address values.
+    globally reserved addresses, which allowed the server to be configured to
+    hand out nonsensical leases for arbitrary address values. Later versions
+    of Kea perform these checks.
 
 To use global host reservations, a configuration similar to the
 following can be used:
@@ -4985,12 +4985,13 @@ Host Reservations as Basic Access Control
 -----------------------------------------
 
 Starting with Kea 2.3.5, it is possible to define a host reservation that
-contains just an identifier, without any address, options or values. In some
-deployments this is useful, as the hosts that have a reservation will belong to
-KNOWN class, while others won't. This can be used as a basic access control.
+contains just an identifier, without any address, options, or values. In some
+deployments this is useful, as the hosts that have a reservation belong to
+the KNOWN class while others do not. This can be used as a basic access control
+mechanism.
 
-The following example demonstrates this concept. There is a single IPv6 subnet
-and all clients will get an address from it. However, only known (those that
+The following example demonstrates this concept. It indicates a single IPv6 subnet
+and all clients will get an address from it. However, only known clients (those that
 have reservations) will get their default DNS server configured.
 
 ::
@@ -5026,11 +5027,11 @@ have reservations) will get their default DNS server configured.
         ]
     }
 
-This concept can be extended further. A good real life scenario is a list of
-customers of an ISP. Some of them haven't paid their bills. A new class can be
-defined to use alternative default DNS server, that instead of giving access
-to Internet, redirects customers to a captive portal urging them to pay
-their bills.
+This concept can be extended further. A good real-life scenario might be a
+situation where some customers of an ISP have not paid their bills. A new class can be
+defined to use an alternative default DNS server that, instead of giving access
+to the Internet, redirects those customers to a captive portal urging them to bring
+their accounts up to date.
 
 ::
 
@@ -7276,15 +7277,14 @@ Address Allocation Strategies in DHCPv6
 A DHCP server follows a complicated algorithm to select a DHCPv6 lease for a client.
 It prefers assigning specific addresses or delegated prefixes requested by the client
 and the ones for which the client has reservations. If the client requests no particular
-lease, has no reservations, or other clients already use these leases, the server must
+lease and has no reservations, or other clients are already using any requested leases, the server must
 find another available lease within the configured pools. A server function called
-"allocator" is responsible in Kea for finding an available leases in such a case.
+an "allocator" is responsible in Kea for finding an available lease in such a case.
 
-Kea DHCPv6 server provides configuration parameters to select different allocators
-(allocation strategies) at the global, shared network, and subnet levels. It also
+The Kea DHCPv6 server provides configuration parameters to select different allocators
+at the global, shared-network, and subnet levels. It also
 allows for selecting different allocation strategies for address assignments and
 prefix delegation.
-
 
 Consider the following example:
 
@@ -7309,13 +7309,12 @@ Consider the following example:
         }
     }
 
-The iterative allocator is globally selected for address assignments. The
+The iterative allocator is globally selected for address assignments, while the
 random allocator is globally selected for prefix delegation. These settings
 are selectively overridden at the subnet level.
 
-
-In the following sections, we describe the supported allocators and recommend
-when to use them.
+The following sections describe the supported allocators and their
+recommended uses.
 
 .. note::
 
@@ -7326,7 +7325,7 @@ Allocators Comparison
 ---------------------
 
 In the table below, we briefly compare the supported allocators. The
-detailed allocators' descriptions are in further sections.
+detailed allocators' descriptions are in later sections.
 
 .. table:: Comparison of the lease allocators supported by Kea DHCPv6
 
@@ -7343,58 +7342,58 @@ detailed allocators' descriptions are in further sections.
 
 Iterative Allocator
 -------------------
-It is the default allocator used by the Kea DHCPv6 server. It remembers the
-last offered lease and offers the following lease to the next client.
+This is the default allocator used by the Kea DHCPv6 server. It remembers the
+last offered lease and offers the following sequential lease to the next client.
 For example, it may offer addresses in this order: ``2001:db8:1::10``,
 ``2001:db8:1::11``, ``2001:db8:1::12``, and so on. Similarly, it offers the
-delegated prefix following the previous one to the next client. The time to
-find and offer the next lease is very short. Thus, it is the highly performant
-allocator when the pool utilization is low and there is a high probability
+next sequential delegated prefix after the previous one to the next client. The time to
+find and offer the next lease is very short; thus, this is the most performant
+allocator when pool utilization is low and there is a high probability
 that the next selected lease is available.
 
 The iterative allocation underperforms when multiple DHCP servers share a lease
 database or are connected to a cluster. The servers tend to offer and allocate
-the same blocks of addresses to different clients independently. It causes many
+the same blocks of addresses to different clients independently, which causes many
 allocation conflicts between the servers and retransmissions by clients. A random
-allocation deals with it by dispersing the allocations order.
+allocation addresses this issue by dispersing the allocation order.
 
 Random Allocator
 ----------------
 
 The random allocator uses a uniform randomization function to select offered
-addresses and delegated prefixes from the subnet pools. It improves the server's
-resilience against attacks based on allocation predictability. In addition, the
-random allocation is suitable in deployments where multiple servers are connected
+addresses and delegated prefixes from subnet pools. It is suitable in deployments
+where multiple servers are connected
 to a shared database or a database cluster. By dispersing the offered leases, the
 servers minimize the risk of allocating the same lease to two different clients at
-the same or nearly the same time.
+the same or nearly the same time. In addition, it improves the server's
+resilience against attacks based on allocation predictability.
 
 The random allocator is, however, slightly slower than the iterative allocator.
 Moreover, it increases the server's memory consumption because it must remember
 randomized leases to avoid offering them repeatedly. Memory consumption grows
-with the number of offered leases. In other words, larger pools and more
+with the number of offered leases; in other words, larger pools and more
 clients increase memory consumption by random allocation.
 
 Free Lease Queue Allocator (Prefix Delegation Only)
 ---------------------------------------------------
 
-It is a sophisticated allocator whose use should be considered in subnets
+This is a sophisticated allocator whose use should be considered in subnets
 with highly utilized delegated prefix pools. In such cases, it can take a
-considerable amount of time for the iterative and random allocator to find
-an available prefix because they have to repeatedly check if there is a
-valid lease for the prefix they will offer. The number of checks can be as
+considerable amount of time for the iterative or random allocator to find
+an available prefix, because they must repeatedly check whether there is a
+valid lease for a prefix they will offer. The number of checks can be as
 high as the number of delegated prefixes in the subnet when the subnet pools
-are exhausted. It has a direct negative impact on the DHCP response time for
+are exhausted, which can have a direct negative impact on the DHCP response time for
 each request.
 
 The Free Lease Queue (FLQ) allocator tracks lease allocations and de-allocations
 and maintains a running list of available delegated prefixes for each pool.
-It allows for picking an available lease in a constant time, regardless of
+It allows an available lease to be selected within a constant time, regardless of
 the subnet pools' utilization. The allocator continuously updates the list of
-free leases by removing the allocated leases and adding the released or
+free leases by removing any allocated leases and adding released or
 reclaimed ones.
 
-The following configuration snipet shows how to select the FLQ allocator
+The following configuration snippet shows how to select the FLQ allocator
 for prefix delegation in a subnet:
 
 .. code-block:: json
@@ -7415,38 +7414,37 @@ for prefix delegation in a subnet:
 
    The Free Lease Queue allocator can only be used for DHCPv6 prefix delegation.
    An attempt to use this allocator for address assignment (with the ``allocator``
-   parameter) will cause the configuration error. The DHCPv6 address pools are
-   typically very large, and their utilization is low. In this case, the benefits
-   of using the FLQ allocator diminish, and the amount of time required for the
+   parameter) will cause a configuration error. DHCPv6 address pools are
+   typically very large and their utilization is low; in these situation, the benefits
+   of using the FLQ allocator diminish. The amount of time required for the
    allocator to populate the free lease queue would cause the server to freeze
    upon startup.
 
-
-There are several tradeoffs that the administrator should take into account
-before using this allocator for prefix delegation. It can heavily
-impact the server's startup and reconfiguration time because the allocator
+There are several considerations that the administrator should take into account
+before using this allocator for prefix delegation. The FLQ allocator can heavily
+impact the server's startup and reconfiguration time, because the allocator
 has to populate the list of free leases for each subnet where it is used.
-The delays can be observed both during the configuration reload and when
+These delays can be observed both during the configuration reload and when
 the subnets are created using the ``subnet_cmds`` hook. The allocator
-increases the memory consumption to hold the list of free leases, and it
-is proportional to the total size of the pools for which this allocator is used.
-Finally, the lease reclamation must be enabled with a low value of the
-``reclaim-timer-wait-time`` parameter to ensure that the server frequently
+increases the memory consumption to hold the list of free leases,
+proportional to the total size of the pools for which this allocator is used.
+Finally, lease reclamation must be enabled with a low value of the
+``reclaim-timer-wait-time`` parameter, to ensure that the server frequently
 collects expired leases and makes them available for allocation via the
 allocator's free lease queue. Expired leases are not considered free by
 the allocator until they are reclaimed by the server. See
 :ref:`lease-reclamation` for more details about the lease reclamation process.
 
-Due to the above tradeoffs, we recommend that the FLQ allocator is selected
+We recommend that the FLQ allocator be selected
 only after careful consideration. The server puts no restrictions on the
-delegated prefix pool sizes used with the FLQ allocator. We recommend testing
-how long it takes for the server to load the pools before deploying the
+delegated prefix pool sizes used with the FLQ allocator, so we advise users to
+test how long it takes for the server to load the pools before deploying the
 configuration using the FLQ allocator in production. We also recommend
-specifying some other allocator type in the global configuration settings
-and overriding this selection at the subnet or shared network level to use
-the FLQ allocator for selected subnets only. That way, when a new subnet is
-added without the allocator specification, the global setting is used, thus
+specifying another allocator type in the global configuration settings
+and overriding this selection at the subnet or shared-network level, to use
+the FLQ allocator only for selected subnets. That way, when a new subnet is
+added without an allocator specification, the global setting is used, thus
 avoiding unnecessary impact on the server's startup time.
 
-Similarly to the random allocator, the FLQ allocator offers leases in
+Like the random allocator, the FLQ allocator offers leases in
 random order, which makes it suitable for use with a shared lease database.

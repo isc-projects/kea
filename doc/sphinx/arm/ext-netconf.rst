@@ -9,9 +9,9 @@ Overview
 --------
 
 The Network Configuration Protocol, or NETCONF, is a network management protocol defined
-in `RFC 4741 <https://tools.ietf.org/html/rfc4741>`__. It uses YANG modeling language,
+in `RFC 4741 <https://tools.ietf.org/html/rfc4741>`__. It uses the YANG modeling language,
 defined in `RFC 6020 <https://tools.ietf.org/html/rfc6020>`__, to provide a uniform way
-of handling the configuration syntax of varied networking devices. Kea provides optional
+of handling the configuration syntax of various networking devices. Kea provides optional
 support for a YANG/NETCONF interface with the ``kea-netconf`` agent.
 
 .. _netconf-install:
@@ -20,7 +20,7 @@ Installing NETCONF
 ------------------
 
 To get its NETCONF capabilities, Kea requires the v2 versions of libyang and
-sysrepo. The specific versions that were thoroughly tested with Kea are:
+Sysrepo. The specific versions that have been thoroughly tested with Kea are:
 
 * libyang v2.1.4
 * sysrepo v2.2.12
@@ -29,10 +29,9 @@ sysrepo. The specific versions that were thoroughly tested with Kea are:
 
 .. note::
 
-    If, for whatever reason, an older version is desired, the versions below
-    are the furthest back one can go. Backtracking even further has resulted
-    either in compilation failure or in improper functioning in ISC internal
-    testing, depending on which component is reverted.
+    For users who are unable to upgrade to one of the versions of libyang
+    and Sysrepo listed above, these are the oldest versions known to work
+    reliably with current Kea releases:
 
     * libyang v2.0.256 (56d4e07ef1cdeab3eb2e6700247f83ec9148edcc)
     * sysrepo v2.1.84
@@ -41,11 +40,13 @@ sysrepo. The specific versions that were thoroughly tested with Kea are:
 
 .. note::
 
-    kea-netconf may be compatible with later versions, but if it is
-    not hereby documented, it is not guaranteed.
+    ``kea-netconf`` may be compatible with later versions of libyang and
+    Sysrepo, but only the versions listed above have been thoroughly
+    tested by ISC.
 
-Use packages if they are provided by the system. If not, users can
-build from sources, which should work on all popular operating systems.
+Installing from packages is recommended, if they are provided by the system. If
+not, users can build from sources following the directions below, which
+should work on all popular operating systems.
 
 .. _libyang-install-sources:
 
@@ -135,7 +136,7 @@ Compiling With NETCONF
     If any of the libraries are installed in a custom location, the
     ``--with`` flags accept the installations paths as values.
 
-3. Check ``config.report`` for NETCONF support.
+3. Check ``config.report`` to verify NETCONF support.
 
 ::
 
@@ -174,7 +175,7 @@ Compiling With NETCONF
         SYSREPOCPP_PREFIX :    /usr/local
         SYSREPOCPP_VERSION:    1.1.0
 
-4. Build as you normally would.
+4. Build as usual.
 
     $ make
 
@@ -188,9 +189,9 @@ functions in Sysrepo. For more complete information, see the
 `Sysrepo homepage <https://www.sysrepo.org>`__.
 
 In YANG, configurations and state data are described in YANG syntax
-in module files named: ``<module-name>[@<revision>].yang``
+in module files named ``<module-name>[@<revision>].yang``
 
-The revision part is optional and has ``YYYY-MM-DD`` format. An alternate
+The revision part is optional and follows the ``YYYY-MM-DD`` format. An alternate
 XML syntax YIN is defined but less user-friendly. Top-level modules are
 named in Kea models (a short version of schema models).
 
@@ -200,28 +201,29 @@ IETF to develop a DHCPv6 YANG model, a similar initiative in the past for DHCPv4
 failed. Therefore, Kea uses its own dedicated models for DHCPv4 and DHCPv6 but
 partially supports the IETF model for DHCPv6.
 
-All of the models have extra modules as dependencies. The dependency modules are also provided.
+All of the models have extra modules as dependencies, which are also provided.
 All of the modules can be found in ``src/share/yang/modules`` in sources and in
-``share/kea/yang/modules`` in the installation directory. This directory will be
+``share/kea/yang/modules`` in the installation directory. This directory is
 referred to as `${share_directory}` in the commands below.
 
-To install modules from sources, or upgrade them if you have older revisions
-installed, run the following command. In the case of a revision upgrade, YANG
+To install modules from sources or upgrade them from older revisions,
+run the following command. In the case of a revision upgrade, YANG
 data will be migrated automatically to the new module schema.
 
 .. code-block:: console
 
     $ ${share_directory}/yang/modules/utils/reinstall.sh
 
-However, if there is resistance in the upgrade process, and data can be recreated from a NETCONF
-client or through other means, Kea modules can be easily uninstalled before installing again with:
+However, if there are any issues during the upgrade process, and data can be recreated from a NETCONF
+client or through other means, Kea modules can be easily uninstalled before installing again
+via this command:
 
 .. code-block:: console
 
     $ ${share_directory}/yang/modules/utils/reinstall.sh -u
 
-The script should be able to pick up on the Sysrepo installation.
-If not, there is a flag that was historically used to point to it:
+This script should be able to reinstall Sysrepo. However, the ``-s``
+flag can also be used to specify a path:
 
 .. code-block:: console
 
@@ -292,8 +294,8 @@ The installation should look similar to the following:
     [INF] File "kea-dhcp6-server@2022-11-30.yang" was installed.
     [INF] No datastore changes to apply.
 
-It is possible to confirm whether the modules are imported correctly.
-The list of currently installed YANG modules should be similar to this:
+To confirm whether the modules have been imported correctly, check the list of
+currently installed YANG modules. It should be similar to this:
 
 .. code-block:: console
 
@@ -342,14 +344,14 @@ it will update it automatically. Otherwise, it must first be uninstalled:
 If the module is used (i.e. imported) by other modules, it can be uninstalled
 only after the dependent modules have first been uninstalled.
 Installation and uninstallation must be done in dependency order and
-reverse-dependency order accordingly.
+reverse-dependency order, as appropriate.
 
 .. _netconf-models:
 
 Supported YANG Models
 ---------------------
 
-The only currently supported models are ``kea-dhcp4-server`` and
+The currently supported models are ``kea-dhcp4-server`` and
 ``kea-dhcp6-server``. There is partial support for
 ``ietf-dhcpv6-server``, but the primary focus of testing has been on Kea DHCP
 servers. Other models (``kea-dhcp-ddns`` and ``kea-ctrl-agent``)
@@ -849,16 +851,15 @@ datastore, i.e. changes are not permanent.
 
 .. note::
 
-    kea-netconf fetches the entire configuration from any Sysrepo datastore in a
-    single get-config NETCONF operation. It underwent an extensive overhaul
-    from the approach prior to Kea 2.3.2 where a get-config operation was done
-    for each leaf and leaf-list node. Because of the broad changes, kea-netconf
-    is considered experimental.
+    ``kea-netconf`` fetches the entire configuration from any Sysrepo datastore in a
+    single ``get-config`` NETCONF operation. Prior to Kea 2.3.2, a ``get-config`` operation
+    was done for each leaf and leaf-list node. Because of the significant changes,
+    ``kea-netconf`` is considered experimental.
 
 .. _operation-example-errors:
 
-Error Handling in NETCONF Operation Example
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Example of Error Handling in NETCONF Operation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are four classes of issues with configurations applied via
 NETCONF:
@@ -1040,7 +1041,7 @@ This configuration is installed by:
 
 .. _operation-example-logging:
 
-NETCONF Operation Example with Logging
+NETCONF Operation Example With Logging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example adds a logger entry to the initial (i.e. startup)
@@ -1126,13 +1127,13 @@ or by using a NETCONF client like ``netopeer2-cli`` from the
 
 .. _migrating-yang-data:
 
-Migrating YANG Data from a prior Sysrepo version
+Migrating YANG Data From a Prior Sysrepo Version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Shut down ``kea-netconf``. This makes sure that backups for both datastores
-are done at the same configuration state and no change happens between exporting them.
+1. Shut down ``kea-netconf``. This ensures that backups for both datastores
+are done at the same configuration state and that no change happens between exporting them.
 
-2. Make data backups for all YANG modules, one XML for each datastore.
+2. Make data backups for all YANG modules, with one XML for each datastore.
 
 .. code-block:: console
 
@@ -1141,17 +1142,17 @@ are done at the same configuration state and no change happens between exporting
 
 .. note::
 
-    Sysrepo v0 does not support import/export of all YANG modules. This capability was added in
+    Sysrepo v0 does not support import/export of all YANG modules; this capability was added in
     Sysrepo v1. Users that are migrating from Sysrepo v0 will need to do per-module backups. This has
     the added benefit of isolating potential failures and preventing them from affecting all
-    modules. The command is the same except it has the module name added to it at the end.
+    modules. The command is the same, except it has the module name added to it at the end.
 
     .. code-block:: console
 
         $ sysrepocfg --datastore running --export=save.xml --format=xml kea-dhcp6-server
         $ sysrepocfg --datastore startup --export=save.xml --format=xml kea-dhcp6-server
 
-3. Upgrade Sysrepo to the newer version and then:
+3. Upgrade Sysrepo to the newer version and then run:
 
 .. code-block:: console
 

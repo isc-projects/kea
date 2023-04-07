@@ -770,18 +770,18 @@ respect to HA:
    is 10.
 
 -  ``max-rejected-lease-updates`` - specifies how many lease updates for distinct
-   clients can fail due to a conflict between the lease and the partner configuration
-   or state before the server transitions to the ``terminated`` state. Conflict
-   can be a sign of a misconfiguration. Usually, a small number of conflicted
+   clients can fail, due to a conflict between the lease and the partner configuration
+   or state, before the server transitions to the ``terminated`` state. Conflict
+   can be a sign of a misconfiguration; usually, a small number of conflicted
    leases are acceptable because they affect only a few devices. However, if
-   the conflicts occur for many devices (e.g., entire subnet), the HA service
-   becomes unreliable, should be terminated, and the problem should be manually
+   the conflicts occur for many devices (e.g., an entire subnet), the HA service
+   becomes unreliable and should be terminated, and the problem must be manually
    corrected by an administrator. It is up to the administrator to select
    the highest acceptable value of ``max-rejected-lease-updates``. The default
    value is 10. The special value of 0 configures the server to never terminate
-   the HA service due to the lease conflicts. If the value is 1, the server
+   the HA service due to lease conflicts. If the value is 1, the server
    transitions to the ``terminated`` state when the first conflict occurs.
-   This parameter does not pertain to the conflicting lease updates sent to
+   This parameter does not pertain to conflicting lease updates sent to
    the backup servers.
 
 -  ``delayed-updates-limit`` - specifies the maximum number of lease updates
@@ -794,14 +794,15 @@ respect to HA:
 
 .. note::
 
-   The ``max-rejected-lease-updates`` parameter has been introduced in Kea 2.3.1
-   release. Earlier, the server did not differentiate between a lease update
-   failure due to a dead partner and conflicts (e.g., configuration issues).
+   The ``max-rejected-lease-updates`` parameter was introduced in Kea 2.3.1.
+   Previously, the server did not differentiate between a lease update
+   failure due to a non-functioning partner and a failure due to a conflict
+   (e.g., configuration issues).
    As a result, the server could sometimes transition to the ``partner-down``
-   state even though the partner was operating normally, but only some leases
+   state even though the partner was operating normally, but only certain leases
    had issues. Conflicts should no longer cause such a transition. However,
    depending on the ``max-rejected-lease-updates`` setting, too many conflicts
-   can lead to the High Availability service termination. In that case, both
+   can lead to termination of the High Availability service. In that case, both
    servers continue to respond to DHCP queries but no longer send lease updates.
 
 The values of ``max-ack-delay`` and ``max-unacked-clients`` must be selected
@@ -1188,7 +1189,7 @@ the backup servers.
 Many of the parameters present in the ``load-balancing`` and ``hot-standby``
 configuration examples are not relevant in the ``passive-backup`` mode, thus
 they are not specified here. For example: ``heartbeat-delay``,
-``max-unacked-clients``, ``max-rejected-lease-updates`` and others related to
+``max-unacked-clients``, ``max-rejected-lease-updates``, and others related to
 the failover mechanism should not be specified in the ``passive-backup`` mode.
 
 The ``wait-backup-ack`` is a boolean parameter not present in previous examples.
