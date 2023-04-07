@@ -1091,8 +1091,10 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     size_t erased_addresses = 0;
     if (addr.isV4()) {
         // Delete IPv4 reservation and host.
-        HostContainerIndex1& idx = hosts_.get<1>();
-        erased_hosts = idx.erase(addr);
+        HostContainerIndex4& idx = hosts_.get<4>();
+        for (auto host : getAll4(subnet_id, addr)) {
+            erased_hosts += idx.erase(host->getHostId());
+        }
         erased_addresses = erased_hosts;
     } else {
         HostContainer6Index1& idx6 = hosts6_.get<1>();
