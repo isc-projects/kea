@@ -3379,6 +3379,35 @@ HostMgrTest::testGetAllbyHostnameSubnet4(BaseHostDataSource& data_source1,
     // Make sure that hostname is correct including its case.
     EXPECT_EQ("Host", hosts[0]->getHostname());
     EXPECT_EQ("hosT", hosts[1]->getHostname());
+
+    // Make sure that the operation target is supported.
+    bool is_first_source_primary = isPrimaryDataSource(data_source1);
+    bool is_second_source_primary = isPrimaryDataSource(data_source2);
+    size_t hosts_in_primary_source = is_first_source_primary + is_second_source_primary;
+
+    // Select hosts only from the primary source.
+    hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(1), HostMgrOperationTarget::PRIMARY_SOURCE);
+    EXPECT_EQ(hosts_in_primary_source, hosts.size());
+    if (is_first_source_primary) {
+        EXPECT_EQ("Host", hosts[0]->getHostname());
+    }
+    if (is_second_source_primary) {
+        EXPECT_EQ("hosT", hosts[hosts_in_primary_source-1]->getHostname());
+    }
+
+    // Select hosts only from the alternate sources.
+    hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(1), HostMgrOperationTarget::ALTERNATE_SOURCES);
+    EXPECT_EQ(2 - hosts_in_primary_source, hosts.size());
+    if (!is_first_source_primary) {
+        EXPECT_EQ("Host", hosts[0]->getHostname());
+    }
+    if (!is_second_source_primary) {
+        EXPECT_EQ("hosT", hosts[2 - hosts_in_primary_source - 1]->getHostname());
+    }
+
+    // Select hosts for an unspecified source.
+    hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(1), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    EXPECT_EQ(0, hosts.size());
 }
 
 void
