@@ -13,6 +13,7 @@
 
 #include <dhcp/iface_mgr.h>
 #include <asiolink/io_address.h>
+#include <iostream>
 
 using namespace isc::dhcp;
 using namespace isc::asiolink;
@@ -53,8 +54,17 @@ PerfSocket::openSocket(CommandOptions& options) const {
               port = DHCP6_SERVER_PORT;
             }
         } else if (options.getIpVersion() == 4) {
-            port = 67; /// @todo: find out why port 68 is wrong here.
+            // perfdhcp sets giaddr to the bound socket address, so kea always
+            // responds to port 67. perfdhcp doesn't currently have a client
+            // behavior for DHCPv4; it either sets giaddr to the bound socket
+            // address or to a random address in the multi_subnet_ case.
+            port = 67;
         }
+    } else if ((options.getIpVersion() == 4) && (port != 67)) {
+        // No matter what port a user specifies, the server will reply to the
+        // address specified in giaddr on port 67. Try and warn the user.
+        std::cout << "WARNING: Port " << port << " specified, but server will "
+                  << "respond to port 67." << std::endl;
     }
 
     // Local name is specified along with '-l' option.

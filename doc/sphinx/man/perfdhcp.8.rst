@@ -225,6 +225,10 @@ Options
    integer up to 65535. A value of 0 (the default) allows ``perfdhcp``
    to choose its own port.
 
+   Note that ``perfdhcp -4`` behaves as a relay agent, and the server may send
+   replies to the BOOTPS port (67) irrespective of what port ``perfdhcp`` is
+   listening on.
+
 ``-M mac-list-file``
    Specifies a text file containing a list of MAC addresses, one per line. If
    provided, a MAC address is chosen randomly from this list for
