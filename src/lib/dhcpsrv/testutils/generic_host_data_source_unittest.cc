@@ -3985,6 +3985,31 @@ HostMgrTest::testGet4Any() {
                                     &duids_[0]->getDuid()[0],
                                     duids_[0]->getDuid().size());
     EXPECT_FALSE(host);
+
+    // Make sure that the operation target is supported.
+    // Select host by explicit, matched operation target.
+    host = HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                       &duids_[0]->getDuid()[0],
+                                       duids_[0]->getDuid().size(),
+                                       HostMgrOperationTarget::PRIMARY_SOURCE);
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+    EXPECT_TRUE(host->getNegative());
+
+    // Select host by explicit but unmatched operation target.
+    host = HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                       &duids_[0]->getDuid()[0],
+                                       duids_[0]->getDuid().size(),
+                                       HostMgrOperationTarget::ALTERNATE_SOURCES);
+    ASSERT_FALSE(host);
+
+    // Select host for an unspecified operation target.
+    host = HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                       &duids_[0]->getDuid()[0],
+                                       duids_[0]->getDuid().size(),
+                                       HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    ASSERT_FALSE(host);
 }
 
 void
