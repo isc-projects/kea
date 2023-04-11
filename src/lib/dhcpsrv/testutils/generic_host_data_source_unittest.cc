@@ -3849,6 +3849,35 @@ HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
 
     // Make sure that two different hosts were returned.
     EXPECT_NE(hosts[0]->getIPv4SubnetID(), hosts[1]->getIPv4SubnetID());
+
+    // Make sure that the operation target is supported.
+    bool is_first_source_primary = isPrimaryDataSource(data_source1);
+    bool is_second_source_primary = isPrimaryDataSource(data_source2);
+    size_t hosts_in_primary_source = is_first_source_primary + is_second_source_primary;
+
+    // Select hosts only from the primary source.
+    hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5"), HostMgrOperationTarget::PRIMARY_SOURCE);
+    EXPECT_EQ(hosts_in_primary_source, hosts.size());
+    if (is_first_source_primary) {
+        EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    }
+    if (is_second_source_primary) {
+        EXPECT_EQ("192.0.2.5", hosts[hosts_in_primary_source-1]->getIPv4Reservation().toText());
+    }
+
+    // Select hosts only from the alternate sources.
+    hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5"), HostMgrOperationTarget::ALTERNATE_SOURCES);
+    EXPECT_EQ(2 - hosts_in_primary_source, hosts.size());
+    if (!is_first_source_primary) {
+        EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    }
+    if (!is_second_source_primary) {
+        EXPECT_EQ("192.0.2.5", hosts[2 - hosts_in_primary_source - 1]->getIPv4Reservation().toText());
+    }
+
+    // Select hosts for an unspecified source.
+    hosts = HostMgr::instance().getAll4(SubnetID(1), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    EXPECT_EQ(0, hosts.size());
 }
 
 void
@@ -3872,6 +3901,36 @@ HostMgrTest::testGet4(BaseHostDataSource& data_source) {
     ASSERT_TRUE(host);
     EXPECT_EQ(1, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+
+    // Make sure that the operation target is supported.
+    // Select host by explicit, matched operation target.
+    HostMgrOperationTarget operation_target = isPrimaryDataSource(data_source)
+                                ? HostMgrOperationTarget::PRIMARY_SOURCE
+                                : HostMgrOperationTarget::ALTERNATE_SOURCES;
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size(),
+                                    operation_target);
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+
+    // Select host by explicit but unmatched operation target.
+    operation_target = isPrimaryDataSource(data_source)
+                                ? HostMgrOperationTarget::ALTERNATE_SOURCES
+                                : HostMgrOperationTarget::PRIMARY_SOURCE;
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size(),
+                                    operation_target);
+    ASSERT_FALSE(host);
+
+    // Select host for an unspecified operation target.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size(),
+                                    HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    ASSERT_FALSE(host);
 }
 
 void
