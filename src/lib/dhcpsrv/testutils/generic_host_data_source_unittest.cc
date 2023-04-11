@@ -3032,8 +3032,8 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
     // Look for the first reservation.
     bool found = false;
     for (unsigned i = 0; i < 2; ++i) {
-        if (hosts[0]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
-            ASSERT_EQ(1, hosts[0]->getIPv4SubnetID());
+        if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
+            ASSERT_EQ(1, hosts[i]->getIPv4SubnetID());
             found = true;
         }
     }
@@ -3045,8 +3045,8 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
     // Look for the second reservation.
     found = false;
     for (unsigned i = 0; i < 2; ++i) {
-        if (hosts[1]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
-            ASSERT_EQ(10, hosts[1]->getIPv4SubnetID());
+        if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
+            ASSERT_EQ(10, hosts[i]->getIPv4SubnetID());
             found = true;
         }
     }
@@ -3054,6 +3054,95 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
         ADD_FAILURE() << "Reservation for the IPv4 address 192.0.3.10"
             " not found using getAll method";
     }
+
+    // Check handling of operation target.
+    bool is_first_source_primary = isPrimaryDataSource(data_source1);
+    bool is_second_source_primary = isPrimaryDataSource(data_source2);
+    size_t reservations_in_primary_source = 0;
+    if (is_first_source_primary) {
+        reservations_in_primary_source += 1;
+    }
+    if (is_second_source_primary) {
+        reservations_in_primary_source += 1;
+    }
+
+    // Primary source target.
+    hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size(),
+                                       HostMgrOperationTarget::PRIMARY_SOURCE);
+    EXPECT_EQ(reservations_in_primary_source, hosts.size());
+    if (is_first_source_primary) {
+        found = false;
+        for (unsigned i = 0; i < 2; ++i) {
+            if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
+                ASSERT_EQ(1, hosts[i]->getIPv4SubnetID());
+                found = true;
+            }
+        }
+        if (!found) {
+            ADD_FAILURE() << "Reservation for the IPv4 address 192.0.2.5"
+                " not found using getAll method with PRIMARY_SOURCE operation"
+                " target";
+        }
+    }
+    if (is_second_source_primary) {
+        found = false;
+        for (unsigned i = 0; i < 2; ++i) {
+            if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
+                ASSERT_EQ(10, hosts[i]->getIPv4SubnetID());
+                found = true;
+            }
+        }
+        if (!found) {
+            ADD_FAILURE() << "Reservation for the IPv4 address 192.0.3.10"
+                " not found using getAll method with PRIMARY_SOURCE operation"
+                " target";
+        }
+    }
+
+    // Alternate sources target.
+    hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size(),
+                                       HostMgrOperationTarget::ALTERNATE_SOURCES);
+    EXPECT_EQ(2 - reservations_in_primary_source, hosts.size());
+
+    if (!is_first_source_primary) {
+        found = false;
+        for (unsigned i = 0; i < 2; ++i) {
+            if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
+                ASSERT_EQ(1, hosts[i]->getIPv4SubnetID());
+                found = true;
+            }
+        }
+        if (!found) {
+            ADD_FAILURE() << "Reservation for the IPv4 address 192.0.2.5"
+                " not found using getAll method with PRIMARY_SOURCE operation"
+                " target";
+        }
+    }
+    if (!is_second_source_primary) {
+        found = false;
+        for (unsigned i = 0; i < 2; ++i) {
+            if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
+                ASSERT_EQ(10, hosts[i]->getIPv4SubnetID());
+                found = true;
+            }
+        }
+        if (!found) {
+            ADD_FAILURE() << "Reservation for the IPv4 address 192.0.3.10"
+                " not found using getAll method with PRIMARY_SOURCE operation"
+                " target";
+        }
+    }
+
+    // Unspecified source target.
+    hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size(),
+                                       HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    EXPECT_EQ(0, hosts.size());
 }
 
 void
@@ -3889,6 +3978,11 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
     EXPECT_TRUE(hosts[1]->hasReservation(
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+}
+
+bool HostMgrTest::isPrimaryDataSource(const BaseHostDataSource& data_source) const {
+    const auto ptr = dynamic_cast<const CfgHosts*>(&data_source);
+    return ptr != nullptr;
 }
 
 void

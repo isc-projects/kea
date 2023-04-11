@@ -929,6 +929,12 @@ protected:
     void testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
                                BaseHostDataSource& data_source2);
 
+    /// @brief Utility function that returns true if a given data source
+    /// is primary (it isn't an alternate source).
+    /// @param data_source  Host data source to check.
+    /// @return True if the data source is primary. Otherwise, false.
+    bool isPrimaryDataSource(const BaseHostDataSource& data_source) const;
+
     /// @brief HW addresses to be used by the tests.
     std::vector<HWAddrPtr> hwaddrs_;
     /// @brief DUIDs to be used by the tests.
