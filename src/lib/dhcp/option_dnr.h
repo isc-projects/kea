@@ -116,7 +116,17 @@ private:
     /// @brief Length of Service Parameters field in octets.
     uint16_t svc_params_length_ = 0;
 
+    /// @brief Flag stating whether ADN only mode is used or not.
+    ///
+    /// "Addr Length", "ipv6-address(es)", and "Service Parameters (SvcParams)"
+    /// fields are not present if the ADN-only mode is used.
     bool adn_only_mode_ = true;
+
+    /// @brief Service Parameters (SvcParams) (variable length).
+    ///
+    /// Specifies a set of service parameters that are encoded
+    /// following the rules in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
+    std::vector<uint8_t> svc_params_;
 
     /// @brief Returns minimal length of the option data (without headers) in octets.
     ///
@@ -129,6 +139,12 @@ private:
     static uint8_t getMinimalLength() {
         return SERVICE_PRIORITY_SIZE + ADN_LENGTH_SIZE;
     };
+
+    void packAdn(isc::util::OutputBuffer& buf) const;
+
+    void packAddresses(isc::util::OutputBuffer& buf) const;
+
+    void packSvcParams(isc::util::OutputBuffer& buf) const;
 };
 
 class OptionDnr4 : public Option {

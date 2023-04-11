@@ -11,6 +11,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_dnr.h>
+#include <dns/labelsequence.h>
 
 using namespace isc::asiolink;
 
@@ -24,7 +25,7 @@ OptionDnr6::OptionDnr6(OptionBufferConstIter begin, OptionBufferConstIter end)
 
 OptionPtr
 OptionDnr6::clone() const {
-    return Option::clone();
+    return (cloneInternal<OptionDnr6>());
 }
 
 void
@@ -32,7 +33,46 @@ OptionDnr6::pack(util::OutputBuffer& buf, bool check) const {
     packHeader(buf, check);
 
     buf.writeUint16(service_priority_);
-    // TBD
+    buf.writeUint16(adn_length_);
+    packAdn(buf);
+    if (adn_only_mode_) {
+        return;
+    }
+    buf.writeUint16(addr_length_);
+    packAddresses(buf);
+    packSvcParams(buf);
+}
+
+void
+OptionDnr6::packAdn(util::OutputBuffer& buf) const {
+    if (!adn_) {
+        // This should not happen since Encrypted DNS options are designed
+        // to always include an authentication domain name.
+        return;
+    }
+    isc::dns::LabelSequence label_sequence(*adn_);
+    if (label_sequence.getDataLength() > 0) {
+        size_t data_length = 0;
+        const uint8_t* data = label_sequence.getData(&data_length);
+        buf.writeData(data, data_length);
+    }
+}
+
+void
+OptionDnr6::packAddresses(util::OutputBuffer& buf) const {
+    for (auto address = ipv6_addresses_.begin(); address != ipv6_addresses_.end(); ++address) {
+        if (!address->isV6()) {
+            isc_throw(isc::BadValue, address->toText() << " is not an IPv6 address");
+        }
+        buf.writeData(&address->toBytes()[0], V6ADDRESS_LEN);
+    }
+}
+
+void
+OptionDnr6::packSvcParams(util::OutputBuffer& buf) const {
+    if (svc_params_length_ > 0) {
+        buf.writeData(&*svc_params_.begin(), svc_params_length_);
+    }
 }
 
 void
@@ -100,7 +140,10 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
 
     // SvcParams (variable length) field is last
     svc_params_length_ = std::distance(begin, end);
-    // TBD svcParams unpack
+    if (svc_params_length_ > 0) {
+        // for now let's keep SvcParams as binary data in buffer
+        svc_params_.assign(begin, end);
+    }
 }
 
 std::string
