@@ -61,7 +61,7 @@ public:
     ///
     /// The call count can be later examined to check whether or not
     /// the function was called.
-    virtual void initAfterConfigure() {
+    virtual void initAfterConfigureInternal() {
         ++callcount_;
     };
 
