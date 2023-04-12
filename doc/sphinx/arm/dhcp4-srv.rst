@@ -7400,6 +7400,8 @@ at which it is currently supported.
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | 4o6-subnet                  | n/a                        | n/a          | n/a         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
+   | allocator                   | yes                        | n/a          | yes         | yes         | n/a         |
+   +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | boot-file-name              | yes                        | yes          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | cache-max-age               | yes                        | n/a          | no          | no          | n/a         |
@@ -7734,11 +7736,6 @@ with ID 1.
 
 The following sections describe the supported allocators and their
 recommended uses.
-
-.. note::
-
-   Allocator selection is currently not supported in the Kea Configuration
-   Backend.
 
 Allocators Comparison
 ---------------------

@@ -7089,6 +7089,8 @@ at which it is currently supported.
    |                             |                            | Class     | Network   |           |           | Delegation |
    |                             |                            |           |           |           |           | Pool       |
    +=============================+============================+===========+===========+===========+===========+============+
+   | allocator                   | yes                        | n/a       | yes       | yes       | n/a       | n/a        |
+   +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | cache-max-age               | yes                        | n/a       | no        | no        | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | cache-threshold             | yes                        | n/a       | no        | no        | n/a       | n/a        |
@@ -7140,6 +7142,8 @@ at which it is currently supported.
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | option-def                  | yes (via                   | yes       | n/a       | n/a       | n/a       | n/a        |
    |                             | remote-option-def6-set)    |           |           |           |           |            |
+   +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
+   | pd-allocator                | yes                        | n/a       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | preferred-lifetime          | yes                        | yes       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
@@ -7315,10 +7319,6 @@ are selectively overridden at the subnet level.
 The following sections describe the supported allocators and their
 recommended uses.
 
-.. note::
-
-   Allocator selection is currently not supported in the Kea Configuration
-   Backend.
 
 Allocators Comparison
 ---------------------
