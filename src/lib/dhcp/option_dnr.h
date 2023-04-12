@@ -15,42 +15,63 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Exception thrown when invalid domain name is specified.
-class InvalidOptionDnr6DomainName : public Exception {
+class InvalidOptionDnrDomainName : public Exception {
 public:
-    InvalidOptionDnr6DomainName(const char* file, size_t line, const char* what)
+    InvalidOptionDnrDomainName(const char* file, size_t line, const char* what)
         : isc::Exception(file, line, what) {
     }
 };
 
+/// @brief Represents DHCPv6 Encrypted DNS %Option (code 144).
+///
+/// This option has been defined in the draft-ietf-add-dnr-15 (to be replaced
+/// with published RFC) and it has a following structure:
+/// - option-code = 144 (2 octets)
+/// - option-len (2 octets)
+/// - Service Priority (2 octets)
+/// - ADN Length (2 octets)
+/// - Authentication Domain Name (variable length)
+/// - Addr Length (2 octets)
+/// - IPv6 Address(es) (variable length)
+/// - Service Parameters (variable length).
 class OptionDnr6 : public Option {
 public:
-    /// a container for (IPv6) addresses
+    /// @brief A container for (IPv6) addresses.
     typedef std::vector<isc::asiolink::IOAddress> AddressContainer;
 
-    /// @brief Size in octets of Service Priority field
+    /// @brief Size in octets of Service Priority field.
     static const uint8_t SERVICE_PRIORITY_SIZE = 2;
 
-    /// @brief Size in octets of ADN Length field
+    /// @brief Size in octets of ADN Length field.
     static const uint8_t ADN_LENGTH_SIZE = 2;
 
-    /// @brief Size in octets of Addr Length field
+    /// @brief Size in octets of Addr Length field.
     static const uint8_t ADDR_LENGTH_SIZE = 2;
 
+    /// @brief Constructor of the %Option from on-wire data.
+    ///
+    /// This constructor creates an instance of the option using a buffer with
+    /// on-wire data. It may throw an exception if the @c unpack method throws.
+    ///
+    /// @param begin Iterator pointing to the beginning of the buffer holding an
+    /// option.
+    /// @param end Iterator pointing to the end of the buffer holding an option.
     OptionDnr6(OptionBufferConstIter begin, OptionBufferConstIter end);
+
     virtual OptionPtr clone() const;
     virtual void pack(util::OutputBuffer& buf, bool check) const;
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
     virtual std::string toText(int indent) const;
     virtual uint16_t len() const;
 
-    /// @brief Getter of the @c service_priority_
+    /// @brief Getter of the @c service_priority_.
     ///
     /// @return The priority of this OPTION_V6_DNR instance compared to other instances.
     uint16_t getServicePriority() const {
         return (service_priority_);
     }
 
-    /// @brief Getter of the @c adn_length_
+    /// @brief Getter of the @c adn_length_.
     ///
     /// @return Length of the authentication-domain-name data in octets.
     uint16_t getAdnLength() const {
@@ -64,14 +85,14 @@ public:
     /// @return Authentication domain name in the text format.
     std::string getAdn() const;
 
-    /// @brief Getter of the @c addr_length_
+    /// @brief Getter of the @c addr_length_.
     ///
     /// @return  Length of enclosed IPv6 addresses in octets.
     uint16_t getAddrLength() const {
         return (addr_length_);
     }
 
-    /// @brief Getter of the @c svc_params_length_
+    /// @brief Getter of the @c svc_params_length_.
     ///
     /// @return Length of Service Parameters field in octets.
     uint16_t getSvcParamsLength() const {
@@ -85,12 +106,12 @@ public:
     /// is no longer available. As options are expected to hold only
     /// a few (1-3) addresses, the overhead is not that big.
     ///
-    /// @return address container with addresses
+    /// @return Address container with addresses.
     AddressContainer getAddresses() const {
         return (ipv6_addresses_);
     }
 
-private:
+protected:
     /// @brief The priority of this OPTION_V6_DNR instance compared to other instances.
     uint16_t service_priority_;
 
@@ -107,7 +128,7 @@ private:
     /// @brief Length of enclosed IPv6 addresses in octets.
     uint16_t addr_length_ = 0;
 
-    /// @brief Vector container holding one or more IPv6 addresses
+    /// @brief Vector container holding one or more IPv6 addresses.
     ///
     /// One or more IPv6 addresses to reach the encrypted DNS resolver.
     /// An address can be link-local, ULA, or GUA.
@@ -128,6 +149,7 @@ private:
     /// following the rules in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
     std::vector<uint8_t> svc_params_;
 
+private:
     /// @brief Returns minimal length of the option data (without headers) in octets.
     ///
     /// If the ADN-only mode is used, then "Addr Length", "ipv6-address(es)",
@@ -137,13 +159,31 @@ private:
     ///
     /// @return Minimal length of the option data (without headers) in octets.
     static uint8_t getMinimalLength() {
-        return SERVICE_PRIORITY_SIZE + ADN_LENGTH_SIZE;
+        return (SERVICE_PRIORITY_SIZE + ADN_LENGTH_SIZE);
     };
 
+    /// @brief Writes the ADN FQDN in the wire format into a buffer.
+    ///
+    /// The Authentication Domain Name - fully qualified domain name of the encrypted
+    /// DNS resolver data is appended at the end of the buffer.
+    ///
+    /// @param [out] buf buffer where ADN FQDN will be written.
     void packAdn(isc::util::OutputBuffer& buf) const;
 
+    /// @brief Writes the IPv6 address(es) in the wire format into a buffer.
+    ///
+    /// The IPv6 address(es) (@c ipv6_addresses_) data is appended at the end
+    /// of the buffer.
+    ///
+    /// @param [out] buf buffer where IPv6 address(es) will be written.
     void packAddresses(isc::util::OutputBuffer& buf) const;
 
+    /// @brief Writes the Service Parameters in the wire format into a buffer.
+    ///
+    /// The Service Parameters (@c svc_params_) data is appended at the end
+    /// of the buffer.
+    ///
+    /// @param [out] buf buffer where SvcParams will be written.
     void packSvcParams(isc::util::OutputBuffer& buf) const;
 };
 

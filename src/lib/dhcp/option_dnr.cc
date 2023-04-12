@@ -95,8 +95,8 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     // Encrypted DNS options are designed to always include an authentication domain name,
     // so when there is no FQDN included, we shall throw an exception.
     if (adn_length_ == 0) {
-        isc_throw(InvalidOptionDnr6DomainName, "Mandatory Authentication Domain Name fully "
-                                               "qualified domain-name is missing");
+        isc_throw(InvalidOptionDnrDomainName, "Mandatory Authentication Domain Name fully "
+                                              "qualified domain-name is missing");
     }
 
     // Let's try to extract ADN FQDN data.
@@ -104,9 +104,9 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     try {
         adn_.reset(new isc::dns::Name(name_buf, true));
     } catch (const Exception& ex) {
-        isc_throw(InvalidOptionDnr6DomainName, "failed to parse "
-                                               "fully qualified domain-name from wire format "
-                                               "- " << ex.what());
+        isc_throw(InvalidOptionDnrDomainName, "failed to parse "
+                                              "fully qualified domain-name from wire format "
+                                              "- " << ex.what());
     }
 
     begin += adn_tuple.getTotalLength();
@@ -153,10 +153,11 @@ OptionDnr6::toText(int indent) const {
 
 uint16_t
 OptionDnr6::len() const {
-    return adn_only_mode_ ?
-               (OPTION6_HDR_LEN + SERVICE_PRIORITY_SIZE + adn_length_ + ADN_LENGTH_SIZE) :
-               (OPTION6_HDR_LEN + SERVICE_PRIORITY_SIZE + adn_length_ + ADN_LENGTH_SIZE +
-                addr_length_ + ADDR_LENGTH_SIZE + svc_params_length_);
+    uint16_t len = OPTION6_HDR_LEN + SERVICE_PRIORITY_SIZE + adn_length_ + ADN_LENGTH_SIZE;
+    if (!adn_only_mode_) {
+        len += addr_length_ + ADDR_LENGTH_SIZE + svc_params_length_;
+    }
+    return (len);
 }
 
 std::string

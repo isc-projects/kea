@@ -74,9 +74,9 @@ TEST(OptionDnr6Test, onlyWhitespaceFqdn) {
     };
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
-    // Create option instance. Check that constructor throws InvalidOptionDnr6DomainName exception.
+    // Create option instance. Check that constructor throws InvalidOptionDnrDomainName exception.
     scoped_ptr<OptionDnr6> option;
-    EXPECT_THROW(option.reset(new OptionDnr6(buf.begin(), buf.end())), InvalidOptionDnr6DomainName);
+    EXPECT_THROW(option.reset(new OptionDnr6(buf.begin(), buf.end())), InvalidOptionDnrDomainName);
     ASSERT_FALSE(option);
 }
 
@@ -90,9 +90,9 @@ TEST(OptionDnr6Test, noAdnFqdn) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Encrypted DNS options are designed to ALWAYS include
     // an authentication domain name, so check that constructor throws
-    // InvalidOptionDnr6DomainName exception.
+    // InvalidOptionDnrDomainName exception.
     scoped_ptr<OptionDnr6> option;
-    EXPECT_THROW(option.reset(new OptionDnr6(buf.begin(), buf.end())), InvalidOptionDnr6DomainName);
+    EXPECT_THROW(option.reset(new OptionDnr6(buf.begin(), buf.end())), InvalidOptionDnrDomainName);
     ASSERT_FALSE(option);
 }
 
