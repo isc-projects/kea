@@ -715,6 +715,44 @@ mysql_upgrade_14_to_15_test() {
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 }
 
+mysql_upgrade_16_to_17_test() {
+    # Check if allocator was added to dhcp4_shared_network table.
+    qry="SELECT allocator from dhcp4_shared_network limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if allocator was added to dhcp6_shared_network table.
+    qry="SELECT allocator from dhcp6_shared_network limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if pd_allocator was added to dhcp6_shared_network table.
+    qry="SELECT pd_allocator from dhcp6_shared_network limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if allocator was added to dhcp4_subnet table.
+    qry="SELECT allocator from dhcp4_subnet limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if allocator was added to dhcp6_subnet table.
+    qry="SELECT allocator from dhcp6_subnet limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if pd_allocator was added to dhcp6_subnet table.
+    qry="SELECT pd_allocator from dhcp6_subnet limit 1;"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -736,7 +774,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "16.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "17.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1389,6 +1427,9 @@ SET @disable_audit = 0;"
     assert_eq 0 "${EXIT_CODE}" "show indexes from lease4 failed. (expected status code %d, returned %d)"
     count=$(echo "${OUTPUT}" | grep -Fci lease4_by_remote_id)
     assert_eq 1 "${count}" "lease4_by_remote_id  wrong or missing. (expected count %d, actual %d)"
+
+    # Check upgrade from 16.0 to 17.0.
+    mysql_upgrade_16_to_17_test
 
     # Let's wipe the whole database
     mysql_wipe
