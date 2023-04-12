@@ -1,3 +1,7 @@
+2125.	[func]		marcin
+	Allocators can now be configured in the configuration backend.
+	(Gitlab #2823)
+
 2124.	[perf]		andrei
 	When not explicitly configured, multi-threading mode and the HTTP
 	dedicated listener are enabled by default for the
