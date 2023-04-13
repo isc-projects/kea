@@ -61,7 +61,7 @@ public:
     virtual OptionPtr clone() const;
     virtual void pack(util::OutputBuffer& buf, bool check) const;
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
-    virtual std::string toText(int indent) const;
+    virtual std::string toText(int indent = 0) const;
     virtual uint16_t len() const;
 
     /// @brief Getter of the @c service_priority_.
@@ -147,7 +147,7 @@ protected:
     ///
     /// Specifies a set of service parameters that are encoded
     /// following the rules in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
-    std::vector<uint8_t> svc_params_;
+    std::string svc_params_;
 
 private:
     /// @brief Returns minimal length of the option data (without headers) in octets.
@@ -185,6 +185,12 @@ private:
     ///
     /// @param [out] buf buffer where SvcParams will be written.
     void packSvcParams(isc::util::OutputBuffer& buf) const;
+
+    /// @brief Checks SvcParams field if encoded correctly and throws in case of issue found.
+    ///
+    /// The field should be encoded following the rules in
+    /// Section 2.1 of [I-D.ietf-dnsop-svcb-https].
+    void checkSvcParams() const;
 };
 
 class OptionDnr4 : public Option {

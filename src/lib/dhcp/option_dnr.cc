@@ -60,18 +60,18 @@ OptionDnr6::packAdn(util::OutputBuffer& buf) const {
 
 void
 OptionDnr6::packAddresses(util::OutputBuffer& buf) const {
-    for (auto address = ipv6_addresses_.begin(); address != ipv6_addresses_.end(); ++address) {
-        if (!address->isV6()) {
-            isc_throw(isc::BadValue, address->toText() << " is not an IPv6 address");
+    for (const auto& address : ipv6_addresses_) {
+        if (!address.isV6()) {
+            isc_throw(isc::BadValue, address.toText() << " is not an IPv6 address");
         }
-        buf.writeData(&address->toBytes()[0], V6ADDRESS_LEN);
+        buf.writeData(&address.toBytes()[0], V6ADDRESS_LEN);
     }
 }
 
 void
 OptionDnr6::packSvcParams(util::OutputBuffer& buf) const {
     if (svc_params_length_ > 0) {
-        buf.writeData(&*svc_params_.begin(), svc_params_length_);
+        buf.writeData(&(*svc_params_.begin()), svc_params_length_);
     }
 }
 
@@ -84,7 +84,7 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     }
     setData(begin, end);
     // First two octets of Option data is Service Priority - this is mandatory field.
-    service_priority_ = isc::util::readUint16((&*begin), SERVICE_PRIORITY_SIZE);
+    service_priority_ = isc::util::readUint16(&(*begin), SERVICE_PRIORITY_SIZE);
     begin += SERVICE_PRIORITY_SIZE;
 
     // Next come two octets of ADN Length plus the ADN data itself (variable length).
@@ -100,7 +100,7 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     }
 
     // Let's try to extract ADN FQDN data.
-    isc::util::InputBuffer name_buf(&adn_tuple.getData()[0], adn_length_);
+    isc::util::InputBuffer name_buf(&(*adn_tuple.getData().begin()), adn_length_);
     try {
         adn_.reset(new isc::dns::Name(name_buf, true));
     } catch (const Exception& ex) {
@@ -122,13 +122,30 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
                               "2 bytes long Addr Length field");
     }
     // Next come two octets of Addr Length.
-    addr_length_ = isc::util::readUint16((&*begin), ADDR_LENGTH_SIZE);
+    addr_length_ = isc::util::readUint16(&(*begin), ADDR_LENGTH_SIZE);
     begin += ADDR_LENGTH_SIZE;
     // It MUST be a multiple of 16.
     if ((addr_length_ % V6ADDRESS_LEN) != 0) {
         isc_throw(OutOfRange, "DHCPv6 Encrypted DNS Option (" << type_ << ")"
                                << " malformed: Addr Len=" << addr_length_
-                               << " is not divisible by 16.");
+                               << " is not divisible by 16");
+    }
+
+    // As per draft-ietf-add-dnr 3.1.8:
+    // If additional data is supplied (i.e. not ADN only mode),
+    // the option includes at least one valid IP address.
+    if (addr_length_ == 0) {
+        isc_throw(OutOfRange, "DHCPv6 Encrypted DNS Option (" << type_ << ")"
+                               << " malformed: Addr Len=" << addr_length_
+                               << " is not greater than 0");
+    }
+
+    // Check if IPv6 Address(es) field is not truncated.
+    if (std::distance(begin, end) < addr_length_) {
+        isc_throw(OutOfRange, "DHCPv6 Encrypted DNS Option (" << type_ << ")"
+                              << " malformed: Addr Len=" << addr_length_
+                              << " but IPv6 address(es) are truncated to len="
+                              << std::distance(begin, end));
     }
 
     // Let's unpack the ipv6-address(es).
@@ -138,17 +155,36 @@ OptionDnr6::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         begin += V6ADDRESS_LEN;
     }
 
-    // SvcParams (variable length) field is last
+    // SvcParams (variable length) field is last.
     svc_params_length_ = std::distance(begin, end);
     if (svc_params_length_ > 0) {
-        // for now let's keep SvcParams as binary data in buffer
         svc_params_.assign(begin, end);
+        checkSvcParams();
     }
 }
 
 std::string
 OptionDnr6::toText(int indent) const {
-    return Option::toText(indent);
+    std::ostringstream stream;
+    std::string in(indent, ' '); // base indentation
+    stream << in  << "type=" << type_ << "(V6_DNR), "
+           << "len=" << (len() - getHeaderLen()) << ", "
+           << "service_priority=" << service_priority_ << ", "
+           << "adn_length=" << adn_length_ << ", "
+           << "adn='" << getAdn() << "'";
+    if (!adn_only_mode_) {
+        stream << ", addr_length=" << addr_length_
+               << ", address(es):";
+        for (const auto& address : ipv6_addresses_) {
+            stream << " " << address.toText();
+        }
+
+        if (svc_params_length_ > 0) {
+            stream << ", svc_params='" << svc_params_ << "'";
+        }
+    }
+
+    return (stream.str());
 }
 
 uint16_t
@@ -166,6 +202,11 @@ OptionDnr6::getAdn() const {
         return (adn_->toText());
     }
     return ("");
+}
+
+void
+OptionDnr6::checkSvcParams() const {
+    // TODO: check SvcParams and throw in case something is wrong
 }
 
 OptionDnr4::OptionDnr4() : Option(V4, DHO_V4_DNR) {
