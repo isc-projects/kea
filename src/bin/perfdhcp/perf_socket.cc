@@ -55,16 +55,15 @@ PerfSocket::openSocket(CommandOptions& options) const {
             }
         } else if (options.getIpVersion() == 4) {
             // perfdhcp sets giaddr to the bound socket address, so kea always
-            // responds to port 67. perfdhcp doesn't currently have a client
-            // behavior for DHCPv4; it either sets giaddr to the bound socket
-            // address or to a random address in the multi_subnet_ case.
-            port = 67;
+            // responds to the server port. perfdhcp doesn't currently have a
+            // client behavior for DHCPv4; it either sets giaddr to the bound
+            // socket address or to a random address in the multi_subnet_ case.
+            port = DHCP4_SERVER_PORT;
         }
-    } else if ((options.getIpVersion() == 4) && (port != 67)) {
-        // No matter what port a user specifies, the server will reply to the
-        // address specified in giaddr on port 67. Try and warn the user.
-        std::cout << "WARNING: Port " << port << " specified, but server will "
-                  << "respond to port 67." << std::endl;
+    } else if ((options.getIpVersion() == 4) && (port != DHCP4_SERVER_PORT)) {
+        std::cerr << "WARNING: Port " << port << " specified, but server will "
+                  << "respond to port " << DHCP4_SERVER_PORT << "."
+                  << std::endl;
     }
 
     // Local name is specified along with '-l' option.
