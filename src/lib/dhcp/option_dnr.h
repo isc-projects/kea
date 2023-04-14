@@ -22,6 +22,14 @@ public:
     }
 };
 
+/// @brief Exception thrown when Service parameters have wrong format.
+class InvalidOptionDnrSvcParams : public Exception {
+public:
+    InvalidOptionDnrSvcParams(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {
+    }
+};
+
 /// @brief Represents DHCPv6 Encrypted DNS %Option (code 144).
 ///
 /// This option has been defined in the draft-ietf-add-dnr-15 (to be replaced
@@ -58,8 +66,12 @@ public:
     /// @param end Iterator pointing to the end of the buffer holding an option.
     OptionDnr6(OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    OptionDnr6(const uint16_t service_priority, const std::string& adn, const AddressContainer& ipv6_addresses, const std::string& svc_params);
+
+    OptionDnr6(const uint16_t service_priority, const std::string& adn);
+
     virtual OptionPtr clone() const;
-    virtual void pack(util::OutputBuffer& buf, bool check) const;
+    virtual void pack(util::OutputBuffer& buf, bool check = false) const;
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
     virtual std::string toText(int indent = 0) const;
     virtual uint16_t len() const;
@@ -190,7 +202,18 @@ private:
     ///
     /// The field should be encoded following the rules in
     /// Section 2.1 of [I-D.ietf-dnsop-svcb-https].
-    void checkSvcParams() const;
+    void checkSvcParams(bool from_wire_data = true);
+
+    /// @brief Sets Authentication domain name from given string.
+    ///
+    /// Sets FQDN of the encrypted DNS resolver from given string.
+    /// It may throw an exception if parsing of the FQDN fails or if
+    /// provided FQDN length is bigger than uint16_t Max.
+    /// It also calculates and sets value of Addr length field.
+    ///
+    /// @param adn string representation of ADN FQDN
+    void setAdn(const std::string& adn);
+    void checkFields();
 };
 
 class OptionDnr4 : public Option {

@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_dnr.h>
@@ -23,7 +24,7 @@ namespace {
 // Provided wire data is in the ADN only mode i.e. only
 // Service priority and Authentication domain name FQDN
 // fields are present.
-TEST(OptionDnr6Test, constructorAdnOnlyMode) {
+TEST(OptionDnr6Test, onWireCtorAdnOnlyMode) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -64,7 +65,7 @@ TEST(OptionDnr6Test, constructorAdnOnlyMode) {
               "adn='myhost.example.com.'", option->toText());
 }
 
-TEST(OptionDnr6Test, constructorDataTruncated) {
+TEST(OptionDnr6Test, onWireCtorDataTruncated) {
     // Prepare data to decode - data too short.
     const uint8_t buf_data[] = {
         0x80, 0x01  // Service priority is 32769 dec, other data is missing
@@ -77,7 +78,7 @@ TEST(OptionDnr6Test, constructorDataTruncated) {
     ASSERT_FALSE(option);
 }
 
-TEST(OptionDnr6Test, onlyWhitespaceFqdn) {
+TEST(OptionDnr6Test, onWireCtorOnlyWhitespaceFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
         0x80, 0x01,  // Service priority is 32769 dec
@@ -92,7 +93,7 @@ TEST(OptionDnr6Test, onlyWhitespaceFqdn) {
     ASSERT_FALSE(option);
 }
 
-TEST(OptionDnr6Test, noAdnFqdn) {
+TEST(OptionDnr6Test, onWireCtorNoAdnFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
         0x00, 0x01,  // Service priority is 1 dec
@@ -108,7 +109,7 @@ TEST(OptionDnr6Test, noAdnFqdn) {
     ASSERT_FALSE(option);
 }
 
-TEST(OptionDnr6Test, truncatedFqdn) {
+TEST(OptionDnr6Test, onWireCtorTruncatedFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                               // Service priority is 32769 dec
@@ -123,7 +124,7 @@ TEST(OptionDnr6Test, truncatedFqdn) {
     ASSERT_FALSE(option);
 }
 
-TEST(OptionDnr6Test, addrLenTruncated) {
+TEST(OptionDnr6Test, onWireCtorAddrLenTruncated) {
     // Prepare data to decode
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -141,7 +142,7 @@ TEST(OptionDnr6Test, addrLenTruncated) {
     ASSERT_FALSE(option);
 }
 
-TEST(OptionDnr6Test, addrLenZero) {
+TEST(OptionDnr6Test, onWireCtorAddrLenZero) {
     // Prepare data to decode
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -159,7 +160,7 @@ TEST(OptionDnr6Test, addrLenZero) {
     ASSERT_FALSE(option);
 }
 
-TEST(OptionDnr6Test, addrLenNot16Modulo) {
+TEST(OptionDnr6Test, onWireCtorAddrLenNot16Modulo) {
     // Prepare data to decode
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -177,7 +178,7 @@ TEST(OptionDnr6Test, addrLenNot16Modulo) {
     ASSERT_FALSE(option);
 }
 
-TEST(OptionDnr6Test, validIpV6Addresses) {
+TEST(OptionDnr6Test, onWireCtorValidIpV6Addresses) {
     // Prepare data to decode
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -232,7 +233,7 @@ TEST(OptionDnr6Test, validIpV6Addresses) {
               "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", option->toText());
 }
 
-TEST(OptionDnr6Test, truncatedIpV6Addresses) {
+TEST(OptionDnr6Test, onWireCtorTruncatedIpV6Addresses) {
     // Prepare data to decode
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -253,7 +254,7 @@ TEST(OptionDnr6Test, truncatedIpV6Addresses) {
     ASSERT_FALSE(option);
 }
 
-TEST(OptionDnr6Test, svcParamsIncluded) {
+TEST(OptionDnr6Test, onWireCtorSvcParamsIncluded) {
     // Prepare data to decode
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -261,7 +262,7 @@ TEST(OptionDnr6Test, svcParamsIncluded) {
         0x06, 0x4D, 0x79, 0x68, 0x6F, 0x73, 0x74,        // FQDN: Myhost.
         0x07, 0x45, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // Example.
         0x03, 0x43, 0x6F, 0x6D, 0x00,                    // Com.
-        0x00, 0x10,                                      // Addr Len field value = 48 dec
+        0x00, 0x10,                                      // Addr Len field value = 16 dec
         0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0x00, 0x00,  // 2001:db8:1::dead:beef
         0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
         'a', 'b', 'c'                                    // example SvcParams data
@@ -300,6 +301,183 @@ TEST(OptionDnr6Test, svcParamsIncluded) {
               "addr_length=16, "
               "address(es): 2001:db8:1::dead:beef, "
               "svc_params='abc'", option->toText());
+}
+
+TEST(OptionDnr6Test, onWireCtorSvcParamsInvalidCharKey) {
+    // Prepare data to decode with invalid SvcParams
+    const uint8_t buf_data[] = {
+        0x80, 0x01,                                      // Service priority is 32769 dec
+        0x00, 0x14,                                      // ADN Length is 20 dec
+        0x06, 0x4D, 0x79, 0x68, 0x6F, 0x73, 0x74,        // FQDN: Myhost.
+        0x07, 0x45, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // Example.
+        0x03, 0x43, 0x6F, 0x6D, 0x00,                    // Com.
+        0x00, 0x10,                                      // Addr Len field value = 48 dec
+        0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0x00, 0x00,  // 2001:db8:1::dead:beef
+        0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+        'a', '+', 'c'                                    // Allowed "a"-"z", "0"-"9", and "-".
+    };
+
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+    // Create option instance. Check that constructor throws InvalidOptionDnrSvcParams exception.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_THROW(option.reset(new OptionDnr6(buf.begin(), buf.end())), InvalidOptionDnrSvcParams);
+    ASSERT_FALSE(option);
+}
+
+// This test verifies option constructor in ADN only mode.
+// Service priority and ADN are provided via ctor.
+TEST(OptionDnr6Test, adnOnlyModeCtor) {
+    // Prepare example parameters
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+
+    // Create option instance. Check that constructor doesn't throw.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_NO_THROW(option.reset(new OptionDnr6(service_priority, adn)));
+    ASSERT_TRUE(option);
+
+    // Check if member variables were correctly set by ctor.
+    EXPECT_EQ(Option::V6, option->getUniverse());
+    EXPECT_EQ(D6O_V6_DNR, option->getType());
+    EXPECT_EQ(service_priority, option->getServicePriority());
+    EXPECT_EQ(20, option->getAdnLength());
+    EXPECT_EQ(adn, option->getAdn());
+
+    // This is ADN only mode, so Addr Length and SvcParams Length
+    // are both expected to be zero.
+    EXPECT_EQ(0, option->getAddrLength());
+    EXPECT_EQ(0, option->getSvcParamsLength());
+
+    // BTW let's check if len() works ok.
+    // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28.
+    EXPECT_EQ(28, option->len());
+
+    // BTW let's check if toText() works ok.
+    // toText() len does not count in headers len.
+    EXPECT_EQ("type=144(V6_DNR), len=24, "
+              "service_priority=9, adn_length=20, "
+              "adn='myhost.example.com.'", option->toText());
+}
+
+TEST(OptionDnr6Test, adnOnlyModeCtorNoFqdn) {
+    // Prepare example parameters
+    const uint16_t service_priority = 9;
+    const std::string adn = ""; // invalid empty ADN
+
+    // Create option instance. Check that constructor throws.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_THROW(option.reset(new OptionDnr6(service_priority, adn)), InvalidOptionDnrDomainName);
+    ASSERT_FALSE(option);
+}
+
+// This test verifies option constructor where all fields
+// i.e. Service priority, ADN, IP address(es) and Service params
+// are provided as ctor parameters.
+TEST(OptionDnr6Test, allFieldsCtor) {
+    // Prepare example parameters
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    OptionDnr6::AddressContainer addresses;
+    addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
+    const std::string svc_params = "alpn";
+
+    // Create option instance. Check that constructor throws.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_NO_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)));
+    ASSERT_TRUE(option);
+
+    // Check if member variables were correctly set by ctor.
+    EXPECT_EQ(Option::V6, option->getUniverse());
+    EXPECT_EQ(D6O_V6_DNR, option->getType());
+    EXPECT_EQ(service_priority, option->getServicePriority());
+    EXPECT_EQ(20, option->getAdnLength());
+    EXPECT_EQ(adn, option->getAdn());
+    EXPECT_EQ(16, option->getAddrLength());
+    EXPECT_EQ(4, option->getSvcParamsLength());
+
+    // BTW let's check if len() works ok.
+    // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28
+    //             + 16 (IPv6) + 2 (Addr Len) + 4 (Svc Params) = 50
+    EXPECT_EQ(50, option->len());
+
+    // BTW let's check if toText() works ok.
+    // toText() len does not count in headers len.
+    EXPECT_EQ("type=144(V6_DNR), len=46, "
+              "service_priority=9, adn_length=20, "
+              "adn='myhost.example.com.', addr_length=16, "
+              "address(es): 2001:db8:1::baca, svc_params='alpn'", option->toText());
+}
+
+TEST(OptionDnr6Test, allFieldsCtorNoIpAddress) {
+    // Prepare example parameters
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    const OptionDnr6::AddressContainer addresses; // no IPv6 address in here
+    const std::string svc_params = "alpn";
+
+    // Create option instance. Check that constructor throws.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)), OutOfRange);
+    ASSERT_FALSE(option);
+}
+
+TEST(OptionDnr6Test, svcParamsTwoEqualSignsPerParam) {
+    // Prepare example parameters
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    OptionDnr6::AddressContainer addresses;
+    addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
+    const std::string svc_params = "key123=val1=val2 key234"; // invalid svc param - 2 equal signs
+
+    // Create option instance. Check that constructor throws.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    ASSERT_FALSE(option);
+}
+
+TEST(OptionDnr6Test, svcParamsForbiddenKey) {
+    // Prepare example parameters
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    OptionDnr6::AddressContainer addresses;
+    addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
+    const std::string svc_params = "key123=val1 ipv6hint"; // forbidden svc param key - ipv6hint
+
+    // Create option instance. Check that constructor throws.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    ASSERT_FALSE(option);
+}
+
+TEST(OptionDnr6Test, svcParamsKeyRepeated) {
+    // Prepare example parameters
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    OptionDnr6::AddressContainer addresses;
+    addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
+    const std::string svc_params = "key123=val1 key234 key123"; // svc param key key123 repeated
+
+    // Create option instance. Check that constructor throws.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    ASSERT_FALSE(option);
+}
+
+TEST(OptionDnr6Test, svcParamsKeyTooLong) {
+    // Prepare example parameters
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    OptionDnr6::AddressContainer addresses;
+    addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
+    const std::string svc_params = "thisisveryveryveryvery"
+                                   "veryveryveryveryveryvery"
+                                   "veryveryveryveryveryvery"
+                                   "veryveryverylongkey"; // svc param key longer than 63
+
+    // Create option instance. Check that constructor throws.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    ASSERT_FALSE(option);
 }
 
 }  // namespace
