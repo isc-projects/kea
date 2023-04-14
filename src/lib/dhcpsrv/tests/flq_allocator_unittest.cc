@@ -26,13 +26,13 @@ public:
     /// @brief Creates a DHCPv4 lease for an address and MAC address.
     ///
     /// @param address Lease address.
-    /// @param hw_address_seed a seed from which the MAC address is generated.
+    /// @param hw_address_seed a seed from which the hardware address is generated.
     /// @return Created lease pointer.
     Lease4Ptr
     createLease4(const IOAddress& address, uint64_t hw_address_seed) const {
-        vector<uint8_t> hw_address_vec(6);
+        vector<uint8_t> hw_address_vec(sizeof(hw_address_seed));
         for (auto i = 0; i < sizeof(hw_address_seed); ++i) {
-            hw_address_vec[i] = hw_address_seed >> sizeof(hw_address_seed-1-i) & 0xFF;
+            hw_address_vec[i] = (hw_address_seed >> i) & 0xFF;
         }
         auto hw_address = boost::make_shared<HWAddr>(hw_address_vec, HTYPE_ETHER);
         auto lease = boost::make_shared<Lease4>(address, hw_address, ClientIdPtr(),
@@ -343,7 +343,7 @@ public:
     createLease6(Lease::Type type, const IOAddress& address, uint64_t duid_seed) const {
         vector<uint8_t> duid_vec(sizeof(duid_seed));
         for (auto i = 0; i < sizeof(duid_seed); ++i) {
-            duid_vec[i] = duid_seed >> sizeof(duid_seed-1-i) & 0xFF;
+            duid_vec[i] = (duid_seed >> i) & 0xFF;
         }
         auto duid = boost::make_shared<DUID>(duid_vec);
         auto lease = boost::make_shared<Lease6>(type, address, duid, 1, 1800,
