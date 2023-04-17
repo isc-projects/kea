@@ -4556,6 +4556,97 @@ HostMgrTest::testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
     HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES);
 }
 
+void
+HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
+                                          BaseHostDataSource& data_source2) {
+    bool is_first_source_primary = isPrimaryDataSource(data_source1);
+    bool is_second_source_primary = isPrimaryDataSource(data_source2);
+    size_t hosts_in_primary_source = is_first_source_primary + is_second_source_primary;
+    size_t hosts_in_alternate_sources = 2 - hosts_in_primary_source;
+
+    // Delete from the explicit operation target - all sources.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+
+    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                             &hwaddrs_[0]->hwaddr_[0],
+                             hwaddrs_[0]->hwaddr_.size(),
+                             HostMgrOperationTarget::ALL_SOURCES);
+    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+                             &hwaddrs_[1]->hwaddr_[0],
+                             hwaddrs_[1]->hwaddr_.size(),
+                             HostMgrOperationTarget::ALL_SOURCES);
+
+    ASSERT_TRUE(HostMgr::instance().getAll4(SubnetID(1)).empty());
+
+    // Delete from the default operation target.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+
+    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                             &hwaddrs_[0]->hwaddr_[0],
+                             hwaddrs_[0]->hwaddr_.size());
+    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+                             &hwaddrs_[1]->hwaddr_[0],
+                             hwaddrs_[1]->hwaddr_.size());
+
+    ASSERT_EQ(hosts_in_primary_source, HostMgr::instance().getAll4(SubnetID(1)).size());
+
+    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
+    HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES);
+
+    // Delete from the explicit operation target - alternate sources.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+
+    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                             &hwaddrs_[0]->hwaddr_[0],
+                             hwaddrs_[0]->hwaddr_.size(),
+                             HostMgrOperationTarget::ALTERNATE_SOURCES);
+    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+                             &hwaddrs_[1]->hwaddr_[0],
+                             hwaddrs_[1]->hwaddr_.size(),
+                             HostMgrOperationTarget::ALTERNATE_SOURCES);
+
+    ASSERT_EQ(hosts_in_primary_source, HostMgr::instance().getAll4(SubnetID(1)).size());
+
+    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
+    
+    // Delete from the explicit operation target - primary source.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+
+    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                             &hwaddrs_[0]->hwaddr_[0],
+                             hwaddrs_[0]->hwaddr_.size(),
+                             HostMgrOperationTarget::PRIMARY_SOURCE);
+    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+                             &hwaddrs_[1]->hwaddr_[0],
+                             hwaddrs_[1]->hwaddr_.size(),
+                             HostMgrOperationTarget::PRIMARY_SOURCE);
+
+    ASSERT_EQ(hosts_in_alternate_sources, HostMgr::instance().getAll4(SubnetID(1)).size());
+
+    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
+
+    // Delete from the explicit operation target - unspecified source.
+    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+
+    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+                             &hwaddrs_[0]->hwaddr_[0],
+                             hwaddrs_[0]->hwaddr_.size(),
+                             HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                             &hwaddrs_[1]->hwaddr_[0],
+                             hwaddrs_[1]->hwaddr_.size(),
+                             HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+
+    ASSERT_EQ(2, HostMgr::instance().getAll4(SubnetID(1)).size());
+
+    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
+}
+
 bool HostMgrTest::isPrimaryDataSource(const BaseHostDataSource& data_source) const {
     const auto ptr = dynamic_cast<const CfgHosts*>(&data_source);
     return ptr != nullptr;
