@@ -4375,6 +4375,101 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
     EXPECT_EQ(0, hosts.size());
 }
 
+void
+HostMgrTest::testAdd(BaseHostDataSource& data_source1,
+                     BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts4 = HostMgr::instance().getAll4(SubnetID(1));
+    ConstHostCollection hosts6 = HostMgr::instance().getAll6(SubnetID(1));
+    ASSERT_TRUE(hosts4.empty());
+    ASSERT_TRUE(hosts6.empty());
+
+    // Add hosts using the implicit operation target.
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[0]->toText(false), "hw-address",
+        SubnetID(1), SUBNET_ID_UNUSED,
+        IOAddress("192.0.2.5")
+    )));
+
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[1]->toText(false), "hw-address",
+        SUBNET_ID_UNUSED, SubnetID(1),
+        IOAddress("2001:db8:1::5")
+    )));
+
+    // Add hosts using the explicit operation target - all data sources.
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[0]->toText(false), "hw-address",
+        SubnetID(1), SUBNET_ID_UNUSED,
+        IOAddress("192.0.2.6")
+    )), HostMgrOperationTarget::ALL_SOURCES);
+
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[1]->toText(false), "hw-address",
+        SUBNET_ID_UNUSED, SubnetID(1),
+        IOAddress("2001:db8:1::6")
+    )), HostMgrOperationTarget::ALL_SOURCES);
+
+    // Add hosts using the explicit operation target - primary data source.
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[0]->toText(false), "hw-address",
+        SubnetID(1), SUBNET_ID_UNUSED,
+        IOAddress("192.0.2.7")
+    )), HostMgrOperationTarget::PRIMARY_SOURCE);
+
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[1]->toText(false), "hw-address",
+        SUBNET_ID_UNUSED, SubnetID(1),
+        IOAddress("2001:db8:1::7")
+    )), HostMgrOperationTarget::PRIMARY_SOURCE);
+
+    // Add hosts using the explicit operation target - alternate data sources.
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[0]->toText(false), "hw-address",
+        SubnetID(1), SUBNET_ID_UNUSED,
+        IOAddress("192.0.2.8")
+    )), HostMgrOperationTarget::ALTERNATE_SOURCES);
+
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[1]->toText(false), "hw-address",
+        SUBNET_ID_UNUSED, SubnetID(1),
+        IOAddress("2001:db8:1::8")
+    )), HostMgrOperationTarget::ALTERNATE_SOURCES);
+
+    // Add hosts using the explicit operation target - unspecified data source.
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[0]->toText(false), "hw-address",
+        SubnetID(1), SUBNET_ID_UNUSED,
+        IOAddress("192.0.2.9")
+    )), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+
+    HostMgr::instance().add(HostPtr(new Host(
+        hwaddrs_[1]->toText(false), "hw-address",
+        SUBNET_ID_UNUSED, SubnetID(1),
+        IOAddress("2001:db8:1::9")
+    )), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+
+    // Verify the hosts were added.
+    bool is_first_source_primary = isPrimaryDataSource(data_source1);
+    bool is_second_source_primary = isPrimaryDataSource(data_source2);
+    // ALL_SOURCES + PRIMARY_SOURCE targets for IPv4 and IPv6. 
+    size_t hosts_in_primary_source = 2 * 2 * (is_first_source_primary + is_second_source_primary);
+    // Default + ALL_SOURCES + ALTERNATE_SOURCES targets for IPv4 and IPv6.
+    size_t hosts_in_alternate_sources = 3 * 2 * (is_first_source_primary + is_second_source_primary);
+
+    // Verify primary sources.
+    hosts4 = HostMgr::instance().getAll4(SubnetID(1), HostMgrOperationTarget::PRIMARY_SOURCE);
+    hosts6 = HostMgr::instance().getAll6(SubnetID(1), HostMgrOperationTarget::PRIMARY_SOURCE);
+    EXPECT_EQ(hosts_in_primary_source / 2, hosts4.size());
+    EXPECT_EQ(hosts_in_primary_source / 2, hosts6.size());
+
+    // Verify alternate sources.
+    hosts4 = HostMgr::instance().getAll4(SubnetID(1), HostMgrOperationTarget::ALTERNATE_SOURCES);
+    hosts6 = HostMgr::instance().getAll6(SubnetID(1), HostMgrOperationTarget::ALTERNATE_SOURCES);
+    EXPECT_EQ(hosts_in_alternate_sources / 2, hosts4.size());
+    EXPECT_EQ(hosts_in_alternate_sources / 2, hosts6.size());
+}
+
 bool HostMgrTest::isPrimaryDataSource(const BaseHostDataSource& data_source) const {
     const auto ptr = dynamic_cast<const CfgHosts*>(&data_source);
     return ptr != nullptr;
