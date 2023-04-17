@@ -1615,6 +1615,30 @@ TEST_F(PgSQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that the reservations can be added to a configuration
+// file and a database.
+TEST_F(PgSQLHostMgrTest, add) {
+    testAdd(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the reservations can be deleted from a configuration
+// file and a database by subnet ID and address.
+TEST_F(PgSQLHostMgrTest, del) {
+    testDeleteByIDAndAddress(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the IPv4 reservations can be deleted from a
+// configuration file and a database by subnet ID and identifier.
+TEST_F(PgSQLHostMgrTest, del4) {
+    testDelete4ByIDAndIdentifier(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the IPv6 reservations can be deleted from a
+// configuration file and a database by subnet ID and identifier.
+TEST_F(PgSQLHostMgrTest, del6) {
+    testDelete6ByIDAndIdentifier(*getCfgHosts(), HostMgr::instance());
+}
+
 // This test verifies that it is possible to control whether the reserved
 // IP addresses are unique or non unique via the HostMgr.
 TEST_F(PgSQLHostMgrTest, setIPReservationsUnique) {

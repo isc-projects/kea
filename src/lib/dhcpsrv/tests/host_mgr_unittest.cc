@@ -153,6 +153,29 @@ TEST_F(HostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), *getCfgHosts());
 }
 
+// This test verifies that the reservations can be added using HostMgr.
+TEST_F(HostMgrTest, add) {
+    testAdd(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that the reservations can be deleted by subnet ID and
+// address using HostMgr..
+TEST_F(HostMgrTest, del) {
+    testDeleteByIDAndAddress(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that the IPv4 reservations can be deleted by subnet ID
+// and identifier using HostMgr.
+TEST_F(HostMgrTest, del4) {
+    testDelete4ByIDAndIdentifier(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that the IPv6 reservations can be deleted by subnet ID
+// and identifier using HostMgr..
+TEST_F(HostMgrTest, del6) {
+    testDelete6ByIDAndIdentifier(*getCfgHosts(), *getCfgHosts());
+}
+
 // This test verifies that without a host data source an exception is thrown.
 TEST_F(HostMgrTest, noDataSource) {
     // Remove all configuration.
