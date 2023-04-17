@@ -929,6 +929,61 @@ protected:
     void testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
                                BaseHostDataSource& data_source2);
 
+    /// @brief This test verifies that HostMgr adds the reservations to any
+    /// data source.
+    ///
+    /// The reservations are added to the external database (alternate sources)
+    /// by default but the primary source may be changed on demand too.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testAdd(BaseHostDataSource& data_source1,
+                 BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr deletes the reservations by
+    /// the subnet ID and subnet address.
+    ///
+    /// The reservations are deleted from the external database (alternate
+    /// sources) only by default but the primary source may be changed on
+    /// demand too.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
+                                  BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr deletes the IPv4 reservations by
+    /// the subnet ID and identifier.
+    ///
+    /// The reservations are deleted from the external database (alternate
+    /// sources) only by default but the primary source may be changed on
+    /// demand too.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
+                                      BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr deletes the IPv6 reservations by
+    /// the subnet ID and identifier.
+    ///
+    /// The reservations are deleted from the external database (alternate
+    /// sources) only by default but the primary source may be changed on
+    /// demand too.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
+                                      BaseHostDataSource& data_source2);
+
     /// @brief Utility function that returns true if a given data source
     /// is primary (it isn't an alternate source).
     /// @param data_source  Host data source to check.
