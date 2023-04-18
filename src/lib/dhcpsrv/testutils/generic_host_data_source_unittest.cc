@@ -4636,8 +4636,14 @@ HostMgrTest::testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
 void
 HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                           BaseHostDataSource& data_source2) {
+    // Set the mode of operation with multiple reservations for the same
+    // IP address.
+    ASSERT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->setIPReservationsUnique(false);
+
     bool is_first_source_primary = isPrimaryDataSource(data_source1);
     bool is_second_source_primary = isPrimaryDataSource(data_source2);
+    bool has_alternate_source = !is_first_source_primary || !is_second_source_primary;
     size_t hosts_in_primary_source = is_first_source_primary + is_second_source_primary;
     size_t hosts_in_alternate_sources = 2 - hosts_in_primary_source;
 
@@ -4646,30 +4652,43 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
     CfgMgr::instance().commit();
 
-    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
-                             &hwaddrs_[0]->hwaddr_[0],
-                             hwaddrs_[0]->hwaddr_.size(),
-                             HostMgrOperationTarget::ALL_SOURCES);
-    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
-                             &hwaddrs_[1]->hwaddr_[0],
-                             hwaddrs_[1]->hwaddr_.size(),
-                             HostMgrOperationTarget::ALL_SOURCES);
+    EXPECT_TRUE(HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                                         &hwaddrs_[0]->hwaddr_[0],
+                                         hwaddrs_[0]->hwaddr_.size(),
+                                         HostMgrOperationTarget::ALL_SOURCES));
+    EXPECT_TRUE(HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+                                         &hwaddrs_[1]->hwaddr_[0],
+                                         hwaddrs_[1]->hwaddr_.size(),
+                                         HostMgrOperationTarget::ALL_SOURCES));
 
-    ASSERT_TRUE(HostMgr::instance().getAll4(SubnetID(1)).empty());
+    EXPECT_TRUE(HostMgr::instance().getAll4(SubnetID(1)).empty());
 
     // Delete from the default operation target.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
     CfgMgr::instance().commit();
 
-    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
-                             &hwaddrs_[0]->hwaddr_[0],
-                             hwaddrs_[0]->hwaddr_.size());
-    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
-                             &hwaddrs_[1]->hwaddr_[0],
-                             hwaddrs_[1]->hwaddr_.size());
+    if (has_alternate_source) {
+        EXPECT_EQ(!is_first_source_primary, HostMgr::instance().del4(SubnetID(1),
+                                            Host::IDENT_HWADDR,
+                                            &hwaddrs_[0]->hwaddr_[0],
+                                            hwaddrs_[0]->hwaddr_.size()));
+        EXPECT_EQ(!is_second_source_primary, HostMgr::instance().del4(SubnetID(1),
+                                             Host::IDENT_HWADDR,
+                                             &hwaddrs_[1]->hwaddr_[0],
+                                             hwaddrs_[1]->hwaddr_.size()));
+    } else {
+        EXPECT_THROW(HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                                              &hwaddrs_[0]->hwaddr_[0],
+                                              hwaddrs_[0]->hwaddr_.size()),
+                     NoHostDataSourceManager);
+        EXPECT_THROW(HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+                                              &hwaddrs_[1]->hwaddr_[0],
+                                              hwaddrs_[1]->hwaddr_.size()),
+                     NoHostDataSourceManager);
+    }
 
-    ASSERT_EQ(hosts_in_primary_source, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(hosts_in_primary_source, HostMgr::instance().getAll4(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
 
@@ -4678,16 +4697,31 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
     CfgMgr::instance().commit();
 
-    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
-                             &hwaddrs_[0]->hwaddr_[0],
-                             hwaddrs_[0]->hwaddr_.size(),
-                             HostMgrOperationTarget::ALTERNATE_SOURCES);
-    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
-                             &hwaddrs_[1]->hwaddr_[0],
-                             hwaddrs_[1]->hwaddr_.size(),
-                             HostMgrOperationTarget::ALTERNATE_SOURCES);
+    if (has_alternate_source) {
+        EXPECT_EQ(!is_first_source_primary, HostMgr::instance().del4(SubnetID(1),
+                                Host::IDENT_HWADDR,
+                                &hwaddrs_[0]->hwaddr_[0],
+                                hwaddrs_[0]->hwaddr_.size(),
+                                HostMgrOperationTarget::ALTERNATE_SOURCES));
+        EXPECT_EQ(!is_second_source_primary, HostMgr::instance().del4(SubnetID(1),
+                                Host::IDENT_HWADDR,
+                                &hwaddrs_[1]->hwaddr_[0],
+                                hwaddrs_[1]->hwaddr_.size(),
+                                HostMgrOperationTarget::ALTERNATE_SOURCES));
+    } else {
+        EXPECT_THROW(HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                                &hwaddrs_[0]->hwaddr_[0],
+                                hwaddrs_[0]->hwaddr_.size(),
+                                HostMgrOperationTarget::ALTERNATE_SOURCES),
+                     NoHostDataSourceManager);
+        EXPECT_THROW(HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+                                &hwaddrs_[1]->hwaddr_[0],
+                                hwaddrs_[1]->hwaddr_.size(),
+                                HostMgrOperationTarget::ALTERNATE_SOURCES),
+                     NoHostDataSourceManager);
+    }
 
-    ASSERT_EQ(hosts_in_primary_source, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(hosts_in_primary_source, HostMgr::instance().getAll4(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
     
@@ -4696,16 +4730,18 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
     CfgMgr::instance().commit();
 
-    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
-                             &hwaddrs_[0]->hwaddr_[0],
-                             hwaddrs_[0]->hwaddr_.size(),
-                             HostMgrOperationTarget::PRIMARY_SOURCE);
-    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
-                             &hwaddrs_[1]->hwaddr_[0],
-                             hwaddrs_[1]->hwaddr_.size(),
-                             HostMgrOperationTarget::PRIMARY_SOURCE);
+    EXPECT_EQ(is_first_source_primary, HostMgr::instance().del4(SubnetID(1),
+                                    Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size(),
+                                    HostMgrOperationTarget::PRIMARY_SOURCE));
+    EXPECT_EQ(is_second_source_primary, HostMgr::instance().del4(SubnetID(1),
+                                    Host::IDENT_HWADDR,
+                                    &hwaddrs_[1]->hwaddr_[0],
+                                    hwaddrs_[1]->hwaddr_.size(),
+                                    HostMgrOperationTarget::PRIMARY_SOURCE));
 
-    ASSERT_EQ(hosts_in_alternate_sources, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(hosts_in_alternate_sources, HostMgr::instance().getAll4(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
 
@@ -4714,16 +4750,16 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
     CfgMgr::instance().commit();
 
-    HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
+    EXPECT_FALSE(HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
                              &hwaddrs_[0]->hwaddr_[0],
                              hwaddrs_[0]->hwaddr_.size(),
-                             HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
+                             HostMgrOperationTarget::UNSPECIFIED_SOURCE));
+    EXPECT_FALSE(HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                              &hwaddrs_[1]->hwaddr_[0],
                              hwaddrs_[1]->hwaddr_.size(),
-                             HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+                             HostMgrOperationTarget::UNSPECIFIED_SOURCE));
 
-    ASSERT_EQ(2, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(2, HostMgr::instance().getAll4(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
 }
