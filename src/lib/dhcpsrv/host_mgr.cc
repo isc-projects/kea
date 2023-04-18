@@ -773,10 +773,10 @@ HostMgr::add(const HostPtr& host) {
 bool
 HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
              const HostMgrOperationTarget target) {
+    size_t erased = false;
+
     if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
-        if (getCfgHostsForEdit()->del(subnet_id, addr)) {
-            return (true);
-        }
+        erased = getCfgHostsForEdit()->del(subnet_id, addr);
     }
 
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
@@ -787,13 +787,12 @@ HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
         }
 
         for (auto source : alternate_sources_) {
-            if (source->del(subnet_id, addr)) {
-                return (true);
-            }
+            bool alternate_erased = source->del(subnet_id, addr);
+            erased = alternate_erased || erased;
         }
     }
 
-    return (false);
+    return (erased);
 }
 
 bool

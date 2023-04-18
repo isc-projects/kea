@@ -4517,77 +4517,117 @@ HostMgrTest::testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
 
     bool is_first_source_primary = isPrimaryDataSource(data_source1);
     bool is_second_source_primary = isPrimaryDataSource(data_source2);
-    size_t hosts_in_primary_source = 2 * (is_first_source_primary + is_second_source_primary);
-    size_t hosts_in_alternate_sources = 4 - hosts_in_primary_source;
+    bool has_alternate_source = !is_first_source_primary || !is_second_source_primary;
+    bool has_primary_source = is_first_source_primary || is_second_source_primary;
+    size_t hosts4_in_primary_source = 2 * (is_first_source_primary + is_second_source_primary);
+    size_t hosts6_in_primary_source = is_first_source_primary + is_second_source_primary;
+    size_t hosts4_in_alternate_sources = 4 - hosts4_in_primary_source;
+    size_t hosts6_in_alternate_sources = 2 - hosts6_in_primary_source;
 
     // Delete from the explicit operation target - all sources.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
     addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
     addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
+    // 4 IPv4 reservations - 2 sources * 2 addresses.
+    ASSERT_EQ(4, HostMgr::instance().getAll4(SubnetID(1)).size());
+    // 2 IPv6 reservations - each with 2 reserved addresses.
+    ASSERT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
 
-    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
-    HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES);
+    EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES));
+    EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES));
 
-    ASSERT_TRUE(HostMgr::instance().getAll4(SubnetID(1)).empty());
-    ASSERT_TRUE(HostMgr::instance().getAll6(SubnetID(1)).empty());
+    EXPECT_TRUE(HostMgr::instance().getAll4(SubnetID(1)).empty());
+    EXPECT_TRUE(HostMgr::instance().getAll6(SubnetID(1)).empty());
 
     // Delete from the default operation target.
-    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
-    addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost4(data_source1, hwaddrs_[2], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[3], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost6(data_source1, duids_[2], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(data_source2, duids_[3], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
+    ASSERT_EQ(4, HostMgr::instance().getAll4(SubnetID(1)).size());
+    ASSERT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
 
-    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"));
-    HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"));
+    if (has_alternate_source) {
+        EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5")));
+        EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5")));
+    } else {
+        EXPECT_THROW(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5")), NoHostDataSourceManager);
+        EXPECT_THROW(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5")), NoHostDataSourceManager);
+    }
 
-    ASSERT_EQ(hosts_in_primary_source / 2, HostMgr::instance().getAll4(SubnetID(1)).size());
-    ASSERT_EQ(hosts_in_primary_source / 2, HostMgr::instance().getAll6(SubnetID(1)).size());
+    EXPECT_EQ(hosts4_in_primary_source, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(hosts6_in_primary_source, HostMgr::instance().getAll6(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
     HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES);
 
     // Delete from the explicit operation target - alternate sources.
-    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
-    addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost4(data_source1, hwaddrs_[4], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[5], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost6(data_source1, duids_[4], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(data_source2, duids_[5], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
 
-    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALTERNATE_SOURCES);
-    HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALTERNATE_SOURCES);
+    if (has_alternate_source) {
+        EXPECT_TRUE(HostMgr::instance().del(SubnetID(1),
+                                                IOAddress("192.0.2.5"),
+                                                HostMgrOperationTarget::ALTERNATE_SOURCES));
+        EXPECT_TRUE(HostMgr::instance().del(SubnetID(1),
+                                                IOAddress("2001:db8:1::5"),
+                                                HostMgrOperationTarget::ALTERNATE_SOURCES));
+    } else {
+        EXPECT_THROW(HostMgr::instance().del(SubnetID(1),
+                                             IOAddress("192.0.2.5"),
+                                             HostMgrOperationTarget::ALTERNATE_SOURCES),
+                     NoHostDataSourceManager);
+        EXPECT_THROW(HostMgr::instance().del(SubnetID(1),
+                                             IOAddress("2001:db8:1::5"),
+                                             HostMgrOperationTarget::ALTERNATE_SOURCES),
+                     NoHostDataSourceManager);
+    }
 
-    ASSERT_EQ(hosts_in_primary_source / 2, HostMgr::instance().getAll4(SubnetID(1)).size());
-    ASSERT_EQ(hosts_in_primary_source / 2, HostMgr::instance().getAll6(SubnetID(1)).size());
+    EXPECT_EQ(hosts4_in_primary_source, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(hosts6_in_primary_source, HostMgr::instance().getAll6(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
     HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES);
 
     // Delete from the explicit operation target - primary source.
-    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
-    addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost4(data_source1, hwaddrs_[6], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[7], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost6(data_source1, duids_[6], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(data_source2, duids_[7], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
 
-    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::PRIMARY_SOURCE);
-    HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::PRIMARY_SOURCE);
+    if (has_primary_source) {
+        EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::PRIMARY_SOURCE));
+        EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::PRIMARY_SOURCE));
+    } else {
+        EXPECT_FALSE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::PRIMARY_SOURCE));
+        EXPECT_FALSE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::PRIMARY_SOURCE));
+    }
 
-    ASSERT_EQ(hosts_in_alternate_sources / 2, HostMgr::instance().getAll4(SubnetID(1)).size());
-    ASSERT_EQ(hosts_in_alternate_sources / 2, HostMgr::instance().getAll6(SubnetID(1)).size());
+    EXPECT_EQ(hosts4_in_alternate_sources, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(hosts6_in_alternate_sources, HostMgr::instance().getAll6(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
     HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES);
 
     // Delete from the explicit operation target - unspecified source.
-    addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
-    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
-    addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost4(data_source1, hwaddrs_[8], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source2, hwaddrs_[9], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost6(data_source1, duids_[8], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(data_source2, duids_[9], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
 
-    HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    EXPECT_FALSE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::UNSPECIFIED_SOURCE));
+    EXPECT_FALSE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::UNSPECIFIED_SOURCE));
 
-    ASSERT_EQ(2, HostMgr::instance().getAll4(SubnetID(1)).size());
-    ASSERT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
+    EXPECT_EQ(4, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
     HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES);
@@ -4604,6 +4644,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the explicit operation target - all sources.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                              &hwaddrs_[0]->hwaddr_[0],
@@ -4619,6 +4660,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the default operation target.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                              &hwaddrs_[0]->hwaddr_[0],
@@ -4634,6 +4676,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the explicit operation target - alternate sources.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                              &hwaddrs_[0]->hwaddr_[0],
@@ -4651,6 +4694,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the explicit operation target - primary source.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                              &hwaddrs_[0]->hwaddr_[0],
@@ -4668,6 +4712,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the explicit operation target - unspecified source.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
     addHost4(data_source2, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del4(SubnetID(1),Host::IDENT_HWADDR,
                              &hwaddrs_[0]->hwaddr_[0],
@@ -4694,6 +4739,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the explicit operation target - all sources.
     addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
     addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
                              &duids_[0]->getDuid()[0],
@@ -4709,6 +4755,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the default operation target.
     addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
     addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
                              &duids_[0]->getDuid()[0],
@@ -4724,6 +4771,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the explicit operation target - alternate sources.
     addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
     addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
                              &duids_[0]->getDuid()[0],
@@ -4741,6 +4789,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the explicit operation target - primary source.
     addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
     addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
                              &duids_[0]->getDuid()[0],
@@ -4758,6 +4807,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
     // Delete from the explicit operation target - unspecified source.
     addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
     addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    CfgMgr::instance().commit();
 
     HostMgr::instance().del6(SubnetID(1),Host::IDENT_DUID,
                              &duids_[0]->getDuid()[0],
