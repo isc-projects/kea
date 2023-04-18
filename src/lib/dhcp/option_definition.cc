@@ -10,8 +10,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option4_dnr.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_dnr.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
@@ -19,7 +21,6 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
-#include <dhcp/option_dnr.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
@@ -868,7 +869,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (OptionPtr(new Option6PDExclude(begin, end)));
 
         case D6O_V6_DNR:
-            return (OptionPtr(new OptionDnr6(begin, end)));
+            return (OptionPtr(new Option6Dnr(begin, end)));
 
         default:
             break;
@@ -899,7 +900,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (factoryOpaqueDataTuples(Option::V4, getCode(), begin, end, OpaqueDataTuple::LENGTH_2_BYTES));
 
         case DHO_V4_DNR:
-            return (OptionPtr(new OptionDnr4(begin, end)));
+            return (OptionPtr(new Option4Dnr(begin, end)));
 
         default:
             break;
