@@ -668,8 +668,8 @@ static uint8_t v4_opts[] = {
     43, 2,                     // Vendor Specific Information
     0xDC, 0,                   // VSI suboption
     0x52, 0x19,                // RAI
-    0x01, 0x04, 0x20, 0x00, 0x00, 0x02, // Agent Circuit ID
-    0x02, 0x06, 0x20, 0xE5, 0x2A, 0xB8, 0x15, 0x14, // Agent Remote ID
+    0x01, 0x04, 0x20, 0x00, 0x02, 0x00, // Agent Circuit ID
+    0x02, 0x06, 0x20, 0xE5, 0x2A, 0xB8, 0x15, 0x00, // Agent Remote ID
     0x09, 0x09, 0x00, 0x00, 0x11, 0x8B, 0x04, // Vendor Specific Information
     0x01, 0x02, 0x03, 0x00 // Vendor Specific Information continued
 };
@@ -1439,21 +1439,15 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     // Check that Circuit ID option is among parsed options.
     OptionPtr rai_option = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
     ASSERT_TRUE(rai_option);
-    boost::shared_ptr<OptionString> circuit_id =
-        boost::dynamic_pointer_cast<OptionString>(rai_option);
-    ASSERT_TRUE(circuit_id);
-    EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, circuit_id->getType());
-    ASSERT_EQ(6, circuit_id->len());
-    EXPECT_EQ(0, memcmp(&circuit_id->getData()[0], v4_opts + 46, 4));
+    EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
+    ASSERT_EQ(6, rai_option->len());
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 46, 4));
 
     // Check that Remote ID option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_REMOTE_ID);
     ASSERT_TRUE(rai_option);
-    boost::shared_ptr<OptionString> remote_id =
-        boost::dynamic_pointer_cast<OptionString>(rai_option);
-    ASSERT_TRUE(remote_id);
-    EXPECT_EQ(RAI_OPTION_REMOTE_ID, remote_id->getType());
-    ASSERT_EQ(8, remote_id->len());
+    EXPECT_EQ(RAI_OPTION_REMOTE_ID, rai_option->getType());
+    ASSERT_EQ(8, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 52, 6));
 
     // Check that Vendor Specific Information option is among parsed options.
