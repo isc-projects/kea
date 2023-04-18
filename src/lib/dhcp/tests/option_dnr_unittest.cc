@@ -65,6 +65,8 @@ TEST(OptionDnr6Test, onWireCtorAdnOnlyMode) {
               "adn='myhost.example.com.'", option->toText());
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - mandatory fields are truncated.
 TEST(OptionDnr6Test, onWireCtorDataTruncated) {
     // Prepare data to decode - data too short.
     const uint8_t buf_data[] = {
@@ -78,6 +80,8 @@ TEST(OptionDnr6Test, onWireCtorDataTruncated) {
     ASSERT_FALSE(option);
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - ADN FQDN contains only whitespace - non valid FQDN.
 TEST(OptionDnr6Test, onWireCtorOnlyWhitespaceFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
@@ -93,6 +97,8 @@ TEST(OptionDnr6Test, onWireCtorOnlyWhitespaceFqdn) {
     ASSERT_FALSE(option);
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - ADN Length is 0 and no ADN FQDN at all.
 TEST(OptionDnr6Test, onWireCtorNoAdnFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
@@ -109,6 +115,8 @@ TEST(OptionDnr6Test, onWireCtorNoAdnFqdn) {
     ASSERT_FALSE(option);
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - FQDN data is truncated.
 TEST(OptionDnr6Test, onWireCtorTruncatedFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
@@ -124,8 +132,10 @@ TEST(OptionDnr6Test, onWireCtorTruncatedFqdn) {
     ASSERT_FALSE(option);
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - Addr Length field truncated.
 TEST(OptionDnr6Test, onWireCtorAddrLenTruncated) {
-    // Prepare data to decode
+    // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
         0x00, 0x14,                                      // ADN Length is 20 dec
@@ -142,8 +152,10 @@ TEST(OptionDnr6Test, onWireCtorAddrLenTruncated) {
     ASSERT_FALSE(option);
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - Addr length is 0 and no IPv6 addresses at all.
 TEST(OptionDnr6Test, onWireCtorAddrLenZero) {
-    // Prepare data to decode
+    // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
         0x00, 0x14,                                      // ADN Length is 20 dec
@@ -155,13 +167,17 @@ TEST(OptionDnr6Test, onWireCtorAddrLenZero) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor throws OutOfRange exception.
+    // If additional data is supplied (i.e. not ADN only mode),
+    // the option includes at least one valid IP address.
     scoped_ptr<OptionDnr6> option;
     EXPECT_THROW(option.reset(new OptionDnr6(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - Addr length is not a multiple of 16.
 TEST(OptionDnr6Test, onWireCtorAddrLenNot16Modulo) {
-    // Prepare data to decode
+    // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
         0x00, 0x14,                                      // ADN Length is 20 dec
@@ -178,6 +194,8 @@ TEST(OptionDnr6Test, onWireCtorAddrLenNot16Modulo) {
     ASSERT_FALSE(option);
 }
 
+// This test verifies option constructor from wire data.
+// Provided wire data contains also IPv6 addresses.
 TEST(OptionDnr6Test, onWireCtorValidIpV6Addresses) {
     // Prepare data to decode
     const uint8_t buf_data[] = {
@@ -219,7 +237,7 @@ TEST(OptionDnr6Test, onWireCtorValidIpV6Addresses) {
 
     // BTW let's check if len() works ok.
     // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28
-    // + 48 (3 IP addresses) + 2 (Addr Len) = 78
+    //             + 48 (3 IP addresses) + 2 (Addr Len) = 78.
     EXPECT_EQ(78, option->len());
 
     // BTW let's check if toText() works ok.
@@ -233,8 +251,10 @@ TEST(OptionDnr6Test, onWireCtorValidIpV6Addresses) {
               "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", option->toText());
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - IPv6 addresses are truncated.
 TEST(OptionDnr6Test, onWireCtorTruncatedIpV6Addresses) {
-    // Prepare data to decode
+    // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
         0x00, 0x14,                                      // ADN Length is 20 dec
@@ -254,8 +274,10 @@ TEST(OptionDnr6Test, onWireCtorTruncatedIpV6Addresses) {
     ASSERT_FALSE(option);
 }
 
+// This test verifies option constructor from wire data.
+// Provided wire data contains also IPv6 address and Svc Params.
 TEST(OptionDnr6Test, onWireCtorSvcParamsIncluded) {
-    // Prepare data to decode
+    // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
         0x00, 0x14,                                      // ADN Length is 20 dec
@@ -287,10 +309,11 @@ TEST(OptionDnr6Test, onWireCtorSvcParamsIncluded) {
     EXPECT_EQ(1, addresses.size());
     EXPECT_EQ("2001:db8:1::dead:beef", addresses[0].toText());
     EXPECT_EQ(3, option->getSvcParamsLength());
+    EXPECT_EQ("abc", option->getSvcParams());
 
     // BTW let's check if len() works ok.
     // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28
-    // + 16 (IP address) + 2 (Addr Len) + 3 (SvcParams) = 49
+    //             + 16 (IP address) + 2 (Addr Len) + 3 (SvcParams) = 49.
     EXPECT_EQ(49, option->len());
 
     // BTW let's check if toText() works ok.
@@ -303,8 +326,10 @@ TEST(OptionDnr6Test, onWireCtorSvcParamsIncluded) {
               "svc_params='abc'", option->toText());
 }
 
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - SvcParams Key contains char that is not allowed.
 TEST(OptionDnr6Test, onWireCtorSvcParamsInvalidCharKey) {
-    // Prepare data to decode with invalid SvcParams
+    // Prepare data to decode with invalid SvcParams.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
         0x00, 0x14,                                      // ADN Length is 20 dec
@@ -314,7 +339,7 @@ TEST(OptionDnr6Test, onWireCtorSvcParamsInvalidCharKey) {
         0x00, 0x10,                                      // Addr Len field value = 48 dec
         0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0x00, 0x00,  // 2001:db8:1::dead:beef
         0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
-        'a', '+', 'c'                                    // Allowed "a"-"z", "0"-"9", and "-".
+        'a', '+', 'c'                                    // Allowed "a"-"z", "0"-"9", and "-"
     };
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
@@ -327,7 +352,7 @@ TEST(OptionDnr6Test, onWireCtorSvcParamsInvalidCharKey) {
 // This test verifies option constructor in ADN only mode.
 // Service priority and ADN are provided via ctor.
 TEST(OptionDnr6Test, adnOnlyModeCtor) {
-    // Prepare example parameters
+    // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
 
@@ -359,10 +384,12 @@ TEST(OptionDnr6Test, adnOnlyModeCtor) {
               "adn='myhost.example.com.'", option->toText());
 }
 
+// This test verifies that option constructor in ADN only mode throws
+// an exception when mandatory ADN is empty.
 TEST(OptionDnr6Test, adnOnlyModeCtorNoFqdn) {
-    // Prepare example parameters
+    // Prepare example parameters.
     const uint16_t service_priority = 9;
-    const std::string adn = ""; // invalid empty ADN
+    const std::string adn; // invalid empty ADN
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<OptionDnr6> option;
@@ -381,7 +408,7 @@ TEST(OptionDnr6Test, allFieldsCtor) {
     addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
     const std::string svc_params = "alpn";
 
-    // Create option instance. Check that constructor throws.
+    // Create option instance. Check that constructor doesn't throw.
     scoped_ptr<OptionDnr6> option;
     EXPECT_NO_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)));
     ASSERT_TRUE(option);
@@ -394,10 +421,11 @@ TEST(OptionDnr6Test, allFieldsCtor) {
     EXPECT_EQ(adn, option->getAdn());
     EXPECT_EQ(16, option->getAddrLength());
     EXPECT_EQ(4, option->getSvcParamsLength());
+    EXPECT_EQ(svc_params, option->getSvcParams());
 
     // BTW let's check if len() works ok.
     // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28
-    //             + 16 (IPv6) + 2 (Addr Len) + 4 (Svc Params) = 50
+    //             + 16 (IPv6) + 2 (Addr Len) + 4 (Svc Params) = 50.
     EXPECT_EQ(50, option->len());
 
     // BTW let's check if toText() works ok.
@@ -408,6 +436,9 @@ TEST(OptionDnr6Test, allFieldsCtor) {
               "address(es): 2001:db8:1::baca, svc_params='alpn'", option->toText());
 }
 
+// This test verifies that option constructor throws
+// an exception when option fields provided via ctor are malformed
+// - no IPv6 address provided.
 TEST(OptionDnr6Test, allFieldsCtorNoIpAddress) {
     // Prepare example parameters
     const uint16_t service_priority = 9;
@@ -421,8 +452,11 @@ TEST(OptionDnr6Test, allFieldsCtorNoIpAddress) {
     ASSERT_FALSE(option);
 }
 
+// This test verifies that option constructor throws
+// an exception when option fields provided via ctor are malformed
+// - Svc Params key=val pair has 2 equal signs.
 TEST(OptionDnr6Test, svcParamsTwoEqualSignsPerParam) {
-    // Prepare example parameters
+    // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
     OptionDnr6::AddressContainer addresses;
@@ -435,8 +469,11 @@ TEST(OptionDnr6Test, svcParamsTwoEqualSignsPerParam) {
     ASSERT_FALSE(option);
 }
 
+// This test verifies that option constructor throws
+// an exception when option fields provided via ctor are malformed
+// - Svc Params forbidden key provided.
 TEST(OptionDnr6Test, svcParamsForbiddenKey) {
-    // Prepare example parameters
+    // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
     OptionDnr6::AddressContainer addresses;
@@ -449,8 +486,11 @@ TEST(OptionDnr6Test, svcParamsForbiddenKey) {
     ASSERT_FALSE(option);
 }
 
+// This test verifies that option constructor throws
+// an exception when option fields provided via ctor are malformed
+// - Svc Params key was repeated.
 TEST(OptionDnr6Test, svcParamsKeyRepeated) {
-    // Prepare example parameters
+    // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
     OptionDnr6::AddressContainer addresses;
@@ -463,21 +503,142 @@ TEST(OptionDnr6Test, svcParamsKeyRepeated) {
     ASSERT_FALSE(option);
 }
 
+// This test verifies that option constructor throws
+// an exception when option fields provided via ctor are malformed
+// - Svc Params key is too long.
 TEST(OptionDnr6Test, svcParamsKeyTooLong) {
-    // Prepare example parameters
+    // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
     OptionDnr6::AddressContainer addresses;
     addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
     const std::string svc_params = "thisisveryveryveryvery"
                                    "veryveryveryveryveryvery"
-                                   "veryveryveryveryveryvery"
-                                   "veryveryverylongkey"; // svc param key longer than 63
+                                   "veryveryveryveryvlongkey"; // svc param key longer than 63
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<OptionDnr6> option;
     EXPECT_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
+}
+
+// This test verifies that option constructor throws
+// an exception when option fields provided via ctor are malformed
+// - Svc Params key has chars that are not allowed.
+TEST(OptionDnr6Test, svcParamsKeyHasInvalidChar) {
+    // Prepare example parameters.
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    OptionDnr6::AddressContainer addresses;
+    addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
+    const std::string svc_params = "alpn=h2 NOT_ALLOWED_CHARS_KEY=123"; // svc param key has forbidden chars
+
+    // Create option instance. Check that constructor throws.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    ASSERT_FALSE(option);
+}
+
+// This test verifies that string representation of the option returned by
+// toText method is correctly formatted.
+TEST(OptionDnr6Test, toText) {
+    // Prepare example parameters.
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    OptionDnr6::AddressContainer addresses;
+    addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
+    const std::string svc_params = "alpn";
+
+    // Create option instance. Check that constructor doesn't throw.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_NO_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)));
+    ASSERT_TRUE(option);
+
+    const int indent = 4;
+    std::string expected = "    type=144(V6_DNR), len=46, " // the indentation of 4 spaces
+                           "service_priority=9, adn_length=20, "
+                           "adn='myhost.example.com.', addr_length=16, "
+                           "address(es): 2001:db8:1::baca, svc_params='alpn'";
+    EXPECT_EQ(expected, option->toText(indent));
+}
+
+// This test verifies on-wire format of the option is correctly created in ADN only mode.
+TEST(OptionDnr6Test, packAdnOnlyMode) {
+    // Prepare example parameters.
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+
+    // Create option instance. Check that constructor doesn't throw.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_NO_THROW(option.reset(new OptionDnr6(service_priority, adn)));
+    ASSERT_TRUE(option);
+
+    // Prepare on-wire format of the option.
+    isc::util::OutputBuffer buf(10);
+    ASSERT_NO_THROW(option->pack(buf));
+
+    // Prepare reference data.
+    const uint8_t ref_data[] = {
+        0x00, D6O_V6_DNR,                                // Option code
+        0x00, 24,                                        // Option len=24 dec
+        0x00, 0x09,                                      // Service priority is 9 dec
+        0x00, 0x14,                                      // ADN Length is 20 dec
+        0x06, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74,        // FQDN: myhost.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00                     // com.
+    };
+
+    size_t ref_data_size = sizeof(ref_data) / sizeof(ref_data[0]);
+
+    // Check if the buffer has the same length as the reference data,
+    // so as they can be compared directly.
+    ASSERT_EQ(ref_data_size, buf.getLength());
+    EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
+}
+
+// This test verifies on-wire format of the option is correctly created when
+// IP addresses and Svc Params are also included.
+TEST(OptionDnr6Test, pack) {
+    // Prepare example parameters.
+    const uint16_t service_priority = 9;
+    const std::string adn = "myhost.example.com.";
+    OptionDnr6::AddressContainer addresses;
+    addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::dead:beef"));
+    addresses.push_back(isc::asiolink::IOAddress("ff02::face:b00c"));
+    const std::string svc_params = "alpn";
+
+    // Create option instance. Check that constructor doesn't throw.
+    scoped_ptr<OptionDnr6> option;
+    EXPECT_NO_THROW(option.reset(new OptionDnr6(service_priority, adn, addresses, svc_params)));
+    ASSERT_TRUE(option);
+
+    // Prepare on-wire format of the option.
+    isc::util::OutputBuffer buf(10);
+    ASSERT_NO_THROW(option->pack(buf));
+
+    // Prepare reference data.
+    const uint8_t ref_data[] = {
+        0x00, D6O_V6_DNR,                                // Option code
+        0x00, 62,                                        // Option len=62 dec
+        0x00, 0x09,                                      // Service priority is 9 dec
+        0x00, 0x14,                                      // ADN Length is 20 dec
+        0x06, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74,        // FQDN: myhost.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 0x20,                                      // Addr Len field value = 32 dec
+        0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0x00, 0x00,  // 2001:db8:1::dead:beef
+        0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+        0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ff02::face:b00c
+        0x00, 0x00, 0x00, 0x00, 0xfa, 0xce, 0xb0, 0x0c,
+         'a',  'l',  'p',  'n'                           // Svc Params
+    };
+
+    size_t ref_data_size = sizeof(ref_data) / sizeof(ref_data[0]);
+
+    // Check if the buffer has the same length as the reference data,
+    // so as they can be compared directly.
+    ASSERT_EQ(ref_data_size, buf.getLength());
+    EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
 }
 
 }  // namespace

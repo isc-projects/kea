@@ -123,6 +123,13 @@ public:
         return (ipv6_addresses_);
     }
 
+    /// @brief Getter of the @c svc_params_ field.
+    ///
+    /// @return Returns Service Parameters as a string.
+    std::string getSvcParams() const {
+        return (svc_params_);
+    }
+
 protected:
     /// @brief The priority of this OPTION_V6_DNR instance compared to other instances.
     uint16_t service_priority_;
