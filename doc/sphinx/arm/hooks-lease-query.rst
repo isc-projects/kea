@@ -135,6 +135,8 @@ addresses:
 ::
 
  :
+    "store-extended-info": true,
+ :
     "hooks-libraries": [
         {
             "library": "lib/kea/hooks/libdhcp_lease_query.so",
@@ -294,7 +296,7 @@ The client-data option encapsulates the following options:
    +------------------------------+-------+-----------------------------------------------+
 
 If the lease with the most recent client-last-transaction-time (CLTT)
-value has relay information in its user-context (see
+value has relay information in its user-context (``store-extended-info``, see
 :ref:`store-extended-info-v6`), then an ``OPTION_LQ_RELAY_DATA`` option is
 added to the reply (see
 `RFC 5007, Section 4.1.2.4 <https://tools.ietf.org/html/rfc5007#section-4.1.2.4>`__).
@@ -320,6 +322,8 @@ addresses:
 
 ::
 
+ :
+    "store-extended-info": true,
  :
     "hooks-libraries": [
         {
@@ -415,7 +419,8 @@ defined in RFC 6607.
 
 .. note::
 
-   New query types are supported only with the memfile lease backend.
+   New query types are supported only with the memfile lease backend,
+   and only when the ``store-extended-info`` option is enabled.
 
 .. _bulk-lease-query-dhcpv6:
 
@@ -445,7 +450,8 @@ not yet used by the hook library.
 
 .. note::
 
-   New query types are supported only with the memfile lease backend.
+   New query types are supported only with the memfile lease backend,
+   and only when the ``store-extended-info`` option is enabled.
 
 .. _bulk-lease-query-dhcpv6-config:
 
@@ -470,6 +476,8 @@ with possible entries:
     (aka relay info) in tables to support by-relay-id and by-remote-id
     DHCPv6 Bulk Leasequery new query types. Default is to use the
     same value as ``bulk-query-enabled``.
+
+    This option does nothing if ``store-extended-info`` is disabled.
 
 - ``lease-query-ip``
 
