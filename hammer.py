@@ -1603,9 +1603,7 @@ def prepare_system_local(features, check_times):
         if 'pgsql' in features:
             packages.extend(['postgresql', 'postgresql-server'])
             if revision == '9':
-                packages.append('postgresql13-devel')
-                if not os.path.exists('/usr/bin/pg_config'):
-                    execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
+                packages.append('postgresql-server-devel ')
             else:
                 packages.append('postgresql-devel')
 
