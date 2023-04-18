@@ -1202,10 +1202,11 @@ CfgHosts::del6(const SubnetID& subnet_id,
         }
 
         // Delete host.
+        auto host_id = (*key)->getHostId();
         key = idx.erase(key);
         erased_hosts++;
         // Delete reservations.
-        erased_reservations += idx6.erase((*key)->getHostId());
+        erased_reservations += idx6.erase(host_id);
     }
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL6)
