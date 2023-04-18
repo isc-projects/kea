@@ -140,6 +140,7 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
             std::string svc_params = dnr_instance.getSvcParams();
             svc_params.assign(begin + offset, dnr_instance_end);
             dnr_instance.checkSvcParams();
+            offset += svc_params_length;
         }
 
         addDnrInstance(dnr_instance);

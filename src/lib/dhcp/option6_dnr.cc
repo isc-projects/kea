@@ -11,8 +11,6 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option6_dnr.h>
-#include <dns/labelsequence.h>
-#include <set>
 
 using namespace isc::asiolink;
 

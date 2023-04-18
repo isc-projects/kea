@@ -7,10 +7,8 @@
 #ifndef OPTION6_DNR_H
 #define OPTION6_DNR_H
 
-#include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/option4_dnr.h>
-#include <dns/name.h>
 
 namespace isc {
 namespace dhcp {
