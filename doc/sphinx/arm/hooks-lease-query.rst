@@ -186,9 +186,8 @@ attached to a ``DHCPV6_LEASEQUERY`` message:
     `RFC 5007, Section 3.3 <https://tools.ietf.org/html/rfc5007#section-3.3>`__
     states that querying by IP address should return either a lease (e.g.
     binding) for the address itself or a lease for a delegated prefix that
-    contains the address. The latter is not currently implemented. Leases for
-    delegated prefixes may only be returned when querying by client ID. See
-    `GitLab issue #1275 <https://gitlab.isc.org/isc-projects/kea/-/issues/1275>`__
+    contains the address.  The latter case is not supported by releases
+    prior to Kea 2.3.7.
 
 ``DHCPV6_LEASEQUERY`` queries are only honored if the source address of
 the query matches an entry in a list of known IP addresses which are
@@ -325,7 +324,8 @@ addresses:
         {
             "library": "lib/kea/hooks/libdhcp_lease_query.so",
             "parameters": {
-                "requesters": [ "2001:db8:1::1", "2001:db8:2::1" ]
+                "requesters": [ "2001:db8:1::1", "2001:db8:2::1" ],
+                "prefix-lengths": [ 72 ]
             }
         }
     ],
@@ -335,6 +335,34 @@ addresses:
 
     For security purposes, there is no way to specify wildcards. Each requester address
     must be explicitly listed.
+
+When a query by IP address does not match an existing address lease,
+a search for a matching delegated prefix is conducted.  This is carried
+out by iterating over a list of prefix lengths, in descending order,
+extracting a prefix of that length from the query address and searching
+for a delegation matching the resulting prefix. This continues for each
+length in the list until a match is found or the list is exhausted.
+
+By default, the  list of prefix lengths to use in the search is determined
+dynamically after (re)configuration events.  This resulting list
+will contain unique values of ``delegated-len`` gleaned from the currently
+configured set of PD pools.
+
+There is an optional parameter, ``prefix-lengths``, shown above which
+provides the ability to explicitly configure the list rather than having
+it be determined dynamically.  This provides tighter control over which
+prefix lengths are searched.  In the above example, the prefix length
+search will be restricted to single pass, using a length of 72, regardless
+of whether or not there are pools using other values for ``delegated-len``.
+Specifying an empty list, as shown below:
+
+::
+
+ :
+                "prefix-lengths": [ ]
+ :
+
+disables the search for delegated prefixes for query by IP address.
 
 .. _bulk-lease-query-dhcpv4:
 
