@@ -1078,7 +1078,6 @@ def _install_gtest_sources():
     execute('sudo mkdir -p /usr/src')
     execute('sudo tar -C /usr/src -zxf ~/.hammer-tmp/gtest.tar.gz')
     execute(f'sudo ln -sf /usr/src/googletest-release-{gtest_version} /usr/src/googletest')
-    os.unlink('~/.hammer-tmp/gtest.tar.gz')
     execute('rm -rf ~/.hammer-tmp')
 
 
@@ -2610,7 +2609,6 @@ def _install_vagrant(ver=RECOMMENDED_VAGRANT_VERSION, upgrade=False):
         cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, rpm)
         execute(cmd)
         execute('sudo rpm -i ~/.hammer-tmp/%s' % rpm)
-        os.unlink('~/.hammer-tmp/%s' % rpm)
         execute('rm -rf ~/.hammer-tmp')
     elif system in ['debian', 'ubuntu']:
         if upgrade:
@@ -2621,7 +2619,6 @@ def _install_vagrant(ver=RECOMMENDED_VAGRANT_VERSION, upgrade=False):
         cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, deb)
         execute(cmd)
         execute('sudo dpkg -i ~/.hammer-tmp/%s' % deb)
-        os.unlink('~/.hammer-tmp/%s' % deb)
         execute('rm -rf ~/.hammer-tmp')
     elif system in ['arch']:
         pass
