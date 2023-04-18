@@ -1732,11 +1732,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
         if 'pgsql' in features:
             packages.extend(['postgresql', 'postgresql-server'])
             if revision == '9':
-                packages.append('postgresql13-devel')
-                def link_pg_config():
-                    if not os.path.exists('/usr/bin/pg_config'):
-                        execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
-                deferred_functions.append(link_pg_config)
+                packages.append('postgresql-server-devel ')
             else:
                 packages.append('postgresql-devel')
 
