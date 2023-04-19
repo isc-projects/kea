@@ -174,7 +174,7 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     }
     if (command->getType() != Element::map) {
         isc_throw(CtrlChannelError, "invalid command: expected toplevel entry to be a map, got "
-                                        << Element::typeToName(command->getType()) << " instead");
+                  << Element::typeToName(command->getType()) << " instead");
     }
     if (!command->contains(CONTROL_COMMAND)) {
         isc_throw(CtrlChannelError,
@@ -196,8 +196,8 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     ConstElementPtr cmd = command->get(CONTROL_COMMAND);
     if (cmd->getType() != Element::string) {
         isc_throw(CtrlChannelError, "invalid command: expected '"
-                                        << CONTROL_COMMAND << "' to be a string, got "
-                                        << Element::typeToName(command->getType()) << " instead");
+                  << CONTROL_COMMAND << "' to be a string, got "
+                  << Element::typeToName(command->getType()) << " instead");
     }
 
     arg = command->get(CONTROL_ARGUMENTS);
@@ -282,5 +282,5 @@ combineCommandsLists(const ConstElementPtr& response1,
     }
 }
 
-}
-}
+}  // namespace config
+}  // namespace isc

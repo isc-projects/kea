@@ -698,9 +698,6 @@ public:
         return (false);
     }
 
-    void update(HostPtr const&) {
-    }
-
     std::string getType() const {
         return ("one");
     }
@@ -996,4 +993,4 @@ TEST_F(NegativeCacheTest, get6withNegativeCaching) {
     testGet6();
 }
 
-}; // end of anonymous namespace
+}  // namespace

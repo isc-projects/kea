@@ -559,7 +559,7 @@ private:
     PgSqlHostDataSourceImplPtr impl_;
 };
 
-}
-}
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // PGSQL_HOST_DATA_SOURCE_H
