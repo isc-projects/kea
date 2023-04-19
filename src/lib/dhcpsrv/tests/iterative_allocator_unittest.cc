@@ -119,8 +119,11 @@ using IterativeAllocatorTest6 = AllocEngine6Test;
 
 // Test that the allocator returns the correct type.
 TEST_F(IterativeAllocatorTest6, getType) {
-    IterativeAllocator alloc(Lease::TYPE_NA, subnet_);
-    EXPECT_EQ("iterative", alloc.getType());
+    IterativeAllocator allocNA(Lease::TYPE_NA, subnet_);
+    EXPECT_EQ("iterative", allocNA.getType());
+
+    IterativeAllocator allocPD(Lease::TYPE_PD, subnet_);
+    EXPECT_EQ("iterative", allocPD.getType());
 }
 
 // This test verifies that the allocator picks addresses that belong to the

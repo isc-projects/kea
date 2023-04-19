@@ -1237,6 +1237,9 @@ protected:
     util::Optional<std::string> allocator_type_;
 
     /// @brief Default allocator type.
+    ///
+    /// This value is not configurable by the user. It is used by the configuration
+    /// backend internally.
     util::Optional<std::string> default_allocator_type_;
 
     /// @brief Pointer to another network that this network belongs to.

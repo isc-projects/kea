@@ -220,17 +220,17 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
     // Allocator selection at the global level can affect subnets and shared networks
     // for which the allocator hasn't been specified explicitly. Let's see if the
     // allocator has been specified at the global level.
-    std::string default_allocator;
+    std::string global_allocator;
     auto allocator = external_cfg->getConfiguredGlobal(CfgGlobals::ALLOCATOR);
     if (allocator && (allocator->getType() == Element::string)) {
-        default_allocator = allocator->stringValue();
+        global_allocator = allocator->stringValue();
     }
 
     // Also, get the PD allocator.
-    std::string default_pd_allocator;
+    std::string global_pd_allocator;
     allocator = external_cfg->getConfiguredGlobal(CfgGlobals::PD_ALLOCATOR);
     if (allocator && (allocator->getType() == Element::string)) {
-        default_pd_allocator = allocator->stringValue();
+        global_pd_allocator = allocator->stringValue();
     }
 
     // If we're fetching the changes from the config backend we also want
@@ -242,7 +242,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
     if (cb_update) {
         auto allocator = CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::ALLOCATOR);
         if (allocator && (allocator->getType() == Element::string)) {
-            allocator_changed = (default_allocator != allocator->stringValue());
+            allocator_changed = (global_allocator != allocator->stringValue());
         }
 
         // The address allocator hasn't changed. So, let's check if the PD allocator
@@ -250,7 +250,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         if (!allocator_changed) {
             auto allocator = CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::PD_ALLOCATOR);
             if (allocator && (allocator->getType() == Element::string)) {
-                allocator_changed = (default_pd_allocator != allocator->stringValue());
+                allocator_changed = (global_pd_allocator != allocator->stringValue());
             }
         }
     }
@@ -278,8 +278,8 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         (*network)->setFetchGlobalsFn([] () -> ConstCfgGlobalsPtr {
             return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
         });
-        (*network)->setDefaultAllocatorType(default_allocator);
-        (*network)->setDefaultPdAllocatorType(default_pd_allocator);
+        (*network)->setDefaultAllocatorType(global_allocator);
+        (*network)->setDefaultPdAllocatorType(global_pd_allocator);
         external_cfg->getCfgSharedNetworks6()->add((*network));
     }
 
@@ -290,7 +290,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
     Subnet6Collection subnets;
     if (allocator_changed || reconfig) {
         // A change of the allocator or the server reconfiguration can affect all
-        // shared networks. Get all subnets.
+        // subnets. Get all subnets.
         subnets = getMgr().getPool()->getAllSubnets6(backend_selector, server_selector);
 
     } else if (!updated_entries.empty()) {
@@ -311,8 +311,8 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         (*subnet)->setFetchGlobalsFn([] () -> ConstCfgGlobalsPtr {
             return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
         });
-        (*subnet)->setDefaultAllocatorType(default_allocator);
-        (*subnet)->setDefaultPdAllocatorType(default_pd_allocator);
+        (*subnet)->setDefaultAllocatorType(global_allocator);
+        (*subnet)->setDefaultPdAllocatorType(global_pd_allocator);
         external_cfg->getCfgSubnets6()->add((*subnet));
     }
 

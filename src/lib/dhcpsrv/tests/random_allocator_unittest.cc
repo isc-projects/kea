@@ -186,8 +186,11 @@ using RandomAllocatorTest6 = AllocEngine6Test;
 
 // Test that the allocator returns the correct type.
 TEST_F(RandomAllocatorTest6, getType) {
-    RandomAllocator alloc(Lease::TYPE_NA, subnet_);
-    EXPECT_EQ("random", alloc.getType());
+    RandomAllocator allocNA(Lease::TYPE_NA, subnet_);
+    EXPECT_EQ("random", allocNA.getType());
+
+    RandomAllocator allocPD(Lease::TYPE_PD, subnet_);
+    EXPECT_EQ("random", allocPD.getType());
 }
 
 // Test allocating IPv6 addresses when a subnet has a single pool.

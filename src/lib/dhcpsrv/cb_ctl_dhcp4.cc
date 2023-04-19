@@ -221,10 +221,10 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
     // Allocator selection at the global level can affect subnets and shared networks
     // for which the allocator hasn't been specified explicitly. Let's see if the
     // allocator has been specified at the global level.
-    std::string default_allocator;
+    std::string global_allocator;
     auto allocator = external_cfg->getConfiguredGlobal(CfgGlobals::ALLOCATOR);
     if (allocator && (allocator->getType() == Element::string)) {
-        default_allocator = allocator->stringValue();
+       global_allocator = allocator->stringValue();
     }
 
     // If we're fetching the changes from the config backend we also want
@@ -234,10 +234,9 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
     // We're only affected by the allocator change if this is the update from
     // the configuration backend.
     if (cb_update) {
-        std::string current_default_allocator;
         auto allocator = CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::ALLOCATOR);
         if (allocator && (allocator->getType() == Element::string)) {
-            allocator_changed = (default_allocator != allocator->stringValue());
+            allocator_changed = (global_allocator != allocator->stringValue());
         }
     }
 
@@ -268,7 +267,7 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
         (*network)->setFetchGlobalsFn([] () -> ConstCfgGlobalsPtr {
              return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
         });
-        (*network)->setDefaultAllocatorType(default_allocator);
+        (*network)->setDefaultAllocatorType(global_allocator);
         external_cfg->getCfgSharedNetworks4()->add((*network));
     }
 
@@ -279,7 +278,7 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
     Subnet4Collection subnets;
     if (allocator_changed || reconfig) {
         // A change of the allocator or the server reconfiguration can affect all
-        // shared networks. Get all subnets.
+        // subnets. Get all subnets.
         subnets = getMgr().getPool()->getAllSubnets4(backend_selector, server_selector);
 
     }  else if (!updated_entries.empty()) {
@@ -300,7 +299,7 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
         (*subnet)->setFetchGlobalsFn([] () -> ConstCfgGlobalsPtr {
             return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
         });
-        (*subnet)->setDefaultAllocatorType(default_allocator);
+        (*subnet)->setDefaultAllocatorType(global_allocator);
         external_cfg->getCfgSubnets4()->add((*subnet));
     }
 
