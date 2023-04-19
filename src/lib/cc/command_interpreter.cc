@@ -213,20 +213,22 @@ parseCommandWithArgs(ConstElementPtr& arg, ConstElementPtr command) {
 
     // This function requires arguments within the command.
     if (!arg) {
-        isc_throw(CtrlChannelError, "invalid command: no arguments specified for the '"
-                                        << command_name << "' command");
+        isc_throw(CtrlChannelError,
+                  "invalid command '" << command_name << "': no arguments specified");
     }
 
     // Arguments must be a map.
     if (arg->getType() != Element::map) {
-        isc_throw(CtrlChannelError, "invalid command: expected '"
+        isc_throw(CtrlChannelError,
+                  "invalid command '" << command_name << "': expected "
                   << CONTROL_ARGUMENTS << "' to be a map, got "
                   << Element::typeToName(arg->getType()) << " instead");
     }
 
     // At least one argument is required.
     if (arg->size() == 0) {
-        isc_throw(CtrlChannelError, "invalid command: '" << CONTROL_ARGUMENTS << "' is empty");
+        isc_throw(CtrlChannelError, "invalid command '" << command_name << "': '"
+                                                        << CONTROL_ARGUMENTS << "' is empty");
     }
 
     return (command_name);
