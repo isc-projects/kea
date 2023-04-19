@@ -52,6 +52,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ALLOCATOR;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST;
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB;
 extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL;

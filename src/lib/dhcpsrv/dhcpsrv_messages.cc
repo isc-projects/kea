@@ -51,6 +51,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL = "DHCPSRV_CF
 extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET4 = "DHCPSRV_CFGMGR_UPDATE_SUBNET4";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET6 = "DHCPSRV_CFGMGR_UPDATE_SUBNET6";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS = "DHCPSRV_CFGMGR_USE_ADDRESS";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ALLOCATOR = "DHCPSRV_CFGMGR_USE_ALLOCATOR";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST = "DHCPSRV_CFGMGR_USE_UNICAST";
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB = "DHCPSRV_CLOSE_DB";
 extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL = "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL";
@@ -315,6 +316,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_UPDATE_SUBNET4", "updating subnet %1 (result %2)",
     "DHCPSRV_CFGMGR_UPDATE_SUBNET6", "updating subnet %1 (result %2)",
     "DHCPSRV_CFGMGR_USE_ADDRESS", "listening on address %1, on interface %2",
+    "DHCPSRV_CFGMGR_USE_ALLOCATOR", "using the %1 allocator for %2 leases in subnet %3",
     "DHCPSRV_CFGMGR_USE_UNICAST", "listening on unicast address %1, on interface %2",
     "DHCPSRV_CLOSE_DB", "closing currently open %1 database",
     "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL", "ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it",
