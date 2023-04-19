@@ -68,21 +68,22 @@ createAnswer(const int status_code, const ConstElementPtr& arg) {
 ConstElementPtr
 parseAnswer(int &rcode, const ConstElementPtr& msg) {
     if (!msg) {
-        isc_throw(CtrlChannelError, "No answer specified");
+        isc_throw(CtrlChannelError, "invalid answer: no answer specified");
     }
     if (msg->getType() != Element::map) {
-        isc_throw(CtrlChannelError,
-                  "Invalid answer Element specified, expected map");
+        isc_throw(CtrlChannelError, "invalid answer: expected toplevel entry to be a map, got "
+                  << Element::typeToName(msg->getType()) << " instead");
     }
     if (!msg->contains(CONTROL_RESULT)) {
         isc_throw(CtrlChannelError,
-                  "Invalid answer specified, does not contain mandatory 'result'");
+                  "invalid answer: does not contain mandatory '" << CONTROL_RESULT << "'");
     }
 
     ConstElementPtr result = msg->get(CONTROL_RESULT);
     if (result->getType() != Element::integer) {
-            isc_throw(CtrlChannelError,
-                      "Result element in answer message is not a string");
+        isc_throw(CtrlChannelError, "invalid answer: expected '" << CONTROL_RESULT
+                  << "' to be an integer, got "
+                  << Element::typeToName(result->getType()) << " instead");
     }
 
     rcode = result->intValue();
@@ -100,21 +101,22 @@ parseAnswer(int &rcode, const ConstElementPtr& msg) {
 std::string
 answerToText(const ConstElementPtr& msg) {
     if (!msg) {
-        isc_throw(CtrlChannelError, "No answer specified");
+        isc_throw(CtrlChannelError, "invalid answer: no answer specified");
     }
     if (msg->getType() != Element::map) {
-        isc_throw(CtrlChannelError,
-                  "Invalid answer Element specified, expected map");
+        isc_throw(CtrlChannelError, "invalid answer: expected toplevel entry to be a map, got "
+                  << Element::typeToName(msg->getType()) << " instead");
     }
     if (!msg->contains(CONTROL_RESULT)) {
         isc_throw(CtrlChannelError,
-                  "Invalid answer specified, does not contain mandatory 'result'");
+                  "invalid answer: does not contain mandatory '" << CONTROL_RESULT << "'");
     }
 
     ConstElementPtr result = msg->get(CONTROL_RESULT);
     if (result->getType() != Element::integer) {
-            isc_throw(CtrlChannelError,
-                      "Result element in answer message is not a string");
+        isc_throw(CtrlChannelError, "invalid answer: expected '" << CONTROL_RESULT
+                  << "' to be an integer, got " << Element::typeToName(result->getType())
+                  << " instead");
     }
 
     stringstream txt;
@@ -170,7 +172,7 @@ createCommand(const std::string& command,
 std::string
 parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     if (!command) {
-        isc_throw(CtrlChannelError, "no command specified");
+        isc_throw(CtrlChannelError, "invalid command: no command specified");
     }
     if (command->getType() != Element::map) {
         isc_throw(CtrlChannelError, "invalid command: expected toplevel entry to be a map, got "
@@ -211,21 +213,20 @@ parseCommandWithArgs(ConstElementPtr& arg, ConstElementPtr command) {
 
     // This function requires arguments within the command.
     if (!arg) {
-        isc_throw(CtrlChannelError,
-                  "no arguments specified for the '" << command_name
-                  << "' command");
+        isc_throw(CtrlChannelError, "invalid command: no arguments specified for the '"
+                                        << command_name << "' command");
     }
 
     // Arguments must be a map.
     if (arg->getType() != Element::map) {
-        isc_throw(CtrlChannelError, "arguments specified for the '" << command_name
-                  << "' command are not a map");
+        isc_throw(CtrlChannelError, "invalid command: expected '"
+                  << CONTROL_ARGUMENTS << "' to be a map, got "
+                  << Element::typeToName(arg->getType()) << " instead");
     }
 
     // At least one argument is required.
     if (arg->size() == 0) {
-        isc_throw(CtrlChannelError, "arguments must not be empty for "
-                  "the '" << command_name << "' command");
+        isc_throw(CtrlChannelError, "invalid command: '" << CONTROL_ARGUMENTS << "' is empty");
     }
 
     return (command_name);
