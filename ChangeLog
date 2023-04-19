@@ -1,3 +1,10 @@
+2123.	[bug]		razvan
+	Fixed a bug which was truncating relay suboptions (circuit-id
+	code 1 and remote-id code 2) if the data ended in 0x0. The
+	option definitions have been updated from OPT_STRING_TYPE to
+	OPT_BINARY_TYPE.
+	(Gitlab #2794)
+
 2122.	[bug]		marcin
 	Fixed a bug in the HA hook library whereby the HA service could
 	sometimes terminate even after the partner's clock has been
