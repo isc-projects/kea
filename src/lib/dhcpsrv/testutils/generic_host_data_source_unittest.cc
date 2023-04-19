@@ -3905,7 +3905,7 @@ GenericHostDataSourceTest::testUpdate() {
     boost::to_upper(hwaddr);
 
     // Updating a host that doesn't exist should throw.
-    EXPECT_THROW_MSG(hdsptr_->update(host), NoRowsAffected, "Host not updated (not found).");
+    EXPECT_THROW_MSG(hdsptr_->update(host), HostNotFound, "Host not updated (not found).");
 
     // There should be no hosts.
     ConstHostCollection hosts(hdsptr_->getAll4(v4_subnet));
