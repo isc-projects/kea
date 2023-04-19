@@ -24,7 +24,7 @@ namespace {
 // Provided wire data is in the ADN only mode i.e. only
 // Service priority and Authentication domain name FQDN
 // fields are present.
-TEST(OptionDnr6Test, onWireCtorAdnOnlyMode) {
+TEST(Option6DnrTest, onWireCtorAdnOnlyMode) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -67,7 +67,7 @@ TEST(OptionDnr6Test, onWireCtorAdnOnlyMode) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - mandatory fields are truncated.
-TEST(OptionDnr6Test, onWireCtorDataTruncated) {
+TEST(Option6DnrTest, onWireCtorDataTruncated) {
     // Prepare data to decode - data too short.
     const uint8_t buf_data[] = {
         0x80, 0x01  // Service priority is 32769 dec, other data is missing
@@ -82,7 +82,7 @@ TEST(OptionDnr6Test, onWireCtorDataTruncated) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - ADN FQDN contains only whitespace - non valid FQDN.
-TEST(OptionDnr6Test, onWireCtorOnlyWhitespaceFqdn) {
+TEST(Option6DnrTest, onWireCtorOnlyWhitespaceFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
         0x80, 0x01,  // Service priority is 32769 dec
@@ -99,7 +99,7 @@ TEST(OptionDnr6Test, onWireCtorOnlyWhitespaceFqdn) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - ADN Length is 0 and no ADN FQDN at all.
-TEST(OptionDnr6Test, onWireCtorNoAdnFqdn) {
+TEST(Option6DnrTest, onWireCtorNoAdnFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
         0x00, 0x01,  // Service priority is 1 dec
@@ -117,7 +117,7 @@ TEST(OptionDnr6Test, onWireCtorNoAdnFqdn) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - FQDN data is truncated.
-TEST(OptionDnr6Test, onWireCtorTruncatedFqdn) {
+TEST(Option6DnrTest, onWireCtorTruncatedFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                               // Service priority is 32769 dec
@@ -134,7 +134,7 @@ TEST(OptionDnr6Test, onWireCtorTruncatedFqdn) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - Addr Length field truncated.
-TEST(OptionDnr6Test, onWireCtorAddrLenTruncated) {
+TEST(Option6DnrTest, onWireCtorAddrLenTruncated) {
     // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -154,7 +154,7 @@ TEST(OptionDnr6Test, onWireCtorAddrLenTruncated) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - Addr length is 0 and no IPv6 addresses at all.
-TEST(OptionDnr6Test, onWireCtorAddrLenZero) {
+TEST(Option6DnrTest, onWireCtorAddrLenZero) {
     // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -176,7 +176,7 @@ TEST(OptionDnr6Test, onWireCtorAddrLenZero) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - Addr length is not a multiple of 16.
-TEST(OptionDnr6Test, onWireCtorAddrLenNot16Modulo) {
+TEST(Option6DnrTest, onWireCtorAddrLenNot16Modulo) {
     // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -196,7 +196,7 @@ TEST(OptionDnr6Test, onWireCtorAddrLenNot16Modulo) {
 
 // This test verifies option constructor from wire data.
 // Provided wire data contains also IPv6 addresses.
-TEST(OptionDnr6Test, onWireCtorValidIpV6Addresses) {
+TEST(Option6DnrTest, onWireCtorValidIpV6Addresses) {
     // Prepare data to decode
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -253,7 +253,7 @@ TEST(OptionDnr6Test, onWireCtorValidIpV6Addresses) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - IPv6 addresses are truncated.
-TEST(OptionDnr6Test, onWireCtorTruncatedIpV6Addresses) {
+TEST(Option6DnrTest, onWireCtorTruncatedIpV6Addresses) {
     // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -276,7 +276,7 @@ TEST(OptionDnr6Test, onWireCtorTruncatedIpV6Addresses) {
 
 // This test verifies option constructor from wire data.
 // Provided wire data contains also IPv6 address and Svc Params.
-TEST(OptionDnr6Test, onWireCtorSvcParamsIncluded) {
+TEST(Option6DnrTest, onWireCtorSvcParamsIncluded) {
     // Prepare data to decode.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -328,7 +328,7 @@ TEST(OptionDnr6Test, onWireCtorSvcParamsIncluded) {
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
 // - SvcParams Key contains char that is not allowed.
-TEST(OptionDnr6Test, onWireCtorSvcParamsInvalidCharKey) {
+TEST(Option6DnrTest, onWireCtorSvcParamsInvalidCharKey) {
     // Prepare data to decode with invalid SvcParams.
     const uint8_t buf_data[] = {
         0x80, 0x01,                                      // Service priority is 32769 dec
@@ -351,7 +351,7 @@ TEST(OptionDnr6Test, onWireCtorSvcParamsInvalidCharKey) {
 
 // This test verifies option constructor in ADN only mode.
 // Service priority and ADN are provided via ctor.
-TEST(OptionDnr6Test, adnOnlyModeCtor) {
+TEST(Option6DnrTest, adnOnlyModeCtor) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -386,7 +386,7 @@ TEST(OptionDnr6Test, adnOnlyModeCtor) {
 
 // This test verifies that option constructor in ADN only mode throws
 // an exception when mandatory ADN is empty.
-TEST(OptionDnr6Test, adnOnlyModeCtorNoFqdn) {
+TEST(Option6DnrTest, adnOnlyModeCtorNoFqdn) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn; // invalid empty ADN
@@ -400,7 +400,7 @@ TEST(OptionDnr6Test, adnOnlyModeCtorNoFqdn) {
 // This test verifies option constructor where all fields
 // i.e. Service priority, ADN, IP address(es) and Service params
 // are provided as ctor parameters.
-TEST(OptionDnr6Test, allFieldsCtor) {
+TEST(Option6DnrTest, allFieldsCtor) {
     // Prepare example parameters
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -439,7 +439,7 @@ TEST(OptionDnr6Test, allFieldsCtor) {
 // This test verifies that option constructor throws
 // an exception when option fields provided via ctor are malformed
 // - no IPv6 address provided.
-TEST(OptionDnr6Test, allFieldsCtorNoIpAddress) {
+TEST(Option6DnrTest, allFieldsCtorNoIpAddress) {
     // Prepare example parameters
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -455,7 +455,7 @@ TEST(OptionDnr6Test, allFieldsCtorNoIpAddress) {
 // This test verifies that option constructor throws
 // an exception when option fields provided via ctor are malformed
 // - Svc Params key=val pair has 2 equal signs.
-TEST(OptionDnr6Test, svcParamsTwoEqualSignsPerParam) {
+TEST(Option6DnrTest, svcParamsTwoEqualSignsPerParam) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -472,7 +472,7 @@ TEST(OptionDnr6Test, svcParamsTwoEqualSignsPerParam) {
 // This test verifies that option constructor throws
 // an exception when option fields provided via ctor are malformed
 // - Svc Params forbidden key provided.
-TEST(OptionDnr6Test, svcParamsForbiddenKey) {
+TEST(Option6DnrTest, svcParamsForbiddenKey) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -489,7 +489,7 @@ TEST(OptionDnr6Test, svcParamsForbiddenKey) {
 // This test verifies that option constructor throws
 // an exception when option fields provided via ctor are malformed
 // - Svc Params key was repeated.
-TEST(OptionDnr6Test, svcParamsKeyRepeated) {
+TEST(Option6DnrTest, svcParamsKeyRepeated) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -506,7 +506,7 @@ TEST(OptionDnr6Test, svcParamsKeyRepeated) {
 // This test verifies that option constructor throws
 // an exception when option fields provided via ctor are malformed
 // - Svc Params key is too long.
-TEST(OptionDnr6Test, svcParamsKeyTooLong) {
+TEST(Option6DnrTest, svcParamsKeyTooLong) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -525,7 +525,7 @@ TEST(OptionDnr6Test, svcParamsKeyTooLong) {
 // This test verifies that option constructor throws
 // an exception when option fields provided via ctor are malformed
 // - Svc Params key has chars that are not allowed.
-TEST(OptionDnr6Test, svcParamsKeyHasInvalidChar) {
+TEST(Option6DnrTest, svcParamsKeyHasInvalidChar) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -541,7 +541,7 @@ TEST(OptionDnr6Test, svcParamsKeyHasInvalidChar) {
 
 // This test verifies that string representation of the option returned by
 // toText method is correctly formatted.
-TEST(OptionDnr6Test, toText) {
+TEST(Option6DnrTest, toText) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -563,7 +563,7 @@ TEST(OptionDnr6Test, toText) {
 }
 
 // This test verifies on-wire format of the option is correctly created in ADN only mode.
-TEST(OptionDnr6Test, packAdnOnlyMode) {
+TEST(Option6DnrTest, packAdnOnlyMode) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
@@ -598,7 +598,7 @@ TEST(OptionDnr6Test, packAdnOnlyMode) {
 
 // This test verifies on-wire format of the option is correctly created when
 // IP addresses and Svc Params are also included.
-TEST(OptionDnr6Test, pack) {
+TEST(Option6DnrTest, pack) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";

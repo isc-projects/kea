@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
-#include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option6_dnr.h>
@@ -20,24 +18,6 @@ namespace dhcp {
 Option6Dnr::Option6Dnr(OptionBufferConstIter begin, OptionBufferConstIter end)
     : Option(V6, D6O_V6_DNR), DnrInstance(V6) {
     unpack(begin, end);
-}
-
-Option6Dnr::Option6Dnr(const uint16_t service_priority,
-                       const std::string& adn,
-                       const Option6Dnr::AddressContainer& ip_addresses,
-                       const std::string& svc_params)
-    : Option(V6, D6O_V6_DNR), DnrInstance(V6) {
-    service_priority_ = service_priority;
-    ip_addresses_ = ip_addresses;
-    svc_params_ = svc_params;
-    setAdn(adn);
-    checkFields();
-}
-
-Option6Dnr::Option6Dnr(const uint16_t service_priority, const std::string& adn)
-    : Option(V6, D6O_V6_DNR), DnrInstance(V6) {
-    service_priority_ = service_priority;
-    setAdn(adn);
 }
 
 OptionPtr
@@ -111,14 +91,14 @@ Option6Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         return;
     }
     adn_only_mode_ = false;
-    if (std::distance(begin, end) < ADDR_LENGTH_SIZE) {
+    if (std::distance(begin, end) < getAddrLengthSize()) {
         isc_throw(OutOfRange, "DHCPv6 Encrypted DNS Option (" << type_ << ") malformed: after"
                               " ADN field, there should be at least "
                               "2 bytes long Addr Length field");
     }
     // Next come two octets of Addr Length.
-    addr_length_ = isc::util::readUint16(&(*begin), ADDR_LENGTH_SIZE);
-    begin += ADDR_LENGTH_SIZE;
+    addr_length_ = isc::util::readUint16(&(*begin), getAddrLengthSize());
+    begin += getAddrLengthSize();
     // It MUST be a multiple of 16.
     if ((addr_length_ % V6ADDRESS_LEN) != 0) {
         isc_throw(OutOfRange, "DHCPv6 Encrypted DNS Option (" << type_ << ")"
@@ -163,32 +143,13 @@ Option6Dnr::toText(int indent) const {
     std::ostringstream stream;
     std::string in(indent, ' '); // base indentation
     stream << in  << "type=" << type_ << "(V6_DNR), "
-           << "len=" << (len() - getHeaderLen()) << ", "
-           << "service_priority=" << service_priority_ << ", "
-           << "adn_length=" << adn_length_ << ", "
-           << "adn='" << getAdnAsText() << "'";
-    if (!adn_only_mode_) {
-        stream << ", addr_length=" << addr_length_
-               << ", address(es):";
-        for (const auto& address : ip_addresses_) {
-            stream << " " << address.toText();
-        }
-
-        if (svc_params_length_ > 0) {
-            stream << ", svc_params='" << svc_params_ << "'";
-        }
-    }
-
+           << "len=" << (len() - getHeaderLen()) << ", " << getDnrInstanceAsText();
     return (stream.str());
 }
 
 uint16_t
 Option6Dnr::len() const {
-    uint16_t len = OPTION6_HDR_LEN + SERVICE_PRIORITY_SIZE + adn_length_ + ADN_LENGTH_SIZE;
-    if (!adn_only_mode_) {
-        len += addr_length_ + ADDR_LENGTH_SIZE + svc_params_length_;
-    }
-    return (len);
+    return (OPTION6_HDR_LEN + dnrInstanceLen());
 }
 
 }  // namespace dhcp

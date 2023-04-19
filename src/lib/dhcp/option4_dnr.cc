@@ -41,7 +41,7 @@ Option4Dnr::pack(util::OutputBuffer& buf, bool check) const {
         buf.writeUint8(dnr_instance.getAdnLength());
         dnr_instance.packAdn(buf);
         if (dnr_instance.isAdnOnlyMode()) {
-            return;
+            continue;
         }
         buf.writeUint8(dnr_instance.getAddrLength());
         dnr_instance.packAddresses(buf);
@@ -54,20 +54,20 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     setData(begin, end);
     size_t offset = 0;
     while (offset < std::distance(begin, end)) {
-        if (std::distance(begin + offset, end) < getMinimalLength()) {
+        DnrInstance dnr_instance(V4);
+        if (std::distance(begin + offset, end) < dnr_instance.getMinimalLength()) {
             isc_throw(OutOfRange, "DHCPv4 Encrypted DNS Option (" << type_ << ") malformed: "
                                   "DNR instance data truncated to size "
                                   << std::distance(begin + offset, end));
         }
-        DnrInstance dnr_instance(V4);
         dnr_instance.setDnrInstanceDataLength(
-            readUint16(&(*(begin + offset)), DNR_INSTANCE_DATA_LENGTH_SIZE));
+            readUint16(&(*(begin + offset)), dnr_instance.getDnrInstanceDataLengthSize()));
         OptionBufferConstIter dnr_instance_end = begin + offset +
                                                  dnr_instance.getDnrInstanceDataLength();
-        offset += DNR_INSTANCE_DATA_LENGTH_SIZE;
+        offset += dnr_instance.getDnrInstanceDataLengthSize();
         dnr_instance.setServicePriority(
-            readUint16(&(*(begin + offset)), SERVICE_PRIORITY_SIZE));
-        offset += SERVICE_PRIORITY_SIZE;
+            readUint16(&(*(begin + offset)), dnr_instance.SERVICE_PRIORITY_SIZE));
+        offset += dnr_instance.SERVICE_PRIORITY_SIZE;
 
         OpaqueDataTuple adn_tuple(OpaqueDataTuple::LENGTH_1_BYTE, begin + offset, dnr_instance_end);
         auto adn_length = adn_tuple.getLength();
@@ -122,7 +122,7 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
                                   << " is not greater than 0");
         }
 
-        offset += ADDR_LENGTH_SIZE;
+        offset += dnr_instance.getAddrLengthSize();
         OptionBufferConstIter addr_begin = begin + offset;
         OptionBufferConstIter addr_end = addr_begin + addr_length;
         auto ip_addresses = dnr_instance.getIpAddresses();
@@ -137,8 +137,9 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         // SvcParams (variable length) field is last.
         auto svc_params_length = std::distance(begin + offset, dnr_instance_end);
         if (svc_params_length > 0) {
-            std::string svc_params = dnr_instance.getSvcParams();
+            std::string svc_params;
             svc_params.assign(begin + offset, dnr_instance_end);
+            dnr_instance.setSvcParams(svc_params);
             dnr_instance.checkSvcParams();
             offset += svc_params_length;
         }
@@ -149,14 +150,24 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
 
 std::string
 Option4Dnr::toText(int indent) const {
-    return Option::toText(indent);
+    std::ostringstream stream;
+    std::string in(indent, ' '); // base indentation
+    stream << in  << "type=" << type_ << "(V4_DNR), "
+           << "len=" << (len() - getHeaderLen());
+    int i = 0;
+    for(const DnrInstance& dnr_instance : dnr_instances_) {
+        stream << ", DNR Instance " << ++i << "(Instance len="
+               << dnr_instance.getDnrInstanceDataLength() << ", "
+               << dnr_instance.getDnrInstanceAsText() << ")";
+    }
+    return (stream.str());
 }
 
 uint16_t
 Option4Dnr::len() const {
     uint16_t len = OPTION4_HDR_LEN;
     for (const DnrInstance& dnr_instance : dnr_instances_) {
-        len += dnr_instance.getDnrInstanceDataLength() + DNR_INSTANCE_DATA_LENGTH_SIZE;
+        len += dnr_instance.getDnrInstanceDataLength() + dnr_instance.getDnrInstanceDataLengthSize();
     }
     return (len);
 }
@@ -229,6 +240,9 @@ DnrInstance::setAdn(const std::string& adn) {
     }
 
     adn_length_ = adn_len;
+    if (universe_ == Option::V4) {
+        setDnrInstanceDataLength(dnrInstanceLen());
+    }
 }
 
 void
@@ -332,12 +346,19 @@ DnrInstance::checkFields() {
         checkSvcParams(false);
     }
     adn_only_mode_ = false;
-    auto addr_len = ip_addresses_.size() * V6ADDRESS_LEN;
-    if (addr_len > std::numeric_limits<uint16_t>::max()) {
+    const uint8_t addr_field_len = (universe_ == Option::V4) ? V4ADDRESS_LEN : V6ADDRESS_LEN;
+    const uint16_t max_addr_len = (universe_ == Option::V4)
+                                      ? std::numeric_limits<uint8_t>::max()
+                                      : std::numeric_limits<uint16_t>::max();
+    auto addr_len = ip_addresses_.size() * addr_field_len;
+    if (addr_len > max_addr_len) {
         isc_throw(OutOfRange,
-                  "Given IPv6 addresses length " << addr_len << " is bigger than uint_16 MAX");
+                  "Given IP addresses length " << addr_len << " is bigger than MAX " << max_addr_len);
     }
     addr_length_ = addr_len;
+    if (universe_ == Option::V4) {
+        setDnrInstanceDataLength(dnrInstanceLen());
+    }
 }
 
 std::string
@@ -345,6 +366,79 @@ DnrInstance::getLogPrefix() const {
     return (universe_ == Option::V4) ?
                ("DHCPv4 Encrypted DNS Option (" + std::to_string(DHO_V4_DNR) + ")") :
                ("DHCPv6 Encrypted DNS Option (" + std::to_string(D6O_V6_DNR) + ")");
+}
+
+DnrInstance::DnrInstance(Option::Universe universe,
+                         const uint16_t service_priority,
+                         const std::string& adn,
+                         const DnrInstance::AddressContainer& ip_addresses,
+                         const std::string& svc_params)
+    : universe_(universe), service_priority_(service_priority),
+      ip_addresses_(ip_addresses), svc_params_(svc_params) {
+    setAdn(adn);
+    checkFields();
+}
+
+DnrInstance::DnrInstance(Option::Universe universe,
+                         const uint16_t service_priority,
+                         const std::string& adn)
+    : universe_(universe), service_priority_(service_priority){
+    setAdn(adn);
+}
+
+std::string
+DnrInstance::getDnrInstanceAsText() const {
+    std::string text = "service_priority=" + std::to_string(service_priority_) + ", "
+                                           + "adn_length=" + std::to_string(adn_length_) + ", "
+                                           + "adn='" + getAdnAsText() + "'";
+    if (!adn_only_mode_) {
+        text += ", addr_length=" + std::to_string(addr_length_) + ", address(es):";
+        for (const auto& address : ip_addresses_) {
+            text += " " + address.toText();
+        }
+        if (svc_params_length_ > 0) {
+            text += ", svc_params='" + svc_params_ + "'";
+        }
+    }
+    return text;
+}
+
+uint16_t
+DnrInstance::dnrInstanceLen() const {
+    uint16_t len = SERVICE_PRIORITY_SIZE + adn_length_ + getAdnLengthSize();
+    if (!adn_only_mode_) {
+        len += addr_length_ + getAddrLengthSize() + svc_params_length_;
+    }
+    return (len);
+}
+
+uint8_t
+DnrInstance::getDnrInstanceDataLengthSize() const {
+    if (universe_ == Option::V6) {
+        return (0);
+    }
+    return (2);
+}
+
+uint8_t
+DnrInstance::getAdnLengthSize() const {
+    if (universe_ == Option::V6) {
+        return (2);
+    }
+    return (1);
+}
+
+uint8_t
+DnrInstance::getAddrLengthSize() const {
+    if (universe_ == Option::V6) {
+        return (2);
+    }
+    return (1);
+}
+
+uint8_t
+DnrInstance::getMinimalLength() const {
+    return (getDnrInstanceDataLengthSize() + SERVICE_PRIORITY_SIZE + getAdnLengthSize());
 }
 
 }  // namespace dhcp

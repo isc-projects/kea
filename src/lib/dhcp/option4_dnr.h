@@ -8,6 +8,7 @@
 #define OPTION4_DNR_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
 #include <dns/name.h>
 
@@ -16,12 +17,23 @@ namespace dhcp {
 
 class DnrInstance {
 public:
-    DnrInstance(Option::Universe universe) : universe_(universe) {}
-
-    virtual ~DnrInstance() {}
-
     /// @brief A Type defined for container holding IP addresses.
     typedef std::vector<isc::asiolink::IOAddress> AddressContainer;
+
+    /// @brief Size in octets of Service Priority field.
+    static const uint8_t SERVICE_PRIORITY_SIZE = 2;
+
+    explicit DnrInstance(Option::Universe universe) : universe_(universe) {}
+
+    DnrInstance(Option::Universe universe, const uint16_t service_priority,
+                const std::string& adn,
+                const AddressContainer& ip_addresses,
+                const std::string& svc_params);
+
+    DnrInstance(Option::Universe universe, const uint16_t service_priority,
+                const std::string& adn);
+
+    virtual ~DnrInstance() = default;
 
     const AddressContainer& getIpAddresses() const {
         return ip_addresses_;
@@ -56,6 +68,8 @@ public:
     /// @return Authentication domain name in the text format.
     std::string getAdnAsText() const;
 
+    std::string getDnrInstanceAsText() const;
+
     /// @brief Getter of the @c addr_length_.
     ///
     /// @return  Length of enclosed IP addresses in octets.
@@ -89,6 +103,23 @@ public:
         return svc_params_;
     }
 
+    /// @brief Returns minimal length of the DNR instance data (without headers) in octets.
+    ///
+    /// If the ADN-only mode is used, then "Addr Length", "ip(v4/v6)-address(es)",
+    /// and "Service Parameters (SvcParams)" fields are not present.
+    /// So minimal length of data is calculated by adding 2 octets for Service Priority,
+    /// octets needed for ADN Length and octets needed for DNR Instance Data Length
+    /// (only in case of DHCPv4).
+    ///
+    /// @return Minimal length of the DNR instance data (without headers) in octets.
+    uint8_t getMinimalLength() const;
+
+    /// @brief Returns size in octets of Addr Length field.
+    uint8_t getAddrLengthSize() const;
+
+    /// @brief Returns size in octets of DNR Instance Data Length field.
+    uint8_t getDnrInstanceDataLengthSize() const;
+
     bool isAdnOnlyMode() const {
         return adn_only_mode_;
     }
@@ -115,9 +146,9 @@ public:
     void setAddrLength(uint16_t addr_length) {
         addr_length_ = addr_length;
     }
-    void setSvcParamsLength(uint16_t svc_params_length) {
-        svc_params_length_ = svc_params_length;
-    }
+//    void setSvcParamsLength(uint16_t svc_params_length) {
+//        svc_params_length_ = svc_params_length;
+//    }
     void setAdnOnlyMode(bool adn_only_mode) {
         adn_only_mode_ = adn_only_mode;
     }
@@ -204,27 +235,28 @@ protected:
     /// following the rules in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
     std::string svc_params_;
 
+    uint16_t dnrInstanceLen() const;
+
 private:
     std::string getLogPrefix() const;
+
+    /// @brief Returns size in octets of ADN Length field.
+    uint8_t getAdnLengthSize() const;
 };
 
 class Option4Dnr : public Option {
 public:
-    /// @brief Size in octets of Service Priority field.
-    static const uint8_t DNR_INSTANCE_DATA_LENGTH_SIZE = 2;
-
-    /// @brief Size in octets of Service Priority field.
-    static const uint8_t SERVICE_PRIORITY_SIZE = 2;
-
-    /// @brief Size in octets of ADN Length field.
-    static const uint8_t ADN_LENGTH_SIZE = 1;
-
-    /// @brief Size in octets of Addr Length field.
-    static const uint8_t ADDR_LENGTH_SIZE = 1;
-
     typedef std::vector<DnrInstance> DnrInstanceContainer;
 
     Option4Dnr(OptionBufferConstIter begin, OptionBufferConstIter end);
+
+    Option4Dnr() : Option(V4, DHO_V4_DNR) {}
+
+    void addDnrInstance(DnrInstance& dnr_instance);
+
+    const DnrInstanceContainer& getDnrInstances() const {
+        return dnr_instances_;
+    }
 
     virtual OptionPtr clone() const;
     virtual void pack(util::OutputBuffer& buf, bool check = true) const;
@@ -234,21 +266,6 @@ public:
 
 protected:
     DnrInstanceContainer dnr_instances_;
-
-private:
-    /// @brief Returns minimal length of the option data (without headers) in octets.
-    ///
-    /// If the ADN-only mode is used, then "Addr Length", "IPv4 Address(es)",
-    /// and "Service Parameters (SvcParams)" fields are not present. In this
-    /// case minimal length of data is 2 octets for Service Priority plus 1 octet
-    /// for ADN Length plus 2 octets for DNR Instance Data Length.
-    ///
-    /// @return Minimal length of the option data (without headers) in octets.
-    static uint8_t getMinimalLength() {
-        return (DNR_INSTANCE_DATA_LENGTH_SIZE + SERVICE_PRIORITY_SIZE + ADN_LENGTH_SIZE);
-    };
-
-    void addDnrInstance(DnrInstance& dnr_instance);
 };
 
 /// A pointer to the @c OptionDnr4 object.

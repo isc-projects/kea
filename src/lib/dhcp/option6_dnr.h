@@ -44,15 +44,6 @@ public:
 class Option6Dnr : public Option, public DnrInstance {
 public:
 
-    /// @brief Size in octets of Service Priority field.
-    static const uint8_t SERVICE_PRIORITY_SIZE = 2;
-
-    /// @brief Size in octets of ADN Length field.
-    static const uint8_t ADN_LENGTH_SIZE = 2;
-
-    /// @brief Size in octets of Addr Length field.
-    static const uint8_t ADDR_LENGTH_SIZE = 2;
-
     /// @brief Constructor of the %Option from on-wire data.
     ///
     /// This constructor creates an instance of the option using a buffer with
@@ -63,9 +54,15 @@ public:
     /// @param end Iterator pointing to the end of the buffer holding an option.
     Option6Dnr(OptionBufferConstIter begin, OptionBufferConstIter end);
 
-    Option6Dnr(const uint16_t service_priority, const std::string& adn, const AddressContainer& ip_addresses, const std::string& svc_params);
+    Option6Dnr(const uint16_t service_priority,
+                           const std::string& adn,
+                           const Option6Dnr::AddressContainer& ip_addresses,
+                           const std::string& svc_params)
+        : Option(V6, D6O_V6_DNR),
+          DnrInstance(V6, service_priority, adn, ip_addresses, svc_params) {}
 
-    Option6Dnr(const uint16_t service_priority, const std::string& adn);
+    Option6Dnr(const uint16_t service_priority, const std::string& adn)
+        : Option(V6, D6O_V6_DNR), DnrInstance(V6, service_priority, adn) {}
 
     virtual OptionPtr clone() const;
     virtual void pack(util::OutputBuffer& buf, bool check = false) const;
@@ -74,19 +71,6 @@ public:
     virtual uint16_t len() const;
 
     virtual void packAddresses(isc::util::OutputBuffer& buf) const;
-
-private:
-    /// @brief Returns minimal length of the option data (without headers) in octets.
-    ///
-    /// If the ADN-only mode is used, then "Addr Length", "ipv6-address(es)",
-    /// and "Service Parameters (SvcParams)" fields are not present. In this
-    /// case minimal length of data is 2 octets for Service Priority plus 2 octets
-    /// for ADN Length.
-    ///
-    /// @return Minimal length of the option data (without headers) in octets.
-    static uint8_t getMinimalLength() {
-        return (SERVICE_PRIORITY_SIZE + ADN_LENGTH_SIZE);
-    };
 };
 
 /// A pointer to the @c Option6Dnr object.
