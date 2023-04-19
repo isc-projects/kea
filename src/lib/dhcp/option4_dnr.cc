@@ -151,13 +151,13 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
 std::string
 Option4Dnr::toText(int indent) const {
     std::ostringstream stream;
-    std::string in(indent, ' '); // base indentation
-    stream << in  << "type=" << type_ << "(V4_DNR), "
+    std::string in(indent, ' ');  // base indentation
+    stream << in << "type=" << type_ << "(V4_DNR), "
            << "len=" << (len() - getHeaderLen());
     int i = 0;
-    for(const DnrInstance& dnr_instance : dnr_instances_) {
-        stream << ", DNR Instance " << ++i << "(Instance len="
-               << dnr_instance.getDnrInstanceDataLength() << ", "
+    for (const DnrInstance& dnr_instance : dnr_instances_) {
+        stream << ", DNR Instance " << ++i
+               << "(Instance len=" << dnr_instance.getDnrInstanceDataLength() << ", "
                << dnr_instance.getDnrInstanceAsText() << ")";
     }
     return (stream.str());
@@ -167,7 +167,8 @@ uint16_t
 Option4Dnr::len() const {
     uint16_t len = OPTION4_HDR_LEN;
     for (const DnrInstance& dnr_instance : dnr_instances_) {
-        len += dnr_instance.getDnrInstanceDataLength() + dnr_instance.getDnrInstanceDataLengthSize();
+        len += dnr_instance.getDnrInstanceDataLength() +
+               dnr_instance.getDnrInstanceDataLengthSize();
     }
     return (len);
 }
@@ -175,6 +176,24 @@ Option4Dnr::len() const {
 void
 Option4Dnr::addDnrInstance(DnrInstance& dnr_instance) {
     dnr_instances_.push_back(dnr_instance);
+}
+
+DnrInstance::DnrInstance(Option::Universe universe,
+                         const uint16_t service_priority,
+                         const std::string& adn,
+                         const DnrInstance::AddressContainer& ip_addresses,
+                         const std::string& svc_params)
+    : universe_(universe), service_priority_(service_priority), ip_addresses_(ip_addresses),
+      svc_params_(svc_params) {
+    setAdn(adn);
+    checkFields();
+}
+
+DnrInstance::DnrInstance(Option::Universe universe,
+                         const uint16_t service_priority,
+                         const std::string& adn)
+    : universe_(universe), service_priority_(service_priority) {
+    setAdn(adn);
 }
 
 void
@@ -321,7 +340,8 @@ DnrInstance::checkSvcParams(bool from_wire_data) {
         }
 
         if (key_val.size() == 2) {
-            // tbd Check value syntax
+            // For now we skip Check of value syntax.
+            // This is up to customer to configure this correctly.
             std::string value = key_val[1];
         }
     }
@@ -347,13 +367,12 @@ DnrInstance::checkFields() {
     }
     adn_only_mode_ = false;
     const uint8_t addr_field_len = (universe_ == Option::V4) ? V4ADDRESS_LEN : V6ADDRESS_LEN;
-    const uint16_t max_addr_len = (universe_ == Option::V4)
-                                      ? std::numeric_limits<uint8_t>::max()
-                                      : std::numeric_limits<uint16_t>::max();
+    const uint16_t max_addr_len = (universe_ == Option::V4) ? std::numeric_limits<uint8_t>::max() :
+                                                              std::numeric_limits<uint16_t>::max();
     auto addr_len = ip_addresses_.size() * addr_field_len;
     if (addr_len > max_addr_len) {
-        isc_throw(OutOfRange,
-                  "Given IP addresses length " << addr_len << " is bigger than MAX " << max_addr_len);
+        isc_throw(OutOfRange, "Given IP addresses length " << addr_len << " is bigger than MAX "
+                               << max_addr_len);
     }
     addr_length_ = addr_len;
     if (universe_ == Option::V4) {
@@ -368,29 +387,11 @@ DnrInstance::getLogPrefix() const {
                ("DHCPv6 Encrypted DNS Option (" + std::to_string(D6O_V6_DNR) + ")");
 }
 
-DnrInstance::DnrInstance(Option::Universe universe,
-                         const uint16_t service_priority,
-                         const std::string& adn,
-                         const DnrInstance::AddressContainer& ip_addresses,
-                         const std::string& svc_params)
-    : universe_(universe), service_priority_(service_priority),
-      ip_addresses_(ip_addresses), svc_params_(svc_params) {
-    setAdn(adn);
-    checkFields();
-}
-
-DnrInstance::DnrInstance(Option::Universe universe,
-                         const uint16_t service_priority,
-                         const std::string& adn)
-    : universe_(universe), service_priority_(service_priority){
-    setAdn(adn);
-}
-
 std::string
 DnrInstance::getDnrInstanceAsText() const {
-    std::string text = "service_priority=" + std::to_string(service_priority_) + ", "
-                                           + "adn_length=" + std::to_string(adn_length_) + ", "
-                                           + "adn='" + getAdnAsText() + "'";
+    std::string text = "service_priority=" + std::to_string(service_priority_) + ", " +
+                       "adn_length=" + std::to_string(adn_length_) + ", " + "adn='" +
+                       getAdnAsText() + "'";
     if (!adn_only_mode_) {
         text += ", addr_length=" + std::to_string(addr_length_) + ", address(es):";
         for (const auto& address : ip_addresses_) {

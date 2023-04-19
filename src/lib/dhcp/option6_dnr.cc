@@ -141,8 +141,8 @@ Option6Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
 std::string
 Option6Dnr::toText(int indent) const {
     std::ostringstream stream;
-    std::string in(indent, ' '); // base indentation
-    stream << in  << "type=" << type_ << "(V6_DNR), "
+    std::string in(indent, ' ');  // base indentation
+    stream << in << "type=" << type_ << "(V6_DNR), "
            << "len=" << (len() - getHeaderLen()) << ", " << getDnrInstanceAsText();
     return (stream.str());
 }
