@@ -227,8 +227,9 @@ parseCommandWithArgs(ConstElementPtr& arg, ConstElementPtr command) {
 
     // At least one argument is required.
     if (arg->size() == 0) {
-        isc_throw(CtrlChannelError, "invalid command '" << command_name << "': '"
-                                                        << CONTROL_ARGUMENTS << "' is empty");
+        isc_throw(CtrlChannelError,
+                  "invalid command '" << command_name << "': '"
+                  << CONTROL_ARGUMENTS << "' is empty");
     }
 
     return (command_name);
