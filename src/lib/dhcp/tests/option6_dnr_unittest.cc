@@ -62,7 +62,8 @@ TEST(Option6DnrTest, onWireCtorAdnOnlyMode) {
     // toText() len does not count in headers len.
     EXPECT_EQ("type=144(V6_DNR), len=24, "
               "service_priority=32769, adn_length=20, "
-              "adn='myhost.example.com.'", option->toText());
+              "adn='myhost.example.com.'",
+              option->toText());
 }
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
@@ -248,7 +249,8 @@ TEST(Option6DnrTest, onWireCtorValidIpV6Addresses) {
               "addr_length=48, "
               "address(es): 2001:db8:1::dead:beef "
               "ff02::face:b00c "
-              "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", option->toText());
+              "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+              option->toText());
 }
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
@@ -323,7 +325,8 @@ TEST(Option6DnrTest, onWireCtorSvcParamsIncluded) {
               "adn='myhost.example.com.', "
               "addr_length=16, "
               "address(es): 2001:db8:1::dead:beef, "
-              "svc_params='abc'", option->toText());
+              "svc_params='abc'",
+              option->toText());
 }
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
@@ -381,7 +384,8 @@ TEST(Option6DnrTest, adnOnlyModeCtor) {
     // toText() len does not count in headers len.
     EXPECT_EQ("type=144(V6_DNR), len=24, "
               "service_priority=9, adn_length=20, "
-              "adn='myhost.example.com.'", option->toText());
+              "adn='myhost.example.com.'",
+              option->toText());
 }
 
 // This test verifies that option constructor in ADN only mode throws
@@ -389,7 +393,7 @@ TEST(Option6DnrTest, adnOnlyModeCtor) {
 TEST(Option6DnrTest, adnOnlyModeCtorNoFqdn) {
     // Prepare example parameters.
     const uint16_t service_priority = 9;
-    const std::string adn; // invalid empty ADN
+    const std::string adn;  // invalid empty ADN
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<Option6Dnr> option;
@@ -433,7 +437,8 @@ TEST(Option6DnrTest, allFieldsCtor) {
     EXPECT_EQ("type=144(V6_DNR), len=46, "
               "service_priority=9, adn_length=20, "
               "adn='myhost.example.com.', addr_length=16, "
-              "address(es): 2001:db8:1::baca, svc_params='alpn'", option->toText());
+              "address(es): 2001:db8:1::baca, svc_params='alpn'",
+              option->toText());
 }
 
 // This test verifies that option constructor throws
@@ -443,12 +448,13 @@ TEST(Option6DnrTest, allFieldsCtorNoIpAddress) {
     // Prepare example parameters
     const uint16_t service_priority = 9;
     const std::string adn = "myhost.example.com.";
-    const Option6Dnr::AddressContainer addresses; // no IPv6 address in here
+    const Option6Dnr::AddressContainer addresses;  // no IPv6 address in here
     const std::string svc_params = "alpn";
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<Option6Dnr> option;
-    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)), OutOfRange);
+    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
+                 OutOfRange);
     ASSERT_FALSE(option);
 }
 
@@ -461,11 +467,12 @@ TEST(Option6DnrTest, svcParamsTwoEqualSignsPerParam) {
     const std::string adn = "myhost.example.com.";
     Option6Dnr::AddressContainer addresses;
     addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
-    const std::string svc_params = "key123=val1=val2 key234"; // invalid svc param - 2 equal signs
+    const std::string svc_params = "key123=val1=val2 key234";  // invalid svc param - 2 equal signs
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<Option6Dnr> option;
-    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
+                 InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
 }
 
@@ -478,11 +485,12 @@ TEST(Option6DnrTest, svcParamsForbiddenKey) {
     const std::string adn = "myhost.example.com.";
     Option6Dnr::AddressContainer addresses;
     addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
-    const std::string svc_params = "key123=val1 ipv6hint"; // forbidden svc param key - ipv6hint
+    const std::string svc_params = "key123=val1 ipv6hint";  // forbidden svc param key - ipv6hint
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<Option6Dnr> option;
-    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
+                 InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
 }
 
@@ -495,11 +503,12 @@ TEST(Option6DnrTest, svcParamsKeyRepeated) {
     const std::string adn = "myhost.example.com.";
     Option6Dnr::AddressContainer addresses;
     addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
-    const std::string svc_params = "key123=val1 key234 key123"; // svc param key key123 repeated
+    const std::string svc_params = "key123=val1 key234 key123";  // svc param key key123 repeated
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<Option6Dnr> option;
-    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
+                 InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
 }
 
@@ -514,11 +523,12 @@ TEST(Option6DnrTest, svcParamsKeyTooLong) {
     addresses.push_back(isc::asiolink::IOAddress("2001:db8:1::baca"));
     const std::string svc_params = "thisisveryveryveryvery"
                                    "veryveryveryveryveryvery"
-                                   "veryveryveryveryvlongkey"; // svc param key longer than 63
+                                   "veryveryveryveryvlongkey";  // svc param key longer than 63
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<Option6Dnr> option;
-    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
+                 InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
 }
 
@@ -535,7 +545,8 @@ TEST(Option6DnrTest, svcParamsKeyHasInvalidChar) {
 
     // Create option instance. Check that constructor throws.
     scoped_ptr<Option6Dnr> option;
-    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)), InvalidOptionDnrSvcParams);
+    EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
+                 InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
 }
 
@@ -555,7 +566,7 @@ TEST(Option6DnrTest, toText) {
     ASSERT_TRUE(option);
 
     const int indent = 4;
-    std::string expected = "    type=144(V6_DNR), len=46, " // the indentation of 4 spaces
+    std::string expected = "    type=144(V6_DNR), len=46, "  // the indentation of 4 spaces
                            "service_priority=9, adn_length=20, "
                            "adn='myhost.example.com.', addr_length=16, "
                            "address(es): 2001:db8:1::baca, svc_params='alpn'";

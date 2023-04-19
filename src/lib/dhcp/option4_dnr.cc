@@ -12,6 +12,7 @@
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option4_dnr.h>
 #include <dhcp/option6_dnr.h>
+#include <dhcp/option_data_types.h>
 #include <dns/labelsequence.h>
 #include <util/strutil.h>
 #include <set>
@@ -52,90 +53,38 @@ Option4Dnr::pack(util::OutputBuffer& buf, bool check) const {
 void
 Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     setData(begin, end);
-    size_t offset = 0;
-    while (offset < std::distance(begin, end)) {
+    while (begin != end) {
         DnrInstance dnr_instance(V4);
-        if (std::distance(begin + offset, end) < dnr_instance.getMinimalLength()) {
-            isc_throw(OutOfRange, "DHCPv4 Encrypted DNS Option (" << type_ << ") malformed: "
-                                  "DNR instance data truncated to size "
-                                  << std::distance(begin + offset, end));
-        }
-        dnr_instance.setDnrInstanceDataLength(
-            readUint16(&(*(begin + offset)), dnr_instance.getDnrInstanceDataLengthSize()));
-        offset += dnr_instance.getDnrInstanceDataLengthSize();
-        OptionBufferConstIter dnr_instance_end = begin + offset +
-                                                 dnr_instance.getDnrInstanceDataLength();
-
-        dnr_instance.setServicePriority(
-            readUint16(&(*(begin + offset)), dnr_instance.SERVICE_PRIORITY_SIZE));
-        offset += dnr_instance.SERVICE_PRIORITY_SIZE;
-
-        OpaqueDataTuple adn_tuple(OpaqueDataTuple::LENGTH_1_BYTE, begin + offset, dnr_instance_end);
-        auto adn_length = adn_tuple.getLength();
-        dnr_instance.setAdnLength(adn_length);
-
-        // Encrypted DNS options are designed to always include an authentication domain name,
-        // so when there is no FQDN included, we shall throw an exception.
-        if (adn_length == 0) {
-            isc_throw(InvalidOptionDnrDomainName, "Mandatory Authentication Domain Name fully "
-                                                  "qualified domain-name is missing");
+        if (std::distance(begin, end) < dnr_instance.getMinimalLength()) {
+            isc_throw(OutOfRange, dnr_instance.getLogPrefix()
+                                      << " malformed: DNR instance data truncated to size "
+                                      << std::distance(begin, end));
         }
 
-        // Let's try to extract ADN FQDN data.
-        dnr_instance.unpackAdn(adn_tuple.getData().begin(), adn_length);
+        // Unpack DnrInstanceDataLength.
+        dnr_instance.unpackDnrInstanceDataLength(begin);
 
-        offset += adn_tuple.getTotalLength();
+        const OptionBufferConstIter dnr_instance_end = begin +
+                                                       dnr_instance.getDnrInstanceDataLength();
 
-        if (begin + offset == dnr_instance_end) {
+        // Unpack Service priority.
+        dnr_instance.unpackServicePriority(begin);
+
+        // Unpack ADN len + ADN.
+        dnr_instance.unpackAdn(begin, dnr_instance_end);
+
+        if (begin == dnr_instance_end) {
             // ADN only mode, other fields are not included.
             addDnrInstance(dnr_instance);
             continue;
         }
         dnr_instance.setAdnOnlyMode(false);
 
-        OpaqueDataTuple addr_tuple(OpaqueDataTuple::LENGTH_1_BYTE, begin + offset,
-                                   dnr_instance_end);
-        auto addr_length = addr_tuple.getLength();
-        dnr_instance.setAddrLength(addr_length);
-        // It MUST be a multiple of 4.
-        if ((addr_length % V4ADDRESS_LEN) != 0) {
-            isc_throw(OutOfRange, "DHCPv4 Encrypted DNS Option ("
-                                  << type_ << ")"
-                                  << " malformed: Addr Len=" << addr_length
-                                  << " is not divisible by 4");
-        }
-
-        // As per draft-ietf-add-dnr 3.1.8:
-        // If additional data is supplied (i.e. not ADN only mode),
-        // the option includes at least one valid IP address.
-        if (addr_length == 0) {
-            isc_throw(OutOfRange, "DHCPv4 Encrypted DNS Option ("
-                                  << type_ << ")"
-                                  << " malformed: Addr Len=" << addr_length
-                                  << " is not greater than 0");
-        }
-
-        offset += dnr_instance.getAddrLengthSize();
-        OptionBufferConstIter addr_begin = begin + offset;
-        OptionBufferConstIter addr_end = addr_begin + addr_length;
-
-        while (addr_begin != addr_end) {
-            const uint8_t* ptr = &(*addr_begin);
-            dnr_instance.addIpAddress(IOAddress(readUint32(ptr, std::distance(addr_begin, addr_end))));
-            addr_begin += V4ADDRESS_LEN;
-            offset += V4ADDRESS_LEN;
-        }
+        // Unpack Addr Len + IPv4 Address(es).
+        dnr_instance.unpackAddresses(begin, dnr_instance_end);
 
         // SvcParams (variable length) field is last.
-        auto svc_params_length = std::distance(begin + offset, dnr_instance_end);
-        dnr_instance.setSvcParamsLength(svc_params_length);
-        if (svc_params_length > 0) {
-            std::string svc_params;
-            svc_params.assign(begin + offset, dnr_instance_end);
-            dnr_instance.setSvcParams(svc_params);
-            dnr_instance.checkSvcParams();
-            offset += svc_params_length;
-        }
+        dnr_instance.unpackSvcParams(begin, end);
 
         addDnrInstance(dnr_instance);
     }
@@ -253,13 +202,23 @@ DnrInstance::setAdn(const std::string& adn) {
 
     adn_length_ = adn_len;
     if (universe_ == Option::V4) {
-        setDnrInstanceDataLength(dnrInstanceLen());
+        dnr_instance_data_length_ = dnrInstanceLen();
     }
 }
 
 void
-DnrInstance::unpackAdn(OptionBufferConstIter begin, uint16_t adn_len) {
-    InputBuffer name_buf(&*begin, adn_len);
+DnrInstance::unpackAdn(OptionBufferConstIter& begin, OptionBufferConstIter end) {
+    OpaqueDataTuple::LengthFieldType lft = OptionDataTypeUtil::getTupleLenFieldType(universe_);
+    OpaqueDataTuple adn_tuple(lft, begin, end);
+    adn_length_ = adn_tuple.getLength();
+
+    // Encrypted DNS options are designed to always include an authentication domain name,
+    // so when there is no FQDN included, we shall throw an exception.
+    if (adn_length_ == 0) {
+        isc_throw(InvalidOptionDnrDomainName, "Mandatory Authentication Domain Name fully "
+                                              "qualified domain-name is missing");
+    }
+    InputBuffer name_buf(&*adn_tuple.getData().begin(), adn_length_);
     try {
         adn_.reset(new isc::dns::Name(name_buf, true));
     } catch (const Exception& ex) {
@@ -267,6 +226,7 @@ DnrInstance::unpackAdn(OptionBufferConstIter begin, uint16_t adn_len) {
                                               "fully qualified domain-name from wire format "
                                               "- " << ex.what());
     }
+    begin += adn_length_ + getAdnLengthSize();
 }
 
 void
@@ -377,11 +337,11 @@ DnrInstance::checkFields() {
     auto addr_len = ip_addresses_.size() * addr_field_len;
     if (addr_len > max_addr_len) {
         isc_throw(OutOfRange, "Given IP addresses length " << addr_len << " is bigger than MAX "
-                               << max_addr_len);
+                                                           << max_addr_len);
     }
     addr_length_ = addr_len;
     if (universe_ == Option::V4) {
-        setDnrInstanceDataLength(dnrInstanceLen());
+        dnr_instance_data_length_ = dnrInstanceLen();
     }
 }
 
@@ -406,7 +366,7 @@ DnrInstance::getDnrInstanceAsText() const {
             text += ", svc_params='" + svc_params_ + "'";
         }
     }
-    return text;
+    return (text);
 }
 
 uint16_t
@@ -450,6 +410,58 @@ DnrInstance::getMinimalLength() const {
 void
 DnrInstance::addIpAddress(const IOAddress& ip_address) {
     ip_addresses_.push_back(ip_address);
+}
+
+void
+DnrInstance::unpackDnrInstanceDataLength(OptionBufferConstIter& begin) {
+    dnr_instance_data_length_ = readUint16(&*begin, getDnrInstanceDataLengthSize());
+    begin += getDnrInstanceDataLengthSize();
+}
+
+void
+DnrInstance::unpackServicePriority(OptionBufferConstIter& begin) {
+    service_priority_ = readUint16(&*begin, SERVICE_PRIORITY_SIZE);
+    begin += SERVICE_PRIORITY_SIZE;
+}
+
+void
+DnrInstance::unpackAddresses(OptionBufferConstIter& begin, const OptionBufferConstIter end) {
+    OpaqueDataTuple addr_tuple(OpaqueDataTuple::LENGTH_1_BYTE, begin, end);
+    addr_length_ = addr_tuple.getLength();
+    // It MUST be a multiple of 4.
+    if ((addr_length_ % V4ADDRESS_LEN) != 0) {
+        isc_throw(OutOfRange, getLogPrefix() << " malformed: Addr Len=" << addr_length_
+                                             << " is not divisible by 4");
+    }
+
+    // As per draft-ietf-add-dnr 3.1.8:
+    // If additional data is supplied (i.e. not ADN only mode),
+    // the option includes at least one valid IP address.
+    if (addr_length_ == 0) {
+        isc_throw(OutOfRange, getLogPrefix() << " malformed: Addr Len=" << addr_length_
+                                             << " is not greater than 0");
+    }
+
+    begin += getAddrLengthSize();
+    OptionBufferConstIter addr_begin = begin;
+    OptionBufferConstIter addr_end = addr_begin + addr_length_;
+
+    while (addr_begin != addr_end) {
+        const uint8_t* ptr = &(*addr_begin);
+        addIpAddress(IOAddress(readUint32(ptr, std::distance(addr_begin, addr_end))));
+        addr_begin += V4ADDRESS_LEN;
+        begin += V4ADDRESS_LEN;
+    }
+}
+
+void
+DnrInstance::unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter end) {
+    svc_params_length_ = std::distance(begin, end);
+    if (svc_params_length_ > 0) {
+        svc_params_.assign(begin, end);
+        checkSvcParams();
+        begin += svc_params_length_;
+    }
 }
 
 }  // namespace dhcp

@@ -20,10 +20,12 @@ namespace dhcp {
 ///
 /// DNR Instance includes the configuration data of an encrypted DNS resolver.
 /// It is used to build OPTION_V4_DNR (code 162). There may be multiple DNR Instances
-/// in one OPTION_V4_DNR %Option. It can be also used to build OPTION_V6_DNR (code 144).
-/// There must be only one DNR Instance in one OPTION_V6_DNR %Option.
+/// in one OPTION_V4_DNR %Option. OPTION_V6_DNR (code 144) is using very similar structure,
+/// only that there must be only one DNR Instance per one OPTION_V6_DNR %Option. That's why
+/// @c Option6Dnr class can derive from this @c DnrInstance class, whereas @c Option4Dnr class
+/// should have a container of @c DnrInstance's.
 ///
-/// DNR Instance Data Format has been defined in the draft-ietf-add-dnr-15 (to be replaced
+/// DNR Instance Data Format has been defined in the @c draft-ietf-add-dnr (to be replaced
 /// with published RFC).
 class DnrInstance {
 public:
@@ -49,7 +51,8 @@ public:
     /// @param adn ADN FQDN
     /// @param ip_addresses Container of IP addresses
     /// @param svc_params Service Parameters
-    DnrInstance(Option::Universe universe, const uint16_t service_priority,
+    DnrInstance(Option::Universe universe,
+                uint16_t service_priority,
                 const std::string& adn,
                 const AddressContainer& ip_addresses,
                 const std::string& svc_params);
@@ -63,8 +66,7 @@ public:
     /// @param universe either V4 or V6 Option universe
     /// @param service_priority Service priority
     /// @param adn ADN FQDN
-    DnrInstance(Option::Universe universe, const uint16_t service_priority,
-                const std::string& adn);
+    DnrInstance(Option::Universe universe, uint16_t service_priority, const std::string& adn);
 
     /// @brief Default destructor.
     virtual ~DnrInstance() = default;
@@ -132,7 +134,7 @@ public:
     ///
     /// @return Returns Service Parameters as a string.
     const std::string& getSvcParams() const {
-        return svc_params_;
+        return (svc_params_);
     }
 
     /// @brief Returns minimal length of the DNR instance data (without headers) in octets.
@@ -152,9 +154,16 @@ public:
     /// @brief Returns size in octets of DNR Instance Data Length field.
     uint8_t getDnrInstanceDataLengthSize() const;
 
+    /// @brief Returns size in octets of ADN Length field.
+    uint8_t getAdnLengthSize() const;
+
+    /// @brief Constructs Log prefix depending on V4/V6 Option universe.
+    /// @return Log prefix as a string which can be used for prints when throwing an exception.
+    std::string getLogPrefix() const;
+
     /// @brief Returns whether ADN only mode is enabled or disabled.
     bool isAdnOnlyMode() const {
-        return adn_only_mode_;
+        return (adn_only_mode_);
     }
 
     /// @brief Sets Authentication domain name from given string.
@@ -167,47 +176,10 @@ public:
     /// @param adn string representation of ADN FQDN
     void setAdn(const std::string& adn);
 
-    /// @brief Setter of the @c dnr_instance_data_length_ field.
-    ///
-    /// @param dnr_instance_data_length length to be set
-    void setDnrInstanceDataLength(uint16_t dnr_instance_data_length) {
-        dnr_instance_data_length_ = dnr_instance_data_length;
-    }
-
-    /// @brief Setter of the @c service_priority_ field.
-    /// @param service_priority priority to be set
-    void setServicePriority(uint16_t service_priority) {
-        service_priority_ = service_priority;
-    }
-
-    /// @brief Setter of the @c adn_length_ field.
-    /// @param adn_length length to be set
-    void setAdnLength(uint16_t adn_length) {
-        adn_length_ = adn_length;
-    }
-
-    /// @brief Setter of the @c addr_length_ field.
-    /// @param addr_length length to be set
-    void setAddrLength(uint16_t addr_length) {
-        addr_length_ = addr_length;
-    }
-
     /// @brief Setter of the @c adn_only_mode_ field.
     /// @param adn_only_mode enabled/disabled setting
     void setAdnOnlyMode(bool adn_only_mode) {
         adn_only_mode_ = adn_only_mode;
-    }
-
-    /// @brief Setter of the @c svc_params_ field.
-    /// @param svc_params Svc Params to be set
-    void setSvcParams(const std::string& svc_params) {
-        svc_params_ = svc_params;
-    }
-
-    /// @brief Setter of the @c svc_params_length_ field.
-    /// @param svc_params_length len to be set
-    void setSvcParamsLength(uint16_t svc_params_length) {
-        svc_params_length_ = svc_params_length;
     }
 
     /// @brief Writes the ADN FQDN in the wire format into a buffer.
@@ -234,10 +206,29 @@ public:
     /// @param [out] buf buffer where SvcParams will be written.
     void packSvcParams(isc::util::OutputBuffer& buf) const;
 
+    /// @brief Unpacks DNR Instance Data Length from wire data buffer and stores
+    /// it in @c dnr_instance_data_length_.
+    /// @param begin beginning of the buffer from which the field will be read
+    void unpackDnrInstanceDataLength(OptionBufferConstIter& begin);
+
+    /// @brief Unpacks Service Priority from wire data buffer and stores it in @c service_priority_.
+    /// @param begin beginning of the buffer from which the field will be read
+    void unpackServicePriority(OptionBufferConstIter& begin);
+
     /// @brief Unpacks the ADN from given wire data buffer and stores it in @c adn_ field.
     /// @param begin beginning of the buffer from which the ADN will be read
-    /// @param adn_len length of the ADN to be read
-    void unpackAdn(OptionBufferConstIter begin, uint16_t adn_len);
+    /// @param end end of the buffer from which the ADN will be read
+    void unpackAdn(OptionBufferConstIter& begin, OptionBufferConstIter end);
+
+    /// @brief Unpacks IP address(es) from wire data and stores it/them in @c ip_addresses_.
+    /// @param begin beginning of the buffer from which the field will be read
+    /// @param end end of the buffer from which the field will be read
+    virtual void unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter end);
+
+    /// @brief Unpacks Service Parameters from wire data buffer and stores it in @c svc_params_.
+    /// @param begin beginning of the buffer from which the field will be read
+    /// @param end end of the buffer from which the field will be read
+    void unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
     /// @brief Checks SvcParams field if encoded correctly and throws in case of issue found.
     ///
@@ -305,19 +296,11 @@ protected:
     /// @brief Calculates and returns length of DNR Instance data in octets.
     /// @return length of DNR Instance data in octets.
     uint16_t dnrInstanceLen() const;
-
-private:
-    /// @brief Constructs Log prefix depending on V4/V6 Option universe.
-    /// @return Log prefix as a string which can be used for prints when throwing an exception.
-    std::string getLogPrefix() const;
-
-    /// @brief Returns size in octets of ADN Length field.
-    uint8_t getAdnLengthSize() const;
 };
 
 /// @brief Represents DHCPv4 Encrypted DNS %Option (code 162).
 ///
-/// This option has been defined in the draft-ietf-add-dnr-15 (to be replaced
+/// This option has been defined in the @c draft-ietf-add-dnr (to be replaced
 /// with published RFC) and it has a following structure:
 /// - option-code = 162 (1 octet)
 /// - option-len (1 octet)
@@ -361,14 +344,14 @@ public:
     /// @brief Getter of the @c dnr_instances_ field.
     /// @return Reference to Option's DNR Instance container
     const DnrInstanceContainer& getDnrInstances() const {
-        return dnr_instances_;
+        return (dnr_instances_);
     }
 
-    virtual OptionPtr clone() const;
-    virtual void pack(util::OutputBuffer& buf, bool check = true) const;
-    virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
-    virtual std::string toText(int indent = 0) const;
-    virtual uint16_t len() const;
+    OptionPtr clone() const override;
+    void pack(util::OutputBuffer& buf, bool check = true) const override;
+    void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) override;
+    std::string toText(int indent = 0) const override;
+    uint16_t len() const override;
 
 protected:
     /// @brief Container holding DNR Instances.

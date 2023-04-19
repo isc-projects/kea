@@ -438,4 +438,61 @@ TEST(Option4DnrTest, unpackOneDnrInstance) {
     EXPECT_EQ(66, option->len());
 }
 
+TEST(Option4DnrTest, unpackMixedDnrInstances) {
+    // Prepare data to decode - 2 DNR instances.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 62,                                        // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '2',   // FQDN: myhost2.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        8,                                               // Addr Len
+        192,  168,  0,    1,                             // IP address 1
+        192,  168,  0,    2,                             // IP address 2
+        'k',  'e',  'y',  '1',  '2',  '3',  '=',  'v',   // Svc Params
+        'a',  'l',  ' ',  'k',  'e',  'y',  '2',  '3',   // Svc Params
+        '4',  '=',  'v',  'a',  'l',  '2',  ' ',  'k',   // Svc Params
+        'e',  'y',  '3',  '4',  '5'                      // Svc Params
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+    // Create option instance. Check that constructor doesn't throw.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_NO_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())));
+    ASSERT_TRUE(option);
+
+    // Check if member variables were correctly set by ctor.
+    EXPECT_EQ(Option::V4, option->getUniverse());
+    EXPECT_EQ(DHO_V4_DNR, option->getType());
+
+    // Check if data was unpacked correctly from wire data.
+    const DnrInstance& dnr_1 = option->getDnrInstances()[0];
+    EXPECT_EQ(24, dnr_1.getDnrInstanceDataLength());
+    EXPECT_EQ(1, dnr_1.getServicePriority());
+    EXPECT_EQ(21, dnr_1.getAdnLength());
+    EXPECT_EQ("myhost1.example.com.", dnr_1.getAdnAsText());
+    EXPECT_EQ(0, dnr_1.getAddrLength());
+    EXPECT_EQ(0, dnr_1.getSvcParamsLength());
+
+    const DnrInstance& dnr_2 = option->getDnrInstances()[1];
+    EXPECT_EQ(62, dnr_2.getDnrInstanceDataLength());
+    EXPECT_EQ(2, dnr_2.getServicePriority());
+    EXPECT_EQ(21, dnr_2.getAdnLength());
+    EXPECT_EQ("myhost2.example.com.", dnr_2.getAdnAsText());
+    EXPECT_EQ(8, dnr_2.getAddrLength());
+    EXPECT_EQ(29, dnr_2.getSvcParamsLength());
+    EXPECT_EQ(2, dnr_2.getAddresses().size());
+    EXPECT_EQ("192.168.0.1", dnr_2.getAddresses()[0].toText());
+    EXPECT_EQ("192.168.0.2", dnr_2.getAddresses()[1].toText());
+    EXPECT_EQ("key123=val key234=val2 key345", dnr_2.getSvcParams());
+
+    EXPECT_EQ(92, option->len());
+}
+
 }  // namespace
