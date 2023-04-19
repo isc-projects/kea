@@ -112,7 +112,7 @@ As with other update commands, this command overwrites all the contents of the
 entry. If the client class previously had a resource assigned to it, and the
 ``class-update`` command is missing the resource, it is deleted from the server
 configuration. If an incremental update of the class is desired, then this can
-be achieved by doing a `class-get <command-class-get_>`_ to get the full picture
+be achieved by doing a `class-get <command-class-get_>`_ to get the current state
 of the client class, picking the client class out of the response, modifying it
 to the required outcome, and then issuing the ``client-update`` command with the
 resulting client class attached.

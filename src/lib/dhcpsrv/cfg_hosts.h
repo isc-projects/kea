@@ -590,6 +590,10 @@ public:
                       const uint8_t* identifier_begin, const size_t identifier_len);
 
     /// @brief Implements @ref BaseHostDataSource::update() for config hosts.
+    ///
+    /// Attempts to update an existing host entry.
+    ///
+    /// @param host the host up to date with the requested changes
     void update(HostPtr const& host);
 
     /// @brief Return backend type

@@ -960,7 +960,7 @@ CfgHosts::add(const HostPtr& host) {
                   " is added to the configuration");
     }
 
-    // At least one subnet ID must be used
+    // At least one subnet ID must be used.
     if (host->getIPv4SubnetID() == SUBNET_ID_UNUSED &&
         host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
         isc_throw(BadValue, "must not use both IPv4 and IPv6 subnet ids of"

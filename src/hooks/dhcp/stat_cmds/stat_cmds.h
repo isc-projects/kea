@@ -31,7 +31,7 @@ public:
     ///
     /// This command attempts to fetch lease4 statistics for one or
     /// more subnets based upon subnet selection criteria (or lack thereof).
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// arguments accordingly.
     /// {
@@ -75,7 +75,7 @@ public:
     ///
     /// This command attempts to fetch lease6 statistics for one or
     /// more subnets based upon subnet selection criteria (or lack thereof).
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     /// {

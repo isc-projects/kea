@@ -5,7 +5,7 @@
         "This command adds a new host reservation. The reservation may include IPv4 addresses, IPv6 addresses, IPv6 prefixes, various identifiers, a class the client will be assigned to, DHCPv4 and DHCPv6 options, and more."
     ],
     "cmd-comment": [
-        "Note that ip-address, client-id, next-server, server-hostname, and boot-file-name are IPv4-specific. duid, ip-addresses, and prefixes are IPv6-specific."
+        "Note that ip-address, client-id, next-server, server-hostname, and boot-file-name are IPv4-specific. ip-addresses, and prefixes are IPv6-specific."
     ],
     "cmd-syntax": [
         "{",
@@ -13,7 +13,6 @@
         "    \"arguments\": {",
         "        \"reservation\": {",
         "            \"boot-file-name\": <string>,",
-        "            \"comment\": <string>,",
         "            \"client-id\": <string>,",
         "            \"circuit-id\": <string>,",
         "            \"duid\": <string>,",

@@ -462,8 +462,6 @@ public:
     /// @brief Attempts to update an existing host entry.
     ///
     /// @param host the host up to date with the requested changes
-    ///
-    /// @return true if deletion was successful, false if the host was not there.
     virtual void update(HostPtr const& host) = 0;
 
     /// @brief Return backend type
@@ -480,7 +478,7 @@ public:
     /// @return Parameters of the backend.
     virtual isc::db::DatabaseConnection::ParameterMap getParameters() const {
         return (isc::db::DatabaseConnection::ParameterMap());
-    };
+    }
 
     /// @brief Commit Transactions
     ///

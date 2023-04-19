@@ -466,7 +466,7 @@ The response to this command has the following structure:
    }
 
 As with other update commands, this command overwrites all the contents of the
-entry. If the IPv4 subnet previously had a resource assigned to it, and the
+entry. If the IPv6 subnet previously had a resource assigned to it, and the
 ``subnet6-update`` command is missing the resource, it is deleted from the
 server configuration. If an incremental update of the subnet is desired, then
 this can be achieved with `subnet6-delta-add <command-subnet6-delta-add_>`_.

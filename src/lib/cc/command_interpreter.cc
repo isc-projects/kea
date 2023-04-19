@@ -170,7 +170,7 @@ createCommand(const std::string& command,
 std::string
 parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     if (!command) {
-        isc_throw(CtrlChannelError, "No command specified");
+        isc_throw(CtrlChannelError, "no command specified");
     }
     if (command->getType() != Element::map) {
         isc_throw(CtrlChannelError, "invalid command: expected toplevel entry to be a map, got "

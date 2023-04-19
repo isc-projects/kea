@@ -1445,6 +1445,7 @@ TEST_F(PgSqlHostDataSourceTest, updateMultiThreading) {
     MultiThreadingTest mt(true);
     testUpdate();
 }
+
 /// @brief Test fixture class for validating @c HostMgr using
 /// PostgreSQL as alternate host data source.
 class PgSQLHostMgrTest : public HostMgrTest {

@@ -452,6 +452,10 @@ public:
             const asiolink::IOAddress& address) const;
 
     /// @brief Implements @ref BaseHostDataSource::update() for PostgreSQL.
+    ///
+    /// Attempts to update an existing host entry.
+    ///
+    /// @param host the host up to date with the requested changes
     void update(HostPtr const& host);
 
     /// @brief Return backend type

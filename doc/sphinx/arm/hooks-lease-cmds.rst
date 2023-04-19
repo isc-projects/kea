@@ -908,7 +908,7 @@ entry. If the lease previously had a resource assigned to it, and the
 deleted from the lease database. If an incremental update of the lease is
 desired, then this can be achieved by doing a
 `lease4-get <command-lease4-get_>`_ / `lease6-get <command-lease6-get_>`_
-command to get the full picture of the lease, picking the lease out of the
+command to get the current state of the lease, picking the lease out of the
 response, modifying it to the required outcome, and then issuing the
 ``lease4-update``/``lease6-update`` command with the resulting lease attached.
 

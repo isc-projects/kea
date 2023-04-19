@@ -144,7 +144,7 @@ address can be assigned like so:
        }
    }
 
-But it can also take many more parameters, for example:
+It can also take many more parameters, for example:
 
 .. code-block:: json
 
@@ -750,7 +750,7 @@ address can be assigned like so:
         }
     }
 
-But it can also take many more parameters, for example:
+It can also take many more parameters, for example:
 
 .. code-block:: json
 
@@ -838,7 +838,7 @@ As with other update and set commands, this command overwrites all the contents
 of the entry. If the host previously had a resource assigned to it, and the
 ``reservation-update`` command is missing the resource, it is deleted from the
 database. If an incremental update of the host is desired, then this can be
-achieved by doing a ``reservation-get-by-id`` to get the full picture of the
+achieved by doing a ``reservation-get-by-id`` to get the current state of the
 host, picking the host out of the response, modifying it to the required
 outcome, and then issuing the ``reservation-update`` command with the resulting
 host attached.

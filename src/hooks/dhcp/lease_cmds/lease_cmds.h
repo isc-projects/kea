@@ -33,7 +33,7 @@ public:
     /// @brief lease4-add, lease6-add command handler
     ///
     /// This command attempts to add a lease.
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
@@ -169,7 +169,7 @@ public:
     /// @brief lease4-get, lease6-get command handler
     ///
     /// This command attempts to retrieve a lease that match selected criteria.
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
@@ -346,7 +346,7 @@ public:
     ///
     /// This command attempts to delete an IPv4 lease that match selected
     /// criteria.
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.  If the lease is deleted successfully, then a call
     /// to @ref isc::dhcp::queueNCR() is issued, which to generate an
@@ -384,7 +384,7 @@ public:
     /// @brief lease6-del command handler
     ///
     /// This command attempts to delete a lease that match selected criteria.
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.  If the lease is deleted successfully, then a call
     /// to @ref isc::dhcp::queueNCR() is issued, which to generate an
@@ -427,7 +427,7 @@ public:
     /// specified will replace existing lease. The only condition is that
     /// the IP address must not change. If you want to change the IP address,
     /// please use lease4-del and lease4-add instead.
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
@@ -458,7 +458,7 @@ public:
     /// specified will replace existing lease. The only condition is that
     /// the IP address must not change. If you want to change the IP address,
     /// please use lease6-del and lease6-add instead.
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
@@ -490,7 +490,7 @@ public:
     /// subnet. Currently the leases are removed from the database,
     /// without any processing (like calling hooks or doing DDNS
     /// cleanups).
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
@@ -514,7 +514,7 @@ public:
     /// subnet. Currently the leases are removed from the database,
     /// without any processing (like calling hooks or doing DDNS
     /// cleanups).
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
@@ -537,7 +537,7 @@ public:
     /// This command attempts to resend the DDNS updates for the IPv4 lease that
     /// matches the selection criteria.
     ///
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
@@ -562,7 +562,7 @@ public:
     /// This command attempts to resend the DDNS updates for the IPv6 lease that
     /// matches the selection criteria.
     ///
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
@@ -587,7 +587,7 @@ public:
     /// This commands attempts to write the lease database to a CSV file.
     /// Currently it is supported only by the memfile database and
     /// should be reserved to emergency situations.
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     ///
