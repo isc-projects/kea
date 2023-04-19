@@ -26,7 +26,7 @@
     // We need to specify the database used to store leases. As of
     // June 2022, three database backends are supported: MySQL,
     // PostgreSQL and the in-memory database, Memfile.
-    // We will use memfile  because it doesn't require any prior set up.
+    // We will use memfile because it doesn't require any prior set up.
     "lease-database": {
         "type": "memfile",
         "lfc-interval": 3600
@@ -169,7 +169,7 @@
                     // Several additional parameters are possible in addition
                     // to the typical output. Flush determines whether logger
                     // flushes output to a file. Maxsize determines maximum
-                    // filesize before the file is being rotated. maxver
+                    // filesize before the file is rotated. maxver
                     // specifies the maximum number of rotated files being
                     // kept.
                     "flush": true,

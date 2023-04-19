@@ -44,9 +44,9 @@ the following command-line switches:
 
 -  ``-T file`` - specifies a configuration file to be tested. ``kea-dhcp6``
    loads it, checks it, and exits. It performs extra checks beyond what ``-t``
-   offers, such as establising database connections (for the lease backend,
+   offers, such as establishing database connections (for the lease backend,
    host reservations backend, configuration backend, and forensic logging
-   backend), loading hook libraries, parsing configurations, etc.
+   backend), loading hook libraries, parsing hook-library configurations, etc.
    It does not open UNIX or TCP/UDP sockets, nor does it open or rotate
    files, as any of these actions could interfere with a running process on the
    same machine.
@@ -811,7 +811,6 @@ Tuning Database Timeouts for Hosts Storage
 
 See :ref:`tuning-database-timeouts6`.
 
-
 .. _dhcp6-interface-configuration:
 
 Interface Configuration
@@ -1267,7 +1266,7 @@ and which is delegated a prefix from this pool.
     +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
     | Prefix delegation pools not matching the subnet prefix                        | Yes     | It is common in many deployments to configure the prefix delegation pools not      |
     |                                                                               |         | matching the subnet prefix, e.g. a prefix pool of 3000::/96 within the             |
-    |                                                                               |         | 2001:db8:1::/64 subnet. Such use cases are supported by Kea DHCPv6 server.         |
+    |                                                                               |         | 2001:db8:1::/64 subnet. Such use cases are supported by the Kea DHCPv6 server.     |
     +-------------------------------------------------------------------------------+---------+------------------------------------------------------------------------------------+
 
 .. _dhcp6-std-options:
@@ -1496,7 +1495,7 @@ on subnet ``2001:db8:1::/64``. ``never-send`` has precedence over
     inheritance chain, they are applied - even if they are
     disabled in other places which would normally receive a higher priority.
     For instance, if one of the flags is enabled in the global scope,
-    but disabled at the subnet level, it will be enabled,
+    but disabled at the subnet level, it is enabled,
     disregarding the subnet-level setting.
 
 .. note::
@@ -1577,13 +1576,13 @@ obtains an address from the given pool:
    }
 
 Options can also be specified in class or host-reservation scope. The
-current Kea options precedence order is (from most important): host
+current Kea options precedence order is (from most important to least): host
 reservation, pool, subnet, shared network, class, global.
 
 When a data field is a string and that string contains the comma (``,``;
 U+002C) character, the comma must be escaped with two backslashes (``\\,``;
 U+005C). This double escape is required because both the routine
-splitting CSV data into fields and JSON use the same escape character; a
+splitting of CSV data into fields and JSON use the same escape character; a
 single escape (``\,``) would make the JSON invalid. For example, the string
 "EST5EDT4,M3.2.0/02:00,M11.1.0/02:00" must be represented as:
 
@@ -2094,7 +2093,7 @@ defined in the following way:
        ...
    }
 
-The ``type`` is set to ``record`` to indicate that the option contains
+The ``type`` is set to ``"record"`` to indicate that the option contains
 multiple values of different types. These types are given as a
 comma-separated list in the ``record-types`` field and should be ones
 from those listed in :ref:`dhcp-types`.
@@ -2122,7 +2121,7 @@ comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
-When ``array`` is set to ``"true"`` and ``type`` is set to ``"record"``, the
+When ``array`` is set to ``true`` and ``type`` is set to ``"record"``, the
 last field is an array, i.e. it can contain more than one value, as in:
 
 ::
@@ -2288,8 +2287,8 @@ defining sub-options for a standard option, because one is created by
 default if the standard option is meant to convey any sub-options (see
 :ref:`dhcp6-vendor-opts`).
 
-If we want a DHCPv6 option called ``container`` with code
-102, that conveys two sub-options with codes 1 and 2, we first need to
+If we want a DHCPv6 option called ``container`` with code 102,
+that conveys two sub-options with codes 1 and 2, we first need to
 define the new sub-options:
 
 ::
@@ -2343,8 +2342,8 @@ and specify that it should include options from the new option space:
    }
 
 The name of the option space in which the sub-options are defined is set
-in the ``encapsulate`` field. The ``type`` field is set to ``"empty"``,
-to indicate that this option does not carry any data other than
+in the ``encapsulate`` field. The ``type`` field is set to ``"empty"``, to
+indicate that this option does not carry any data other than
 sub-options.
 
 Finally, we can set values for the new options:
@@ -2843,8 +2842,8 @@ Required Classification
 
 In some cases it is useful to limit the scope of a class to a
 shared network, subnet, or pool. There are two parameters which are used
-to limit the scope of the class by instructing the server to evaluate
-test expressions when required.
+to limit the scope of the class by instructing the server to evaluate test
+expressions when required.
 
 The first one is the per-class ``only-if-required`` flag, which is ``false``
 by default. When it is set to ``true``, the test expression of the class
@@ -2903,10 +2902,10 @@ way in which ``option-data`` is processed.
 DDNS for DHCPv6
 ---------------
 
-As mentioned earlier, kea-dhcp6 can be configured to generate requests
-to the DHCP-DDNS server (referred to here as "D2") to update DNS
-entries. These requests are known as NameChangeRequests or NCRs. Each
-NCR contains the following information:
+As mentioned earlier, ``kea-dhcp6`` can be configured to generate requests
+to the DHCP-DDNS server, ``kea-dhcp-ddns``, (referred to herein as "D2") to
+update DNS entries. These requests are known as NameChangeRequests or
+NCRs. Each NCR contains the following information:
 
 1. Whether it is a request to add (update) or remove DNS entries.
 
@@ -3086,7 +3085,7 @@ The parameter ``ddns-ttl-percent``, when specified,
 causes the TTL to be calculated as a simple percentage of the lease's
 lifetime, using the parameter's value as the percentage. It is specified
 as a decimal percent (e.g. .25, .75, 1.00) and may be specified at the
-global, shared-network, and subnet levels.  By default it is unspecified.
+global, shared-network, and subnet levels. By default it is unspecified.
 
 .. _dhcpv6-d2-io-config:
 
@@ -3098,7 +3097,8 @@ with it. ``kea-dhcp6`` uses the following configuration parameters to
 control this communication:
 
 -  ``enable-updates`` - Enables connectivity to ``kea-dhcp-ddns`` such that DDNS
-   updates can be constructed and sent. It must be ``true`` for NCRs to be generated and sent to D2.
+   updates can be constructed and sent.
+   It must be ``true`` for NCRs to be generated and sent to D2.
    It defaults to ``false``.
 
 -  ``server-ip`` - This is the IP address on which D2 listens for requests. The
@@ -3106,14 +3106,14 @@ control this communication:
    Either an IPv4 or IPv6 address may be specified.
 
 -  ``server-port`` - This is the port on which D2 listens for requests. The default
-   value is 53001.
+   value is ``53001``.
 
 -  ``sender-ip`` - This is the IP address which ``kea-dhcp6`` uses to send requests to
    D2. The default value is blank, which instructs ``kea-dhcp6`` to select a
    suitable address.
 
 -  ``sender-port`` - This is the port which ``kea-dhcp6`` uses to send requests to D2.
-   The default value of 0 instructs kea-dhcp6 to select a suitable port.
+   The default value of ``0`` instructs ``kea-dhcp6`` to select a suitable port.
 
 -  ``max-queue-size`` - This is the maximum number of requests allowed to queue
    while waiting to be sent to D2. This value guards against requests
@@ -3121,9 +3121,9 @@ control this communication:
    they can be delivered. If the number of requests queued for
    transmission reaches this value, DDNS updating is turned off
    until the queue backlog has been sufficiently reduced. The intent is
-   to allow the ``kea-dhcp6`` server to continue lease operations without running the
-   risk that its memory usage grows without limit. The default value is
-   1024.
+   to allow the ``kea-dhcp4`` server to continue lease operations without
+   running the risk that its memory usage grows without limit. The
+   default value is ``1024``.
 
 -  ``ncr-protocol`` - This specifies the socket protocol to use when sending requests to
    D2. Currently only UDP is supported.
@@ -3265,7 +3265,7 @@ To override client delegation, issue the following commands:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each NameChangeRequest must of course include the fully qualified
-domain name whose DNS entries are to be affected. kea-dhcp6 can be
+domain name whose DNS entries are to be affected. ``kea-dhcp6`` can be
 configured to supply a portion or all of that name, based upon what it
 receives from the client in the DHCPREQUEST.
 
@@ -3423,7 +3423,7 @@ qualifying suffix (if one is defined and needed).
    then re-assembled.
 
    If clients are sending values that differ only by characters
-   considered as invalid by the hostname-char-set, be aware that
+   considered as invalid by the ``hostname-char-set``, be aware that
    scrubbing them will yield identical values. In such cases, DDNS
    conflict rules will permit only one of them to register the name.
 
@@ -3728,18 +3728,18 @@ An example configuration that sets these parameters looks as follows:
 Multi-Threading Settings With Different Database Backends
 ---------------------------------------------------------
 
-Both ``kea-dhcp4`` and ``kea-dhcp6`` are tested by ISC to determine which settings
+The Kea DHCPv6 server is benchmarked by ISC to determine which settings
 give the best performance. Although this section describes our results, they are merely
 recommendations and are very dependent on the particular hardware used
-for testing. We strongly advise that administrators run their own performance tests.
+for benchmarking. We strongly advise that administrators run their own performance benchmarks.
 
 A full report of performance results for the latest stable Kea version can be found
 `here <https://reports.kea.isc.org/>`_.
-This includes hardware and test scenario descriptions, as well as
+This includes hardware and benchmark scenario descriptions, as well as
 current results.
 
 After enabling multi-threading, the number of threads is set by the ``thread-pool-size``
-parameter. Results from our tests show that best configurations for
+parameter. Results from our experiments show that the best settings for
 ``kea-dhcp6`` are:
 
 -  ``thread-pool-size``: 4 when using ``memfile`` for storing leases.
@@ -3748,11 +3748,11 @@ parameter. Results from our tests show that best configurations for
 
 -  ``thread-pool-size``: 6 when using ``postgresql``.
 
-Another very important parameter is ``packet-queue-size``; in our tests we
+Another very important parameter is ``packet-queue-size``; in our benchmarks we
 used it as a multiplier of ``thread-pool-size``. The actual setting strongly depends
 on ``thread-pool-size``.
 
-We saw the best results in our tests with the following settings:
+We saw the best results in our benchmarks with the following settings:
 
 -  ``packet-queue-size``: 150 * ``thread-pool-size`` when using ``memfile`` for
    storing leases; in our case it was 150 * 4 = 600. This means that at any given
@@ -3779,7 +3779,7 @@ does not require disk operations.
 The two parameters are the ``cache-threshold`` double and the
 ``cache-max-age`` integer; they have no default setting, i.e. the lease caching
 feature must be explicitly enabled. These parameters can be configured
-at the global, shared-network and subnet levels. The subnet level has
+at the global, shared-network, and subnet levels. The subnet level has
 the precedence over the shared-network level, while the global level is used
 as a last resort. For example:
 
@@ -4712,13 +4712,13 @@ following can be used:
        "valid-lifetime": 600,
        "subnet4": [ {
            "subnet": "2001:db8:1::/64",
-           # It is replaced by the "reservations-global"
-           # "reservations-in-subnet" and "reservations-out-of-pool"
+           # It is replaced by the "reservations-global",
+           # "reservations-in-subnet", and "reservations-out-of-pool"
            # parameters.
            # "reservation-mode": "global",
-           # Specify if the server should lookup global reservations.
+           # Specify if the server should look up global reservations.
            "reservations-global": true,
-           # Specify if the server should lookup in-subnet reservations.
+           # Specify if the server should look up in-subnet reservations.
            "reservations-in-subnet": false,
            # Specify if the server can assume that all reserved addresses
            # are out-of-pool. It can be ignored because "reservations-in-subnet"
@@ -4826,11 +4826,11 @@ following example:
             "hw-address": "aa:bb:cc:dd:ee:fe",
             "client-classes": [ "reserved_class" ]
         }],
-        # It is replaced by the "reservations-global"
-        # "reservations-in-subnet" and "reservations-out-of-pool" parameters.
-        # Specify if the server should lookup global reservations.
+        # It is replaced by the "reservations-global",
+        # "reservations-in-subnet", and "reservations-out-of-pool" parameters.
+        # Specify if the server should look up global reservations.
         "reservations-global": true,
-        # Specify if the server should lookup in-subnet reservations.
+        # Specify if the server should look up in-subnet reservations.
         "reservations-in-subnet": false,
         # Specify if the server can assume that all reserved addresses
         # are out-of-pool. It can be ignored because "reservations-in-subnet"
@@ -5289,7 +5289,7 @@ However, each subnet must have the same value.
 Local and Relayed Traffic in Shared Networks
 --------------------------------------------
 
-It is possible to specify an interface name at the shared network level,
+It is possible to specify an interface name at the shared-network level,
 to tell the server that this specific shared network is reachable
 directly (not via relays) using the local network interface. As all
 subnets in a shared network are expected to be used on the same physical
@@ -7005,7 +7005,7 @@ The following standards are currently supported in Kea:
 DHCPv6 Server Limitations
 =========================
 
-These are the current limitations of the DHCPv6 server software. Most of
+These are the current known limitations of the Kea DHCPv6 server software. Most of
 them are reflections of the current stage of development and should be
 treated as “not implemented yet”, rather than actual limitations.
 
@@ -7050,15 +7050,15 @@ Supported Parameters
 The ultimate goal for the CB is to serve as a central configuration
 repository for one or multiple Kea servers connected to a database.
 In currently supported Kea versions, only a subset of
-the DHCPv6 server parameters can be stored in the database. All other
+the DHCPv6 server parameters can be configured in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
-All supported parameters can be configured via ``cb_cmds`` hook library
+All supported parameters can be configured via the ``cb_cmds`` hook library
 described in the :ref:`hooks-cb-cmds` section. The general rule is that
 scalar global parameters are set using
 ``remote-global-parameter6-set``; shared-network-specific parameters
-are set using ``remote-network6-set``; and subnet- and pool-level
+are set using ``remote-network6-set``; and subnet-level and pool-level
 parameters are set using ``remote-subnet6-set``. Whenever
 there is an exception to this general rule, it is highlighted in the
 table. Non-scalar global parameters have dedicated commands; for example,
@@ -7187,10 +7187,10 @@ at which it is currently supported.
 Enabling the Configuration Backend
 ----------------------------------
 
-The following configuration snippet demonstrates how to enable the MySQL
-Configuration Backend for the DHCPv6 server:
+Consider the following configuration snippet, which uses a MySQL configuration
+database:
 
-::
+.. code-block:: json
 
    {
        "Dhcp6": {
@@ -7215,8 +7215,7 @@ Configuration Backend for the DHCPv6 server:
                {
                    "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
                }
-           ],
-           ...
+           ]
        }
    }
 
@@ -7431,7 +7430,7 @@ proportional to the total size of the pools for which this allocator is used.
 Finally, lease reclamation must be enabled with a low value of the
 ``reclaim-timer-wait-time`` parameter, to ensure that the server frequently
 collects expired leases and makes them available for allocation via the
-allocator's free lease queue. Expired leases are not considered free by
+free lease queue. Expired leases are not considered free by
 the allocator until they are reclaimed by the server. See
 :ref:`lease-reclamation` for more details about the lease reclamation process.
 

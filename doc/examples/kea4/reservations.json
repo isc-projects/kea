@@ -72,13 +72,13 @@
         // It is replaced by the "reservations-global", "reservations-in-subnet"
         // and "reservations-out-of-pool" parameters.
 
-        // Specify if server should lookup global reservations.
+        // Specify whether the server should look up global reservations.
         "reservations-global": false,
 
-        // Specify if server should lookup in-subnet reservations.
+        // Specify whether the server should look up in-subnet reservations.
         "reservations-in-subnet": true,
 
-        // Specify if server can assume that all reserved addresses
+        // Specify whether the server can assume that all reserved addresses
         // are out-of-pool.
         // Ignored when reservations-in-subnet is false.
         // If specified, it is inherited by "shared-networks" and

@@ -89,15 +89,15 @@ This is the last moment to freeze code! :snowflake:
       1. which were updated? (save results)
       1. Do any of the libraries from the current release have lower version than in the previous release?
    1. Uninstall Kea, check what left (there should be just configuration files)
-   1. Check if all of the installed binaries has man page
-      1. if not, is it in the tarball?
-      1. are man page up-to-date?
+   1. Check if each of the installed binaries has a man page.
+      1. If not, is the binary included in the tarball? That might explain it.
+      1. Are man pages up to date?
    1. Check if documentation is properly formatted, has correct versions and dates.
-      1. it's advised to search for previous version numbers, some of them are statically added in statements that are no longer valid
+      1. It's advised to search for previous version numbers, some of them are statically added in statements that are no longer valid.
 1. [ ] Upload tarballs to repo.isc.org using Jenkins and send sanity checks request.
    1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
-   1. Click "Build with Parameters"
-   1. In field "Tarball" select picked tarball build
+   1. Click "Build with Parameters".
+   1. In field "Tarball" select picked tarball build.
    1. In field "Release_Candidate" pick:
       1. rc1 if this is the first selected build for release, it will push the selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
       1. next rc# if this is a respin after some fixes (note: it is not possible to pick previous rc number - it will result in an error)

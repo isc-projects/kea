@@ -108,7 +108,7 @@ The following is the directory layout of the complete Kea installation.
 
 -  ``lib/`` — libraries.
 
--  ``lib/kea/hooks`` — additional hooks libraries.
+-  ``lib/kea/hooks`` — additional hook libraries.
 
 -  ``sbin/`` — server software and commands used by the system administrator.
 

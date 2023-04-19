@@ -435,7 +435,7 @@ not yet used by the hook library.
 
    Kea attempts to map link address parameters to the prefixes of configured
    subnets. If a given address falls outside all configured subnet prefixes,
-   the query fails with a status code of STATUS_NotConfigured. If
+   the query fails with a status code of ``STATUS_NotConfigured``. If
    the link address parameter for ``query-by-relay-id`` or ``query-by-remote-id``
    is not ``::`` (i.e. not empty), only delegated prefixes that lie within matching
    subnet prefixes are returned. Currently, ``query-by-address`` does not

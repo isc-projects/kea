@@ -54,7 +54,7 @@ The arguments are as follows:
    It performs extra checks beyond what -t offers, such as establishing
    database connections (for the lease backend, host reservations backend,
    configuration backend, and forensic logging backend), loading hook libraries,
-   parsing configurations, etc. It does not open UNIX or TCP/UDP sockets,
+   parsing hook-library configurations, etc. It does not open UNIX or TCP/UDP sockets,
    nor does it open or rotate files, as any of these actions could interfere
    with a running process on the same machine.
 

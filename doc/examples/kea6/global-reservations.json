@@ -17,7 +17,7 @@
 // We need to specify the database used to store leases. As of
 // June 2022, three database backends are supported: MySQL,
 // PostgreSQL and the in-memory database, Memfile.
-// We'll use memfile  because it doesn't require any prior set up.
+// We'll use memfile because it doesn't require any prior set up.
   "lease-database": {
       "type": "memfile",
       "lfc-interval": 3600
@@ -41,16 +41,16 @@
 // This directive tells Kea that reservations are global. Note that this
 // can also be specified at shared network and/or subnet level.
 // "reservation-mode": "global",
-// It is replaced by the "reservations-global", "reservations-in-subnet" and
+// It is replaced by the "reservations-global", "reservations-in-subnet", and
 // "reservations-out-of-pool" parameters.
 
-// Specify if server should lookup global reservations.
+// Specify whether the server should look up global reservations.
   "reservations-global": true,
 
-// Specify if server should lookup in-subnet reservations.
+// Specify whether the server should look up in-subnet reservations.
   "reservations-in-subnet": false,
 
-// Specify if server can assume that all reserved addresses
+// Specify whether the server can assume that all reserved addresses
 // are out-of-pool.
 // Ignored when reservations-in-subnet is false.
 // If specified, it is inherited by "shared-networks" and "subnet6" levels.

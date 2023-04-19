@@ -87,7 +87,7 @@
                 // Third class name.
                 "name": "late",
 
-                // Boolean flag indicating that the class expression is only evaluated
+                // Boolean flag indicating whether the class expression is only evaluated
                 // when the class is required, e.g. the selected address pool configuration
                 // includes this class name in its "require-client-classes" list. The
                 // default value false means that the class test expression must
@@ -118,7 +118,7 @@
             "ignore-rai-link-selection": false,
 
             // Parse options more leniently where fields can be deduced
-            // deterministically even if against RFC or common practice.
+            // deterministically, even if against RFC or common practice.
             "lenient-option-parsing": true
         },
 
@@ -138,30 +138,30 @@
         // It may be specified at the global, shared-network, and subnet levels.
         "ddns-generated-prefix": "myhost",
 
-        // Boolean flag indicating that the server should ignore DHCP client
+        // Boolean flag indicating whether the server should ignore DHCP client
         // wishes to update DNS on its own. With that flag set to true,
         // the server will send DNS updates for both forward and
         // reverse DNS data. The default value is false, which indicates
-        // that the server will delegate DNS update to the client when
+        // that the server will delegate a DNS update to the client when
         // requested. It may be specified at the global, shared-network,
         // and subnet levels.
         "ddns-override-client-update": false,
 
-        // Boolean flag indicating that the server should override the DHCP
+        // Boolean flag indicating whether the server should override the DHCP
         // client's wish to not update the DNS. With this parameter
-        // set to true, the server will send DNS update even when
+        // set to true, the server will send a DNS update even when
         // the client requested no update. It may be specified at the
         // global, shared-network, and subnet levels.
         "ddns-override-no-update": false,
 
         // Suffix appended to the partial name sent to the DNS. The
-        // default value is an empty string which indicates that no
+        // default value is an empty string, which indicates that no
         // suffix is appended. It may be specified at the global,
         // shared-network, and subnet levels.
         "ddns-qualifying-suffix": "",
 
         // Enumeration specifying whether the server should honor
-        // hostname or Client FQDN sent by the client, or replace
+        // the hostname or Client FQDN sent by the client or replace
         // this name. The acceptable values are: "never" (use the
         // name the client sent), "always" (replace the name the
         // client sent), "when-present" (replace the name the client
@@ -186,8 +186,8 @@
         // may be specified at the global, shared-network, and subnet levels.
         "ddns-update-on-renew": true,
 
-        // Boolean flag, which is passed to kea-dhcp-ddns with each DDNS
-        // update request to indicate whether DNS update conflict
+        // Boolean flag which is passed to kea-dhcp-ddns with each DDNS
+        // update request, to indicate whether DNS update conflict
         // resolution as described in RFC 4703 should be employed for the
         // given update request. The default value for this flag is true.
         // It may be specified at the global, shared-network, and subnet levels.
@@ -197,11 +197,11 @@
         // excluded from DHCP assignments. The default value is 86400 (24 hours).
         "decline-probation-period": 86400,
 
-        // Name Change Request forwarding configuration for Kea DHCPv4 server.
+        // Name Change Request forwarding configuration for the Kea DHCPv4 server.
         // NCRs are sent to the Kea D2 module to update DNS upon allocation of
         // DHCP leases.
         "dhcp-ddns": {
-            // Boolean flag indicating if Kea DHCPv4 server should connect to
+            // Boolean flag indicating whether Kea DHCPv4 server should connect to
             // kea-dhcp-ddns. This must be true for NCRs to be created and
             // sent to kea-dhcp-ddns. By default, NCRs are not generated.
             "enable-updates": false,
@@ -218,12 +218,12 @@
             // only UDP is supported.
             "ncr-protocol": "UDP",
 
-            // IP address that Kea DHCPv4 server should use to send
+            // IP address that the Kea DHCPv4 server should use to send
             // NCRs to D2. The default value of zero indicates that Kea
             // should pick a suitable address.
             "sender-ip": "0.0.0.0",
 
-            // Port number that Kea DHCPv4 server should use to send
+            // Port number that the Kea DHCPv4 server should use to send
             // NCRs to D2. The default value of zero indicates that Kea
             // should pick a suitable port.
             "sender-port": 0,
@@ -254,7 +254,7 @@
         "dhcp4o6-port": 6767,
 
         // Boolean flag indicating whether the Kea DHCPv4 server
-        // should send back Client Identifier option in its responses.
+        // should send back the Client Identifier option in its responses.
         // The default value is true, which indicates that the option
         // must be sent back if the client included it. The false
         // value instructs the server to not send this option for
@@ -265,11 +265,11 @@
         // Collection of Kea DHCPv4 server parameters configuring how
         // the server should process expired DHCP leases.
         "expired-leases-processing": {
-            // Specifies the number of seconds since last removal of
-            // the expired leases, when next removal should occur.
+            // Specifies the number of seconds since the last removal of
+            // the expired leases, when the next removal should occur.
             // If both "flush-reclaimed-timer-wait-time" and
             // "hold-reclaimed-time" are not 0, when the client sends a release
-            // message the lease is expired instead of being deleted from the
+            // message the lease is expired instead of being deleted from
             // lease storage.
             "flush-reclaimed-timer-wait-time": 25,
 
@@ -277,30 +277,28 @@
             // leases in the lease database (lease affinity).
             // If both "flush-reclaimed-timer-wait-time" and
             // "hold-reclaimed-time" are not 0, when the client sends a release
-            // message the lease is expired instead of being deleted from the
+            // message the lease is expired instead of being deleted from
             // lease storage.
             "hold-reclaimed-time": 3600,
 
             // Specifies the maximum number of expired leases that can be
-            // processed in a single attempt to clean up the expired
-            // leases from the lease database. If there are more
+            // processed in a single attempt to clean up expired leases
+            // from the lease database. If there are more
             // expired leases, they will be processed during the next
             // cleanup attempt.
             "max-reclaim-leases": 100,
 
-            // Specifies the maximum time in milliseconds that a single
-            // attempt to cleanup the lease database from the expired
-            // leases may take.
+            // Specifies the maximum time in milliseconds that a single attempt
+            // to clean up expired leases from the lease database may take.
             "max-reclaim-time": 250,
 
-            // Specifies the time period in seconds since the last attempt
+            // Specifies the length of time in seconds since the last attempt
             // to process expired leases before initiating the next attempt.
             "reclaim-timer-wait-time": 10,
 
-            // Specifies the maximum number of expired lease-processing
-            // cycles which didn't result in full cleanup of expired leases
-            // from the lease database, after which a
-            // warning message is issued.
+            // Specifies the maximum number of expired lease-processing cycles
+            // which didn't result in full cleanup of exired leases from the
+            // lease database, after which a warning message is issued.
             "unwarned-reclaim-cycles": 5
         },
 
@@ -375,7 +373,7 @@
 
                 // Connection reconnect wait time.
                 // This parameter governs how long Kea waits before attempting
-                // to reconnect, expressed in milliseconds. The default is 0
+                // to reconnect. Expressed in milliseconds. The default is 0
                 // (disabled) for MySQL and PostgreSQL.
                 "reconnect-wait-time": 3000,
 
@@ -387,7 +385,7 @@
                 // serve-retry-continue
                 "on-fail": "stop-retry-exit",
 
-                // Connection connect timeout.
+                // Connection connect timeout in seconds.
                 "connect-timeout": 100
             }
         ],
@@ -397,7 +395,7 @@
         // DHCP clients. All identifiers are used by default, which
         // means that the server will issue multiple queries to the
         // database to find if there is a reservation for a particular
-        // client. If the particular deployment uses only a subset, e.g.
+        // client. If a particular deployment uses only a subset, e.g.
         // one identifier type, this identifier should be only listed
         // here to prevent unnecessary queries to the database.
         "host-reservation-identifiers": [
@@ -412,7 +410,7 @@
         // server is listening to the DHCP queries.
         "interfaces-config": {
             // Specifies whether the server should use "udp" sockets or
-            // "raw" sockets to listen to the DHCP traffic. The "raw"
+            // "raw" sockets to listen to DHCP traffic. The "raw"
             // sockets are useful when direct DHCP traffic is being
             // received.
             "dhcp-socket-type": "udp",
@@ -424,7 +422,7 @@
             ],
 
             // Enumeration which indicates what interface should be used
-            // to send DHCP response to the client. The default value is
+            // to send DHCP responses to the client. The default value is
             // "same-as-inbound", which indicates that the response should
             // be sent via the interface on which the client's query
             // was received. The "use-routing" value indicates that the
@@ -432,7 +430,7 @@
             // suitable interface.
             "outbound-interface": "same-as-inbound",
 
-            // Boolean flag indicating if the available interfaces should
+            // Boolean flag indicating whether the available interfaces should
             // be re-detected upon server reconfiguration. The default value
             // is true, which means that the interfaces are always
             // re-detected.
@@ -516,9 +514,9 @@
             "type": "memfile"
         },
 
-        // Boolean value indicating whether the Kea DHCPv4 server should use client
+        // Boolean value indicating whether the Kea DHCPv4 server should use the client
         // identifier value sent by the client or ignore it. The default value
-        // is true, which indicates that the server should use a client identifier
+        // is true, which indicates that the server should use the client identifier
         // and that it takes precedence over the client's MAC address. In deployments
         // where MAC address should take precedence, this value can be set to
         // false, in which case the clients will be identified by MAC address.
@@ -542,7 +540,7 @@
         // kea-dhcp4 from building an insurmountable backlog of updates.
         "parked-packet-limit": 128,
 
-        // List of global DHCP options that Kea DHCPv4 server assigns to the
+        // List of global DHCP options that the Kea DHCPv4 server assigns to
         // clients.
         "option-data": [
             {
@@ -618,7 +616,7 @@
         ],
 
         // Global value for the rebind timer, i.e. the time after which the
-        // DHCP client enters rebind state if it fails to renew the lease.
+        // DHCP client enters the rebind state if it fails to renew the lease.
         "rebind-timer": 40,
 
         // Global value for the renew timer, i.e. the time after which the
@@ -675,8 +673,8 @@
             // whether to upgrade from the old format. The following values
             // are supported: "none" (don't attempt to correct or upgrade
             // the extended info), "fix" (fix common inconsistencies and
-            // upgrade from old format; this is the default), "strict"
-            // (fix inconsistencies with an impact on Lease Query),
+            // upgrade from the old format; this is the default), "strict"
+            // (fix inconsistencies with an impact on Leasequery),
             // "pedantic" (enforce full Kea code format).
             "extended-info-checks": "fix"
         },
@@ -685,10 +683,10 @@
         // networks group subnets together.
         "shared-networks": [
             {
-                // Shared network-level authoritative flag.
+                // Shared-network level authoritative flag.
                 "authoritative": false,
 
-                // Shared network-level bootfile name.
+                // Shared-network level bootfile name.
                 "boot-file-name": "/dev/null",
 
                 // Restricts this shared network to allow only clients
@@ -696,48 +694,48 @@
                 // empty string is provided, no restriction is applied.
                 "client-class": "",
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "ddns-generated-prefix": "myhost",
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "ddns-override-client-update": false,
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "ddns-override-no-update": false,
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "ddns-qualifying-suffix": "",
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "ddns-replace-client-name": "never",
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "ddns-send-updates": true,
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "ddns-update-on-renew": true,
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "ddns-use-conflict-resolution": true,
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "hostname-char-replacement": "x",
 
-                // Shared network-level value. See description at the global level.
+                // Shared-network level value. See description at the global level.
                 "hostname-char-set": "[^A-Za-z0-9.-]",
 
                 // Specifies that this shared network is selected for
                 // requests received on a particular interface.
                 "interface": "eth0",
 
-                // Shared network-level flag specifying whether the client
+                // Shared-network level flag specifying whether the client
                 // identifier should be used for identifying clients.
                 "match-client-id": true,
 
                 // Shared network name.
                 "name": "my-secret-network",
 
-                // Shared network-level specification of the next server
+                // Shared-network level specification of the next server
                 // to be sent in 'siaddr'.
                 "next-server": "192.0.2.123",
 
@@ -750,13 +748,13 @@
                     "ip-addresses": []
                 },
 
-                // Shared network-level rebind timer.
+                // Shared-network level rebind timer.
                 "rebind-timer": 41,
 
-                // Shared network-level renew timer.
+                // Shared-network level renew timer.
                 "renew-timer": 31,
 
-                // Shared network-level compute T1 and T2 timers.
+                // Shared-network level compute T1 and T2 timers.
                 "calculate-tee-times": true,
 
                 // T1 = valid lifetime * .5.
@@ -780,13 +778,13 @@
                 // "reservations-in-subnet", and "reservations-out-of-pool"
                 // parameters.
 
-                // Specify if server should look up global reservations.
+                // Specify whether the server should look up global reservations.
                 "reservations-global": false,
 
-                // Specify if server should look up in-subnet reservations.
+                // Specify whether the server should look up in-subnet reservations.
                 "reservations-in-subnet": true,
 
-                // Specify if server can assume that all reserved addresses
+                // Specify whether the server can assume that all reserved addresses
                 // are out-of-pool.
                 // Ignored when reservations-in-subnet is false.
                 // If specified, it is inherited by "subnet4" levels.
@@ -800,7 +798,7 @@
                 // information) with each lease for this shared network.
                 "store-extended-info": false,
 
-                // Shared network-level server hostname set in 'sname' field.
+                // Shared-network level server hostname set in 'sname' field.
                 "server-hostname": "",
 
                 // List of IPv4 subnets belonging to this shared network.
@@ -879,16 +877,16 @@
                         // Subnet-level list of DHCP options.
                         "option-data": [
                             {
-                                // Boolean flag indicating if the particular option
+                                // Boolean flag indicating whether the particular option
                                 // should be always sent or sent only when requested.
                                 "always-send": false,
 
                                 // Option code.
                                 "code": 3,
 
-                                // Boolean flag indicating if the option value specified
-                                // in "data" is a string of hexadecimal values or a
-                                // human-readable CSV value.
+                                // Boolean flag indicating whether the option value specified
+                                // in "data" is a string of hexadecimal values or human-readable
+                                // CSV value.
                                 "csv-format": true,
 
                                 // Option data to be included in the option payload.
@@ -897,7 +895,7 @@
                                 // Option name.
                                 "name": "routers",
 
-                                // Boolean flag indicating if the given option is never
+                                // Boolean flag indicating whether the given option is never
                                 // sent in response.
                                 "never-send": false,
 
@@ -962,13 +960,13 @@
                         // "reservations-in-subnet", and
                         // "reservations-out-of-pool" parameters.
 
-                        // Specify if server should lookup global reservations.
+                        // Specify whether the server should look up global reservations.
                         "reservations-global": false,
 
-                        // Specify if server should lookup in-subnet reservations.
+                        // Specify whether the server should look up in-subnet reservations.
                         "reservations-in-subnet": true,
 
-                        // Specify if server can assume that all reserved
+                        // Specify whether the server can assume that all reserved
                         // addresses are out-of-pool.
                         // Ignored when reservations-in-subnet is false.
                         "reservations-out-of-pool": false,
@@ -1036,7 +1034,7 @@
                     }
                 ],
 
-                // Shared network-level (default) valid lifetime.
+                // Shared-network level (default) valid lifetime.
                 "valid-lifetime": 6001,
 
                 // Subnet-level min valid lifetime.
@@ -1053,7 +1051,7 @@
         // List of IPv4 subnets which don't belong to any shared network.
         "subnet4": [],
 
-        // Global valid (default) lifetime value.
+        // Global valid lifetime value.
         "valid-lifetime": 6000,
 
         // Global min valid lifetime value.
@@ -1078,7 +1076,7 @@
                     "type": "mysql"
                 }
             ],
-            // Intervals between attempts to fetch configuration updates
+            // Interval between attempts to fetch configuration updates
             // via the configuration backends used.
             "config-fetch-wait-time": 30
         },
@@ -1103,13 +1101,13 @@
         // It is replaced by the "reservations-global",
         // "reservations-in-subnet", and "reservations-out-of-pool" parameters.
 
-        // Specify if server should lookup global reservations.
+        // Specify whether the server should look up global reservations.
         "reservations-global": false,
 
-        // Specify if server should lookup in-subnet reservations.
+        // Specify whether the server should look up in-subnet reservations.
         "reservations-in-subnet": true,
 
-        // Specify if server can assume that all reserved addresses
+        // Specify whether the server can assume that all reserved addresses
         // are out-of-pool.
         // Ignored when reservations-in-subnet is false.
         // If specified, it is inherited by "shared-networks" and

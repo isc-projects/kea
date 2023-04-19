@@ -473,7 +473,7 @@ belonging to the subnet. The server may also be configured with static
 host reservations which are associated with this subnet. The current
 implementation of the ``subnet4-del`` command removes neither the leases nor
 the host reservations associated with a subnet. This is the safest approach
-because the server does not lose track of leases assigned to the clients
+because the server does not lose track of leases assigned to clients
 from this subnet. However, removal of the subnet may still cause
 configuration errors and conflicts. For example: after removal of the
 subnet, the server administrator may update a new subnet with the ID
@@ -528,7 +528,7 @@ belonging to the subnet. The server may also be configured with static
 host reservations which are associated with this subnet. The current
 implementation of the ``subnet6-del`` command removes neither the leases nor
 the host reservations associated with a subnet. This is the safest approach
-because the server does not lose track of leases assigned to the clients
+because the server does not lose track of leases assigned to clients
 from this subnet. However, removal of the subnet may still cause
 configuration errors and conflicts. For example: after removal of the
 subnet, the server administrator may add a new subnet with the ID used
@@ -989,12 +989,12 @@ An example response could look as follows:
                },
                "renew-timer": 60,
                # "reservation-mode": "all",
-               # It is replaced by the "reservations-global"
-               # "reservations-in-subnet" and "reservations-out-of-pool"
+               # It is replaced by the "reservations-global",
+               # "reservations-in-subnet", and "reservations-out-of-pool"
                # parameters.
-               # Specify if the server should lookup global reservations.
+               # Specify if the server should look up global reservations.
                "reservations-global": false,
-               # Specify if the server should lookup in-subnet reservations.
+               # Specify if the server should look up in-subnet reservations.
                "reservations-in-subnet": true,
                # Specify if the server can assume that all reserved addresses
                # are out-of-pool.

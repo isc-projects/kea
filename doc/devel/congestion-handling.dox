@@ -55,7 +55,7 @@ always discarding the newest packets, we now always discard the oldest
 packets.  The capacity of the buffer (i.e. the maximum number of packets the
 buffer can contain) is configurable.
 
-@section custom-implementations  Custom Packet Queues
+@section custom-implementations Custom Packet Queues
 
 It is possible to replace the default packet queue implementation with a
 custom implementation by registering it with your Kea server via a hook
@@ -143,7 +143,7 @@ an isc::data::MapElement instance containing the contents of the configuration
 element "dhcp-queue-control" from the Kea server's configuration. It will
 always have the following two values:
 
--# "enable-queue" - used by isc::dhcp::IfaceMgr to know whether or not
+-# "enable-queue" - used by isc::dhcp::IfaceMgr to know whether
 congestion handling is enabled. Your implementation need not do anything
 with this value.
 

@@ -1,5 +1,5 @@
 // This is an example configuration file for the DHCPv4 server in Kea
-// illustrating the configuration of the RADIUS and Host Cache hooks libraries.
+// illustrating the configuration of the RADIUS and Host Cache hook libraries.
 //
 // It is not intended to be used as is. It tries to showcase some of the
 // parameters available.
@@ -121,7 +121,7 @@
       ]
     } ],
 
-  // Set up the hooks libraries.
+  // Set up the hook libraries.
   "hooks-libraries": [
      {
         // Load the flex-id hook library.

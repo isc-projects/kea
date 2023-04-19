@@ -837,7 +837,7 @@ is not mandatory that the flag be set to ``true``.
    limits that apply to all packets associated with a class spawned at
    runtime, according to the ``template-test`` expression in the parent template
    class. For a more detailed description of how to configure limits using the
-   limits hooks library, see :ref:`hooks-limits-configuration`.
+   limits hook library, see :ref:`hooks-limits-configuration`.
    For example, using the configuration below, ingress DHCPv6 packets that have
    client ID values (in the format expressed by the Kea evaluator) ``foobar``
    and ``foofoo`` both amount to the same limit of 60 packets per day, while
@@ -944,7 +944,7 @@ bottleneck.
 Using Static Host Reservations in Classification
 ================================================
 
-Classes can be statically assigned to the clients using techniques
+Classes can be statically assigned to clients using techniques
 described in :ref:`reservation4-client-classes` and
 :ref:`reservation6-client-classes`.
 

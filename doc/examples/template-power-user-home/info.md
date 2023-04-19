@@ -60,7 +60,7 @@ The whole subnet is split into dynamic and static pools:
 
 To deploy this setup, perform the following steps:
 
-1. Install the CA and DHCPv4 daemon on host-1, and copy the configuration files to their typical locations.
+1. Install the CA and the DHCPv4 server on host-1, and copy the configuration files to their typical locations.
    They are usually in ``/etc/kea`` on Linux and ``/usr/local/etc/kea`` on FreeBSD, and the files are typically called
    ``kea-ctrl-agent.conf`` and ``kea-dhcp4.conf``. Please consult the startup scripts for any specific system.
 
@@ -91,7 +91,7 @@ To deploy this setup, perform the following steps:
 4. Verify that communication between the hosts works in the opposite direction as well
    (host-2 can connect to host-1), by repeating step 3 from host-2 using host-1's IP address and port.
 
-5. Install the CA and DHCPv4 daemon on host-2, as in steps 1 and 2. The config file for the
+5. Install the CA and the DHCPv4 server on host-2, as in steps 1 and 2. The config file for the
    standby server is very similar to the one on the primary server, other than the definition of
    the ``this-server-name`` field (and possibly the interface names).
 

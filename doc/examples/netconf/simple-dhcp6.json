@@ -80,7 +80,7 @@
         //
         //        // Some libraries may support parameters. Make sure you
         //        // type this section carefully, as the CA does not validate
-        //        // it (because the format is library specific).
+        //        // it (because the format is library-specific).
         //        "parameters": {
         //            "param1": "foo"
         //        }
@@ -98,7 +98,7 @@
                         // Several additional parameters are possible in addition
                         // to the typical output. Flush determines whether logger
                         // flushes output to a file. Maxsize determines maximum
-                        // filesize before the file is being rotated. maxver
+                        // filesize before the file is rotated. maxver
                         // specifies the maximum number of rotated files being
                         // kept.
                         "flush": true,

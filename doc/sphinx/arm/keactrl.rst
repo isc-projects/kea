@@ -119,7 +119,7 @@ specified with the ``dhcp4_srv``, ``dhcp6_srv``, ``dhcp_ddns_srv``,
 ``ctrl_agent_srv``, and ``netconf_srv`` parameters should be modified.
 
 The ``kea_verbose`` parameter specifies the verbosity of the servers
-being started. When ``kea_verbose`` is set to "yes," the logging level of
+being started. When ``kea_verbose`` is set to ``yes``, the logging level of
 the server is set to DEBUG. Modification of the logging severity in a
 configuration file, as described in :ref:`logging`, will have no
 effect as long as ``kea_verbose`` is set to "yes." Setting it to
@@ -220,7 +220,7 @@ it rereads its configuration file and, if the new configuration is
 valid, uses the new configuration.
 If the new configuration proves to be invalid, the server retains its
 current configuration; however, in some cases a fatal error message is logged
-indicating that the server no longer provides any service: a working
+indicating that the server is no longer providing any service: a working
 configuration must be loaded as soon as possible.
 
 A reload is executed as follows:

@@ -5,11 +5,11 @@
 
 This hook library is used to manage Kea
 servers' configurations in a configuration backend database. This library must
-be used in conjunction with the available CB hooks libraries implementing
+be used in conjunction with the available CB hook libraries implementing
 the common APIs to create, read, update, and delete (CRUD) the
 configuration information in the respective databases. For example:
-the ``mysql_cb`` hooks library implements this API for MySQL while the
-``pgsql_cg`` hooks library implements this API for PostgreSQL.
+the ``mysql_cb`` hook library implements this API for MySQL while the
+``pgsql_cg`` hook library implements this API for PostgreSQL.
 To manage the configuration information in a MySQL database, both the
 ``mysql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
 configuration management.
@@ -109,7 +109,7 @@ Control Commands for DHCP Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This section describes and gives some examples of the control commands
-implemented by the ``cb_cmds`` hooks library, to manage the
+implemented by the ``cb_cmds`` hook library, to manage the
 configuration information of the DHCPv4 and DHCPv6 servers. Many of the
 commands are almost identical between DHCPv4 and DHCPv6; they only
 differ by the command name. Other commands differ slightly by the
@@ -876,7 +876,7 @@ database:
 
 
 This command includes the ``interface`` parameter, which sets the shared
-network-level interface name. Any remaining shared network-level parameters,
+network-level interface name. Any remaining shared-network level parameters,
 which are not specified with the command, will be marked as
 "unspecified" in the database. The DHCP server uses the global
 values for unspecified parameters or, if the global values are not
@@ -1266,7 +1266,7 @@ be deleted. If the option is not explicitly specified for this
 shared network, no option is deleted. In particular, the given
 option may be present for a subnet belonging to the shared network.
 Such an option instance is not affected by this command as this
-command merely deletes the shared-network-level option. To
+command merely deletes the shared-network level option. To
 delete a subnet-level option, the ``remote-option[46]-subnet-del``
 command must be used instead.
 

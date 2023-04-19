@@ -46,7 +46,7 @@ the following command-line switches:
    loads it, checks it, and exits. It performs extra checks beyond what ``-t``
    offers, such as establishing database connections (for the lease backend,
    host reservations backend, configuration backend, and forensic logging
-   backend), loading hook libraries, parsing configurations, etc.
+   backend), loading hook libraries, parsing hook-library configurations, etc.
    It does not open UNIX or TCP/UDP sockets, nor does it open or rotate
    files, as any of these actions could interfere with a running process on the
    same machine.
@@ -870,7 +870,7 @@ server to listen on all available interfaces:
            "interfaces": [ "*" ]
        }
        ...
-   },
+   }
 
 The asterisk plays the role of a wildcard and means "listen on all
 interfaces." However, it is usually a good idea to explicitly specify
@@ -1569,7 +1569,7 @@ responses on subnet ``192.0.3.0/24``. ``never-send`` has precedence over
     inheritance chain, they are applied - even if they are
     disabled in other places which would normally receive a higher priority.
     For instance, if one of the flags is enabled in the global scope,
-    but disabled at the subnet level, it will be enabled,
+    but disabled at the subnet level, it is enabled,
     disregarding the subnet-level setting.
 
 .. note::
@@ -1762,14 +1762,14 @@ to obtain the addresses of multiple NTP servers.
 configuration syntax to create custom option definitions (formats).
 Creation of custom definitions for standard options is generally not
 permitted, even if the definition being created matches the actual
-option format defined in the RFCs. There is an exception to this rule
+option format defined in the RFCs. However, there is an exception to this rule
 for standard options for which Kea currently does not provide a
 definition. To use such options, a server administrator must
 create a definition as described in
 :ref:`dhcp4-custom-options` in the ``dhcp4`` option space. This
 definition should match the option format described in the relevant RFC,
-but the configuration mechanism will allow any option format as it
-currently has no means to validate it.
+but the configuration mechanism allows any option format as there is
+currently no way to validate it.
 
 The currently supported standard DHCPv4 options are listed in
 the table below. "Name" and "Code" are the
@@ -2277,12 +2277,12 @@ The option's values are set in an ``option-data`` statement as follows:
        ...
    }
 
-``csv-format`` is set to ``"true"`` to indicate that the ``data`` field
+``csv-format`` is set to ``true`` to indicate that the ``data`` field
 comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
-When ``array`` is set to ``"true"`` and ``type`` is set to ``"record"``, the
+When ``array`` is set to ``true`` and ``type`` is set to ``"record"``, the
 last field is an array, i.e. it can contain more than one value, as in:
 
 ::
@@ -2757,8 +2757,8 @@ defining sub-options for a standard option, because one is created by
 default if the standard option is meant to convey any sub-options (see
 :ref:`dhcp4-vendor-opts`).
 
-If we want a DHCPv4 option called ``container`` with code
-222, that conveys two sub-options with codes 1 and 2, we first need to
+If we want a DHCPv4 option called ``container`` with code 222,
+that conveys two sub-options with codes 1 and 2, we first need to
 define the new sub-options:
 
 ::
@@ -2900,7 +2900,7 @@ specified:
 Support for Long Options
 ------------------------
 
-The kea-dhcp4 server partially supports long options (RFC3396).
+The ``kea-dhcp4`` server partially supports long options (RFC3396).
 Since Kea 2.1.6, the server accepts configuring long options and sub-options
 (longer than 255 bytes). The options and sub-options are stored internally
 in their unwrapped form and they can be processed as usual using the parser
@@ -3524,14 +3524,14 @@ control this communication:
    Either an IPv4 or IPv6 address may be specified.
 
 -  ``server-port`` - This is the port on which D2 listens for requests. The default
-   value is 53001.
+   value is ``53001``.
 
 -  ``sender-ip`` - This is the IP address which ``kea-dhcp4`` uses to send requests to
    D2. The default value is blank, which instructs ``kea-dhcp4`` to select a
    suitable address.
 
 -  ``sender-port`` - This is the port which ``kea-dhcp4`` uses to send requests to D2.
-   The default value of 0 instructs ``kea-dhcp4`` to select a suitable port.
+   The default value of ``0`` instructs ``kea-dhcp4`` to select a suitable port.
 
 -  ``max-queue-size`` - This is the maximum number of requests allowed to queue
    while waiting to be sent to D2. This value guards against requests
@@ -3541,7 +3541,7 @@ control this communication:
    until the queue backlog has been sufficiently reduced. The intent is
    to allow the ``kea-dhcp4`` server to continue lease operations without
    running the risk that its memory usage grows without limit. The
-   default value is 1024.
+   default value is ``1024``.
 
 -  ``ncr-protocol`` - This specifies the socket protocol to use when sending requests to
    D2. Currently only UDP is supported.
@@ -4362,18 +4362,18 @@ An example configuration that sets these parameters looks as follows:
 Multi-Threading Settings With Different Database Backends
 ---------------------------------------------------------
 
-Both ``kea-dhcp4`` and ``kea-dhcp6`` are tested by ISC to determine which settings
+The Kea DHCPv4 server is benchmarked by ISC to determine which settings
 give the best performance. Although this section describes our results, they are merely
 recommendations and are very dependent on the particular hardware used
-for testing. We strongly advise that administrators run their own performance tests.
+for benchmarking. We strongly advise that administrators run their own performance benchmarks.
 
 A full report of performance results for the latest stable Kea version can be found
 `here <https://reports.kea.isc.org/>`_.
-This includes hardware and test scenario descriptions, as well as
+This includes hardware and benchmark scenario descriptions, as well as
 current results.
 
 After enabling multi-threading, the number of threads is set by the ``thread-pool-size``
-parameter. Results from our tests show that the best settings for
+parameter. Results from our experiments show that the best settings for
 ``kea-dhcp4`` are:
 
 -  ``thread-pool-size``: 4 when using ``memfile`` for storing leases.
@@ -4382,11 +4382,11 @@ parameter. Results from our tests show that the best settings for
 
 -  ``thread-pool-size``: 8 when using ``postgresql``.
 
-Another very important parameter is ``packet-queue-size``; in our tests we
+Another very important parameter is ``packet-queue-size``; in our benchmarks we
 used it as a multiplier of ``thread-pool-size``. The actual setting strongly depends
 on ``thread-pool-size``.
 
-We saw the best results in our tests with the following settings:
+We saw the best results in our benchmarks with the following settings:
 
 -  ``packet-queue-size``: 7 * ``thread-pool-size`` when using ``memfile`` for
    storing leases; in our case it was 7 * 4 = 28. This means that at any given
@@ -5485,13 +5485,13 @@ following can be used:
        "valid-lifetime": 600,
        "subnet4": [ {
            "subnet": "10.0.0.0/24",
-           # It is replaced by the "reservations-global"
-           # "reservations-in-subnet" and "reservations-out-of-pool"
+           # It is replaced by the "reservations-global",
+           # "reservations-in-subnet", and "reservations-out-of-pool"
            # parameters.
            # "reservation-mode": "global",
-           # Specify if the server should lookup global reservations.
+           # Specify if the server should look up global reservations.
            "reservations-global": true,
-           # Specify if the server should lookup in-subnet reservations.
+           # Specify if the server should look up in-subnet reservations.
            "reservations-in-subnet": false,
            # Specify if the server can assume that all reserved addresses
            # are out-of-pool. It can be ignored because "reservations-in-subnet"
@@ -5599,11 +5599,11 @@ following example:
             "hw-address": "aa:bb:cc:dd:ee:fe",
             "client-classes": [ "reserved_class" ]
         }],
-        # It is replaced by the "reservations-global"
-        # "reservations-in-subnet" and "reservations-out-of-pool" parameters.
-        # Specify if the server should lookup global reservations.
+        # It is replaced by the "reservations-global",
+        # "reservations-in-subnet", and "reservations-out-of-pool" parameters.
+        # Specify if the server should look up global reservations.
         "reservations-global": true,
-        # Specify if the server should lookup in-subnet reservations.
+        # Specify if the server should look up in-subnet reservations.
         "reservations-in-subnet": false,
         # Specify if the server can assume that all reserved addresses
         # are out-of-pool. It can be ignored because "reservations-in-subnet"
@@ -5921,7 +5921,7 @@ introduced:
                # and it must be unique among all shared networks.
                "name": "my-secret-lair-level-1",
 
-               # The subnet selector can be specified at the shared network level.
+               # The subnet selector can be specified at the shared-network level.
                # Subnets from this shared network will be selected for directly
                # connected clients sending requests to the server's "eth0" interface.
                "interface": "eth0",
@@ -6040,7 +6040,7 @@ assigned to the second subnet, it will get a 10-minute lease, a
 Local and Relayed Traffic in Shared Networks
 --------------------------------------------
 
-It is possible to specify an interface name at the shared network level,
+It is possible to specify an interface name at the shared-network level,
 to tell the server that this specific shared network is reachable
 directly (not via relays) using the local network interface. As all
 subnets in a shared network are expected to be used on the same physical
@@ -7199,11 +7199,12 @@ of LED devices could be configured in the following way:
        } ]
    }
 
-Kea does not interpret or use the user-context information; it simply stores it and makes it
-available to the hook libraries. It is up to each hook library to
-extract that information and use it. The parser translates a ``comment``
-entry into a user context with the entry, which allows a comment to be
-attached inside the configuration itself.
+Kea does not interpret or use the user-context information; it simply
+stores it and makes it available to the hook libraries. It is up to each
+hook library to extract that information and use it. The parser
+translates a ``comment`` entry into a user context with the entry, which
+allows a comment to be attached inside the configuration itself.
+
 
 .. _dhcp4-std:
 
@@ -7307,7 +7308,7 @@ DHCPv4 Server Limitations
 
 These are the current known limitations of the Kea DHCPv4 server software. Most of
 them are reflections of the current stage of development and should be
-treated as “not implemented yet,” rather than as actual limitations.
+treated as “not implemented yet”, rather than as actual limitations.
 However, some of them are implications of the design choices made. Those
 are clearly marked as such.
 
@@ -7731,8 +7732,8 @@ selects the random allocation instead. The random allocation will be used
 for the subnet with ID 2, while the iterative allocation will be used for the subnet
 with ID 1.
 
-The following sections describe the supported allocators and
-their recommended uses.
+The following sections describe the supported allocators and their
+recommended uses.
 
 .. note::
 

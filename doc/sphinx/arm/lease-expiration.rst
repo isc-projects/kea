@@ -65,7 +65,7 @@ involves the following steps for each reclaimed lease:
 
 Please refer to :ref:`dhcp-ddns-server` to see how to configure DNS
 updates in Kea, and to :ref:`hooks-libraries` for information about
-using hooks libraries.
+using hook libraries.
 
 .. _lease-reclamation-defaults:
 
@@ -83,14 +83,14 @@ processing expired leases, with their default values:
    often the server initiates the lease reclamation procedure. Expressed in
    seconds; the default value is 25. If both ``flush-reclaimed-timer-wait-time``
    and ``hold-reclaimed-time`` are not 0, when the client sends a release
-   message the lease is expired instead of being deleted from the lease storage.
+   message the lease is expired instead of being deleted from lease storage.
 
 -  ``hold-reclaimed-time`` - this parameter governs how long the lease
    should be kept after it is reclaimed. This enables lease affinity
    when set to a non-zero value. Expressed in seconds; the default value
    is 3600. If both ``flush-reclaimed-timer-wait-time`` and
    ``hold-reclaimed-time`` are not 0, when the client sends a release message
-   the lease is expired instead of being deleted from the lease storage.
+   the lease is expired instead of being deleted from lease storage.
 
 -  ``max-reclaim-leases`` - this parameter specifies the maximum number
    of reclaimed leases that can be processed at one time. Zero means
@@ -266,7 +266,7 @@ parameters described in :ref:`lease-reclaim-config`, but the reclaimed leases
 are held in the database for a specified amount of time rather than removed.
 If both ``flush-reclaimed-timer-wait-time`` and ``hold-reclaimed-time`` are
 greater than zero, the lease is expired immediately when the client sends a
-release message, instead of being deleted from the lease storage. When the client
+release message, instead of being deleted from lease storage. When the client
 returns, the server first verifies whether there are any reclaimed leases
 associated with this client and then reassigns them if possible. However, it is
 important to note that any reclaimed lease may be assigned to another client if

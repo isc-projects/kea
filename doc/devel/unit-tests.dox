@@ -343,7 +343,7 @@ GRANT
 keatest=> \q
 @endverbatim
 
-  Now we  should be able to log into the newly created database using both user
+  Now we should be able to log into the newly created database using both user
   names:
 @verbatim
 $ psql -d keatest -U keatest

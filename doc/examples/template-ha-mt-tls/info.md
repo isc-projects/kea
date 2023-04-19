@@ -5,7 +5,7 @@ Below are some templates to assist in configuring a secure Kea DHCP server with
 multi-threading. These templates make the following assumptions:
 
 - The administrator wants to set up High Availability (HA) with multi-threading.
-- The machines running Kea with multi-threading have at least four CPUs.
+- The machines running Kea with multi-threading have at least four CPU cores.
 - The connection to the peer is secured using TLS.
 
 The logical setup consists of two hosts, each running a Kea DHCPv4 server and a Control Agent (CA).

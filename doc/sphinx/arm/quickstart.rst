@@ -87,7 +87,7 @@ easier to install Kea using native packages.
         # apk update
 
 4. Kea is split into various packages. The entire list is available on
-   `cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum/dnf.
+   `cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__ or using apt/yum/dnf.
    For example, on Debian/Ubuntu:
 
     .. code-block:: console
@@ -130,7 +130,7 @@ easier to install Kea using native packages.
 
     .. code-block:: console
 
-        $ sudo apt install isc-kea*=2.4.0-isc0000920201106154401
+        $ sudo apt install isc-kea*=2.4.0-isc20230531000000
 
 .. note::
   Not all package managers support installing packages with a glob (``*``),

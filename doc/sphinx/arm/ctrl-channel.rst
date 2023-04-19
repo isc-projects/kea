@@ -572,7 +572,7 @@ as "Dhcp4" or "Dhcp6". For example:
 
 If the new configuration proves to be invalid, the server retains its
 current configuration; however, in some cases a fatal error message is logged
-indicating that the server no longer provides any service: a working
+indicating that the server is no longer providing any service: a working
 configuration must be loaded as soon as possible. If the control channel
 is dead, the configuration file can still be reloaded using the ``SIGHUP``
 signal. If that is unsuccessful, restart the server.

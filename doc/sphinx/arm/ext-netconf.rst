@@ -614,7 +614,7 @@ Kea sources.
            // Currently there are no hook points defined in kea-netconf
            // processing.
            "hooks-libraries": [
-               // The hooks libraries list may contain more than one library.
+               // The hook libraries list may contain more than one library.
                {
                    // The only necessary parameter is the library filename.
                    "library": "/opt/local/netconf-commands.so",
@@ -640,9 +640,9 @@ Kea sources.
                            // Flush determines whether logger flushes output
                            //  to a file.
                            // Maxsize determines maximum filesize before
-                           // the file is being rotated.
+                           // the file is rotated.
                            // Maxver specifies the maximum number of
-                           //  rotated files being kept.
+                           //  rotated files to be kept.
                            "flush": true,
                            "maxsize": 204800,
                            "maxver": 4

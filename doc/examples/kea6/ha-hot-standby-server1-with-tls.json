@@ -1,5 +1,5 @@
 // This is an example configuration of the Kea DHCPv6 server. It uses High
-// Availability hooks library and Lease Commands hooks library to enable
+// Availability hook library and Lease Commands hook library to enable
 // High Availability function for the DHCP server. Note that almost exactly
 // the same configuration must be used on the second server (partner).
 // The only difference is that "this-server-name" must be set to "server2"
@@ -38,7 +38,7 @@
         "type": "memfile"
     },
 
-    // HA requires two hooks libraries to be loaded: libdhcp_lease_cmds.so and
+    // HA requires two hook libraries to be loaded: libdhcp_lease_cmds.so and
     // libdhcp_ha.so. The former handles incoming lease updates from the HA peers.
     // The latter implements high availability feature for Kea.
     "hooks-libraries": [
@@ -50,7 +50,7 @@
             "parameters": { }
         },
         {
-            // The HA hooks library should be loaded.
+            // The HA hook library should be loaded.
             "library": "/opt/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 // High Availability configuration is specified for the HA hook library.
@@ -151,7 +151,7 @@
             "debuglevel": 0
         },
         {
-            // This section specifies configuration of the HA hooks library specific
+            // This section specifies configuration of the HA hook library-specific
             // logger.
             "name": "kea-dhcp6.ha-hooks",
             "output_options": [

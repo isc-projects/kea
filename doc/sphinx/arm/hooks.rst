@@ -478,7 +478,7 @@ loaded by the correct process per the table below.
    |                                                           |              | leases, and to periodically test whether their partners are  |
    |                                                           |              | still operational. The hook library also provides an ability |
    |                                                           |              | to send lease updates to external backup servers, making it  |
-   |                                                           |              | much easier to have a replacement that is up-to-date.        |
+   |                                                           |              | much easier to have a replacement that is up to date.        |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`Host Cache <hooks-host-cache>`                      | ISC support  | Some database backends, such as RADIUS,                      |
    |                                                           | customers    | may take a long time to respond. Since                       |
