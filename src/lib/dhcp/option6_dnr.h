@@ -54,6 +54,16 @@ public:
     /// @param end Iterator pointing to the end of the buffer holding an option.
     Option6Dnr(OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    /// @brief Constructor of the %Option with all fields from params.
+    ///
+    /// Constructor of the %Option where all fields
+    /// i.e. Service priority, ADN, IP address(es) and Service params
+    /// are provided as ctor parameters.
+    ///
+    /// @param service_priority Service priority
+    /// @param adn ADN FQDN
+    /// @param ip_addresses Container of IP addresses
+    /// @param svc_params Service Parameters
     Option6Dnr(const uint16_t service_priority,
                            const std::string& adn,
                            const Option6Dnr::AddressContainer& ip_addresses,
@@ -61,6 +71,14 @@ public:
         : Option(V6, D6O_V6_DNR),
           DnrInstance(V6, service_priority, adn, ip_addresses, svc_params) {}
 
+    /// @brief Constructor of the %Option in ADN only mode.
+    ///
+    /// Constructor of the %Option in ADN only mode
+    /// i.e. only Service priority and ADN FQDN
+    /// are provided as ctor parameters.
+    ///
+    /// @param service_priority Service priority
+    /// @param adn ADN FQDN
     Option6Dnr(const uint16_t service_priority, const std::string& adn)
         : Option(V6, D6O_V6_DNR), DnrInstance(V6, service_priority, adn) {}
 

@@ -15,6 +15,16 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Represents DNR Instance which is used both in DHCPv4
+/// and DHCPv6 Encrypted DNS %Option.
+///
+/// DNR Instance includes the configuration data of an encrypted DNS resolver.
+/// It is used to build OPTION_V4_DNR (code 162). There may be multiple DNR Instances
+/// in one OPTION_V4_DNR %Option. It can be also used to build OPTION_V6_DNR (code 144).
+/// There must be only one DNR Instance in one OPTION_V6_DNR %Option.
+///
+/// DNR Instance Data Format has been defined in the draft-ietf-add-dnr-15 (to be replaced
+/// with published RFC).
 class DnrInstance {
 public:
     /// @brief A Type defined for container holding IP addresses.
@@ -23,26 +33,59 @@ public:
     /// @brief Size in octets of Service Priority field.
     static const uint8_t SERVICE_PRIORITY_SIZE = 2;
 
+    /// @brief Constructor of the empty DNR Instance.
+    ///
+    /// @param universe either V4 or V6 Option universe
     explicit DnrInstance(Option::Universe universe) : universe_(universe) {}
 
+    /// @brief Constructor of the DNR Instance with all fields from params.
+    ///
+    /// Constructor of the DNR Instance where all fields
+    /// i.e. Service priority, ADN, IP address(es) and Service params
+    /// are provided as ctor parameters.
+    ///
+    /// @param universe either V4 or V6 Option universe
+    /// @param service_priority Service priority
+    /// @param adn ADN FQDN
+    /// @param ip_addresses Container of IP addresses
+    /// @param svc_params Service Parameters
     DnrInstance(Option::Universe universe, const uint16_t service_priority,
                 const std::string& adn,
                 const AddressContainer& ip_addresses,
                 const std::string& svc_params);
 
+    /// @brief Constructor of the DNR Instance in ADN only mode.
+    ///
+    /// Constructor of the DNR Instance in ADN only mode
+    /// i.e. only Service priority and ADN FQDN
+    /// are provided as ctor parameters.
+    ///
+    /// @param universe either V4 or V6 Option universe
+    /// @param service_priority Service priority
+    /// @param adn ADN FQDN
     DnrInstance(Option::Universe universe, const uint16_t service_priority,
                 const std::string& adn);
 
+    /// @brief Default destructor.
     virtual ~DnrInstance() = default;
 
+    /// @brief Getter of the @c ip_addresses_.
+    ///
+    /// @return Vector container holding one or more IP addresses.
     const AddressContainer& getIpAddresses() const {
         return ip_addresses_;
     }
 
+    /// @brief Getter of the @c adn_.
+    ///
+    /// @return Authentication domain name field of variable length.
     const boost::shared_ptr<isc::dns::Name>& getAdn() const {
         return adn_;
     }
 
+    /// @brief Getter of the @c dnr_instance_data_length_.
+    ///
+    /// @return Length of all following data inside this DNR instance in octets.
     uint16_t getDnrInstanceDataLength() const {
         return (dnr_instance_data_length_);
     }
@@ -68,6 +111,9 @@ public:
     /// @return Authentication domain name in the text format.
     std::string getAdnAsText() const;
 
+    /// @brief Returns string representation of the DNR instance.
+    ///
+    /// @return String with text representation.
     std::string getDnrInstanceAsText() const;
 
     /// @brief Getter of the @c addr_length_.
@@ -120,6 +166,7 @@ public:
     /// @brief Returns size in octets of DNR Instance Data Length field.
     uint8_t getDnrInstanceDataLengthSize() const;
 
+    /// @brief Returns whether ADN only mode is enabled or disabled.
     bool isAdnOnlyMode() const {
         return adn_only_mode_;
     }
@@ -134,24 +181,39 @@ public:
     /// @param adn string representation of ADN FQDN
     void setAdn(const std::string& adn);
 
+    /// @brief Setter of the @c dnr_instance_data_length_ field.
+    ///
+    /// @param dnr_instance_data_length length to be set
     void setDnrInstanceDataLength(uint16_t dnr_instance_data_length) {
         dnr_instance_data_length_ = dnr_instance_data_length;
     }
+
+    /// @brief Setter of the @c service_priority_ field.
+    /// @param service_priority priority to be set
     void setServicePriority(uint16_t service_priority) {
         service_priority_ = service_priority;
     }
+
+    /// @brief Setter of the @c adn_length_ field.
+    /// @param adn_length length to be set
     void setAdnLength(uint16_t adn_length) {
         adn_length_ = adn_length;
     }
+
+    /// @brief Setter of the @c addr_length_ field.
+    /// @param addr_length length to be set
     void setAddrLength(uint16_t addr_length) {
         addr_length_ = addr_length;
     }
-//    void setSvcParamsLength(uint16_t svc_params_length) {
-//        svc_params_length_ = svc_params_length;
-//    }
+
+    /// @brief Setter of the @c adn_only_mode_ field.
+    /// @param adn_only_mode enabled/disabled setting
     void setAdnOnlyMode(bool adn_only_mode) {
         adn_only_mode_ = adn_only_mode;
     }
+
+    /// @brief Setter of the @c svc_params_ field.
+    /// @param svc_params Svc Params to be set
     void setSvcParams(const std::string& svc_params) {
         svc_params_ = svc_params;
     }
@@ -186,9 +248,13 @@ public:
     /// Section 2.1 of [I-D.ietf-dnsop-svcb-https].
     void checkSvcParams(bool from_wire_data = true);
 
+    /// @brief Checks IP address(es) field if data is correct and throws in case of issue found.
+    ///
+    /// Fields lengths are also calculated and saved to member variables.
     void checkFields();
 
 protected:
+    /// @brief Either V4 or V6 Option universe.
     Option::Universe universe_;
 
     /// @brief Authentication domain name field of variable length.
@@ -198,7 +264,7 @@ protected:
     /// This field is formatted as specified in Section 10 of RFC8415.
     boost::shared_ptr<isc::dns::Name> adn_;
 
-    /// @brief Length of all following data in octets.
+    /// @brief Length of all following data inside this DNR instance in octets.
     ///
     /// This field is only used for DHCPv4 Encrypted DNS %Option.
     uint16_t dnr_instance_data_length_;
@@ -235,25 +301,64 @@ protected:
     /// following the rules in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
     std::string svc_params_;
 
+    /// @brief Calculates and returns length of DNR Instance data in octets.
+    /// @return length of DNR Instance data in octets.
     uint16_t dnrInstanceLen() const;
 
 private:
+    /// @brief Constructs Log prefix depending on V4/V6 Option universe.
+    /// @return Log prefix as a string which can be used for prints when throwing an exception.
     std::string getLogPrefix() const;
 
     /// @brief Returns size in octets of ADN Length field.
     uint8_t getAdnLengthSize() const;
 };
 
+/// @brief Represents DHCPv4 Encrypted DNS %Option (code 162).
+///
+/// This option has been defined in the draft-ietf-add-dnr-15 (to be replaced
+/// with published RFC) and it has a following structure:
+/// - option-code = 162 (1 octet)
+/// - option-len (1 octet)
+/// - multiple (one or more) DNR Instance Data
+///
+/// DNR Instance Data structure:
+/// - DNR Instance Data Length (2 octets)
+/// - Service Priority (2 octets)
+/// - ADN Length (1 octet)
+/// - Authentication Domain Name (variable length)
+/// - Addr Length (1 octet)
+/// - IPv4 Address(es) (variable length)
+/// - Service Parameters (variable length).
 class Option4Dnr : public Option {
 public:
+    /// @brief A Type defined for container holding DNR Instances.
     typedef std::vector<DnrInstance> DnrInstanceContainer;
 
+    /// @brief Constructor of the %Option from on-wire data.
+    ///
+    /// This constructor creates an instance of the option using a buffer with
+    /// on-wire data. It may throw an exception if the @c unpack method throws.
+    ///
+    /// @param begin Iterator pointing to the beginning of the buffer holding an
+    /// option.
+    /// @param end Iterator pointing to the end of the buffer holding an option.
     Option4Dnr(OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    /// @brief Constructor of the empty %Option.
+    ///
+    /// No DNR instances are included in the %Option when using this ctor.
+    /// They must be added afterwards.
+    /// No fields data included in the %Option when using this ctor.
+    /// They must be added afterwards.
     Option4Dnr() : Option(V4, DHO_V4_DNR) {}
 
+    /// @brief Adds given DNR instance to Option's DNR Instance container.
+    /// @param dnr_instance DNR instance to be added
     void addDnrInstance(DnrInstance& dnr_instance);
 
+    /// @brief Getter of the @c dnr_instances_ field.
+    /// @return Reference to Option's DNR Instance container
     const DnrInstanceContainer& getDnrInstances() const {
         return dnr_instances_;
     }
@@ -265,6 +370,7 @@ public:
     virtual uint16_t len() const;
 
 protected:
+    /// @brief Container holding DNR Instances.
     DnrInstanceContainer dnr_instances_;
 };
 
