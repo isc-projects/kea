@@ -75,14 +75,7 @@ Option6Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     }
 
     // Let's try to extract ADN FQDN data.
-    isc::util::InputBuffer name_buf(&(*adn_tuple.getData().begin()), adn_length_);
-    try {
-        adn_.reset(new isc::dns::Name(name_buf, true));
-    } catch (const Exception& ex) {
-        isc_throw(InvalidOptionDnrDomainName, "failed to parse "
-                                              "fully qualified domain-name from wire format "
-                                              "- " << ex.what());
-    }
+    unpackAdn(adn_tuple.getData().begin(), adn_length_);
 
     begin += adn_tuple.getTotalLength();
 

@@ -69,20 +69,6 @@ public:
     /// @brief Default destructor.
     virtual ~DnrInstance() = default;
 
-    /// @brief Getter of the @c ip_addresses_.
-    ///
-    /// @return Vector container holding one or more IP addresses.
-    const AddressContainer& getIpAddresses() const {
-        return ip_addresses_;
-    }
-
-    /// @brief Getter of the @c adn_.
-    ///
-    /// @return Authentication domain name field of variable length.
-    const boost::shared_ptr<isc::dns::Name>& getAdn() const {
-        return adn_;
-    }
-
     /// @brief Getter of the @c dnr_instance_data_length_.
     ///
     /// @return Length of all following data inside this DNR instance in octets.
@@ -218,6 +204,12 @@ public:
         svc_params_ = svc_params;
     }
 
+    /// @brief Setter of the @c svc_params_length_ field.
+    /// @param svc_params_length len to be set
+    void setSvcParamsLength(uint16_t svc_params_length) {
+        svc_params_length_ = svc_params_length;
+    }
+
     /// @brief Writes the ADN FQDN in the wire format into a buffer.
     ///
     /// The Authentication Domain Name - fully qualified domain name of the encrypted
@@ -242,6 +234,11 @@ public:
     /// @param [out] buf buffer where SvcParams will be written.
     void packSvcParams(isc::util::OutputBuffer& buf) const;
 
+    /// @brief Unpacks the ADN from given wire data buffer and stores it in @c adn_ field.
+    /// @param begin beginning of the buffer from which the ADN will be read
+    /// @param adn_len length of the ADN to be read
+    void unpackAdn(OptionBufferConstIter begin, uint16_t adn_len);
+
     /// @brief Checks SvcParams field if encoded correctly and throws in case of issue found.
     ///
     /// The field should be encoded following the rules in
@@ -252,6 +249,10 @@ public:
     ///
     /// Fields lengths are also calculated and saved to member variables.
     void checkFields();
+
+    /// @brief Adds IP address to @c ip_addresses_ container.
+    /// @param ip_address IP address to be added
+    void addIpAddress(const asiolink::IOAddress& ip_address);
 
 protected:
     /// @brief Either V4 or V6 Option universe.

@@ -62,9 +62,10 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         }
         dnr_instance.setDnrInstanceDataLength(
             readUint16(&(*(begin + offset)), dnr_instance.getDnrInstanceDataLengthSize()));
+        offset += dnr_instance.getDnrInstanceDataLengthSize();
         OptionBufferConstIter dnr_instance_end = begin + offset +
                                                  dnr_instance.getDnrInstanceDataLength();
-        offset += dnr_instance.getDnrInstanceDataLengthSize();
+
         dnr_instance.setServicePriority(
             readUint16(&(*(begin + offset)), dnr_instance.SERVICE_PRIORITY_SIZE));
         offset += dnr_instance.SERVICE_PRIORITY_SIZE;
@@ -81,15 +82,7 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         }
 
         // Let's try to extract ADN FQDN data.
-        InputBuffer name_buf(&(*adn_tuple.getData().begin()), adn_length);
-        try {
-            auto adn = dnr_instance.getAdn();
-            adn.reset(new isc::dns::Name(name_buf, true));
-        } catch (const Exception& ex) {
-            isc_throw(InvalidOptionDnrDomainName, "failed to parse "
-                                                  "fully qualified domain-name from wire format "
-                                                  "- " << ex.what());
-        }
+        dnr_instance.unpackAdn(adn_tuple.getData().begin(), adn_length);
 
         offset += adn_tuple.getTotalLength();
 
@@ -125,17 +118,17 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         offset += dnr_instance.getAddrLengthSize();
         OptionBufferConstIter addr_begin = begin + offset;
         OptionBufferConstIter addr_end = addr_begin + addr_length;
-        auto ip_addresses = dnr_instance.getIpAddresses();
 
         while (addr_begin != addr_end) {
             const uint8_t* ptr = &(*addr_begin);
-            ip_addresses.push_back(IOAddress(readUint32(ptr, std::distance(addr_begin, addr_end))));
+            dnr_instance.addIpAddress(IOAddress(readUint32(ptr, std::distance(addr_begin, addr_end))));
             addr_begin += V4ADDRESS_LEN;
             offset += V4ADDRESS_LEN;
         }
 
         // SvcParams (variable length) field is last.
         auto svc_params_length = std::distance(begin + offset, dnr_instance_end);
+        dnr_instance.setSvcParamsLength(svc_params_length);
         if (svc_params_length > 0) {
             std::string svc_params;
             svc_params.assign(begin + offset, dnr_instance_end);
@@ -261,6 +254,18 @@ DnrInstance::setAdn(const std::string& adn) {
     adn_length_ = adn_len;
     if (universe_ == Option::V4) {
         setDnrInstanceDataLength(dnrInstanceLen());
+    }
+}
+
+void
+DnrInstance::unpackAdn(OptionBufferConstIter begin, uint16_t adn_len) {
+    InputBuffer name_buf(&*begin, adn_len);
+    try {
+        adn_.reset(new isc::dns::Name(name_buf, true));
+    } catch (const Exception& ex) {
+        isc_throw(InvalidOptionDnrDomainName, "Failed to parse "
+                                              "fully qualified domain-name from wire format "
+                                              "- " << ex.what());
     }
 }
 
@@ -440,6 +445,11 @@ DnrInstance::getAddrLengthSize() const {
 uint8_t
 DnrInstance::getMinimalLength() const {
     return (getDnrInstanceDataLengthSize() + SERVICE_PRIORITY_SIZE + getAdnLengthSize());
+}
+
+void
+DnrInstance::addIpAddress(const IOAddress& ip_address) {
+    ip_addresses_.push_back(ip_address);
 }
 
 }  // namespace dhcp
