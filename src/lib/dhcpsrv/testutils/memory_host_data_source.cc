@@ -375,26 +375,6 @@ MemHostDataSource::del6(const SubnetID& subnet_id,
     return (false);
 }
 
-void
-MemHostDataSource::update(HostPtr const& host) {
-    bool deleted(false);
-    if (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) {
-        vector<uint8_t> const& identifier(host->getIdentifier());
-        deleted = del4(host->getIPv4SubnetID(), host->getIdentifierType(), identifier.data(),
-             identifier.size());
-    } else if (host->getIPv6SubnetID() != SUBNET_ID_UNUSED) {
-        vector<uint8_t> const& identifier(host->getIdentifier());
-        deleted = del6(host->getIPv6SubnetID(), host->getIdentifierType(), identifier.data(),
-             identifier.size());
-    } else {
-        isc_throw(HostNotFound, "Mandatory 'subnet-id' parameter missing.");
-    }
-    if (!deleted) {
-        isc_throw(HostNotFound, "Host not updated (not found).");
-    }
-    store_.push_back(host);
-}
-
 size_t
 MemHostDataSource::size() const {
     return (store_.size());

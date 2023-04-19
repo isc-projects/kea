@@ -3209,20 +3209,7 @@ PgSqlHostDataSource::update(HostPtr const& host) {
     // updating the host to exactly as is described in the command, which may involve inserts and
     // deletes alongside updates. So let's delete and add. The delete cascades into all tables. The
     // add explicitly adds into all tables.
-    bool deleted(false);
-    if (CfgMgr::instance().getFamily() == AF_INET) {
-        vector<uint8_t> const& identifier(host->getIdentifier());
-        deleted = del4(host->getIPv4SubnetID(), host->getIdentifierType(), identifier.data(),
-             identifier.size());
-    } else {
-        vector<uint8_t> const& identifier(host->getIdentifier());
-        deleted = del6(host->getIPv6SubnetID(), host->getIdentifierType(), identifier.data(),
-             identifier.size());
-    }
-    if (!deleted) {
-        isc_throw(NoRowsAffected, "Host not updated (not found).");
-    }
-    add(host);
+    BaseHostDataSource::update(host);
 
     // Everything went fine, so explicitly commit the transaction.
     transaction.commit();
