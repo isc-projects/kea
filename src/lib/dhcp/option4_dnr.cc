@@ -6,15 +6,10 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
-#include <dhcp/dhcp4.h>
-#include <dhcp/dhcp6.h>
-#include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option4_dnr.h>
-#include <dhcp/option6_dnr.h>
-#include <dhcp/option_data_types.h>
 #include <dns/labelsequence.h>
 #include <util/strutil.h>
+
 #include <set>
 
 using namespace isc::asiolink;
@@ -34,7 +29,7 @@ Option4Dnr::clone() const {
 }
 
 void
-Option4Dnr::pack(util::OutputBuffer& buf, bool check) const {
+Option4Dnr::pack(OutputBuffer& buf, bool check) const {
     packHeader(buf, check);
     for (const DnrInstance& dnr_instance : dnr_instances_) {
         buf.writeUint16(dnr_instance.getDnrInstanceDataLength());
@@ -62,7 +57,7 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         }
 
         // Unpack DnrInstanceDataLength.
-        dnr_instance.unpackDnrInstanceDataLength(begin);
+        dnr_instance.unpackDnrInstanceDataLength(begin, end);
 
         const OptionBufferConstIter dnr_instance_end = begin +
                                                        dnr_instance.getDnrInstanceDataLength();
@@ -413,9 +408,15 @@ DnrInstance::addIpAddress(const IOAddress& ip_address) {
 }
 
 void
-DnrInstance::unpackDnrInstanceDataLength(OptionBufferConstIter& begin) {
+DnrInstance::unpackDnrInstanceDataLength(OptionBufferConstIter& begin, OptionBufferConstIter end) {
     dnr_instance_data_length_ = readUint16(&*begin, getDnrInstanceDataLengthSize());
     begin += getDnrInstanceDataLengthSize();
+    if (std::distance(begin, end) < dnr_instance_data_length_) {
+        isc_throw(OutOfRange, getLogPrefix()
+                                  << " malformed: DNR instance data truncated to size "
+                                  << std::distance(begin, end) << " but it was supposed to be "
+                                  << dnr_instance_data_length_);
+    }
 }
 
 void
@@ -438,8 +439,9 @@ DnrInstance::unpackAddresses(OptionBufferConstIter& begin, const OptionBufferCon
     // If additional data is supplied (i.e. not ADN only mode),
     // the option includes at least one valid IP address.
     if (addr_length_ == 0) {
-        isc_throw(OutOfRange, getLogPrefix() << " malformed: Addr Len=" << addr_length_
-                                             << " is not greater than 0");
+        isc_throw(OutOfRange, getLogPrefix()
+                                  << " malformed: Addr Len=" << addr_length_
+                                  << " but it must contain at least one valid IP address");
     }
 
     begin += getAddrLengthSize();

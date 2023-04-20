@@ -6,13 +6,9 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
-#include <dhcp/dhcp4.h>
-#include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option4_dnr.h>
 
 #include <boost/scoped_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -22,6 +18,7 @@ using boost::scoped_ptr;
 
 namespace {
 
+// This test verifies constructor of the empty Option4Dnr class.
 TEST(Option4DnrTest, emptyCtor) {
     // Create option instance. Check that constructor doesn't throw.
     scoped_ptr<Option4Dnr> option;
@@ -33,7 +30,9 @@ TEST(Option4DnrTest, emptyCtor) {
     EXPECT_EQ(DHO_V4_DNR, option->getType());
 }
 
-TEST(Option4DnrTest, oneDnrOnlyModeInstance) {
+// This test verifies constructor of the empty Option4Dnr class together
+// with adding ADN-only-mode DNR instance to option's DNR instances.
+TEST(Option4DnrTest, oneAdnOnlyModeInstance) {
     // Create option instance. Check that constructor doesn't throw.
     scoped_ptr<Option4Dnr> option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
@@ -70,7 +69,9 @@ TEST(Option4DnrTest, oneDnrOnlyModeInstance) {
               option->toText());
 }
 
-TEST(Option4DnrTest, multipleDnrOnlyModeInstances) {
+// This test verifies constructor of the empty Option4Dnr class together
+// with adding multiple ADN-only-mode DNR instances to option's DNR instances.
+TEST(Option4DnrTest, multipleAdnOnlyModeInstances) {
     // Create option instance. Check that constructor doesn't throw.
     scoped_ptr<Option4Dnr> option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
@@ -129,6 +130,10 @@ TEST(Option4DnrTest, multipleDnrOnlyModeInstances) {
               option->toText());
 }
 
+// This test verifies constructor of the empty Option4Dnr class together
+// with adding to option's DNR instances:
+// 1. ADN-only-mode DNR instance
+// 2. All fields included (IP addresses and service params also) DNR instance.
 TEST(Option4DnrTest, mixedDnrInstances) {
     // Create option instance. Check that constructor doesn't throw.
     scoped_ptr<Option4Dnr> option;
@@ -186,7 +191,10 @@ TEST(Option4DnrTest, mixedDnrInstances) {
               option->toText());
 }
 
-TEST(Option4DnrTest, packOneDnrOnlyModeInstance) {
+// This test verifies option packing into wire data.
+// Provided data to pack contains 1 DNR instance:
+// 1. ADN only mode
+TEST(Option4DnrTest, packOneAdnOnlyModeInstance) {
     // Create option instance. Check that constructor doesn't throw.
     scoped_ptr<Option4Dnr> option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
@@ -222,7 +230,12 @@ TEST(Option4DnrTest, packOneDnrOnlyModeInstance) {
     EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
 }
 
-TEST(Option4DnrTest, packMultipleDnrOnlyModeInstances) {
+// This test verifies option packing into wire data.
+// Provided data to pack contains 3 DNR instances:
+// 1. ADN only mode
+// 2. ADN only mode
+// 3. ADN only mode
+TEST(Option4DnrTest, packMultipleAdnOnlyModeInstances) {
     // Create option instance. Check that constructor doesn't throw.
     scoped_ptr<Option4Dnr> option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
@@ -278,6 +291,10 @@ TEST(Option4DnrTest, packMultipleDnrOnlyModeInstances) {
     EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
 }
 
+// This test verifies option packing into wire data.
+// Provided data to pack contains 2 DNR instances:
+// 1. ADN only mode
+// 2. All fields included (IP addresses and service params also).
 TEST(Option4DnrTest, packMixedDnrInstances) {
     // Create option instance. Check that constructor doesn't throw.
     scoped_ptr<Option4Dnr> option;
@@ -334,6 +351,7 @@ TEST(Option4DnrTest, packMixedDnrInstances) {
     EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
 }
 
+// This test verifies option constructor from wire data.
 TEST(Option4DnrTest, onWireDataCtor) {
     // Prepare data to decode - ADN only mode 1 DNR instance.
     const uint8_t buf_data[] = {
@@ -351,6 +369,10 @@ TEST(Option4DnrTest, onWireDataCtor) {
     ASSERT_TRUE(option);
 }
 
+// This test verifies option constructor from wire data in terms
+// of proper data unpacking.
+// Provided wire data contains 1 DNR instance:
+// 1. ADN only mode
 TEST(Option4DnrTest, unpackOneAdnOnly) {
     // Prepare data to decode - ADN only mode 1 DNR instance.
     const uint8_t buf_data[] = {
@@ -396,6 +418,10 @@ TEST(Option4DnrTest, unpackOneAdnOnly) {
               option->toText());
 }
 
+// This test verifies option constructor from wire data in terms
+// of proper data unpacking.
+// Provided wire data contains 1 DNR instance:
+// 1. All fields included (IP addresses and service params also).
 TEST(Option4DnrTest, unpackOneDnrInstance) {
     // Prepare data to decode - 1 DNR instance.
     const uint8_t buf_data[] = {
@@ -438,6 +464,11 @@ TEST(Option4DnrTest, unpackOneDnrInstance) {
     EXPECT_EQ(66, option->len());
 }
 
+// This test verifies option constructor from wire data in terms
+// of proper data unpacking.
+// Provided wire data contains 2 DNR instances:
+// 1. ADN only mode
+// 2. All fields included (IP addresses and service params also).
 TEST(Option4DnrTest, unpackMixedDnrInstances) {
     // Prepare data to decode - 2 DNR instances.
     const uint8_t buf_data[] = {
@@ -493,6 +524,259 @@ TEST(Option4DnrTest, unpackMixedDnrInstances) {
     EXPECT_EQ("key123=val key234=val2 key345", dnr_2.getSvcParams());
 
     EXPECT_EQ(92, option->len());
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - mandatory fields are truncated - Service Priority and ADN Len truncated.
+TEST(Option4DnrTest, unpackTruncatedDnrInstanceDataLen) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 62                                         // DNR Instance Data Len truncated
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OutOfRange);
+    ASSERT_FALSE(option);
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - DNR instance data truncated when compared to DNR Instance Data Len field.
+TEST(Option4DnrTest, unpackTruncatedDnrInstanceData) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 62,                                        // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        21                                               // ADN Length is 21 dec
+        // the rest of DNR instance data is truncated
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OutOfRange);
+    ASSERT_FALSE(option);
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - ADN field data truncated.
+TEST(Option4DnrTest, unpackTruncatedAdn) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 3,                                         // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        21                                               // ADN Length is 21 dec
+        // ADN data is missing.
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OpaqueDataTupleError);
+    ASSERT_FALSE(option);
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - ADN FQDN contains only whitespace - non valid FQDN.
+TEST(Option4DnrTest, unpackInvalidFqdnAdn) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 4,                                         // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        1,                                               // ADN Length is 1 dec
+        ' '                                              // ADN contains only whitespace
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), InvalidOptionDnrDomainName);
+    ASSERT_FALSE(option);
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - ADN Length is 0 and no ADN FQDN at all.
+TEST(Option4DnrTest, unpackNoFqdnAdn) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 3,                                         // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        0                                                // ADN Length is 0 dec
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), InvalidOptionDnrDomainName);
+    ASSERT_FALSE(option);
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - IPv4 address(es) field data truncated.
+TEST(Option4DnrTest, unpackTruncatedIpAddress) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 25,                                        // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '2',   // FQDN: myhost2.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        8                                                // Addr Len
+        // the rest of DNR instance data is truncated.
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OpaqueDataTupleError);
+    ASSERT_FALSE(option);
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - Addr length is 0 and no IPv4 addresses at all.
+TEST(Option4DnrTest, unpackNoIpAddress) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 25,                                        // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '2',   // FQDN: myhost2.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0                                                // Addr Len = 0
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OutOfRange);
+    ASSERT_FALSE(option);
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - Addr length is not a multiple of 4.
+TEST(Option4DnrTest, unpackIpAddressNon4Modulo) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 32,                                        // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '2',   // FQDN: myhost2.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        7,                                               // Addr Len
+        192,  168,  0,    1,                             // IP address 1
+        192,  168,  0                                    // IP address 2 truncated
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OutOfRange);
+    ASSERT_FALSE(option);
+}
+
+// Test checks that exception is thrown when trying to unpack malformed wire data
+// - SvcParams Key contains char that is not allowed.
+TEST(Option4DnrTest, unpackvcParamsInvalidCharKey) {
+    // Prepare malformed data to decode.
+    const uint8_t buf_data[] = {
+        0x00, 24,                                        // DNR Instance Data Len
+        0x00, 0x01,                                      // Service priority is 1 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '1',   // FQDN: myhost1.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        0x00, 39,                                        // DNR Instance Data Len
+        0x00, 0x02,                                      // Service priority is 2 dec
+        21,                                              // ADN Length is 21 dec
+        0x07, 0x6D, 0x79, 0x68, 0x6F, 0x73, 0x74, '2',   // FQDN: myhost2.
+        0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
+        0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
+        8,                                               // Addr Len
+        192,  168,  0,    1,                             // IP address 1
+        192,  168,  0,    2,                             // IP address 2 truncated
+        'k',  'e',  'y',  '+',  '2',  '3'                // Svc Params key has forbidden char +
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor throws an exception while doing unpack.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), InvalidOptionDnrSvcParams);
+    ASSERT_FALSE(option);
+}
+
+// This test verifies that string representation of the option returned by
+// toText method is correctly formatted.
+TEST(Option4DnrTest, toText) {
+    // Create option instance. Check that constructor doesn't throw.
+    scoped_ptr<Option4Dnr> option;
+    EXPECT_NO_THROW(option.reset(new Option4Dnr()));
+    ASSERT_TRUE(option);
+
+    // Prepare example DNR instance to add.
+    DnrInstance dnr_1 = DnrInstance(Option::V4, 1, "myhost1.example.com.");
+
+    // Add DNR instance.
+    option->addDnrInstance(dnr_1);
+
+    // Let's check if toText() works ok.
+    // toText() len does not count in headers len.
+    const int indent = 4;
+    std::string expected = "    type=162(V4_DNR), len=26, "  // the indentation of 4 spaces
+                           "DNR Instance 1(Instance len=24, service_priority=1, "
+                           "adn_length=21, adn='myhost1.example.com.')";
+    EXPECT_EQ(expected, option->toText(indent));
 }
 
 }  // namespace

@@ -6,9 +6,6 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
-#include <dhcp/dhcp6.h>
-#include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option6_dnr.h>
 
 #include <boost/scoped_ptr.hpp>

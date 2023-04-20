@@ -7,27 +7,10 @@
 #ifndef OPTION6_DNR_H
 #define OPTION6_DNR_H
 
-#include <dhcp/option.h>
 #include <dhcp/option4_dnr.h>
 
 namespace isc {
 namespace dhcp {
-
-/// @brief Exception thrown when invalid domain name is specified.
-class InvalidOptionDnrDomainName : public Exception {
-public:
-    InvalidOptionDnrDomainName(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {
-    }
-};
-
-/// @brief Exception thrown when Service parameters have wrong format.
-class InvalidOptionDnrSvcParams : public Exception {
-public:
-    InvalidOptionDnrSvcParams(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {
-    }
-};
 
 /// @brief Represents DHCPv6 Encrypted DNS %Option (code 144).
 ///

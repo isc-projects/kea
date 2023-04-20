@@ -9,11 +9,29 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
+#include <dhcp/option_data_types.h>
 #include <dns/name.h>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown when invalid domain name is specified.
+class InvalidOptionDnrDomainName : public Exception {
+public:
+    InvalidOptionDnrDomainName(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {
+    }
+};
+
+/// @brief Exception thrown when Service parameters have wrong format.
+class InvalidOptionDnrSvcParams : public Exception {
+public:
+    InvalidOptionDnrSvcParams(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {
+    }
+};
 
 /// @brief Represents DNR Instance which is used both in DHCPv4
 /// and DHCPv6 Encrypted DNS %Option.
@@ -208,24 +226,37 @@ public:
 
     /// @brief Unpacks DNR Instance Data Length from wire data buffer and stores
     /// it in @c dnr_instance_data_length_.
+    ///
+    /// It may throw in case of malformed data detected during parsing.
+    ///
     /// @param begin beginning of the buffer from which the field will be read
-    void unpackDnrInstanceDataLength(OptionBufferConstIter& begin);
+    /// @param end end of the buffer from which the field will be read
+    void unpackDnrInstanceDataLength(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
     /// @brief Unpacks Service Priority from wire data buffer and stores it in @c service_priority_.
     /// @param begin beginning of the buffer from which the field will be read
     void unpackServicePriority(OptionBufferConstIter& begin);
 
     /// @brief Unpacks the ADN from given wire data buffer and stores it in @c adn_ field.
+    ///
+    /// It may throw in case of malformed data detected during parsing.
+    ///
     /// @param begin beginning of the buffer from which the ADN will be read
     /// @param end end of the buffer from which the ADN will be read
     void unpackAdn(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
     /// @brief Unpacks IP address(es) from wire data and stores it/them in @c ip_addresses_.
+    ///
+    /// It may throw in case of malformed data detected during parsing.
+    ///
     /// @param begin beginning of the buffer from which the field will be read
     /// @param end end of the buffer from which the field will be read
     virtual void unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
     /// @brief Unpacks Service Parameters from wire data buffer and stores it in @c svc_params_.
+    ///
+    /// It may throw in case of malformed data detected during parsing.
+    ///
     /// @param begin beginning of the buffer from which the field will be read
     /// @param end end of the buffer from which the field will be read
     void unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter end);

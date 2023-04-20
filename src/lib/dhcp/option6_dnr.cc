@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <dhcp/dhcp6.h>
-#include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option6_dnr.h>
 
 using namespace isc::asiolink;
@@ -111,8 +109,9 @@ Option6Dnr::unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter 
     // If additional data is supplied (i.e. not ADN only mode),
     // the option includes at least one valid IP address.
     if (addr_length_ == 0) {
-        isc_throw(OutOfRange, getLogPrefix() << " malformed: Addr Len=" << addr_length_
-                                             << " is not greater than 0");
+        isc_throw(OutOfRange, getLogPrefix()
+                                  << " malformed: Addr Len=" << addr_length_
+                                  << " but it must contain at least one valid IP address");
     }
 
     // Check if IPv6 Address(es) field is not truncated.
