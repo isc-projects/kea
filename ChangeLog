@@ -1,3 +1,8 @@
+2127.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.3.7
+	development release.
+	(Gitlab #2837)
+
 2126.	[func]		andrei
 	A new command named reservation-update is now available in the
 	host_cmds hook library. It updates an existing reservation.
