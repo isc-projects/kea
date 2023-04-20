@@ -11,15 +11,16 @@ Primary developers:
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
                      control agent, shared networks, high availability,
-                     config backend)
+                     config backend, random allocator, free lease queue
+                     allocator)
  - Thomas Markwalder (DDNS, user_chk, global host reservations, stat commands,
                       congestion handling, config backend, multi-threading mode
                       of high availability, forensic logging, leasequery,
-                      ddns_tuning)
+                      ddns_tuning, bulk leasequery)
  - Wlodek Wencel (testing, release engineering, hammer, perfdhcp)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend, multi-threading,
-                   GSS-TSIG)
+                   GSS-TSIG, bulk leasequery)
  - Razvan Becheriu (cassandra, netconf, multi-threading, forensic logging,
                     run script hook, multi-threading mode of high availability,
                     GSS-TSIG)

@@ -1,3 +1,5 @@
+Kea 2.3.7 (development) released on April 26, 2023
+
 2127.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.3.7
 	development release.
@@ -254,7 +256,7 @@ Kea 2.3.5 (development) released on February 22, 2023
 	had no effect.
 	(Gitlab #2669)
 
-Kea 2.3.4 (development) released on January 25, 2022
+Kea 2.3.4 (development) released on January 25, 2023
 
 2089.	[build]		razvan
 	The library version numbers have been bumped for the Kea 2.3.4
