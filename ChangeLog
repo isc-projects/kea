@@ -1,3 +1,10 @@
+2130.	[func]		piotrek
+	Added support of DHCP Options for the Discovery of
+	Network-designated Resolvers (DNR) as per draft-ietf-add-dnr.
+	Kea can now handle DHCPv4 Option code #162 and DHCPv6 Option
+	code #144.
+	(Gitlab #2536)
+
 2129.	[func]		andrei
 	New statistics were added to keep track of leases that have their
 	CLTT increased in memory and their expiration time left unchanged

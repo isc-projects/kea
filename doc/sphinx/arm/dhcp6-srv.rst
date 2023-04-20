@@ -1768,6 +1768,9 @@ types are given in :ref:`dhcp-types`.
    +--------------------------+-----------------+-----------------+-----------------+
    | ipv6-address-andsf       | 143             | ipv6-address    | true            |
    +--------------------------+-----------------+-----------------+-----------------+
+   | v6-dnr                   | 144             | record (uint16, | false           |
+   |                          |                 | uint16, binary) |                 |
+   +--------------------------+-----------------+-----------------+-----------------+
 
 Options marked with (1) have option definitions, but the logic behind
 them is not implemented. That means that, technically, Kea knows how to

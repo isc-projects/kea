@@ -8,20 +8,18 @@
 
 #include <dhcp/option4_dnr.h>
 
-#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
-using boost::scoped_ptr;
 
 namespace {
 
 // This test verifies constructor of the empty Option4Dnr class.
 TEST(Option4DnrTest, emptyCtor) {
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
     ASSERT_TRUE(option);
 
@@ -34,7 +32,7 @@ TEST(Option4DnrTest, emptyCtor) {
 // with adding ADN-only-mode DNR instance to option's DNR instances.
 TEST(Option4DnrTest, oneAdnOnlyModeInstance) {
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
     ASSERT_TRUE(option);
 
@@ -73,7 +71,7 @@ TEST(Option4DnrTest, oneAdnOnlyModeInstance) {
 // with adding multiple ADN-only-mode DNR instances to option's DNR instances.
 TEST(Option4DnrTest, multipleAdnOnlyModeInstances) {
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
     ASSERT_TRUE(option);
 
@@ -136,7 +134,7 @@ TEST(Option4DnrTest, multipleAdnOnlyModeInstances) {
 // 2. All fields included (IP addresses and service params also) DNR instance.
 TEST(Option4DnrTest, mixedDnrInstances) {
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
     ASSERT_TRUE(option);
 
@@ -196,7 +194,7 @@ TEST(Option4DnrTest, mixedDnrInstances) {
 // 1. ADN only mode
 TEST(Option4DnrTest, packOneAdnOnlyModeInstance) {
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
     ASSERT_TRUE(option);
 
@@ -237,7 +235,7 @@ TEST(Option4DnrTest, packOneAdnOnlyModeInstance) {
 // 3. ADN only mode
 TEST(Option4DnrTest, packMultipleAdnOnlyModeInstances) {
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
     ASSERT_TRUE(option);
 
@@ -297,7 +295,7 @@ TEST(Option4DnrTest, packMultipleAdnOnlyModeInstances) {
 // 2. All fields included (IP addresses and service params also).
 TEST(Option4DnrTest, packMixedDnrInstances) {
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
     ASSERT_TRUE(option);
 
@@ -364,7 +362,7 @@ TEST(Option4DnrTest, onWireDataCtor) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
 }
@@ -385,7 +383,7 @@ TEST(Option4DnrTest, unpackOneAdnOnly) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
 
@@ -441,7 +439,7 @@ TEST(Option4DnrTest, unpackOneDnrInstance) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
 
@@ -494,7 +492,7 @@ TEST(Option4DnrTest, unpackMixedDnrInstances) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
 
@@ -542,7 +540,7 @@ TEST(Option4DnrTest, unpackTruncatedDnrInstanceDataLen) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -566,7 +564,7 @@ TEST(Option4DnrTest, unpackTruncatedDnrInstanceData) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -590,7 +588,7 @@ TEST(Option4DnrTest, unpackTruncatedAdn) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OpaqueDataTupleError);
     ASSERT_FALSE(option);
 }
@@ -614,7 +612,7 @@ TEST(Option4DnrTest, unpackInvalidFqdnAdn) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), InvalidOptionDnrDomainName);
     ASSERT_FALSE(option);
 }
@@ -637,7 +635,7 @@ TEST(Option4DnrTest, unpackNoFqdnAdn) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), InvalidOptionDnrDomainName);
     ASSERT_FALSE(option);
 }
@@ -665,7 +663,7 @@ TEST(Option4DnrTest, unpackTruncatedIpAddress) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OpaqueDataTupleError);
     ASSERT_FALSE(option);
 }
@@ -692,7 +690,7 @@ TEST(Option4DnrTest, unpackNoIpAddress) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -721,7 +719,7 @@ TEST(Option4DnrTest, unpackIpAddressNon4Modulo) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -751,7 +749,7 @@ TEST(Option4DnrTest, unpackvcParamsInvalidCharKey) {
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
 }
@@ -760,7 +758,7 @@ TEST(Option4DnrTest, unpackvcParamsInvalidCharKey) {
 // toText method is correctly formatted.
 TEST(Option4DnrTest, toText) {
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option4Dnr> option;
+    Option4DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option4Dnr()));
     ASSERT_TRUE(option);
 

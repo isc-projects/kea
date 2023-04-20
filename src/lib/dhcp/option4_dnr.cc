@@ -134,7 +134,7 @@ DnrInstance::DnrInstance(Option::Universe universe,
 }
 
 void
-DnrInstance::packAdn(util::OutputBuffer& buf) const {
+DnrInstance::packAdn(OutputBuffer& buf) const {
     if (!adn_) {
         // This should not happen since Encrypted DNS options are designed
         // to always include an authentication domain name.
@@ -150,7 +150,7 @@ DnrInstance::packAdn(util::OutputBuffer& buf) const {
 }
 
 void
-DnrInstance::packAddresses(util::OutputBuffer& buf) const {
+DnrInstance::packAddresses(OutputBuffer& buf) const {
     AddressContainer::const_iterator address = ip_addresses_.begin();
     while (address != ip_addresses_.end()) {
         buf.writeUint32(address->toUint32());
@@ -159,7 +159,7 @@ DnrInstance::packAddresses(util::OutputBuffer& buf) const {
 }
 
 void
-DnrInstance::packSvcParams(util::OutputBuffer& buf) const {
+DnrInstance::packSvcParams(OutputBuffer& buf) const {
     if (svc_params_length_ > 0) {
         buf.writeData(&(*svc_params_.begin()), svc_params_length_);
     }
@@ -175,7 +175,7 @@ DnrInstance::getAdnAsText() const {
 
 void
 DnrInstance::setAdn(const std::string& adn) {
-    std::string trimmed_adn = isc::util::str::trim(adn);
+    std::string trimmed_adn = str::trim(adn);
     if (trimmed_adn.empty()) {
         isc_throw(InvalidOptionDnrDomainName, "Mandatory Authentication Domain Name fully "
                                               "qualified domain-name must not be empty");
@@ -226,7 +226,7 @@ DnrInstance::unpackAdn(OptionBufferConstIter& begin, OptionBufferConstIter end) 
 
 void
 DnrInstance::checkSvcParams(bool from_wire_data) {
-    std::string svc_params = isc::util::str::trim(svc_params_);
+    std::string svc_params = str::trim(svc_params_);
     if (svc_params.empty()) {
         isc_throw(InvalidOptionDnrSvcParams, "Provided Svc Params field is empty");
     }
@@ -249,16 +249,16 @@ DnrInstance::checkSvcParams(bool from_wire_data) {
     // SvcParams in presentation format MAY appear in any order, but keys MUST NOT be repeated.
 
     // Let's put all elements of a whitespace-separated list into a vector.
-    std::vector<std::string> tokens = isc::util::str::tokens(svc_params, " ");
+    std::vector<std::string> tokens = str::tokens(svc_params, " ");
 
     // Set of keys used to check if a key is not repeated.
     std::set<std::string> keys;
     // String sanitizer is used to check keys syntax.
-    util::str::StringSanitizerPtr sanitizer;
+    str::StringSanitizerPtr sanitizer;
     // SvcParamKeys are lower-case alphanumeric strings. Key names
     // contain 1-63 characters from the ranges "a"-"z", "0"-"9", and "-".
     std::string regex = "[^a-z0-9-]";
-    sanitizer.reset(new util::str::StringSanitizer(regex, ""));
+    sanitizer.reset(new str::StringSanitizer(regex, ""));
     // The service parameters MUST NOT include
     // "ipv4hint" or "ipv6hint" SvcParams as they are superseded by the
     // included IP addresses.
@@ -266,7 +266,7 @@ DnrInstance::checkSvcParams(bool from_wire_data) {
 
     // Now let's check each SvcParamKey=SvcParamValue pair.
     for (const std::string& token : tokens) {
-        std::vector<std::string> key_val = isc::util::str::tokens(token, "=");
+        std::vector<std::string> key_val = str::tokens(token, "=");
         if (key_val.size() > 2) {
             isc_throw(InvalidOptionDnrSvcParams, "Wrong Svc Params syntax - more than one "
                                                  "equals sign found in SvcParamKey=SvcParamValue "

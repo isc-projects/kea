@@ -8,12 +8,10 @@
 
 #include <dhcp/option6_dnr.h>
 
-#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;
-using boost::scoped_ptr;
 
 namespace {
 
@@ -33,7 +31,7 @@ TEST(Option6DnrTest, onWireCtorAdnOnlyMode) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
 
@@ -73,7 +71,7 @@ TEST(Option6DnrTest, onWireCtorDataTruncated) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor throws OutOfRange exception.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -90,7 +88,7 @@ TEST(Option6DnrTest, onWireCtorOnlyWhitespaceFqdn) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor throws InvalidOptionDnrDomainName exception.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), InvalidOptionDnrDomainName);
     ASSERT_FALSE(option);
 }
@@ -108,7 +106,7 @@ TEST(Option6DnrTest, onWireCtorNoAdnFqdn) {
     // Create option instance. Encrypted DNS options are designed to ALWAYS include
     // an authentication domain name, so check that constructor throws
     // InvalidOptionDnrDomainName exception.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), InvalidOptionDnrDomainName);
     ASSERT_FALSE(option);
 }
@@ -125,7 +123,7 @@ TEST(Option6DnrTest, onWireCtorTruncatedFqdn) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor throws OpaqueDataTupleError exception.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), OpaqueDataTupleError);
     ASSERT_FALSE(option);
 }
@@ -145,7 +143,7 @@ TEST(Option6DnrTest, onWireCtorAddrLenTruncated) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor throws OutOfRange exception.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -167,7 +165,7 @@ TEST(Option6DnrTest, onWireCtorAddrLenZero) {
     // Create option instance. Check that constructor throws OutOfRange exception.
     // If additional data is supplied (i.e. not ADN only mode),
     // the option includes at least one valid IP address.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -187,7 +185,7 @@ TEST(Option6DnrTest, onWireCtorAddrLenNot16Modulo) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor throws OutOfRange exception.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -213,7 +211,7 @@ TEST(Option6DnrTest, onWireCtorValidIpV6Addresses) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
 
@@ -268,7 +266,7 @@ TEST(Option6DnrTest, onWireCtorTruncatedIpV6Addresses) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor throws OutOfRange exception.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -291,7 +289,7 @@ TEST(Option6DnrTest, onWireCtorSvcParamsIncluded) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
 
@@ -344,7 +342,7 @@ TEST(Option6DnrTest, onWireCtorSvcParamsInvalidCharKey) {
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor throws InvalidOptionDnrSvcParams exception.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
 }
@@ -357,7 +355,7 @@ TEST(Option6DnrTest, adnOnlyModeCtor) {
     const std::string adn = "myhost.example.com.";
 
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option6Dnr(service_priority, adn)));
     ASSERT_TRUE(option);
 
@@ -393,7 +391,7 @@ TEST(Option6DnrTest, adnOnlyModeCtorNoFqdn) {
     const std::string adn;  // invalid empty ADN
 
     // Create option instance. Check that constructor throws.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn)), InvalidOptionDnrDomainName);
     ASSERT_FALSE(option);
 }
@@ -410,7 +408,7 @@ TEST(Option6DnrTest, allFieldsCtor) {
     const std::string svc_params = "alpn";
 
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)));
     ASSERT_TRUE(option);
 
@@ -449,7 +447,7 @@ TEST(Option6DnrTest, allFieldsCtorNoIpAddress) {
     const std::string svc_params = "alpn";
 
     // Create option instance. Check that constructor throws.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
                  OutOfRange);
     ASSERT_FALSE(option);
@@ -467,7 +465,7 @@ TEST(Option6DnrTest, svcParamsTwoEqualSignsPerParam) {
     const std::string svc_params = "key123=val1=val2 key234";  // invalid svc param - 2 equal signs
 
     // Create option instance. Check that constructor throws.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
                  InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
@@ -485,7 +483,7 @@ TEST(Option6DnrTest, svcParamsForbiddenKey) {
     const std::string svc_params = "key123=val1 ipv6hint";  // forbidden svc param key - ipv6hint
 
     // Create option instance. Check that constructor throws.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
                  InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
@@ -503,7 +501,7 @@ TEST(Option6DnrTest, svcParamsKeyRepeated) {
     const std::string svc_params = "key123=val1 key234 key123";  // svc param key key123 repeated
 
     // Create option instance. Check that constructor throws.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
                  InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
@@ -523,7 +521,7 @@ TEST(Option6DnrTest, svcParamsKeyTooLong) {
                                    "veryveryveryveryvlongkey";  // svc param key longer than 63
 
     // Create option instance. Check that constructor throws.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
                  InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
@@ -541,7 +539,7 @@ TEST(Option6DnrTest, svcParamsKeyHasInvalidChar) {
     const std::string svc_params = "alpn=h2 NOT_ALLOWED_CHARS_KEY=123"; // svc param key has forbidden chars
 
     // Create option instance. Check that constructor throws.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)),
                  InvalidOptionDnrSvcParams);
     ASSERT_FALSE(option);
@@ -558,7 +556,7 @@ TEST(Option6DnrTest, toText) {
     const std::string svc_params = "alpn";
 
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)));
     ASSERT_TRUE(option);
 
@@ -577,7 +575,7 @@ TEST(Option6DnrTest, packAdnOnlyMode) {
     const std::string adn = "myhost.example.com.";
 
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option6Dnr(service_priority, adn)));
     ASSERT_TRUE(option);
 
@@ -616,7 +614,7 @@ TEST(Option6DnrTest, pack) {
     const std::string svc_params = "alpn";
 
     // Create option instance. Check that constructor doesn't throw.
-    scoped_ptr<Option6Dnr> option;
+    Option6DnrPtr option;
     EXPECT_NO_THROW(option.reset(new Option6Dnr(service_priority, adn, addresses, svc_params)));
     ASSERT_TRUE(option);
 
