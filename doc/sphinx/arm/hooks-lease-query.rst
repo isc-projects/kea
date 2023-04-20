@@ -337,21 +337,21 @@ addresses:
     must be explicitly listed.
 
 When a query by IP address does not match an existing address lease,
-a search for a matching delegated prefix is conducted.  This is carried
+a search for a matching delegated prefix is conducted. This is carried
 out by iterating over a list of prefix lengths, in descending order,
 extracting a prefix of that length from the query address and searching
 for a delegation matching the resulting prefix. This continues for each
 length in the list until a match is found or the list is exhausted.
 
-By default, the  list of prefix lengths to use in the search is determined
-dynamically after (re)configuration events.  This resulting list
-will contain unique values of ``delegated-len`` gleaned from the currently
+By default, the list of prefix lengths to use in the search is determined
+dynamically after (re)configuration events. This resulting list will
+contain unique values of ``delegated-len`` gleaned from the currently
 configured set of PD pools.
 
 There is an optional parameter, ``prefix-lengths``, shown above which
 provides the ability to explicitly configure the list rather than having
-it be determined dynamically.  This provides tighter control over which
-prefix lengths are searched.  In the above example, the prefix length
+it be determined dynamically. This provides tighter control over which
+prefix lengths are searched. In the above example, the prefix length
 search will be restricted to single pass, using a length of 72, regardless
 of whether or not there are pools using other values for ``delegated-len``.
 Specifying an empty list, as shown below:
