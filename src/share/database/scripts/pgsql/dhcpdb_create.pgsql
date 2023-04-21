@@ -5651,7 +5651,7 @@ UPDATE schema_version
 
 -- This line starts the schema upgrade to version 15.
 
--- Add relay and remote id colums to DHCPv4 leases.
+-- Add relay and remote id columns to DHCPv4 leases.
 --
 -- Note: these columns are only used for indexes, in particular they are
 -- not exported by lease4 dump as values are also in the user context 

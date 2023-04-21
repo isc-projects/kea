@@ -220,7 +220,7 @@ parseCommandWithArgs(ConstElementPtr& arg, ConstElementPtr command) {
     // Arguments must be a map.
     if (arg->getType() != Element::map) {
         isc_throw(CtrlChannelError,
-                  "invalid command '" << command_name << "': expected "
+                  "invalid command '" << command_name << "': expected '"
                   << CONTROL_ARGUMENTS << "' to be a map, got "
                   << Element::typeToName(arg->getType()) << " instead");
     }

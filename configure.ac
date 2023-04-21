@@ -850,16 +850,6 @@ if test "${pgsql_ssl}" = "yes"; then
     AC_DEFINE([HAVE_PGSQL_SSL], [1], [PostgreSQL was built with OpenSSL support])
 fi
 
-cql_config="no"
-AC_ARG_WITH([cql],
-  [AS_HELP_STRING([--with-cql[[=PATH]]],
-    [path to pkg-config or the Cassandra CQL 'cql_config' script (deprecated)])],
-  [cql_config="$withval"])
-
-if test "${cql_config}" != "no" ; then
-    AC_MSG_ERROR([$CQL_CONFIG Cassandra is no longer supported])
-fi
-
 # Check for log4cplus
 DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
 log4cplus_path="yes"
