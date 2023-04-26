@@ -15,7 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <limits>
+
 #include <string>
 
 using namespace isc::data;

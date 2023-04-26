@@ -894,11 +894,12 @@ public:
     }
 
 
-    /// @brief Checks the value of statistic for a given subnet.
+    /// @brief Checks the value of an integer statistic for a given subnet.
     ///
-    /// @param subnet_id Identifier of a subnet for which statistics should be
-    /// @param name statistic name (e.g. "assigned-addresses", "total-addresses" ...)
+    /// @param subnet_id identifier of a subnet for which the statistic should be checked
+    /// @param name statistic name (e.g. "assigned-addresses", "total-addresses", ...)
     /// @param exp_value expected value of the statistic
+    ///
     /// @return Number of assigned addresses for a subnet.
     void checkSubnetStat(const SubnetID& subnet_id, const std::string& name, int64_t exp_value) const {
         // Retrieve statistics name, e.g. subnet[1234].assigned-addresses.
@@ -906,6 +907,21 @@ public:
         ObservationPtr obs =  StatsMgr::instance().getObservation(stats_name);
         ASSERT_TRUE(obs) << "cannot find: " << stats_name;
         EXPECT_EQ(exp_value, obs->getInteger().first);
+    }
+
+    /// @brief Checks the value of a big integer statistic for a given subnet.
+    ///
+    /// @param subnet_id identifier of a subnet for which the statistic should be checked
+    /// @param name statistic name (e.g. "total-nas", "total-pds", ...)
+    /// @param exp_value expected value of the statistic
+    ///
+    /// @return Number of assigned addresses for a subnet.
+    void checkBigSubnetStat(const SubnetID& subnet_id, const std::string& name, int64_t exp_value) const {
+        // Retrieve statistics name, e.g. subnet[1234].assigned-addresses.
+        const std::string stats_name = StatsMgr::generateName("subnet", subnet_id, name);
+        ObservationPtr obs =  StatsMgr::instance().getObservation(stats_name);
+        ASSERT_TRUE(obs) << "cannot find: " << stats_name;
+        EXPECT_EQ(exp_value, obs->getBigInteger().first);
     }
 };
 

@@ -1717,13 +1717,13 @@ TEST(CfgSubnets6Test, updateStatistics) {
         StatsMgr::generateName("subnet", subnet_id,
                                "total-nas"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getInteger().first);
+    ASSERT_EQ(0, observation->getBigInteger().first);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getInteger().first);
+    ASSERT_EQ(0, observation->getBigInteger().first);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
@@ -1786,24 +1786,24 @@ TEST(CfgSubnets6Test, removeStatistics) {
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-nas"),
-        int64_t(0));
+        int128_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-nas"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getInteger().first);
+    ASSERT_EQ(0, observation->getBigInteger().first);
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"),
-        int64_t(0));
+        int128_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getInteger().first);
+    ASSERT_EQ(0, observation->getBigInteger().first);
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,

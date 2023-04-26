@@ -27,6 +27,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>

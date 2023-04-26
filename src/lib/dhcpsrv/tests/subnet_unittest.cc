@@ -25,13 +25,8 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/pointer_cast.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <gtest/gtest.h>
-#include <limits>
 
-// don't import the entire boost namespace.  It will unexpectedly hide uint8_t
-// for some systems.
-using boost::scoped_ptr;
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -1103,12 +1098,12 @@ TEST(Subnet6Test, Pool6PdgetPoolCapacity) {
     // This is 2^64.
     PoolPtr pool4(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:4::"), 48, 112));
     subnet->addPool(pool4);
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+    EXPECT_EQ(65536 + 4294967296ull + 4294967296ull + (int128_t(1) << 64),
               subnet->getPoolCapacity(Lease::TYPE_PD));
 
     PoolPtr pool5(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:5::"), 48, 112));
     subnet->addPool(pool5);
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+    EXPECT_EQ(65536 + 4294967296ull + 4294967296ull + (int128_t(1) << 64) + (int128_t(1) << 64),
               subnet->getPoolCapacity(Lease::TYPE_PD));
 }
 

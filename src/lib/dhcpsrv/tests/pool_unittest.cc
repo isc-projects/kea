@@ -12,15 +12,12 @@
 #include <dhcpsrv/pool.h>
 #include <testutils/test_to_element.h>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 #include <iostream>
 #include <vector>
 #include <sstream>
 
-using boost::scoped_ptr;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::data;

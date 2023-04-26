@@ -115,16 +115,6 @@ public:
     /// @return vector<Lease6Ptr> Vector of pointers to leases
     std::vector<Lease6Ptr> createLeases6();
 
-    /// @brief Compares a StatsMgr statistic to an expected value
-    ///
-    /// Attempt to fetch the named statistic from the StatsMgr and if
-    /// found, compare its observed value to the given value.
-    /// Fails if the stat is not found or if the values do not match.
-    ///
-    /// @param name StatsMgr name for the statistic to check
-    /// @param expected_value expected value of the statistic
-    void checkStat(const std::string& name, const int64_t expected_value);
-
     /// @brief Compares StatsMgr statistics against an expected list of values
     ///
     /// Iterates over a list of statistic names and expected values, attempting
@@ -668,6 +658,9 @@ public:
     /// @param access database connection string used for recreating the
     /// lease manager.
     void testRecreateWithoutCallbacks(const std::string& access);
+
+    /// @brief Checks that statistic with big integer values are handled correctly.
+    void testBigStats();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string> straddress4_;

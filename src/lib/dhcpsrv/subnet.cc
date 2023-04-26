@@ -23,12 +23,15 @@
 #include <boost/make_shared.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <sstream>
 
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
+
+using namespace std;
 
 namespace {
 
@@ -89,7 +92,7 @@ Subnet::toText() const {
     return (tmp.str());
 }
 
-uint64_t
+uint128_t
 Subnet::getPoolCapacity(Lease::Type type) const {
     switch (type) {
     case Lease::TYPE_V4:
@@ -105,7 +108,7 @@ Subnet::getPoolCapacity(Lease::Type type) const {
     }
 }
 
-uint64_t
+uint128_t
 Subnet::getPoolCapacity(Lease::Type type,
                         const ClientClasses& client_classes) const {
     switch (type) {
@@ -122,7 +125,7 @@ Subnet::getPoolCapacity(Lease::Type type,
     }
 }
 
-uint64_t
+uint128_t
 Subnet::getPoolCapacity(Lease::Type type,
                         const ClientClasses& client_classes,
                         Allocator::PrefixLenMatchType prefix_length_match,
@@ -142,52 +145,53 @@ Subnet::getPoolCapacity(Lease::Type type,
     }
 }
 
-uint64_t
+uint128_t
 Subnet::sumPoolCapacity(const PoolCollection& pools) const {
-    uint64_t sum = 0;
+    uint128_t sum(0);
     for (auto const& p : pools) {
-        uint64_t x = p->getCapacity();
+        uint128_t const c(p->getCapacity());
 
-        // Check if we can add it. If sum + x > uint64::max, then we would have
+        // Check if we can add it. If sum + c > UINT128_MAX, then we would have
         // overflown if we tried to add it.
-        if (x > std::numeric_limits<uint64_t>::max() - sum) {
-            return (std::numeric_limits<uint64_t>::max());
+        if (c > numeric_limits<uint128_t>::max() - sum) {
+            return (numeric_limits<uint128_t>::max());
         }
 
-        sum += x;
+        sum += c;
     }
 
     return (sum);
 }
 
-uint64_t
+uint128_t
 Subnet::sumPoolCapacity(const PoolCollection& pools,
                         const ClientClasses& client_classes) const {
-    uint64_t sum = 0;
+    uint128_t sum(0);
     for (auto const& p : pools) {
         if (!p->clientSupported(client_classes)) {
             continue;
         }
-        uint64_t x = p->getCapacity();
 
-        // Check if we can add it. If sum + x > uint64::max, then we would have
+        uint128_t const c(p->getCapacity());
+
+        // Check if we can add it. If sum + c > UINT128_MAX, then we would have
         // overflown if we tried to add it.
-        if (x > std::numeric_limits<uint64_t>::max() - sum) {
-            return (std::numeric_limits<uint64_t>::max());
+        if (c > numeric_limits<uint128_t>::max() - sum) {
+            return (numeric_limits<uint128_t>::max());
         }
 
-        sum += x;
+        sum += c;
     }
 
     return (sum);
 }
 
-uint64_t
+uint128_t
 Subnet::sumPoolCapacity(const PoolCollection& pools,
                         const ClientClasses& client_classes,
                         Allocator::PrefixLenMatchType prefix_length_match,
                         uint8_t hint_prefix_length) const {
-    uint64_t sum = 0;
+    uint128_t sum(0);
     for (auto const& p : pools) {
         if (!p->clientSupported(client_classes)) {
             continue;
@@ -198,15 +202,15 @@ Subnet::sumPoolCapacity(const PoolCollection& pools,
             continue;
         }
 
-        uint64_t x = p->getCapacity();
+        uint128_t const c(p->getCapacity());
 
-        // Check if we can add it. If sum + x > uint64::max, then we would have
+        // Check if we can add it. If sum + c > UINT128_MAX, then we would have
         // overflown if we tried to add it.
-        if (x > std::numeric_limits<uint64_t>::max() - sum) {
-            return (std::numeric_limits<uint64_t>::max());
+        if (c > numeric_limits<uint128_t>::max() - sum) {
+            return (numeric_limits<uint128_t>::max());
         }
 
-        sum += x;
+        sum += c;
     }
 
     return (sum);

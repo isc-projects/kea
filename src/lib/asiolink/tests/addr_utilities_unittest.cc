@@ -8,6 +8,7 @@
 
 #include <asiolink/addr_utilities.h>
 #include <exceptions/exceptions.h>
+#include <util/bigints.h>
 
 #include <gtest/gtest.h>
 
@@ -18,6 +19,7 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace {
 
@@ -358,13 +360,13 @@ TEST(AddrUtilitiesTest, prefixesInRange) {
     EXPECT_EQ(uint64_t(9223372036854775808ull), prefixesInRange(64, 127));
 
     // How many /128 prefixes are in /64 pool?
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
-              prefixesInRange(64, 128));
+    EXPECT_EQ(uint128_t(1) << 64, prefixesInRange(64, 128));
 
     // Let's go overboard again. How many IPv6 addresses are there?
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
-              prefixesInRange(0, 128));
+    EXPECT_EQ(uint128_t(1) << 127, prefixesInRange(1, 128));
 
+    // Let's go overboard again. How many IPv6 addresses are there?
+    EXPECT_EQ(uint128_t(-1), prefixesInRange(0, 128));
 }
 
 // Checks the function which finds an IPv4 address from input address and offset.

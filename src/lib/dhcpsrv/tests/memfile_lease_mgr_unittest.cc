@@ -4404,4 +4404,9 @@ TEST_F(MemfileLeaseMgrTest, recreateWithoutCallbacks) {
     testRecreateWithoutCallbacks(getConfigString(V4));
 }
 
+TEST_F(MemfileLeaseMgrTest, bigStats) {
+    startBackend(V4);
+    testBigStats();
+}
+
 }  // namespace

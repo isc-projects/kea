@@ -27,12 +27,21 @@ typedef std::map<std::string, int64_t> StatMap;
 ///
 /// @param name StatsMgr name for the statistic to check.
 /// @param expected_value expected value of the statistic.
-inline void checkStat(const std::string& name, const int64_t expected_value) {
-    using namespace isc::stats;
-    ObservationPtr obs = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(obs) << " stat: " << name << " not found ";
-    ASSERT_EQ(expected_value, obs->getInteger().first)
-        << " stat: " << name << " value wrong";
+inline void checkStat(const std::string& name,
+                      const isc::util::int128_t expected_value) {
+    ObservationPtr const obs(isc::stats::StatsMgr::instance().getObservation(name));
+
+    ASSERT_TRUE(obs) << "stat " << name << " not found ";
+    if (obs->getType() == Observation::STAT_INTEGER) {
+        EXPECT_EQ(expected_value, obs->getInteger().first)
+            << " wrong value for stat " << name;
+    } else if (obs->getType() == Observation::STAT_BIG_INTEGER) {
+        EXPECT_EQ(expected_value, obs->getBigInteger().first)
+            << " wrong value for stat " << name;
+    } else {
+        GTEST_FAIL() << "unexpected statistic type: "
+                     << Observation::typeToText(obs->getType());
+    }
 }
 
 /// @brief Check if a statistic does not exists.

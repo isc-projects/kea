@@ -56,7 +56,7 @@ public:
     ///
     /// @param attempts number of attempts for each lease allocation before
     ///        we give up (0 means unlimited)
-    AllocEngine(uint64_t attempts);
+    AllocEngine(isc::util::uint128_t const& attempts);
 
     /// @brief Destructor.
     virtual ~AllocEngine() { }
@@ -64,7 +64,7 @@ public:
 private:
 
     /// @brief number of attempts before we give up lease allocation (0=unlimited)
-    uint64_t attempts_;
+    isc::util::uint128_t attempts_;
 
     /// @brief Hook name indexes (used in hooks callouts)
     int hook_index_lease4_select_; ///< index for lease4_select hook

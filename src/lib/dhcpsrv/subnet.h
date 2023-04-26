@@ -17,6 +17,7 @@
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
+#include <util/bigints.h>
 #include <util/dhcp_space.h>
 #include <util/triplet.h>
 
@@ -28,7 +29,6 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <cstdint>
@@ -176,7 +176,7 @@ public:
     /// @brief Returns the number of possible leases for specified lease type.
     ///
     /// @param type type of the lease
-    uint64_t getPoolCapacity(Lease::Type type) const;
+    isc::util::uint128_t getPoolCapacity(Lease::Type type) const;
 
     /// @brief Returns the number of possible leases for specified lease type
     /// allowed for a client which belongs to classes.
@@ -184,8 +184,8 @@ public:
     /// @param type type of the lease
     /// @param client_classes list of classes the client belongs to
     /// @return number of leases matching lease type and classes
-    uint64_t getPoolCapacity(Lease::Type type,
-                             const ClientClasses& client_classes) const;
+    isc::util::uint128_t getPoolCapacity(Lease::Type type,
+                                         const ClientClasses& client_classes) const;
 
     /// @brief Returns the number of possible leases for specified lease type
     /// allowed for a client which belongs to classes and matching selection
@@ -198,10 +198,10 @@ public:
     /// @param hint_prefix_length the hint prefix length that the client
     /// provided
     /// @return number of leases matching lease type and classes
-    uint64_t getPoolCapacity(Lease::Type type,
-                             const ClientClasses& client_classes,
-                             Allocator::PrefixLenMatchType prefix_length_match,
-                             uint8_t hint_prefix_length) const;
+    isc::util::uint128_t getPoolCapacity(Lease::Type type,
+                                         const ClientClasses& client_classes,
+                                         Allocator::PrefixLenMatchType prefix_length_match,
+                                         uint8_t hint_prefix_length) const;
 
     /// @brief Returns textual representation of the subnet (e.g.
     /// "2001:db8::/64").
@@ -393,15 +393,15 @@ protected:
     ///
     /// @param pools list of pools
     /// @return sum of possible leases
-    uint64_t sumPoolCapacity(const PoolCollection& pools) const;
+    isc::util::uint128_t sumPoolCapacity(const PoolCollection& pools) const;
 
     /// @brief Returns a sum of possible leases in all pools allowing classes.
     ///
     /// @param pools list of pools
     /// @param client_classes list of classes
     /// @return sum of possible/allowed leases
-    uint64_t sumPoolCapacity(const PoolCollection& pools,
-                             const ClientClasses& client_classes) const;
+    isc::util::uint128_t sumPoolCapacity(const PoolCollection& pools,
+                                         const ClientClasses& client_classes) const;
 
     /// @brief Returns a sum of possible leases in all pools allowing classes
     /// and matching selection criteria relative to provided hint prefix length.
@@ -415,10 +415,10 @@ protected:
     /// @param hint_prefix_length the hint prefix length that the client
     /// provided
     /// @return sum of possible/allowed leases
-    uint64_t sumPoolCapacity(const PoolCollection& pools,
-                             const ClientClasses& client_classes,
-                             Allocator::PrefixLenMatchType prefix_length_match,
-                             uint8_t hint_prefix_length) const;
+    isc::util::uint128_t sumPoolCapacity(const PoolCollection& pools,
+                                         const ClientClasses& client_classes,
+                                         Allocator::PrefixLenMatchType prefix_length_match,
+                                         uint8_t hint_prefix_length) const;
 
     /// @brief Checks if the specified pool overlaps with an existing pool.
     ///

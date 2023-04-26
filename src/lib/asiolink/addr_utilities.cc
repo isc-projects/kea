@@ -15,6 +15,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace {
 
@@ -199,7 +200,7 @@ IOAddress getNetmask4(uint8_t len) {
     return (IOAddress(x));
 }
 
-uint64_t
+uint128_t
 addrsInRange(const IOAddress& min, const IOAddress& max) {
     if (min.getFamily() != max.getFamily()) {
         isc_throw(BadValue, "Both addresses have to be the same family");
@@ -349,28 +350,19 @@ prefixLengthFromRange(const IOAddress& min, const IOAddress& max) {
     }
 }
 
-uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
+uint128_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
     if (delegated_len < pool_len) {
         return (0);
     }
 
-    uint64_t count = delegated_len - pool_len;
+    uint8_t const count(delegated_len - pool_len);
 
-    if (count == 0) {
-        // If we want to delegate /64 out of /64 pool, we have only
-        // one prefix.
-        return (1);
-    } else if (count >= 64) {
-        // If the difference is greater than or equal 64, e.g. we want to
-        // delegate /96 out of /16 pool, the number is bigger than we can
-        // express, so we'll stick with maximum value of uint64_t.
-        return (std::numeric_limits<uint64_t>::max());
-    } else {
-        // Now count specifies the exponent (e.g. if the difference between the
-        // delegated and pool length is 4, we have 16 prefixes), so we need
-        // to calculate 2^(count - 1)
-        return ((static_cast<uint64_t>(2)) << (count - 1));
+    if (count == 128) {
+        // One off is the best we can do, unless we promote to uint256_t.
+        return uint128_t(-1);
     }
+
+    return (uint128_t(1) << count);
 }
 
 IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {

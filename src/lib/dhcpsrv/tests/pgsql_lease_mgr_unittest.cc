@@ -1328,5 +1328,8 @@ TEST_F(PgSqlLeaseMgrTest, recreateWithoutCallbacks) {
     testRecreateWithoutCallbacks(validPgSQLConnectionString());
 }
 
+TEST_F(PgSqlLeaseMgrTest, bigStats) {
+    testBigStats();
+}
 
 }  // namespace

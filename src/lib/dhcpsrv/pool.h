@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/ip_range_permutation.h>
+#include <util/bigints.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -84,7 +85,7 @@ public:
     /// Note that this is the upper bound, assuming that no leases are used
     /// and there are no host reservations. This is just a theoretical calculation.
     /// @return number of possible leases in this pool
-    uint64_t getCapacity() const {
+    isc::util::uint128_t getCapacity() const {
         return (capacity_);
     }
 
@@ -208,7 +209,7 @@ protected:
     /// involved, so it is more efficient to calculate it once and just store
     /// the result. Note that for very large pools, the number is capped at
     /// max value of uint64_t.
-    uint64_t capacity_;
+    isc::util::uint128_t capacity_;
 
     /// @brief Pointer to the option data configuration for this pool.
     CfgOptionPtr cfg_option_;

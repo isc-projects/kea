@@ -1339,4 +1339,8 @@ TEST_F(MySqlLeaseMgrTest, recreateWithoutCallbacks) {
     testRecreateWithoutCallbacks(validMySQLConnectionString());
 }
 
+TEST_F(MySqlLeaseMgrTest, bigStats) {
+    testBigStats();
+}
+
 }  // namespace

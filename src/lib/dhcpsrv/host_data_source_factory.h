@@ -10,7 +10,6 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <exceptions/exceptions.h>
-#include <boost/scoped_ptr.hpp>
 
 #include <functional>
 #include <string>

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -205,13 +205,21 @@ public:
     void addValueRow6(ElementPtr value_rows, const SubnetID &subnet_id,
                       int64_t assigned, int64_t declined, int64_t assigned_pds);
 
-    /// @brief Fetches a single statistic for a subnet from StatsMgr
+    /// @brief Fetches a single integer statistic for a subnet from StatsMgr.
     ///
     /// Uses the given id and name to query the StatsMgr for the desired value.
     ///
-    /// @param subnet_id id of the desired subnet
-    /// @param name name of the desired statistic
+    /// @param subnet_id the subnet ID for the desired statistic
+    /// @param name the name of the desired statistic
     int64_t getSubnetStat(const SubnetID& subnet_id, const std::string& name);
+
+    /// @brief Fetches a single bigint statistic for a subnet from StatsMgr.
+    ///
+    /// Uses the given id and name to query the StatsMgr for the desired value.
+    ///
+    /// @param subnet_id the subnet ID for the desired statistic
+    /// @param name the name of the desired statistic
+    int128_t getBigSubnetStat(const SubnetID& subnet_id, const std::string& name);
 };
 
 int
@@ -676,7 +684,7 @@ LeaseStatCmdsImpl::createResultSet(const ElementPtr &result_wrapper,
 
 void
 LeaseStatCmdsImpl::addValueRow4(ElementPtr value_rows, const SubnetID &subnet_id,
-                          int64_t assigned, int64_t declined) {
+                                int64_t assigned, int64_t declined) {
     ElementPtr row = Element::createList();
     row->add(Element::create(static_cast<int64_t>(subnet_id)));
     row->add(Element::create(getSubnetStat(subnet_id, "total-addresses")));
@@ -688,14 +696,14 @@ LeaseStatCmdsImpl::addValueRow4(ElementPtr value_rows, const SubnetID &subnet_id
 
 void
 LeaseStatCmdsImpl::addValueRow6(ElementPtr value_rows, const SubnetID &subnet_id,
-                           int64_t assigned, int64_t declined, int64_t assigned_pds) {
+                                int64_t assigned, int64_t declined, int64_t assigned_pds) {
     ElementPtr row = Element::createList();
     row->add(Element::create(static_cast<int64_t>(subnet_id)));
-    row->add(Element::create(getSubnetStat(subnet_id, "total-nas")));
+    row->add(Element::create(getBigSubnetStat(subnet_id, "total-nas")));
     row->add(Element::create(getSubnetStat(subnet_id, "cumulative-assigned-nas")));
     row->add(Element::create(assigned));
     row->add(Element::create(declined));
-    row->add(Element::create(getSubnetStat(subnet_id, "total-pds")));
+    row->add(Element::create(getBigSubnetStat(subnet_id, "total-pds")));
     row->add(Element::create(getSubnetStat(subnet_id, "cumulative-assigned-pds")));
     row->add(Element::create(assigned_pds));
     value_rows->add(row);
@@ -707,6 +715,17 @@ LeaseStatCmdsImpl::getSubnetStat(const SubnetID& subnet_id, const std::string& n
                           getObservation(StatsMgr::generateName("subnet", subnet_id, name));
     if (stat) {
         return (stat->getInteger().first);
+    }
+
+    return (0);
+}
+
+int128_t
+LeaseStatCmdsImpl::getBigSubnetStat(const SubnetID& subnet_id, const std::string& name) {
+    ObservationPtr stat = StatsMgr::instance().
+                          getObservation(StatsMgr::generateName("subnet", subnet_id, name));
+    if (stat) {
+        return (stat->getBigInteger().first);
     }
 
     return (0);

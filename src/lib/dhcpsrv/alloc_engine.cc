@@ -35,7 +35,6 @@
 #include <boost/make_shared.hpp>
 
 #include <algorithm>
-#include <limits>
 #include <sstream>
 #include <stdint.h>
 #include <string.h>
@@ -90,7 +89,7 @@ AllocEngineHooks Hooks;
 namespace isc {
 namespace dhcp {
 
-AllocEngine::AllocEngine(uint64_t attempts)
+AllocEngine::AllocEngine(uint128_t const& attempts)
     : attempts_(attempts), incomplete_v4_reclamations_(0),
       incomplete_v6_reclamations_(0) {
 
@@ -969,17 +968,21 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
         // - we find a free address
         // - we find an address for which the lease has expired
         // - we exhaust number of tries
-        uint64_t possible_attempts = subnet->getPoolCapacity(ctx.currentIA().type_,
-                                                             classes,
-                                                             prefix_length_match,
-                                                             hint_prefix_length);
+        uint128_t const possible_attempts =
+            subnet->getPoolCapacity(ctx.currentIA().type_,
+                                    classes,
+                                    prefix_length_match,
+                                    hint_prefix_length);
 
         // If the number of tries specified in the allocation engine constructor
         // is set to 0 (unlimited) or the pools capacity is lower than that number,
         // let's use the pools capacity as the maximum number of tries. Trying
         // more than the actual pools capacity is a waste of time. If the specified
         // number of tries is lower than the pools capacity, use that number.
-        uint64_t max_attempts = ((attempts_ == 0) || (possible_attempts < attempts_)) ? possible_attempts : attempts_;
+        uint128_t const max_attempts =
+            (attempts_ == 0 || possible_attempts < attempts_) ?
+                possible_attempts :
+                attempts_;
 
         if (max_attempts > 0) {
             // If max_attempts is greater than 0, there are some pools in this subnet
@@ -4360,7 +4363,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
     Subnet4Ptr original_subnet = subnet;
 
-    uint64_t total_attempts = 0;
+    uint128_t total_attempts = 0;
 
     // The following counter tracks the number of subnets with matching client
     // classes from which the allocation engine attempted to assign leases.
@@ -4377,7 +4380,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             client_id = ctx.clientid_;
         }
 
-        uint64_t possible_attempts =
+        uint128_t const possible_attempts =
             subnet->getPoolCapacity(Lease::TYPE_V4, classes);
 
         // If the number of tries specified in the allocation engine constructor
@@ -4385,7 +4388,10 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         // let's use the pools capacity as the maximum number of tries. Trying
         // more than the actual pools capacity is a waste of time. If the specified
         // number of tries is lower than the pools capacity, use that number.
-        uint64_t max_attempts = ((attempts_ == 0 || possible_attempts < attempts_) ? possible_attempts : attempts_);
+        uint128_t const max_attempts =
+            (attempts_ == 0 || possible_attempts < attempts_) ?
+                possible_attempts :
+                attempts_;
 
         if (max_attempts > 0) {
             // If max_attempts is greater than 0, there are some pools in this subnet
@@ -4402,7 +4408,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
         CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
-        for (uint64_t i = 0; i < max_attempts; ++i) {
+        for (uint128_t i = 0; i < max_attempts; ++i) {
 
             ++total_attempts;
 

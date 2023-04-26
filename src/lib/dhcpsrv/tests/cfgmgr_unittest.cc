@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,8 +17,6 @@
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -35,10 +33,6 @@ using namespace isc::util;
 using namespace isc::stats;
 using namespace isc::process;
 using namespace isc;
-
-// don't import the entire boost namespace.  It will unexpectedly hide uint8_t
-// for some systems.
-using boost::scoped_ptr;
 
 namespace {
 
@@ -593,7 +587,7 @@ TEST_F(CfgMgrTest, commitStats4) {
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-addresses", int64_t(256));
     stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
 
     // Now, let's change the configuration to something new.
@@ -646,7 +640,7 @@ TEST_F(CfgMgrTest, mergeIntoCurrentStats4) {
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-addresses", int64_t(256));
     stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
 
     // There should be no stats for subnet 42 at this point.
@@ -705,7 +699,7 @@ TEST_F(CfgMgrTest, clearStats4) {
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-addresses", int64_t(256));
     stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
 
     // The stats should be there.
@@ -733,10 +727,10 @@ TEST_F(CfgMgrTest, commitStats6) {
     CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-nas", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-nas", int128_t(256));
     stats_mgr.setValue("subnet[123].assigned-nas", static_cast<int64_t>(150));
 
-    stats_mgr.addValue("subnet[123].total-pds", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-pds", int128_t(256));
     stats_mgr.setValue("subnet[123].assigned-pds", static_cast<int64_t>(150));
 
     // Now, let's change the configuration to something new.
@@ -774,7 +768,7 @@ TEST_F(CfgMgrTest, commitStats6) {
     ObservationPtr total_addrs;
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-nas"));
     ASSERT_TRUE(total_addrs);
-    EXPECT_EQ(128, total_addrs->getInteger().first);
+    EXPECT_EQ(128, total_addrs->getBigInteger().first);
     EXPECT_TRUE(total_addrs->getMaxSampleCount().first);
     EXPECT_EQ(14, total_addrs->getMaxSampleCount().second);
     EXPECT_FALSE(total_addrs->getMaxSampleAge().first);
@@ -783,7 +777,7 @@ TEST_F(CfgMgrTest, commitStats6) {
     ObservationPtr total_prfx;
     EXPECT_NO_THROW(total_prfx = stats_mgr.getObservation("subnet[42].total-pds"));
     ASSERT_TRUE(total_prfx);
-    EXPECT_EQ(65536, total_prfx->getInteger().first);
+    EXPECT_EQ(65536, total_prfx->getBigInteger().first);
     EXPECT_TRUE(total_prfx->getMaxSampleCount().first);
     EXPECT_EQ(14, total_prfx->getMaxSampleCount().second);
     EXPECT_FALSE(total_prfx->getMaxSampleAge().first);
@@ -856,11 +850,11 @@ TEST_F(CfgMgrTest, DISABLED_mergeIntoCurrentStats6) {
     ObservationPtr total_addrs;
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-nas"));
     ASSERT_TRUE(total_addrs);
-    EXPECT_EQ(128, total_addrs->getInteger().first);
+    EXPECT_EQ(128, total_addrs->getBigInteger().first);
 
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-pds"));
     ASSERT_TRUE(total_addrs);
-    EXPECT_EQ(65536, total_addrs->getInteger().first);
+    EXPECT_EQ(65536, total_addrs->getBigInteger().first);
 }
 
 // This test verifies that once the configuration is cleared, the v6 statistics

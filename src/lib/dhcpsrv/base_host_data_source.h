@@ -13,6 +13,7 @@
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
 
+#include <limits>
 #include <vector>
 
 namespace isc {

@@ -8,6 +8,7 @@
 #define ADDR_UTILITIES_H
 
 #include <asiolink/io_address.h>
+#include <util/bigints.h>
 
 namespace isc {
 namespace asiolink {
@@ -54,7 +55,7 @@ IOAddress getNetmask4(uint8_t len);
 /// @param min the first address in range
 /// @param max the last address in range
 /// @return number of addresses in range
-uint64_t addrsInRange(const IOAddress& min, const IOAddress& max);
+isc::util::uint128_t addrsInRange(const IOAddress& min, const IOAddress& max);
 
 /// @brief Returns prefix length from the specified range (min - max).
 ///
@@ -78,7 +79,7 @@ int prefixLengthFromRange(const IOAddress& min, const IOAddress& max);
 /// @param pool_len length of the pool in bits
 /// @param delegated_len length of the prefixes to be delegated from the pool
 /// @return number of prefixes in range
-uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len);
+isc::util::uint128_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len);
 
 /// @brief Finds the address increased by offset.
 ///
@@ -92,7 +93,7 @@ uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len);
 /// @return address being offset greater than the input address
 IOAddress offsetAddress(const IOAddress& addr, uint64_t offset);
 
-};
-};
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // ADDR_UTILITIES_H

@@ -11,6 +11,8 @@
 #include <dhcpsrv/parsers/multi_threading_config_parser.h>
 #include <util/multi_threading_mgr.h>
 
+#include <limits>
+
 using namespace isc::data;
 using namespace isc::util;
 

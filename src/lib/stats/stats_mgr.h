@@ -9,6 +9,8 @@
 
 #include <stats/observation.h>
 #include <stats/context.h>
+#include <util/bigints.h>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -79,6 +81,13 @@ public:
     /// @throw InvalidStatType if statistic is not integer
     void setValue(const std::string& name, const int64_t value);
 
+    /// @brief Records an absolute big integer observation.
+    ///
+    /// @param name name of the observation
+    /// @param value integer value observed
+    /// @throw InvalidStatType if statistic is not integer
+    void setValue(const std::string& name, const isc::util::int128_t& value);
+
     /// @brief Records absolute floating point observation.
     ///
     /// @param name name of the observation
@@ -106,6 +115,13 @@ public:
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
     void addValue(const std::string& name, const int64_t value);
+
+    /// @brief Records an incremental big integer observation.
+    ///
+    /// @param name name of the observation
+    /// @param value integer value observed
+    /// @throw InvalidStatType if statistic is not integer
+    void addValue(const std::string& name, const isc::util::int128_t& value);
 
     /// @brief Records incremental floating point observation.
     ///

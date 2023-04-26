@@ -553,8 +553,7 @@ CfgSubnets4::updateStatistics() {
 
         stats_mgr.setValue(StatsMgr::
                            generateName("subnet", subnet_id, "total-addresses"),
-                                        static_cast<int64_t>
-                                        (subnet4->getPoolCapacity(Lease::TYPE_V4)));
+                                        int64_t(subnet4->getPoolCapacity(Lease::TYPE_V4)));
         std::string name =
             StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-addresses");
         if (!stats_mgr.getObservation(name)) {

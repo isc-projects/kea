@@ -16,7 +16,9 @@
 #include <dhcpsrv/testutils/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
+#include <stats/testutils/stats_test_utils.h>
 #include <testutils/gtest_utils.h>
+#include <util/bigints.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -31,6 +33,11 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::db;
+using namespace isc::stats;
+using namespace isc::util;
+
+using isc::stats::test::checkStat;
+
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -75,6 +82,17 @@ GenericLeaseMgrTest::GenericLeaseMgrTest()
         /// a template
         leasetype6_.push_back(LEASETYPE6[i]);
     }
+
+    // Clear all subnets defined in previous tests.
+    for (Subnet4Ptr const& subnet : *CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll()) {
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->del(subnet);
+    }
+    for (Subnet6Ptr const& subnet : *CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll()) {
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->del(subnet);
+    }
+
+    // Clear all stats.
+    StatsMgr::instance().removeAll();
 }
 
 GenericLeaseMgrTest::~GenericLeaseMgrTest() {
@@ -2855,17 +2873,6 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
 }
 
 void
-GenericLeaseMgrTest::checkStat(const std::string& name,
-                               const int64_t expected_value) {
-    stats::ObservationPtr obs =
-        stats::StatsMgr::instance().getObservation(name);
-
-    ASSERT_TRUE(obs) << " stat: " << name << " not found ";
-    ASSERT_EQ(expected_value, obs->getInteger().first)
-                << " stat: " << name << " value wrong";
-}
-
-void
 GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
     // Global accumulators
     int64_t declined_addresses = 0;
@@ -3062,7 +3069,6 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 }
-
 
 void
 GenericLeaseMgrTest::testRecountLeaseStats6() {
@@ -4575,6 +4581,44 @@ GenericLeaseMgrTest::testRecreateWithoutCallbacks(const std::string& access) {
     Lease4Ptr lease = initializeLease4(straddress4_[1]);
     EXPECT_TRUE(lmptr_->addLease(lease));
     EXPECT_TRUE(logs_.empty());
+}
+
+void
+GenericLeaseMgrTest::testBigStats() {
+    StatValMapList expected_stats(1);
+
+    // Create the largest possible subnet with the largest possible IPv4 pool.
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("0.0.0.0"), 1, 1, 2, 3, 1));
+    subnet4->addPool(Pool4Ptr(new Pool4(IOAddress("0.0.0.0"), 1)));
+    expected_stats[0]["total-addresses"] = 2147483648;
+
+    // Create the largest possible subnet with the largest possible IA_NA pool.
+    Subnet6Ptr subnet6(new Subnet6(IOAddress("::"), 1, 1, 2, 3, 4, 1));
+    subnet6->addPool(Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("::"), 1)));
+
+    // Add the largest possible IA_PD pool.
+    subnet6->addPool(Pool6Ptr(new Pool6(Lease::TYPE_PD, IOAddress("8000::"), 1)));
+
+    // Commit the subnets to the configurations.
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet4);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet6);
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Create the expected stats list. At this point, the only stats
+    // that should be non-zero are total-addresses, total-nas, total-pds.
+    expected_stats[0]["assigned-nas"] = 0;
+    expected_stats[0]["declined-addresses"] = 0;
+    expected_stats[0]["reclaimed-declined-addresses"] = 0;
+    expected_stats[0]["assigned-pds"] = 0;
+    expected_stats[0]["reclaimed-leases"] = 0;
+
+    // Make sure stats are as expected.
+    ASSERT_NO_THROW(checkLeaseStats(expected_stats));
+
+    // Check the big integers separately.
+    int128_t const two_to_the_power_of_127(int128_t(1) << 127);
+    checkStat(StatsMgr::generateName("subnet", 1, "total-nas"), two_to_the_power_of_127);
+    checkStat(StatsMgr::generateName("subnet", 1, "total-pds"), two_to_the_power_of_127);
 }
 
 }  // namespace test

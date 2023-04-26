@@ -450,13 +450,11 @@ CfgSubnets6::updateStatistics() {
 
         stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
                                                   "total-nas"),
-                           static_cast<int64_t>
-                           (subnet6->getPoolCapacity(Lease::TYPE_NA)));
+                           subnet6->getPoolCapacity(Lease::TYPE_NA));
 
         stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
                                                   "total-pds"),
-                            static_cast<int64_t>
-                            (subnet6->getPoolCapacity(Lease::TYPE_PD)));
+                           subnet6->getPoolCapacity(Lease::TYPE_PD));
 
         const std::string& name_nas =
             StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-nas");

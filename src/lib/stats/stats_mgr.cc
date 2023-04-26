@@ -11,7 +11,10 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <util/multi_threading_mgr.h>
+#include <util/bigints.h>
+
 #include <boost/make_shared.hpp>
+
 #include <chrono>
 
 using namespace std;
@@ -35,92 +38,68 @@ StatsMgr::StatsMgr() :
 
 void
 StatsMgr::setValue(const string& name, const int64_t value) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        setValueInternal(name, value);
-    } else {
-        setValueInternal(name, value);
-    }
+    MultiThreadingLock lock(*mutex_);
+    setValueInternal(name, value);
+}
+
+void
+StatsMgr::setValue(const string& name, const int128_t& value) {
+    MultiThreadingLock lock(*mutex_);
+    setValueInternal(name, value);
 }
 
 void
 StatsMgr::setValue(const string& name, const double value) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        setValueInternal(name, value);
-    } else {
-        setValueInternal(name, value);
-    }
+    MultiThreadingLock lock(*mutex_);
+    setValueInternal(name, value);
 }
 
 void
 StatsMgr::setValue(const string& name, const StatsDuration& value) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        setValueInternal(name, value);
-    } else {
-        setValueInternal(name, value);
-    }
+    MultiThreadingLock lock(*mutex_);
+    setValueInternal(name, value);
 }
 
 void
 StatsMgr::setValue(const string& name, const string& value) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        setValueInternal(name, value);
-    } else {
-        setValueInternal(name, value);
-    }
+    MultiThreadingLock lock(*mutex_);
+    setValueInternal(name, value);
 }
 
 void
 StatsMgr::addValue(const string& name, const int64_t value) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        addValueInternal(name, value);
-    } else {
-        addValueInternal(name, value);
-    }
+    MultiThreadingLock lock(*mutex_);
+    addValueInternal(name, value);
+}
+
+void
+StatsMgr::addValue(const string& name, const int128_t& value) {
+    MultiThreadingLock lock(*mutex_);
+    addValueInternal(name, value);
 }
 
 void
 StatsMgr::addValue(const string& name, const double value) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        addValueInternal(name, value);
-    } else {
-        addValueInternal(name, value);
-    }
+    MultiThreadingLock lock(*mutex_);
+    addValueInternal(name, value);
 }
 
 void
 StatsMgr::addValue(const string& name, const StatsDuration& value) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        addValueInternal(name, value);
-    } else {
-        addValueInternal(name, value);
-    }
+    MultiThreadingLock lock(*mutex_);
+    addValueInternal(name, value);
 }
 
 void
 StatsMgr::addValue(const string& name, const string& value) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        addValueInternal(name, value);
-    } else {
-        addValueInternal(name, value);
-    }
+    MultiThreadingLock lock(*mutex_);
+    addValueInternal(name, value);
 }
 
 ObservationPtr
 StatsMgr::getObservation(const string& name) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (getObservationInternal(name));
-    } else {
-        return (getObservationInternal(name));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (getObservationInternal(name));
 }
 
 ObservationPtr
@@ -132,12 +111,8 @@ StatsMgr::getObservationInternal(const string& name) const {
 
 void
 StatsMgr::addObservation(const ObservationPtr& stat) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        addObservationInternal(stat);
-    } else {
-        addObservationInternal(stat);
-    }
+    MultiThreadingLock lock(*mutex_);
+    addObservationInternal(stat);
 }
 
 void
@@ -149,12 +124,8 @@ StatsMgr::addObservationInternal(const ObservationPtr& stat) {
 
 bool
 StatsMgr::deleteObservation(const string& name) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (deleteObservationInternal(name));
-    } else {
-        return (deleteObservationInternal(name));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (deleteObservationInternal(name));
 }
 
 bool
@@ -166,12 +137,8 @@ StatsMgr::deleteObservationInternal(const string& name) {
 
 bool
 StatsMgr::setMaxSampleAge(const string& name, const StatsDuration& duration) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (setMaxSampleAgeInternal(name, duration));
-    } else {
-        return (setMaxSampleAgeInternal(name, duration));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (setMaxSampleAgeInternal(name, duration));
 }
 
 bool
@@ -187,12 +154,8 @@ StatsMgr::setMaxSampleAgeInternal(const string& name,
 
 bool
 StatsMgr::setMaxSampleCount(const string& name, uint32_t max_samples) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (setMaxSampleCountInternal(name, max_samples));
-    } else {
-        return (setMaxSampleCountInternal(name, max_samples));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (setMaxSampleCountInternal(name, max_samples));
 }
 
 bool
@@ -208,12 +171,8 @@ StatsMgr::setMaxSampleCountInternal(const string& name,
 
 void
 StatsMgr::setMaxSampleAgeAll(const StatsDuration& duration) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        setMaxSampleAgeAllInternal(duration);
-    } else {
-        setMaxSampleAgeAllInternal(duration);
-    }
+    MultiThreadingLock lock(*mutex_);
+    setMaxSampleAgeAllInternal(duration);
 }
 
 void
@@ -223,12 +182,8 @@ StatsMgr::setMaxSampleAgeAllInternal(const StatsDuration& duration) {
 
 void
 StatsMgr::setMaxSampleCountAll(uint32_t max_samples) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        setMaxSampleCountAllInternal(max_samples);
-    } else {
-        setMaxSampleCountAllInternal(max_samples);
-    }
+    MultiThreadingLock lock(*mutex_);
+    setMaxSampleCountAllInternal(max_samples);
 }
 
 void
@@ -238,12 +193,8 @@ StatsMgr::setMaxSampleCountAllInternal(uint32_t max_samples) {
 
 void
 StatsMgr::setMaxSampleAgeDefault(const StatsDuration& duration) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        setMaxSampleAgeDefaultInternal(duration);
-    } else {
-        setMaxSampleAgeDefaultInternal(duration);
-    }
+    MultiThreadingLock lock(*mutex_);
+    setMaxSampleAgeDefaultInternal(duration);
 }
 
 void
@@ -253,12 +204,8 @@ StatsMgr::setMaxSampleAgeDefaultInternal(const StatsDuration& duration) {
 
 void
 StatsMgr::setMaxSampleCountDefault(uint32_t max_samples) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        setMaxSampleCountDefaultInternal(max_samples);
-    } else {
-        setMaxSampleCountDefaultInternal(max_samples);
-    }
+    MultiThreadingLock lock(*mutex_);
+    setMaxSampleCountDefaultInternal(max_samples);
 }
 
 void
@@ -268,12 +215,8 @@ StatsMgr::setMaxSampleCountDefaultInternal(uint32_t max_samples) {
 
 const StatsDuration&
 StatsMgr::getMaxSampleAgeDefault() const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (getMaxSampleAgeDefaultInternal());
-    } else {
-        return (getMaxSampleAgeDefaultInternal());
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (getMaxSampleAgeDefaultInternal());
 }
 
 const StatsDuration&
@@ -283,12 +226,8 @@ StatsMgr::getMaxSampleAgeDefaultInternal() const {
 
 uint32_t
 StatsMgr::getMaxSampleCountDefault() const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (getMaxSampleCountDefaultInternal());
-    } else {
-        return (getMaxSampleCountDefaultInternal());
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (getMaxSampleCountDefaultInternal());
 }
 
 uint32_t
@@ -298,12 +237,8 @@ StatsMgr::getMaxSampleCountDefaultInternal() const {
 
 bool
 StatsMgr::reset(const string& name) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (resetInternal(name));
-    } else {
-        return (resetInternal(name));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (resetInternal(name));
 }
 
 bool
@@ -318,12 +253,8 @@ StatsMgr::resetInternal(const string& name) {
 
 bool
 StatsMgr::del(const string& name) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (delInternal(name));
-    } else {
-        return (delInternal(name));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (delInternal(name));
 }
 
 bool
@@ -333,12 +264,8 @@ StatsMgr::delInternal(const string& name) {
 
 void
 StatsMgr::removeAll() {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        removeAllInternal();
-    } else {
-        removeAllInternal();
-    }
+    MultiThreadingLock lock(*mutex_);
+    removeAllInternal();
 }
 
 void
@@ -348,12 +275,8 @@ StatsMgr::removeAllInternal() {
 
 ConstElementPtr
 StatsMgr::get(const string& name) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (getInternal(name));
-    } else {
-        return (getInternal(name));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (getInternal(name));
 }
 
 ConstElementPtr
@@ -368,12 +291,8 @@ StatsMgr::getInternal(const string& name) const {
 
 ConstElementPtr
 StatsMgr::getAll() const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (getAllInternal());
-    } else {
-        return (getAllInternal());
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (getAllInternal());
 }
 
 ConstElementPtr
@@ -383,12 +302,8 @@ StatsMgr::getAllInternal() const {
 
 void
 StatsMgr::resetAll() {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        resetAllInternal();
-    } else {
-        resetAllInternal();
-    }
+    MultiThreadingLock lock(*mutex_);
+    resetAllInternal();
 }
 
 void
@@ -398,12 +313,8 @@ StatsMgr::resetAllInternal() {
 
 size_t
 StatsMgr::getSize(const string& name) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (getSizeInternal(name));
-    } else {
-        return (getSizeInternal(name));
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (getSizeInternal(name));
 }
 
 size_t
@@ -417,12 +328,8 @@ StatsMgr::getSizeInternal(const string& name) const {
 
 size_t
 StatsMgr::count() const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        return (countInternal());
-    } else {
-        return (countInternal());
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (countInternal());
 }
 
 size_t
@@ -545,16 +452,10 @@ StatsMgr::statisticSetMaxSampleAgeAllHandler(const ConstElementPtr& params) {
     if (!StatsMgr::getStatDuration(params, duration, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        StatsMgr::instance().setMaxSampleCountDefaultInternal(0);
-        StatsMgr::instance().setMaxSampleAgeDefaultInternal(duration);
-        StatsMgr::instance().setMaxSampleAgeAllInternal(duration);
-    } else {
-        StatsMgr::instance().setMaxSampleCountDefaultInternal(0);
-        StatsMgr::instance().setMaxSampleAgeDefaultInternal(duration);
-        StatsMgr::instance().setMaxSampleAgeAllInternal(duration);
-    }
+    MultiThreadingLock lock(*mutex_);
+    StatsMgr::instance().setMaxSampleCountDefaultInternal(0);
+    StatsMgr::instance().setMaxSampleAgeDefaultInternal(duration);
+    StatsMgr::instance().setMaxSampleAgeAllInternal(duration);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics duration limit are set."));
 }
@@ -570,14 +471,9 @@ StatsMgr::statisticSetMaxSampleCountAllHandler(const ConstElementPtr& params) {
         error = "'max-samples' parameter must not be zero";
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (MultiThreadingMgr::instance().getMode()) {
-        lock_guard<mutex> lock(*mutex_);
-        StatsMgr::instance().setMaxSampleCountDefaultInternal(max_samples);
-        StatsMgr::instance().setMaxSampleCountAllInternal(max_samples);
-    } else {
-        StatsMgr::instance().setMaxSampleCountDefaultInternal(max_samples);
-        StatsMgr::instance().setMaxSampleCountAllInternal(max_samples);
-    }
+    MultiThreadingLock lock(*mutex_);
+    StatsMgr::instance().setMaxSampleCountDefaultInternal(max_samples);
+    StatsMgr::instance().setMaxSampleCountAllInternal(max_samples);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics count limit are set."));
 }
