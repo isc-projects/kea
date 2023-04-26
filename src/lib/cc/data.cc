@@ -102,6 +102,11 @@ Element::setValue(const long long int) {
 }
 
 bool
+Element::setValue(isc::util::int128_t const&) {
+    return (false);
+}
+
+bool
 Element::setValue(const double) {
     return (false);
 }
@@ -245,6 +250,11 @@ Element::create(const Position& pos) {
 ElementPtr
 Element::create(const long long int i, const Position& pos) {
     return (ElementPtr(new IntElement(static_cast<int64_t>(i), pos)));
+}
+
+ElementPtr
+Element::create(const isc::util::int128_t& i, const Position& pos) {
+    return (ElementPtr(new BigIntElement(i, pos)));
 }
 
 ElementPtr
@@ -622,6 +632,8 @@ Element::typeToName(Element::types type) {
     switch (type) {
     case Element::integer:
         return (std::string("integer"));
+    case Element::bigint:
+        return (std::string("bigint"));
     case Element::real:
         return (std::string("real"));
     case Element::boolean:
@@ -645,6 +657,8 @@ Element::types
 Element::nameToType(const std::string& type_name) {
     if (type_name == "integer") {
         return (Element::integer);
+    } else if (type_name == "bigint") {
+        return (Element::bigint);
     } else if (type_name == "real") {
         return (Element::real);
     } else if (type_name == "boolean") {
@@ -799,6 +813,11 @@ Element::fromJSONFile(const std::string& file_name, bool preproc) {
 void
 IntElement::toJSON(std::ostream& ss) const {
     ss << intValue();
+}
+
+void
+BigIntElement::toJSON(std::ostream& ss) const {
+    ss << bigIntValue();
 }
 
 void
@@ -981,8 +1000,24 @@ MapElement::find(const std::string& id, ConstElementPtr& t) const {
 
 bool
 IntElement::equals(const Element& other) const {
-    return (other.getType() == Element::integer) &&
-           (i == other.intValue());
+    // Let's not be very picky with constraining the integer types to be the
+    // same. Equality is sometimes checked from high-up in the Element hierarcy.
+    // That is a context which, most of the time, does not have information on
+    // the type of integers stored on Elements lower in the hierarchy. So it
+    // would be difficult to differentiate between the integer types.
+    return (other.getType() == Element::integer && i == other.intValue()) ||
+           (other.getType() == Element::bigint && i == other.bigIntValue());
+}
+
+bool
+BigIntElement::equals(const Element& other) const {
+    // Let's not be very picky with constraining the integer types to be the
+    // same. Equality is sometimes checked from high-up in the Element hierarcy.
+    // That is a context which, most of the time, does not have information on
+    // the type of integers stored on Elements lower in the hierarchy. So it
+    // would be difficult to differentiate between the integer types.
+    return (other.getType() == Element::bigint && i_ == other.bigIntValue()) ||
+           (other.getType() == Element::integer && i_ == other.intValue());
 }
 
 bool

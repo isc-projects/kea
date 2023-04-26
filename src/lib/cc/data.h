@@ -7,6 +7,8 @@
 #ifndef ISC_DATA_H
 #define ISC_DATA_H 1
 
+#include <util/bigints.h>
+
 #include <iostream>
 #include <map>
 #include <stdexcept>
@@ -126,9 +128,25 @@ public:
         return (position);
     }
 
-    // any is a special type used in list specifications, specifying
-    // that the elements can be of any type
-    enum types { integer, real, boolean, null, string, list, map, any };
+    /// @brief The types that an Element can hold
+    ///
+    /// Some of these types need to match their associated integer from the
+    /// parameter_data_type database table, so let the enums be explicitly
+    /// mapped to integers, to reduce the chance of messing up.
+    ///
+    /// any is a special type used in list specifications, specifying that the
+    /// elements can be of any type.
+    enum types {
+        integer = 0,
+        real = 1,
+        boolean = 2,
+        null = 3,
+        string = 4,
+        bigint = 5,
+        list = 6,
+        map = 7,
+        any = 8,
+    };
 
 private:
     // technically the type could be omitted; is it useful?
@@ -214,6 +232,9 @@ public:
     //@{
     virtual int64_t intValue() const
     { throwTypeError("intValue() called on non-integer Element"); };
+    virtual isc::util::int128_t bigIntValue() const {
+        throwTypeError("bigIntValue() called on non-big-integer Element");
+    }
     virtual double doubleValue() const
     { throwTypeError("doubleValue() called on non-double Element"); };
     virtual bool boolValue() const
@@ -258,6 +279,7 @@ public:
     ///        long long int, long int and int.
     //@{
     virtual bool setValue(const long long int v);
+    virtual bool setValue(const isc::util::int128_t& v);
     bool setValue(const long int i) { return (setValue(static_cast<long long int>(i))); };
     bool setValue(const int i) { return (setValue(static_cast<long long int>(i))); };
     virtual bool setValue(const double v);
@@ -375,6 +397,8 @@ public:
     //@{
     static ElementPtr create(const Position& pos = ZERO_POSITION());
     static ElementPtr create(const long long int i,
+                             const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const isc::util::int128_t& i,
                              const Position& pos = ZERO_POSITION());
     static ElementPtr create(const int i,
                              const Position& pos = ZERO_POSITION());
@@ -599,6 +623,45 @@ public:
     bool setValue(long long int v) { i = v; return (true); }
     void toJSON(std::ostream& ss) const;
     bool equals(const Element& other) const;
+};
+
+/// @brief Wrapper over int128_t
+class BigIntElement : public Element {
+    using int128_t = isc::util::int128_t;
+    using Element::getValue;
+    using Element::setValue;
+
+public:
+    /// @brief Constructor
+    BigIntElement(const int128_t& v, const Position& pos = ZERO_POSITION())
+        : Element(bigint, pos), i_(v) {
+    }
+
+    /// @brief Retrieve the underlying big integer value.
+    ///
+    /// @return the underlying value
+    int128_t bigIntValue() const override {
+        return (i_);
+    }
+
+    /// @brief Sets the underlying big integer value.
+    ///
+    /// @return true for no reason
+    bool setValue(const int128_t& v) override {
+        i_ = v;
+        return (true);
+    }
+
+    /// @brief Converts the Element to JSON format and appends it to the given
+    /// stringstream.
+    void toJSON(std::ostream& ss) const override;
+
+    /// @brief Checks whether the other Element has the same type and value.
+    bool equals(const Element& other) const override;
+
+private:
+    /// @brief the underlying stored value
+    int128_t i_;
 };
 
 class DoubleElement : public Element {

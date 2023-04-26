@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,6 +55,7 @@ TEST(Element, type) {
 
 TEST(Element, TypeNameConversion) {
     EXPECT_EQ(Element::integer, Element::nameToType("integer"));
+    EXPECT_EQ(Element::bigint, Element::nameToType("bigint"));
     EXPECT_EQ(Element::real, Element::nameToType("real"));
     EXPECT_EQ(Element::boolean, Element::nameToType("boolean"));
     EXPECT_EQ(Element::string, Element::nameToType("string"));
@@ -65,6 +66,7 @@ TEST(Element, TypeNameConversion) {
     EXPECT_THROW(Element::nameToType("somethingunknown"), TypeError);
 
     EXPECT_EQ("integer", Element::typeToName(Element::integer));
+    EXPECT_EQ("bigint", Element::typeToName(Element::bigint));
     EXPECT_EQ("real", Element::typeToName(Element::real));
     EXPECT_EQ("boolean", Element::typeToName(Element::boolean));
     EXPECT_EQ("string", Element::typeToName(Element::string));
