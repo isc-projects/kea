@@ -23,6 +23,7 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
+run_unittests_SOURCES += bigint_unittest.cc
 run_unittests_SOURCES += base32hex_unittest.cc
 run_unittests_SOURCES += base64_unittest.cc
 run_unittests_SOURCES += boost_time_utils_unittest.cc
