@@ -7,7 +7,9 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-util.la
-libkea_util_la_SOURCES  = boost_time_utils.h boost_time_utils.cc
+libkea_util_la_SOURCES  =
+libkea_util_la_SOURCES += bigints.h
+libkea_util_la_SOURCES += boost_time_utils.h boost_time_utils.cc
 libkea_util_la_SOURCES += buffer.h io_utilities.h
 libkea_util_la_SOURCES += chrono_time_utils.h chrono_time_utils.cc
 libkea_util_la_SOURCES += csv_file.h csv_file.cc
@@ -57,6 +59,7 @@ CLEANFILES = *.gcno *.gcda
 # Specify the headers for copying into the installation directory tree.
 libkea_util_includedir = $(pkgincludedir)/util
 libkea_util_include_HEADERS = \
+	bigints.h \
 	boost_time_utils.h \
 	buffer.h \
 	csv_file.h \
