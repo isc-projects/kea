@@ -579,7 +579,32 @@ const char* DORA_CONFIGS[] = {
         "        \"interface\": \"eth0\""
         "    }"
         "]"
-    "}"
+    "}",
+
+    // Configuration 18
+    R"({
+        "cache-max-age": 600,
+        "cache-threshold": .50,
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "subnet4": [
+            {
+                "id": 1,
+                "pools": [
+                    {
+                        "pool": "10.0.0.10 - 10.0.0.20"
+                    },
+                ],
+                "subnet": "10.0.0.0/24"
+            },
+            {
+                "id": 2,
+                "subnet": "192.168.0.0/24"
+            }
+        ],
+        "valid-lifetime": 600
+    })",
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -830,6 +855,9 @@ public:
     /// @brief This test verifies that random allocator is used according
     /// to the configuration and it allocates random addresses.
     void randomAllocation();
+
+    /// @brief Checks that features related to lease caching (such as lease reuse statistics) work.
+    void leaseCaching();
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -2798,6 +2826,163 @@ TEST_F(DORATest, randomAllocation) {
 TEST_F(DORATest, randomAllocationMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     randomAllocation();
+}
+
+void
+DORATest::leaseCaching() {
+    // Configure a DHCP client.
+    Dhcp4Client client;
+    client.includeClientId("11:22");
+
+    // Configure a DHCP server.
+    configure(DORA_CONFIGS[18], *client.getServer());
+
+    // Obtain a lease from the server using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Make sure that the server responded.
+    Pkt4Ptr response(client.getContext().response_);
+    ASSERT_TRUE(response);
+
+    // Make sure that the server has responded with DHCPACK.
+    EXPECT_EQ(DHCPACK, response->getType());
+
+    // Make sure that the server ID is present.
+    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+
+    // Make sure that the client has got the first lease in the pool.
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+
+    // There should only be the default global statistic point.
+    ObservationPtr lease_reuses(StatsMgr::instance().getObservation("v4-lease-reuses"));
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+
+    // There should only be the default subnet statistic point.
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+
+    // There should only be the default statistic point in the other subnet.
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+
+    // Assume the client enters init-reboot and does a request.
+    client.setState(Dhcp4Client::INIT_REBOOT);
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that the server responded.
+    response = client.getContext().response_;
+    ASSERT_TRUE(response);
+
+    // Make sure that the server has responded with DHCPACK.
+    EXPECT_EQ(DHCPACK, response->getType());
+
+    // Make sure that the server ID is present.
+    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+
+    // Make sure that the client has got the same lease.
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+
+    // There should be one global lease reuse.
+    lease_reuses = StatsMgr::instance().getObservation("v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(2, lease_reuses->getSize());
+    EXPECT_EQ(1, lease_reuses->getInteger().first);
+
+    // There should be one subnet lease reuse.
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(2, lease_reuses->getSize());
+    EXPECT_EQ(1, lease_reuses->getInteger().first);
+
+    // Statistics for the other subnet should not be affected.
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+
+    // Let's say the client suddenly decides to do a full DORA.
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Make sure that the server responded.
+    response = client.getContext().response_;
+    ASSERT_TRUE(response);
+
+    // Make sure that the server has responded with DHCPACK.
+    EXPECT_EQ(DHCPACK, response->getType());
+
+    // Make sure that the server ID is present.
+    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+
+    // Make sure that the client has got the same lease.
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+
+    // There should be three global lease reuses (REQUEST + DISCOVER + REQUEST).
+    lease_reuses = StatsMgr::instance().getObservation("v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(4, lease_reuses->getSize());
+    EXPECT_EQ(3, lease_reuses->getInteger().first);
+
+    // There should be three subnet lease reuses (REQUEST + DISCOVER + REQUEST).
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(4, lease_reuses->getSize());
+    EXPECT_EQ(3, lease_reuses->getInteger().first);
+
+    // Statistics for the other subnet should not be affected.
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+
+    // Try to request a different address than the client has. The server
+    // should respond with DHCPNAK.
+    client.config_.lease_.addr_ = IOAddress("10.0.0.30");
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that the server responded.
+    response = client.getContext().response_;
+    ASSERT_TRUE(response);
+    EXPECT_EQ(DHCPNAK, response->getType());
+
+    // Change client identifier. The server should treat the request
+    // as a request from unknown client and ignore it.
+    client.includeClientId("12:34");
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Global statistics should remain unchanged.
+    lease_reuses = StatsMgr::instance().getObservation("v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(4, lease_reuses->getSize());
+    EXPECT_EQ(3, lease_reuses->getInteger().first);
+
+    // Subnet statistics should remain unchanged.
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(4, lease_reuses->getSize());
+    EXPECT_EQ(3, lease_reuses->getInteger().first);
+
+    // Statistics for the other subnet should certainly not be affected.
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v4-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+}
+
+TEST_F(DORATest, leaseCaching) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    leaseCaching();
+}
+
+TEST_F(DORATest, leaseCachingMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    leaseCaching();
 }
 
 // Starting tests which require MySQL backend availability. Those tests

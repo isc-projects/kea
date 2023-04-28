@@ -21,6 +21,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
 
 namespace {
 
@@ -286,6 +287,39 @@ const char* CONFIGS[] = {
         "    }"
         "],"
         "\"valid-lifetime\": 4000 }",
+
+    // Configuration 7
+    R"({
+        "cache-max-age": 600,
+        "cache-threshold": .50,
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "subnet6": [
+            {
+                "id": 1,
+                "interface": "eth0",
+                "pools": [
+                    {
+                        "pool": "2001:db8::10 - 2001:db8::20"
+                    },
+                ],
+                "pd-pools": [
+                    {
+                        "prefix": "2001:db8:1::",
+                        "prefix-len": 64,
+                        "delegated-len": 96
+                    },
+                ],
+                "subnet": "2001:db8::/32"
+            },
+            {
+                "id": 2,
+                "subnet": "3001:db8::/32"
+            }
+        ],
+        "valid-lifetime": 600
+    })",
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -386,6 +420,9 @@ public:
     /// @brief This test verifies that random allocator is used according
     /// to the configuration and it allocates random prefixes.
     void randomPrefixAllocation();
+
+    /// @brief Checks that features related to lease caching (such as lease reuse statistics) work.
+    void leaseCaching();
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -1159,5 +1196,177 @@ TEST_F(SARRTest, randomPrefixAllocationMultiThreading) {
     randomPrefixAllocation();
 }
 
+void
+SARRTest::leaseCaching() {
+    // Configure a DHCP client.
+    Dhcp6Client client;
+
+    // Configure a DHCP server.
+    configure(CONFIGS[7], *client.getServer());
+
+    // Statistics should have default values.
+    ObservationPtr lease_reuses(StatsMgr::instance().getObservation("v6-ia-na-lease-reuses"));
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+
+    // Append IAADDR and IAPREFIX options to the client's message.
+    ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 32, asiolink::IOAddress("2001:db8:1::")));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Server should have assigned an address and a prefix.
+    ASSERT_EQ(2, client.getLeaseNum());
+
+    // The server should respect the hints.
+    Lease6 lease_client(client.getLease(0));
+    EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
+    EXPECT_EQ(128, lease_client.prefixlen_);
+    Lease6Ptr lease_server(checkLease(lease_client));
+    EXPECT_TRUE(lease_server);
+    lease_client = client.getLease(1);
+    EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
+    EXPECT_EQ(96, lease_client.prefixlen_);
+    lease_server = checkLease(lease_client);
+    EXPECT_TRUE(lease_server);
+
+    // Check statistics.
+    lease_reuses = StatsMgr::instance().getObservation("v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+
+    // Request the same prefix with a different length. The server should
+    // return an existing lease.
+    client.clearRequestedIAs();
+    ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 80, IOAddress("2001:db8:1::")));
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_EQ(2, client.getLeaseNum());
+    lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
+    EXPECT_EQ(128, lease_client.prefixlen_);
+    lease_client = client.getLease(1);
+    EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
+    EXPECT_EQ(96, lease_client.prefixlen_);
+
+    // Check statistics.
+    lease_reuses = StatsMgr::instance().getObservation("v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(2, lease_reuses->getSize());
+    EXPECT_EQ(1, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(2, lease_reuses->getSize());
+    EXPECT_EQ(1, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(2, lease_reuses->getSize());
+    EXPECT_EQ(1, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(2, lease_reuses->getSize());
+    EXPECT_EQ(1, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+
+    // Try to request another prefix. The client should still get the existing
+    // lease.
+    client.clearRequestedIAs();
+    ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:2::")));
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_EQ(2, client.getLeaseNum());
+    lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
+    EXPECT_EQ(128, lease_client.prefixlen_);
+    lease_client = client.getLease(1);
+    EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
+    EXPECT_EQ(96, lease_client.prefixlen_);
+
+    // Check statistics.
+    lease_reuses = StatsMgr::instance().getObservation("v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(3, lease_reuses->getSize());
+    EXPECT_EQ(2, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(3, lease_reuses->getSize());
+    EXPECT_EQ(2, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v6-ia-na-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(3, lease_reuses->getSize());
+    EXPECT_EQ(2, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(3, lease_reuses->getSize());
+    EXPECT_EQ(2, lease_reuses->getInteger().first);
+    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v6-ia-pd-lease-reuses");
+    ASSERT_TRUE(lease_reuses);
+    EXPECT_EQ(1, lease_reuses->getSize());
+    EXPECT_EQ(0, lease_reuses->getInteger().first);
+}
+
+TEST_F(SARRTest, leaseCaching) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    leaseCaching();
+}
+
+TEST_F(SARRTest, leaseCachingMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    leaseCaching();
+}
 
 } // end of anonymous namespace

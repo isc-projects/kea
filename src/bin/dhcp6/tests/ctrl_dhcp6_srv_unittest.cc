@@ -1360,7 +1360,9 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
         "v6-allocation-fail-shared-network",
         "v6-allocation-fail-subnet",
         "v6-allocation-fail-no-pools",
-        "v6-allocation-fail-classes"
+        "v6-allocation-fail-classes",
+        "v6-ia-na-lease-reuses",
+        "v6-ia-pd-lease-reuses",
     };
 
     std::ostringstream s;
