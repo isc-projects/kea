@@ -6540,7 +6540,7 @@ The DHCPv6 server supports the following statistics:
    |                                              |                | are certain cases where there is   |
    |                                              |                | no response.                       |
    +----------------------------------------------+----------------+------------------------------------+
-   | subnet[id].total-nas                         | integer        | Total number of NA addresses       |
+   | subnet[id].total-nas                         | big integer    | Total number of NA addresses       |
    |                                              |                | available for DHCPv6 management    |
    |                                              |                | for a given subnet; in other       |
    |                                              |                | words, this is the sum of all      |
@@ -6587,7 +6587,7 @@ The DHCPv6 server supports the following statistics:
    |                                              |                | subnet separately, and is reset    |
    |                                              |                | during a reconfiguration event.    |
    +----------------------------------------------+----------------+------------------------------------+
-   | subnet[id].total-pds                         | integer        | Total number of PD prefixes        |
+   | subnet[id].total-pds                         | big integer    | Total number of PD prefixes        |
    |                                              |                | available for DHCPv6 management    |
    |                                              |                | for a given subnet; in other       |
    |                                              |                | words, this is the sum of all      |
