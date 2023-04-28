@@ -1,3 +1,12 @@
+2129.	[func]		andrei
+	New statistics were added to keep track of leases that have their
+	CLTT increased in memory and their expiration time left unchanged
+	in persistent storage as part of the lease caching feature. The
+	statistics are: v4-lease-reuse, subnet[id].v4-lease-reuse,
+	v6-ia-na-lease-reuse, subnet[id].v6-ia-na-lease-reuse,
+	v6-ia-pd-lease-reuse, subnet[id].v6-ia-pd-lease-reuse.
+	(Gitlab #2797)
+
 2128.	[bug]*		razvan
 	In addition to logging them, the server now sets the
 	CalloutHandle status to DROP to indicate an error occurred when
