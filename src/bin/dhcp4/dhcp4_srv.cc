@@ -136,7 +136,8 @@ std::set<std::string> dhcp4_statistics = {
     "v4-allocation-fail-subnet",
     "v4-allocation-fail-no-pools",
     "v4-allocation-fail-classes",
-    "v4-reservation-conflicts"
+    "v4-reservation-conflicts",
+    "v4-lease-reuses",
 };
 
 } // end of anonymous namespace
@@ -2852,6 +2853,12 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
                 .arg(Lease::lifetimeToText(lease->valid_lft_));
+
+            // Increment the reuse statistics.
+            StatsMgr::instance().addValue("v4-lease-reuses", int64_t(1));
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+                                                                 "v4-lease-reuses"),
+                                          int64_t(1));
         }
 
         // IP Address Lease time (type 51)

@@ -201,7 +201,9 @@ std::set<std::string> dhcp6_statistics = {
     "v6-allocation-fail-shared-network",
     "v6-allocation-fail-subnet",
     "v6-allocation-fail-no-pools",
-    "v6-allocation-fail-classes"
+    "v6-allocation-fail-classes",
+    "v6-ia-na-lease-reuses",
+    "v6-ia-pd-lease-reuses",
 };
 
 }  // namespace
@@ -2407,6 +2409,12 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query,
                 .arg(lease->addr_.toText())
                 .arg(ia->getIAID())
                 .arg(Lease::lifetimeToText(lease->valid_lft_));
+
+            // Increment the reuse statistics.
+            StatsMgr::instance().addValue("v6-ia-na-lease-reuses", int64_t(1));
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+                                                                 "v6-ia-na-lease-reuses"),
+                                          int64_t(1));
         }
         LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_LEASE_DATA)
             .arg(query->getLabel())
@@ -2533,6 +2541,12 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
                     .arg(static_cast<int>((*l)->prefixlen_))
                     .arg(ia->getIAID())
                     .arg(Lease::lifetimeToText((*l)->valid_lft_));
+
+                // Increment the reuse statistics.
+                StatsMgr::instance().addValue("v6-ia-pd-lease-reuses", int64_t(1));
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet", (*l)->subnet_id_,
+                                                                    "v6-ia-pd-lease-reuses"),
+                                            int64_t(1));
             }
 
             // Check for new minimum lease time
@@ -2672,6 +2686,12 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
                 .arg((*l)->addr_.toText())
                 .arg(ia->getIAID())
                 .arg(Lease::lifetimeToText((*l)->valid_lft_));
+
+            // Increment the reuse statistics.
+            StatsMgr::instance().addValue("v6-ia-na-lease-reuses", int64_t(1));
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", (*l)->subnet_id_,
+                                                                 "v6-ia-na-lease-reuses"),
+                                          int64_t(1));
         }
 
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
@@ -2862,6 +2882,12 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                 .arg(static_cast<int>((*l)->prefixlen_))
                 .arg(ia->getIAID())
                 .arg(Lease::lifetimeToText((*l)->valid_lft_));
+
+            // Increment the reuse statistics.
+            StatsMgr::instance().addValue("v6-ia-pd-lease-reuses", int64_t(1));
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", (*l)->subnet_id_,
+                                                                 "v6-ia-pd-lease-reuses"),
+                                          int64_t(1));
         }
 
         Option6IAPrefixPtr prf(new Option6IAPrefix(D6O_IAPREFIX,

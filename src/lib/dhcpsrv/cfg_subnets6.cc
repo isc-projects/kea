@@ -20,6 +20,8 @@
 using namespace isc::asiolink;
 using namespace isc::data;
 
+using namespace std;
+
 namespace isc {
 namespace dhcp {
 
@@ -466,6 +468,18 @@ CfgSubnets6::updateStatistics() {
             StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-pds");
         if (!stats_mgr.getObservation(name_pds)) {
             stats_mgr.setValue(name_pds, static_cast<int64_t>(0));
+        }
+
+        string const& name_ia_na_reuses(
+            StatsMgr::generateName("subnet", subnet_id, "v6-ia-na-lease-reuses"));
+        if (!stats_mgr.getObservation(name_ia_na_reuses)) {
+            stats_mgr.setValue(name_ia_na_reuses, int64_t(0));
+        }
+
+        string const& name_ia_pd_reuses(
+            StatsMgr::generateName("subnet", subnet_id, "v6-ia-pd-lease-reuses"));
+        if (!stats_mgr.getObservation(name_ia_pd_reuses)) {
+            stats_mgr.setValue(name_ia_pd_reuses, int64_t(0));
         }
     }
 
