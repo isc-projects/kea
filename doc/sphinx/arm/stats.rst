@@ -375,6 +375,18 @@ Here is an example response returning all collected statistics:
                    "2022-02-11 17:54:17.487512"
                ]
            ],
+           "subnet[1].v4-lease-reuses": [
+               [
+                   0,
+                   "2022-02-11 17:54:17.487516"
+               ]
+           ],
+           "subnet[1].v4-reservation-conflicts": [
+               [
+                   0,
+                   "2022-02-11 17:54:17.487520"
+               ]
+           ],
            "v4-allocation-fail": [
                [
                    0,
@@ -403,6 +415,18 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2022-02-11 17:54:17.455323"
+               ]
+           ],
+           "v4-lease-reuses": [
+               [
+                   0,
+                   "2022-02-11 17:54:17.455328"
+               ]
+           ],
+           "v4-reservation-conflicts": [
+               [
+                   0,
+                   "2022-02-11 17:54:17.455332"
                ]
            ]
        },

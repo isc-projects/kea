@@ -7026,6 +7026,24 @@ The DHCPv4 server supports the following statistics:
    |                                              |                | statistic is exposed for each      |
    |                                              |                | subnet separately.                 |
    +----------------------------------------------+----------------+------------------------------------+
+   | v4-lease-reuses                              | integer        | Number of times an IPv4 lease had  |
+   |                                              |                | its CLTT increased in memory and   |
+   |                                              |                | its expiration time left unchanged |
+   |                                              |                | in persistent storage as part of   |
+   |                                              |                | the lease caching feature. This is |
+   |                                              |                | referred to as a lease reuse.      |
+   |                                              |                | This statistic is global.          |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].v4-lease-reuses                   | integer        | Number of times an IPv4 lease had  |
+   |                                              |                | its CLTT increased in memory and   |
+   |                                              |                | its expiration time left unchanged |
+   |                                              |                | in persistent storage as part of   |
+   |                                              |                | the lease caching feature. This is |
+   |                                              |                | referred to as a lease reuse.      |
+   |                                              |                | This statistic is on a per-subnet  |
+   |                                              |                | basis. The *id* is the subnet-id   |
+   |                                              |                | of a given subnet.                 |
+   +----------------------------------------------+----------------+------------------------------------+
    | v4-reservation-conflicts                     | integer        | Number of host reservation         |
    |                                              |                | allocation conflicts which have    |
    |                                              |                | occurred across every subnet. When |

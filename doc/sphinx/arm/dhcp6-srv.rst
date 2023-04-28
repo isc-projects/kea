@@ -6731,6 +6731,42 @@ The DHCPv6 server supports the following statistics:
    |                                              |                | statistic is exposed for each      |
    |                                              |                | subnet separately.                 |
    +----------------------------------------------+----------------+------------------------------------+
+   | v6-ia-na-lease-reuses                        | integer        | Number of times an IA_NA lease had |
+   |                                              |                | its CLTT increased in memory and   |
+   |                                              |                | its expiration time left unchanged |
+   |                                              |                | in persistent storage as part of   |
+   |                                              |                | the lease caching feature. This is |
+   |                                              |                | referred to as a lease reuse.      |
+   |                                              |                | This statistic is global.          |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].v6-ia-na-lease-reuses             | integer        | Number of times an IA_NA lease had |
+   |                                              |                | its CLTT increased in memory and   |
+   |                                              |                | its expiration time left unchanged |
+   |                                              |                | in persistent storage as part of   |
+   |                                              |                | the lease caching feature. This is |
+   |                                              |                | referred to as a lease reuse.      |
+   |                                              |                | This statistic is on a per-subnet  |
+   |                                              |                | basis. The *id* is the subnet-id   |
+   |                                              |                | of a given subnet.                 |
+   +----------------------------------------------+----------------+------------------------------------+
+   | v6-ia-pd-lease-reuses                        | integer        | Number of times an IA_PD lease had |
+   |                                              |                | its CLTT increased in memory and   |
+   |                                              |                | its expiration time left unchanged |
+   |                                              |                | in persistent storage as part of   |
+   |                                              |                | the lease caching feature. This is |
+   |                                              |                | referred to as a lease reuse.      |
+   |                                              |                | This statistic is global.          |
+   +----------------------------------------------+----------------+------------------------------------+
+   | subnet[id].v6-ia-pd-lease-reuses             | integer        | Number of times an IA_PD lease had |
+   |                                              |                | its CLTT increased in memory and   |
+   |                                              |                | its expiration time left unchanged |
+   |                                              |                | in persistent storage as part of   |
+   |                                              |                | the lease caching feature. This is |
+   |                                              |                | referred to as a lease reuse.      |
+   |                                              |                | This statistic is on a per-subnet  |
+   |                                              |                | basis. The *id* is the subnet-id   |
+   |                                              |                | of a given subnet.                 |
+   +----------------------------------------------+----------------+------------------------------------+
 
 .. note::
 
