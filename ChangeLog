@@ -1,3 +1,8 @@
+2134.	[func]		andrei
+	Statistics total-nas and total-pds were increased from 64-bit
+	values to 128-bit values to accurately represent large pools.
+	(Gitlab #2658)
+
 2133.	[func]		andrei
 	Added missing YANG nodes: allocator, ddns-ttl-percent,
 	exclude-first-last-24, ignore-dhcp-server-identifier,
