@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,9 +122,9 @@ TEST(Option6DnrTest, onWireCtorTruncatedFqdn) {
     };
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
-    // Create option instance. Check that constructor throws OpaqueDataTupleError exception.
+    // Create option instance. Check that constructor throws BadValue exception.
     Option6DnrPtr option;
-    EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), OpaqueDataTupleError);
+    EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end())), BadValue);
     ASSERT_FALSE(option);
 }
 

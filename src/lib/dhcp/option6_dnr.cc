@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,6 +33,7 @@ Option6Dnr::pack(util::OutputBuffer& buf, bool check) const {
     if (adn_only_mode_) {
         return;
     }
+
     buf.writeUint16(addr_length_);
     packAddresses(buf);
     packSvcParams(buf);
@@ -42,8 +43,10 @@ void
 Option6Dnr::packAddresses(util::OutputBuffer& buf) const {
     for (const auto& address : ip_addresses_) {
         if (!address.isV6()) {
-            isc_throw(isc::BadValue, address.toText() << " is not an IPv6 address");
+            isc_throw(isc::BadValue, getLogPrefix()
+                                         << address.toText() << " is not an IPv6 address");
         }
+
         buf.writeData(&address.toBytes()[0], V6ADDRESS_LEN);
     }
 }
@@ -51,9 +54,10 @@ Option6Dnr::packAddresses(util::OutputBuffer& buf) const {
 void
 Option6Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     if (std::distance(begin, end) < getMinimalLength()) {
-        isc_throw(OutOfRange, getLogPrefix() << " malformed: data truncated to size "
-                                             << std::distance(begin, end));
+        isc_throw(OutOfRange, getLogPrefix()
+                                  << "data truncated to size " << std::distance(begin, end));
     }
+
     setData(begin, end);
 
     // First two octets of Option data is Service Priority - this is mandatory field.
@@ -67,6 +71,7 @@ Option6Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         // ADN only mode, other fields are not included.
         return;
     }
+
     adn_only_mode_ = false;
 
     unpackAddresses(begin, end);
@@ -92,17 +97,18 @@ Option6Dnr::len() const {
 void
 Option6Dnr::unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter end) {
     if (std::distance(begin, end) < getAddrLengthSize()) {
-        isc_throw(OutOfRange, getLogPrefix() << " malformed: after"
+        isc_throw(OutOfRange, getLogPrefix() << "after"
                                                 " ADN field, there should be at least "
                                                 "2 bytes long Addr Length field");
     }
+
     // Next come two octets of Addr Length.
     addr_length_ = isc::util::readUint16(&(*begin), getAddrLengthSize());
     begin += getAddrLengthSize();
     // It MUST be a multiple of 16.
     if ((addr_length_ % V6ADDRESS_LEN) != 0) {
-        isc_throw(OutOfRange, getLogPrefix() << " malformed: Addr Len=" << addr_length_
-                                             << " is not divisible by 16");
+        isc_throw(OutOfRange, getLogPrefix()
+                                  << "Addr Len=" << addr_length_ << " is not divisible by 16");
     }
 
     // As per draft-ietf-add-dnr 3.1.8:
@@ -110,13 +116,13 @@ Option6Dnr::unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter 
     // the option includes at least one valid IP address.
     if (addr_length_ == 0) {
         isc_throw(OutOfRange, getLogPrefix()
-                                  << " malformed: Addr Len=" << addr_length_
+                                  << "Addr Len=" << addr_length_
                                   << " but it must contain at least one valid IP address");
     }
 
     // Check if IPv6 Address(es) field is not truncated.
     if (std::distance(begin, end) < addr_length_) {
-        isc_throw(OutOfRange, getLogPrefix() << " malformed: Addr Len=" << addr_length_
+        isc_throw(OutOfRange, getLogPrefix() << "Addr Len=" << addr_length_
                                              << " but IPv6 address(es) are truncated to len="
                                              << std::distance(begin, end));
     }
@@ -124,7 +130,13 @@ Option6Dnr::unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter 
     // Let's unpack the ipv6-address(es).
     auto addr_end = begin + addr_length_;
     while (begin != addr_end) {
-        ip_addresses_.push_back(IOAddress::fromBytes(AF_INET6, &(*begin)));
+        try {
+            ip_addresses_.push_back(IOAddress::fromBytes(AF_INET6, &(*begin)));
+        } catch (const Exception& ex) {
+            isc_throw(BadValue, getLogPrefix() << "failed to parse IPv6 address"
+                                               << " - " << ex.what());
+        }
+
         begin += V6ADDRESS_LEN;
     }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,8 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <dns/name.h>
+
+#include <unordered_set>
 
 namespace isc {
 namespace dhcp {
@@ -53,10 +55,17 @@ public:
     /// @brief Size in octets of Service Priority field.
     static const uint8_t SERVICE_PRIORITY_SIZE = 2;
 
+    /// @brief Set of forbidden SvcParams.
+    ///
+    /// The service parameters MUST NOT include
+    /// "ipv4hint" or "ipv6hint" SvcParams as they are superseded by the
+    /// included IP addresses.
+    static const std::unordered_set<std::string> FORBIDDEN_SVC_PARAMS;
+
     /// @brief Constructor of the empty DNR Instance.
     ///
     /// @param universe either V4 or V6 Option universe
-    explicit DnrInstance(Option::Universe universe) : universe_(universe) {}
+    explicit DnrInstance(Option::Universe universe);
 
     /// @brief Constructor of the DNR Instance with all fields from params.
     ///
@@ -157,27 +166,32 @@ public:
 
     /// @brief Returns minimal length of the DNR instance data (without headers) in octets.
     ///
-    /// If the ADN-only mode is used, then "Addr Length", "ip(v4/v6)-address(es)",
-    /// and "Service Parameters (SvcParams)" fields are not present.
-    /// So minimal length of data is calculated by adding 2 octets for Service Priority,
-    /// octets needed for ADN Length and octets needed for DNR Instance Data Length
-    /// (only in case of DHCPv4).
-    ///
     /// @return Minimal length of the DNR instance data (without headers) in octets.
-    uint8_t getMinimalLength() const;
+    uint8_t getMinimalLength() const {
+        return (minimal_length_);
+    }
 
     /// @brief Returns size in octets of Addr Length field.
-    uint8_t getAddrLengthSize() const;
+    uint8_t getAddrLengthSize() const {
+        return (addr_length_size_);
+    }
 
     /// @brief Returns size in octets of DNR Instance Data Length field.
-    uint8_t getDnrInstanceDataLengthSize() const;
+    uint8_t getDnrInstanceDataLengthSize() const {
+        return (dnr_instance_data_length_size_);
+    }
 
     /// @brief Returns size in octets of ADN Length field.
-    uint8_t getAdnLengthSize() const;
+    uint8_t getAdnLengthSize() const {
+        return (adn_length_size_);
+    }
 
-    /// @brief Constructs Log prefix depending on V4/V6 Option universe.
+    /// @brief Returns Log prefix depending on V4/V6 Option universe.
+    ///
     /// @return Log prefix as a string which can be used for prints when throwing an exception.
-    std::string getLogPrefix() const;
+    std::string getLogPrefix() const {
+        return (log_prefix_);
+    }
 
     /// @brief Returns whether ADN only mode is enabled or disabled.
     bool isAdnOnlyMode() const {
@@ -192,9 +206,13 @@ public:
     /// It also calculates and sets value of Addr length field.
     ///
     /// @param adn string representation of ADN FQDN
+    ///
+    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
+    /// from given string.
     void setAdn(const std::string& adn);
 
     /// @brief Setter of the @c adn_only_mode_ field.
+    ///
     /// @param adn_only_mode enabled/disabled setting
     void setAdnOnlyMode(bool adn_only_mode) {
         adn_only_mode_ = adn_only_mode;
@@ -206,6 +224,8 @@ public:
     /// DNS resolver data is appended at the end of the buffer.
     ///
     /// @param [out] buf buffer where ADN FQDN will be written.
+    ///
+    /// @throw InvalidOptionDnrDomainName Thrown when mandatory field ADN is empty.
     void packAdn(isc::util::OutputBuffer& buf) const;
 
     /// @brief Writes the IP address(es) in the wire format into a buffer.
@@ -231,9 +251,12 @@ public:
     ///
     /// @param begin beginning of the buffer from which the field will be read
     /// @param end end of the buffer from which the field will be read
+    ///
+    /// @throw OutOfRange Thrown in case of truncated data detected.
     void unpackDnrInstanceDataLength(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
     /// @brief Unpacks Service Priority from wire data buffer and stores it in @c service_priority_.
+    ///
     /// @param begin beginning of the buffer from which the field will be read
     void unpackServicePriority(OptionBufferConstIter& begin);
 
@@ -243,6 +266,10 @@ public:
     ///
     /// @param begin beginning of the buffer from which the ADN will be read
     /// @param end end of the buffer from which the ADN will be read
+    ///
+    /// @throw BadValue Thrown in case of any issue with unpacking opaque data of the ADN.
+    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
+    /// from given wire data.
     void unpackAdn(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
     /// @brief Unpacks IP address(es) from wire data and stores it/them in @c ip_addresses_.
@@ -251,6 +278,10 @@ public:
     ///
     /// @param begin beginning of the buffer from which the field will be read
     /// @param end end of the buffer from which the field will be read
+    ///
+    /// @throw BadValue Thrown in case of any issue with unpacking opaque data of the IP addresses.
+    /// @throw OutOfRange Thrown in case of malformed data detected during parsing e.g.
+    /// Addr Len not divisible by 4, Addr Len is 0.
     virtual void unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
     /// @brief Unpacks Service Parameters from wire data buffer and stores it in @c svc_params_.
@@ -264,15 +295,33 @@ public:
     /// @brief Checks SvcParams field if encoded correctly and throws in case of issue found.
     ///
     /// The field should be encoded following the rules in
-    /// Section 2.1 of [I-D.ietf-dnsop-svcb-https].
+    /// Section 2.1 of [I-D.ietf-dnsop-svcb-https]. SvcParams are
+    /// a whitespace-separated list, with each SvcParam consisting of
+    /// a SvcParamKey=SvcParamValue pair or a standalone SvcParamKey.
+    ///
+    /// @note It is user's responsibility to provide correct configuration
+    /// of @c SvcParams as described in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
+    /// Currently, SvcParamValue is not verified. Proper syntax of SvcParamValue
+    /// is described in Appendix A of [I-D.ietf-dnsop-svcb-https].
+    ///
+    /// @param from_wire_data used to determine whether SvcParams data comes
+    /// from unpacked wire data or from ctor param
+    ///
+    /// @throw InvalidOptionDnrSvcParams Thrown in case of any issue found when checking
+    /// @c ServiceParams field syntax
     void checkSvcParams(bool from_wire_data = true);
 
     /// @brief Checks IP address(es) field if data is correct and throws in case of issue found.
     ///
     /// Fields lengths are also calculated and saved to member variables.
+    ///
+    /// @throw OutOfRange Thrown in case of no IP addresses found or when IP addresses length
+    /// is too big
+    /// @throw InvalidOptionDnrSvcParams Thrown when @c checkSvcParams(from_wire_data) throws
     void checkFields();
 
     /// @brief Adds IP address to @c ip_addresses_ container.
+    ///
     /// @param ip_address IP address to be added
     void addIpAddress(const asiolink::IOAddress& ip_address);
 
@@ -327,6 +376,35 @@ protected:
     /// @brief Calculates and returns length of DNR Instance data in octets.
     /// @return length of DNR Instance data in octets.
     uint16_t dnrInstanceLen() const;
+
+private:
+    /// @brief Size in octets of DNR Instance Data Length field.
+    ///
+    /// @note This field is used only in case of V4 DNR option.
+    uint8_t dnr_instance_data_length_size_;
+
+    /// @brief Size in octets of ADN Length field.
+    uint8_t adn_length_size_;
+
+    /// @brief Size in octets of Addr Length field.
+    uint8_t addr_length_size_;
+
+    /// @brief Minimal length of the DNR instance data (without headers) in octets.
+    ///
+    /// @note If the ADN-only mode is used, then "Addr Length", "ip(v4/v6)-address(es)",
+    /// and "Service Parameters (SvcParams)" fields are not present.
+    /// So minimal length of data is calculated by adding 2 octets for Service Priority,
+    /// octets needed for ADN Length and octets needed for DNR Instance Data Length
+    /// (only in case of DHCPv4).
+    uint8_t minimal_length_;
+
+    /// @brief Log prefix as a string which can be used for prints when throwing an exception.
+    std::string log_prefix_;
+
+    /// @brief Initializes private member variables basing on option's V4/V6 Universe.
+    ///
+    /// @note It must be called in all types of constructors of class @c DnrInstance .
+    void initMembers();
 };
 
 /// @brief Represents DHCPv4 Encrypted DNS %Option (code 162).
@@ -378,10 +456,48 @@ public:
         return (dnr_instances_);
     }
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    ///
+    /// @return Pointer to the copy of the option.
     OptionPtr clone() const override;
+
+    /// @brief Writes option in wire-format to a buffer.
+    ///
+    /// Writes option in wire-format to buffer, returns pointer to first unused
+    /// byte after stored option (that is useful for writing options one after
+    /// another).
+    ///
+    /// @param buf pointer to a buffer
+    /// @param check flag which indicates if checking the option length is
+    /// required (used only in V4)
+    ///
+    /// @throw InvalidOptionDnrDomainName Thrown when Option's mandatory field ADN is empty.
+    /// @throw OutOfRange Thrown when @c check param set to @c true and
+    /// @c Option::packHeader(buf,check) throws.
     void pack(util::OutputBuffer& buf, bool check = true) const override;
+
+    /// @brief Parses received wire data buffer.
+    ///
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    ///
+    /// @throw OutOfRange Thrown in case of truncated data. May be also thrown when
+    /// @c DnrInstance::unpackDnrInstanceDataLength(begin,end) throws.
+    /// @throw BadValue Thrown when @c DnrInstance::unpackAdn(begin,end) throws.
+    /// @throw InvalidOptionDnrDomainName Thrown when @c DnrInstance::unpackAdn(begin,end) throws.
     void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) override;
+
+    /// @brief Returns string representation of the option.
+    ///
+    /// @param indent number of spaces before printing text
+    ///
+    /// @return string with text representation.
     std::string toText(int indent = 0) const override;
+
+    /// @brief Returns length of the complete option (data length + DHCPv4/DHCPv6
+    /// option header)
+    ///
+    /// @return length of the option
     uint16_t len() const override;
 
 protected:

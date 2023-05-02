@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -360,6 +360,7 @@ TEST(Option4DnrTest, onWireDataCtor) {
         0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
         0x03, 0x63, 0x6F, 0x6D, 0x00                     // com.
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
     Option4DnrPtr option;
@@ -381,6 +382,7 @@ TEST(Option4DnrTest, unpackOneAdnOnly) {
         0x07, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65,  // example.
         0x03, 0x63, 0x6F, 0x6D, 0x00                     // com.
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
     Option4DnrPtr option;
@@ -437,6 +439,7 @@ TEST(Option4DnrTest, unpackOneDnrInstance) {
         '4',  '=',  'v',  'a',  'l',  '2',  ' ',  'k',   // Svc Params
         'e',  'y',  '3',  '4',  '5'                      // Svc Params
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
     Option4DnrPtr option;
@@ -490,6 +493,7 @@ TEST(Option4DnrTest, unpackMixedDnrInstances) {
         '4',  '=',  'v',  'a',  'l',  '2',  ' ',  'k',   // Svc Params
         'e',  'y',  '3',  '4',  '5'                      // Svc Params
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
     // Create option instance. Check that constructor doesn't throw.
     Option4DnrPtr option;
@@ -537,6 +541,7 @@ TEST(Option4DnrTest, unpackTruncatedDnrInstanceDataLen) {
         0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
         0x00, 62                                         // DNR Instance Data Len truncated
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
@@ -561,6 +566,7 @@ TEST(Option4DnrTest, unpackTruncatedDnrInstanceData) {
         21                                               // ADN Length is 21 dec
         // the rest of DNR instance data is truncated
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
@@ -585,11 +591,12 @@ TEST(Option4DnrTest, unpackTruncatedAdn) {
         21                                               // ADN Length is 21 dec
         // ADN data is missing.
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
     Option4DnrPtr option;
-    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OpaqueDataTupleError);
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), BadValue);
     ASSERT_FALSE(option);
 }
 
@@ -609,6 +616,7 @@ TEST(Option4DnrTest, unpackInvalidFqdnAdn) {
         1,                                               // ADN Length is 1 dec
         ' '                                              // ADN contains only whitespace
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
@@ -632,6 +640,7 @@ TEST(Option4DnrTest, unpackNoFqdnAdn) {
         0x00, 0x02,                                      // Service priority is 2 dec
         0                                                // ADN Length is 0 dec
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
@@ -660,11 +669,12 @@ TEST(Option4DnrTest, unpackTruncatedIpAddress) {
         8                                                // Addr Len
         // the rest of DNR instance data is truncated.
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
     Option4DnrPtr option;
-    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), OpaqueDataTupleError);
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end())), BadValue);
     ASSERT_FALSE(option);
 }
 
@@ -687,6 +697,7 @@ TEST(Option4DnrTest, unpackNoIpAddress) {
         0x03, 0x63, 0x6F, 0x6D, 0x00,                    // com.
         0                                                // Addr Len = 0
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
@@ -716,6 +727,7 @@ TEST(Option4DnrTest, unpackIpAddressNon4Modulo) {
         192,  168,  0,    1,                             // IP address 1
         192,  168,  0                                    // IP address 2 truncated
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
@@ -746,6 +758,7 @@ TEST(Option4DnrTest, unpackvcParamsInvalidCharKey) {
         192,  168,  0,    2,                             // IP address 2 truncated
         'k',  'e',  'y',  '+',  '2',  '3'                // Svc Params key has forbidden char +
     };
+
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws an exception while doing unpack.
