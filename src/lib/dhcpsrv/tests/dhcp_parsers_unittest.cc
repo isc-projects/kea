@@ -1296,9 +1296,9 @@ TEST_F(ParseConfigTest, encapsulatedOptionData) {
         (getOptionPtr(MAPE_V6_OPTION_SPACE, D6O_S46_RULE));
     ASSERT_TRUE(s46_rule);
 
-    uint8_t flags;
-    uint8_t ea_len;
-    uint8_t prefix4_len;
+    uint8_t flags = 0;
+    uint8_t ea_len = 0;
+    uint8_t prefix4_len = 0;
     IOAddress ipv4_prefix(IOAddress::IPV4_ZERO_ADDRESS());
     PrefixTuple ipv6_prefix(PrefixLen(0), IOAddress::IPV6_ZERO_ADDRESS());;
 

@@ -732,10 +732,10 @@ TEST(ClientClassDictionary, unparseDict) {
                     "\"option-data\": [ ] }");
     };
 
-    std::string expected = "[\n" +
-        add_defaults("one") + ",\n" +
-        add_defaults("two") + ",\n" +
-        add_defaults("three") + "]\n";
+    std::string expected = "[\n";
+    expected += add_defaults("one") + ",\n";
+    expected += add_defaults("two") + ",\n";
+    expected += add_defaults("three") + "]\n";
 
     runToElementTest<ClientClassDictionary>(expected, *dictionary);
 }
@@ -1587,10 +1587,10 @@ TEST(ClientClassDictionary, templateUnparseDict) {
                     "\"option-data\": [ ] }");
     };
 
-    std::string expected = "[\n" +
-        add_defaults("one") + ",\n" +
-        add_defaults("two") + ",\n" +
-        add_defaults("three") + "]\n";
+    std::string expected = "[\n";
+    expected += add_defaults("one") + ",\n";
+    expected += add_defaults("two") + ",\n";
+    expected += add_defaults("three") + "]\n";
 
     runToElementTest<ClientClassDictionary>(expected, *dictionary);
 }

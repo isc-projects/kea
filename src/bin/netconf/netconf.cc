@@ -449,7 +449,7 @@ NetconfAgent::subscribeToDataChanges(const CfgServersMapPair& service_pair) {
         }
         Subscription subscription(
             running_sess_->onModuleChange(model, callback, nullopt, 0, options));
-        subscriptions_.emplace(server, forward<Subscription>(subscription));
+        subscriptions_.emplace(server, std::forward<Subscription>(subscription));
     } catch (exception const& ex) {
         ostringstream msg;
         msg << "module change subscribe failed with " << ex.what();
@@ -488,7 +488,7 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
     };
     try {
         Subscription subscription(running_sess_->onNotification(model, callback));
-        subscriptions_.emplace(server, forward<Subscription>(subscription));
+        subscriptions_.emplace(server, std::forward<Subscription>(subscription));
     } catch (exception const& ex) {
         ostringstream msg;
         msg << "event notification subscription for model " << model <<

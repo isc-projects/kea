@@ -251,7 +251,7 @@ TEST_F(SimpleParserTest, getInteger) {
 
     // The value specified is 100.
     ElementPtr json = Element::fromJSON("{ \"bar\": 100 }");
-    int64_t x;
+    int64_t x = -1;
 
     // Positive case: we expect value in range 0..200. All ok.
     EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 0, 200));

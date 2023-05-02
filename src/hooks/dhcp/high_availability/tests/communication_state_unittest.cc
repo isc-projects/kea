@@ -978,6 +978,15 @@ TEST_F(CommunicationStateTest, partnerStateTestMultiThreading) {
     partnerStateTest();
 }
 
+TEST_F(CommunicationStateTest, partnerStateUnavailableTest) {
+    partnerStateUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateUnavailableTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    partnerStateUnavailableTest();
+}
+
 TEST_F(CommunicationStateTest, partnerScopesTest) {
     partnerScopesTest();
 }

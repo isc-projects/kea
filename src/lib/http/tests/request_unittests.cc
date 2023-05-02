@@ -139,7 +139,7 @@ TEST_F(HttpRequestTest, includeHeaders) {
     ASSERT_NO_THROW(content_type = request_->getHeaderValue("Content-Type"));
     EXPECT_EQ("application/json", content_type);
 
-    uint64_t content_length;
+    uint64_t content_length = 0;
     ASSERT_NO_THROW(
         content_length = request_->getHeaderValueAsUint64("Content-Length")
     );
