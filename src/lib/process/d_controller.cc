@@ -410,7 +410,7 @@ DControllerBase::configFromFile() {
         process_->getCfgMgr()->getContext()->applyLoggingCfg();
 
         // build an error result
-        ConstElementPtr error = createAnswer(COMMAND_ERROR,
+        ConstElementPtr error = createAnswer(CONTROL_RESULT_ERROR,
                  std::string("Configuration parsing failed: ") + ex.what());
         return (error);
     }
@@ -449,7 +449,7 @@ DControllerBase::configGetHandler(const std::string&,
                                   ConstElementPtr /*args*/) {
     ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
 
-    return (createAnswer(COMMAND_SUCCESS, config));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, config));
 }
 
 ConstElementPtr
@@ -459,12 +459,12 @@ DControllerBase::configWriteHandler(const std::string&,
 
     if (args) {
         if (args->getType() != Element::map) {
-            return (createAnswer(COMMAND_ERROR, "Argument must be a map"));
+            return (createAnswer(CONTROL_RESULT_ERROR, "Argument must be a map"));
         }
         ConstElementPtr filename_param = args->get("filename");
         if (filename_param) {
             if (filename_param->getType() != Element::string) {
-                return (createAnswer(COMMAND_ERROR,
+                return (createAnswer(CONTROL_RESULT_ERROR,
                                      "passed parameter 'filename' "
                                      "is not a string"));
             }
@@ -477,12 +477,11 @@ DControllerBase::configWriteHandler(const std::string&,
         // whatever we remember
         filename = getConfigFile();
         if (filename.empty()) {
-            return (createAnswer(COMMAND_ERROR,
+            return (createAnswer(CONTROL_RESULT_ERROR,
                                  "Unable to determine filename."
                                  "Please specify filename explicitly."));
         }
     }
-
 
     // Ok, it's time to write the file.
     size_t size = 0;
@@ -491,12 +490,12 @@ DControllerBase::configWriteHandler(const std::string&,
     try {
         size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
-        return (createAnswer(COMMAND_ERROR,
+        return (createAnswer(CONTROL_RESULT_ERROR,
                              std::string("Error during write-config:")
                              + ex.what()));
     }
     if (size == 0) {
-        return (createAnswer(COMMAND_ERROR,
+        return (createAnswer(CONTROL_RESULT_ERROR,
                              "Error writing configuration to " + filename));
     }
 
@@ -533,7 +532,7 @@ DControllerBase::handleOtherObjects(ConstElementPtr args) {
 
 ConstElementPtr
 DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
-    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr module_config;
     std::string app_name = getAppName();
     std::string message;
@@ -566,7 +565,6 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
         return (result);
     }
 
-
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
     // configuration attempts.
@@ -585,7 +583,7 @@ DControllerBase::configReloadHandler(const std::string&, ConstElementPtr) {
 
 ConstElementPtr
 DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
-    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr module_config;
     std::string app_name = getAppName();
     std::string message;
@@ -643,7 +641,7 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         process_->getCfgMgr()->getContext()->applyLoggingCfg();
 
         // build an error result
-        ConstElementPtr error = createAnswer(COMMAND_ERROR,
+        ConstElementPtr error = createAnswer(CONTROL_RESULT_ERROR,
                  std::string("Configuration parsing failed: ") + ex.what());
         return (error);
     }
@@ -655,7 +653,7 @@ DControllerBase::serverTagGetHandler(const std::string&, ConstElementPtr) {
     ElementPtr response = Element::createMap();
     response->set("server-tag", Element::create(tag));
 
-    return (createAnswer(COMMAND_SUCCESS, response));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, response));
 }
 
 ConstElementPtr
@@ -675,7 +673,7 @@ DControllerBase::statusGetHandler(const std::string&, ConstElementPtr) {
         status->set("reload", Element::create(reload.total_seconds()));
     }
 
-    return (createAnswer(COMMAND_SUCCESS, status));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, status));
 }
 
 ConstElementPtr
@@ -686,13 +684,13 @@ DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
     ElementPtr extended = Element::create(getVersion(true));
     ElementPtr arguments = Element::createMap();
     arguments->set("extended", extended);
-    answer = createAnswer(COMMAND_SUCCESS, getVersion(false), arguments);
+    answer = createAnswer(CONTROL_RESULT_SUCCESS, getVersion(false), arguments);
     return (answer);
 }
 
 ConstElementPtr
 DControllerBase::buildReportHandler(const std::string&, ConstElementPtr) {
-    return (createAnswer(COMMAND_SUCCESS, isc::detail::getConfigReport()));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, isc::detail::getConfigReport()));
 }
 
 ConstElementPtr
@@ -733,7 +731,7 @@ DControllerBase::shutdownProcess(ConstElementPtr args) {
     // Not really a failure, but this condition is worth noting. In reality
     // it should be pretty hard to cause this.
     LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
-    return (createAnswer(COMMAND_SUCCESS, "Process has not been initialized"));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Process has not been initialized"));
 }
 
 void

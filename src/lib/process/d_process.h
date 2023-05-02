@@ -57,15 +57,6 @@ static const std::string SHUT_DOWN_COMMAND("shutdown");
 /// @brief String value for the status-get command.
 static const std::string STATUS_GET_COMMAND("status-get");
 
-/// @brief Returned by the process to indicate a command was successful.
-static const int COMMAND_SUCCESS = 0;
-
-/// @brief Returned by the process to indicates a command failed.
-static const int COMMAND_ERROR = 1;
-
-/// @brief Returned by the process to indicates a command is not valid.
-static const int COMMAND_INVALID = 2;
-
 /// @brief Application Process Interface
 ///
 /// DProcessBase is an abstract class represents the primary "application"
@@ -214,7 +205,7 @@ private:
 /// @brief Defines a shared pointer to DProcessBase.
 typedef boost::shared_ptr<DProcessBase> DProcessBasePtr;
 
-}; // namespace isc::process
-}; // namespace isc
+}  // namespace process
+}  // namespace isc
 
 #endif

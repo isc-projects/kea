@@ -73,7 +73,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-
 /// @brief Defines a shared pointer to DControllerBase.
 class DControllerBase;
 typedef boost::shared_ptr<DControllerBase> DControllerBasePtr;
@@ -491,7 +490,6 @@ protected:
     /// @throw VersionMessage if the -v, -V or -W arguments is given.
     void parseArgs(int argc, char* argv[]);
 
-
     ///@brief Parse a given file into Elements
     ///
     /// This method provides a means for deriving classes to use alternate
@@ -647,7 +645,7 @@ private:
 friend class DControllerTest;
 };
 
-} // namespace isc::process
-} // namespace isc
+}  // namespace process
+}  // namespace isc
 
 #endif
