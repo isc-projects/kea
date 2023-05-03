@@ -40,7 +40,6 @@ CalloutManager::CalloutManager(int num_libraries)
 // (n is the number of libraries), 0 (pre-user library callouts), or INT_MAX
 // (post-user library callouts).  It can also be -1 to indicate an invalid
 // value.
-
 void
 CalloutManager::checkLibraryIndex(int library_index) const {
     if (((library_index >= -1) && (library_index <= num_libraries_)) ||
@@ -54,7 +53,6 @@ CalloutManager::checkLibraryIndex(int library_index) const {
 }
 
 // Register a callout for the current library.
-
 void
 CalloutManager::registerCallout(const std::string& name,
                                 CalloutPtr callout,
@@ -94,7 +92,6 @@ CalloutManager::registerCallout(const std::string& name,
 }
 
 // Check if callouts are present for a given hook index.
-
 bool
 CalloutManager::calloutsPresent(int hook_index) const {
     // Validate the hook index.
@@ -127,9 +124,7 @@ CalloutManager::commandHandlersPresent(const std::string& command_name) const {
     return (false);
 }
 
-
 // Call all the callouts for a given hook.
-
 void
 CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
     // Clear the "skip" flag so we don't carry state from a previous call.
@@ -185,15 +180,27 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 // If an exception occurred, the stopwatch.stop() hasn't been
                 // called, so we have to call it here.
                 stopwatch.stop();
-                // Any exception, not just ones based on isc::Exception
+                // Any exception, just ones based on isc::Exception
                 LOG_ERROR(callouts_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
                     .arg(callout_handle.getCurrentLibrary())
                     .arg(PointerConverter(i->second).dlsymPtr())
                     .arg(e.what())
                     .arg(stopwatch.logFormatLastDuration());
+                callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            } catch (...) {
+                // If an exception occurred, the stopwatch.stop() hasn't been
+                // called, so we have to call it here.
+                stopwatch.stop();
+                // Any exception, not just ones based on isc::Exception
+                LOG_ERROR(callouts_logger, HOOKS_CALLOUT_EXCEPTION)
+                    .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
+                    .arg(callout_handle.getCurrentLibrary())
+                    .arg(PointerConverter(i->second).dlsymPtr())
+                    .arg("Unspecified exception")
+                    .arg(stopwatch.logFormatLastDuration());
+                callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
             }
-
         }
 
         // Mark end of callout execution. Include the total execution
@@ -216,15 +223,12 @@ CalloutManager::callCommandHandlers(const std::string& command_name,
     // This will throw an exception if the hook point doesn't exist.
     // The caller should check if the hook point exists by calling
     // commandHandlersPresent.
-    int index = ServerHooks::getServerHooks().getIndex(
-                    ServerHooks::commandToHookName(command_name));
+    int index = ServerHooks::getServerHooks().getIndex(ServerHooks::commandToHookName(command_name));
     // Call the handlers for this command.
     callCallouts(index, callout_handle);
 }
 
-
 // Deregister a callout registered by the current library on a particular hook.
-
 bool
 CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout,
                                   int library_index) {
@@ -278,7 +282,6 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout,
 }
 
 // Deregister all callouts on a given hook.
-
 bool
 CalloutManager::deregisterAllCallouts(const std::string& name,
                                       int library_index) {
