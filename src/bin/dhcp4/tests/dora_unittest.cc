@@ -859,6 +859,15 @@ public:
     /// @brief Checks that features related to lease caching (such as lease reuse statistics) work.
     void leaseCaching();
 
+    /// @brief Checks the value of a statistic.
+    ///
+    /// @param name name of statistic to check
+    /// @param expected_size expected number of statistic samples
+    /// @param expected_value expected value of the latest statistic sample
+    void checkStat(string const& name,
+                   size_t const expected_size,
+                   int64_t const expected_value);
+
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
@@ -2854,22 +2863,13 @@ DORATest::leaseCaching() {
     ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 
     // There should only be the default global statistic point.
-    ObservationPtr lease_reuses(StatsMgr::instance().getObservation("v4-lease-reuses"));
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(1, lease_reuses->getSize());
-    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    checkStat("v4-lease-reuses", 1, 0);
 
     // There should only be the default subnet statistic point.
-    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(1, lease_reuses->getSize());
-    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    checkStat("subnet[1].v4-lease-reuses", 1, 0);
 
     // There should only be the default statistic point in the other subnet.
-    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(1, lease_reuses->getSize());
-    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
     // Assume the client enters init-reboot and does a request.
     client.setState(Dhcp4Client::INIT_REBOOT);
@@ -2889,22 +2889,13 @@ DORATest::leaseCaching() {
     ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 
     // There should be one global lease reuse.
-    lease_reuses = StatsMgr::instance().getObservation("v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(2, lease_reuses->getSize());
-    EXPECT_EQ(1, lease_reuses->getInteger().first);
+    checkStat("v4-lease-reuses", 2, 1);
 
     // There should be one subnet lease reuse.
-    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(2, lease_reuses->getSize());
-    EXPECT_EQ(1, lease_reuses->getInteger().first);
+    checkStat("subnet[1].v4-lease-reuses", 2, 1);
 
     // Statistics for the other subnet should not be affected.
-    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(1, lease_reuses->getSize());
-    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
     // Let's say the client suddenly decides to do a full DORA.
     ASSERT_NO_THROW(client.doDORA());
@@ -2923,22 +2914,13 @@ DORATest::leaseCaching() {
     ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 
     // There should be three global lease reuses (REQUEST + DISCOVER + REQUEST).
-    lease_reuses = StatsMgr::instance().getObservation("v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(4, lease_reuses->getSize());
-    EXPECT_EQ(3, lease_reuses->getInteger().first);
+    checkStat("v4-lease-reuses", 4, 3);
 
     // There should be three subnet lease reuses (REQUEST + DISCOVER + REQUEST).
-    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(4, lease_reuses->getSize());
-    EXPECT_EQ(3, lease_reuses->getInteger().first);
+    checkStat("subnet[1].v4-lease-reuses", 4, 3);
 
     // Statistics for the other subnet should not be affected.
-    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(1, lease_reuses->getSize());
-    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
     // Try to request a different address than the client has. The server
     // should respond with DHCPNAK.
@@ -2957,22 +2939,13 @@ DORATest::leaseCaching() {
     ASSERT_FALSE(client.getContext().response_);
 
     // Global statistics should remain unchanged.
-    lease_reuses = StatsMgr::instance().getObservation("v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(4, lease_reuses->getSize());
-    EXPECT_EQ(3, lease_reuses->getInteger().first);
+    checkStat("v4-lease-reuses", 4, 3);
 
     // Subnet statistics should remain unchanged.
-    lease_reuses = StatsMgr::instance().getObservation("subnet[1].v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(4, lease_reuses->getSize());
-    EXPECT_EQ(3, lease_reuses->getInteger().first);
+    checkStat("subnet[1].v4-lease-reuses", 4, 3);
 
     // Statistics for the other subnet should certainly not be affected.
-    lease_reuses = StatsMgr::instance().getObservation("subnet[2].v4-lease-reuses");
-    ASSERT_TRUE(lease_reuses);
-    EXPECT_EQ(1, lease_reuses->getSize());
-    EXPECT_EQ(0, lease_reuses->getInteger().first);
+    checkStat("subnet[2].v4-lease-reuses", 1, 0);
 }
 
 TEST_F(DORATest, leaseCaching) {
@@ -2983,6 +2956,24 @@ TEST_F(DORATest, leaseCaching) {
 TEST_F(DORATest, leaseCachingMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     leaseCaching();
+}
+
+/// @brief Checks the value of a statistic.
+///
+/// @param name name of statistic to check
+/// @param expected_size expected number of statistic samples
+/// @param expected_value expected value of the latest statistic sample
+void DORATest::checkStat(string const& name,
+                         size_t const expected_size,
+                         int64_t const expected_value) {
+    ObservationPtr const stats(StatsMgr::instance().getObservation(name));
+    ASSERT_TRUE(stats) << "no such stat: " << name;
+    EXPECT_EQ(expected_size, stats->getSize())
+        << name << " stat has wrong size: found " << stats->getSize() << ", expected "
+        << expected_size;
+    EXPECT_EQ(expected_value, stats->getInteger().first)
+        << name << " stat has wrong value: found " << stats->getInteger().first << ", expected "
+        << expected_value;
 }
 
 // Starting tests which require MySQL backend availability. Those tests
