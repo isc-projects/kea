@@ -13,6 +13,8 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option4_dnr.h>
+#include <dhcp/option6_dnr.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
@@ -1838,6 +1840,227 @@ TEST_F(OptionDefinitionTest, tuple4ArrayOption143) {
 
     OpaqueDataTuple tuple2 = option_cast->getTuple(2);
     EXPECT_EQ("world", tuple2.getText());
+}
+
+// The purpose of this test is to verify that definition can be created
+// for option that comprises record of data. In this particular test
+// the V4-DNR option is used (code 162) in ADN only mode, only one DNR instance.
+// Option's fields are specified as a vector of strings.
+TEST_F(OptionDefinitionTest, recordOption4DnrAdnOnly) {
+    OptionDefinition opt_def("option-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, "record", false);
+    opt_def.addRecordField(OPT_UINT16_TYPE);
+    opt_def.addRecordField(OPT_UINT16_TYPE);
+    opt_def.addRecordField(OPT_UINT8_TYPE);
+    opt_def.addRecordField(OPT_FQDN_TYPE);
+    opt_def.addRecordField(OPT_BINARY_TYPE);
+
+    OptionPtr option;
+
+    // Specify option's fields for ADN only mode.
+    std::vector<std::string> values;
+    values.push_back("26");                      // DNR instance data Len
+    values.push_back("1234");                    // service priority
+    values.push_back("23");                      // ADN Len
+    values.push_back("Example.Some.Host.Org.");  // ADN FQDN
+    values.push_back("");                        // leave empty Binary type
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_V4_DNR, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(Option4Dnr));
+
+    // Validate that option's fields were correctly parsed from strings.
+    Option4DnrPtr option_cast = boost::dynamic_pointer_cast<Option4Dnr>(option);
+
+    auto dnr_instances = option_cast->getDnrInstances();
+
+    // Only one DNR instance is expected.
+    ASSERT_EQ(1, dnr_instances.size());
+
+    DnrInstance& dnr = dnr_instances[0];
+    ASSERT_EQ(26, dnr.getDnrInstanceDataLength());
+    ASSERT_EQ(1234, dnr.getServicePriority());
+    ASSERT_EQ(true, dnr.isAdnOnlyMode());
+    ASSERT_EQ("example.some.host.org.", dnr.getAdnAsText());
+    ASSERT_EQ(23, dnr.getAdnLength());
+    ASSERT_EQ(0, dnr.getAddrLength());
+    ASSERT_EQ(0, dnr.getSvcParamsLength());
+}
+
+// The purpose of this test is to verify that definition can be created
+// for option that comprises record of data. In this particular test
+// the V4-DNR option is used (code 162) with ADN, IP addresses and Service
+// Parameters included. Option's fields are specified as a vector of strings.
+// Multiple DNR instances are configured in this test.
+TEST_F(OptionDefinitionTest, recordOption4Dnr) {
+    OptionDefinition opt_def("option-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, "record", false);
+    opt_def.addRecordField(OPT_UINT16_TYPE);
+    opt_def.addRecordField(OPT_UINT16_TYPE);
+    opt_def.addRecordField(OPT_UINT8_TYPE);
+    opt_def.addRecordField(OPT_FQDN_TYPE);
+    opt_def.addRecordField(OPT_BINARY_TYPE);
+
+    OptionPtr option;
+
+    // Specify option's fields - multiple DNR instances.
+    std::vector<std::string> values;
+    values.push_back("54");                            // DNR instance #1 data Len
+    values.push_back("1234");                          // service priority
+    values.push_back("23");                            // ADN Len
+    values.push_back("Example.Some.Host.Org.");        // ADN FQDN
+    values.push_back("08 "                             // Addr Len
+                     "c0 a8 00 01"                     // IP 192.168.0.1
+                     "c0 a8 00 02"                     // IP 192.168.0.2
+                     "6b 65 79 31 3d 76 61 6c 31 20 "  // SvcParams "key1=val1 "
+                     "6b 65 79 32 3d 76 61 6c 32 "     // SvcParams "key2=val2"
+                     "00 34 "                          // DNR instance #2 data Len 52
+                     "10 e1 "                          // service priority 4321
+                     "15 "                             // ADN Len 21
+                     "07 6D 79 68 6F 73 74 31 "        // ADN FQDN myhost1.
+                     "07 65 78 61 6D 70 6C 65 "        // example.
+                     "03 63 6F 6D 00 "                 // com.
+                     "08 "                             // Addr Len 8
+                     "c0 a9 00 01"                     // IP 192.169.0.1
+                     "c0 a9 00 02"                     // IP 192.169.0.2
+                     "6b 65 79 33 3d 76 61 6c 33 20 "  // SvcParams "key3=val3 "
+                     "6b 65 79 34 3d 76 61 6c 34 "     // SvcParams "key4=val4"
+    );
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_V4_DNR, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(Option4Dnr));
+
+    // Validate that option's fields were correctly parsed from strings.
+    Option4DnrPtr option_cast = boost::dynamic_pointer_cast<Option4Dnr>(option);
+
+    auto dnr_instances = option_cast->getDnrInstances();
+
+    // Two DNR instances are expected.
+    ASSERT_EQ(2, dnr_instances.size());
+
+    // Let's check 1st DNR instance.
+    DnrInstance& dnr_1 = dnr_instances[0];
+    ASSERT_EQ(54, dnr_1.getDnrInstanceDataLength());
+    ASSERT_EQ(1234, dnr_1.getServicePriority());
+    ASSERT_EQ(false, dnr_1.isAdnOnlyMode());
+    ASSERT_EQ(23, dnr_1.getAdnLength());
+    ASSERT_EQ("example.some.host.org.", dnr_1.getAdnAsText());
+    ASSERT_EQ(8, dnr_1.getAddrLength());
+    ASSERT_EQ(19, dnr_1.getSvcParamsLength());
+    auto addresses_1 = dnr_1.getAddresses();
+    ASSERT_EQ(2, addresses_1.size());
+    ASSERT_EQ("192.168.0.1", addresses_1[0].toText());
+    ASSERT_EQ("192.168.0.2", addresses_1[1].toText());
+    ASSERT_EQ("key1=val1 key2=val2", dnr_1.getSvcParams());
+
+    // Let's check 2nd DNR instance.
+    DnrInstance& dnr_2 = dnr_instances[1];
+    ASSERT_EQ(52, dnr_2.getDnrInstanceDataLength());
+    ASSERT_EQ(4321, dnr_2.getServicePriority());
+    ASSERT_EQ(false, dnr_2.isAdnOnlyMode());
+    ASSERT_EQ(21, dnr_2.getAdnLength());
+    ASSERT_EQ("myhost1.example.com.", dnr_2.getAdnAsText());
+    ASSERT_EQ(8, dnr_2.getAddrLength());
+    ASSERT_EQ(19, dnr_2.getSvcParamsLength());
+    auto addresses_2 = dnr_2.getAddresses();
+    ASSERT_EQ(2, addresses_2.size());
+    ASSERT_EQ("192.169.0.1", addresses_2[0].toText());
+    ASSERT_EQ("192.169.0.2", addresses_2[1].toText());
+    ASSERT_EQ("key3=val3 key4=val4", dnr_2.getSvcParams());
+}
+
+// The purpose of this test is to verify that definition can be created
+// for option that comprises record of data. In this particular test
+// the V6-DNR option is used (code 144) in ADN only mode.
+// Option's fields are specified as a vector of strings.
+TEST_F(OptionDefinitionTest, recordOption6DnrAdnOnly) {
+    OptionDefinition opt_def("option-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, "record", false);
+    opt_def.addRecordField(OPT_UINT16_TYPE);
+    opt_def.addRecordField(OPT_UINT16_TYPE);
+    opt_def.addRecordField(OPT_FQDN_TYPE);
+    opt_def.addRecordField(OPT_BINARY_TYPE);
+
+    OptionPtr option;
+
+    // Specify option's fields for ADN only mode.
+    std::vector<std::string> values;
+    values.push_back("1234");                    // service priority
+    values.push_back("23");                      // ADN Len
+    values.push_back("Example.Some.Host.Org.");  // ADN FQDN
+    values.push_back("");                        // leave empty Binary type
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V6, D6O_V6_DNR, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(Option6Dnr));
+
+    // Validate that option's fields were correctly parsed from strings.
+    Option6DnrPtr option_cast = boost::dynamic_pointer_cast<Option6Dnr>(option);
+
+    ASSERT_EQ(1234, option_cast->getServicePriority());
+    ASSERT_EQ(true, option_cast->isAdnOnlyMode());
+    ASSERT_EQ("example.some.host.org.", option_cast->getAdnAsText());
+    ASSERT_EQ(23, option_cast->getAdnLength());
+    ASSERT_EQ(0, option_cast->getAddrLength());
+    ASSERT_EQ(0, option_cast->getSvcParamsLength());
+}
+
+// The purpose of this test is to verify that definition can be created
+// for option that comprises record of data. In this particular test
+// the V6-DNR option is used (code 144) with ADN, IP addresses and Service
+// Parameters included. Option's fields are specified as a vector of strings.
+TEST_F(OptionDefinitionTest, recordOption6Dnr) {
+    OptionDefinition opt_def("option-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, "record", false);
+    opt_def.addRecordField(OPT_UINT16_TYPE);
+    opt_def.addRecordField(OPT_UINT16_TYPE);
+    opt_def.addRecordField(OPT_FQDN_TYPE);
+    opt_def.addRecordField(OPT_BINARY_TYPE);
+
+    OptionPtr option;
+
+    // Specify option's fields: service priority, ADN, IP addresses and SvcParams.
+    std::vector<std::string> values;
+    values.push_back("1234");                                            // service priority
+    values.push_back("23");                                              // ADN Len
+    values.push_back("Example.Some.Host.Org.");                          // ADN FQDN
+    values.push_back("00 20 "                                            // Addr Len
+                     "20 01 0d b8 00 01 00 00 00 00 00 00 de ad be ef "  // IP 2001:db8:1::dead:beef
+                     "ff 02 00 00 00 00 00 00 00 00 00 00 fa ce b0 0c "  // IP ff02::face:b00c
+                     "6b 65 79 31 3d 76 61 6c 31 20 "                    // SvcParams "key1=val1 "
+                     "6b 65 79 32 3d 76 61 6c 32"                        // SvcParams "key2=val2"
+    );
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V6, D6O_V6_DNR, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(Option6Dnr));
+
+    // Validate that option's fields were correctly parsed from strings.
+    Option6DnrPtr option_cast = boost::dynamic_pointer_cast<Option6Dnr>(option);
+
+    ASSERT_EQ(1234, option_cast->getServicePriority());
+    ASSERT_EQ(false, option_cast->isAdnOnlyMode());
+    ASSERT_EQ("example.some.host.org.", option_cast->getAdnAsText());
+    ASSERT_EQ(23, option_cast->getAdnLength());
+    ASSERT_EQ(32, option_cast->getAddrLength());
+    auto addresses = option_cast->getAddresses();
+    ASSERT_EQ(2, addresses.size());
+    ASSERT_EQ("2001:db8:1::dead:beef", addresses[0].toText());
+    ASSERT_EQ("ff02::face:b00c", addresses[1].toText());
+    ASSERT_EQ("key1=val1 key2=val2", option_cast->getSvcParams());
 }
 
 // This test verifies that a definition of an option with an array

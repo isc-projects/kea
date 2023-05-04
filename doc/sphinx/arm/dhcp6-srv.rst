@@ -1769,7 +1769,8 @@ types are given in :ref:`dhcp-types`.
    | ipv6-address-andsf       | 143             | ipv6-address    | true            |
    +--------------------------+-----------------+-----------------+-----------------+
    | v6-dnr                   | 144             | record (uint16, | false           |
-   |                          |                 | uint16, binary) |                 |
+   |                          |                 | uint16, fqdn,   |                 |
+   |                          |                 | binary)         |                 |
    +--------------------------+-----------------+-----------------+-----------------+
 
 Options marked with (1) have option definitions, but the logic behind

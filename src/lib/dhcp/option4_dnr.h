@@ -78,6 +78,11 @@ public:
     /// @param adn ADN FQDN
     /// @param ip_addresses Container of IP addresses
     /// @param svc_params Service Parameters
+    ///
+    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
+    /// @throw InvalidOptionDnrSvcParams Thrown when @c checkSvcParams(from_wire_data) throws
+    /// @throw OutOfRange Thrown in case of no IP addresses found or when IP addresses length
+    /// is too big
     DnrInstance(Option::Universe universe,
                 uint16_t service_priority,
                 const std::string& adn,
@@ -93,6 +98,8 @@ public:
     /// @param universe either V4 or V6 Option universe
     /// @param service_priority Service priority
     /// @param adn ADN FQDN
+    ///
+    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
     DnrInstance(Option::Universe universe, uint16_t service_priority, const std::string& adn);
 
     /// @brief Default destructor.
@@ -436,6 +443,11 @@ public:
     /// @param begin Iterator pointing to the beginning of the buffer holding an
     /// option.
     /// @param end Iterator pointing to the end of the buffer holding an option.
+    ///
+    /// @throw OutOfRange Thrown in case of truncated data. May be also thrown when
+    /// @c DnrInstance::unpackDnrInstanceDataLength(begin,end) throws.
+    /// @throw BadValue Thrown when @c DnrInstance::unpackAdn(begin,end) throws.
+    /// @throw InvalidOptionDnrDomainName Thrown when @c DnrInstance::unpackAdn(begin,end) throws.
     Option4Dnr(OptionBufferConstIter begin, OptionBufferConstIter end);
 
     /// @brief Constructor of the empty %Option.

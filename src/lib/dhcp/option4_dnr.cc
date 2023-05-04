@@ -79,7 +79,7 @@ Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         dnr_instance.unpackAddresses(begin, dnr_instance_end);
 
         // SvcParams (variable length) field is last.
-        dnr_instance.unpackSvcParams(begin, end);
+        dnr_instance.unpackSvcParams(begin, dnr_instance_end);
 
         addDnrInstance(dnr_instance);
     }

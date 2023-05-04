@@ -1734,7 +1734,70 @@
         "name": "ipv6-address-andsf"
       },
 
-      // Option codes 144-65535 are unassigned.
+      /*
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       Option-code             |         Option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       Service Priority        |         ADN Length            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      ~                   authentication-domain-name                  ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         Addr Length           |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
+      ~                        ipv6-address(es)                       ~
+      |                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                               |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
+      ~                 Service Parameters (SvcParams)                ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      Option-code:  OPTION_V6_DNR (144)
+
+      Option-length:  Length of the enclosed data in octets.  The option
+         length is ('ADN Length' + 4) when only an ADN is included in the
+         option.
+
+      Service Priority:  The priority of this OPTION_V6_DNR instance
+         compared to other instances.  This 16-bit unsigned integer is
+         interpreted following the rules specified in Section 2.4.1 of
+         [I-D.ietf-dnsop-svcb-https].
+
+      ADN Length:  Length of the authentication-domain-name field in
+         octets.
+
+      authentication-domain-name (variable length):  A fully qualified
+         domain name of the encrypted DNS resolver.  This field is
+         formatted as specified in Section 10 of [RFC8415].
+
+      Addr Length:  Length of enclosed IPv6 addresses in octets.  When
+         present, it MUST be a multiple of 16.
+
+      ipv6-address(es) (variable length):  Indicates one or more IPv6
+         addresses to reach the encrypted DNS resolver.  An address can be
+         link-local, ULA, or GUA.
+
+      Service Parameters (SvcParams) (variable length):  Specifies a set of
+         service parameters that are encoded following the rules in
+         Section 2.1 of [I-D.ietf-dnsop-svcb-https].
+      */
+      // Type: uint16, uint16, FQDN, binary
+      {
+        // DNR ADN only mode - IP address(es) and SvcParams are missing on purpose.
+        "code": 144,
+        "name": "v6-dnr",
+        "data": "1234, 23, example.some.host.org., " // please notice comma and space at the end put on purpose
+                                                     // this means empty last type of the record - binary type
+
+      },
+      {
+        // DNR with IP address(es) and SvcParams included as binary type.
+        "code": 144,
+        "name": "v6-dnr",          // addresses len=32  |                                     1st IPv6  |                                     2nd IPv6  |             SvcParams "key1=val1 key2=val2"            |
+        "data": "3234, 23, example.some.host.org., 00 20 20 01 0d b8 00 01 00 00 00 00 00 00 de ad be ef ff 02 00 00 00 00 00 00 00 00 00 00 fa ce b0 0c 6b 65 79 31 3d 76 61 6c 31 20 6b 65 79 32 3d 76 61 6c 32"
+      },
+
+      // Option codes 145-65535 are unassigned.
 
       /*                         Custom option data                           */
       // See "option-def" below for the definitions.
