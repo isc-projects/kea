@@ -5617,13 +5617,13 @@ UPDATE schema_version
 
 UPDATE lease6 SET duid = E'\\x000000' WHERE duid = E'\\x00';
 
--- Set schema 16.0 version.
+-- Set 16.0 schema version.
 UPDATE schema_version
     SET version = '16', minor = '0';
 
 -- Schema 16.0 specification ends here.
 
--- This line starts the schema upgrade to version 16.
+-- Upgrade to schema 16.0 begins here:
 
 -- Add the allocator column to the DHCPv4 tables.
 ALTER TABLE dhcp4_subnet ADD COLUMN allocator TEXT DEFAULT NULL;
@@ -5637,11 +5637,11 @@ ALTER TABLE dhcp6_subnet ADD COLUMN pd_allocator TEXT DEFAULT NULL;
 ALTER TABLE dhcp6_shared_network ADD COLUMN allocator TEXT DEFAULT NULL;
 ALTER TABLE dhcp6_shared_network ADD COLUMN pd_allocator TEXT DEFAULT NULL;
 
--- Update the schema version number.
+-- Set 17.0 schema version.
 UPDATE schema_version
-    SET version = '16', minor = '0';
+    SET version = '17', minor = '0';
 
--- This line concludes the schema upgrade to version 16.
+-- Schema 17.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

@@ -27,8 +27,8 @@ fi
 
 VERSION=$(pgsql_version "$@")
 
-if [ "$VERSION" != "15.0" ]; then
-    printf 'This script upgrades 15.0 to 16.0. '
+if [ "$VERSION" != "16.0" ]; then
+    printf 'This script upgrades 16.0 to 17.0. '
     printf 'Reported version is %s. Skipping upgrade.\n' "${VERSION}"
     exit 0
 fi
@@ -36,25 +36,15 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- Upgrade to schema 16.0 begins here:
+-- Upgrade to schema 17.0 begins here:
 
--- Add the allocator column to the DHCPv4 tables.
-ALTER TABLE dhcp4_subnet ADD COLUMN allocator TEXT DEFAULT NULL;
-ALTER TABLE dhcp4_shared_network ADD COLUMN allocator TEXT DEFAULT NULL;
+UPDATE lease6 SET duid = E'\\\\x000000' WHERE duid = E'\\\\x00';
 
--- Add allocator and pd_allocator to the DHCPv6 subnet tables.
-ALTER TABLE dhcp6_subnet ADD COLUMN allocator TEXT DEFAULT NULL;
-ALTER TABLE dhcp6_subnet ADD COLUMN pd_allocator TEXT DEFAULT NULL;
-
--- Add allocator and pd_allocator to the DHCPv6 shared network tables.
-ALTER TABLE dhcp6_shared_network ADD COLUMN allocator TEXT DEFAULT NULL;
-ALTER TABLE dhcp6_shared_network ADD COLUMN pd_allocator TEXT DEFAULT NULL;
-
--- Set 16.0 schema version.
+-- Set 17.0 schema version.
 UPDATE schema_version
-    SET version = '16', minor = '0';
+    SET version = '17', minor = '0';
 
--- Schema 16.0 specification ends here.
+-- Schema 17.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;
