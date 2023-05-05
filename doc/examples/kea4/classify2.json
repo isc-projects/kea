@@ -2,7 +2,9 @@
 // The purpose of this example is to showcase how clients can be classified
 // with advanced features.
 
-{ "Dhcp4": {
+{ "Dhcp4":
+
+{
 
 // Kea is told to listen on eth0 interface only.
   "interfaces-config": {

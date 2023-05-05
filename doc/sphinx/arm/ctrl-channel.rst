@@ -69,7 +69,7 @@ send JSON commands structured as follows:
 
    {
        "command": "foo",
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
        "arguments": {
            "param1": "value1",
            "param2": "value2",
@@ -87,7 +87,7 @@ following structure:
        Content-Length: 147\r\n\r\n
        {
            "command": "foo",
-           "service": [ "dhcp4" ]
+           "service": [ "dhcp4" ],
            "arguments": {
                "param1": "value1",
                "param2": "value2",
@@ -95,8 +95,8 @@ following structure:
            }
        }
 
-``command`` is the name of the command to execute and is mandatory.
-``arguments`` is a map of the parameters required to carry out the given
+The ``command`` is the name of the command to execute and is mandatory.
+The ``arguments`` is a map of the parameters required to carry out the given
 command. The exact content and format of the map are command-specific.
 
 ``service`` is a list of the servers at which the control command is
@@ -141,7 +141,7 @@ form:
 ::
 
    {
-       "result": 0|1|2|3|4,
+       "result": 0, // 0|1|2|3|4
        "text": "textual description",
        "arguments": {
            "argument1": "value1",
@@ -193,12 +193,15 @@ that depends on the specific command.
    {
        "command": "foo",
        // service is a list
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
        # command arguments are here.
        "arguments": {
-           "param1": "value1"/*,
+           "param1": "value1",
+           ...
+           /*
            "param2": "value2",
-           ...*/
+           ...
+           */
        }
    }
 
@@ -218,12 +221,13 @@ to one service would be structured as follows:
 
     [
         {
-            "result": 0|1|2|3|4,
+            "result": 0, // 0|1|2|3|4
             "text": "textual description",
             "arguments": {
                 "argument1": "value1",
                 "argument2": "value2",
-            ...
+                ...
+            }
         }
     ]
 
@@ -235,20 +239,22 @@ contain responses from each service, in the order they were requested:
 
     [
         {
-            "result": 0|1|2|3|4,
+            "result": 0, // 0|1|2|3|4
             "text": "textual description",
             "arguments": {
                 "argument1": "value1",
                 "argument2": "value2",
-            ...
+                ...
+            }
         },
         {
-            "result": 0|1|2|3|4,
+            "result": 0, // 0|1|2|3|4
             "text": "textual description",
             "arguments": {
                 "argument1": "value1",
                 "argument2": "value2",
-            ...
+                ...
+            }
         },
         ...
     ]
@@ -424,7 +430,7 @@ as "Dhcp4" or "Dhcp6". For example:
        "command": "config-test",
        "arguments":  {
            "Dhcp6": {
-               :
+               ...
            }
        }
    }
@@ -565,7 +571,7 @@ as "Dhcp4" or "Dhcp6". For example:
        "command": "config-set",
        "arguments":  {
            "Dhcp6": {
-               :
+               ...
            }
        }
    }
@@ -605,7 +611,7 @@ may look like this:
 ::
 
    {
-       "command": "shutdown"
+       "command": "shutdown",
        "arguments": {
            "exit-value": 3
        }
@@ -632,7 +638,7 @@ An example command may look like this:
 ::
 
    {
-       "command": "shutdown"
+       "command": "shutdown",
        "arguments": {
            "exit-value": 3,
            "type": "drain_first"

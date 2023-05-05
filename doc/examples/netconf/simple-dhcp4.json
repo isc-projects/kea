@@ -68,15 +68,15 @@
 
         // Netconf is able to load hook libraries that augment its operation.
         // The primary functionality is the ability to add new commands.
-        //
+
         // Uncomment this section to load a hook library.
-        //
+
         // "hooks-libraries": [
         //    // Hook libraries list may contain more than one library.
         //    {
         //        // The only necessary parameter is the library filename.
         //        "library": "/opt/local/netconf-commands.so",
-        //
+
         //        // Some libraries may support parameters. Make sure you
         //        // type this section carefully, as the CA does not validate
         //        // it (because the format is library-specific).
@@ -84,7 +84,7 @@
         //            "param1": "foo"
         //        }
         //    }
-        //]
+        // ]
 
         // Similar to other Kea components, Netconf also uses logging.
         "loggers": [
@@ -92,7 +92,7 @@
                 "name": "kea-netconf",
                 "output_options": [
                     {
-                        //"output": "/var/log/kea-netconf.log",
+                        // "output": "/var/log/kea-netconf.log",
                         "output": "stdout",
                         // Several additional parameters are possible in addition
                         // to the typical output. Flush determines whether logger

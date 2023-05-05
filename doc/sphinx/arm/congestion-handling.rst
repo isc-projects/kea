@@ -69,9 +69,9 @@ servers through an optional, top-level, configuration element,
 ::
 
       "dhcp-queue-control": {
-          "enable-queue": true|false,
+          "enable-queue": true, // true|false
           "queue-type": "queue type",
-          "capacity" : n
+          "capacity" : 256 // n packets
       }
 
 where:
@@ -100,8 +100,7 @@ with a queue capacity of 250 packets:
 
    "Dhcp4":
    {
-       ...
-      "dhcp-queue-control": {
+       "dhcp-queue-control": {
           "enable-queue": true,
           "queue-type": "kea-ring4",
           "capacity" : 250
@@ -116,8 +115,7 @@ with a queue capacity of 300 packets:
 
    "Dhcp6":
    {
-       ...
-      "dhcp-queue-control": {
+       "dhcp-queue-control": {
           "enable-queue": true,
           "queue-type": "kea-ring6",
           "capacity" : 300

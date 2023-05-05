@@ -200,14 +200,16 @@ to an existing subnet.
 
 ::
 
+   {
    "subnet4": [ {
       "id": 1,
       "subnet": "10.20.30.0/24",
       "user-context": {
-         "building": "Main"
+         "building": "Main",
          "floor": 1
          }
     } ]
+    }
 
 The same can be done with many other commands like lease6-add etc.
 
@@ -232,7 +234,7 @@ Example of relay information stored in a lease:
       "ip-address": "192.0.2.1",
       "state": 0,
       "subnet-id": 44,
-      "valid-lft": 3600
+      "valid-lft": 3600,
       "user-context": {
          "ISC": {
          "relays": [
@@ -249,6 +251,7 @@ Example of relay information stored in a lease:
          }]
          }
       }
+   }
    }
 
 
@@ -314,6 +317,7 @@ where the content of "subnets.json" may be:
 
 ::
 
+   {
    "subnet4": [
       {
          "id": 123,
@@ -328,3 +332,5 @@ where the content of "subnets.json" may be:
          "subnet": "10.0.0.0/8"
       }
    ],
+   ...
+   }

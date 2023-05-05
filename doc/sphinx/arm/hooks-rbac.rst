@@ -356,20 +356,22 @@ and hook name:
 
 .. code-block:: javascript
 
-    ...
+    {
     "commands": [
             {
                 "name": "my-new-command",
                 "access": "write",
                 "hook": "my-custom-hook"
             }
-        ]
+        ],
+    ...
+    }
 
 The new command can then be specified in ``roles``:
 
 .. code-block:: javascript
 
-    ...
+    {
     "roles": [
         {
             "name": "user1",
@@ -380,11 +382,13 @@ The new command can then be specified in ``roles``:
         },
         {
             "name": "user2",
-            "accept-commands": { "hook": "my-custom-hook" }
+            "accept-commands": { "hook": "my-custom-hook" },
             "reject-commands": "ALL",
             "list-match-first": "accept"
         }
-    ]
+    ],
+    ...
+    }
 
 The second method is to create a custom file in ``.../share/kea/api`` and define
 the access type of the custom command(s).
@@ -394,7 +398,7 @@ file from ``.../share/kea/api`` and defining it in the ``commands`` global param
 
 .. code-block:: javascript
 
-    ...
+    {
     "commands": [
             {
                 "name": "dhcp-disable",
@@ -402,6 +406,7 @@ file from ``.../share/kea/api`` and defining it in the ``commands`` global param
                 "hook": "my-custom-hook-3"
             }
         ]
+    }
 
 With this approach, an administrator can put the configurations of all existing
 commands inside the Control Agent's configuration file.
@@ -418,7 +423,7 @@ list and to reject anything else:
 
 .. code-block:: javascript
 
-   ...
+   {
    "roles": [
    {
        "name": "user1",
@@ -435,17 +440,18 @@ list and to reject anything else:
        // This is the default but as the config relies on it
        // it is explicitly set.
        "list-match-first": "accept"
-    },
-    ...
-    ],
-    ...
+   },
+   ...
+   ],
+   ...
+   }
 
 A common alternative is not to set the "reject-commands" list, i.e. leave
 it empty and rely on "other-commands" to reject anything else.
 
 .. code-block:: javascript
 
-   ...
+   {
    "roles": [
    {
        "name": "user2",
@@ -461,16 +467,17 @@ it empty and rely on "other-commands" to reject anything else.
        // This is the default but as the config relies on it
        // it is explicitly set.
        "other-commands": "reject"
-    },
-    ...
-    ],
-    ...
+   },
+   ...
+   ],
+   ...
+   }
 
 It is also possible to do the opposite, i.e. to set only the "reject-commands" list:
 
 .. code-block:: javascript
 
-   ...
+   {
    "roles": [
    {
        "name": "user3",
@@ -482,27 +489,29 @@ It is also possible to do the opposite, i.e. to set only the "reject-commands" l
            ]
        },
        "other-commands": "accept"
-    },
-    ...
-    ],
-    ...
+   },
+   ...
+   ],
+   ...
+   }
 
 Or use both lists with the exception in the "reject-commands" list,
 which must be checked first as "config-get" has the read-access right.
 
 .. code-block:: javascript
 
-   ...
+   {
    "roles": [
    {
        "name": "user4",
        "accept-commands": "READ",
        "reject-commands": { "commands": [ "config-get" ] },
        "list-match-first": "reject"
-    },
-    ...
-    ],
-    ...
+   },
+   ...
+   ],
+   ...
+   }
 
 To check any configuration, it is a good idea to use the "list-commands"
 response filter, which shows errors such as missing (rejected) commands
@@ -513,7 +522,7 @@ and later reused in ``roles``:
 
  .. code-block:: javascript
 
-    ...
+    {
     "access-control-lists":[
         {
             "my-list-one":{
@@ -566,4 +575,6 @@ and later reused in ``roles``:
     "unknown-role":{
         "accept-commands":"my-list-three",
         "reject-commands":"ALL"
+    },
+    ...
     }

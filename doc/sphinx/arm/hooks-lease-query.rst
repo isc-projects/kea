@@ -134,7 +134,7 @@ addresses:
 
 ::
 
- :
+   {
     "hooks-libraries": [
         {
             "library": "lib/kea/hooks/libdhcp_lease_query.so",
@@ -143,7 +143,8 @@ addresses:
             }
         }
     ],
- :
+    ...
+   }
 
 .. note::
 
@@ -319,7 +320,7 @@ addresses:
 
 ::
 
- :
+   {
     "hooks-libraries": [
         {
             "library": "lib/kea/hooks/libdhcp_lease_query.so",
@@ -329,7 +330,8 @@ addresses:
             }
         }
     ],
- :
+    ...
+   }
 
 .. note::
 
@@ -541,7 +543,7 @@ For instance, for DHCPv4:
 
 ::
 
-  :
+   {
      "hooks-libraries": [
          {
              "library": "lib/kea/hooks/libdhcp_lease_query.so",
@@ -563,13 +565,14 @@ For instance, for DHCPv4:
              }
          }
      ],
- :
+     ...
+   }
 
 or for DHCPv6:
 
 ::
 
-  :
+   {
      "hooks-libraries": [
          {
              "library": "lib/kea/hooks/libdhcp_lease_query.so",
@@ -593,4 +596,5 @@ or for DHCPv6:
              }
          }
      ],
- :
+     ...
+   }

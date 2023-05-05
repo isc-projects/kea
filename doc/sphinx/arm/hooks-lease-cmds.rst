@@ -113,7 +113,7 @@ servers.
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_lease_cmds.so"
-           }
+           },
            ...
        ]
    }
@@ -166,7 +166,7 @@ subnet. For example:
        }
    }
 
-``lease6-add`` can also be used to add leases for IPv6 prefixes. In this
+The ``lease6-add`` can also be used to add leases for IPv6 prefixes. In this
 case there are three additional parameters that must be specified:
 ``subnet-id``, ``type`` (set to "IA_PD"), and prefix length. The actual
 prefix is set using the ``ip-address`` field. Note that Kea cannot guess
@@ -355,7 +355,7 @@ listed in the response. For example:
 
     {
         "result": 0,
-        "text": "Bulk apply of 2 IPv6 leases completed".
+        "text": "Bulk apply of 2 IPv6 leases completed",
         "arguments": {
             "failed-deleted-leases": [
                 {
@@ -681,7 +681,7 @@ The response has the following structure:
                {
                    "ip-address": "2001:db8:5::3",
                    ...
-               }
+               },
                {
                    "ip-address": "2001:db8:4::1",
                    ...
@@ -689,8 +689,8 @@ The response has the following structure:
                {
                    "ip-address": "2001:db8:2::7",
                    ...
-               }
-
+               },
+               ...
            ],
            "count": 6
        },
@@ -840,10 +840,10 @@ This parameter defaults to ``false``. An example of its use is shown below:
    }
 
 
-``lease4-del`` and ``lease6-del`` return a result that indicates the outcome of the
-operation. It has one of the following values: 0 (success), 1 (error),
-or 3 (empty). The empty result means that a query has been completed
-properly, but the object (a lease, in this case) has not been found.
+The ``lease4-del`` and ``lease6-del`` return a result that indicates the outcome
+of the operation. It has one of the following values: 0 (success), 1 (error),
+or 3 (empty). The empty result means that a query has been completed properly,
+but the object (a lease, in this case) has not been found.
 
 .. _command-lease4-update:
 
@@ -1000,8 +1000,9 @@ An example of the ``lease6-resend-ddns`` query is:
      }
    }
 
-``lease4-resend-ddns`` and ``lease6-resend-ddns`` return an indication of the result of the operation.
-It has one of the following values: 0 (success), 1 (error), or 3 (empty). An empty
+The ``lease4-resend-ddns`` and ``lease6-resend-ddns`` return an indication of the
+result of the operation.
+it has one of the following values: 0 (success), 1 (error), or 3 (empty). An empty
 result means that a query has been completed properly, but the object (a lease in
 this case) has not been found.
 

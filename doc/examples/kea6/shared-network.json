@@ -23,7 +23,7 @@
         // It is likely that in your network you'll have a mix of regular,
         // "plain" subnets and shared networks. It is perfectly valid to mix
         // them in the same config file.
-        //
+
         // This is regular subnet. It's not part of any shared-network.
         "subnet6": [
             {
@@ -56,7 +56,7 @@
             // values inserted by relays, which are only used for
             // remote traffic. A shared network cannot be both direct
             // and relayed.
-            //"interface-id": "content of the option",
+            // "interface-id": "content of the option",
 
             // Other parameters defined here will be inherited by the
             // subnets.

@@ -135,9 +135,7 @@ The following is a sample command removing the ``ipxe_efi_x64`` class:
    {
        "command": "class-del",
        "arguments": {
-           {
-               "name": "ipxe_efi_x64"
-           }
+           "name": "ipxe_efi_x64"
        }
    }
 

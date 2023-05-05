@@ -221,9 +221,12 @@ this:
 
 ::
 
+   {
    "interfaces-config": {
        "interfaces": [ "eth0", "eth1" ]
    },
+   ...
+   }
 
 The next lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
@@ -256,6 +259,7 @@ syntax would be used:
 
 ::
 
+   {
    "subnet6": [
        {
            "pools": [ { "pool": "2001:db8:1::/112" } ],
@@ -265,7 +269,9 @@ syntax would be used:
            "pools": [ { "pool": "2001:db8:2::1-2001:db8:2::ffff" } ],
            "subnet": "2001:db8:2::/64"
        }
-   ]
+   ],
+   ...
+   }
 
 Note that indentation is optional and is used for aesthetic purposes
 only. In some cases it may be preferable to use more compact notation.
@@ -531,10 +537,14 @@ access the database should be set:
 
 ::
 
-   "Dhcp6": { "lease-database": { "user": "user-name",
-                                  "password": "password",
-                                 ... },
-              ... }
+   "Dhcp6": {
+       "lease-database": {
+           "user": "user-name",
+           "password": "password",
+           ...
+       },
+       ...
+   }
 
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
@@ -747,10 +757,14 @@ access the database should be set:
 
 ::
 
-   "Dhcp6": { "hosts-database": { "user": "user-name",
-                                  "password": "password",
-                                 ... },
-              ... }
+   "Dhcp6": {
+       "hosts-database": {
+           "user": "user-name",
+           "password": "password",
+           ...
+       },
+       ...
+   }
 
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
@@ -825,7 +839,7 @@ server to listen on all available interfaces:
    "Dhcp6": {
        "interfaces-config": {
            "interfaces": [ "*" ]
-       }
+       },
        ...
    }
 
@@ -1029,7 +1043,6 @@ ff02::1:2 address. The sample configuration below shows how to listen on
        "interfaces-config": {
            "interfaces": [ "eth1/2001:db8::1" ]
        },
-       ...
        "option-data": [
            {
                "name": "unicast",
@@ -1142,8 +1155,7 @@ second subnet, use a command similar to the following:
                { "pool": "2001:db8:2::/64" }
            ]
        },
-
-           ...
+       ...
        ]
    }
 
@@ -1876,7 +1888,6 @@ server configuration as shown below:
 ::
 
    "Dhcp6": {
-       ...
        "option-data": [
            {
                "name": "s46-cont-mape"
@@ -2029,7 +2040,8 @@ in the configuration file:
                "record-types": "",
                "space": "dhcp6",
                "encapsulate": ""
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2066,7 +2078,8 @@ global value that applies to all subnets.
                "space": "dhcp6",
                "csv-format": true,
                "data": "12345"
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2092,7 +2105,8 @@ defined in the following way:
                "array": false,
                "record-types": "ipv6-address, uint16, boolean, string",
                "encapsulate": ""
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2120,7 +2134,7 @@ follows:
        ...
    }
 
-``csv-format`` is set to ``true`` to indicate that the ``data`` field
+The ``csv-format`` is set to ``true`` to indicate that the ``data`` field
 comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
@@ -2140,7 +2154,8 @@ last field is an array, i.e. it can contain more than one value, as in:
                "array": true,
                "record-types": "ipv6-address, uint16",
                "encapsulate": ""
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2216,9 +2231,9 @@ The first step is to define the format of the option:
        ...
    }
 
-(Note that the option space is set to ``"vendor-12345"``.) Once the
-option format is defined, the next step is to define actual values for
-that option:
+Note that the option space is set to ``"vendor-12345"``.
+Once the option format is defined, the next step is to define actual values
+for that option:
 
 ::
 
@@ -2241,11 +2256,11 @@ Vendor-Specific Information option, to convey the option ``foo``.
 
    "Dhcp6": {
        "option-data": [
-           ...,
            {
                "name": "vendor-opts",
                "data": "12345"
-           }
+           },
+           ...
        ],
        ...
    }
@@ -2256,11 +2271,11 @@ Alternatively, the option can be specified using its code.
 
    "Dhcp6": {
        "option-data": [
-           ...,
            {
                "code": 17,
                "data": "12345"
-           }
+           },
+           ...
        ],
        ...
    }
@@ -2314,7 +2329,7 @@ define the new sub-options:
                "space": "isc",
                "type": "string",
                "record-types": "",
-               "array": false
+               "array": false,
                "encapsulate": ""
            }
        ],
@@ -2331,7 +2346,6 @@ and specify that it should include options from the new option space:
 
    "Dhcp6": {
        "option-def": [
-           ...,
            {
                "name": "container",
                "code": 102,
@@ -2340,7 +2354,8 @@ and specify that it should include options from the new option space:
                "array": false,
                "record-types": "",
                "encapsulate": "isc"
-           }
+           },
+           ...
        ],
        ...
    }
@@ -2875,12 +2890,12 @@ specified subnet is used:
        ],
        "subnet6": [
            {
-               "subnet": "2001:db8:1::/64"
+               "subnet": "2001:db8:1::/64",
                "pools": [
                     {
                         "pool": "2001:db8:1::-2001:db8:1::ffff"
                     }
-                ],
+               ],
                "require-client-classes": [ "Client_foo" ],
                ...
            },
@@ -2996,7 +3011,7 @@ The default configuration and values would appear as follows:
         "ddns-update-on-renew": false,
         "ddns-use-conflict-resolution": true,
         "hostname-char-set": "",
-        "hostname-char-replacement": ""
+        "hostname-char-replacement": "",
         ...
    }
 
@@ -3158,7 +3173,7 @@ configuration is required:
 When Does the ``kea-dhcp6`` Server Generate a DDNS Request?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``kea-dhcp6`` follows the behavior prescribed for DHCP servers in `RFC
+The ``kea-dhcp6`` follows the behavior prescribed for DHCP servers in `RFC
 4704 <https://tools.ietf.org/html/rfc4704>`__. It is important to keep in
 mind that ``kea-dhcp6`` makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
@@ -3240,7 +3255,6 @@ configuration file:
 ::
 
     "Dhcp6": {
-        ...
         "ddns-override-client-update": true,
         ...
     }
@@ -3258,10 +3272,15 @@ To override client delegation, issue the following commands:
 ::
 
     "Dhcp6": {
-        ...
         "ddns-override-no-update": true,
         ...
     }
+
+The ``kea-dhcp6`` always generates DDNS update requests if the client
+request only contains the Host Name option. In addition, it includes
+an FQDN option in the response to the client with the FQDN N-S-O flags
+set to 0-1-0, respectively. The domain name portion of the FQDN option
+is the name submitted to D2 in the DDNS update request.
 
 .. _dhcpv6-fqdn-name-generation:
 
@@ -3318,7 +3337,6 @@ follows:
 ::
 
     "Dhcp6": {
-        ...
         "ddns-replace-client-name": "always",
         ...
     }
@@ -3330,7 +3348,6 @@ its value, simply set it to the desired string:
 ::
 
     "Dhcp6": {
-        ...
         "ddns-generated-prefix": "another.host",
         ...
     }
@@ -3343,7 +3360,6 @@ are enabled. To set its value simply set it to the desired string:
 ::
 
     "Dhcp6": {
-        ...
         "ddns-qualifying-suffix": "foo.example.org",
         ...
     }
@@ -3400,7 +3416,6 @@ digit, dot, or hyphen with the letter "x":
 ::
 
     "Dhcp6": {
-        ...
         "hostname-char-set": "[^A-Za-z0-9.-]",
         "hostname-char-replacement": "x",
         ...
@@ -3647,7 +3662,7 @@ pretty-printed for clarity):
                 "peer": "2001:db8::4"
             },
             {
-                "hop": 1",
+                "hop": 1,
                 "link": "2001:db8::5",
                 "options": "0x00250006010203040506003500086464646464646464",
                 "remote-id": "010203040506",
@@ -3725,7 +3740,7 @@ An example configuration that sets these parameters looks as follows:
           "enable-multi-threading": true,
           "thread-pool-size": 4,
           "packet-queue-size": 16
-       }
+       },
        ...
    }
 
@@ -3789,6 +3804,7 @@ as a last resort. For example:
 
 ::
 
+    {
     "subnet6": [
         {
             "subnet": "2001:db8:1:1::/64",
@@ -3799,6 +3815,8 @@ as a last resort. For example:
             ...
         }
     ],
+    ...
+    }
 
 When an already-assigned lease can fulfill a client query:
 
@@ -3868,6 +3886,7 @@ specific hosts:
 
 ::
 
+   {
    "subnet6": [
        {
            "subnet": "2001:db8:1::/48",
@@ -3896,7 +3915,9 @@ specific hosts:
                }
            ]
        }
-   ]
+   ],
+   ...
+   }
 
 This example includes reservations for three different clients. The
 first reservation is for the address 2001:db8:1::100, for a client using
@@ -4064,6 +4085,7 @@ configuration:
 
 ::
 
+   {
    "subnet6": [
        {
            "subnet": "2001:db8:1::/48",
@@ -4080,6 +4102,8 @@ configuration:
    ],
    "dhcp-ddns": {
        "enable-updates": true
+   },
+   ...
    }
 
 will result the "alice-laptop.example.isc.org." hostname being assigned to
@@ -4129,27 +4153,34 @@ example demonstrates how standard options can be defined.
 
 ::
 
+   {
    "reservations": [
    {
-      "duid": "01:02:03:05:06:07:08",
-      "ip-addresses": [ "2001:db8:1::2" ],
+       "duid": "01:02:03:05:06:07:08",
+       "ip-addresses": [ "2001:db8:1::2" ],
        "option-data": [
        {
-           "option-data": [ {
-               "name": "dns-servers",
-               "data": "3000:1::234"
-           },
-           {
-               "name": "nis-servers",
-               "data": "3000:1::234"
-           }
-       } ]
-   } ]
+           "name": "dns-servers",
+           "data": "3000:1::234"
+       },
+       {
+           "name": "nis-servers",
+           "data": "3000:1::234"
+       },
+       ...
+       ],
+       ...
+   },
+   ...
+   ],
+   ...
+   }
 
 Vendor-specific options can be reserved in a similar manner:
 
 ::
 
+   {
    "reservations": [
    {
        "duid": "aa:bb:cc:dd:ee:ff",
@@ -4163,8 +4194,15 @@ Vendor-specific options can be reserved in a similar manner:
            "name": "tftp-servers",
            "space": "vendor-4491",
            "data": "3000:1::234"
-       } ]
-   } ]
+       },
+       ...
+       ],
+       ...
+   },
+   ...
+   ],
+   ...
+   }
 
 Options defined at the host level have the highest priority. In other words,
 if there are options defined with the same type on global, subnet,
@@ -4636,13 +4674,16 @@ example of a ``host-reservation-identifiers`` configuration looks as follows:
 
 ::
 
+   {
    "host-reservation-identifiers": [ "duid", "hw-address" ],
    "subnet6": [
        {
            "subnet": "2001:db8:1::/64",
            ...
        }
-   ]
+   ],
+   ...
+   }
 
 If not specified, the default value is:
 
@@ -4774,7 +4815,7 @@ within the subnet as follows:
         "subnet6": [
             {
                 "subnet": "2001:db8:1::/64",
-                "reservations": [{"
+                "reservations": [{
                     "hw-address": "aa:bb:cc:dd:ee:fe",
                     "client-classes": [ "reserved_class" ]
                  }],
@@ -4822,11 +4863,11 @@ following example:
                 "name": "reserved_class"
             },
             {
-                "name: "unreserved_class",
+                "name": "unreserved_class",
                 "test": "not member('reserved_class')"
             }
         ],
-        "reservations": [{"
+        "reservations": [{
             "hw-address": "aa:bb:cc:dd:ee:fe",
             "client-classes": [ "reserved_class" ]
         }],
@@ -5049,7 +5090,7 @@ their accounts up to date.
                         "data": "2001:db8::2"
                     }
                 ]
-            },
+            }
         ],
         "reservations": [
             // Clients on this list will be added to the KNOWN class. Some
@@ -5143,7 +5184,7 @@ introduced:
 ::
 
    "Dhcp6": {
-       "shared-networks": [{
+       "shared-networks": [ {
            # Name of the shared network. It may be an arbitrary string
            # and it must be unique among all shared networks.
            "name": "ipv6-lab-1",
@@ -5158,28 +5199,34 @@ introduced:
 
            # This starts a list of subnets in this shared network.
            # There are two subnets in this example.
-           "subnet6": [{
-               "subnet": "2001:db8::/48",
-               "pools": [{ "pool":  "2001:db8::1 - 2001:db8::ffff" }]
-           }, {
-               "subnet": "3ffe:ffe::/64",
-               "pools": [{ "pool":  "3ffe:ffe::/64" }]
-           }]
-       }], # end of shared-networks
+           "subnet6": [
+               {
+                   "subnet": "2001:db8::/48",
+                   "pools": [{ "pool":  "2001:db8::1 - 2001:db8::ffff" }]
+               },
+               {
+                   "subnet": "3ffe:ffe::/64",
+                   "pools": [{ "pool":  "3ffe:ffe::/64" }]
+               }
+           ]
+       } ],
+       # end of shared-networks
 
        # It is likely that in the network there will be a mix of regular,
        # "plain" subnets and shared networks. It is perfectly valid
        # to mix them in the same configuration file.
        #
        # This is a regular subnet. It is not part of any shared-network.
-       "subnet6": [{
-           "subnet": "2001:db9::/48",
-           "pools": [{ "pool":  "2001:db9::/64" }],
-           "relay": {
-               "ip-addresses": [ "2001:db8:1:2::1" ]
+       "subnet6": [
+           {
+               "subnet": "2001:db9::/48",
+               "pools": [{ "pool":  "2001:db9::/64" }],
+               "relay": {
+                   "ip-addresses": [ "2001:db8:1:2::1" ]
+               }
            }
-       }]
-   } # end of Dhcp6
+       ]
+   }
 
 As demonstrated in the example, it is possible to mix shared and regular
 ("plain") subnets. Each shared network must have a unique name. This is
@@ -5202,6 +5249,7 @@ then override its value in the subnet scope. For example:
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "lab-network3",
@@ -5250,7 +5298,10 @@ then override its value in the subnet scope. For example:
                     } ]
                }
            ]
-       } ]
+       }
+       ],
+       ...
+   }
 
 In this example, there is a ``dns-servers`` option defined that is available
 to clients in both subnets in this shared network. Also, the valid
@@ -5305,6 +5356,7 @@ of what **NOT** to do:
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "office-floor-2",
@@ -5317,14 +5369,17 @@ of what **NOT** to do:
                {
                     "subnet": "3ffe:abcd::/64",
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
-
-                    # Specifying the different interface name is a configuration
+                    ...
+                    # Specifying a different interface name is a configuration
                     # error. This value should rather be "eth0" or the interface
                     # name in the other subnet should be "eth1".
                     # "interface": "eth1"
                }
            ]
-       } ]
+       }
+   ],
+   ...
+   }
 
 To minimize the chance of configuration errors, it is often more convenient
 to simply specify the interface name once, at the shared-network level, as
@@ -5332,6 +5387,7 @@ shown in the example below.
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "office-floor-2",
@@ -5350,7 +5406,10 @@ shown in the example below.
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ]
                }
            ]
-       } ]
+       }
+   ],
+   ...
+   }
 
 
 With relayed traffic, subnets are typically selected using
@@ -5365,6 +5424,7 @@ of what **NOT** to do:
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "kakapo",
@@ -5389,7 +5449,9 @@ of what **NOT** to do:
                }
            ]
        }
-   ]
+   ],
+   ...
+   }
 
 Again, it is better to specify the relay address at the shared-network
 level; this value will be inherited by all subnets belonging to the
@@ -5397,6 +5459,7 @@ shared network.
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "kakapo",
@@ -5415,7 +5478,9 @@ shared network.
                }
            ]
        }
-   ]
+   ],
+   ...
+   }
 
 Even though it is technically possible to configure two (or more) subnets
 within the shared network to use different relay addresses, this will almost
@@ -5572,7 +5637,7 @@ similar to regular subnets:
                {
                    "subnet": "2001:db8:1::/64",
                    "id": 100,
-                   "pools": [ { "2001:db8:1::1 - 2001:db8:1::64" } ],
+                   "pools": [ { "pool": "2001:db8:1::1 - 2001:db8:1::64" } ],
                    "reservations": [
                    {
                        "duid": "00:03:00:01:11:22:33:44:55:66",
@@ -6078,10 +6143,19 @@ Here is an example:
 ::
 
    "Dhcp6": {
-       "mac-sources": [ "method1", "method2", "method3", ... ],
+       "mac-sources": [
+           "method1",
+           "method2",
+           "method3",
+           ...
+       ],
 
-       "subnet6": [ ... ],
-
+       "subnet6": [
+           {
+               ...
+           },
+           ...
+       ],
        ...
    }
 
@@ -6204,9 +6278,14 @@ default, the following syntax can be used:
 
 ::
 
-     "Dhcp6": {
+   "Dhcp6": {
        "decline-probation-period": 3600,
-       "subnet6": [ ... ],
+       "subnet6": [
+           {
+               ...
+           },
+           ...
+       ],
        ...
    }
 
@@ -6792,9 +6871,14 @@ the default maximum sample count to 1 so only one sample is kept:
 
 ::
 
-     "Dhcp6": {
+   "Dhcp6": {
        "statistic-default-sample-count": 1,
-       "subnet6": [ ... ],
+       "subnet6": [
+           {
+               ...
+           },
+           ...
+       ],
        ...
    }
 
@@ -6823,6 +6907,9 @@ in the configuration file can be used:
        },
 
        "subnet6": [
+           {
+               ...
+           },
            ...
        ],
        ...

@@ -549,7 +549,6 @@ An excerpt from a D2 server configuration is provided below; more examples are a
                 // store client keys. As credentials cache is more flexible,
                 // it is recommended to use it. Typically, using both at the
                 // same time may cause problems.
-                //
                 // "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
                 "gss-replay-flag": true, // GSS anti replay service

@@ -327,10 +327,12 @@ takes many parameters. For example, this configuration could be used:
 
              # Specify which address to use to communicate with RADIUS servers
              "bindaddr": "*",
-
+             ...
              # more RADIUS parameters here
          }
-     } ]
+     } ],
+     ...
+     }
 
 RADIUS is a complicated environment. As such, it is not feasible
 to provide a default configuration that works for everyone.

@@ -222,7 +222,7 @@ The following is the successful response to the ``remote-server4-del`` command:
 
     {
         "result": 0,
-        "text": "1 DHCPv4 server(s) deleted."
+        "text": "1 DHCPv4 server(s) deleted.",
         "arguments": {
             "count": 1
         }
@@ -250,7 +250,7 @@ from the configuration database. For example:
 .. code-block:: json
 
     {
-        "command": "remote-server6-get"
+        "command": "remote-server6-get",
         "arguments": {
             "servers": [
                 {
@@ -297,7 +297,7 @@ database. The command structure is very simple:
 .. code-block:: json
 
     {
-        "command": "remote-server4-get-all"
+        "command": "remote-server4-get-all",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -349,7 +349,7 @@ database:
 .. code-block:: json
 
     {
-        "command": "remote-server6-set"
+        "command": "remote-server6-set",
         "arguments": {
             "servers": [
                 {
@@ -615,7 +615,7 @@ integer, real, or boolean. For example:
 .. code-block:: json
 
    {
-       "command": "remote-global-parameter4-set"
+       "command": "remote-global-parameter4-set",
        "arguments": {
            "parameters": {
                "boot-file-name": "/dev/null",
@@ -734,7 +734,7 @@ The following command retrieves all shared networks to be used by
 .. code-block:: json
 
     {
-        "command": "remote-network4-list"
+        "command": "remote-network4-list",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -752,7 +752,7 @@ networks, i.e. the networks which are associated with no servers. For example:
 .. code-block:: json
 
     {
-        "command": "remote-network4-list"
+        "command": "remote-network4-list",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -953,7 +953,7 @@ servers, having the code of 1 and belonging to the option space "isc":
 .. code-block:: json
 
    {
-       "command": "remote-option-def4-get"
+       "command": "remote-option-def4-get",
        "arguments": {
            "option-defs": [
                {
@@ -984,7 +984,7 @@ for the given server or all servers. For example:
 .. code-block:: json
 
     {
-        "command": "remote-option-def6-get-all"
+        "command": "remote-option-def6-get-all",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -1086,7 +1086,7 @@ For example:
        "arguments": {
            "options": [
                {
-                   "code": 5
+                   "code": 5,
                    "space": "dhcp4"
                }
            ],
@@ -1097,7 +1097,7 @@ For example:
        }
    }
 
-"dhcp4" is the top-level option space where the standard DHCPv4 options
+The "dhcp4" is the top-level option space where the standard DHCPv4 options
 belong. The ``server-tags`` parameter is mandatory and must include a
 single option tag or the keyword "all". If the explicit server tag is specified,
 this command attempts to delete a global option associated with this
@@ -1296,7 +1296,7 @@ network "fancy".
        }
    }
 
-"dhcp4" is the top-level option space where the standard DHCPv4 options
+The "dhcp4" is the top-level option space where the standard DHCPv4 options
 belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-network-set:
@@ -1382,7 +1382,7 @@ option. To delete a subnet level option, the
        }
    }
 
-"dhcp6" is the top-level option space where the standard DHCPv6 options
+The "dhcp6" is the top-level option space where the standard DHCPv6 options
 belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option6-pd-pool-set:
@@ -1475,7 +1475,7 @@ pool:
        }
    }
 
-"dhcp4" is the top-level option space where the standard DHCPv4 options
+The "dhcp4" is the top-level option space where the standard DHCPv4 options
 belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-pool-set:
@@ -1564,7 +1564,7 @@ having an identifier of 123.
        }
    }
 
-"dhcp4" is the top-level option space where the standard DHCPv4 options
+The "dhcp4" is the top-level option space where the standard DHCPv4 options
 belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-subnet-set:
@@ -1740,7 +1740,7 @@ be used by "server1" and "server2":
 .. code-block:: json
 
     {
-        "command": "remote-subnet4-list"
+        "command": "remote-subnet4-list",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -1759,7 +1759,7 @@ For example:
 .. code-block:: json
 
     {
-        "command": "remote-subnet4-list"
+        "command": "remote-subnet4-list",
         "arguments": {
             "remote": {
                 "type": "mysql"

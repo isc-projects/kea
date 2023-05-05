@@ -825,7 +825,7 @@ logfile grows to 2MB, it should be renamed and a new file should be created.
                        "output": "/var/log/kea-debug.log",
                        "maxver": 8,
                        "maxsize": 204800,
-                       "flush": true
+                       "flush": true,
                        "pattern": "%d{%j %H:%M:%S.%q} %c %m\n"
                    }
                ],

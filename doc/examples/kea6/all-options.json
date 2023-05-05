@@ -18,7 +18,9 @@
 
 {
   "Dhcp6": {
-    /*                Data for all standard option definitions                */
+    /*
+                      Data for all standard option definitions
+    */
     // Option data defined globally
     "option-data": [
       /*
@@ -1794,7 +1796,9 @@
 
       // Option codes 145-65535 are unassigned.
 
-      /*                         Custom option data                           */
+      /*
+                                 Custom option data
+      */
       // See "option-def" below for the definitions.
       {
         "code": 111,
@@ -1825,7 +1829,9 @@
       }
     ],
 
-    /*                       Custom option definitions                        */
+    /*
+                             Custom option definitions
+    */
     // For kea-dhcp6, custom option definitions are always global. Even when
     // data for said options is then configured at subnet level.
     "option-def": [
@@ -1897,7 +1903,9 @@
     ],
 
     "subnet6": [
-      /*                         DOCSIS3 option data                          */
+      /*
+                                 DOCSIS3 option data
+      */
       // Headers are as defined in CL-SP-CANN-DHCP-Reg-I16-200715.
       // "space" is required to be explicitly defined as "docsis3-v6"
       {

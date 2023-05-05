@@ -41,7 +41,9 @@ any other hook library; for example, this configuration could be used:
              "maximum": 1000
 
          }
-     } ]
+     } ],
+     ...
+     }
 
 Once loaded, the Host Cache hook library provides a number of new
 commands which can be used either over the control channel (see

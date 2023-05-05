@@ -71,7 +71,7 @@ servers.
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_host_cmds.so"
-           }
+           },
            ...
        ]
    }
@@ -269,7 +269,7 @@ follows:
        }
    }
 
-``reservation-get`` typically returns the result 0 when a query was
+The ``reservation-get`` typically returns the result 0 when a query was
 conducted properly. In particular, 0 is returned when the host was not
 found. If the query was successful, the host parameters are
 returned. An example of a query that did not find the host looks as
@@ -307,8 +307,7 @@ An example result returned when the query was malformed might look like this:
 
 ::
 
-   { "result": 1, "text": "No 'ip-address' provided and 'identifier-type'
-                           is either missing or not a string." }
+   { "result": 1, "text": "No 'ip-address' provided and 'identifier-type' is either missing or not a string." }
 
 .. _command-reservation-get-all:
 
@@ -349,7 +348,6 @@ returns some IPv4 hosts:
                    "server-hostname": "server-hostname.example.org",
                    "subnet-id": 1
                },
-               ...
                {
                    "boot-file-name": "bootfile.efi",
                    "client-classes": [ ],
@@ -360,7 +358,8 @@ returns some IPv4 hosts:
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org",
                    "subnet-id": 1
-               }
+               },
+               ...
            ]
        },
        "result": 0,
@@ -446,7 +445,6 @@ Some hosts are returned with information to get the next page:
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org"
                },
-               ...
                {
                    "boot-file-name": "bootfile.efi",
                    "client-classes": [ ],
@@ -456,7 +454,8 @@ Some hosts are returned with information to get the next page:
                    "next-server": "192.0.0.2",
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org"
-               }
+               },
+               ...
            ],
            "next": {
                "from": 1234567,
@@ -496,7 +495,7 @@ page is received. Its response will look like this:
            "hosts": [ ]
        },
        "result": 3,
-       "0 IPv4 host(s) found."
+       "text": "0 IPv4 host(s) found."
    }
 
 This command is more complex than ``reservation-get-all``, but lets
@@ -545,7 +544,6 @@ returns some IPv4 hosts:
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org"
                },
-               ...
                {
                    "boot-file-name": "bootfile.efi",
                    "client-classes": [ ],
@@ -555,7 +553,8 @@ returns some IPv4 hosts:
                    "next-server": "192.0.0.2",
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org"
-               }
+               },
+               ...
            ]
        },
        "result": 0,
@@ -617,7 +616,6 @@ returns some IPv4 hosts:
                    "server-hostname": "server-hostname.example.org",
                    "subnet-id": 123
                },
-               ...
                {
                    "boot-file-name": "bootfile.efi",
                    "client-classes": [ ],
@@ -628,7 +626,8 @@ returns some IPv4 hosts:
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org",
                    "subnet-id": 345
-               }
+               },
+               ...
            ]
        },
        "result": 0,
@@ -679,14 +678,14 @@ follows:
 
    {
        "command": "reservation-del",
-       "arguments":
+       "arguments": {
            "subnet-id": 4,
            "identifier-type": "hw-address",
            "identifier": "01:02:03:04:05:06"
        }
    }
 
-``reservation-del`` returns a result of 0 when the host deletion was
+The ``reservation-del`` returns a result of 0 when the host deletion was
 successful, or 1 if it failed. Descriptive text is provided in the event of
 an error. Here are some examples of possible results:
 
@@ -697,6 +696,8 @@ an error. Here are some examples of possible results:
        "text": "Host not deleted (not found)."
    }
 
+or
+
 ::
 
    {
@@ -704,12 +705,13 @@ an error. Here are some examples of possible results:
        "text": "Host deleted."
    }
 
+or
+
 ::
 
    {
        "result": 1,
-       "text": "Unable to delete a host because there is no hosts-database
-                configured."
+       "text": "Unable to delete a host because there is no hosts-database configured."
    }
 
 .. _command-reservation-update:

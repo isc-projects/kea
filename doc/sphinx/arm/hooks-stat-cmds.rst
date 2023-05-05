@@ -45,7 +45,7 @@ parameters:
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_stat_cmds.so"
-           }
+           },
            ...
        ]
    }
@@ -118,7 +118,7 @@ in the range 10 through 50 from a ``kea-dhcp4`` server:
    {
      "command": "stat-lease4-get",
      "arguments": {
-       "subnet-range" {
+       "subnet-range": {
          "first-subnet-id": 10,
          "last-subnet-id": 50
        }
@@ -210,12 +210,12 @@ The response to a DHCPv4 command might look as follows:
        "text": "stat-lease4-get: 2 rows found",
        "arguments": {
          "result-set": {
-           "columns": [ "subnet-id", "total-addresses", "cumulative-assigned-addresses", "assigned-addresses", "declined-addresses" ]
+           "columns": [ "subnet-id", "total-addresses", "cumulative-assigned-addresses", "assigned-addresses", "declined-addresses" ],
            "rows": [
              [ 10, 256, 300, 111, 0 ],
              [ 20, 4098, 2034, 2034, 4 ]
            ],
-         "timestamp": "2018-05-04 15:03:37.000000"
+           "timestamp": "2018-05-04 15:03:37.000000"
          }
        }
      }
@@ -231,13 +231,13 @@ PD pools:
        "text": "stat-lease6-get: 2 rows found",
        "arguments": {
          "result-set": {
-           "columns": [ "subnet-id", "total-nas", "cumulative-assigned-nas", "assigned-nas", "declined-nas", "total-pds", "cumulative-assigned-pds", "assigned-pds" ]
+           "columns": [ "subnet-id", "total-nas", "cumulative-assigned-nas", "assigned-nas", "declined-nas", "total-pds", "cumulative-assigned-pds", "assigned-pds" ],
            "rows": [
              [ 10, 4096, 5000, 2400, 3, 0, 0, 0],
-             [ 20, 0, 0, 0, 0, 1048, 300, 233 ]
+             [ 20, 0, 0, 0, 0, 1048, 300, 233 ],
              [ 30, 256, 60, 60, 0, 1048, 15, 15 ]
            ],
-         "timestamp": "2018-05-04 15:03:37.000000"
+           "timestamp": "2018-05-04 15:03:37.000000"
          }
        }
      }

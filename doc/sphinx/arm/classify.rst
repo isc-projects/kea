@@ -996,7 +996,7 @@ this subnet. Such a configuration can be achieved in the following way:
                "client-class": "Client_foo"
            },
            ...
-       ],,
+       ],
        ...
    }
 
@@ -1078,8 +1078,8 @@ to use this pool. Such a configuration can be achieved in the following way:
                ]
            },
            ...
-       ],,
-
+       ],
+       ...
    }
 
 The following example shows how to restrict access to an address pool. This

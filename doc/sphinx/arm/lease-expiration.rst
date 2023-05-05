@@ -282,14 +282,11 @@ Consider the following configuration:
 ::
 
    "Dhcp4": {
-       ...
-
        "expired-leases-processing": {
            "reclaim-timer-wait-time": 3,
            "hold-reclaimed-time": 1800,
            "flush-reclaimed-timer-wait-time": 5
        },
-
        ...
    }
 

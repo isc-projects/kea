@@ -13,7 +13,9 @@
 
 {
   "Dhcp4": {
-    /*                Data for all standard option definitions                */
+    /*
+                      Data for all standard option definitions
+    */
     // Option data defined globally
     "option-data": [
       /*
@@ -1381,8 +1383,8 @@
         "name": "vivso-suboptions"
       },
 
-    // Option codes 126-127 are unassigned.
-    // Option codes 128-135 are not defined in Kea.
+      // Option codes 126-127 are unassigned.
+      // Option codes 128-135 are not defined in Kea.
 
       /*
       0                   1
@@ -1657,7 +1659,9 @@
       // Option codes 220-221 are not defined in Kea.
       // Option codes 222-254 are unassigned
 
-      /*                         Custom option data                           */
+      /*
+                                 Custom option data
+      */
       // See "option-def" below for the definitions.
       {
         "code": 1,
@@ -1683,7 +1687,9 @@
       }
     ],
 
-    /*                       Custom option definitions                        */
+    /*
+                             Custom option definitions
+    */
     // For kea-dhcp4, custom option definitions can be global or in a client
     // class.
     "option-def": [
@@ -1740,7 +1746,9 @@
     ],
 
     "subnet4": [
-      /*                         DOCSIS3 option data                          */
+      /*
+                                 DOCSIS3 option data
+      */
       // Headers are as defined in CL-SP-CANN-DHCP-Reg-I16-200715.
       // "space" is required to be explicitly defined as "docsis3-v4"
       {

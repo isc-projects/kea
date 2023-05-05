@@ -19,7 +19,7 @@
     "description": "See <xref linkend=\"command-config-test\"/>",
     "name": "config-test",
     "resp-syntax": [
-        "{ \"result\": 0, \"text\": \"Configuration seems sane...\" }",
+        "{ \"result\": 0, \"text\": \"Configuration seems sane.\" }",
         "",
         "or",
         "",

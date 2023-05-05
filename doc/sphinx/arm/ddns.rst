@@ -251,7 +251,6 @@ illustrates how to change D2's global parameters so it will listen at
        "ip-address": "192.168.1.10",
        "port": 900,
        ...
-       }
    }
 
 .. warning::
@@ -339,7 +338,7 @@ An example command may look like this:
 ::
 
    {
-       "command": "shutdown"
+       "command": "shutdown",
        "arguments": {
            "exit-value": 3,
            "type": "drain_first"
@@ -583,7 +582,7 @@ domains, which is a list of structures.
    "DhcpDdns": {
        "reverse-ddns": {
            "ddns-domains": [ ]
-       }
+       },
        ...
    }
 
@@ -867,7 +866,7 @@ The following example configuration specifies the forward DDNS domains.
                    ],
                    "user-context": { "backup": false }
                },
-
+               ...
            ]
        }
    }
@@ -905,21 +904,22 @@ These reverse DDNS domains are specified as follows:
                        { "ip-address": "172.16.1.5" },
                        { "ip-address": "172.16.2.5" }
                    ]
-               }
+               },
                {
                    "name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
                    "key-name": "",
                    "dns-servers": [
                        { "ip-address": "2001:db8::1" }
                    ]
-               }
+               },
                {
                    "name": "0.192.in-addr.arpa.",
                    "key-name": "",
                    "dns-servers": [
                        { "ip-address": "172.16.2.5" }
                    ]
-               }
+               },
+               ...
            ]
        }
    }

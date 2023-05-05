@@ -18,16 +18,15 @@ server's configuration:
 
     {
         "hooks-libraries": [
-            :
-            ,
             {
                 "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
                 "parameters": {
-                    :
+                    ...
                 }
             },
-            :
-        ]
+            ...
+        ],
+        ...
     }
 
 Procedural Host-Name Generation
@@ -43,17 +42,16 @@ expression is shown below:
 
     {
         "hooks-libraries": [
-            :
-            ,
             {
                 "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
                 "parameters": {
-                    :
-                    "hostname-expr": "'host-'+hexstring(pkt4.mac,'-')"
+                    "hostname-expr": "'host-'+hexstring(pkt4.mac,'-')",
+                    ...
                 }
             },
-            :
-        ]
+            ...
+        ],
+        ...
     }
 
 It is also possible to define this parameter in a subnet, using the user-context mechanism.
@@ -63,6 +61,7 @@ global expression for that subnet. An example subnet expression is shown below:
 
 .. code-block:: javascript
 
+   {
     "subnet4": [{
         "subnet": "192.0.2.0/24",
         "pools": [{
@@ -83,7 +82,9 @@ global expression for that subnet. An example subnet expression is shown below:
             "devices-registered": 42,
             "billing": false
         }
-    }]
+    }],
+    ...
+   }
 
 .. note::
 

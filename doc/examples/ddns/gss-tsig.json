@@ -22,11 +22,13 @@
                 "comment": "DdnsDomain example",
                 "dns-servers":
                 [
-                    { // This server has an entry in gss/servers and
+                    {
+                      // This server has an entry in gss/servers and
                       // thus will use GSS-TSIG.
                         "ip-address": "192.0.2.1"
                     },
-                    { // This server also has an entry there, so will
+                    {
+                      // This server also has an entry there, so will
                       // use GSS-TSIG, too.
                         "ip-address": "192.0.2.2",
                         "port": 5300
@@ -74,7 +76,6 @@
             // store client keys. As credentials cache is more flexible,
             // it is recommended to use it. Typically, using both at the
             // same time may cause problems.
-            //
             // "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
             "credentials-cache": "FILE:/etc/ccache",     // toplevel only
 

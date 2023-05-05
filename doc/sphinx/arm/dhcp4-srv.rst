@@ -260,9 +260,12 @@ this:
 
 ::
 
+   {
    "interfaces-config": {
        "interfaces": [ "eth0", "eth1" ]
    },
+   ...
+   }
 
 The next lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
@@ -295,6 +298,7 @@ syntax would be used:
 
 ::
 
+   {
    "subnet4": [
        {
            "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
@@ -308,7 +312,9 @@ syntax would be used:
            "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
            "subnet": "192.0.4.0/24"
        }
-   ]
+   ],
+   ...
+   }
 
 Note that indentation is optional and is used for aesthetic purposes
 only. In some cases it may be preferable to use more compact notation.
@@ -574,10 +580,14 @@ access the database should be set:
 
 ::
 
-   "Dhcp4": { "lease-database": { "user": "user-name",
-                                  "password": "password",
-                                 ... },
-              ... }
+   "Dhcp4": {
+       "lease-database": {
+           "user": "user-name",
+           "password": "password",
+           ...
+       },
+       ...
+   }
 
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
@@ -790,10 +800,14 @@ access the database should be set:
 
 ::
 
-   "Dhcp4": { "hosts-database": { "user": "user-name",
-                                  "password": "password",
-                                 ... },
-              ... }
+   "Dhcp4": {
+       "hosts-database": {
+           "user": "user-name",
+           "password": "password",
+           ...
+       },
+       ...
+   }
 
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
@@ -868,7 +882,7 @@ server to listen on all available interfaces:
    "Dhcp4": {
        "interfaces-config": {
            "interfaces": [ "*" ]
-       }
+       },
        ...
    }
 
@@ -2190,7 +2204,8 @@ Such an option can be defined by putting the following entry in the configuratio
                "record-types": "",
                "space": "dhcp4",
                "encapsulate": ""
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2227,7 +2242,8 @@ global value that applies to all subnets.
                "space": "dhcp4",
                "csv-format": true,
                "data": "12345"
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2253,7 +2269,8 @@ defined in the following way:
                "array": false,
                "record-types": "ipv4-address, uint16, boolean, string",
                "encapsulate": ""
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2280,7 +2297,7 @@ The option's values are set in an ``option-data`` statement as follows:
        ...
    }
 
-``csv-format`` is set to ``true`` to indicate that the ``data`` field
+The ``csv-format`` is set to ``true`` to indicate that the ``data`` field
 comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
@@ -2300,7 +2317,8 @@ last field is an array, i.e. it can contain more than one value, as in:
                "array": true,
                "record-types": "ipv4-address, uint16",
                "encapsulate": ""
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2346,7 +2364,8 @@ PXEClient vendor:
                    }
                ],
                ...
-           }, ...
+           },
+           ...
        ],
        ...
    }
@@ -2520,9 +2539,9 @@ The first step is to define the format of the option:
        ...
    }
 
-(Note that the option space is set to
-``"vendor-encapsulated-options-space"``.) Once the option format is defined,
-the next step is to define actual values for that option:
+Note that the option space is set to ``"vendor-encapsulated-options-space"``.
+Once the option format is defined, the next step is to define actual values
+for that option:
 
 ::
 
@@ -2800,7 +2819,6 @@ and specify that it should include options from the new option space:
 
    "Dhcp4": {
        "option-def": [
-           ...,
            {
                "name": "container",
                "code": 222,
@@ -2809,7 +2827,8 @@ and specify that it should include options from the new option space:
                "array": false,
                "record-types": "",
                "encapsulate": "isc"
-           }
+           },
+           ...
        ],
        ...
    }
@@ -2912,6 +2931,7 @@ options and sub-options, using the respective option code.
 
 ::
 
+   {
    "option-def": [
        {
            "array": false,
@@ -2945,7 +2965,9 @@ options and sub-options, using the respective option code.
                }
            ]
        }
-   ]
+   ],
+   ...
+   }
 
 .. note::
 
@@ -2990,7 +3012,7 @@ configuration looks like this:
    "Dhcp4": {
        "subnet4": [
            {
-               "subnet": "192.0.2.0/24"
+               "subnet": "192.0.2.0/24",
                "option-data": [ {
                    "name": "domain-name-servers",
                    "code": 6,
@@ -3141,7 +3163,7 @@ client documentation for specific values.
            ...
        ],
        ...
-             }
+   }
 
 If an incoming packet is matched to multiple classes, then the
 value used for each field will come from the first class that
@@ -3413,7 +3435,7 @@ The default configuration and values would appear as follows:
         "ddns-update-on-renew": false,
         "ddns-use-conflict-resolution": true,
         "hostname-char-set": "",
-        "hostname-char-replacement": ""
+        "hostname-char-replacement": "",
         ...
    }
 
@@ -3497,7 +3519,7 @@ conflict with existing entries owned by other DHCPv4 clients.
     to generate DNS removal requests to D2.
 
 The DNS entries Kea creates contain a value for TTL (time to live).
-``kea-dhcp4`` calculates that value based on
+The ``kea-dhcp4`` calculates that value based on
 `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
 which suggests that the TTL value be 1/3 of the lease's lifetime, with
 a minimum value of 10 minutes.
@@ -3575,7 +3597,7 @@ following configuration is required:
 When Does the ``kea-dhcp4`` Server Generate a DDNS Request?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``kea-dhcp4`` follows the behavior prescribed for DHCP servers in `RFC
+The ``kea-dhcp4`` follows the behavior prescribed for DHCP servers in `RFC
 4702 <https://tools.ietf.org/html/rfc4702>`__. It is important to keep in
 mind that ``kea-dhcp4`` makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
@@ -3654,7 +3676,6 @@ configuration file:
 ::
 
     "Dhcp4": {
-        ...
         "ddns-override-client-update": true,
         ...
     }
@@ -3672,12 +3693,11 @@ To override client delegation, issue the following commands:
 ::
 
     "Dhcp4": {
-        ...
         "ddns-override-no-update": true,
         ...
     }
 
-``kea-dhcp4`` always generates DDNS update requests if the client
+The ``kea-dhcp4`` always generates DDNS update requests if the client
 request only contains the Host Name option. In addition, it includes
 an FQDN option in the response to the client with the FQDN N-S-O flags
 set to 0-1-0, respectively. The domain name portion of the FQDN option
@@ -3738,7 +3758,6 @@ follows:
 ::
 
     "Dhcp4": {
-        ...
         "ddns-replace-client-name": "always",
         ...
     }
@@ -3750,7 +3769,6 @@ its value, simply set it to the desired string:
 ::
 
     "Dhcp4": {
-        ...
         "ddns-generated-prefix": "another.host",
         ...
     }
@@ -3764,7 +3782,6 @@ meaningful default.
 ::
 
     "Dhcp4": {
-        ...
         "ddns-qualifying-suffix": "foo.example.org",
         ...
     }
@@ -3809,7 +3826,6 @@ digit, dot, or hyphen with the letter "x":
 ::
 
     "Dhcp4": {
-        ...
         "hostname-char-set": "[^A-Za-z0-9.-]",
         "hostname-char-replacement": "x",
         ...
@@ -3885,7 +3901,6 @@ handled the same way as ``next-server``.
    "Dhcp4": {
        "next-server": "192.0.2.123",
        "boot-file-name": "/dev/null",
-       ...,
        "subnet4": [
            {
                "next-server": "192.0.2.234",
@@ -3893,7 +3908,8 @@ handled the same way as ``next-server``.
                "boot-file-name": "bootfile.efi",
                ...
            }
-       ]
+       ],
+       ...
    }
 
 .. _dhcp4-echo-client-id:
@@ -4288,11 +4304,15 @@ Or with remote and relay sub-options:
 
 ::
 
-   { "ISC": { "relay-agent-info": {
-       "sub-options": "0x02030102030C03AABBCC",
-       "remote-id": "03010203",
-       "relay-id": "AABBCC"
-   } } }
+   {
+       "ISC": {
+           "relay-agent-info": {
+               "sub-options": "0x02030102030C03AABBCC",
+               "remote-id": "03010203",
+               "relay-id": "AABBCC"
+           }
+       }
+   }
 
 .. note::
 
@@ -4358,7 +4378,7 @@ An example configuration that sets these parameters looks as follows:
           "enable-multi-threading": true,
           "thread-pool-size": 4,
           "packet-queue-size": 16
-       }
+       },
        ...
    }
 
@@ -4424,6 +4444,7 @@ enable the option for the whole subnet, the following configuration can be used:
 
 ::
 
+    {
     "subnet4": [
         {
             "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
@@ -4438,6 +4459,8 @@ enable the option for the whole subnet, the following configuration can be used:
             ]
         }
     ],
+    ...
+    }
 
 Lease Caching
 -------------
@@ -4459,6 +4482,7 @@ as a last resort. For example:
 
 ::
 
+    {
     "subnet4": [
         {
             "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
@@ -4469,6 +4493,8 @@ as a last resort. For example:
             ...
         }
     ],
+    ...
+    }
 
 When an already-assigned lease can fulfill a client query:
 
@@ -4536,6 +4562,7 @@ An example subnet configuration is shown below:
 
 ::
 
+    {
     "subnet4": [
         {
             "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
@@ -4545,6 +4572,8 @@ An example subnet configuration is shown below:
             ...
         }
     ],
+    ...
+    }
 
 Here ``offer-lifetime`` has been configured to be 60 seconds, with a ``valid-lifetime``
 of 2000 seconds. This instructs ``kea-dhcp4`` to persist leases for 60 seconds when
@@ -4598,6 +4627,7 @@ in a subnet:
 
 ::
 
+   {
    "subnet4": [
        {
            "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
@@ -4623,7 +4653,9 @@ in a subnet:
                }
            ]
        }
-   ]
+   ],
+   ...
+   }
 
 The first entry reserves the 192.0.2.202 address for the client that
 uses a MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the
@@ -5401,13 +5433,16 @@ example of a ``host-reservation-identifiers`` configuration looks as follows:
 
 ::
 
+   {
    "host-reservation-identifiers": [ "circuit-id", "hw-address", "duid", "client-id" ],
    "subnet4": [
        {
            "subnet": "192.0.2.0/24",
            ...
        }
-   ]
+   ],
+   ...
+   }
 
 If not specified, the default value is:
 
@@ -5546,7 +5581,7 @@ within the subnet as follows:
         "subnet4": [
             {
                 "subnet": "192.0.2.0/24",
-                "reservations": [{"
+                "reservations": [{
                     "hw-address": "aa:bb:cc:dd:ee:fe",
                     "client-classes": [ "reserved_class" ]
                  }],
@@ -5594,11 +5629,11 @@ following example:
                 "name": "reserved_class"
             },
             {
-                "name: "unreserved_class",
+                "name": "unreserved_class",
                 "test": "not member('reserved_class')"
             }
         ],
-        "reservations": [{"
+        "reservations": [{
             "hw-address": "aa:bb:cc:dd:ee:fe",
             "client-classes": [ "reserved_class" ]
         }],
@@ -5827,7 +5862,7 @@ redirects those customers to a captive portal urging them to bring their account
                         "data": "192.0.2.251"
                     }
                 ]
-            },
+            }
         ],
         "reservations": [
             // Clients on this list will be added to the KNOWN class. Some
@@ -5916,10 +5951,8 @@ introduced:
 
 ::
 
-   {
    "Dhcp4": {
-       "shared-networks": [
-           {
+       "shared-networks": [ {
                # Name of the shared network. It may be an arbitrary string
                # and it must be unique among all shared networks.
                "name": "my-secret-lair-level-1",
@@ -5941,7 +5974,8 @@ introduced:
                        "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
                    }
                ]
-           } ], # end of shared-networks
+       } ],
+       # end of shared-networks
 
        # It is likely that in the network there will be a mix of regular,
        # "plain" subnets and shared networks. It is perfectly valid to mix
@@ -5955,8 +5989,6 @@ introduced:
                "interface": "eth1"
            }
        ]
-
-   } # end of Dhcp4
    }
 
 As demonstrated in the example, it is possible to mix shared and regular
@@ -5980,6 +6012,7 @@ then override its value in the subnet scope. For example:
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "lab-network3",
@@ -6027,7 +6060,10 @@ then override its value in the subnet scope. For example:
                     } ]
                }
            ]
-       } ]
+       }
+       ],
+       ...
+   }
 
 In this example, there is a ``log-servers`` option defined that is available
 to clients in both subnets in this shared network. Also, the valid
@@ -6055,6 +6091,7 @@ example of what **NOT** to do:
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "office-floor-2",
@@ -6074,7 +6111,10 @@ example of what **NOT** to do:
                     "interface": "eth1"
                }
            ]
-       } ]
+       }
+   ],
+   ...
+   }
 
 To minimize the chance of configuration errors, it is often more convenient
 to simply specify the interface name once, at the shared-network level, as
@@ -6082,6 +6122,7 @@ shown in the example below.
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "office-floor-2",
@@ -6100,7 +6141,10 @@ shown in the example below.
                     "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
                }
            ]
-       } ]
+       }
+   ],
+   ...
+   }
 
 
 With relayed traffic, subnets are typically selected using
@@ -6115,6 +6159,7 @@ of what **NOT** to do:
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "kakapo",
@@ -6139,7 +6184,9 @@ of what **NOT** to do:
                }
            ]
        }
-   ]
+   ],
+   ...
+   }
 
 Again, it is better to specify the relay address at the shared-network
 level; this value will be inherited by all subnets belonging to the
@@ -6147,6 +6194,7 @@ shared network.
 
 ::
 
+   {
    "shared-networks": [
        {
            "name": "kakapo",
@@ -6165,7 +6213,9 @@ shared network.
                }
            ]
        }
-   ]
+   ],
+   ...
+   }
 
 Even though it is technically possible to configure two (or more) subnets
 within the shared network to use different relay addresses, this will almost
@@ -6385,6 +6435,7 @@ for a subnet:
 
 ::
 
+   {
    "subnet4": [
        {
            "subnet": "192.0.2.0/24",
@@ -6396,7 +6447,9 @@ for a subnet:
            ],
            ...
        }
-   ]
+   ],
+   ...
+   }
 
 .. _dhcp4-subnet-selection:
 
@@ -6515,9 +6568,9 @@ everything connected behind the modems should get addresses from the
            {
                "subnet": "10.1.1.0/24",
                "pools":  [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
-               "client-class" "docsis3.0",
+               "client-class": "docsis3.0",
                "relay": {
-                   "ip-addresses": [ "10.1.1.1 ]"
+                   "ip-addresses": [ "10.1.1.1" ]
                }
            },
            {
@@ -6567,9 +6620,14 @@ default, the following syntax can be used:
 
 ::
 
-     "Dhcp4": {
+   "Dhcp4": {
        "decline-probation-period": 3600,
-       "subnet4": [ ... ],
+       "subnet4": [
+           {
+               ...
+           },
+           ...
+       ],
        ...
    }
 
@@ -7086,9 +7144,14 @@ the default maximum sample count to 1 so only one sample is kept:
 
 ::
 
-     "Dhcp4": {
+   "Dhcp4": {
        "statistic-default-sample-count": 1,
-       "subnet4": [ ... ],
+       "subnet4": [
+           {
+               ...
+           },
+           ...
+       ],
        ...
    }
 
@@ -7117,6 +7180,9 @@ in the configuration file can be used:
        },
 
        "subnet4": [
+           {
+               ...
+           },
            ...
        ],
        ...
@@ -7744,7 +7810,7 @@ Consider the following example:
                 },
                 {
                     "id": 2,
-                    "subnet": "192.0.2.0/24",
+                    "subnet": "192.0.2.0/24"
                 }
             ]
         }

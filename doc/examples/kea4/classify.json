@@ -1,7 +1,9 @@
 // This is an example configuration file for the DHCPv4 server in Kea.
 // The purpose of this example is to showcase how clients can be classified.
 
-{ "Dhcp4": {
+{ "Dhcp4":
+
+{
 
 // Kea is told to listen on eth0 interface only.
   "interfaces-config": {

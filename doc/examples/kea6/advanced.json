@@ -56,12 +56,12 @@
     // is an alias for client-link-addr-option), remote-id, rfc4649 (which is an
     // alias for remote-id, subscriber-id, rfc4580 (which is an alias for
     // subscriber-id) and docsis.
-    //
+
     // Note that the order matters. Methods are attempted one by one in the
     // order specified until hardware address is obtained. If you don't care
     // which method is used, using 'any' is marginally faster than enumerating
     // them all.
-    //
+
     // If mac-sources are not specified, a default value of 'any' is used.
     "mac-sources": [ "client-link-addr-option", "duid", "ipv6-link-local" ],
 

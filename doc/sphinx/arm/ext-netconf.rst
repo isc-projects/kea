@@ -554,7 +554,6 @@ Kea sources.
 
            // This map specifies how each server is managed. For each server there
            // is a name of the YANG model to be used and the control channel.
-           //
            // Currently three control channel types are supported:
            // "stdout" which outputs the configuration on the standard output,
            // "unix" which uses the local control channel supported by the

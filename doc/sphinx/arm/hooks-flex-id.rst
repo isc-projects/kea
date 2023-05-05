@@ -74,13 +74,22 @@ can be achieved by using the following configuration:
 ::
 
    "Dhcp6": {
-       "subnet6": [{ ..., # subnet definition starts here
-       "reservations": [
-           "flex-id": "'port1234'", # value of the first 8 bytes of the interface-id
+       "subnet6": [{
+       # subnet definition starts here
+       "reservations": [{
+           "flex-id": "'port1234'",
+           # value of the first 8 bytes of the interface-id
            "ip-addresses": [ "2001:db8::1" ]
+       },
+       ...
        ],
-       }], # end of subnet definitions
-       "host-reservation-identifiers": ["duid", "flex-id"], # add "flex-id" to reservation identifiers
+       ...
+       },
+       ...
+       ],
+       # end of subnet definitions
+       "host-reservation-identifiers": ["duid", "flex-id"],
+       # add "flex-id" to reservation identifiers
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_flex_id.so",
@@ -89,7 +98,8 @@ can be achieved by using the following configuration:
                }
            },
            ...
-       ]
+       ],
+       ...
    }
 
 .. note::
@@ -113,13 +123,22 @@ for non-printable characters and do not require the use of the
 ::
 
    "Dhcp6": {
-       "subnet6": [{ ..., # subnet definition starts here
-       "reservations": [
-           "flex-id": "01:02:03:04:05:06", # value of the first 8 bytes of the interface-id
+       "subnet6": [{
+       # subnet definition starts here
+       "reservations": [{
+           "flex-id": "01:02:03:04:05:06",
+           # value of the first 8 bytes of the interface-id
            "ip-addresses": [ "2001:db8::1" ]
+       },
+       ...
        ],
-       }], # end of subnet definitions
-       "host-reservation-identifiers": ["duid", "flex-id"], # add "flex-id" to reservation identifiers
+       ...
+       },
+       ...
+       ],
+       # end of subnet definitions
+       "host-reservation-identifiers": ["duid", "flex-id"],
+       # add "flex-id" to reservation identifiers
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_flex_id.so",
@@ -128,7 +147,8 @@ for non-printable characters and do not require the use of the
                }
            },
            ...
-       ]
+       ],
+       ...
    }
 
 The ``replace-client-id`` Flag

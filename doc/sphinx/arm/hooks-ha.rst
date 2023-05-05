@@ -1254,11 +1254,7 @@ default to ``true``:
 
 ::
 
-   {
    "Dhcp4": {
-
-       ...
-
        "hooks-libraries": [
            {
                "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
@@ -1288,9 +1284,7 @@ default to ``true``:
                }
            }
        ],
-
        ...
-
    }
 
 In the most typical use case, both parameters are set to the same value, i.e.
@@ -1353,11 +1347,7 @@ single page of leases from 60 seconds to 90 seconds:
 
 ::
 
-   {
    "Dhcp4": {
-
-       ...
-
        "hooks-libraries": [
            {
                "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
@@ -1386,9 +1376,7 @@ single page of leases from 60 seconds to 90 seconds:
                }
            }
        ],
-
        ...
-
    }
 
 It is important to note that extending this ``sync-timeout`` value may sometimes
@@ -1439,9 +1427,6 @@ the HA state machine to pause in the ``waiting`` state after server startup.
 ::
 
    "Dhcp4": {
-
-       ...
-
        "hooks-libraries": [
            {
                "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
@@ -1477,9 +1462,7 @@ the HA state machine to pause in the ``waiting`` state after server startup.
                }
            }
        ],
-
        ...
-
    }
 
 The ``pause`` parameter value ``once`` denotes that the state machine should be
@@ -1500,9 +1483,6 @@ Consider the following configuration:
 ::
 
    "Dhcp4": {
-
-       ...
-
        "hooks-libraries": [
            {
                "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
@@ -1542,9 +1522,7 @@ Consider the following configuration:
                }
            }
        ],
-
        ...
-
    }
 
 This configuration instructs the server to pause the state machine every time it
@@ -1674,8 +1652,6 @@ as illustrated below:
 ::
 
    "Dhcp4": {
-
-       ...
        "hooks-libraries": [
            {
                "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
@@ -1686,14 +1662,12 @@ as illustrated below:
                "parameters": {
                    "high-availability": [ {
                        "this-server-name": "server1",
-                       ...
                        "multi-threading": {
                            "enable-multi-threading": true,
                            "http-dedicated-listener": true,
                            "http-listener-threads": 4,
                            "http-client-threads": 4
                        },
-                       ...
                        "peers": [
                          // This is the configuration of this server instance.
                          {
@@ -1721,8 +1695,19 @@ as illustrated below:
                              // primary as specified in the previous "peers"
                              // entry and in "this-server-name" before that.
                              "role": "secondary"
-                         }
+                         },
+                         ...
+                       ],
                        ...
+                   },
+                   ...
+                   ]
+               }
+           },
+           ...
+       ],
+       ...
+   }
 
 
 In the example above, HA+MT is enabled with four threads for the listener and
@@ -1781,8 +1766,6 @@ fewer drops but with longer response times. Currently, the default value for
 ::
 
    "Dhcp6": {
-
-       ...
        // Limit the number of concurrently parked packets to 128.
        "parked-packet-limit": 128,
        "hooks-libraries": [
@@ -1796,6 +1779,13 @@ fewer drops but with longer response times. Currently, the default value for
                    "high-availability": [ {
                        "this-server-name": "server1",
                        ...
+                   } ]
+               }
+           },
+           ...
+       ],
+       ...
+   }
 
 .. note::
 

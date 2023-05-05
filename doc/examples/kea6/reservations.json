@@ -139,7 +139,7 @@
 // Expression can be specified either as hex or plain text using single
 // quotes.
 // Note: flexible identifier requires flex_id hook library to be
-//loaded to work.
+// loaded to work.
          {
              "flex-id": "'somevalue'",
              "ip-addresses": [ "2001:db8:1:cafe::2" ]

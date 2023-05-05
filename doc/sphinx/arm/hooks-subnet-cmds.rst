@@ -96,6 +96,7 @@ The list of subnets is returned in the following format:
                "subnet": "192.0.2.0/24"
            }
        ]
+       }
    }
 
 If no IPv4 subnets are found, an error code is returned along with the
@@ -137,6 +138,7 @@ The list of subnets is returned in the following format:
                "subnet": "3000::/16"
            }
        ]
+       }
    }
 
 If no IPv6 subnets are found, an error code is returned along with the
@@ -186,8 +188,11 @@ If the subnet exists, the response will be similar to this:
                    "subnet": "10.0.0.0/8",
                    "id": 1,
                    "option-data": [
-                       ....
-                   ]
+                       {
+                           ...
+                       },
+                       ...
+                   ],
                    ...
                }
            ]
@@ -238,9 +243,12 @@ If the subnet exists, the response will be similar to this:
                    "subnet": "2001:db8:1::/64",
                    "id": 1,
                    "option-data": [
+                       {
+                           ...
+                       },
                        ...
-                   ]
-                   ....
+                   ],
+                   ...
                }
            ]
        }
@@ -785,14 +793,14 @@ to the default 'dhcp4' space.
                "valid-lifetime": 0,
                "id": 123,
                "subnet": "10.20.30.0/24",
-               "option-data" [
+               "option-data": [
                    { "name": "routers" }
-               ]
+               ],
                "pools": [
                    {
                        "option-data": [
                            { "code": 4 }
-                       ]
+                       ],
                        "pool": "10.20.30.11-10.20.30.20"
                    },
                    {
@@ -862,9 +870,9 @@ option belongs to the default 'dhcp6' space.
                "valid-lifetime": 0,
                "id": 234,
                "subnet": "2001:db8:1::/64",
-               "option-data" [
+               "option-data": [
                    { "name": "dns-servers" }
-               ]
+               ],
                "pd-pools": [
                    {
                        "prefix": "2001:db8:3::",
@@ -884,7 +892,7 @@ option belongs to the default 'dhcp6' space.
                    {
                        "option-data": [
                            { "code": 31 }
-                       ]
+                       ],
                        "pool": "2001:db8:1::11-2001:db8:1::20"
                    },
                    {
@@ -1015,11 +1023,13 @@ An example response could look as follows:
                    {
                        "subnet": "192.0.2.0/24",
                        "id": 5,
+                       ...
                        # many other subnet-specific details here
                    },
                    {
                        "id": 6,
                        "subnet": "192.0.3.0/31",
+                       ...
                        # many other subnet-specific details here
                    }
                ],

@@ -4,12 +4,10 @@
 
 {
 // ------------------ DHCP-DDNS ---------------------
-//
 "DhcpDdns":
 {
 
 // --------------  Global Parameters ----------------
-//
 //   D2 will listen for update requests for Kea DHCP servers at 127.0.0.1
 //   on port 53001.  Maximum time to we will wait for a DNS server to
 //   respond to us is 1000 ms.
@@ -29,9 +27,7 @@
 
     "user-context": { "version": 1 },
 
-//
 // ----------------- Control Socket -----------------
-//
 
     "control-socket":
     {
@@ -39,9 +35,7 @@
         "socket-name": "/tmp/kea-ddns-ctrl-socket"
     },
 
-//
 // ----------------- Hooks Libraries -----------------
-//
 
     "hooks-libraries":
     [
@@ -60,14 +54,11 @@
         }
     ],
 
-//
 // ----------------- Forward DDNS  ------------------
-//
 //   1. Zone - "four.example.com.
 //      It uses TSIG, key name is "d2.md5.key"
 //      It is served by one DNS server which listens for DDNS requests at
 //      172.16.1.1 on the default port 53 (standard DNS port)
-//
 //   2. Zone - "six.example.com."
 //      It does not use TSIG.
 //      It is server by one DNS server at "2001:db8:1::10" on port 7802
@@ -104,11 +95,9 @@
     },
 
 // ----------------- Reverse DDNS  ------------------
-//
 // We will update Reverse DNS for one zone "2.0.192.in-addr-arpa". It
 // uses TSIG with key "d2.sha1.key" and is served by two DNS servers:
 // one listening at "172.16.1.1" on 53001 and the other at "192.168.2.10".
-//
     "reverse-ddns":
     {
         "ddns-domains":
@@ -131,10 +120,8 @@
     },
 
 // ------------------ TSIG keys ---------------------
-//
 //   Each key has a name, an algorithm (HMAC-MD5, HMAC-SHA1, HMAC-SHA224...)
 //   and a base-64 encoded shared secret.
-//
     "tsig-keys":
     [
         {
