@@ -20,7 +20,6 @@
         "3 is returned if no leases are found."
     ],
     "resp-syntax": [
-        "[",
         "  {",
         "    \"arguments\": {",
         "      \"leases\": [",
@@ -35,13 +34,12 @@
         "          \"state\": 0,",
         "          \"subnet-id\": 1,",
         "          \"valid-lft\": 4000",
-        "        },",
+        "        }",
         "      ]",
         "    },",
         "    \"result\": 0,",
         "    \"text\": \"1 IPv4 lease(s) found.\"",
-        "  }",
-        "]"
+        "  }"
     ],
     "support": [
         "kea-dhcp4"

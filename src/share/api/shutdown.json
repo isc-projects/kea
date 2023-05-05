@@ -9,7 +9,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"shutdown\"",
+        "    \"command\": \"shutdown\",",
         "    \"arguments\": {",
         "        \"exit-value\": 123",
         "    }",

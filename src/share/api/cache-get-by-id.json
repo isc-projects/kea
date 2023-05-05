@@ -18,7 +18,7 @@
         "{",
         "    \"result\": 0,",
         "    \"text\": \"2 entries returned.\",",
-        "    \"arguments\": <list of host reservations>",
+        "    \"arguments\": \"<list of host reservations>\"",
         "}"
     ],
     "support": [

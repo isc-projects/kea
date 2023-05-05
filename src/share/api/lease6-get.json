@@ -21,7 +21,6 @@
         "3 is returned if no leases are found with specified parameter."
     ],
     "resp-syntax": [
-        "[",
         "  {",
         "    \"arguments\": {",
         "      \"leases\": [",
@@ -44,8 +43,7 @@
         "    },",
         "    \"result\": 0,",
         "    \"text\": \"1 IPv6 lease(s) found.\"",
-        "  }",
-        "]"
+        "  }"
     ],
     "description": "See <xref linkend=\"idp58\"/>",
     "hook": "lease_cmds",

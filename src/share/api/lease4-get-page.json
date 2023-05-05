@@ -11,8 +11,8 @@
         "{",
         "    \"command\": \"lease4-get-page\",",
         "    \"arguments\": {",
-        "        \"limit\": <integer>,",
-        "        \"from\": <IPv4 address or \"start\">",
+        "        \"limit\": \"<integer>\",",
+        "        \"from\": \"<IPv4 address or 'start'>\"",
         "    }",
         "}"
     ],
@@ -21,7 +21,6 @@
         "3 is returned if no leases are found with specified parameters."
     ],
     "resp-syntax": [
-        "[",
         "  {",
         "    \"arguments\": {",
         "      \"leases\": [",
@@ -53,8 +52,7 @@
         "    },",
         "    \"result\": 0,",
         "    \"text\": \"2 IPv4 lease(s) found.\"",
-        "  }",
-        "]"
+        "  }"
     ],
     "description": "See <xref linkend=\"command-lease4-get-page\"/>",
     "hook": "lease_cmds",

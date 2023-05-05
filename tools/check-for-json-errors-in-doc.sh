@@ -1,6 +1,6 @@
 #!/bin/bash
 work_file=`mktemp`
-for file in `find ./ | grep -v "\.git" | grep -v "_build" | grep -v "\/man\/" | grep "\.rst\|\.json" | grep -v "api\.rst" | sort`; do
+for file in `find ./ | grep -v "\.git" | grep -v "_build" | grep -v "\/man\/" | grep "\.rst\|\.json" | sort`; do
 	json=0
 	comment=0
 	line_num=0

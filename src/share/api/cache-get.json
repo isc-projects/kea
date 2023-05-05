@@ -10,7 +10,7 @@
         "{",
         "    \"result\": 0,",
         "    \"text\": \"123 entries returned.\",",
-        "    \"arguments\": <list of host reservations>",
+        "    \"arguments\": \"<list of host reservations>\"",
         "}"
     ],
     "support": [

@@ -13,11 +13,11 @@
         "    \"arguments\": {",
         "        \"subnets\": [",
         "            {",
-        "                \"subnet\": <subnet prefix>",
+        "                \"subnet\": \"<subnet prefix>\"",
         "            }",
         "        ],",
         "        \"remote\": {",
-        "            <specification of the database to connect to>",
+        "            \"<specification\": \"of the database to connect to>\"",
         "        }",
         "    }",
         "}"
