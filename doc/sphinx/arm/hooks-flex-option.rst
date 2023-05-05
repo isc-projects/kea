@@ -40,28 +40,54 @@ per-option parameter maps, with ``code``, ``name``, ``add``, ``supersede``, and
 ``remove`` actions. Action entries take a string value representing an
 expression.
 
-::
+.. code-block:: json
 
+ {
     "Dhcp4": {
         "hooks-libraries": [
-            {   "library": "/usr/local/lib/libdhcp_flex_option.so",
+            {
+                "library": "/usr/local/lib/libdhcp_flex_option.so",
                 "parameters": {
                     "options": [
-                            {
+                        {
                             "code": 67,
-                            "add":
-  "ifelse(option[host-name].exists,concat(option[host-name].text,'.boot'),'')"
+                            "add": "ifelse(option[host-name].exists,concat(option[host-name].text,'.boot'),'')"
                         }
                     ]
                 }
-            },
-            ...
+            }
         ]
     }
+ }
 
 If (and only if) the **query** includes a ``host-name`` option (code 12), a
 ``boot-file-name`` option (code 67) is added to the response with the host name
 followed by ``.boot`` for content.
+
+A commonly discussed use case is modifying the DHCPv4 subnet mask option
+(code 1). The following example demonstrates that capability. All ingress
+packets identified by the gateway address 192.168.0.1 are met with a /32 subnet
+mask in the response.
+
+.. code-block:: json
+
+    {
+        "Dhcp4": {
+            "hooks-libraries": [
+                {
+                    "library": "/usr/local/lib/libdhcp_flex_option.so",
+                    "parameters": {
+                        "options": [
+                            {
+                                "code": 1,
+                                "supersede": "ifelse(pkt4.giaddr==192.168.0.1, '255.255.255.255', '')"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
 
 The flexible option library supports both DHCPv4 and DHCPv6.
 
@@ -138,14 +164,16 @@ For instance this configuration adds a string sub-option in the DHCPv4
 ``vendor-encapsulated-options`` (code 43) option. Note this option
 in last resort encapsulates the ``vendor-encapsulated-options`` space.
 
-::
+.. code-block:: json
 
+ {
     "Dhcp4": {
         "hooks-libraries": [
-            {   "library": "/usr/local/lib/libdhcp_flex_option.so",
+            {
+                "library": "/usr/local/lib/libdhcp_flex_option.so",
                 "parameters": {
                     "options": [
-                            {
+                        {
                             "code": 43,
                             "sub-options": [
                                 {
@@ -156,7 +184,7 @@ in last resort encapsulates the ``vendor-encapsulated-options`` space.
                         }
                     ]
                 }
-            },
-            ...
+            }
         ]
     }
+ }
