@@ -1092,6 +1092,44 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
+    "}",
+// Configuration #22
+// - a shared network with two subnets
+// - first subnet uses the random allocator
+// - second subnet uses the FLQ allocator
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"relay\": {"
+    "                \"ip-address\": \"192.3.5.6\""
+    "            },"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/24\","
+    "                    \"allocator\": \"random\","
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.1 - 192.0.2.10\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"192.0.3.0/24\","
+    "                    \"allocator\": \"flq\","
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.3.1 - 192.0.3.10\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
     "}"
 };
 
@@ -1396,6 +1434,48 @@ public:
             "}";
 
         return (cfg);
+    }
+
+    // @brief Test that different allocator types can be used within a shared network.
+    //
+    // All available addresses should be assigned from the subnets belonging to
+    // the shared network.
+    //
+    /// @param config server configuration that should contain a shared network with
+    /// two subnets. Each subnet should contain an address pool with 10 addresses.
+    void testDifferentAllocatorsInNetwork(const std::string& config) {
+        // Create the base client and server configuration.
+        Dhcp4Client client(Dhcp4Client::SELECTING);
+        configure(config, *client.getServer());
+
+        // Record what addresses have been allocated.
+        std::set<std::string> allocated_set;
+
+        // Simulate allocations from different clients.
+        for (auto i = 0; i < 20; ++i) {
+            // Create a client from the base client.
+            Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
+            next_client.useRelay(true, IOAddress("192.3.5.6"), IOAddress("10.0.0.2"));
+            // Run 4-way exchange.
+            ASSERT_NO_THROW(next_client.doDORA());
+            // Make sure that the server responded.
+            ASSERT_TRUE(next_client.getContext().response_);
+            // Make sure that the server has responded with DHCPACK.
+            ASSERT_EQ(DHCPACK, static_cast<int>(next_client.getContext().response_->getType()));
+            // Make sure that the address is not zero.
+            ASSERT_FALSE(next_client.config_.lease_.addr_.isV4Zero());
+            // Remember allocated address uniqueness.
+            allocated_set.insert(next_client.config_.lease_.addr_.toText());
+        }
+        // Make sure that we have 20 distinct allocations.
+        ASSERT_EQ(20, allocated_set.size());
+
+        // Try one more time. This time no leases should be allocated because
+        // the pools are exhausted.
+        Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
+        next_client.useRelay(true, IOAddress("192.3.5.6"), IOAddress("10.0.0.2"));
+        ASSERT_NO_THROW(next_client.doDiscover());
+        EXPECT_FALSE(next_client.getContext().response_);
     }
 
     /// @brief Destructor.
@@ -2913,34 +2993,17 @@ TEST_F(Dhcpv4SharedNetworkTest, authoritative) {
 }
 
 // Test that different allocator types can be used within a shared network.
-// All available addresses should be assigned from the subnets belonging to
-// the shared network.
+// The first subnet uses the random allocator. The second subnet uses the FLQ
+// allocator.
 TEST_F(Dhcpv4SharedNetworkTest, randomAndFlqAllocation) {
-    // Create the base client and server configuration.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    configure(NETWORKS_CONFIG[21], *client.getServer());
+    testDifferentAllocatorsInNetwork(NETWORKS_CONFIG[21]);
+}
 
-    // Record what addresses have been allocated.
-    std::set<std::string> allocated_set;
-
-    // Simulate allocations from different clients.
-    for (auto i = 0; i < 20; ++i) {
-        // Create a client from the base client.
-        Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
-        next_client.useRelay(true, IOAddress("192.3.5.6"), IOAddress("10.0.0.2"));
-        // Run 4-way exchange.
-        ASSERT_NO_THROW(next_client.doDORA());
-        // Make sure that the server responded.
-        ASSERT_TRUE(next_client.getContext().response_);
-        // Make sure that the server has responded with DHCPACK.
-        ASSERT_EQ(DHCPACK, static_cast<int>(next_client.getContext().response_->getType()));
-        // Make sure that the address is not zero.
-        ASSERT_FALSE(next_client.config_.lease_.addr_.isV4Zero());
-        // Remember allocated address uniqueness.
-        allocated_set.insert(next_client.config_.lease_.addr_.toText());
-    }
-    // Make sure that we have 20 distinct allocations.
-    ASSERT_EQ(20, allocated_set.size());
+// Test that different allocator types can be used within a shared network.
+// The first subnet uses the FLQ allocator. The second subnet uses the random
+// allocator.
+TEST_F(Dhcpv4SharedNetworkTest, flqAndRandomAllocation) {
+    testDifferentAllocatorsInNetwork(NETWORKS_CONFIG[22]);
 }
 
 } // end of anonymous namespace
