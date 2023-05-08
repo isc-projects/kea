@@ -57,6 +57,7 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_NO_V6_HR;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_UNRESERVED;
+extern const isc::log::MessageID ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_DECLINED_RECOVERED;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED;

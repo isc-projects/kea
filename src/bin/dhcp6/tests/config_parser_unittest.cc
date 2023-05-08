@@ -6800,7 +6800,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworks1subnet) {
     const Subnet6SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(1, subs->size());
-    checkSubnet(*subs, "2001:db8::/48", 0, 0, 3600, 7200);
+    checkSubnet(*subs, "2001:db8::/48", 0, 0, 0, 7200);
 
     // Now make sure the subnet was added to global list of subnets.
     CfgSubnets6Ptr subnets6 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
@@ -6808,7 +6808,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworks1subnet) {
 
     const Subnet6Collection* gsubs = subnets6->getAll();
     ASSERT_TRUE(gsubs);
-    checkSubnet(*gsubs, "2001:db8::/48", 0, 0, 3600, 7200);
+    checkSubnet(*gsubs, "2001:db8::/48", 0, 0, 0, 7200);
 }
 
 // Test verifies that a proper shared-network (three subnets) is
@@ -7122,7 +7122,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     // derived from shared-network level. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet6 level.
-    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 0, 10, 3600, 7200);
+    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 0, 10, 0, 7200);
     ASSERT_TRUE(s);
     EXPECT_EQ("eth0", s->getIface().get());
 
@@ -7130,7 +7130,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     // was specified explicitly. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet6 level.
-    checkSubnet(*subs, "2001:db2::/48", 0, 100, 3600, 7200);
+    checkSubnet(*subs, "2001:db2::/48", 0, 100, 0, 7200);
     EXPECT_EQ("eth0", s->getIface().get());
 
     // Ok, now check the second shared subnet.
@@ -7142,7 +7142,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     EXPECT_EQ(1, subs->size());
 
     // This subnet should derive its rebind-timer from global scope.
-    s = checkSubnet(*subs, "2001:db3::/48", 0, 0, 3600, 7200);
+    s = checkSubnet(*subs, "2001:db3::/48", 0, 0, 0, 7200);
     EXPECT_EQ("", s->getIface().get());
 }
 
@@ -7230,13 +7230,13 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
 
     // For the first subnet, the client-class should be inherited from
     // shared-network level.
-    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 0, 0, 3600, 7200);
+    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 0, 0, 0, 7200);
     ASSERT_TRUE(s);
     EXPECT_EQ("alpha", s->getClientClass().get());
 
     // For the second subnet, the values are overridden on subnet level.
     // The value should not be inherited.
-    s = checkSubnet(*subs, "2001:db2::/48", 0, 0, 3600, 7200);
+    s = checkSubnet(*subs, "2001:db2::/48", 0, 0, 0, 7200);
     ASSERT_TRUE(s);
     EXPECT_EQ("beta", s->getClientClass().get()); // beta defined on subnet level
 
@@ -7251,7 +7251,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     EXPECT_EQ(1, subs->size());
 
     // This subnet should derive its renew-timer from global scope.
-    s = checkSubnet(*subs, "2001:db3::/48", 0, 0, 3600, 7200);
+    s = checkSubnet(*subs, "2001:db3::/48", 0, 0, 0, 7200);
     EXPECT_TRUE(s->getClientClass().empty());
 }
 

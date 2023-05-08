@@ -1848,6 +1848,15 @@ AllocEngine::getLifetimes6(ClientContext6& ctx, uint32_t& preferred, uint32_t& v
             valid = candidate_valid.get(ctx.currentIA().hints_[0].getValid());
         }
     }
+
+    // If preferred isn't set or insane, calculate it as valid_lft * 0.625.
+    if (!preferred || preferred > valid) {
+        preferred = ((valid * 5)/8);
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME)
+                .arg(ctx.query_->getLabel())
+                .arg(preferred);
+    }
 }
 
 Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,

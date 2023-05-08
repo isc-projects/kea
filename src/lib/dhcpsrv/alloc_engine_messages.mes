@@ -419,6 +419,13 @@ reservations for the client but they are not usable because the addresses
 are in use by another client or (c) we had a reserved lease but that
 has now been allocated to another client.
 
+% ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME %1: using a calculated preferred-lifetime of %2
+This debug message indicates that the preferred-lifetime being returned
+to the client is defaulting to 62.5% of the valid-lifetime.  This may
+occur if either the preferred-lifetime has not been explicitly configured,
+or the configured value is larger than the valid-lifetime.  The arguments
+detail the client and the preferred-lifetime that will be used.
+
 % ALLOC_ENGINE_V6_DECLINED_RECOVERED IPv6 address %1 was recovered after %2 seconds of probation-period
 This informational message indicates that the specified address was reported
 as duplicate (client sent DECLINE) and the server marked this address as

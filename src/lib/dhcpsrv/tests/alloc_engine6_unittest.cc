@@ -1049,8 +1049,8 @@ TEST_F(AllocEngine6Test, renewClassLeaseLifetime) {
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
         << "Lease lifetime was not extended, but it should";
 
-    // Verify life times came from the class.
-    EXPECT_EQ(renewed[0]->preferred_lft_, 750);
+    // Verify life times came from the class. Preferred should get adjusted.
+    EXPECT_EQ(renewed[0]->preferred_lft_, 437);
     EXPECT_EQ(renewed[0]->valid_lft_, 700);
 }
 
@@ -5707,13 +5707,18 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
     // Commit our class changes.
     CfgMgr::instance().commit();
 
-    // Update the subnet's triplet to something more useful.
-    subnet_->setPreferred(Triplet<uint32_t>(500, 1000, 1500));
+    // Ensure subnet valid-lft is 400.
+    subnet_->setValid(Triplet<uint32_t>(400, 400, 400));
+
+    // Convenience Triplet values.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> specified(Triplet<uint32_t>(301, 350, 450));
 
     // Describes a test scenario.
     struct Scenario {
         std::string desc_;                  // descriptive text for logging
         std::vector<std::string> classes_;  // class list of assigned classes
+        Triplet<uint32_t> subnet_pref_;     // subnet's preferred lifetime triplet.
         uint32_t requested_lft_;            // use as option 51 is > 0
         uint32_t exp_preferred_;            // expected lifetime
     };
@@ -5721,62 +5726,79 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
     // Scenarios to test.
     std::vector<Scenario> scenarios = {
         {
-            "no classes, no hint",
+            "no classes, no hint, subnet specified",
             {},
+            specified,
             0,
-            subnet_->getPreferred()
+            specified
+        },
+        {
+            "no classes, no hint, subnet unspecified",
+            {},
+            unspecified,
+            0,
+            (subnet_->getValid() * 5 / 8)
         },
         {
             "no classes, hint",
             {},
+            specified,
             subnet_->getPreferred().getMin() + 50,
             subnet_->getPreferred().getMin() + 50
         },
         {
             "no classes, hint too small",
             {},
-            subnet_->getPreferred().getMin() - 50,
-            subnet_->getPreferred().getMin()
+            specified,
+            specified.getMin() - 50,
+            specified.getMin()
         },
         {
             "no classes, hint too big",
             {},
-            subnet_->getPreferred().getMax() + 50,
-            subnet_->getPreferred().getMax()
+            specified,
+            specified.getMax() + 50,
+            (subnet_->getValid() * 5 / 8)
         },
         {
             "class unspecified, no hint",
             { "preferred_unspec" },
+            specified,
             0,
-            subnet_->getPreferred()
+            specified
         },
         {
             "from last class, no hint",
             { "preferred_unspec", "preferred_one" },
+            specified,
             0,
             preferred_one.get()
         },
         {
             "from first class, no hint",
             { "preferred_two", "preferred_one" },
+            specified,
             0,
             preferred_two.get()
         },
         {
             "class plus hint",
             { "preferred_one" },
+            specified,
             preferred_one.getMin() + 25,
             preferred_one.getMin() + 25
         },
         {
             "class plus hint too small",
             { "preferred_one" },
+            specified,
             preferred_one.getMin() - 25,
             preferred_one.getMin()
         },
         {
             "class plus hint too big",
             { "preferred_one" },
+            specified,
             preferred_one.getMax() + 25,
             preferred_one.getMax()
         }
@@ -5785,6 +5807,9 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
     // Iterate over the scenarios and verify the correct outcome.
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
+            // Set the subnet's preferred-lifetime triplet.
+            subnet_->setPreferred(scenario.subnet_pref_);
+
             // Create a context;
             AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
                                             Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
@@ -5848,8 +5873,9 @@ TEST_F(AllocEngine6Test, getTemplateClassPreferredLifetime) {
     // Commit our class changes.
     CfgMgr::instance().commit();
 
-    // Update the subnet's triplet to something more useful.
-    subnet_->setPreferred(Triplet<uint32_t>(500, 1000, 1500));
+    // Update the subnet's triplet to something more useful.  Note max is
+    // intentionally larger than valid-lft.
+    subnet_->setPreferred(Triplet<uint32_t>(301, 350, 450));
 
     // Describes a test scenario.
     struct Scenario {
@@ -5883,7 +5909,7 @@ TEST_F(AllocEngine6Test, getTemplateClassPreferredLifetime) {
             "no classes, hint too big",
             {},
             subnet_->getPreferred().getMax() + 50,
-            subnet_->getPreferred().getMax()
+            (subnet_->getValid() * 5 / 8)
         },
         {
             "class unspecified, no hint",

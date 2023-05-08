@@ -56,6 +56,7 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR = "ALLOC_ENG
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR = "ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_NO_V6_HR = "ALLOC_ENGINE_V6_ALLOC_NO_V6_HR";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_ALLOC_UNRESERVED = "ALLOC_ENGINE_V6_ALLOC_UNRESERVED";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME = "ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_DECLINED_RECOVERED = "ALLOC_ENGINE_V6_DECLINED_RECOVERED";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED = "ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED = "ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED";
@@ -141,6 +142,7 @@ const char* values[] = {
     "ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR", "no leases found but reservations exist for client %1",
     "ALLOC_ENGINE_V6_ALLOC_NO_V6_HR", "%1: unable to allocate reserved leases - no IPv6 reservations",
     "ALLOC_ENGINE_V6_ALLOC_UNRESERVED", "no static reservations available - trying to dynamically allocate leases for client %1",
+    "ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME", "%1: using a calculated preferred-lifetime of %2",
     "ALLOC_ENGINE_V6_DECLINED_RECOVERED", "IPv6 address %1 was recovered after %2 seconds of probation-period",
     "ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED", "%1: expired lease for the client's hint %2 is reserved for another client",
     "ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED", "allocate new (unreserved) leases for the renewing client %1",

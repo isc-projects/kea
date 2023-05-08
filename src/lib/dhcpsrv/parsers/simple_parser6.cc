@@ -111,7 +111,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
 /// in Dhcp6) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
-    { "preferred-lifetime",               Element::integer, "3600" },
+    // { "preferred-lifetime",               Element::integer, "3600" }, unspecified
     { "valid-lifetime",                   Element::integer, "7200" },
     { "decline-probation-period",         Element::integer, "86400" }, // 24h
     { "dhcp4o6-port",                     Element::integer, "0" },
