@@ -300,7 +300,7 @@ without the need to restart the server.
 
 The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example:
 
-::
+.. code-block:: json
 
     "subnet4": [{
         "subnet": "192.0.2.0/24",
@@ -309,10 +309,10 @@ The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example
         } ],
         "user-context": {
             "ddns-tuning": {
-                "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 3,4))"
+                "hostname-expr": "'guest-'+int8totext(substring(pkt4.yiaddr, 0,1))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 1,2))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 2,3))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 3,4))"
             },
             "last-modified": "2017-09-04 13:32",
             "phones": [ "x1234", "x2345" ],

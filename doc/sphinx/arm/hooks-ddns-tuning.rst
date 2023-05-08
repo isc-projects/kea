@@ -72,10 +72,10 @@ global expression for that subnet. An example subnet expression is shown below:
         // This is a subnet-specific user context.
         "user-context": {
             "ddns-tuning": {
-                "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 3,4))"
+                "hostname-expr": "'guest-'+int8totext(substring(pkt4.yiaddr, 0,1))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 1,2))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 2,3))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 3,4))"
             },
             "last-modified": "2017-09-04 13:32",
             "description": "you can put anything you like here",
