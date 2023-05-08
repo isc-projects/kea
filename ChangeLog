@@ -1,3 +1,12 @@
+2136.	[func]		tmark
+	The default value, in kea-dhcp6, for preferred-lifetime is
+	now calculated as: 0.625 * valid-lifetime. This calculation
+	is also used in the event that the specified value for
+	preferred-lifetime is greater than valid-lifetime.  Prior to
+	this, the default value was 3600 seconds, and there was no
+	check against sending values greater than valid-lifetime.
+	(Gitlab #2835)
+
 2135.	[build]		tomek
 	The CodeQL pipeline has been enabled on github. Developer's guide
 	updated with details.
@@ -26,7 +35,6 @@
 	Added support for 255 bytes long client-id and 130 bytes long
 	duid (2 bytes for type and at most 128 bytes for value).
 	(Gitlab #2786)
-
 
 2130.	[func]		piotrek
 	Added support of DHCP Options for the Discovery of

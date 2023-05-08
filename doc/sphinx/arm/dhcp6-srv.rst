@@ -2478,6 +2478,12 @@ non-zero values - uses these values when they are between the configured
 minimum and maximum bounds. Values outside the bounds are rounded up or down as
 needed.
 
+.. note::
+
+   As of Kea 2.3.8, if the preferred-lifetime has not been explicitly specified
+   or the specified value is larger than the value of valid-lifetime, the server
+   will use the value given by 0.625 * valid-lifetime.
+
 To send specific fixed values, use the following two parameters:
 
 -  ``renew-timer`` - specifies the value of T1 in seconds.
