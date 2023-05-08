@@ -1101,8 +1101,44 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
-    "}"
+    "}",
 
+// Configuration #23.
+// - a shared network with two subnets
+// - first subnet uses the FLQ allocator
+// - second subnet uses the random allocator
+    "{"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"pd-allocator\": \"flq\","
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"2001:db8:1::\","
+    "                            \"prefix-len\": 64,"
+    "                            \"delegated-len\": 68"
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"pd-allocator\": \"random\","
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"2001:db8:2::\","
+    "                            \"prefix-len\": 64,"
+    "                            \"delegated-len\": 68"
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}"
 };
 
 /// @Brief Test fixture class for DHCPv6 server using shared networks.
@@ -2496,6 +2532,39 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     EXPECT_EQ(1, client2.getLeaseNum());
     EXPECT_EQ(1, client2.getLeasesWithNonZeroLifetime().size());
 }
+
+// Test that different allocator types can be used within a shared network.
+// All available prefixes should be delegated from the subnets belonging to
+// the shared network.
+TEST_F(Dhcpv6SharedNetworkTest, randomAndFlqAllocation) {
+    // Create the base client and server configuration.
+    Dhcp6Client client;
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[23], *client.getServer()));
+
+    // Record what prefixes have been allocated.
+    std::set<std::string> allocated_set;
+
+    // Simulate allocations from different clients.
+    for (auto i = 0; i < 32; ++i) {
+        // Create a client from the base client.
+        Dhcp6Client next_client(client.getServer());
+        next_client.setInterface("eth1");
+        next_client.requestPrefix();
+        // Run 4-way exchange.
+        ASSERT_NO_THROW(next_client.doSARR());
+        // Make sure that the server responded.
+        ASSERT_TRUE(next_client.getContext().response_);
+        auto leases = next_client.getLeasesByType(Lease::TYPE_PD);
+        ASSERT_EQ(1, leases.size());
+        // Make sure that the prefix is not zero.
+        ASSERT_FALSE(leases[0].addr_.isV6Zero());
+        // Remember the allocated prefix uniqueness.
+        allocated_set.insert(leases[0].addr_.toText());
+    }
+    // Make sure that we have 32 distinct allocations.
+    ASSERT_EQ(32, allocated_set.size());
+}
+
 
 // Verify option processing precedence
 // Order is global < class < shared-network < subnet < pools < host reservation

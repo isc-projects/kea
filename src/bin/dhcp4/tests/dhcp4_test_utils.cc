@@ -874,6 +874,13 @@ Dhcpv4SrvTest::configure(const std::string& config,
     }
 
     try {
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->initAllocatorsAfterConfigure();
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "Error initializing the allocators after configure: "
+            << ex.what();
+    }
+
+    try {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "Error applying multi threading settings: "

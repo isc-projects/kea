@@ -1022,6 +1022,11 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
                 candidate = allocator->pickAddress(classes, ctx.duid_, hint);
             }
 
+            // An allocator may return zero address when it has pools exhausted.
+            if (candidate.isV6Zero()) {
+                break;
+            }
+
             // First check for reservation when it is the choice.
             if (check_reservation_first && in_subnet && !out_of_pool) {
                 auto hosts = getIPv6Resrv(subnet->getID(), candidate);
@@ -4405,6 +4410,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             IOAddress candidate = allocator->pickAddress(classes,
                                                          client_id,
                                                          ctx.requested_address_);
+
+            // An allocator may return zero address when it has pools exhausted.
+            if (candidate.isV4Zero()) {
+                break;
+            }
 
             if (exclude_first_last_24) {
                 // Exclude .0 and .255 addresses.
