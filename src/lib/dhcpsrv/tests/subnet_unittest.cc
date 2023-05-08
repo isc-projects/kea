@@ -807,6 +807,8 @@ TEST(Subnet4Test, createAllocatorsRandom) {
     // Expect random allocator.
     EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
                 (subnet->getAllocator(Lease::TYPE_V4)));
+    // Expect null subnet allocation state.
+    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_V4));
     // Expect random allocation state for the pool.
     EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
                 (pool->getAllocationState()));
@@ -828,6 +830,8 @@ TEST(Subnet4Test, createAllocatorsFreeLeaseQueue) {
     // Expect FLQ allocator.
     EXPECT_TRUE(boost::dynamic_pointer_cast<FreeLeaseQueueAllocator>
                 (subnet->getAllocator(Lease::TYPE_V4)));
+    // Expect null subnet allocation state.
+    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_V4));
     // Expect FLQ allocation state for the pool.
     EXPECT_TRUE(boost::dynamic_pointer_cast<PoolFreeLeaseQueueAllocationState>
                 (pool->getAllocationState()));
@@ -1846,6 +1850,12 @@ TEST(Subnet6Test, createAllocatorsRandom) {
     // Expect random allocator for PD.
     EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
                 (subnet->getAllocator(Lease::TYPE_PD)));
+    // Expect null subnet allocation state for NA.
+    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_NA));
+    // Expect null subnet allocation state for TA.
+    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_TA));
+    // Expect null subnet allocation state for PD.
+    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_PD));
     // Expect random allocation state for the NA pool.
     EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
                 (pool->getAllocationState()));
@@ -1887,6 +1897,12 @@ TEST(Subnet6Test, createAllocatorsFreeLeaseQueue) {
     // Expect FLQ allocator for PD.
     EXPECT_TRUE(boost::dynamic_pointer_cast<FreeLeaseQueueAllocator>
                 (subnet->getAllocator(Lease::TYPE_PD)));
+    // Expect null subnet allocation state for NA.
+    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_NA));
+    // Expect null subnet allocation state for TA.
+    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_TA));
+    // Expect null subnet allocation state for PD.
+    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_PD));
     // Expect random allocation state for the NA pool.
     EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
                 (pool->getAllocationState()));

@@ -768,6 +768,8 @@ Subnet4::createAllocators() {
         setAllocator(Lease::TYPE_V4,
                      boost::make_shared<FreeLeaseQueueAllocator>
                      (Lease::TYPE_V4, shared_from_this()));
+        setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
+
         for (auto pool : pools_) {
             pool->setAllocationState(PoolFreeLeaseQueueAllocationState::create(pool));
         }
@@ -776,6 +778,9 @@ Subnet4::createAllocators() {
         setAllocator(Lease::TYPE_V4,
                      boost::make_shared<IterativeAllocator>
                      (Lease::TYPE_V4, shared_from_this()));
+        setAllocationState(Lease::TYPE_V4,
+                           SubnetIterativeAllocationState::create(shared_from_this()));
+
         for (auto pool : pools_) {
             pool->setAllocationState(PoolIterativeAllocationState::create(pool));
         }
