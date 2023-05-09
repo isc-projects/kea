@@ -52,7 +52,7 @@ then
 fi
 
 mysql "$@" <<EOF
--- This line starts the schema upgrade to version 17.
+-- This line starts the schema upgrade to version 17.0.
 
 -- Add the allocator column to the DHCPv4 tables.
 ALTER TABLE dhcp4_subnet ADD COLUMN allocator TEXT NULL;
@@ -70,6 +70,6 @@ ALTER TABLE dhcp6_shared_network ADD COLUMN pd_allocator TEXT NULL;
 UPDATE schema_version
     SET version = '17', minor = '0';
 
--- This line concludes the schema upgrade to version 17.
+-- This line concludes the schema upgrade to version 17.0.
 
 EOF

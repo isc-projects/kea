@@ -37,7 +37,7 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
--- Upgrade to schema 3.0 begins here:
+-- This line starts the schema upgrade to version 3.0.
 
 --
 -- Table structure for table host_identifier_type
@@ -281,13 +281,13 @@ ALTER TABLE hosts ADD COLUMN dhcp4_next_server BIGINT DEFAULT NULL;
 ALTER TABLE hosts ADD COLUMN dhcp4_server_hostname VARCHAR(64) DEFAULT NULL;
 ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) DEFAULT NULL;
 
--- Set 3.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '3', minor = '0';
 
--- Schema 3.0 specification ends here.
+-- This line concludes the schema upgrade to version 3.0.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

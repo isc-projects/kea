@@ -37,18 +37,18 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
--- Upgrade to schema 5.1 begins here:
+-- This line starts the schema upgrade to version 5.1.
 
 -- Put the auth key in hexadecimal (double size but far more user friendly).
 ALTER TABLE hosts ALTER COLUMN auth_key TYPE VARCHAR(32);
 
--- Set 5.1 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '5', minor = '1';
 
--- Schema 5.1 specification ends here.
+-- This line concludes the schema upgrade to version 5.1.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

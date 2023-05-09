@@ -35,7 +35,7 @@ fi
 
 psql "$@" >/dev/null <<EOF
 
--- Upgrade to schema 2.0 begins here:
+-- This line starts the schema upgrade to version 2.0.
 
 -- Add state column to the lease4 table.
 ALTER TABLE lease4
@@ -168,14 +168,14 @@ CREATE FUNCTION lease6DumpData() RETURNS
 \$\$ LANGUAGE SQL;
 --
 
--- Set 2.0 schema version.
+-- Update the schema version number.
 START TRANSACTION;
 UPDATE schema_version
     SET version = '2', minor = '0';
 
--- Schema 2.0 specification ends here.
+-- This line concludes the schema upgrade to version 2.0.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

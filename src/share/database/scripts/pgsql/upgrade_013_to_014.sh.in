@@ -36,7 +36,7 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- Upgrade to schema 14.0 begins here:
+-- This line starts the schema upgrade to version 14.0.
 
 -- Add cancelled (aka never-send) column to option tables.
 
@@ -53,11 +53,11 @@ ALTER TABLE dhcp4_subnet
 ALTER TABLE dhcp4_client_class
     ADD COLUMN offer_lifetime BIGINT DEFAULT NULL;
 
--- Set 14.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '14', minor = '0';
 
--- Schema 14.0 specification ends here.
+-- This line concludes the schema upgrade to version 14.0.
 
 -- Commit the script transaction.
 COMMIT;

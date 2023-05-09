@@ -52,6 +52,7 @@ then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 13.0.
 
 -- Create a function that separates a contiguous hexadecimal string
 -- into groups of two hexadecimals separated by colons.
@@ -261,6 +262,6 @@ DELIMITER ;
 UPDATE schema_version
     SET version = '13', minor = '0';
 
--- This line concludes the schema upgrade to version 13.
+-- This line concludes the schema upgrade to version 13.0.
 
 EOF

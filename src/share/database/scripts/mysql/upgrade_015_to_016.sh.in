@@ -52,7 +52,7 @@ then
 fi
 
 mysql "$@" <<EOF
--- This line starts the schema upgrade to version 16.
+-- This line starts the schema upgrade to version 16.0.
 
 -- Add relay and remote id columns to DHCPv4 leases.
 --
@@ -70,6 +70,6 @@ CREATE INDEX lease4_by_remote_id ON lease4 (remote_id);
 UPDATE schema_version
     SET version = '16', minor = '0';
 
--- This line concludes the schema upgrade to version 16.
+-- This line concludes the schema upgrade to version 16.0.
 
 EOF

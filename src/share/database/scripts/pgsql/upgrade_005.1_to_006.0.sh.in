@@ -37,7 +37,7 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
--- Upgrade to schema 6.0 begins here:
+-- This line starts the schema upgrade to version 6.0.
 
 -- Create a lower case hostname index for hosts.
 CREATE INDEX hosts_by_hostname ON hosts (lower(hostname))
@@ -61,13 +61,13 @@ WHERE hostname IS NOT NULL;
 -- UPDATE lease6 SET hostname = lower(hostname)
 -- WHERE lower(hostname) != hostname;
 
--- Set 6.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '6', minor = '0';
 
--- Schema 6.0 specification ends here.
+-- This line concludes the schema upgrade to version 6.0.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

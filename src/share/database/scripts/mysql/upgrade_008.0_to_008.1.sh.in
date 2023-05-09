@@ -34,6 +34,7 @@ if [ "$VERSION" != "8.0" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 8.1.
 
 # Add lifetime bounds
 ALTER TABLE dhcp4_shared_network
@@ -114,7 +115,7 @@ DELIMITER ;
 ALTER TABLE hosts
     MODIFY COLUMN auth_key VARCHAR(32) NULL;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '8', minor = '1';
 

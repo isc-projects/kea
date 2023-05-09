@@ -50,7 +50,7 @@ ClientHandler::ClientPtr
 ClientHandler::lookup(const ClientIdPtr& client_id) {
     // Sanity check.
     if (!client_id) {
-        isc_throw(InvalidParameter, "null duid in ClientHandler::lookup");
+        isc_throw(InvalidParameter, "null client-id in ClientHandler::lookup");
     }
 
     auto it = clients_client_id_.find(client_id->getClientId());

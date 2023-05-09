@@ -88,7 +88,7 @@ CREATE TABLE schema_version (
 
 INSERT INTO schema_version VALUES (1, 0);
 
--- Upgrade to schema 2.0 begins here:
+-- This line starts the schema upgrade to version 2.0.
 
 -- Add state column to the lease4 table.
 ALTER TABLE lease4
@@ -219,13 +219,13 @@ CREATE OR REPLACE FUNCTION lease6DumpData() RETURNS
 $$ LANGUAGE SQL;
 --
 
--- Set 2.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '2', minor = '0';
 
--- Schema 2.0 specification ends here.
+-- This line concludes the schema upgrade to version 2.0.
 
--- Upgrade to schema 3.0 begins here:
+-- This line starts the schema upgrade to version 3.0.
 
 --
 -- Table structure for table host_identifier_type.
@@ -474,13 +474,13 @@ ALTER TABLE hosts ADD COLUMN dhcp4_next_server BIGINT DEFAULT NULL;
 ALTER TABLE hosts ADD COLUMN dhcp4_server_hostname VARCHAR(64) DEFAULT NULL;
 ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) DEFAULT NULL;
 
--- Set 3.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '3', minor = '0';
 
--- Schema 3.0 specification ends here.
+-- This line concludes the schema upgrade to version 3.0.
 
--- Upgrade to schema 3.1 begins here:
+-- This line starts the schema upgrade to version 3.1.
 
 -- This is a placeholder for the changes between 3.0 and 3.1. We have added a
 -- missing 'client-id' host reservation type entry that had been accidentally
@@ -488,13 +488,13 @@ UPDATE schema_version
 -- Also, new flexible identifier has been added.
 INSERT INTO host_identifier_type VALUES (4, 'flex-id');
 
--- Set 3.1 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '3', minor = '1';
 
--- Schema 3.1 specification ends here.
+-- This line concludes the schema upgrade to version 3.1.
 
--- Upgrade to schema 3.2 begins here:
+-- This line starts the schema upgrade to version 3.2.
 
 -- Remove constraints which perform too restrictive checks on the inserted
 -- host reservations. We want to be able to insert host reservations which
@@ -525,13 +525,13 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
         (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
     WHERE (dhcp6_subnet_id IS NOT NULL AND dhcp6_subnet_id <> 0);
 
--- Set 3.2 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '3', minor = '2';
 
--- Schema 3.2 specification ends here.
+-- This line concludes the schema upgrade to version 3.2.
 
--- Upgrade to schema 3.3 begins here:
+-- This line starts the schema upgrade to version 3.3.
 
 -- Change subnet ID columns type to BIGINT to match lease4/6 tables
 ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
@@ -540,13 +540,13 @@ ALTER TABLE hosts ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
 ALTER TABLE dhcp4_options ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
 ALTER TABLE dhcp6_options ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
 
--- Set 3.3 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '3', minor = '3';
 
--- Schema 3.3 specification ends here.
+-- This line concludes the schema upgrade to version 3.3.
 
--- Upgrade to schema 4.0 begins here:
+-- This line starts the schema upgrade to version 4.0.
 
 -- Add a column holding hosts for user context.
 ALTER TABLE hosts ADD COLUMN user_context TEXT;
@@ -745,13 +745,13 @@ CREATE TRIGGER stat_lease6_delete
 AFTER DELETE ON lease6
     FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease6_delete();
 
--- Set 4.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '4', minor = '0';
 
--- Schema 4.0 specification ends here.
+-- This line concludes the schema upgrade to version 4.0.
 
--- Upgrade to schema 5.0 begins here:
+-- This line starts the schema upgrade to version 5.0.
 
 -- Add a column holding leases for user context.
 ALTER TABLE lease4 ADD COLUMN user_context TEXT;
@@ -867,24 +867,24 @@ CREATE INDEX address_id ON logs (address);
 -- Create auth_key in hosts table for storing keys for DHCPv6 reconfigure.
 ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
 
--- Set schema 5.0 version.
+-- Update the schema version number.
 UPDATE schema_version
    SET version = '5', minor = '0';
 
--- Schema 5.0 specification ends here.
+-- This line concludes the schema upgrade to version 5.0.
 
--- Upgrade to schema 5.1 begins here:
+-- This line starts the schema upgrade to version 5.1.
 
 -- Put the auth key in hexadecimal (double size but far more user friendly).
 ALTER TABLE hosts ALTER COLUMN auth_key TYPE VARCHAR(32);
 
--- Set schema 5.1 version.
+-- Update the schema version number.
 UPDATE schema_version
    SET version = '5', minor = '1';
 
--- Schema 5.1 specification ends here.
+-- This line concludes the schema upgrade to version 5.1.
 
--- Upgrade to schema 6.0 begins here:
+-- This line starts the schema upgrade to version 6.0.
 
 -- Create a lower case hostname index for hosts.
 CREATE INDEX hosts_by_hostname ON hosts (lower(hostname))
@@ -898,13 +898,13 @@ WHERE hostname IS NOT NULL;
 CREATE INDEX lease6_by_hostname ON lease6 (lower(hostname))
 WHERE hostname IS NOT NULL;
 
--- Set 6.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '6', minor = '0';
 
--- Schema 6.0 specification ends here.
+-- This line concludes the schema upgrade to version 6.0.
 
--- Upgrade to schema 6.1 begins here:
+-- This line starts the schema upgrade to version 6.1.
 
 -- Fix v4 update trigger procedure
 CREATE OR REPLACE FUNCTION proc_stat_lease4_update() RETURNS trigger AS $stat_lease4_update$
@@ -996,13 +996,13 @@ BEGIN
 END;
 $stat_lease6_delete$ LANGUAGE plpgsql;
 
--- Set 6.1 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '6', minor = '1';
 
--- Schema 6.1 specification ends here.
+-- This line concludes the schema upgrade to version 6.1.
 
--- Upgrade to schema 6.2 begins here:
+-- This line starts the schema upgrade to version 6.2.
 
 -- Starting from this version we allow specifying multiple IP reservations
 -- for the same address in certain DHCP configurations. The server may check
@@ -1022,13 +1022,13 @@ ALTER TABLE ipv6_reservations DROP CONSTRAINT IF EXISTS key_dhcp6_address_prefix
 CREATE INDEX key_dhcp6_address_prefix_len
     ON ipv6_reservations (address ASC, prefix_len ASC);
 
--- Set schema 6.2 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '6', minor = '2';
 
--- Schema 6.2 specification ends here.
+-- This line concludes the schema upgrade to version 6.2.
 
--- Upgrade to schema 7.0 begins here:
+-- This line starts the schema upgrade to version 7.0.
 
 -- Add a lot (20+) of tables for the config backend.
 
@@ -3726,13 +3726,13 @@ END;
 $dhcp6_pd_pool_BDEL$
 LANGUAGE plpgsql;
 
--- Set schema 7.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '7', minor = '0';
 
--- Schema 7.0 specification ends here.
+-- This line concludes the schema upgrade to version 7.0.
 
--- Upgrade to schema 8.0 begins here:
+-- This line starts the schema upgrade to version 8.0.
 
 -- Add a few missing elements for CB and functions for kea-admin's lease-dump
 -- and lease-upload commands.
@@ -4201,13 +4201,13 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
--- Set schema 8.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '8', minor = '0';
 
--- Schema 8.0 specification ends here.
+-- This line concludes the schema upgrade to version 8.0.
 
--- Upgrade to schema 9.0 begins here:
+-- This line starts the schema upgrade to version 9.0.
 
 -- Add missing cascade to constraint on dhcp4/6_subnet_server tables.
 ALTER TABLE dhcp4_subnet_server
@@ -4453,13 +4453,13 @@ BEGIN
 END;$$
 LANGUAGE plpgsql;
 
--- Set schema 9.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '9', minor = '0';
 
--- Schema 9.0 specification ends here.
+-- This line concludes the schema upgrade to version 9.0.
 
--- Upgrade to schema 10.0 begins here:
+-- This line starts the schema upgrade to version 10.0.
 
 -- It adds corrections for client classes for CB
 
@@ -4749,13 +4749,13 @@ END;
 $dhcp6_client_class_check_dependency_BINS$
 LANGUAGE plpgsql;
 
--- Set schema 10.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '10', minor = '0';
 
--- Schema 10.0 specification ends here.
+-- This line concludes the schema upgrade to version 10.0.
 
--- Upgrade to schema 11.0 begins here:
+-- This line starts the schema upgrade to version 11.0.
 
 -- Replace createOptionAuditDHCP6() with a version corrected
 -- where clause when scope is 6 (i.e. PD pool)
@@ -4861,13 +4861,13 @@ BEGIN
     RETURN;
 END;$$;
 
--- Set schema 11.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '11', minor = '0';
 
--- Schema 11.0 specification ends here.
+-- This line concludes the schema upgrade to version 11.0.
 
--- Upgrade to schema 12.0 begins here:
+-- This line starts the schema upgrade to version 12.0.
 
 -- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
@@ -4925,13 +4925,13 @@ LANGUAGE plpgsql;
 ALTER TABLE dhcp4_client_class ADD COLUMN user_context JSON DEFAULT NULL;
 ALTER TABLE dhcp6_client_class ADD COLUMN user_context JSON DEFAULT NULL;
 
--- Set schema 12.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '12', minor = '0';
 
--- Schema 12.0 specification ends here.
+-- This line concludes the schema upgrade to version 12.0.
 
--- Upgrade to schema 13.0 begins here:
+-- This line starts the schema upgrade to version 13.0.
 
 -- JSON functions --
 
@@ -5564,13 +5564,13 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
         (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
     WHERE (dhcp6_subnet_id IS NOT NULL);
 
--- Set schema 13.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '13', minor = '0';
 
--- Schema 13.0 specification ends here.
+-- This line concludes the schema upgrade to version 13.0.
 
--- Upgrade to schema 14.0 begins here:
+-- This line starts the schema upgrade to version 14.0.
 
 -- Add cancelled (aka never-send) column to option tables.
 
@@ -5587,13 +5587,13 @@ ALTER TABLE dhcp4_subnet
 ALTER TABLE dhcp4_client_class
     ADD COLUMN offer_lifetime BIGINT DEFAULT NULL;
 
--- Set schema 14.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '14', minor = '0';
 
--- Schema 14.0 specification ends here.
+-- This line concludes the schema upgrade to version 14.0.
 
--- Upgrade to schema 15.0 begins here:
+-- This line starts the schema upgrade to version 15.0.
 
 -- Add relay and remote id columns to DHCPv4 leases.
 --
@@ -5607,23 +5607,13 @@ ALTER TABLE lease4
 CREATE INDEX lease4_by_relay_id ON lease4 (relay_id);
 CREATE INDEX lease4_by_remote_id ON lease4 (remote_id);
 
--- Set schema 15.0 version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '15', minor = '0';
 
--- Schema 15.0 specification ends here.
+-- This line concludes the schema upgrade to version 15.0.
 
--- Upgrade to schema 16.0 begins here:
-
-UPDATE lease6 SET duid = E'\\x000000' WHERE duid = E'\\x00';
-
--- Set 16.0 schema version.
-UPDATE schema_version
-    SET version = '16', minor = '0';
-
--- Schema 16.0 specification ends here.
-
--- Upgrade to schema 16.0 begins here:
+-- This line starts the schema upgrade to version 16.0.
 
 -- Add the allocator column to the DHCPv4 tables.
 ALTER TABLE dhcp4_subnet ADD COLUMN allocator TEXT DEFAULT NULL;
@@ -5637,11 +5627,21 @@ ALTER TABLE dhcp6_subnet ADD COLUMN pd_allocator TEXT DEFAULT NULL;
 ALTER TABLE dhcp6_shared_network ADD COLUMN allocator TEXT DEFAULT NULL;
 ALTER TABLE dhcp6_shared_network ADD COLUMN pd_allocator TEXT DEFAULT NULL;
 
--- Set 17.0 schema version.
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '16', minor = '0';
+
+-- This line concludes the schema upgrade to version 16.0.
+
+-- This line starts the schema upgrade to version 17.0.
+
+UPDATE lease6 SET duid = E'\\x000000' WHERE duid = E'\\x00';
+
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '17', minor = '0';
 
--- Schema 17.0 specification ends here.
+-- This line concludes the schema upgrade to version 17.0.
 
 -- Commit the script transaction.
 COMMIT;

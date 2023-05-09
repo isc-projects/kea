@@ -767,14 +767,14 @@ mysql_upgrade_test() {
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "1.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to the latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-upgrade mysql failed, expected %d, returned non-zero status code %d\n"
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "17.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "18.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1886,7 +1886,7 @@ mysql_lease_stat_upgrade_test() {
  insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
     run_statement "insert v6 leases" "$qry"
 
-    # Ok, we have a 4.0 database with leases. Let's upgrade it to the latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
@@ -2187,7 +2187,7 @@ mysql_reservation_mode_upgrade_test() {
     mysql_wipe
 
     # We need to create an older database with lease data so we can
-    # verify the upgrade mechanisms which convert reservations values
+    # verify the upgrade mechanisms which convert reservation values
     #
     # Initialize database to schema 1.0.
     mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
@@ -2525,7 +2525,7 @@ mysql_update_empty_duid_test() {
 
     run_statement "insert v6 leases" "$sql"
 
-    # Ok, we have a 14.0 database with leases. Let's upgrade it to latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 

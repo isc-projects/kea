@@ -34,6 +34,7 @@ if [ "$VERSION" != "5.0" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 5.1.
 
 # Add missing 'client-id' and new 'flex-id' host identifier types.
 INSERT INTO host_identifier_type VALUES (3, 'client-id');
@@ -53,7 +54,7 @@ END
 $$
 DELIMITER ;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '5', minor = '1';
 

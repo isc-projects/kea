@@ -36,7 +36,7 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- Upgrade to schema 8.0 begins here:
+-- This line starts the schema upgrade to version 8.0.
 
 -- Adds a few missing elements for CB and functions for kea-admin's lease-dump
 -- and lease-upload commands.
@@ -506,9 +506,11 @@ BEGIN
 END
 \$\$ LANGUAGE plpgsql;
 
--- Set 8.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '8', minor = '0';
+
+-- This line concludes the schema upgrade to version 8.0.
 
 -- Commit the script transaction.
 COMMIT;

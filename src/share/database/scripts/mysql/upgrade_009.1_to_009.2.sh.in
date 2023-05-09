@@ -34,6 +34,7 @@ if [ "$VERSION" != "9.1" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 9.2.
 
 # Add missing indexes (foreign keys) to the dhcp4_options table.
 ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_shared_network
@@ -72,7 +73,7 @@ ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_pd_pool
         REFERENCES dhcp6_pd_pool(id)
         ON DELETE CASCADE ON UPDATE CASCADE;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '9', minor = '2';
 

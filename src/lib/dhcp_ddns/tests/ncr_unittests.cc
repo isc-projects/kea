@@ -388,7 +388,7 @@ TEST_F(DhcidTest, fromMinDUID) {
 
     // Create DUID.
     std::vector<uint8_t> duid_data(DUID::MIN_DUID_LEN, 1);
-    DUID duid(&duid_data[0], duid_data.size());
+    DUID duid(duid_data.data(), duid_data.size());
 
     // Create DHCID.
     ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn_));

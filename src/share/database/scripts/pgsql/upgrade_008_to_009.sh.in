@@ -36,7 +36,7 @@ fi
 psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
--- Upgrade to schema 9.0 begins here:
+-- This line starts the schema upgrade to version 9.0.
 
 -- Add missing cascade to constraint on dhcp4/6_subnet_server tables.
 ALTER TABLE dhcp4_subnet_server
@@ -282,11 +282,11 @@ BEGIN
 END;\$\$
 LANGUAGE plpgsql;
 
--- Set 9.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '9', minor = '0';
 
--- Schema 9.0 specification ends here.
+-- This line concludes the schema upgrade to version 9.0.
 
 -- Commit the script transaction.
 COMMIT;

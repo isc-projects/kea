@@ -37,7 +37,7 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
--- Upgrade to schema 6.1 begins here:
+-- This line starts the schema upgrade to version 6.1.
 
 -- Fix v4 update trigger procedure
 CREATE OR REPLACE FUNCTION proc_stat_lease4_update () RETURNS trigger AS \$stat_lease4_update\$
@@ -129,13 +129,13 @@ BEGIN
 END;
 \$stat_lease6_delete\$ LANGUAGE plpgsql;
 
--- Set 6.1 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '6', minor = '1';
 
--- Schema 6.1 specification ends here.
+-- This line concludes the schema upgrade to version 6.1.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

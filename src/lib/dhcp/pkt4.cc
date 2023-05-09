@@ -477,8 +477,8 @@ Pkt4::setHWAddrMember(const uint8_t htype, const uint8_t hlen,
     /// @todo Rewrite this once support for client-identifier option
     /// is implemented (ticket 1228?)
     if (hlen > MAX_CHADDR_LEN) {
-        isc_throw(OutOfRange, "Hardware address (len=" << hlen
-                  << " too long. Max " << MAX_CHADDR_LEN << " supported.");
+        isc_throw(OutOfRange, "Hardware address (len=" << static_cast<uint32_t>(hlen)
+                  << ") too long. Max " << MAX_CHADDR_LEN << " supported.");
 
     } else if (mac_addr.empty() && (hlen > 0) ) {
         isc_throw(OutOfRange, "Invalid HW Address specified");

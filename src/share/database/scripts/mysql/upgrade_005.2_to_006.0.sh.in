@@ -34,6 +34,7 @@ if [ "$VERSION" != "5.2" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 6.0.
 
 # Add user context into table holding hosts
 ALTER TABLE hosts ADD COLUMN user_context TEXT NULL;
@@ -208,7 +209,7 @@ INSERT INTO lease6_stat (subnet_id, lease_type, state, leases)
     GROUP BY subnet_id, lease_type, state
     ORDER BY subnet_id;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '6', minor = '0';
 

@@ -37,7 +37,7 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
--- Upgrade to schema 7.0 begins here:
+-- This line starts the schema upgrade to version 7.0.
 
 -- Add a lot (20+) of tables for the config backend.
 
@@ -2734,13 +2734,13 @@ END;
 \$dhcp6_pd_pool_BDEL\$
 LANGUAGE plpgsql;
 
--- Set 7.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '7', minor = '0';
 
--- Schema 7.0 specification ends here.
+-- This line concludes the schema upgrade to version 7.0.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

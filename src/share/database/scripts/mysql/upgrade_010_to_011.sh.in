@@ -52,6 +52,7 @@ then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 11.0.
 
 -- Reverse index order to improve reclamation query performance
 -- Add a constraint that any state value added to the lease4 must
@@ -77,7 +78,7 @@ ALTER TABLE dhcp6_client_class
     ADD COLUMN min_preferred_lifetime INT(10) DEFAULT NULL,
     ADD COLUMN max_preferred_lifetime INT(10) DEFAULT NULL;
 
--- Update the schema version number
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '11', minor = '0';
 

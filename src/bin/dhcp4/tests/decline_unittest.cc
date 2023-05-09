@@ -190,7 +190,7 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
     // We check if the decline process was successful by checking if the
     // lease is in the database and what is its state.
     if (expected_result == SHOULD_PASS) {
-        EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+        ASSERT_EQ(Lease::STATE_DECLINED, lease->state_);
 
         ASSERT_TRUE(lease->hwaddr_);
         ASSERT_TRUE(lease->hwaddr_->hwaddr_.empty());
@@ -201,12 +201,11 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
 
         // The decline succeeded, so the declined-addresses statistic should
         // be increased by one
-        EXPECT_EQ(after, before + 1);
-
-        EXPECT_EQ(after_global, before_global + 1);
+        ASSERT_EQ(after, before + 1);
+        ASSERT_EQ(after_global, before_global + 1);
     } else {
         // the decline was supposed, to be rejected.
-        EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+        ASSERT_EQ(Lease::STATE_DEFAULT, lease->state_);
 
         ASSERT_TRUE(lease->hwaddr_);
         ASSERT_FALSE(lease->hwaddr_->hwaddr_.empty());
@@ -216,8 +215,8 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
 
         // The decline failed, so the declined-addresses should be the same
         // as before
-        EXPECT_EQ(before, after);
-        EXPECT_EQ(before_global, after_global);
+        ASSERT_EQ(before, after);
+        ASSERT_EQ(before_global, after_global);
     }
 }
 

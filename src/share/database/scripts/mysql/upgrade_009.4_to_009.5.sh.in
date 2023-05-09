@@ -34,6 +34,7 @@ if [ "$VERSION" != "9.4" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 9.5.
 
 # Add new reservations flags.
 ALTER TABLE dhcp4_subnet
@@ -161,7 +162,7 @@ ALTER TABLE dhcp6_shared_network DROP COLUMN reservation_mode;
 # Enable audit in this session
 SET @disable_audit = 0;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '9', minor = '5';
 

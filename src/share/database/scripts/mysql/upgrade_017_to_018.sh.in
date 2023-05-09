@@ -52,7 +52,7 @@ then
 fi
 
 mysql "$@" <<EOF
--- This line starts the schema upgrade to version 18.
+-- This line starts the schema upgrade to version 18.0.
 
 -- Extend lease4 client_id to 255 bytes.
 ALTER TABLE lease4
@@ -192,6 +192,6 @@ DELIMITER ;
 UPDATE schema_version
     SET version = '18', minor = '0';
 
--- This line concludes the schema upgrade to version 18.
+-- This line concludes the schema upgrade to version 18.0.
 
 EOF

@@ -37,7 +37,7 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
--- Upgrade to schema 4.0 begins here:
+-- This line starts the schema upgrade to version 4.0.
 
 -- Add a column holding hosts for user context.
 ALTER TABLE hosts ADD COLUMN user_context TEXT;
@@ -251,13 +251,13 @@ INSERT INTO lease6_stat (subnet_id, lease_type, state, leases)
     GROUP BY subnet_id, lease_type, state
     ORDER BY subnet_id;
 
--- Set 4.0 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '4', minor = '0';
 
--- Schema 4.0 specification ends here.
+-- This line concludes the schema upgrade to version 4.0.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

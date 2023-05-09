@@ -37,7 +37,7 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
--- Upgrade to schema 3.1 begins here:
+-- This line starts the schema upgrade to version 3.1.
 
 -- The 'client-id' host identifier type was missing in the
 -- 2.0 -> 3.0 upgrade script. However, it was present in the
@@ -53,13 +53,13 @@ INSERT INTO host_identifier_type (type, name)
 -- We also add a new identifier type: flex-id.
 INSERT INTO host_identifier_type VALUES (4, 'flex-id');
 
--- Set 3.1 schema version.
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '3', minor = '1';
 
--- Schema 3.1 specification ends here.
+-- This line concludes the schema upgrade to version 3.1.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

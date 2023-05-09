@@ -34,6 +34,7 @@ if [ "$VERSION" != "9.3" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 9.4.
 
 # Starting from this version we allow specifying multiple IP reservations
 # for the same address in certain DHCP configurations. The server may check
@@ -75,7 +76,7 @@ ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_Host
         REFERENCES hosts(host_id)
         ON DELETE CASCADE ON UPDATE CASCADE;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '9', minor = '4';
 

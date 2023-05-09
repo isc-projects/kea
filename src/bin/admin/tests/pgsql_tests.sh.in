@@ -143,7 +143,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "16.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "17.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -847,14 +847,14 @@ pgsql_upgrade_test() {
         pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to the latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "db-upgrade failed, expected exit code: %d, actual: %d"
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "16.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "17.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -1403,7 +1403,7 @@ pgsql_lease_stat_upgrade_test() {
  insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
     run_statement "insert v6 leases" "$qry"
 
-    # Ok, we have a 2.0 database with leases. Let's upgrade it to latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
@@ -1648,7 +1648,7 @@ pgsql_unused_subnet_id_test() {
 
     run_statement "insert options" "$qry"
 
-    # Ok, we have a 4.0 database with hosts and options. Let's upgrade it to latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
@@ -1718,7 +1718,7 @@ pgsql_update_empty_duid_test() {
 
     run_statement "insert v6 leases" "$qry"
 
-    # Ok, we have a 14.0 database with leases. Let's upgrade it to latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 

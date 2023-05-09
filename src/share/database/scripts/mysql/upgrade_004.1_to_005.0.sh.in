@@ -34,6 +34,7 @@ if [ "$VERSION" != "4.1" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 5.0.
 
 # Update index used for searching DHCPv4 reservations by identifier and subnet id.
 # This index is now unique (to prevent duplicates) and includes DHCPv4 subnet
@@ -120,7 +121,7 @@ ALTER TABLE hosts ADD COLUMN dhcp4_next_server INT UNSIGNED NULL;
 ALTER TABLE hosts ADD COLUMN dhcp4_server_hostname VARCHAR(64) NULL;
 ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) NULL;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '5', minor = '0';
 

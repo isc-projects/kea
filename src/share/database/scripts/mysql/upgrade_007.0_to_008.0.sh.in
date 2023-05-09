@@ -34,6 +34,7 @@ if [ "$VERSION" != "7.0" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 8.0.
 
 ALTER TABLE dhcp4_options
     MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
@@ -985,7 +986,7 @@ CREATE TRIGGER dhcp6_options_ADEL AFTER DELETE ON dhcp6_options
     END $$
 DELIMITER ;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '8', minor = '0';
 

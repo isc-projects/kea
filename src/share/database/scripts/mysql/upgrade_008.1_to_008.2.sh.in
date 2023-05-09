@@ -86,6 +86,7 @@ change_column() {
 }
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 8.2.
 
 # Drop existing trigger on the dhcp4_shared_network table.
 DROP TRIGGER dhcp4_shared_network_ADEL;
@@ -485,7 +486,7 @@ CREATE TRIGGER dhcp6_options_ADEL AFTER DELETE ON dhcp6_options
     END $$
 DELIMITER ;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
     SET version = '8', minor = '2';
 
