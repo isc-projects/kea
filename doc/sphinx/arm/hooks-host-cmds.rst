@@ -46,12 +46,18 @@ Currently, the following commands are supported:
   matching the given identifiers in a subnet.
 
 To use the commands that change reservation information
-(i.e. ``reservation-add``, ``reservation-del``, and ``reservation-update``),
-the hosts database must be specified and it must not operate in read-only mode
-(for details, see the ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4`
-and :ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not specified or are
-running in read-only mode, the ``host_cmds`` library will load, but any
-attempts to use ``reservation-add``, ``reservation-del``, or ``reservation-update`` will fail.
+(i.e. ``reservation-add``, ``reservation-del``, and ``reservation-update``) to
+modify data stored in the host database, the hosts database must be specified
+and it must not operate in read-only mode (for details, see the
+``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4` and
+:ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not
+specified or are running in read-only mode, the ``host_cmds`` library will
+load, but any attempts to use ``reservation-add``, ``reservation-del``, and
+``reservation-update`` to modify data in that database will fail.
+
+These commands can also modify hosts from the JSON configuration independently
+from the hosts database. The changes provided in the JSON configuration are
+volatile and can be made permanent by sending the config-write command.
 
 For a description of proposed future commands, see the `Control API
 Requirements <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands>`__
@@ -100,6 +106,24 @@ parameters, it is added to each host in responses. If the ``subnet-id``
 has the unused special value, this means the host entry belongs only
 to the other IP version (i.e. IPv6 in DHCPv4 server or IPv4 in DHCPv6
 server) and this entry is ignored.
+
+The ``operation-target`` Parameter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most host commands accept the ``operation-target`` parameter that specifies the
+database(s) to query. The commands may process data from the JSON configuration
+(primary source), the hosts database (alternate source), or both of them
+(all sources). The operation target parameter is optional. By default, the
+commands that only read the data use all data sources (JSON configuration and
+hosts database); the commands that modify the state (as ``reservation-add`` and
+``reservation-del``) only use the alternate source.
+
+The operation target accepts the fallowing values:
+
+- ``primary`` - query the primary source - JSON configuration.
+- ``alternate`` - query the alternate source - hosts database(s).
+- ``all`` - query both sources - JSON configuration and host database(s).
+- ``default`` - query the default source - it's command specific.
 
 .. _command-reservation-add:
 
@@ -197,6 +221,19 @@ Here is an example of a complex IPv6 reservation:
        }
    }
 
+The command accepts the ``operation-target`` argument. By default, it adds the
+reservation to the hosts database only.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-add",
+       "arguments": {
+           "reservation": {...},
+           "operation-target": "all"
+       }
+   }
+
 The command returns a status that indicates either success (result 0)
 or failure (result 1). A failed command always includes a text parameter
 that explains the cause of the failure. Here's an example of a successful
@@ -266,6 +303,20 @@ follows:
            "subnet-id": 4,
            "identifier-type": "hw-address",
            "identifier": "01:02:03:04:05:06"
+       }
+   }
+
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get",
+       "arguments": {
+           "subnet-id": 1,
+           "ip-address": "192.0.2.202",
+           "operation-target": "alternate"
        }
    }
 
@@ -372,6 +423,19 @@ DHCP server does not handle DHCP traffic while preparing a response to
 may be disruptive; use with caution. For larger deployments, please
 consider using ``reservation-get-page`` instead (see
 :ref:`command-reservation-get-page`).
+
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get-all",
+       "arguments": {
+           "subnet-id": 1,
+           "operation-target": "alternate"
+       }
+   }
 
 For more information, see :ref:`command-reservation-get-all`.
 
@@ -498,6 +562,8 @@ page is received. Its response will look like this:
        "text": "0 IPv4 host(s) found."
    }
 
+The command doesn't accept the ``operation-target`` argument.
+
 This command is more complex than ``reservation-get-all``, but lets
 users retrieve larger host reservations lists in smaller chunks. For
 small deployments with few reservations, it is easier to use
@@ -563,6 +629,20 @@ returns some IPv4 hosts:
 
 The response returned by ``reservation-get-by-hostname`` can be long,
 particularly when responses are not limited to a subnet.
+
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get-by-hostname",
+       "arguments": {
+           "hostname": "foobar.example.org",
+           "subnet-id": 1,
+           "operation-target": "alternate"
+       }
+   }
 
 For more information, see :ref:`command-reservation-get-by-hostname`.
 
@@ -637,6 +717,20 @@ returns some IPv4 hosts:
 The response returned by ``reservation-get-by-id`` can be long,
 particularly when responses are not limited to a subnet.
 
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get-by-id",
+       "arguments": {
+           "identifier-type": "hw-address",
+           "identifier": "01:02:03:04:05:06",
+           "operation-target": "alternate"
+       }
+   }
+
 For more information, see :ref:`command-reservation-get-by-id`.
 
 .. _command-reservation-del:
@@ -645,7 +739,7 @@ The ``reservation-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-del`` can be used to delete a reservation from the host
-database. This command supports two types of parameters:
+database and/or JSON configuration. This command supports two types of parameters:
 (``subnet-id``, ``address``) or (``subnet-id``, ``identifier-type``, ``identifier``). The
 first type of query is used when the address (either IPv4 or IPv6) is
 known, but the details of the reservation are not. One common use for
@@ -712,6 +806,21 @@ or
    {
        "result": 1,
        "text": "Unable to delete a host because there is no hosts-database configured."
+   }
+
+The command accepts the ``operation-target`` argument. By default, it removes
+the reservation from the hosts database only.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-del",
+       "arguments": {
+           "subnet-id": 4,
+           "identifier-type": "hw-address",
+           "identifier": "01:02:03:04:05:06",
+           "operation-target": "primary"
+       }
    }
 
 .. _command-reservation-update:
