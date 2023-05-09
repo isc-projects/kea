@@ -1459,13 +1459,6 @@ TEST_F(CfgHostsTest, update) {
                                                 SubnetID(1), IOAddress("0.0.0.0"),
                                                 "foo.example.com"));
 
-    // Updating any host currently throws because it relies on delete being
-    // implemented which is not.
-    EXPECT_THROW_MSG(cfg.update(host), NotImplemented, "sorry, not implemented");
-
-    // Temporary return. Remove it and the preceding EXPECT_THROW_MSG when delete gets implemented.
-    return;
-
     // Updating a host that doesn't exist should throw.
     EXPECT_THROW_MSG(cfg.update(host), HostNotFound, "Host not updated (not found).");
 
