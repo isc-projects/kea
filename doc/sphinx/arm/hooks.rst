@@ -300,7 +300,7 @@ without the need to restart the server.
 
 The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example:
 
-.. code-block:: json
+::
 
     "subnet4": [{
         "subnet": "192.0.2.0/24",
