@@ -1,0 +1,76 @@
+// This is an example configuration file for the DHCPv4 server in Kea.
+// The purpose of this example is to showcase how to configure
+// DHCP option for the Discovery of Network-designated Resolvers (DNR)
+// (code 162) draft-ietf-add-dnr.
+
+
+{
+  "Dhcp4": {
+    // Option data defined globally
+    "option-data": [
+      /*
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | OPTION_V4_DNR |     Length    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      ~      DNR Instance Data #1     ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   ---
+      .              ...              .    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ optional
+      ~      DNR Instance Data #n     ~    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   ---
+
+      DNR Instance Data Format:
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    DNR Instance Data Length   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       Service Priority        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   ADN Length  |               |
+      +-+-+-+-+-+-+-+-+               |
+      ~  authentication-domain-name   ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  Addr Length  |               |
+      +-+-+-+-+-+-+-+-+               |
+      ~        IPv4 Address(es)       ~
+      |               +-+-+-+-+-+-+-+-+
+      |               |               |
+      +-+-+-+-+-+-+-+-+               |
+      ~Service Parameters (SvcParams) ~
+      |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      */
+      // Type: uint16, uint16, uint8, FQDN, binary
+      {
+        // 2 DNR instances with IP address(es) and SvcParams included as binary type.
+        "code": 162,
+        "name": "v4-dnr",           // addresses len=8   |  IPv4 1   |  IPv4 2   |             SvcParams "key1=val1 key2=val2"            |Len2 |Prio2|  | ADN with Len=21=15hex myhost1.example.com                    |  |  IPv4 1   |  IPv4 2   |             SvcParams "key3=val3 key4=val4"            |
+        "data": "54, 3234, 23, example.some.host.org., 08 c0 a8 00 01 c0 a8 00 02 6b 65 79 31 3d 76 61 6c 31 20 6b 65 79 32 3d 76 61 6c 32 00 34 10 e1 15 07 6D 79 68 6F 73 74 31 07 65 78 61 6D 70 6C 65 03 63 6F 6D 00 08 c0 a9 00 01 c0 a9 00 02 6b 65 79 33 3d 76 61 6c 33 20 6b 65 79 34 3d 76 61 6c 34"
+      }
+    ],
+    // Kea is told to listen on eth0 interface only.
+    "interfaces-config": {
+      "interfaces": [
+        "eth0"
+      ]
+    },
+    // We need to specify the database used to store leases.
+    "lease-database": {
+      "type": "memfile"
+    },
+    // The following list defines subnets. We have only one subnet
+    // here. We tell Kea that it is directly available over local interface.
+    "subnet4": [
+      {
+        "interface": "eth0",
+        "pools": [
+          {
+            "pool": "192.0.2.50-192.0.2.50"
+          }
+        ],
+        "subnet": "192.0.2.0/24"
+      }
+    ]
+  }
+}

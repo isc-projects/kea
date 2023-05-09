@@ -285,6 +285,7 @@ TEST(ParserTest, file) {
                                "classify2.json",
                                "comments.json",
                                "dhcpv4-over-dhcpv6.json",
+                               "dnr.json",
                                "global-reservations.json",
                                "hooks.json",
                                "leases-expiration.json",

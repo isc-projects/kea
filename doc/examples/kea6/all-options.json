@@ -1784,17 +1784,12 @@
       // Type: uint16, uint16, FQDN, binary
       {
         // DNR ADN only mode - IP address(es) and SvcParams are missing on purpose.
+        // For more detailed example with IP addresses and SvcParams included, please check dnr.json example.
         "code": 144,
         "name": "v6-dnr",
         "data": "1234, 23, example.some.host.org., " // please notice comma and space at the end put on purpose
                                                      // this means empty last type of the record - binary type
 
-      },
-      {
-        // DNR with IP address(es) and SvcParams included as binary type.
-        "code": 144,
-        "name": "v6-dnr",          // addresses len=32  |                                     1st IPv6  |                                     2nd IPv6  |             SvcParams "key1=val1 key2=val2"            |
-        "data": "3234, 23, example.some.host.org., 00 20 20 01 0d b8 00 01 00 00 00 00 00 00 de ad be ef ff 02 00 00 00 00 00 00 00 00 00 00 fa ce b0 0c 6b 65 79 31 3d 76 61 6c 31 20 6b 65 79 32 3d 76 61 6c 32"
       },
 
       // Option codes 145-65535 are unassigned.
