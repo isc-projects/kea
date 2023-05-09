@@ -1,3 +1,8 @@
+2131.	[bug]		razvan
+	Added support for 255 bytes long client-id and 130 bytes long
+	duid (2 bytes for type and at most 128 bytes for value).
+	(Gitlab #2786)
+
 2130.	[func]		piotrek
 	Added support of DHCP Options for the Discovery of
 	Network-designated Resolvers (DNR) as per draft-ietf-add-dnr.
