@@ -871,18 +871,32 @@ HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
 }
 
 void
-HostMgr::update(HostPtr const& host) {
-    if (alternate_sources_.empty()) {
-        isc_throw(NoHostDataSourceManager,
-                  "Unable to update existing host because there is no hosts-database configured.");
+HostMgr::update(HostPtr const& host, const HostMgrOperationTarget target) {
+    if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
+        getCfgHostsForEdit()->update(host);
     }
-    for (HostDataSourcePtr const& source : alternate_sources_) {
-        source->update(host);
+
+    if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
+        // Don't throw if all targets were selected.
+        if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
+            isc_throw(NoHostDataSourceManager,
+                    "Unable to update existing host because there is no hosts-database configured.");
+        }
+    
+        for (HostDataSourcePtr const& source : alternate_sources_) {
+            source->update(host);
+        }
     }
+
     // If no backend throws the host should be cached.
     if (cache_ptr_) {
         cache(host);
     }
+}
+
+void
+HostMgr::update(HostPtr const& host) {
+    update(host, HostMgrOperationTarget::ALTERNATE_SOURCES);
 }
 
 void

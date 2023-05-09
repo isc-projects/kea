@@ -725,6 +725,11 @@ public:
     /// Attempts to update an existing host entry.
     ///
     /// @param host the host up to date with the requested changes
+    /// @param target The host data source being a target of the operation.
+    void update(HostPtr const& host, const HostMgrOperationTarget target);
+
+    /// @brief The @c HostMgr::update with default operation target. Operates
+    /// on alternate host sources only.
     void update(HostPtr const& host);
 
     /// @brief Return backend type
