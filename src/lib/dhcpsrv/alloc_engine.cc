@@ -1006,7 +1006,7 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
             ++total_attempts;
 
             auto allocator = subnet->getAllocator(ctx.currentIA().type_);
-            IOAddress candidate("::");
+            IOAddress candidate = IOAddress::IPV6_ZERO_ADDRESS();
 
             // The first step is to find out prefix length. It is 128 for
             // non-PD leases.
