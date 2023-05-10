@@ -30,7 +30,7 @@ enum HostMgrOperationTarget {
     // Consider only the alternate sources.
     ALTERNATE_SOURCES = 2, // 1 << 2
     // Consider both CfgInstance and alternate sources.
-    ALL_SOURCES = 3  // PRIMARY_SOURCE & ALTERNATE_SOURCES
+    ALL_SOURCES = 3  // PRIMARY_SOURCE | ALTERNATE_SOURCES
 };
 
 /// @brief Host Manager.
