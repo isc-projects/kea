@@ -250,11 +250,10 @@ client begins the renewal and rebind processes.
    See section :ref:`dhcp4-t1-t2-times`
    for more details on generating T1 and T2.
 
-The ``interfaces-config`` map specifies the
-network interfaces on which the server should listen to
-DHCP messages. The ``interfaces`` parameter specifies a list of
-network interfaces on which the server should listen. Lists are opened
-and closed with square brackets, with elements separated by commas. To
+The ``interfaces-config`` map specifies the network interfaces on which the
+server should listen to DHCP messages. The ``interfaces`` parameter specifies
+a list of network interfaces on which the server should listen. Lists are
+opened and closed with square brackets, with elements separated by commas. To
 listen on two interfaces, the ``interfaces-config`` element should look like
 this:
 
@@ -2224,9 +2223,9 @@ configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all others
-are optional. The ``array`` default value is ``false``. The
-``record-types`` and ``encapsulate`` default values are blank (``""``).
-The default ``space`` is ``dhcp4``.
+are optional. The ``array`` parameter default value is ``false``. The
+``record-types`` and ``encapsulate`` parameters default values are blank
+(``""``). The default ``space`` is ``dhcp4``.
 
 Once the new option format is defined, its value is set in the same way
 as for a standard option. For example, the following commands set a
@@ -2275,8 +2274,8 @@ defined in the following way:
        ...
    }
 
-The ``type`` is set to ``"record"`` to indicate that the option contains
-multiple values of different types. These types are given as a
+The ``type`` parameter is set to ``"record"`` to indicate that the option
+contains multiple values of different types. These types are given as a
 comma-separated list in the ``record-types`` field and should be ones
 from those listed in :ref:`dhcp-types`.
 
@@ -2297,10 +2296,10 @@ The option's values are set in an ``option-data`` statement as follows:
        ...
    }
 
-The ``csv-format`` is set to ``true`` to indicate that the ``data`` field
-comprises a comma-separated list of values. The values in ``data``
-must correspond to the types set in the ``record-types`` field of the
-option definition.
+The ``csv-format`` parameter is set to ``true`` to indicate that the ``data``
+field comprises a comma-separated list of values. The values in ``data`` must
+correspond to the types set in the ``record-types`` field of the option
+definition.
 
 When ``array`` is set to ``true`` and ``type`` is set to ``"record"``, the
 last field is an array, i.e. it can contain more than one value, as in:
@@ -3519,7 +3518,7 @@ conflict with existing entries owned by other DHCPv4 clients.
     to generate DNS removal requests to D2.
 
 The DNS entries Kea creates contain a value for TTL (time to live).
-The ``kea-dhcp4`` calculates that value based on
+The ``kea-dhcp4`` server calculates that value based on
 `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
 which suggests that the TTL value be 1/3 of the lease's lifetime, with
 a minimum value of 10 minutes.
@@ -3597,9 +3596,9 @@ following configuration is required:
 When Does the ``kea-dhcp4`` Server Generate a DDNS Request?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``kea-dhcp4`` follows the behavior prescribed for DHCP servers in `RFC
-4702 <https://tools.ietf.org/html/rfc4702>`__. It is important to keep in
-mind that ``kea-dhcp4`` makes the initial decision of when and what to
+The ``kea-dhcp4`` server follows the behavior prescribed for DHCP servers in
+`RFC 4702 <https://tools.ietf.org/html/rfc4702>`__. It is important to keep
+in mind that ``kea-dhcp4`` makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
 out the actual DNS updates and dealing with such things as conflict
 resolution are within the purview of D2 itself
@@ -3697,8 +3696,8 @@ To override client delegation, issue the following commands:
         ...
     }
 
-The ``kea-dhcp4`` always generates DDNS update requests if the client
-request only contains the Host Name option. In addition, it includes
+The ``kea-dhcp4`` server always generates DDNS update requests if the
+client request only contains the Host Name option. In addition, it includes
 an FQDN option in the response to the client with the FQDN N-S-O flags
 set to 0-1-0, respectively. The domain name portion of the FQDN option
 is the name submitted to D2 in the DDNS update request.
@@ -4047,9 +4046,9 @@ for a particular subnet. Consider the following simplified server configuration:
      }
    }
 
-The ``match-client-id`` is a boolean value which controls this behavior.
-The default value of ``true`` indicates that the server will use the
-client identifier for lease lookups and ``chaddr`` if the first lookup
+The ``match-client-id`` parameter is a boolean value which controls this
+behavior. The default value of ``true`` indicates that the server will use
+the client identifier for lease lookups and ``chaddr`` if the first lookup
 returns no results. ``false`` means that the server will only use
 the ``chaddr`` to search for the client's lease. Whether the DHCID for DNS
 updates is generated from the client identifier or ``chaddr`` is
@@ -5041,9 +5040,9 @@ For example:
         ]
     }
 
-The ``only-if-required`` parameter is needed here to force
-evaluation of the class after the lease has been allocated and thus the
-reserved class has been also assigned.
+The ``only-if-required`` parameter is needed here to force evaluation
+of the class after the lease has been allocated and thus the reserved
+class has been also assigned.
 
 .. note::
 
@@ -5794,8 +5793,8 @@ The ``reservations-lookup-first`` is a boolean parameter which controls whether
 host reservations lookup should be performed before lease lookup. This parameter
 has effect only when multi-threading is disabled. When multi-threading is
 enabled, host reservations lookup is always performed first to avoid lease
-lookup resource locking. The ``reservations-lookup-first`` defaults to ``false``
-when multi-threading is disabled.
+lookup resource locking. The ``reservations-lookup-first`` parameter defaults to
+``false`` when multi-threading is disabled.
 
 .. _host_reservations_as_basic_access_control4:
 
@@ -5951,6 +5950,7 @@ introduced:
 
 ::
 
+   {
    "Dhcp4": {
        "shared-networks": [ {
                # Name of the shared network. It may be an arbitrary string
@@ -5989,6 +5989,7 @@ introduced:
                "interface": "eth1"
            }
        ]
+   }
    }
 
 As demonstrated in the example, it is possible to mix shared and regular

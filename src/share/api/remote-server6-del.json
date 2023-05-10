@@ -13,11 +13,11 @@
         "    \"arguments\": {",
         "        \"servers\": [",
         "            {",
-        "                \"server-tag\": \"<server name>\"",
+        "                \"server-tag\": <server name>",
         "            }",
         "        ],",
         "        \"remote\": {",
-        "            \"<specification\": \"of the database to connect to>\"",
+        "            <specification of the database to connect to>",
         "        }",
         "    }",
         "}"

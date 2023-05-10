@@ -13,7 +13,7 @@
         "{",
         "    \"command\": \"lease4-get-all\",",
         "    \"arguments\": {",
-        "        \"subnets\": [ 1, 2, 3 ]",
+        "        \"subnets\": [ 1, 2, 3, ... ]",
         "    }",
         "}"
     ],

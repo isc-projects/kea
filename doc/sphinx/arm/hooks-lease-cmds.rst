@@ -166,8 +166,8 @@ subnet. For example:
        }
    }
 
-The ``lease6-add`` can also be used to add leases for IPv6 prefixes. In this
-case there are three additional parameters that must be specified:
+The ``lease6-add`` command can also be used to add leases for IPv6 prefixes.
+In this case there are three additional parameters that must be specified:
 ``subnet-id``, ``type`` (set to "IA_PD"), and prefix length. The actual
 prefix is set using the ``ip-address`` field. Note that Kea cannot guess
 ``subnet-id`` values for prefixes; they must be specified explicitly. For
@@ -840,7 +840,7 @@ This parameter defaults to ``false``. An example of its use is shown below:
    }
 
 
-The ``lease4-del`` and ``lease6-del`` return a result that indicates the outcome
+``lease4-del`` and ``lease6-del`` return a result that indicates the outcome
 of the operation. It has one of the following values: 0 (success), 1 (error),
 or 3 (empty). The empty result means that a query has been completed properly,
 but the object (a lease, in this case) has not been found.
@@ -1000,11 +1000,10 @@ An example of the ``lease6-resend-ddns`` query is:
      }
    }
 
-The ``lease4-resend-ddns`` and ``lease6-resend-ddns`` return an indication of the
-result of the operation.
-it has one of the following values: 0 (success), 1 (error), or 3 (empty). An empty
-result means that a query has been completed properly, but the object (a lease in
-this case) has not been found.
+``lease4-resend-ddns`` and ``lease6-resend-ddns`` return an indication of the
+result of the operation. It has one of the following values: 0 (success), 1 (error),
+or 3 (empty). An empty result means that a query has been completed properly, but the
+object (a lease in this case) has not been found.
 
 A successful result does not mean that DNS has been successfully updated; it
 indicates that a request to update DNS has been successfully created and

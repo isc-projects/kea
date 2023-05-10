@@ -22,6 +22,9 @@ namespace dhcp {
 IdentifierBaseType::~IdentifierBaseType() {
 }
 
+constexpr size_t DUID::MIN_DUID_LEN;
+constexpr size_t DUID::MAX_DUID_LEN;
+
 DUID::DUID(const std::vector<uint8_t>& data) : IdentifierType<3, 130>(data) {
 }
 
@@ -31,9 +34,6 @@ DUID::DUID(const uint8_t* data, size_t len) : IdentifierType<3, 130>(data, len) 
 const std::vector<uint8_t>& DUID::getDuid() const {
     return (data_);
 }
-
-constexpr size_t DUID::MIN_DUID_LEN;
-constexpr size_t DUID::MAX_DUID_LEN;
 
 DUID::DUIDType DUID::getType() const {
     if (data_.size() < 2) {

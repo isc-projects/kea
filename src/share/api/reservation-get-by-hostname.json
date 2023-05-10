@@ -8,8 +8,8 @@
         "{",
         "    \"command\": \"reservation-get-by-hostname\",",
         "    \"arguments\": {",
-        "        \"hostname\": \"<hostname>\",",
-        "        \"subnet-id\": \"<integer>\"",
+        "        \"hostname\": <hostname>,",
+        "        \"subnet-id\": <integer>",
         "    }",
         "}"
     ],

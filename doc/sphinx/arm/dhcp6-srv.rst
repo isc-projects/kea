@@ -211,11 +211,10 @@ address to create new connections. ``renew-timer`` and
 ``rebind-timer`` are values (also in seconds) that define T1 and T2 timers, which govern
 when the client begins the renewal and rebind procedures.
 
-The ``interfaces-config`` map specifies the
-network interfaces on which the server should listen to
-DHCP messages. The ``interfaces`` parameter specifies a list of
-network interfaces on which the server should listen. Lists are opened
-and closed with square brackets, with elements separated by commas. To
+The ``interfaces-config`` map specifies the network interfaces on which the
+server should listen to DHCP messages. The ``interfaces`` parameter specifies
+a list of network interfaces on which the server should listen. Lists are
+opened and closed with square brackets, with elements separated by commas. To
 listen on two interfaces, the ``interfaces-config`` element should look like
 this:
 
@@ -2059,10 +2058,10 @@ option space, the parameter should be left blank. Note that the ``option-def``
 configuration statement only defines the format of an option and does
 not set its value(s).
 
-The ``name``, ``code``, and ``type`` parameters are required; all
-others are optional. The ``array`` default value is ``false``. The
-``record-types`` and ``encapsulate`` default values are blank (``""``).
-The default ``space`` is ``dhcp6``.
+The ``name``, ``code``, and ``type`` parameters are required; all others
+are optional. The ``array`` parameter default value is ``false``. The
+``record-types`` and ``encapsulate`` parameters default values are blank
+(``""``). The default ``space`` is ``dhcp6``.
 
 Once the new option format is defined, its value is set in the same way
 as for a standard option. For example, the following commands set a
@@ -2111,8 +2110,8 @@ defined in the following way:
        ...
    }
 
-The ``type`` is set to ``"record"`` to indicate that the option contains
-multiple values of different types. These types are given as a
+The ``type`` parameter is set to ``"record"`` to indicate that the option
+contains multiple values of different types. These types are given as a
 comma-separated list in the ``record-types`` field and should be ones
 from those listed in :ref:`dhcp-types`.
 
@@ -2134,10 +2133,10 @@ follows:
        ...
    }
 
-The ``csv-format`` is set to ``true`` to indicate that the ``data`` field
-comprises a comma-separated list of values. The values in ``data``
-must correspond to the types set in the ``record-types`` field of the
-option definition.
+The ``csv-format`` parameter is set to ``true`` to indicate that the ``data``
+field comprises a comma-separated list of values. The values in ``data`` must
+correspond to the types set in the ``record-types`` field of the option
+definition.
 
 When ``array`` is set to ``true`` and ``type`` is set to ``"record"``, the
 last field is an array, i.e. it can contain more than one value, as in:
@@ -3173,9 +3172,9 @@ configuration is required:
 When Does the ``kea-dhcp6`` Server Generate a DDNS Request?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``kea-dhcp6`` follows the behavior prescribed for DHCP servers in `RFC
-4704 <https://tools.ietf.org/html/rfc4704>`__. It is important to keep in
-mind that ``kea-dhcp6`` makes the initial decision of when and what to
+The ``kea-dhcp6`` server follows the behavior prescribed for DHCP servers in
+`RFC 4704 <https://tools.ietf.org/html/rfc4704>`__. It is important to keep
+in mind that ``kea-dhcp6`` makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
 out the actual DNS updates and dealing with such things as conflict
 resolution are within the purview of D2 itself
@@ -3276,8 +3275,8 @@ To override client delegation, issue the following commands:
         ...
     }
 
-The ``kea-dhcp6`` always generates DDNS update requests if the client
-request only contains the Host Name option. In addition, it includes
+The ``kea-dhcp6`` server always generates DDNS update requests if the
+client request only contains the Host Name option. In addition, it includes
 an FQDN option in the response to the client with the FQDN N-S-O flags
 set to 0-1-0, respectively. The domain name portion of the FQDN option
 is the name submitted to D2 in the DDNS update request.
@@ -5183,6 +5182,7 @@ introduced:
 
 ::
 
+   {
    "Dhcp6": {
        "shared-networks": [ {
            # Name of the shared network. It may be an arbitrary string
@@ -5226,6 +5226,7 @@ introduced:
                }
            }
        ]
+   }
    }
 
 As demonstrated in the example, it is possible to mix shared and regular

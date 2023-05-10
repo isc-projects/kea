@@ -11,8 +11,8 @@
         "{",
         "    \"command\": \"lease4-get-page\",",
         "    \"arguments\": {",
-        "        \"limit\": \"<integer>\",",
-        "        \"from\": \"<IPv4 address or 'start'>\"",
+        "        \"limit\": <integer>,",
+        "        \"from\": <IPv4 address or 'start'>",
         "    }",
         "}"
     ],

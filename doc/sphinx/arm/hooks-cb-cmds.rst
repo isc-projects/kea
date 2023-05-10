@@ -9,7 +9,7 @@ be used in conjunction with the available CB hook libraries implementing
 the common APIs to create, read, update, and delete (CRUD) the
 configuration information in the respective databases. For example:
 the ``mysql_cb`` hook library implements this API for MySQL while the
-``pgsql_cg`` hook library implements this API for PostgreSQL.
+``pgsql_cb`` hook library implements this API for PostgreSQL.
 To manage the configuration information in a MySQL database, both the
 ``mysql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
 configuration management.
@@ -1097,8 +1097,8 @@ For example:
        }
    }
 
-The "dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The ``server-tags`` parameter is mandatory and must include a
+The "dhcp4" value represents the top-level option space where the standard DHCPv4
+options belong. The ``server-tags`` parameter is mandatory and must include a
 single option tag or the keyword "all". If the explicit server tag is specified,
 this command attempts to delete a global option associated with this
 server. If there is no such option associated with the given server, no option
@@ -1296,8 +1296,8 @@ network "fancy".
        }
    }
 
-The "dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The ``server-tags`` parameter cannot be specified for this command.
+The "dhcp4" value represents the top-level option space where the standard DHCPv4
+options belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-network-set:
 
@@ -1382,8 +1382,8 @@ option. To delete a subnet level option, the
        }
    }
 
-The "dhcp6" is the top-level option space where the standard DHCPv6 options
-belong. The ``server-tags`` parameter cannot be specified for this command.
+The "dhcp6" value represents the top-level option space where the standard DHCPv6
+options belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option6-pd-pool-set:
 
@@ -1475,8 +1475,8 @@ pool:
        }
    }
 
-The "dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The ``server-tags`` parameter cannot be specified for this command.
+The "dhcp4" value represents the top-level option space where the standard DHCPv4
+options belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-pool-set:
 
@@ -1564,8 +1564,8 @@ having an identifier of 123.
        }
    }
 
-The "dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The ``server-tags`` parameter cannot be specified for this command.
+The "dhcp4" value represents the top-level option space where the standard DHCPv4
+options belong. The ``server-tags`` parameter cannot be specified for this command.
 
 .. _command-remote-option4-subnet-set:
 

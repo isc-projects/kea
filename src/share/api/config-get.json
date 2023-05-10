@@ -15,9 +15,9 @@
     "name": "config-get",
     "resp-syntax": [
         "{",
-        "    \"result\": \"<integer>\",",
+        "    \"result\": <integer>,",
         "    \"arguments\": {",
-        "        \"<Dhcp4, Dhcp6, or Control-agent object>\": \"<JSON configuration here>\" ",
+        "        <Dhcp4, Dhcp6, or Control-agent object>: <JSON configuration here> ",
         "    }",
         "}"
     ],

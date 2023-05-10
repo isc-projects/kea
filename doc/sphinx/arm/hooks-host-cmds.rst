@@ -269,7 +269,7 @@ follows:
        }
    }
 
-The ``reservation-get`` typically returns the result 0 when a query was
+``reservation-get`` typically returns the result 0 when a query was
 conducted properly. In particular, 0 is returned when the host was not
 found. If the query was successful, the host parameters are
 returned. An example of a query that did not find the host looks as
@@ -685,7 +685,7 @@ follows:
        }
    }
 
-The ``reservation-del`` returns a result of 0 when the host deletion was
+``reservation-del`` returns a result of 0 when the host deletion was
 successful, or 1 if it failed. Descriptive text is provided in the event of
 an error. Here are some examples of possible results:
 

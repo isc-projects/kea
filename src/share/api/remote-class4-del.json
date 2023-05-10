@@ -13,11 +13,11 @@
         "    \"arguments\": {",
         "        \"client-classes\": [",
         "            {",
-        "                \"name\": \"<client class name>\"",
+        "                \"name\": <client class name>",
         "            }",
         "        ],",
         "        \"remote\": {",
-        "            \"<specification\": \"of the database to connect to>\"",
+        "            <specification of the database to connect to>",
         "        }",
         "    }",
         "}"

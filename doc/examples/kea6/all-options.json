@@ -1791,7 +1791,6 @@
         "name": "v6-dnr",
         "data": "1234, 23, example.some.host.org., " // please notice comma and space at the end put on purpose
                                                      // this means empty last type of the record - binary type
-
       },
 
       // Option codes 145-65535 are unassigned.

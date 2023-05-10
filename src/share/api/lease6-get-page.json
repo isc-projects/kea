@@ -11,8 +11,8 @@
         "{",
         "    \"command\": \"lease6-get-page\",",
         "    \"arguments\": {",
-        "        \"limit\": \"<integer>\",",
-        "        \"from\": \"<IPv6 address or 'start'>\"",
+        "        \"limit\": <integer>,",
+        "        \"from\": <IPv6 address or 'start'>",
         "    }",
         "}"
     ],
