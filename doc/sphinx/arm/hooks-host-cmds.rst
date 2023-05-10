@@ -229,7 +229,7 @@ reservation to the hosts database only.
    {
        "command": "reservation-add",
        "arguments": {
-           "reservation": {...},
+           "reservation": {},
            "operation-target": "all"
        }
    }
