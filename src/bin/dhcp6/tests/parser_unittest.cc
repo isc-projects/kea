@@ -290,10 +290,13 @@ TEST(ParserTest, file) {
     configs.push_back("classify.json");
     configs.push_back("classify2.json");
     configs.push_back("comments.json");
+    configs.push_back("config-backend.json");
     configs.push_back("dhcpv4-over-dhcpv6.json");
     configs.push_back("dnr.json");
     configs.push_back("duid.json");
     configs.push_back("global-reservations.json");
+    configs.push_back("ha-hot-standby-server1-with-tls.json");
+    configs.push_back("ha-hot-standby-server2.json");
     configs.push_back("hooks.json");
     configs.push_back("iPXE.json");
     configs.push_back("leases-expiration.json");
@@ -306,6 +309,7 @@ TEST(ParserTest, file) {
     configs.push_back("simple.json");
     configs.push_back("softwire46.json");
     configs.push_back("stateless.json");
+    configs.push_back("tee-times.json");
     configs.push_back("with-ddns.json");
 
     for (int i = 0; i<configs.size(); i++) {

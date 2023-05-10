@@ -64,12 +64,14 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
     vector<string> configs = {
         "advanced.json",
         "all-keys-netconf.json",
+        "all-options.json",
         "backends.json",
         "classify.json",
         "classify2.json",
         "comments.json",
         "config-backend.json",
         "dhcpv4-over-dhcpv6.json",
+        "dnr.json",
         "global-reservations.json",
         "ha-load-balancing-server1-mt-with-tls.json",
         "ha-load-balancing-server2-mt.json",
@@ -83,6 +85,8 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
         "several-subnets.json",
         "shared-network.json",
         "single-subnet.json",
+        "vendor-specific.json",
+        "vivso.json",
         // "with-ddns.json",  commented out for ddns-ttl-percent
     };
 
@@ -99,12 +103,14 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
     vector<string> configs = {
         "advanced.json",
         "all-keys-netconf.json",
+        "all-options.json",
         "backends.json",
         "classify.json",
         "classify2.json",
         "comments.json",
         "config-backend.json",
         "dhcpv4-over-dhcpv6.json",
+        "dnr.json",
         "duid.json",
         "global-reservations.json",
         "ha-hot-standby-server1-with-tls.json",
