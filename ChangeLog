@@ -1,11 +1,12 @@
 2140.	[func]		slawek
 	Implemented functions to delete the host reservations from the
-	configuration. Updated the host manager to fully support altering (add,
-	update, delete) host reservations in the primary source (JSON
-	configuration). Its methods accept a new argument ("operation target") to
-	specify the data source (JSON configuration and/or hosts database) to query
-	or alter. Fixed a bug in retrieving IPv6 host reservations from the
-	configuration by address.
+	configuration. Updated the host manager to fully support altering
+	(add, update, delete) host reservations in the primary source
+	(JSON configuration). Its methods accept a new argument
+	("operation target") to specify the data source (JSON
+	configuration and/or hosts database) to query or alter. Fixed a
+	bug in retrieving IPv6 host reservations from the configuration
+	by address.
 	(Gitlab #2815)
 
 2139.	[bug]		marcin
