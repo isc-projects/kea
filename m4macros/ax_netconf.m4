@@ -69,7 +69,6 @@ $(cat conftest.err)])]
       AC_SUBST(LIBYANG_PREFIX)
       AC_SUBST(LIBYANG_VERSION)
 
-      AC_DEFINE([LIBYANG_VERSION], ["${LIBYANG_VERSION}"], [libyang version])
       AC_MSG_RESULT([${LIBYANG_VERSION}])
     else
       AC_MSG_RESULT([no])
@@ -185,7 +184,6 @@ $(cat conftest.err)])]
       AC_SUBST(SR_PLUGINS_PATH)
       AC_SUBST(SRPD_PLUGINS_PATH)
 
-      AC_DEFINE([SYSREPO_VERSION], ["${SYSREPO_VERSION}"], [sysrepo version])
       AC_MSG_RESULT([${SYSREPO_VERSION}])
     else
       AC_MSG_RESULT([no])
