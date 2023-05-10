@@ -115,8 +115,8 @@ database(s) to query. The commands may process data from the JSON configuration
 (primary source), the hosts database (alternate source), or both of them
 (all sources). The operation target parameter is optional. By default, the
 commands that only read the data use all data sources (JSON configuration and
-hosts database); the commands that modify the state (as ``reservation-add`` and
-``reservation-del``) only use the alternate source.
+hosts database); the commands that modify the state (as ``reservation-add``,
+``reservation-del``, and ``reservation-update``) only use the alternate source.
 
 The operation target accepts the fallowing values:
 
@@ -941,9 +941,11 @@ And here's an example of a failure:
        "text": "Mandatory 'subnet-id' parameter missing."
    }
 
-As ``reservation-update`` is expected to store the host, the ``hosts-databases``
-parameter must be specified in the configuration, and databases must not run in
-read-only mode.
+The command accepts the ``operation-target`` argument. By default, it adds the
+reservation to the hosts database only. As ``reservation-update`` is expected
+to store the host, the ``hosts-databases`` parameter must be specified in the
+configuration, and databases must not run in read-only mode if the operation
+target is not the JSON configuration.
 
 As with other update and set commands, this command overwrites all the contents
 of the entry. If the host previously had a resource assigned to it, and the
