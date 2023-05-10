@@ -32,6 +32,9 @@ const std::vector<uint8_t>& DUID::getDuid() const {
     return (data_);
 }
 
+constexpr size_t DUID::MIN_DUID_LEN;
+constexpr size_t DUID::MAX_DUID_LEN;
+
 DUID::DUIDType DUID::getType() const {
     if (data_.size() < 2) {
         return (DUID_UNKNOWN);
@@ -54,6 +57,9 @@ DUID::EMPTY() {
     static DUID empty({0, 0, 0});
     return (empty);
 }
+
+constexpr size_t ClientId::MIN_CLIENT_ID_LEN;
+constexpr size_t ClientId::MAX_CLIENT_ID_LEN;
 
 ClientId::ClientId(const std::vector<uint8_t>& data) : IdentifierType<2, 255>(data) {
 }

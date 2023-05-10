@@ -139,11 +139,13 @@ class DUID : public IdentifierType<3, 130> {
 public:
 
     /// @brief minimum duid size
+    ///
     /// The minimal DUID size specified in RFC 8415, section 11.1 is 3:
     /// 2 fixed octets for the type + 1 minimum octet for the value.
     static constexpr size_t MIN_DUID_LEN = IdentifierType::getMinSize();
 
     /// @brief maximum duid size
+    ///
     /// The maximum DUID size specified in RFC 8415, section 11.1 is 130:
     /// 2 fixed octets for the type + 128 maximum octets for the value.
     static constexpr size_t MAX_DUID_LEN = IdentifierType::getMaxSize();
