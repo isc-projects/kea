@@ -137,7 +137,7 @@
 
             // Boolean flag indicating whether .0 and .255 addresses
             // must be considered as never free in subnets with a prefix length
-            // less than 24. The default is false, as these addresses are not
+            // of 24 or less. The default is false, as these addresses are not
             // special; only the first and the last addresses are.
             "exclude-first-last-24": false
         },
@@ -374,46 +374,7 @@
                 "key-file": "my-key",
 
                 // Cipher list (see the OpenSSL ciphers command manual).
-                "cipher-list": "AES"
-            },
-            {
-                // Name of the database to connect to.
-                "name": "keatest",
-
-                // Host on which the database resides.
-                "host": "localhost",
-
-                // Database password.
-                "password": "keatest",
-
-                // Port on which the database is available.
-                "port": 5432,
-
-                // Type of database, e.g. "mysql", "postgresql".
-                "type": "postgresql",
-
-                // Username to be used to access the database.
-                "user": "keatest",
-
-                // TCP user timeout while communicating with the database.
-                // It is specified in seconds.
-                "tcp-user-timeout": 100
-            },
-            {
-                // Name of the database to connect to.
-                "name": "keatest",
-
-                // Database password.
-                "password": "keatest",
-
-                // Port on which the database is available.
-                "port": 9042,
-
-                // Type of database, e.g. "mysql", "postgresql".
-                "type": "mysql",
-
-                // Username to be used to access the database.
-                "user": "keatest",
+                "cipher-list": "AES",
 
                 // Connection reconnect wait time.
                 // This parameter governs how long Kea waits before attempting
@@ -437,6 +398,29 @@
 
                 // Timeout of database write operations in seconds.
                 "write-timeout": 180
+            },
+            {
+                // Name of the database to connect to.
+                "name": "keatest",
+
+                // Host on which the database resides.
+                "host": "localhost",
+
+                // Database password.
+                "password": "keatest",
+
+                // Port on which the database is available.
+                "port": 5432,
+
+                // Type of database, e.g. "mysql", "postgresql".
+                "type": "postgresql",
+
+                // Username to be used to access the database.
+                "user": "keatest",
+
+                // TCP user timeout while communicating with the database.
+                // It is specified in seconds.
+                "tcp-user-timeout": 100
             }
         ],
 

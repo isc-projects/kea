@@ -16,6 +16,13 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2023-05-31 {
+    description "Added allocator, ddns-ttl-percent, exclude-first-last-24,
+                 ignore-dhcp-server-identifier, offer-lifetime, pd-allocator,
+                 read-timeout, tcp-user-timeout, write-timeout.
+                 Removed contact-points, keyspace.";
+  }
+
   revision 2022-12-27 {
     description "Added never-send.";
   }
@@ -257,15 +264,15 @@ module kea-dhcp-types {
       units "milliseconds";
       description "Database connection timeout.";
     }
-    leaf contact-points {
-      type string;
-      description "Cassandra database contact points, a coma separated list of
-                   IP addresses.";
+    leaf read-timeout {
+      type uint32;
+      units "seconds";
+      description "timeout for database read operations";
     }
-    leaf keyspace {
-      type string;
-      description "Cassandra database keyspace (this is Cassandra's equivalent
-                   of a database name).";
+    leaf write-timeout {
+      type uint32;
+      units "seconds";
+      description "timeout for database write operations";
     }
     leaf max-reconnect-tries {
       type uint32;
@@ -289,6 +296,11 @@ module kea-dhcp-types {
     leaf tcp-nodelay {
       type boolean;
       description "TCP nodelay for the database connection.";
+    }
+    leaf tcp-user-timeout {
+      type uint32;
+      units "seconds";
+      description "TCP user timeout while communicating with the database";
     }
     leaf consistency {
       type string;
@@ -997,21 +1009,35 @@ module kea-dhcp-types {
     }
   }
 
-  grouping compatibility {
-    container compatibility {
+  grouping common-compatibility {
+    description
+      "parameters that are common to DHCPv4 and DHCPv6 for triggering behaviors compatible
+        with broken or non-compliant clients, relays or other agents";
+    leaf ignore-rai-link-selection {
+      type boolean;
       description
-        "parameters for triggering behaviors compatible with broken or
-         non-compliant clients, relays or other agents";
-      leaf ignore-rai-link-selection {
-        type boolean;
-        description
-          "Ignore the link selection RAI suboption.";
-      }
-      leaf lenient-option-parsing {
-        type boolean;
-        description
-          "Enable more lenient option parsing.";
-      }
+        "Ignore the link selection RAI suboption.";
+    }
+    leaf lenient-option-parsing {
+      type boolean;
+      description
+        "Enable more lenient option parsing.";
+    }
+  }
+
+  grouping v4-compatibility {
+    description
+      "DHCPv4-specific parameters for triggering behaviors compatible
+        with broken or non-compliant clients, relays or other agents";
+    leaf exclude-first-last-24 {
+      type boolean;
+      description
+        "Whether .0 and .255 addresses should be excluded from allocation in subnets with a prefix length of 24 or less.";
+    }
+    leaf ignore-dhcp-server-identifier {
+      type boolean;
+      description
+        "Whether the DHCP Server Identifier should be ignored in ingress packets.";
     }
   }
 
@@ -1061,6 +1087,17 @@ module kea-dhcp-types {
       type boolean;
       description
         "whether DDNS updates should be enabled";
+    }
+  }
+
+  grouping ddns-ttl-percent {
+    leaf ddns-ttl-percent {
+      type decimal64 {
+        fraction-digits 18;
+        range "0 .. 1";
+      }
+      description
+        "the percentage of the leases's lifetime to use for the DNS TTL";
     }
   }
 
@@ -1176,6 +1213,30 @@ module kea-dhcp-types {
       type uint32;
       description
         "the maximum number of samples which are kept";
+    }
+  }
+
+  grouping allocator {
+    leaf allocator {
+      type string;
+      description
+        "the allocation strategy for IP addresses";
+    }
+  }
+
+  grouping pd-allocator {
+    leaf pd-allocator {
+      type string;
+      description
+        "the allocation strategy for delegted prefixes";
+    }
+  }
+
+  grouping offer-lifetime {
+    leaf offer-lifetime {
+      type uint32;
+      description
+        "the lifetime of leases temporarily allocated on DISCOVER";
     }
   }
 }

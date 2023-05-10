@@ -11,6 +11,9 @@
 {
     // Kea DHCPv4 server configuration begins here.
     "Dhcp4": {
+        // Global flag selecting an IP address allocation strategy for all
+        // subnets. Use "random" for a random allocation strategy.
+        "allocator": "iterative",
 
         // Global authoritative flag to handle requests by clients for
         // unknown IP addresses (ignore if disabled, NAK if enabled).
@@ -54,7 +57,11 @@
                 "min-valid-lifetime": 4000,
 
                 // Class max valid lifetime.
-                "max-valid-lifetime": 8000
+                "max-valid-lifetime": 8000,
+
+                // If greater than zero, it is the lifetime of leases temporarily allocated
+                // on DISCOVER. When zero (the default), leases are not allocated on DISCOVER.
+                "offer-lifetime" : 65
             },
             {
                 // Default value of the class-specific bootfile name. An empty name
@@ -110,6 +117,13 @@
         // Parameters for triggering behaviors compatible with broken or
         // non-compliant clients, relays, or other agents
         "compatibility": {
+            // Ignore DHCP Server Identifier option if set to true.
+            // Enabling this will cause Kea to accept any query, even
+            // if the address in the option belongs to another server,
+            // instead of dropping it. This config option defaults to
+            // false, as enabling it breaks RFC compliance.
+            "ignore-dhcp-server-identifier": false,
+
             // Ignore Relay Agent Information Link Selection suboption if set
             // to true. Enabling this will cause Kea to use normal subnet
             // selection logic instead of attempting to use the subnet
@@ -119,7 +133,13 @@
 
             // Parse options more leniently where fields can be deduced
             // deterministically, even if against RFC or common practice.
-            "lenient-option-parsing": true
+            "lenient-option-parsing": true,
+
+            // Boolean flag indicating whether .0 and .255 addresses
+            // must be considered as never free in subnets with a prefix length
+            // of 24 or less. The default is false, as these addresses are not
+            // special; only the first and the last addresses are.
+            "exclude-first-last-24": false
         },
 
         // Command control socket configuration parameters for the Kea DHCPv4 server.
@@ -192,6 +212,10 @@
         // given update request. The default value for this flag is true.
         // It may be specified at the global, shared-network, and subnet levels.
         "ddns-use-conflict-resolution": true,
+
+        // When greater than 0.0, it is the percent of the lease's lifetime
+        // to use for the DNS TTL.
+        "ddns-ttl-percent": 0.75,
 
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 86400 (24 hours).
@@ -350,7 +374,30 @@
                 "key-file": "my-key",
 
                 // Cipher list (see the OpenSSL ciphers command manual).
-                "cipher-list": "AES"
+                "cipher-list": "AES",
+
+                // Connection reconnect wait time.
+                // This parameter governs how long Kea waits before attempting
+                // to reconnect. Expressed in milliseconds. The default is 0
+                // (disabled) for MySQL and PostgreSQL.
+                "reconnect-wait-time": 3000,
+
+                // Connection maximum reconnect tries.
+                "max-reconnect-tries": 3,
+
+                // Action to take when connection recovery fails.
+                // Supported values: stop-retry-exit, serve-retry-exit,
+                // serve-retry-continue
+                "on-fail": "stop-retry-exit",
+
+                // Connection connect timeout in seconds.
+                "connect-timeout": 100,
+
+                // Timeout of database read operations in seconds.
+                "read-timeout": 120,
+
+                // Timeout of database write operations in seconds.
+                "write-timeout": 180
             },
             {
                 // Name of the database to connect to.
@@ -371,22 +418,9 @@
                 // Username to be used to access the database.
                 "user": "keatest",
 
-                // Connection reconnect wait time.
-                // This parameter governs how long Kea waits before attempting
-                // to reconnect. Expressed in milliseconds. The default is 0
-                // (disabled) for MySQL and PostgreSQL.
-                "reconnect-wait-time": 3000,
-
-                // Connection maximum reconnect tries.
-                "max-reconnect-tries": 3,
-
-                // Action to take when connection recovery fails.
-                // Supported values: stop-retry-exit, serve-retry-exit,
-                // serve-retry-continue
-                "on-fail": "stop-retry-exit",
-
-                // Connection connect timeout in seconds.
-                "connect-timeout": 100
+                // TCP user timeout while communicating with the database.
+                // It is specified in seconds.
+                "tcp-user-timeout": 100
             }
         ],
 
@@ -681,6 +715,10 @@
         // networks group subnets together.
         "shared-networks": [
             {
+                // A flag selecting an IP address allocation strategy for all
+                // subnets in this shared network.
+                "allocator": "random",
+
                 // Shared-network level authoritative flag.
                 "authoritative": false,
 
@@ -717,6 +755,9 @@
                 "ddns-use-conflict-resolution": true,
 
                 // Shared-network level value. See description at the global level.
+                "ddns-ttl-percent": 0.65,
+
+                // Shared-network level value. See description at the global level.
                 "hostname-char-replacement": "x",
 
                 // Shared-network level value. See description at the global level.
@@ -736,6 +777,10 @@
                 // Shared-network level specification of the next server
                 // to be sent in 'siaddr'.
                 "next-server": "192.0.2.123",
+
+                // If greater than zero, it is the lifetime of leases temporarily allocated
+                // on DISCOVER. When zero (the default), leases are not allocated on DISCOVER.
+                "offer-lifetime" : 60,
 
                 // List of shared network-specific DHCP options.
                 "option-data": [],
@@ -812,6 +857,10 @@
                         // Prefix matched against source address. See RFC7341.
                         "4o6-subnet": "2001:db8:1:1::/64",
 
+                        // A flag selecting an IP address allocation strategy for
+                        // the subnet.
+                        "allocator": "iterative",
+
                         // Subnet-level authoritative flag.
                         "authoritative": false,
 
@@ -848,6 +897,9 @@
                         "ddns-use-conflict-resolution": true,
 
                         // Subnet-level value. See description at the global level.
+                        "ddns-ttl-percent": 0.55,
+
+                        // Subnet-level value. See description at the global level.
                         "hostname-char-replacement": "x",
 
                         // Subnet-level value. See description at the global level.
@@ -867,6 +919,10 @@
                         // Subnet-level specification of the next server to be sent
                         // in 'siaddr'.
                         "next-server": "0.0.0.0",
+
+                        // If greater than zero, it is the lifetime of leases temporarily allocated
+                        // on DISCOVER. When zero (the default), leases are not allocated on DISCOVER.
+                        "offer-lifetime" : 60,
 
                         // Turn on storage of extended information (e.g. relay agent
                         // information) with each lease for this subnet.
@@ -940,8 +996,7 @@
                         // Subnet-level value of the rebind timer.
                         "rebind-timer": 40,
 
-                        // List of IPv4 relay addresses for which this subnet is
-                        // selected.
+                        // List of IPv4 relay addresses for which this subnet is selected.
                         "relay": {
                             "ip-addresses": [
                                 "192.168.56.1"
@@ -1035,10 +1090,10 @@
                 // Shared-network level (default) valid lifetime.
                 "valid-lifetime": 6001,
 
-                // Subnet-level min valid lifetime.
+                // Shared-network level min valid lifetime.
                 "min-valid-lifetime": 4001,
 
-                // Subnet-level max valid lifetime.
+                // Shared-network level max valid lifetime.
                 "max-valid-lifetime": 8001
             }
         ],
@@ -1171,6 +1226,10 @@
                 "severity": "INFO"
             }
         ],
+
+        // If greater than zero, it is the lifetime of leases temporarily allocated
+        // on DISCOVER. When zero (the default), leases are not allocated on DISCOVER.
+        "offer-lifetime" : 60,
 
         // Look at advanced examples for the use of user-contexts.
         "user-context": { }

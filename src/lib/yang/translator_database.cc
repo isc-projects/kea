@@ -66,10 +66,13 @@ TranslatorDatabase::getDatabaseKea(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "password");
     checkAndGetLeaf(result, data_node, "persist");
     checkAndGetLeaf(result, data_node, "port");
+    checkAndGetLeaf(result, data_node, "read-timeout");
     checkAndGetLeaf(result, data_node, "readonly");
     checkAndGetLeaf(result, data_node, "reconnect-wait-time");
+    checkAndGetLeaf(result, data_node, "tcp-user-timeout");
     checkAndGetLeaf(result, data_node, "trust-anchor");
     checkAndGetLeaf(result, data_node, "user");
+    checkAndGetLeaf(result, data_node, "write-timeout");
 
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
 
@@ -118,9 +121,12 @@ TranslatorDatabase::setDatabaseKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "persist", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "port", LeafBaseType::Uint16);
     checkAndSetLeaf(elem, xpath, "readonly", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "read-timeout", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "reconnect-wait-time", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "tcp-user-timeout", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "user", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "write-timeout", LeafBaseType::Uint32);
 
     checkAndSetUserContext(elem, xpath);
 

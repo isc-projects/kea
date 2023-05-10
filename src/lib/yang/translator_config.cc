@@ -187,6 +187,8 @@ ElementPtr
 TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
 
+    checkAndGetLeaf(result, data_node, "allocator");
+    checkAndGetLeaf(result, data_node, "cache-max-age");
     checkAndGetLeaf(result, data_node, "cache-max-age");
     checkAndGetLeaf(result, data_node, "cache-threshold");
     checkAndGetLeaf(result, data_node, "calculate-tee-times");
@@ -197,6 +199,7 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "ddns-qualifying-suffix");
     checkAndGetLeaf(result, data_node, "ddns-replace-client-name");
     checkAndGetLeaf(result, data_node, "ddns-send-updates");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-percent");
     checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
     checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
     checkAndGetLeaf(result, data_node, "decline-probation-period");
@@ -234,6 +237,8 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     checkAndGet(result, data_node, "compatibility",
                 [&](DataNode const& node) -> ElementPtr const {
                     ElementPtr compatibility(Element::createMap());
+                    checkAndGetLeaf(compatibility, node, "exclude-first-last-24");
+                    checkAndGetLeaf(compatibility, node, "ignore-dhcp-server-identifier");
                     checkAndGetLeaf(compatibility, node, "ignore-rai-link-selection");
                     checkAndGetLeaf(compatibility, node, "lenient-option-parsing");
                     return compatibility;
@@ -337,6 +342,7 @@ TranslatorConfig::getServerKeaDhcp4() {
     checkAndGetLeaf(result, config, "echo-client-id");
     checkAndGetLeaf(result, config, "match-client-id");
     checkAndGetLeaf(result, config, "next-server");
+    checkAndGetLeaf(result, config, "offer-lifetime");
     checkAndGetLeaf(result, config, "server-hostname");
 
     // Handle interfaces.
@@ -371,6 +377,7 @@ TranslatorConfig::getServerKeaDhcp6() {
     checkAndGetLeaf(result, config, "mac-sources");
     checkAndGetLeaf(result, config, "max-preferred-lifetime");
     checkAndGetLeaf(result, config, "min-preferred-lifetime");
+    checkAndGetLeaf(result, config, "pd-allocator");
     checkAndGetLeaf(result, config, "preferred-lifetime");
     checkAndGetLeaf(result, config, "relay-supplied-options");
 
@@ -486,6 +493,7 @@ TranslatorConfig::setConfigKea6(ConstElementPtr elem) {
 void
 TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
                                          ConstElementPtr elem) {
+    checkAndSetLeaf(elem, xpath, "allocator", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "cache-threshold", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "calculate-tee-times", LeafBaseType::Bool);
@@ -495,6 +503,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
     checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "ddns-send-updates", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "dhcp4o6-port", LeafBaseType::Uint16);
@@ -661,7 +670,14 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "echo-client-id", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "match-client-id", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "offer-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
+
+    ConstElementPtr compatibility(elem->get("compatibility"));
+    if (compatibility) {
+        checkAndSetLeaf(compatibility, xpath + "/compatibility", "exclude-first-last-24", LeafBaseType::Bool);
+        checkAndSetLeaf(compatibility, xpath + "/compatibility", "ignore-dhcp-server-identifier", LeafBaseType::Bool);
+    }
 
     ConstElementPtr if_config = elem->get("interfaces-config");
     if (if_config) {
@@ -691,6 +707,7 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "data-directory", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "pd-allocator", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
 
     checkAndSetLeafList(elem, xpath, "mac-sources", LeafBaseType::String);

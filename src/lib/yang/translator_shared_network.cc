@@ -67,6 +67,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
 
     getMandatoryLeaf(result, data_node, "name");
 
+    checkAndGetLeaf(result, data_node, "allocator");
     checkAndGetLeaf(result, data_node, "cache-max-age");
     checkAndGetLeaf(result, data_node, "cache-threshold");
     checkAndGetLeaf(result, data_node, "calculate-tee-times");
@@ -77,6 +78,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
     checkAndGetLeaf(result, data_node, "ddns-qualifying-suffix");
     checkAndGetLeaf(result, data_node, "ddns-replace-client-name");
     checkAndGetLeaf(result, data_node, "ddns-send-updates");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-percent");
     checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
     checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
     checkAndGetLeaf(result, data_node, "hostname-char-replacement");
@@ -119,6 +121,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
         checkAndGetLeaf(result, data_node, "interface-id");
         checkAndGetLeaf(result, data_node, "max-preferred-lifetime");
         checkAndGetLeaf(result, data_node, "min-preferred-lifetime");
+        checkAndGetLeaf(result, data_node, "pd-allocator");
         checkAndGetLeaf(result, data_node, "preferred-lifetime");
         checkAndGetLeaf(result, data_node, "rapid-commit");
     } else if (subsel == "subnet4") {
@@ -126,6 +129,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
         checkAndGetLeaf(result, data_node, "boot-file-name");
         checkAndGetLeaf(result, data_node, "match-client-id");
         checkAndGetLeaf(result, data_node, "next-server");
+        checkAndGetLeaf(result, data_node, "offer-lifetime");
         checkAndGetLeaf(result, data_node, "server-hostname");
     }
 
@@ -158,6 +162,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
                                              string const& subsel) {
     // Skip key "name".
 
+    checkAndSetLeaf(elem, xpath, "allocator", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "cache-threshold", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "calculate-tee-times", LeafBaseType::Bool);
@@ -168,6 +173,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "ddns-send-updates", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
@@ -217,6 +223,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
         checkAndSetLeaf(elem, xpath, "interface-id", LeafBaseType::String);
         checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", LeafBaseType::Uint32);
         checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "pd-allocator", LeafBaseType::String);
         checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
         checkAndSetLeaf(elem, xpath, "rapid-commit", LeafBaseType::Bool);
     } else {
@@ -224,6 +231,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
         checkAndSetLeaf(elem, xpath, "boot-file-name", LeafBaseType::String);
         checkAndSetLeaf(elem, xpath, "match-client-id", LeafBaseType::Bool);
         checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "offer-lifetime", LeafBaseType::Uint32);
         checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
     }
 }

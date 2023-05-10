@@ -75,6 +75,7 @@ TranslatorClass::getClassKea(DataNode const& data_node) {
     if (model_ == KEA_DHCP4_SERVER) {
         checkAndGetLeaf(result, data_node, "boot-file-name");
         checkAndGetLeaf(result, data_node, "next-server");
+        checkAndGetLeaf(result, data_node, "offer-lifetime");
         checkAndGetLeaf(result, data_node, "server-hostname");
 
         ConstElementPtr defs = getOptionDefList(data_node);
@@ -127,6 +128,7 @@ TranslatorClass::setClassKea(string const& xpath, ConstElementPtr elem) {
     if (model_ == KEA_DHCP4_SERVER) {
         checkAndSetLeaf(elem, xpath, "boot-file-name", LeafBaseType::String);
         checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "offer-lifetime", LeafBaseType::Uint32);
         checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
 
         ConstElementPtr defs = elem->get("option-def");
