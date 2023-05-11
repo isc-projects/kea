@@ -3012,13 +3012,15 @@ configuration looks like this:
        "subnet4": [
            {
                "subnet": "192.0.2.0/24",
-               "option-data": [ {
+               "option-data": [
+               {
                    "name": "domain-name-servers",
                    "code": 6,
                    "data": "192.0.2.200,192.0.2.201",
                    "csv-format": true,
                    "space": "dhcp4"
-               } ]
+               }
+               ]
            }
        ]
    }
@@ -4176,23 +4178,29 @@ ISC tested the following configuration:
 
        "valid-lifetime": 4000,
 
-       "subnet4": [ {
+       "subnet4": [
+       {
            "subnet": "10.10.10.0/24",
            "4o6-interface": "eno33554984",
            "4o6-subnet": "2001:db8:1:1::/64",
            "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ]
-       } ],
+       }
+       ],
 
        "dhcp4o6-port": 6767,
 
-       "loggers": [ {
+       "loggers": [
+       {
            "name": "kea-dhcp4",
-           "output_options": [ {
+           "output_options": [
+           {
                "output": "/tmp/kea-dhcp4.log"
-           } ],
+           }
+           ],
            "severity": "DEBUG",
            "debuglevel": 0
-       } ]
+       }
+       ]
    }
 
    }
@@ -4821,7 +4829,8 @@ configuration:
 .. code-block:: json
 
        {
-           "subnet4": [ {
+           "subnet4": [
+           {
                "subnet": "10.0.0.0/24",
                "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ],
                "ddns-qualifying-suffix": "example.isc.org.",
@@ -4831,7 +4840,8 @@ configuration:
                     "hostname": "alice-laptop"
                   }
                ]
-            }],
+           }
+           ],
            "dhcp-ddns": {
                "enable-updates": true
            }
@@ -4848,7 +4858,8 @@ different clients with different domain names:
 .. code-block:: json
 
        {
-           "subnet4": [ {
+           "subnet4": [
+           {
                "subnet": "10.0.0.0/24",
                "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ],
                "reservations": [
@@ -4860,9 +4871,9 @@ different clients with different domain names:
                     "hw-address": "12:34:56:78:99:AA",
                     "hostname": "mark-desktop.example.org."
                   }
-
                ]
-            }],
+           }
+           ],
            "dhcp-ddns": {
                "enable-updates": true
            }
@@ -4888,7 +4899,8 @@ example demonstrates how standard options can be defined:
 ::
 
    {
-       "subnet4": [ {
+       "subnet4": [
+       {
            "reservations": [
            {
                "hw-address": "aa:bb:cc:dd:ee:ff",
@@ -4901,9 +4913,12 @@ example demonstrates how standard options can be defined:
                {
                    "name": "log-servers",
                    "data": "10.1.1.200,10.1.1.201"
-               } ]
-           } ]
-       } ]
+               }
+               ]
+           }
+           ]
+       }
+       ]
    }
 
 Vendor-specific options can be reserved in a similar manner:
@@ -4911,7 +4926,8 @@ Vendor-specific options can be reserved in a similar manner:
 ::
 
    {
-       "subnet4": [ {
+       "subnet4": [
+       {
            "reservations": [
            {
                "hw-address": "aa:bb:cc:dd:ee:ff",
@@ -4925,9 +4941,12 @@ Vendor-specific options can be reserved in a similar manner:
                    "name": "tftp-servers",
                    "space": "vendor-4491",
                    "data": "10.1.1.202,10.1.1.203"
-               } ]
-           } ]
-       } ]
+               }
+               ]
+           }
+           ]
+       }
+       ]
    }
 
 Options defined at the host level have the highest priority. In other words,
@@ -4951,15 +4970,18 @@ message fields:
 ::
 
    {
-       "subnet4": [ {
+       "subnet4": [
+       {
            "reservations": [
            {
                "hw-address": "aa:bb:cc:dd:ee:ff",
                "next-server": "10.1.1.2",
                "server-hostname": "server-hostname.example.org",
                "boot-file-name": "/tmp/bootfile.efi"
-           } ]
-       } ]
+           }
+           ]
+       }
+       ]
    }
 
 Note that those parameters can be specified in combination with other
@@ -5005,7 +5027,8 @@ to them.
           ]
        }
        ],
-       "subnet4": [ {
+       "subnet4": [
+       {
            "subnet": "10.0.0.0/24",
            "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ],
            "reservations": [
@@ -5016,7 +5039,8 @@ to them.
 
            }
            ]
-       } ]
+       }
+       ]
     }
 
 In some cases the host reservations can be used in conjunction with client
@@ -5520,7 +5544,8 @@ following can be used:
        }
        ],
        "valid-lifetime": 600,
-       "subnet4": [ {
+       "subnet4": [
+       {
            "subnet": "10.0.0.0/24",
            # It is replaced by the "reservations-global",
            # "reservations-in-subnet", and "reservations-out-of-pool"
@@ -5535,7 +5560,8 @@ following can be used:
            # is false.
            # "reservations-out-of-pool": false,
            "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ]
-       } ]
+       }
+       ]
    }
 
 When using database backends, the global host reservations are
@@ -5580,10 +5606,12 @@ within the subnet as follows:
         "subnet4": [
             {
                 "subnet": "192.0.2.0/24",
-                "reservations": [{
-                    "hw-address": "aa:bb:cc:dd:ee:fe",
-                    "client-classes": [ "reserved_class" ]
-                 }],
+                "reservations": [
+                    {
+                        "hw-address": "aa:bb:cc:dd:ee:fe",
+                        "client-classes": [ "reserved_class" ]
+                    }
+                ],
                 "pools": [
                     {
                         "pool": "192.0.2.10-192.0.2.20",
@@ -5632,10 +5660,12 @@ following example:
                 "test": "not member('reserved_class')"
             }
         ],
-        "reservations": [{
-            "hw-address": "aa:bb:cc:dd:ee:fe",
-            "client-classes": [ "reserved_class" ]
-        }],
+        "reservations": [
+            {
+                "hw-address": "aa:bb:cc:dd:ee:fe",
+                "client-classes": [ "reserved_class" ]
+            }
+        ],
         # It is replaced by the "reservations-global",
         # "reservations-in-subnet", and "reservations-out-of-pool" parameters.
         # Specify if the server should look up global reservations.
@@ -5647,7 +5677,8 @@ following example:
         # is false, but if specified, it is inherited by "shared-networks"
         # and "subnet4" levels.
         # "reservations-out-of-pool": false,
-        "shared-networks": [{
+        "shared-networks": [
+            {
             "subnet4": [
                 {
                     "subnet": "192.0.2.0/24",
@@ -5668,7 +5699,8 @@ following example:
                     ]
                 }
             ]
-        }]
+            }
+        ]
     }
 
 This is similar to the example described in
@@ -5952,7 +5984,8 @@ introduced:
 
    {
    "Dhcp4": {
-       "shared-networks": [ {
+       "shared-networks": [
+           {
                # Name of the shared network. It may be an arbitrary string
                # and it must be unique among all shared networks.
                "name": "my-secret-lair-level-1",
@@ -5974,7 +6007,8 @@ introduced:
                        "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
                    }
                ]
-       } ],
+           }
+       ],
        # end of shared-networks
 
        # It is likely that in the network there will be a mix of regular,
@@ -6026,10 +6060,12 @@ then override its value in the subnet scope. For example:
 
            # This option is made available to all subnets in this shared
            # network.
-           "option-data": [ {
+           "option-data": [
+           {
                "name": "log-servers",
                "data": "1.2.3.4"
-           } ],
+           }
+           ],
 
            "subnet4": [
                {
@@ -7266,13 +7302,16 @@ of LED devices could be configured in the following way:
 ::
 
    "Dhcp4": {
-       "subnet4": [{
+       "subnet4": [
+           {
            "subnet": "192.0.2.0/24",
-           "pools": [{
+           "pools": [
+           {
                "pool": "192.0.2.10 - 192.0.2.20",
                # This is pool specific user context
                "user-context": { "color": "red" }
-           } ],
+           }
+           ],
 
            # This is a subnet-specific user context. Any type
            # of information can be entered here as long as it is valid JSON.
@@ -7284,7 +7323,8 @@ of LED devices could be configured in the following way:
                "devices-registered": 42,
                "billing": false
            }
-       } ]
+       }
+       ]
    }
 
 Kea does not interpret or use the user-context information; it simply
@@ -7587,21 +7627,25 @@ database:
      "Dhcp4": {
        "server-tag": "my DHCPv4 server",
        "config-control": {
-           "config-databases": [{
+           "config-databases": [
+           {
                "type": "mysql",
                "name": "kea",
                "user": "kea",
                "password": "kea",
                "host": "192.0.2.1",
                "port": 3302
-           }],
+           }
+           ],
            "config-fetch-wait-time": 20
        },
-       "hooks-libraries": [{
+       "hooks-libraries": [
+       {
            "library": "/usr/local/lib/kea/hooks/libdhcp_mysql_cb.so"
        }, {
            "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
-       }]
+       }
+       ]
      }
    }
 
@@ -7624,21 +7668,25 @@ The following snippet illustrates the use of a PostgreSQL database:
      "Dhcp4": {
        "server-tag": "my DHCPv4 server",
        "config-control": {
-           "config-databases": [{
+           "config-databases": [
+           {
                "type": "postgresql",
                "name": "kea",
                "user": "kea",
                "password": "kea",
                "host": "192.0.2.1",
                "port": 5432
-           }],
+           }
+           ],
            "config-fetch-wait-time": 20
        },
-       "hooks-libraries": [{
+       "hooks-libraries": [
+       {
            "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql_cb.so"
        }, {
            "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
-       }]
+       }
+       ]
      }
    }
 

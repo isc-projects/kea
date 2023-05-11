@@ -3666,7 +3666,8 @@ pretty-printed for clarity):
                 "options": "0x00250006010203040506003500086464646464646464",
                 "remote-id": "010203040506",
                 "relay-id": "6464646464646464"
-            }]
+            }
+            ]
         }
     }
 
@@ -4814,10 +4815,12 @@ within the subnet as follows:
         "subnet6": [
             {
                 "subnet": "2001:db8:1::/64",
-                "reservations": [{
-                    "hw-address": "aa:bb:cc:dd:ee:fe",
-                    "client-classes": [ "reserved_class" ]
-                 }],
+                "reservations": [
+                    {
+                        "hw-address": "aa:bb:cc:dd:ee:fe",
+                        "client-classes": [ "reserved_class" ]
+                    }
+                ],
                 "pools": [
                     {
                         "pool": "2001:db8:1::10-2001:db8:1::20",
@@ -4866,10 +4869,12 @@ following example:
                 "test": "not member('reserved_class')"
             }
         ],
-        "reservations": [{
-            "hw-address": "aa:bb:cc:dd:ee:fe",
-            "client-classes": [ "reserved_class" ]
-        }],
+        "reservations": [
+            {
+                "hw-address": "aa:bb:cc:dd:ee:fe",
+                "client-classes": [ "reserved_class" ]
+            }
+        ],
         # It is replaced by the "reservations-global",
         # "reservations-in-subnet", and "reservations-out-of-pool" parameters.
         # Specify if the server should look up global reservations.
@@ -4881,7 +4886,8 @@ following example:
         # is false, but if specified, it is inherited by "shared-networks"
         # and "subnet6" levels.
         # "reservations-out-of-pool": false,
-        "shared-networks": [{
+        "shared-networks": [
+            {
             "subnet6": [
                 {
                     "subnet": "2001:db8:1::/64",
@@ -4902,7 +4908,8 @@ following example:
                     ]
                 }
             ]
-        }]
+            }
+        ]
     }
 
 This is similar to the example described in the
@@ -5184,7 +5191,8 @@ introduced:
 
    {
    "Dhcp6": {
-       "shared-networks": [ {
+       "shared-networks": [
+           {
            # Name of the shared network. It may be an arbitrary string
            # and it must be unique among all shared networks.
            "name": "ipv6-lab-1",
@@ -5202,14 +5210,15 @@ introduced:
            "subnet6": [
                {
                    "subnet": "2001:db8::/48",
-                   "pools": [{ "pool":  "2001:db8::1 - 2001:db8::ffff" }]
+                   "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
                },
                {
                    "subnet": "3ffe:ffe::/64",
-                   "pools": [{ "pool":  "3ffe:ffe::/64" }]
+                   "pools": [ { "pool":  "3ffe:ffe::/64" } ]
                }
            ]
-       } ],
+           }
+       ],
        # end of shared-networks
 
        # It is likely that in the network there will be a mix of regular,
@@ -5220,7 +5229,7 @@ introduced:
        "subnet6": [
            {
                "subnet": "2001:db9::/48",
-               "pools": [{ "pool":  "2001:db9::/64" }],
+               "pools": [ { "pool":  "2001:db9::/64" } ],
                "relay": {
                    "ip-addresses": [ "2001:db8:1:2::1" ]
                }
