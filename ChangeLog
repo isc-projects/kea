@@ -1,3 +1,11 @@
+2133.	[func]		andrei
+	Added missing YANG nodes: allocator, ddns-ttl-percent,
+	exclude-first-last-24, ignore-dhcp-server-identifier,
+	offer-lifetime, pd-allocator, read-timeout, tcp-user-timeout,
+	write-timeout.
+	Removed obsolete YANG nodes: contact-points, keyspace.
+	(Gitlab #2832)
+
 2132.	[bug]		marcin
 	Fixed a bug in the allocation engine that could cause an invalid
 	lease assignment in the shared networks using subnets with
