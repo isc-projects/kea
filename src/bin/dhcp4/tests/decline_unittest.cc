@@ -49,7 +49,7 @@ const char* DECLINE_CONFIGS[] = {
         "    } ]"
         " } ]"
     "}",
-// Configuration 1
+// Configuration 1 - only use when mysql is enabled
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -70,7 +70,7 @@ const char* DECLINE_CONFIGS[] = {
         "    } ]"
         " } ]"
     "}",
-// Configuration 2
+// Configuration 2 - only use when pgsql is enabled
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -254,6 +254,7 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMemfile) {
                       SHOULD_PASS);
 }
 
+#ifdef HAVE_MYSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
@@ -261,7 +262,9 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS, 1);
 }
+#endif
 
+#ifdef HAVE_PGSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
@@ -269,6 +272,7 @@ TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS, 2);
 }
+#endif
 
 // This test verifies the decline correctness in the following case:
 // - Client acquires new lease using HW address only

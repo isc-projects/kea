@@ -42,7 +42,7 @@ const char* DECLINE_CONFIGS[] = {
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 }",
-// Configuration 1
+// Configuration 1 - only use when mysql is enabled
     "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
@@ -62,7 +62,7 @@ const char* DECLINE_CONFIGS[] = {
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 }",
-// Configuration 2
+// Configuration 2 - only use when pgsql is enabled
     "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
@@ -248,18 +248,22 @@ TEST_F(DeclineTest, basicMemfile) {
                       1234, VALID_ADDR, SHOULD_PASS);
 }
 
+#ifdef HAVE_MYSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, basicMySQL) {
     Dhcp6Client client;
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS, 1);
 }
+#endif
 
+#ifdef HAVE_PGSQL
 TEST_F(DeclineTest, basicPgSQL) {
     Dhcp6Client client;
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS, 2);
 }
+#endif
 
 }
 }

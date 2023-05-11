@@ -10,7 +10,7 @@ else
 fi
 
 # Get the files.
-files=$(find ${files} -type f \( -name '*.rst' -or -name '*.json' \) -and -not -path '/_build/*' -and -not -path '/man/*' | sort)
+files=$(find ${files} -type f \( -name '*.rst' -or -name '*.json' \) -and -not -path '*/_build/*' -and -not -path '*/man/*' | sort)
 work_file=$(mktemp)
 for file in $files; do
 	json=0
@@ -88,7 +88,7 @@ for file in $files; do
 				fi
 			fi
 		fi
-	done <<< $(cat $file | sed ':a;N;$!ba;s/,\s*\n\s*\.\.\.//g' | sed 's/\\\"/\\\\\"/g' | sed 's/\\\\,/\\\\\\\\,/g')
+	done <<< $(cat $file | sed ':a;N;$!ba;s/,\s*\n\s*\.\.\.//g')
 	if [ $comment -eq 0 -a $json -eq 1 ]; then
 		# if the file ended but the parser is processing a json structure
 		cat $work_file | jq . > /dev/null
