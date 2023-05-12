@@ -334,7 +334,7 @@ TEST_F(RandomAllocatorTest6, clientClasses) {
    // can't offer any address to the client.
    cc_.clear();
    IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("0.0.0.0"));
-   EXPECT_TRUE(candidate.isV4Zero());
+   EXPECT_TRUE(candidate.isV6Zero());
 }
 
 // Test allocating delegated prefixes when a subnet has a single pool.

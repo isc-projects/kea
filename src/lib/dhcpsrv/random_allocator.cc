@@ -80,7 +80,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
 
     // No pool available. There are no pools or client classes do
     // not match.
-    return (IOAddress::IPV4_ZERO_ADDRESS());
+    return (pool_type_ == Lease::TYPE_V4 ? IOAddress::IPV4_ZERO_ADDRESS() : IOAddress::IPV6_ZERO_ADDRESS());
 }
 
 IOAddress
