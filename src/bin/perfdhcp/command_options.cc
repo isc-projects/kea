@@ -616,7 +616,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             size_t coma_loc = opt_text.find(',');
             check(coma_loc == std::string::npos,
                   "--o1r option must provide option code, a coma and hexstring for"
-                  " the option content, e.g. --o1r60,646f63736973 for sending option"
+                  " the option content, e.g. --o1r 60,646f63736973 for sending option"
                   " 60 (class-id) with the value 'docsis'");
             int code = 0;
 
@@ -626,7 +626,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                 check(code <= 0, "Option code can't be negative");
             } catch (const boost::bad_lexical_cast&) {
                 isc_throw(InvalidParameter, "Invalid option code specified for "
-                                            "--o1r option, expected format: --o1r<integer>,<hexstring>");
+                                            "--o1r option, expected format: --o1r <integer>,<hexstring>");
             }
 
             // Now try to interpret the hexstring

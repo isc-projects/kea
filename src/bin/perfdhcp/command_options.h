@@ -380,6 +380,15 @@ public:
     /// @return container with options.
     const isc::dhcp::OptionCollection& getExtraOpts() const { return extra_opts_; }
 
+    /// @brief Returns relay options to be inserted at given level of encapsulation.
+    ///
+    /// @param encapsulation_level level of encapsulation, by default 1
+    ///
+    /// @return container with options.
+    const isc::dhcp::OptionCollection& getRelayOpts(uint8_t encapsulation_level = 1) const {
+        return relay_opts_.find(encapsulation_level)->second;
+    }
+
     /// \brief Check if single-threaded mode is enabled.
     ///
     /// \return true if single-threaded mode is enabled.

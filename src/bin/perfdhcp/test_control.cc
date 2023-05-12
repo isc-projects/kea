@@ -1880,6 +1880,7 @@ TestControl::setDefaults6(const Pkt6Ptr& pkt) {
           relay_info.linkaddr_ = IOAddress(socket_.addr_);
       }
       relay_info.peeraddr_ = IOAddress(socket_.addr_);
+      relay_info.options_.insert(options_.getRelayOpts().begin(), options_.getRelayOpts().end());
       pkt->addRelayInfo(relay_info);
     }
 }
