@@ -44,7 +44,7 @@ jobs:
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Install dependencies
       run: |
-        ./hammer.py prepare-system -p local -w docs,mysql,netconf,perfdhcp,pgsql,shell,tls,unittest
+        ./hammer.py prepare-system -p local -w docs,mysql,netconf,perfdhcp,shell,tls,unittest
 
     - name: Inspect system CPU
       run: cat /proc/cpuinfo
