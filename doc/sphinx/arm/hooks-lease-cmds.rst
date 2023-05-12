@@ -1033,7 +1033,8 @@ backend and write the lease database into a CSV file. They take the path
 of the file as the ``filename`` argument. If the specified output file
 is the same as the configured memfile one, the backend closes and reopens
 the file in an attempt to synchronize both the files and the in-memory images
-of the lease database. The extension ``.bak`` is added to the previous filename.
+of the lease database. The extension ``.bak`` with server PID number is added
+to the previous filename. For example ``.bak14326``.
 
 .. note::
 
