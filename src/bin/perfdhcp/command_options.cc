@@ -605,8 +605,6 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             // and must be used together with -A option.
             check((ipversion_ != 6),
                   "-6 must be explicitly specified before --o1r is used.");
-            check((ipversion_ == 4),
-                  "--o1r can be only used with -6 option");
             if (v6_relay_encapsulation_level_ != 1) {
                 isc_throw(isc::InvalidParameter, "-A must be explicitly specified before --o1r is used.");
             }
