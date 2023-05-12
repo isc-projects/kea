@@ -5824,9 +5824,9 @@ finds multiple reservations for the same IP address.
 The ``reservations-lookup-first`` is a boolean parameter which controls whether
 host reservations lookup should be performed before lease lookup. This parameter
 has effect only when multi-threading is disabled. When multi-threading is
-enabled, host reservations lookup is always performed first to avoid lease
-lookup resource locking. The ``reservations-lookup-first`` parameter defaults to
-``false`` when multi-threading is disabled.
+enabled, host reservations lookup is always performed first to avoid lease-lookup
+resource locking. The ``reservations-lookup-first`` parameter defaults to ``false``
+when multi-threading is disabled.
 
 .. _host_reservations_as_basic_access_control4:
 

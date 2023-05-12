@@ -32,20 +32,8 @@ for file in $files; do
 			comment=0
 			echo "" >> $work_file
 			continue
-		elif [ $comment -eq 0 -a $json -eq 0 -a $(echo "$line" | grep "^\s*{\|^\s*\".*{" | grep -v "}" | grep -v "key\|pre" | wc -l) -eq 1 ]; then
+		elif [ $comment -eq 0 -a $json -eq 0 -a $(echo "$line" | grep "^\s*{\|^\s*\".*{" | grep -v "}" | wc -l) -eq 1 ]; then
 			# if this is not a comment and the line starts with spaces followed by '{' or by '"' followed by "{"
-			# ignore dns config:
-			#      key "key.four.example.com." {
-			#          algorithm hmac-sha224;
-			#          secret "bZEG7Ow8OgAUPfLWV3aAUQ==";
-			#      };
-			# ignore detailed html:
-			#    .. raw:: html
-			#    <details><summary>Expand here!</summary>
-			#    <pre>{
-			#    ...
-			#    }</pre>
-			#    </details><br>
 			json=1
 			# ignore any map name before top level map
 			line=$(echo "$line" | sed "s/.*{/{/g")

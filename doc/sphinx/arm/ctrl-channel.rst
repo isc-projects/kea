@@ -98,7 +98,7 @@ following structure:
 The ``command`` parameter contains the name of the command to execute and it
 is mandatory.
 The ``arguments`` map contains the parameters required to carry out the
-given command. The exact content and format of the map are command specific.
+given command. The exact content and format of the map are command-specific.
 
 ``service`` is a list of the servers at which the control command is
 targeted. In the example above, the control command is targeted at the
