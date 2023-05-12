@@ -163,6 +163,10 @@ CommandOptions::reset() {
         single_thread_mode_ = false;
     }
     scenario_ = Scenario::BASIC;
+    for (uint8_t i = 1; i <= RELAY_OPTIONS_MAX_ENCAPSULATION ; i++) {
+        OptionCollection option_collection;
+        relay_opts_[i] = option_collection;
+    }
 }
 
 bool
@@ -212,6 +216,7 @@ CommandOptions::parse(int argc, char** const argv, bool print_cmd_line) {
 }
 
 const int LONG_OPT_SCENARIO = 300;
+const int LONG_OPT_RELAY_1_OPTION = 400;
 
 bool
 CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
@@ -232,6 +237,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     struct option long_options[] = {
         {"scenario", required_argument, 0, LONG_OPT_SCENARIO},
+        {"o1r", required_argument, 0, LONG_OPT_RELAY_1_OPTION},
         {0,          0,                 0, 0}
     };
 
@@ -591,6 +597,55 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             } else {
                 isc_throw(InvalidParameter, "scenario value '" << optarg << "' is wrong - should be 'basic' or 'avalanche'");
             }
+            break;
+        }
+
+        case LONG_OPT_RELAY_1_OPTION: {
+            // for now this is only available for v6
+            // and must be used together with -A option.
+            check((ipversion_ != 6),
+                  "-6 must be explicitly specified before --o1r is used.");
+            check((ipversion_ == 4),
+                  "--o1r can be only used with -6 option");
+            if (v6_relay_encapsulation_level_ != 1) {
+                isc_throw(isc::InvalidParameter, "-A must be explicitly specified before --o1r is used.");
+            }
+
+            // custom option (expected format: code,hexstring)
+            std::string opt_text = std::string(optarg);
+            size_t coma_loc = opt_text.find(',');
+            check(coma_loc == std::string::npos,
+                  "--o1r option must provide option code, a coma and hexstring for"
+                  " the option content, e.g. --o1r60,646f63736973 for sending option"
+                  " 60 (class-id) with the value 'docsis'");
+            int code = 0;
+
+            // Try to parse the option code
+            try {
+                code = boost::lexical_cast<int>(opt_text.substr(0,coma_loc));
+                check(code <= 0, "Option code can't be negative");
+            } catch (const boost::bad_lexical_cast&) {
+                isc_throw(InvalidParameter, "Invalid option code specified for "
+                                            "--o1r option, expected format: --o1r<integer>,<hexstring>");
+            }
+
+            // Now try to interpret the hexstring
+            opt_text = opt_text.substr(coma_loc + 1);
+            std::vector<uint8_t> bin;
+            try {
+                isc::util::encode::decodeHex(opt_text, bin);
+            } catch (const BadValue& e) {
+                isc_throw(InvalidParameter, "Error during encoding option --o1r:"
+                                                << e.what());
+            }
+
+            // Create and remember the option.
+            OptionPtr option(new Option(Option::V6, code, bin));
+            // For now, only 1 level of encapsulation is allowed for relay options,
+            // thus 1 key is hardcoded below. But in future, if needed, level of
+            // encapsulation of relay option could be taken from command option.
+            auto relay_1_opts = relay_opts_.find(1);
+            relay_1_opts->second.insert(make_pair(code, option));
             break;
         }
         default:

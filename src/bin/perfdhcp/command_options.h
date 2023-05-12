@@ -41,6 +41,9 @@ public:
     /// @brief A vector holding MAC addresses.
     typedef std::vector<std::vector<uint8_t> > MacAddrsVector;
 
+    /// @brief Maximum allowed level of encapsulation of added relay options.
+    const static uint8_t RELAY_OPTIONS_MAX_ENCAPSULATION = 1;
+
     /// \brief A class encapsulating the type of lease being requested from the
     /// server.
     ///
@@ -750,6 +753,9 @@ private:
 
     /// @brief Extra options to be sent in each packet.
     isc::dhcp::OptionCollection extra_opts_;
+
+    /// @brief Map of relay options to be sent per encapsulation level.
+    std::map<uint8_t, isc::dhcp::OptionCollection> relay_opts_;
 
     /// @brief Option to switch modes between single-threaded and multi-threaded.
     bool single_thread_mode_;
