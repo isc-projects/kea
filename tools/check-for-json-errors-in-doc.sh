@@ -32,11 +32,11 @@ for file in $files; do
 			comment=0
 			echo "" >> $work_file
 			continue
-		elif [ $comment -eq 0 -a $json -eq 0 -a $(echo "$line" | grep "^\s*{\|^\s*\".*{" | grep -v "}" | wc -l) -eq 1 ]; then
+		elif [ $comment -eq 0 -a $json -eq 0 -a $(echo "$line" | grep "^\s*{\|^\s*\".*{\|^\s*\[\s*$" | grep -v "}" | wc -l) -eq 1 ]; then
 			# if this is not a comment and the line starts with spaces followed by '{' or by '"' followed by "{"
 			json=1
 			# ignore any map name before top level map
-			line=$(echo "$line" | sed "s/.*{/{/g")
+			line=$(echo "$line" | sed 's/.*{/{/g')
 			echo "" > $work_file
 		elif [ $comment -eq 0 -a $json -eq 1 -a $(echo "$line" | grep "^\s*[A-Za-z]\|^\s*\`" | wc -l) -eq 1 ]; then
 			# if the line is not a comment and the line starts with spaces followed by 'A-Za-z' or followed by "`" and the parser is processing a json structure
@@ -66,17 +66,17 @@ for file in $files; do
 					# 9. replace '   <DATA>' with '   "placeholder": "value"'
 					# 10. replace ' <DATA>' with ' "placeholder"'
 				if [ $(echo "$file" | grep "\.json" | wc -l) -eq 0 ]; then
-					echo "$line" | cut -d "#" -f 1 | sed "s/\/\/ .*//g" | sed "s/<?.*?>//g" | sed "s/\[ <\([-A-Za-z0-9 ]*\)> \]/\[ \"<\1>\" \]/g" | sed "s/ <\(.*\)>:/ \"<\1>\":/g" | sed "s/: <\(.*\)>/: \"<\1>\"/g" | sed "s/   \.\.\./   \"placeholder\": \"value\"/g" | sed "s/, \.\.\. / /g" | sed "s/   <\(.*\)>/   \"placeholder\": \"value\"/g" | sed "s/ <\(.*\)>/ \"placeholder\"/g" >> $work_file
+					echo "$line" | cut -d "#" -f 1 | sed 's/\/\/ .*//g' | sed 's/<?.*?>//g' | sed 's/\[ <\([-A-Za-z0-9 ]*\)> \]/\[ \"<\1>\" \]/g' | sed 's/ <\(.*\)>:/ \"<\1>\":/g' | sed 's/: <\(.*\)>/: \"<\1>\"/g' | sed 's/   \.\.\./   \"placeholder\": \"value\"/g' | sed 's/, \.\.\. / /g' | sed 's/   <\(.*\)>/   \"placeholder\": \"value\"/g' | sed 's/ <\(.*\)>/ \"placeholder\"/g' >> $work_file
 				else
 					# if file is .rst the following replace in line are done:
 					# 1. delete everything after '#'
 					# 2. delete everything after //
 					# 3. ignore <?include?>
-					echo "$line" | cut -d "#" -f 1 | sed "s/\/\/ .*//g" | sed "s/<?.*?>//g" >> $work_file
+					echo "$line" | cut -d "#" -f 1 | sed 's/\/\/ .*//g' | sed 's/<?.*?>//g' >> $work_file
 				fi
 			fi
 		fi
-	done <<< $(cat $file | sed ':a;N;$!ba;s/,\s*\n\s*\.\.\.//g')
+	done <<< $(cat $file | sed ':a;N;$!ba;s/,\s*\n\s*\.\.\.//g' | sed ':a;N;$!ba;s/\s\\\n//g')
 	if [ $comment -eq 0 -a $json -eq 1 ]; then
 		# if the file ended but the parser is processing a json structure
 		cat $work_file | jq . > /dev/null

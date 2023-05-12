@@ -1336,7 +1336,7 @@ with the addresses 2001:db8:1::cafe and 2001:db8:1::babe.
               "code": 23,
               "space": "dhcp6",
               "csv-format": false,
-              "data": "20 01 0D B8 00 01 00 00 00 00 00 00 00 00 CA FE
+              "data": "20 01 0D B8 00 01 00 00 00 00 00 00 00 00 CA FE \
                        20 01 0D B8 00 01 00 00 00 00 00 00 00 00 BA BE"
            },
            ...

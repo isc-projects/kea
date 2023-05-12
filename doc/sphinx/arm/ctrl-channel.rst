@@ -100,7 +100,7 @@ is mandatory.
 The ``arguments`` map contains the parameters required to carry out the
 given command. The exact content and format of the map are command-specific.
 
-``service`` is a list of the servers at which the control command is
+The ``service`` list contains the servers at which the control command is
 targeted. In the example above, the control command is targeted at the
 DHCPv4 server. In most cases, the CA simply forwards this command to
 the DHCPv4 server for processing via a UNIX domain socket. Sometimes,
@@ -122,9 +122,9 @@ by the receiving server. This parameter is only meaningful to the CA.
 If the command received by the CA does not include a ``service``
 parameter or this list is empty, the CA simply processes this message on
 its own. For example, a ``config-get`` command which includes no service
-parameter returns the Control Agent's own configuration. The
-``config-get`` command with a service value "dhcp4" is forwarded to the DHCPv4
-server and returns the DHCPv4 server's configuration.
+parameter returns the Control Agent's own configuration. The ``config-get``
+command with a service value "dhcp4" is forwarded to the DHCPv4 server and
+returns the DHCPv4 server's configuration.
 
 The following list shows the mapping of the values carried within the
 ``service`` parameter to the servers to which the commands are
@@ -180,9 +180,9 @@ The ``text`` field typically appears when the result is non-zero and
 contains a description of the error encountered, but it often also
 appears for successful outcomes. The exact text is command-specific, but
 in general uses plain English to describe the outcome of the command.
-``arguments`` is a map of additional data values returned by the server
-which are specific to the command issued. The map may be present, but
-that depends on the specific command.
+The ``arguments`` map contains additional data values returned by the server
+which are specific to the command issued. The map may be present, but that
+depends on the specific command.
 
 .. note::
 
@@ -385,7 +385,7 @@ command. When ``config-reload`` is issued after ``config-set``, Kea attempts
 to reload its original configuration from the file, possibly losing all
 changes introduced using ``config-set`` or other commands.
 
-``config-reload`` does not take any parameters. An example command
+The ``config-reload`` command does not take any parameters. An example command
 invocation looks like this:
 
 ::
