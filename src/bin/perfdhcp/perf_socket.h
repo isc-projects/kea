@@ -26,7 +26,7 @@ namespace perfdhcp {
 class BasePerfSocket : public dhcp::SocketInfo {
 public:
     /// Interface index.
-    uint16_t ifindex_;
+    unsigned int ifindex_;
 
     /// \brief Default constructor of BasePerfSocket.
     BasePerfSocket() :

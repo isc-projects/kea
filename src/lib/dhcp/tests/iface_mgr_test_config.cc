@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,12 +67,12 @@ IfaceMgrTestConfig::addIface(const IfacePtr& iface) {
 }
 
 void
-IfaceMgrTestConfig::addIface(const std::string& name, const int ifindex) {
+IfaceMgrTestConfig::addIface(const std::string& name, const unsigned int ifindex) {
     IfaceMgr::instance().addInterface(createIface(name, ifindex));
 }
 
 IfacePtr
-IfaceMgrTestConfig::createIface(const std::string &name, const int ifindex) {
+IfaceMgrTestConfig::createIface(const std::string &name, const unsigned int ifindex) {
     IfacePtr iface(new Iface(name, ifindex));
     if (name == "lo") {
         iface->flag_loopback_ = true;

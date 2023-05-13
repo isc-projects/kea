@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file   dhcp6_test_utils.h
+/// @file dhcp6_test_utils.h
 ///
 /// @brief This file contains utility classes used for DHCPv6 server testing
 
@@ -519,7 +519,7 @@ public:
     std::string valid_iface_;
 
     // Index of a valid network interface
-    uint32_t valid_ifindex_;
+    unsigned int valid_ifindex_;
 };
 
 // We need to pass one reference to the Dhcp6Client, which is defined in

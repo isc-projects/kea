@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -832,7 +832,7 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
 }
 
 IfacePtr
-IfaceCollection::getIface(uint32_t ifindex) {
+IfaceCollection::getIface(const unsigned int ifindex) {
     return (getIfaceInternal(ifindex, MultiThreadingMgr::instance().getMode()));
 }
 
@@ -843,7 +843,10 @@ IfaceCollection::getIface(const std::string& ifname) {
 }
 
 IfacePtr
-IfaceCollection::getIfaceInternal(uint32_t ifindex, bool need_lock) {
+IfaceCollection::getIfaceInternal(const unsigned int ifindex, const bool need_lock) {
+    if (ifindex == UNSET_IFINDEX) {
+        isc_throw(BadValue, "interface index was not set");
+    }
     if (need_lock) {
         lock_guard<mutex> lock(mutex_);
         if (cache_ && (cache_->getIndex() == ifindex)) {
@@ -864,14 +867,13 @@ IfaceCollection::getIfaceInternal(uint32_t ifindex, bool need_lock) {
         cache_ = *it;
         return (cache_);
     } else {
-        lock_guard<mutex> lock(mutex_);
         cache_ = *it;
         return (cache_);
     }
 }
 
 IfacePtr
-IfaceCollection::getIfaceInternal(const std::string& ifname, bool need_lock) {
+IfaceCollection::getIfaceInternal(const std::string& ifname, const bool need_lock) {
     if (need_lock) {
         lock_guard<mutex> lock(mutex_);
         if (cache_ && (cache_->getName() == ifname)) {
@@ -892,17 +894,13 @@ IfaceCollection::getIfaceInternal(const std::string& ifname, bool need_lock) {
         cache_ = *it;
         return (cache_);
     } else {
-        lock_guard<mutex> lock(mutex_);
         cache_ = *it;
         return (cache_);
     }
 }
 
 IfacePtr
-IfaceMgr::getIface(int ifindex) {
-    if ((ifindex < 0) || (ifindex > std::numeric_limits<int32_t>::max())) {
-        return (IfacePtr()); // out of range
-    }
+IfaceMgr::getIface(const unsigned int ifindex) {
     return (ifaces_.getIface(ifindex));
 }
 
@@ -1210,7 +1208,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         return (Pkt4Ptr());
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
-        // an error because of a signal being received  or for some other
+        // an error because of a signal being received or for some other
         // reason. This is because DHCP servers use signals to trigger
         // certain actions, like reconfiguration or graceful shutdown.
         // By catching a dedicated exception the caller will know if the
@@ -1329,7 +1327,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
 
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
-        // an error because of a signal being received  or for some other
+        // an error because of a signal being received or for some other
         // reason. This is because DHCP servers use signals to trigger
         // certain actions, like reconfiguration or graceful shutdown.
         // By catching a dedicated exception the caller will know if the
@@ -1476,7 +1474,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
 
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
-        // an error because of a signal being received  or for some other
+        // an error because of a signal being received or for some other
         // reason. This is because DHCP servers use signals to trigger
         // certain actions, like reconfiguration or graceful shutdown.
         // By catching a dedicated exception the caller will know if the
@@ -1600,7 +1598,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         return (Pkt6Ptr());
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
-        // an error because of a signal being received  or for some other
+        // an error because of a signal being received or for some other
         // reason. This is because DHCP servers use signals to trigger
         // certain actions, like reconfiguration or graceful shutdown.
         // By catching a dedicated exception the caller will know if the

@@ -177,7 +177,7 @@ public:
     ///
     /// @param name Name of the new interface.
     /// @param ifindex Index for a new interface.
-    void addIface(const std::string& name, const int ifindex);
+    void addIface(const std::string& name, const unsigned int ifindex);
 
     /// @brief Create an object representing interface.
     ///
@@ -198,7 +198,7 @@ public:
     /// @param ifindex An index of the interface to be created.
     ///
     /// @return An object representing interface.
-    static IfacePtr createIface(const std::string& name, const int ifindex);
+    static IfacePtr createIface(const std::string& name, const unsigned int ifindex);
 
     /// @brief Creates a default (example) set of fake interfaces.
     void createIfaces();

@@ -182,7 +182,7 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
     struct in6_addr to_addr;
     memset(&to_addr, 0, sizeof(to_addr));
 
-    int ifindex = -1;
+    unsigned int ifindex = UNSET_IFINDEX;
     if (result >= 0) {
         struct in6_pktinfo* pktinfo = NULL;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -216,7 +216,7 @@ public:
     /// @brief Returns interface index.
     ///
     /// @return interface index
-    int getIndex() const { return ifindex_; }
+    unsigned int getIndex() const { return ifindex_; }
 
     /// @brief Returns interface name.
     ///
@@ -416,7 +416,7 @@ protected:
     std::string name_;
 
     /// Interface index (a value that uniquely identifies an interface).
-    int ifindex_;
+    unsigned int ifindex_;
 
     /// List of assigned addresses.
     AddressCollection addrs_;
@@ -511,7 +511,7 @@ public:
             boost::multi_index::hashed_unique<
                 // Use the interface index as the key.
                 boost::multi_index::const_mem_fun<
-                    Iface, int, &Iface::getIndex
+                    Iface, unsigned int, &Iface::getIndex
                 >
             >,
             // Start definition of index #2.
@@ -571,7 +571,7 @@ public:
     ///
     /// @param ifindex The index of the interface to find.
     /// @return The interface with the index or null.
-    IfacePtr getIface(uint32_t ifindex);
+    IfacePtr getIface(const unsigned int ifindex);
 
     /// @brief Lookup by interface name.
     ///
@@ -585,7 +585,7 @@ private:
     /// @param ifindex The index of the interface to find.
     /// @param need_lock True when the cache operation needs to hold the mutex.
     /// @return The interface with the index or null.
-    IfacePtr getIfaceInternal(uint32_t ifindex, bool need_lock);
+    IfacePtr getIfaceInternal(const unsigned int ifindex, const bool need_lock);
 
     /// @brief Lookup by interface name.
     ///
@@ -594,7 +594,7 @@ private:
     /// @param ifname The name of the interface to find.
     /// @param need_lock True when the cache operation needs to hold the mutex.
     /// @return The interface with the name or null.
-    IfacePtr getIfaceInternal(const std::string& ifname, bool need_lock);
+    IfacePtr getIfaceInternal(const std::string& ifname, const bool need_lock);
 
     /// @brief The mutex for protecting the cache from concurrent
     /// access from packet processing threads.
@@ -749,7 +749,7 @@ public:
     /// @return interface with requested index (or null if no such
     ///         interface is present)
     ///
-    IfacePtr getIface(int ifindex);
+    IfacePtr getIface(const unsigned int ifindex);
 
     /// @brief Returns interface with specified interface name
     ///

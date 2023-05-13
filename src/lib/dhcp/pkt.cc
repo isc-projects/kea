@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,7 @@ namespace dhcp {
 Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
          const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
          uint16_t remote_port)
-    : transid_(transid), iface_(""), ifindex_(-1), local_addr_(local_addr),
+    : transid_(transid), iface_(""), ifindex_(UNSET_IFINDEX), local_addr_(local_addr),
       remote_addr_(remote_addr), local_port_(local_port),
       remote_port_(remote_port), buffer_out_(0), copy_retrieved_options_(false) {
 }
@@ -25,7 +25,7 @@ Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
 Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local_addr,
          const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
          uint16_t remote_port)
-    : transid_(0), iface_(""), ifindex_(-1), local_addr_(local_addr),
+    : transid_(0), iface_(""), ifindex_(UNSET_IFINDEX), local_addr_(local_addr),
       remote_addr_(remote_addr), local_port_(local_port),
       remote_port_(remote_port), buffer_out_(0), copy_retrieved_options_(false) {
     if (len != 0) {

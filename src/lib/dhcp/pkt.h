@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,11 +17,17 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <limits>
 #include <utility>
 
 namespace isc {
 
 namespace dhcp {
+
+/// @brief A value used to signal that the interface index was not set.
+/// That means that more than UNSET_IFINDEX interfaces are not supported.
+/// That's fine, since it would have overflowed with UNSET_IFINDEX + 1 anyway.
+constexpr unsigned int UNSET_IFINDEX = std::numeric_limits<unsigned int>::max();
 
 /// @brief RAII object enabling copying options retrieved from the
 /// packet.
@@ -524,13 +530,13 @@ public:
     /// @brief Sets interface index.
     ///
     /// @param ifindex specifies interface index.
-    void setIndex(int ifindex) {
+    void setIndex(const unsigned int ifindex) {
         ifindex_ = ifindex;
     }
 
     /// @brief Resets interface index to negative value.
     void resetIndex() {
-        ifindex_ = -1;
+        ifindex_ = UNSET_IFINDEX;
     }
 
     /// @brief Returns interface index.
@@ -544,7 +550,7 @@ public:
     ///
     /// @return true if interface index set, false otherwise.
     bool indexSet() const {
-        return (ifindex_ >= 0);
+        return (ifindex_ != UNSET_IFINDEX);
     }
 
     /// @brief Returns interface name.
@@ -789,7 +795,7 @@ protected:
     /// Each network interface has assigned an unique ifindex.
     /// It is a functional equivalent of a name, but sometimes more useful, e.g.
     /// when using odd systems that allow spaces in interface names.
-    int64_t ifindex_;
+    unsigned int ifindex_;
 
     /// @brief Local IP (v4 or v6) address.
     ///

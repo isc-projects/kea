@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -271,7 +271,7 @@ public:
     /// @param ifindex An index of the interface to be created.
     ///
     /// @return An object representing interface.
-    static IfacePtr createIface(const std::string& name, const int ifindex) {
+    static IfacePtr createIface(const std::string& name, const unsigned int ifindex) {
         IfacePtr iface(new Iface(name, ifindex));
         if (name == "lo") {
             iface->flag_loopback_ = true;
@@ -941,6 +941,46 @@ TEST_F(IfaceMgrTest, ifaceClass) {
     EXPECT_EQ(66666, iface->getIndex());
 }
 
+// This test checks the getIface by index method.
+TEST_F(IfaceMgrTest, getIfaceByIndex) {
+    NakedIfaceMgr ifacemgr;
+
+    // Create a set of fake interfaces. At the same time, remove the actual
+    // interfaces that have been detected by the IfaceMgr.
+    ifacemgr.createIfaces();
+
+    // Getting an unset index should throw.
+    EXPECT_THROW_MSG(ifacemgr.getIface(UNSET_IFINDEX), BadValue, "interface index was not set");
+
+    // Historically -1 was used as an unset value. Let's also check that it throws in case we didn't
+    // migrate all code to UNSET_IFINDEX and in case the values diverge.
+    EXPECT_THROW_MSG(ifacemgr.getIface(-1), BadValue, "interface index was not set");
+
+    // Get the first interface defined.
+    IfacePtr iface(ifacemgr.getIface(0));
+    ASSERT_TRUE(iface);
+    EXPECT_EQ("lo", iface->getName());
+
+    // Attemt to get an undefined interface.
+    iface = ifacemgr.getIface(3);
+    EXPECT_FALSE(iface);
+
+    // Check that we can go past INT_MAX.
+    unsigned int int_max(numeric_limits<int>::max());
+    iface = ifacemgr.getIface(int_max);
+    EXPECT_FALSE(iface);
+    iface = ifacemgr.createIface("wlan0", int_max);
+    ifacemgr.addInterface(iface);
+    iface = ifacemgr.getIface(int_max);
+    EXPECT_TRUE(iface);
+    iface = ifacemgr.getIface(int_max + 1);
+    EXPECT_FALSE(iface);
+    iface = ifacemgr.createIface("wlan1", int_max + 1);
+    ifacemgr.addInterface(iface);
+    iface = ifacemgr.getIface(int_max + 1);
+    EXPECT_TRUE(iface);
+}
+
 // This test checks the getIface by packet method.
 TEST_F(IfaceMgrTest, getIfaceByPkt) {
     NakedIfaceMgr ifacemgr;
@@ -991,9 +1031,9 @@ TEST_F(IfaceMgrTest, getIfaceByPkt) {
     EXPECT_FALSE(pkt6->indexSet());
 
     // Test that you can also reset the index via setIndex().
-    pkt4->setIndex(-1);
+    pkt4->setIndex(UNSET_IFINDEX);
     EXPECT_FALSE(pkt4->indexSet());
-    pkt6->setIndex(-1);
+    pkt6->setIndex(UNSET_IFINDEX);
     EXPECT_FALSE(pkt6->indexSet());
 }
 

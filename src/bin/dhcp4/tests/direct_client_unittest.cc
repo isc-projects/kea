@@ -83,7 +83,7 @@ public:
     /// @return Generated message.
     Pkt4Ptr createClientMessage(const uint16_t msg_type,
                                 const std::string& iface,
-                                const uint32_t ifindex);
+                                const unsigned int ifindex);
 
     /// @brief Creates simple message from a client.
     ///
@@ -102,7 +102,7 @@ public:
     /// @return Configured and parsed message.
     Pkt4Ptr createClientMessage(const Pkt4Ptr &msg,
                                 const std::string& iface,
-                                const uint32_t ifindex);
+                                const unsigned int ifindex);
 
     /// @brief This test checks that the message from directly connected client
     /// is processed and that client is offered IPv4 address from the subnet
@@ -196,7 +196,7 @@ DirectClientTest::configureTwoSubnets(const std::string& prefix1,
 Pkt4Ptr
 DirectClientTest::createClientMessage(const uint16_t msg_type,
                                       const std::string& iface,
-                                      const uint32_t ifindex) {
+                                      const unsigned int ifindex) {
     // Create a source packet.
     Pkt4Ptr msg = Pkt4Ptr(new Pkt4(msg_type, 1234));
     return (createClientMessage(msg, iface, ifindex));
@@ -206,7 +206,7 @@ DirectClientTest::createClientMessage(const uint16_t msg_type,
 Pkt4Ptr
 DirectClientTest::createClientMessage(const Pkt4Ptr& msg,
                                       const std::string& iface,
-                                      const uint32_t ifindex) {
+                                      const unsigned int ifindex) {
     msg->setRemoteAddr(IOAddress("255.255.255.255"));
     msg->addOption(generateClientId());
     msg->setIface(iface);

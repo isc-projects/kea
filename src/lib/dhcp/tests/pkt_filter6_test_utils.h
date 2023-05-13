@@ -74,7 +74,7 @@ public:
     void testRcvdMessage(const Pkt6Ptr& rcvd_msg) const;
 
     std::string ifname_;   ///< Loopback interface name.
-    uint16_t ifindex_;     ///< Loopback interface index.
+    unsigned int ifindex_; ///< Loopback interface index.
     uint16_t port_;        ///< A port number used for the test.
     isc::dhcp::SocketInfo sock_info_; ///< A structure holding socket info.
     int send_msg_sock_;    ///< Holds a descriptor of the socket used by
