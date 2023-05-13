@@ -1,13 +1,25 @@
 #!/bin/bash
+
+# Usage:
+# check-for-json-errors-in-doc.sh [--all] [<file1>, <file2>, ...]
+
 # Change directory to the root of the repository.
 script_path=$(cd "$(dirname "${0}")" && pwd)
 cd "${script_path}/.."
+
 # Parse parameters.
 if test ${#} -gt 0; then
-  files="${*}"
+	if test "${1}" = '--all'; then
+		files='doc src'
+	else
+		files="${*}"
+	fi
 else
-  files='doc src'
+	# By default, check only modified files.
+	files=$(git diff --name-only $(git merge-base origin/master HEAD))
 fi
+
+exit_code=0
 
 # Get the files.
 files=$(find ${files} -type f \( -name '*.rst' -or -name '*.json' \) -and -not -path '*/_build/*' -and -not -path '*/man/*' | sort)
@@ -48,6 +60,7 @@ for file in $files; do
 				echo "===start of JSON block==="
 				cat $work_file
 				echo "====end of JSON block===="
+				exit_code=1
 			fi
 		fi
 		if [ $comment -eq 0 -a $json -eq 1 ]; then
@@ -86,7 +99,10 @@ for file in $files; do
 			echo "===start of JSON block==="
 			cat $work_file
 			echo "====end of JSON block===="
+			exit_code=1
 		fi
 	fi
 done
 rm $work_file
+
+exit ${exit_code}

@@ -112,6 +112,16 @@ shellcheck:
     - SCRIPTS+="tools/tests_in_valgrind.sh "
     - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
 
+are-database-scripts-in-sync:
+  stage: test
+  script:
+    - ./src/share/database/scripts/utils/are-scripts-in-sync.py
+
+check-for-json-errors-in-doc:
+  stage: test
+  script:
+    - ./tools/check-for-json-errors-in-doc.sh
+
 danger:
   stage: test
   before_script:
@@ -121,12 +131,6 @@ danger:
     - export DANGER_GITLAB_API_BASE_URL=https://gitlab.isc.org/api/v4
   script:
     - danger --fail-on-errors=true --new-comment
-
-dhcpdb_create-upgrade-consistency:
-  allow_failure: false
-  stage: test
-  script:
-    - ./src/share/database/scripts/utils/are-scripts-in-sync.py
 
 duplicate-includes:
   stage: test
