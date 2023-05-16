@@ -1,3 +1,9 @@
+2139.	[bug]		marcin
+	Fixed a bug in the delegated prefix permutations that caused
+	allocating prefixes in the same order by the random and FLQ
+	allocators.
+	(Gitlab #2860)
+
 2138.	[bug]		marcin
 	Fixed a bug in the DHCPv4 server that sent DHCPNAK to a client
 	in the INIT-REBOOT state when the server had no matching subnet
