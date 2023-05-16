@@ -21,8 +21,8 @@ module kea-dhcp6-server {
                used to configure and manage a Kea DHCPv6 server.";
 
   revision 2023-05-31 {
-    description "Added allocator, ddns-ttl-percent, offer-lifetime,
-                 pd-allocator, read-timeout, tcp-user-timeout, write-timeout.
+    description "Added allocator, ddns-ttl-percent, pd-allocator,
+                 read-timeout, tcp-user-timeout, write-timeout.
                  Removed contact-points, keyspace.";
   }
 

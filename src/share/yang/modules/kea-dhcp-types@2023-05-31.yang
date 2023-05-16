@@ -1228,7 +1228,7 @@ module kea-dhcp-types {
     leaf pd-allocator {
       type string;
       description
-        "the allocation strategy for delegted prefixes";
+        "the allocation strategy for delegated prefixes";
     }
   }
 

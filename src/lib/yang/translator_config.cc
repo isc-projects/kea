@@ -189,7 +189,6 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
 
     checkAndGetLeaf(result, data_node, "allocator");
     checkAndGetLeaf(result, data_node, "cache-max-age");
-    checkAndGetLeaf(result, data_node, "cache-max-age");
     checkAndGetLeaf(result, data_node, "cache-threshold");
     checkAndGetLeaf(result, data_node, "calculate-tee-times");
     checkAndGetLeaf(result, data_node, "dhcp4o6-port");
@@ -237,8 +236,6 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     checkAndGet(result, data_node, "compatibility",
                 [&](DataNode const& node) -> ElementPtr const {
                     ElementPtr compatibility(Element::createMap());
-                    checkAndGetLeaf(compatibility, node, "exclude-first-last-24");
-                    checkAndGetLeaf(compatibility, node, "ignore-dhcp-server-identifier");
                     checkAndGetLeaf(compatibility, node, "ignore-rai-link-selection");
                     checkAndGetLeaf(compatibility, node, "lenient-option-parsing");
                     return compatibility;
@@ -344,6 +341,22 @@ TranslatorConfig::getServerKeaDhcp4() {
     checkAndGetLeaf(result, config, "next-server");
     checkAndGetLeaf(result, config, "offer-lifetime");
     checkAndGetLeaf(result, config, "server-hostname");
+
+    checkAndGet(result, config, "compatibility",
+                [&](DataNode const& node) -> ElementPtr const {
+                    // If it exists, add to the existing compatibility map created in getServerKeaDhcpCommon.
+                    ConstElementPtr const_compatibility(result->get("compatibility"));
+                    ElementPtr compatibility;
+                    if (const_compatibility) {
+                        compatibility = copy(const_compatibility);
+                    } else {
+                        compatibility = Element::createMap();
+                    }
+
+                    checkAndGetLeaf(compatibility, node, "exclude-first-last-24");
+                    checkAndGetLeaf(compatibility, node, "ignore-dhcp-server-identifier");
+                    return compatibility;
+                });
 
     // Handle interfaces.
     ElementPtr interfaces_config(getInterfacesKea(config));
