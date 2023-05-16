@@ -26,6 +26,8 @@ IPRangePermutation::IPRangePermutation(const PrefixRange& range)
     : range_start_(range.start_), step_(static_cast<uint64_t>(1) << (128 - range.delegated_length_)),
       cursor_(prefixesInRange(range.prefix_length_, range.delegated_length_) - 1),
       initial_cursor_(cursor_), state_(), done_(false), generator_() {
+    std::random_device rd;
+    generator_.seed(rd());
 }
 
 IOAddress
