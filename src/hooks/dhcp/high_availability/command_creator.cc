@@ -81,6 +81,7 @@ CommandCreator::createLease4Update(const Lease4& lease4) {
     ElementPtr lease_as_json = lease4.toElement();
     insertLeaseExpireTime(lease_as_json);
     lease_as_json->set("force-create", Element::create(true));
+    lease_as_json->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("lease4-update", lease_as_json);
     insertService(command, HAServerType::DHCPv4);
     return (command);
@@ -90,6 +91,7 @@ ConstElementPtr
 CommandCreator::createLease4Delete(const Lease4& lease4) {
     ElementPtr lease_as_json = lease4.toElement();
     insertLeaseExpireTime(lease_as_json);
+    lease_as_json->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("lease4-del", lease_as_json);
     insertService(command, HAServerType::DHCPv4);
     return (command);
@@ -149,6 +151,7 @@ CommandCreator::createLease6BulkApply(const Lease6CollectionPtr& leases,
     ElementPtr args = Element::createMap();
     args->set("deleted-leases", deleted_leases_list);
     args->set("leases", leases_list);
+    args->set("origin", Element::create("ha-partner"));
 
     ConstElementPtr command = config::createCommand("lease6-bulk-apply", args);
     insertService(command, HAServerType::DHCPv6);
@@ -175,6 +178,7 @@ CommandCreator::createLease6BulkApply(LeaseUpdateBacklog& leases) {
     ElementPtr args = Element::createMap();
     args->set("deleted-leases", deleted_leases_list);
     args->set("leases", leases_list);
+    args->set("origin", Element::create("ha-partner"));
 
     ConstElementPtr command = config::createCommand("lease6-bulk-apply", args);
     insertService(command, HAServerType::DHCPv6);
@@ -186,6 +190,7 @@ CommandCreator::createLease6Update(const Lease6& lease6) {
     ElementPtr lease_as_json = lease6.toElement();
     insertLeaseExpireTime(lease_as_json);
     lease_as_json->set("force-create", Element::create(true));
+    lease_as_json->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("lease6-update", lease_as_json);
     insertService(command, HAServerType::DHCPv6);
     return (command);
@@ -195,6 +200,7 @@ ConstElementPtr
 CommandCreator::createLease6Delete(const Lease6& lease6) {
     ElementPtr lease_as_json = lease6.toElement();
     insertLeaseExpireTime(lease_as_json);
+    lease_as_json->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("lease6-del", lease_as_json);
     insertService(command, HAServerType::DHCPv6);
     return (command);

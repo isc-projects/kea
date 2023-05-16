@@ -208,6 +208,7 @@ TEST(CommandCreatorTest, createLease4Update) {
     // The lease update must contain the "force-create" parameter indicating that
     // the lease must be created if it doesn't exist.
     lease_as_json->set("force-create", Element::create(true));
+    lease_as_json->set("origin", Element::create("ha-partner"));
     EXPECT_EQ(lease_as_json->str(), arguments->str());
 }
 
@@ -219,6 +220,7 @@ TEST(CommandCreatorTest, createLease4Delete) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease4-del", "dhcp4",
                                               arguments));
     ElementPtr lease_as_json = leaseAsJson(createLease4());
+    lease_as_json->set("origin", Element::create("ha-partner"));
     EXPECT_EQ(lease_as_json->str(), arguments->str());
 }
 
@@ -334,6 +336,7 @@ TEST(CommandCreatorTest, createLease6Update) {
     // The lease update must contain the "force-create" parameter indicating that
     // the lease must be created if it doesn't exist.
     lease_as_json->set("force-create", Element::create(true));
+    lease_as_json->set("origin", Element::create("ha-partner"));
     EXPECT_EQ(lease_as_json->str(), arguments->str());
 }
 
@@ -345,6 +348,7 @@ TEST(CommandCreatorTest, createLease6Delete) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-del", "dhcp6",
                                               arguments));
     ElementPtr lease_as_json = leaseAsJson(createLease6());
+    lease_as_json->set("origin", Element::create("ha-partner"));
     EXPECT_EQ(lease_as_json->str(), arguments->str());
 }
 
@@ -363,6 +367,10 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-bulk-apply",
                                               "dhcp6", arguments));
+
+    ConstElementPtr origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("ha-partner", origin->stringValue());
 
     // Verify deleted-leases.
     auto deleted_leases_json = arguments->get("deleted-leases");
@@ -395,6 +403,10 @@ TEST(CommandCreatorTest, createLease6BulkApplyFromBacklog) {
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-bulk-apply",
                                               "dhcp6", arguments));
+
+    ConstElementPtr origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("ha-partner", origin->stringValue());
 
     // Verify deleted-leases.
     auto deleted_leases_json = arguments->get("deleted-leases");
