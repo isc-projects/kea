@@ -215,7 +215,8 @@ public:
 
     /// @name pure virtuals, every derived class must implement these
 
-    /// @return true if the other ElementPtr has the same type and value
+    /// @return true if the other ElementPtr has the same value and the same
+    /// type (or a different and compatible type), false otherwise.
     virtual bool equals(const Element& other) const = 0;
 
     /// Converts the Element to JSON format and appends it to
@@ -656,7 +657,10 @@ public:
     /// stringstream.
     void toJSON(std::ostream& ss) const override;
 
-    /// @brief Checks whether the other Element has the same type and value.
+    /// @brief Checks whether the other Element is equal.
+    ///
+    /// @return true if the other ElementPtr has the same value and the same
+    /// type (or a different and compatible type), false otherwise.
     bool equals(const Element& other) const override;
 
 private:
