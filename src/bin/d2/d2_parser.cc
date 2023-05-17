@@ -48,7 +48,12 @@
 
 #include <d2/parser_context.h>
 
-#line 52 "d2_parser.cc"
+// Avoid warnings with the error counter.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
+#line 57 "d2_parser.cc"
 
 
 #ifndef YY_
@@ -141,7 +146,7 @@
 
 #line 14 "d2_parser.yy"
 namespace isc { namespace d2 {
-#line 145 "d2_parser.cc"
+#line 150 "d2_parser.cc"
 
   /// Build a parser object.
   D2Parser::D2Parser (isc::d2::D2ParserContext& ctx_yyarg)
@@ -378,45 +383,45 @@ namespace isc { namespace d2 {
         switch (yykind)
     {
       case symbol_kind::S_STRING: // "constant string"
-#line 116 "d2_parser.yy"
+#line 121 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
-#line 384 "d2_parser.cc"
+#line 389 "d2_parser.cc"
         break;
 
       case symbol_kind::S_INTEGER: // "integer"
-#line 116 "d2_parser.yy"
+#line 121 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < int64_t > (); }
-#line 390 "d2_parser.cc"
+#line 395 "d2_parser.cc"
         break;
 
       case symbol_kind::S_FLOAT: // "floating point"
-#line 116 "d2_parser.yy"
+#line 121 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < double > (); }
-#line 396 "d2_parser.cc"
+#line 401 "d2_parser.cc"
         break;
 
       case symbol_kind::S_BOOLEAN: // "boolean"
-#line 116 "d2_parser.yy"
+#line 121 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < bool > (); }
-#line 402 "d2_parser.cc"
+#line 407 "d2_parser.cc"
         break;
 
       case symbol_kind::S_value: // value
-#line 116 "d2_parser.yy"
+#line 121 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 408 "d2_parser.cc"
+#line 413 "d2_parser.cc"
         break;
 
       case symbol_kind::S_map_value: // map_value
-#line 116 "d2_parser.yy"
+#line 121 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 414 "d2_parser.cc"
+#line 419 "d2_parser.cc"
         break;
 
       case symbol_kind::S_ncr_protocol_value: // ncr_protocol_value
-#line 116 "d2_parser.yy"
+#line 121 "d2_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 420 "d2_parser.cc"
+#line 425 "d2_parser.cc"
         break;
 
       default:
@@ -689,249 +694,249 @@ namespace isc { namespace d2 {
           switch (yyn)
             {
   case 2: // $@1: %empty
-#line 125 "d2_parser.yy"
+#line 130 "d2_parser.yy"
                      { ctx.ctx_ = ctx.NO_KEYWORD; }
-#line 695 "d2_parser.cc"
+#line 700 "d2_parser.cc"
     break;
 
   case 4: // $@2: %empty
-#line 126 "d2_parser.yy"
+#line 131 "d2_parser.yy"
                          { ctx.ctx_ = ctx.CONFIG; }
-#line 701 "d2_parser.cc"
+#line 706 "d2_parser.cc"
     break;
 
   case 6: // $@3: %empty
-#line 127 "d2_parser.yy"
+#line 132 "d2_parser.yy"
                     { ctx.ctx_ = ctx.DHCPDDNS; }
-#line 707 "d2_parser.cc"
+#line 712 "d2_parser.cc"
     break;
 
   case 8: // $@4: %empty
-#line 128 "d2_parser.yy"
+#line 133 "d2_parser.yy"
                     { ctx.ctx_ = ctx.TSIG_KEY; }
-#line 713 "d2_parser.cc"
+#line 718 "d2_parser.cc"
     break;
 
   case 10: // $@5: %empty
-#line 129 "d2_parser.yy"
+#line 134 "d2_parser.yy"
                      { ctx.ctx_ = ctx.TSIG_KEYS; }
-#line 719 "d2_parser.cc"
+#line 724 "d2_parser.cc"
     break;
 
   case 12: // $@6: %empty
-#line 130 "d2_parser.yy"
+#line 135 "d2_parser.yy"
                        { ctx.ctx_ = ctx.DDNS_DOMAIN; }
-#line 725 "d2_parser.cc"
+#line 730 "d2_parser.cc"
     break;
 
   case 14: // $@7: %empty
-#line 131 "d2_parser.yy"
+#line 136 "d2_parser.yy"
                         { ctx.ctx_ = ctx.DDNS_DOMAINS; }
-#line 731 "d2_parser.cc"
+#line 736 "d2_parser.cc"
     break;
 
   case 16: // $@8: %empty
-#line 132 "d2_parser.yy"
+#line 137 "d2_parser.yy"
                       { ctx.ctx_ = ctx.DNS_SERVERS; }
-#line 737 "d2_parser.cc"
+#line 742 "d2_parser.cc"
     break;
 
   case 18: // $@9: %empty
-#line 133 "d2_parser.yy"
+#line 138 "d2_parser.yy"
                        { ctx.ctx_ = ctx.DNS_SERVERS; }
-#line 743 "d2_parser.cc"
+#line 748 "d2_parser.cc"
     break;
 
   case 20: // $@10: %empty
-#line 134 "d2_parser.yy"
+#line 139 "d2_parser.yy"
                          { ctx.ctx_ = ctx.HOOKS_LIBRARIES; }
-#line 749 "d2_parser.cc"
+#line 754 "d2_parser.cc"
     break;
 
   case 22: // value: "integer"
-#line 142 "d2_parser.yy"
+#line 147 "d2_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 755 "d2_parser.cc"
+#line 760 "d2_parser.cc"
     break;
 
   case 23: // value: "floating point"
-#line 143 "d2_parser.yy"
+#line 148 "d2_parser.yy"
              { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 761 "d2_parser.cc"
+#line 766 "d2_parser.cc"
     break;
 
   case 24: // value: "boolean"
-#line 144 "d2_parser.yy"
+#line 149 "d2_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 767 "d2_parser.cc"
+#line 772 "d2_parser.cc"
     break;
 
   case 25: // value: "constant string"
-#line 145 "d2_parser.yy"
+#line 150 "d2_parser.yy"
               { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 773 "d2_parser.cc"
+#line 778 "d2_parser.cc"
     break;
 
   case 26: // value: "null"
-#line 146 "d2_parser.yy"
+#line 151 "d2_parser.yy"
                  { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 779 "d2_parser.cc"
+#line 784 "d2_parser.cc"
     break;
 
   case 27: // value: map2
-#line 147 "d2_parser.yy"
+#line 152 "d2_parser.yy"
             { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 785 "d2_parser.cc"
+#line 790 "d2_parser.cc"
     break;
 
   case 28: // value: list_generic
-#line 148 "d2_parser.yy"
+#line 153 "d2_parser.yy"
                     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 791 "d2_parser.cc"
+#line 796 "d2_parser.cc"
     break;
 
   case 29: // sub_json: value
-#line 151 "d2_parser.yy"
+#line 156 "d2_parser.yy"
                 {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 800 "d2_parser.cc"
+#line 805 "d2_parser.cc"
     break;
 
   case 30: // $@11: %empty
-#line 156 "d2_parser.yy"
+#line 161 "d2_parser.yy"
                      {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 811 "d2_parser.cc"
+#line 816 "d2_parser.cc"
     break;
 
   case 31: // map2: "{" $@11 map_content "}"
-#line 161 "d2_parser.yy"
+#line 166 "d2_parser.yy"
                              {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 821 "d2_parser.cc"
+#line 826 "d2_parser.cc"
     break;
 
   case 32: // map_value: map2
-#line 167 "d2_parser.yy"
+#line 172 "d2_parser.yy"
                 { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 827 "d2_parser.cc"
+#line 832 "d2_parser.cc"
     break;
 
   case 35: // not_empty_map: "constant string" ":" value
-#line 174 "d2_parser.yy"
+#line 179 "d2_parser.yy"
                                   {
                   // map containing a single entry
                   ctx.unique(yystack_[2].value.as < std::string > (), ctx.loc2pos(yystack_[2].location));
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 837 "d2_parser.cc"
+#line 842 "d2_parser.cc"
     break;
 
   case 36: // not_empty_map: not_empty_map "," "constant string" ":" value
-#line 179 "d2_parser.yy"
+#line 184 "d2_parser.yy"
                                                       {
                   // map consisting of a shorter map followed by
                   // comma and string:value
                   ctx.unique(yystack_[2].value.as < std::string > (), ctx.loc2pos(yystack_[2].location));
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 848 "d2_parser.cc"
+#line 853 "d2_parser.cc"
     break;
 
   case 37: // not_empty_map: not_empty_map ","
-#line 185 "d2_parser.yy"
+#line 190 "d2_parser.yy"
                                    {
                   ctx.warnAboutExtraCommas(yystack_[0].location);
                   }
-#line 856 "d2_parser.cc"
+#line 861 "d2_parser.cc"
     break;
 
   case 38: // $@12: %empty
-#line 190 "d2_parser.yy"
+#line 195 "d2_parser.yy"
                               {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 865 "d2_parser.cc"
+#line 870 "d2_parser.cc"
     break;
 
   case 39: // list_generic: "[" $@12 list_content "]"
-#line 193 "d2_parser.yy"
+#line 198 "d2_parser.yy"
                                {
     // list parsing complete. Put any sanity checking here
 }
-#line 873 "d2_parser.cc"
+#line 878 "d2_parser.cc"
     break;
 
   case 42: // not_empty_list: value
-#line 201 "d2_parser.yy"
+#line 206 "d2_parser.yy"
                       {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 882 "d2_parser.cc"
+#line 887 "d2_parser.cc"
     break;
 
   case 43: // not_empty_list: not_empty_list "," value
-#line 205 "d2_parser.yy"
+#line 210 "d2_parser.yy"
                                            {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 891 "d2_parser.cc"
+#line 896 "d2_parser.cc"
     break;
 
   case 44: // not_empty_list: not_empty_list ","
-#line 209 "d2_parser.yy"
+#line 214 "d2_parser.yy"
                                      {
                   ctx.warnAboutExtraCommas(yystack_[0].location);
                   }
-#line 899 "d2_parser.cc"
+#line 904 "d2_parser.cc"
     break;
 
   case 45: // unknown_map_entry: "constant string" ":"
-#line 219 "d2_parser.yy"
+#line 224 "d2_parser.yy"
                                 {
     const std::string& where = ctx.contextName();
     const std::string& keyword = yystack_[1].value.as < std::string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 910 "d2_parser.cc"
+#line 915 "d2_parser.cc"
     break;
 
   case 46: // $@13: %empty
-#line 228 "d2_parser.yy"
+#line 233 "d2_parser.yy"
                            {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 921 "d2_parser.cc"
+#line 926 "d2_parser.cc"
     break;
 
   case 47: // syntax_map: "{" $@13 global_object "}"
-#line 233 "d2_parser.yy"
+#line 238 "d2_parser.yy"
                                {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 931 "d2_parser.cc"
+#line 936 "d2_parser.cc"
     break;
 
   case 48: // $@14: %empty
-#line 241 "d2_parser.yy"
+#line 246 "d2_parser.yy"
                         {
     ctx.unique("DhcpDdns", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -939,73 +944,73 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCPDDNS);
 }
-#line 943 "d2_parser.cc"
+#line 948 "d2_parser.cc"
     break;
 
   case 49: // global_object: "DhcpDdns" $@14 ":" "{" dhcpddns_params "}"
-#line 247 "d2_parser.yy"
+#line 252 "d2_parser.yy"
                                                       {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 952 "d2_parser.cc"
+#line 957 "d2_parser.cc"
     break;
 
   case 51: // global_object_comma: global_object ","
-#line 254 "d2_parser.yy"
+#line 259 "d2_parser.yy"
                                          {
     ctx.warnAboutExtraCommas(yystack_[0].location);
 }
-#line 960 "d2_parser.cc"
+#line 965 "d2_parser.cc"
     break;
 
   case 52: // $@15: %empty
-#line 258 "d2_parser.yy"
+#line 263 "d2_parser.yy"
                              {
     // Parse the dhcpddns map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 970 "d2_parser.cc"
+#line 975 "d2_parser.cc"
     break;
 
   case 53: // sub_dhcpddns: "{" $@15 dhcpddns_params "}"
-#line 262 "d2_parser.yy"
+#line 267 "d2_parser.yy"
                                  {
     // parsing completed
 }
-#line 978 "d2_parser.cc"
+#line 983 "d2_parser.cc"
     break;
 
   case 56: // dhcpddns_params: dhcpddns_params ","
-#line 268 "d2_parser.yy"
+#line 273 "d2_parser.yy"
                                        {
                    ctx.warnAboutExtraCommas(yystack_[0].location);
                    }
-#line 986 "d2_parser.cc"
+#line 991 "d2_parser.cc"
     break;
 
   case 71: // $@16: %empty
-#line 290 "d2_parser.yy"
+#line 295 "d2_parser.yy"
                        {
     ctx.unique("ip-address", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 995 "d2_parser.cc"
+#line 1000 "d2_parser.cc"
     break;
 
   case 72: // ip_address: "ip-address" $@16 ":" "constant string"
-#line 293 "d2_parser.yy"
+#line 298 "d2_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", s);
     ctx.leave();
 }
-#line 1005 "d2_parser.cc"
+#line 1010 "d2_parser.cc"
     break;
 
   case 73: // port: "port" ":" "integer"
-#line 299 "d2_parser.yy"
+#line 304 "d2_parser.yy"
                          {
     ctx.unique("port", ctx.loc2pos(yystack_[2].location));
     if (yystack_[0].value.as < int64_t > () <= 0 || yystack_[0].value.as < int64_t > () >= 65536 ) {
@@ -1014,11 +1019,11 @@ namespace isc { namespace d2 {
     ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", i);
 }
-#line 1018 "d2_parser.cc"
+#line 1023 "d2_parser.cc"
     break;
 
   case 74: // dns_server_timeout: "dns-server-timeout" ":" "integer"
-#line 308 "d2_parser.yy"
+#line 313 "d2_parser.yy"
                                                      {
     ctx.unique("dns-server-timeout", ctx.loc2pos(yystack_[2].location));
     if (yystack_[0].value.as < int64_t > () <= 0) {
@@ -1028,68 +1033,68 @@ namespace isc { namespace d2 {
         ctx.stack_.back()->set("dns-server-timeout", i);
     }
 }
-#line 1032 "d2_parser.cc"
+#line 1037 "d2_parser.cc"
     break;
 
   case 75: // $@17: %empty
-#line 318 "d2_parser.yy"
+#line 323 "d2_parser.yy"
                            {
     ctx.unique("ncr-protocol", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NCR_PROTOCOL);
 }
-#line 1041 "d2_parser.cc"
+#line 1046 "d2_parser.cc"
     break;
 
   case 76: // ncr_protocol: "ncr-protocol" $@17 ":" ncr_protocol_value
-#line 321 "d2_parser.yy"
+#line 326 "d2_parser.yy"
                            {
     ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1050 "d2_parser.cc"
+#line 1055 "d2_parser.cc"
     break;
 
   case 77: // ncr_protocol_value: "UDP"
-#line 327 "d2_parser.yy"
+#line 332 "d2_parser.yy"
         { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
-#line 1056 "d2_parser.cc"
+#line 1061 "d2_parser.cc"
     break;
 
   case 78: // ncr_protocol_value: "TCP"
-#line 328 "d2_parser.yy"
+#line 333 "d2_parser.yy"
         { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
-#line 1062 "d2_parser.cc"
+#line 1067 "d2_parser.cc"
     break;
 
   case 79: // $@18: %empty
-#line 331 "d2_parser.yy"
+#line 336 "d2_parser.yy"
                        {
     ctx.unique("ncr-format", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NCR_FORMAT);
 }
-#line 1071 "d2_parser.cc"
+#line 1076 "d2_parser.cc"
     break;
 
   case 80: // ncr_format: "ncr-format" $@18 ":" "JSON"
-#line 334 "d2_parser.yy"
+#line 339 "d2_parser.yy"
              {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
 }
-#line 1081 "d2_parser.cc"
+#line 1086 "d2_parser.cc"
     break;
 
   case 81: // $@19: %empty
-#line 340 "d2_parser.yy"
+#line 345 "d2_parser.yy"
                            {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1089 "d2_parser.cc"
+#line 1094 "d2_parser.cc"
     break;
 
   case 82: // user_context: "user-context" $@19 ":" map_value
-#line 342 "d2_parser.yy"
+#line 347 "d2_parser.yy"
                   {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
@@ -1112,19 +1117,19 @@ namespace isc { namespace d2 {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1116 "d2_parser.cc"
+#line 1121 "d2_parser.cc"
     break;
 
   case 83: // $@20: %empty
-#line 365 "d2_parser.yy"
+#line 370 "d2_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1124 "d2_parser.cc"
+#line 1129 "d2_parser.cc"
     break;
 
   case 84: // comment: "comment" $@20 ":" "constant string"
-#line 367 "d2_parser.yy"
+#line 372 "d2_parser.yy"
                {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
@@ -1149,11 +1154,11 @@ namespace isc { namespace d2 {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1153 "d2_parser.cc"
+#line 1158 "d2_parser.cc"
     break;
 
   case 85: // $@21: %empty
-#line 392 "d2_parser.yy"
+#line 397 "d2_parser.yy"
                             {
     ctx.unique("forward-ddns", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1161,20 +1166,20 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.FORWARD_DDNS);
 }
-#line 1165 "d2_parser.cc"
+#line 1170 "d2_parser.cc"
     break;
 
   case 86: // forward_ddns: "forward-ddns" $@21 ":" "{" ddns_mgr_params "}"
-#line 398 "d2_parser.yy"
+#line 403 "d2_parser.yy"
                                                       {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1174 "d2_parser.cc"
+#line 1179 "d2_parser.cc"
     break;
 
   case 87: // $@22: %empty
-#line 403 "d2_parser.yy"
+#line 408 "d2_parser.yy"
                             {
     ctx.unique("reverse-ddns", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1182,28 +1187,28 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.REVERSE_DDNS);
 }
-#line 1186 "d2_parser.cc"
+#line 1191 "d2_parser.cc"
     break;
 
   case 88: // reverse_ddns: "reverse-ddns" $@22 ":" "{" ddns_mgr_params "}"
-#line 409 "d2_parser.yy"
+#line 414 "d2_parser.yy"
                                                       {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1195 "d2_parser.cc"
+#line 1200 "d2_parser.cc"
     break;
 
   case 93: // not_empty_ddns_mgr_params: ddns_mgr_params ","
-#line 420 "d2_parser.yy"
+#line 425 "d2_parser.yy"
                                                  {
                              ctx.warnAboutExtraCommas(yystack_[0].location);
                              }
-#line 1203 "d2_parser.cc"
+#line 1208 "d2_parser.cc"
     break;
 
   case 96: // $@23: %empty
-#line 431 "d2_parser.yy"
+#line 436 "d2_parser.yy"
                            {
     ctx.unique("ddns-domains", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1211,97 +1216,97 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.DDNS_DOMAINS);
 }
-#line 1215 "d2_parser.cc"
+#line 1220 "d2_parser.cc"
     break;
 
   case 97: // ddns_domains: "ddns-domains" $@23 ":" "[" ddns_domain_list "]"
-#line 437 "d2_parser.yy"
+#line 442 "d2_parser.yy"
                                                          {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1224 "d2_parser.cc"
+#line 1229 "d2_parser.cc"
     break;
 
   case 98: // $@24: %empty
-#line 442 "d2_parser.yy"
+#line 447 "d2_parser.yy"
                                   {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 1233 "d2_parser.cc"
+#line 1238 "d2_parser.cc"
     break;
 
   case 99: // sub_ddns_domains: "[" $@24 ddns_domain_list "]"
-#line 445 "d2_parser.yy"
+#line 450 "d2_parser.yy"
                                    {
     // parsing completed
 }
-#line 1241 "d2_parser.cc"
+#line 1246 "d2_parser.cc"
     break;
 
   case 104: // not_empty_ddns_domain_list: not_empty_ddns_domain_list ","
-#line 455 "d2_parser.yy"
+#line 460 "d2_parser.yy"
                                                            {
                             ctx.warnAboutExtraCommas(yystack_[0].location);
                             }
-#line 1249 "d2_parser.cc"
+#line 1254 "d2_parser.cc"
     break;
 
   case 105: // $@25: %empty
-#line 460 "d2_parser.yy"
+#line 465 "d2_parser.yy"
                             {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1259 "d2_parser.cc"
+#line 1264 "d2_parser.cc"
     break;
 
   case 106: // ddns_domain: "{" $@25 ddns_domain_params "}"
-#line 464 "d2_parser.yy"
+#line 469 "d2_parser.yy"
                                     {
     ctx.stack_.pop_back();
 }
-#line 1267 "d2_parser.cc"
+#line 1272 "d2_parser.cc"
     break;
 
   case 107: // $@26: %empty
-#line 468 "d2_parser.yy"
+#line 473 "d2_parser.yy"
                                 {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1276 "d2_parser.cc"
+#line 1281 "d2_parser.cc"
     break;
 
   case 108: // sub_ddns_domain: "{" $@26 ddns_domain_params "}"
-#line 471 "d2_parser.yy"
+#line 476 "d2_parser.yy"
                                     {
     // parsing completed
 }
-#line 1284 "d2_parser.cc"
+#line 1289 "d2_parser.cc"
     break;
 
   case 111: // ddns_domain_params: ddns_domain_params ","
-#line 477 "d2_parser.yy"
+#line 482 "d2_parser.yy"
                                              {
                       ctx.warnAboutExtraCommas(yystack_[0].location);
                       }
-#line 1292 "d2_parser.cc"
+#line 1297 "d2_parser.cc"
     break;
 
   case 118: // $@27: %empty
-#line 491 "d2_parser.yy"
+#line 496 "d2_parser.yy"
                        {
     ctx.unique("name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1301 "d2_parser.cc"
+#line 1306 "d2_parser.cc"
     break;
 
   case 119: // ddns_domain_name: "name" $@27 ":" "constant string"
-#line 494 "d2_parser.yy"
+#line 499 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "Ddns domain name cannot be blank");
@@ -1311,31 +1316,31 @@ namespace isc { namespace d2 {
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1315 "d2_parser.cc"
+#line 1320 "d2_parser.cc"
     break;
 
   case 120: // $@28: %empty
-#line 504 "d2_parser.yy"
+#line 509 "d2_parser.yy"
                         {
     ctx.unique("key-name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1324 "d2_parser.cc"
+#line 1329 "d2_parser.cc"
     break;
 
   case 121: // ddns_key_name: "key-name" $@28 ":" "constant string"
-#line 507 "d2_parser.yy"
+#line 512 "d2_parser.yy"
                {
     ElementPtr elem(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("key-name", name);
     ctx.leave();
 }
-#line 1335 "d2_parser.cc"
+#line 1340 "d2_parser.cc"
     break;
 
   case 122: // $@29: %empty
-#line 517 "d2_parser.yy"
+#line 522 "d2_parser.yy"
                          {
     ctx.unique("dns-servers", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1343,97 +1348,97 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.DNS_SERVERS);
 }
-#line 1347 "d2_parser.cc"
+#line 1352 "d2_parser.cc"
     break;
 
   case 123: // dns_servers: "dns-servers" $@29 ":" "[" dns_server_list "]"
-#line 523 "d2_parser.yy"
+#line 528 "d2_parser.yy"
                                                         {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1356 "d2_parser.cc"
+#line 1361 "d2_parser.cc"
     break;
 
   case 124: // $@30: %empty
-#line 528 "d2_parser.yy"
+#line 533 "d2_parser.yy"
                                  {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 1365 "d2_parser.cc"
+#line 1370 "d2_parser.cc"
     break;
 
   case 125: // sub_dns_servers: "[" $@30 dns_server_list "]"
-#line 531 "d2_parser.yy"
+#line 536 "d2_parser.yy"
                                   {
     // parsing completed
 }
-#line 1373 "d2_parser.cc"
+#line 1378 "d2_parser.cc"
     break;
 
   case 128: // dns_server_list: dns_server_list ","
-#line 537 "d2_parser.yy"
+#line 542 "d2_parser.yy"
                                        {
                    ctx.warnAboutExtraCommas(yystack_[0].location);
                    }
-#line 1381 "d2_parser.cc"
+#line 1386 "d2_parser.cc"
     break;
 
   case 129: // $@31: %empty
-#line 542 "d2_parser.yy"
+#line 547 "d2_parser.yy"
                            {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1391 "d2_parser.cc"
+#line 1396 "d2_parser.cc"
     break;
 
   case 130: // dns_server: "{" $@31 dns_server_params "}"
-#line 546 "d2_parser.yy"
+#line 551 "d2_parser.yy"
                                    {
     ctx.stack_.pop_back();
 }
-#line 1399 "d2_parser.cc"
+#line 1404 "d2_parser.cc"
     break;
 
   case 131: // $@32: %empty
-#line 550 "d2_parser.yy"
+#line 555 "d2_parser.yy"
                                {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1408 "d2_parser.cc"
+#line 1413 "d2_parser.cc"
     break;
 
   case 132: // sub_dns_server: "{" $@32 dns_server_params "}"
-#line 553 "d2_parser.yy"
+#line 558 "d2_parser.yy"
                                    {
     // parsing completed
 }
-#line 1416 "d2_parser.cc"
+#line 1421 "d2_parser.cc"
     break;
 
   case 135: // dns_server_params: dns_server_params ","
-#line 559 "d2_parser.yy"
+#line 564 "d2_parser.yy"
                                          {
                    ctx.warnAboutExtraCommas(yystack_[0].location);
                    }
-#line 1424 "d2_parser.cc"
+#line 1429 "d2_parser.cc"
     break;
 
   case 143: // $@33: %empty
-#line 573 "d2_parser.yy"
+#line 578 "d2_parser.yy"
                               {
     ctx.unique("hostname", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1433 "d2_parser.cc"
+#line 1438 "d2_parser.cc"
     break;
 
   case 144: // dns_server_hostname: "hostname" $@33 ":" "constant string"
-#line 576 "d2_parser.yy"
+#line 581 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () != "") {
         error(yystack_[1].location, "hostname is not yet supported");
@@ -1443,30 +1448,30 @@ namespace isc { namespace d2 {
     ctx.stack_.back()->set("hostname", name);
     ctx.leave();
 }
-#line 1447 "d2_parser.cc"
+#line 1452 "d2_parser.cc"
     break;
 
   case 145: // $@34: %empty
-#line 586 "d2_parser.yy"
+#line 591 "d2_parser.yy"
                                   {
     ctx.unique("ip-address", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1456 "d2_parser.cc"
+#line 1461 "d2_parser.cc"
     break;
 
   case 146: // dns_server_ip_address: "ip-address" $@34 ":" "constant string"
-#line 589 "d2_parser.yy"
+#line 594 "d2_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", s);
     ctx.leave();
 }
-#line 1466 "d2_parser.cc"
+#line 1471 "d2_parser.cc"
     break;
 
   case 147: // dns_server_port: "port" ":" "integer"
-#line 595 "d2_parser.yy"
+#line 600 "d2_parser.yy"
                                     {
     ctx.unique("port", ctx.loc2pos(yystack_[2].location));
     if (yystack_[0].value.as < int64_t > () <= 0 || yystack_[0].value.as < int64_t > () >= 65536 ) {
@@ -1475,11 +1480,11 @@ namespace isc { namespace d2 {
     ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", i);
 }
-#line 1479 "d2_parser.cc"
+#line 1484 "d2_parser.cc"
     break;
 
   case 148: // $@35: %empty
-#line 610 "d2_parser.yy"
+#line 615 "d2_parser.yy"
                      {
     ctx.unique("tsig-keys", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1487,98 +1492,98 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.TSIG_KEYS);
 }
-#line 1491 "d2_parser.cc"
+#line 1496 "d2_parser.cc"
     break;
 
   case 149: // tsig_keys: "tsig-keys" $@35 ":" "[" tsig_keys_list "]"
-#line 616 "d2_parser.yy"
+#line 621 "d2_parser.yy"
                                                        {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1500 "d2_parser.cc"
+#line 1505 "d2_parser.cc"
     break;
 
   case 150: // $@36: %empty
-#line 621 "d2_parser.yy"
+#line 626 "d2_parser.yy"
                                {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 1509 "d2_parser.cc"
+#line 1514 "d2_parser.cc"
     break;
 
   case 151: // sub_tsig_keys: "[" $@36 tsig_keys_list "]"
-#line 624 "d2_parser.yy"
+#line 629 "d2_parser.yy"
                                  {
     // parsing completed
 }
-#line 1517 "d2_parser.cc"
+#line 1522 "d2_parser.cc"
     break;
 
   case 156: // not_empty_tsig_keys_list: not_empty_tsig_keys_list ","
-#line 634 "d2_parser.yy"
+#line 639 "d2_parser.yy"
                                                          {
                             ctx.warnAboutExtraCommas(yystack_[0].location);
                             }
-#line 1525 "d2_parser.cc"
+#line 1530 "d2_parser.cc"
     break;
 
   case 157: // $@37: %empty
-#line 639 "d2_parser.yy"
+#line 644 "d2_parser.yy"
                          {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1535 "d2_parser.cc"
+#line 1540 "d2_parser.cc"
     break;
 
   case 158: // tsig_key: "{" $@37 tsig_key_params "}"
-#line 643 "d2_parser.yy"
+#line 648 "d2_parser.yy"
                                  {
     ctx.stack_.pop_back();
 }
-#line 1543 "d2_parser.cc"
+#line 1548 "d2_parser.cc"
     break;
 
   case 159: // $@38: %empty
-#line 647 "d2_parser.yy"
+#line 652 "d2_parser.yy"
                              {
     // Parse tsig key list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1553 "d2_parser.cc"
+#line 1558 "d2_parser.cc"
     break;
 
   case 160: // sub_tsig_key: "{" $@38 tsig_key_params "}"
-#line 651 "d2_parser.yy"
+#line 656 "d2_parser.yy"
                                  {
     // parsing completed
 }
-#line 1561 "d2_parser.cc"
+#line 1566 "d2_parser.cc"
     break;
 
   case 163: // tsig_key_params: tsig_key_params ","
-#line 658 "d2_parser.yy"
+#line 663 "d2_parser.yy"
                                        {
                    ctx.warnAboutExtraCommas(yystack_[0].location);
                    }
-#line 1569 "d2_parser.cc"
+#line 1574 "d2_parser.cc"
     break;
 
   case 171: // $@39: %empty
-#line 672 "d2_parser.yy"
+#line 677 "d2_parser.yy"
                     {
     ctx.unique("name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1578 "d2_parser.cc"
+#line 1583 "d2_parser.cc"
     break;
 
   case 172: // tsig_key_name: "name" $@39 ":" "constant string"
-#line 675 "d2_parser.yy"
+#line 680 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key name cannot be blank");
@@ -1588,20 +1593,20 @@ namespace isc { namespace d2 {
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1592 "d2_parser.cc"
+#line 1597 "d2_parser.cc"
     break;
 
   case 173: // $@40: %empty
-#line 685 "d2_parser.yy"
+#line 690 "d2_parser.yy"
                               {
     ctx.unique("algorithm", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1601 "d2_parser.cc"
+#line 1606 "d2_parser.cc"
     break;
 
   case 174: // tsig_key_algorithm: "algorithm" $@40 ":" "constant string"
-#line 688 "d2_parser.yy"
+#line 693 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key algorithm cannot be blank");
@@ -1610,11 +1615,11 @@ namespace isc { namespace d2 {
     ctx.stack_.back()->set("algorithm", elem);
     ctx.leave();
 }
-#line 1614 "d2_parser.cc"
+#line 1619 "d2_parser.cc"
     break;
 
   case 175: // tsig_key_digest_bits: "digest-bits" ":" "integer"
-#line 697 "d2_parser.yy"
+#line 702 "d2_parser.yy"
                                                 {
     ctx.unique("digest-bits", ctx.loc2pos(yystack_[2].location));
     if (yystack_[0].value.as < int64_t > () < 0 || (yystack_[0].value.as < int64_t > () > 0  && (yystack_[0].value.as < int64_t > () % 8 != 0))) {
@@ -1623,20 +1628,20 @@ namespace isc { namespace d2 {
     ElementPtr elem(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("digest-bits", elem);
 }
-#line 1627 "d2_parser.cc"
+#line 1632 "d2_parser.cc"
     break;
 
   case 176: // $@41: %empty
-#line 706 "d2_parser.yy"
+#line 711 "d2_parser.yy"
                         {
     ctx.unique("secret", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1636 "d2_parser.cc"
+#line 1641 "d2_parser.cc"
     break;
 
   case 177: // tsig_key_secret: "secret" $@41 ":" "constant string"
-#line 709 "d2_parser.yy"
+#line 714 "d2_parser.yy"
                {
     if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key secret cannot be blank");
@@ -1645,11 +1650,11 @@ namespace isc { namespace d2 {
     ctx.stack_.back()->set("secret", elem);
     ctx.leave();
 }
-#line 1649 "d2_parser.cc"
+#line 1654 "d2_parser.cc"
     break;
 
   case 178: // $@42: %empty
-#line 723 "d2_parser.yy"
+#line 728 "d2_parser.yy"
                                {
     ctx.unique("control-socket", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1657,66 +1662,66 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKET);
 }
-#line 1661 "d2_parser.cc"
+#line 1666 "d2_parser.cc"
     break;
 
   case 179: // control_socket: "control-socket" $@42 ":" "{" control_socket_params "}"
-#line 729 "d2_parser.yy"
+#line 734 "d2_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1670 "d2_parser.cc"
+#line 1675 "d2_parser.cc"
     break;
 
   case 182: // control_socket_params: control_socket_params ","
-#line 736 "d2_parser.yy"
+#line 741 "d2_parser.yy"
                                                    {
                          ctx.warnAboutExtraCommas(yystack_[0].location);
                          }
-#line 1678 "d2_parser.cc"
+#line 1683 "d2_parser.cc"
     break;
 
   case 188: // $@43: %empty
-#line 748 "d2_parser.yy"
+#line 753 "d2_parser.yy"
                                  {
     ctx.unique("socket-type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1687 "d2_parser.cc"
+#line 1692 "d2_parser.cc"
     break;
 
   case 189: // control_socket_type: "socket-type" $@43 ":" "constant string"
-#line 751 "d2_parser.yy"
+#line 756 "d2_parser.yy"
                {
     ElementPtr stype(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-type", stype);
     ctx.leave();
 }
-#line 1697 "d2_parser.cc"
+#line 1702 "d2_parser.cc"
     break;
 
   case 190: // $@44: %empty
-#line 757 "d2_parser.yy"
+#line 762 "d2_parser.yy"
                                  {
     ctx.unique("socket-name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1706 "d2_parser.cc"
+#line 1711 "d2_parser.cc"
     break;
 
   case 191: // control_socket_name: "socket-name" $@44 ":" "constant string"
-#line 760 "d2_parser.yy"
+#line 765 "d2_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 1716 "d2_parser.cc"
+#line 1721 "d2_parser.cc"
     break;
 
   case 192: // $@45: %empty
-#line 768 "d2_parser.yy"
+#line 773 "d2_parser.yy"
                                  {
     ctx.unique("hooks-libraries", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1724,113 +1729,113 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1728 "d2_parser.cc"
+#line 1733 "d2_parser.cc"
     break;
 
   case 193: // hooks_libraries: "hooks-libraries" $@45 ":" "[" hooks_libraries_list "]"
-#line 774 "d2_parser.yy"
+#line 779 "d2_parser.yy"
                                                              {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1737 "d2_parser.cc"
+#line 1742 "d2_parser.cc"
     break;
 
   case 198: // not_empty_hooks_libraries_list: not_empty_hooks_libraries_list ","
-#line 785 "d2_parser.yy"
+#line 790 "d2_parser.yy"
                                            {
         ctx.warnAboutExtraCommas(yystack_[0].location);
         }
-#line 1745 "d2_parser.cc"
+#line 1750 "d2_parser.cc"
     break;
 
   case 199: // $@46: %empty
-#line 790 "d2_parser.yy"
+#line 795 "d2_parser.yy"
                               {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1755 "d2_parser.cc"
+#line 1760 "d2_parser.cc"
     break;
 
   case 200: // hooks_library: "{" $@46 hooks_params "}"
-#line 794 "d2_parser.yy"
+#line 799 "d2_parser.yy"
                               {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1765 "d2_parser.cc"
+#line 1770 "d2_parser.cc"
     break;
 
   case 201: // $@47: %empty
-#line 800 "d2_parser.yy"
+#line 805 "d2_parser.yy"
                                   {
     // Parse the hooks-libraries list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1775 "d2_parser.cc"
+#line 1780 "d2_parser.cc"
     break;
 
   case 202: // sub_hooks_library: "{" $@47 hooks_params "}"
-#line 804 "d2_parser.yy"
+#line 809 "d2_parser.yy"
                               {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 1785 "d2_parser.cc"
+#line 1790 "d2_parser.cc"
     break;
 
   case 205: // hooks_params: hooks_params ","
-#line 812 "d2_parser.yy"
+#line 817 "d2_parser.yy"
                                  {
                 ctx.warnAboutExtraCommas(yystack_[0].location);
                 }
-#line 1793 "d2_parser.cc"
+#line 1798 "d2_parser.cc"
     break;
 
   case 209: // $@48: %empty
-#line 822 "d2_parser.yy"
+#line 827 "d2_parser.yy"
                  {
     ctx.unique("library", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1802 "d2_parser.cc"
+#line 1807 "d2_parser.cc"
     break;
 
   case 210: // library: "library" $@48 ":" "constant string"
-#line 825 "d2_parser.yy"
+#line 830 "d2_parser.yy"
                {
     ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1812 "d2_parser.cc"
+#line 1817 "d2_parser.cc"
     break;
 
   case 211: // $@49: %empty
-#line 831 "d2_parser.yy"
+#line 836 "d2_parser.yy"
                        {
     ctx.unique("parameters", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1821 "d2_parser.cc"
+#line 1826 "d2_parser.cc"
     break;
 
   case 212: // parameters: "parameters" $@49 ":" map_value
-#line 834 "d2_parser.yy"
+#line 839 "d2_parser.yy"
                   {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1830 "d2_parser.cc"
+#line 1835 "d2_parser.cc"
     break;
 
   case 213: // $@50: %empty
-#line 841 "d2_parser.yy"
+#line 846 "d2_parser.yy"
                  {
     ctx.unique("loggers", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1838,102 +1843,102 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1842 "d2_parser.cc"
+#line 1847 "d2_parser.cc"
     break;
 
   case 214: // loggers: "loggers" $@50 ":" "[" loggers_entries "]"
-#line 847 "d2_parser.yy"
+#line 852 "d2_parser.yy"
                                                          {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1851 "d2_parser.cc"
+#line 1856 "d2_parser.cc"
     break;
 
   case 217: // loggers_entries: loggers_entries ","
-#line 856 "d2_parser.yy"
+#line 861 "d2_parser.yy"
                                        {
                    ctx.warnAboutExtraCommas(yystack_[0].location);
                    }
-#line 1859 "d2_parser.cc"
+#line 1864 "d2_parser.cc"
     break;
 
   case 218: // $@51: %empty
-#line 862 "d2_parser.yy"
+#line 867 "d2_parser.yy"
                              {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1869 "d2_parser.cc"
+#line 1874 "d2_parser.cc"
     break;
 
   case 219: // logger_entry: "{" $@51 logger_params "}"
-#line 866 "d2_parser.yy"
+#line 871 "d2_parser.yy"
                                {
     ctx.stack_.pop_back();
 }
-#line 1877 "d2_parser.cc"
+#line 1882 "d2_parser.cc"
     break;
 
   case 222: // logger_params: logger_params ","
-#line 872 "d2_parser.yy"
+#line 877 "d2_parser.yy"
                                    {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 1885 "d2_parser.cc"
+#line 1890 "d2_parser.cc"
     break;
 
   case 230: // $@52: %empty
-#line 886 "d2_parser.yy"
+#line 891 "d2_parser.yy"
            {
     ctx.unique("name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1894 "d2_parser.cc"
+#line 1899 "d2_parser.cc"
     break;
 
   case 231: // name: "name" $@52 ":" "constant string"
-#line 889 "d2_parser.yy"
+#line 894 "d2_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1904 "d2_parser.cc"
+#line 1909 "d2_parser.cc"
     break;
 
   case 232: // debuglevel: "debuglevel" ":" "integer"
-#line 895 "d2_parser.yy"
+#line 900 "d2_parser.yy"
                                      {
     ctx.unique("debuglevel", ctx.loc2pos(yystack_[2].location));
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1914 "d2_parser.cc"
+#line 1919 "d2_parser.cc"
     break;
 
   case 233: // $@53: %empty
-#line 901 "d2_parser.yy"
+#line 906 "d2_parser.yy"
                    {
     ctx.unique("severity", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1923 "d2_parser.cc"
+#line 1928 "d2_parser.cc"
     break;
 
   case 234: // severity: "severity" $@53 ":" "constant string"
-#line 904 "d2_parser.yy"
+#line 909 "d2_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1933 "d2_parser.cc"
+#line 1938 "d2_parser.cc"
     break;
 
   case 235: // $@54: %empty
-#line 910 "d2_parser.yy"
+#line 915 "d2_parser.yy"
                                     {
     ctx.unique("output_options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1941,122 +1946,122 @@ namespace isc { namespace d2 {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1945 "d2_parser.cc"
+#line 1950 "d2_parser.cc"
     break;
 
   case 236: // output_options_list: "output_options" $@54 ":" "[" output_options_list_content "]"
-#line 916 "d2_parser.yy"
+#line 921 "d2_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1954 "d2_parser.cc"
+#line 1959 "d2_parser.cc"
     break;
 
   case 239: // output_options_list_content: output_options_list_content ","
-#line 923 "d2_parser.yy"
+#line 928 "d2_parser.yy"
                                                                {
                                ctx.warnAboutExtraCommas(yystack_[0].location);
                                }
-#line 1962 "d2_parser.cc"
+#line 1967 "d2_parser.cc"
     break;
 
   case 240: // $@55: %empty
-#line 928 "d2_parser.yy"
+#line 933 "d2_parser.yy"
                              {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1972 "d2_parser.cc"
+#line 1977 "d2_parser.cc"
     break;
 
   case 241: // output_entry: "{" $@55 output_params_list "}"
-#line 932 "d2_parser.yy"
+#line 937 "d2_parser.yy"
                                     {
     ctx.stack_.pop_back();
 }
-#line 1980 "d2_parser.cc"
+#line 1985 "d2_parser.cc"
     break;
 
   case 244: // output_params_list: output_params_list ","
-#line 938 "d2_parser.yy"
+#line 943 "d2_parser.yy"
                                         {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 1988 "d2_parser.cc"
+#line 1993 "d2_parser.cc"
     break;
 
   case 250: // $@56: %empty
-#line 950 "d2_parser.yy"
+#line 955 "d2_parser.yy"
                {
     ctx.unique("output", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1997 "d2_parser.cc"
+#line 2002 "d2_parser.cc"
     break;
 
   case 251: // output: "output" $@56 ":" "constant string"
-#line 953 "d2_parser.yy"
+#line 958 "d2_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 2007 "d2_parser.cc"
+#line 2012 "d2_parser.cc"
     break;
 
   case 252: // flush: "flush" ":" "boolean"
-#line 959 "d2_parser.yy"
+#line 964 "d2_parser.yy"
                            {
     ctx.unique("flush", ctx.loc2pos(yystack_[2].location));
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 2017 "d2_parser.cc"
+#line 2022 "d2_parser.cc"
     break;
 
   case 253: // maxsize: "maxsize" ":" "integer"
-#line 965 "d2_parser.yy"
+#line 970 "d2_parser.yy"
                                {
     ctx.unique("maxsize", ctx.loc2pos(yystack_[2].location));
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 2027 "d2_parser.cc"
+#line 2032 "d2_parser.cc"
     break;
 
   case 254: // maxver: "maxver" ":" "integer"
-#line 971 "d2_parser.yy"
+#line 976 "d2_parser.yy"
                              {
     ctx.unique("maxver", ctx.loc2pos(yystack_[2].location));
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 2037 "d2_parser.cc"
+#line 2042 "d2_parser.cc"
     break;
 
   case 255: // $@57: %empty
-#line 977 "d2_parser.yy"
+#line 982 "d2_parser.yy"
                  {
     ctx.unique("pattern", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2046 "d2_parser.cc"
+#line 2051 "d2_parser.cc"
     break;
 
   case 256: // pattern: "pattern" $@57 ":" "constant string"
-#line 980 "d2_parser.yy"
+#line 985 "d2_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 2056 "d2_parser.cc"
+#line 2061 "d2_parser.cc"
     break;
 
 
-#line 2060 "d2_parser.cc"
+#line 2065 "d2_parser.cc"
 
             default:
               break;
@@ -2787,32 +2792,32 @@ namespace isc { namespace d2 {
   const short
   D2Parser::yyrline_[] =
   {
-       0,   125,   125,   125,   126,   126,   127,   127,   128,   128,
-     129,   129,   130,   130,   131,   131,   132,   132,   133,   133,
-     134,   134,   142,   143,   144,   145,   146,   147,   148,   151,
-     156,   156,   167,   170,   171,   174,   179,   185,   190,   190,
-     197,   198,   201,   205,   209,   219,   228,   228,   241,   241,
-     251,   254,   258,   258,   266,   267,   268,   274,   275,   276,
-     277,   278,   279,   280,   281,   282,   283,   284,   285,   286,
-     287,   290,   290,   299,   308,   318,   318,   327,   328,   331,
-     331,   340,   340,   365,   365,   392,   392,   403,   403,   414,
-     415,   418,   419,   420,   425,   426,   431,   431,   442,   442,
-     449,   450,   453,   454,   455,   460,   460,   468,   468,   475,
-     476,   477,   482,   483,   484,   485,   486,   487,   491,   491,
-     504,   504,   517,   517,   528,   528,   535,   536,   537,   542,
-     542,   550,   550,   557,   558,   559,   564,   565,   566,   567,
-     568,   569,   570,   573,   573,   586,   586,   595,   610,   610,
-     621,   621,   628,   629,   632,   633,   634,   639,   639,   647,
-     647,   656,   657,   658,   663,   664,   665,   666,   667,   668,
-     669,   672,   672,   685,   685,   697,   706,   706,   723,   723,
-     734,   735,   736,   741,   742,   743,   744,   745,   748,   748,
-     757,   757,   768,   768,   779,   780,   783,   784,   785,   790,
-     790,   800,   800,   810,   811,   812,   815,   818,   819,   822,
-     822,   831,   831,   841,   841,   854,   855,   856,   862,   862,
-     870,   871,   872,   877,   878,   879,   880,   881,   882,   883,
-     886,   886,   895,   901,   901,   910,   910,   921,   922,   923,
-     928,   928,   936,   937,   938,   943,   944,   945,   946,   947,
-     950,   950,   959,   965,   971,   977,   977
+       0,   130,   130,   130,   131,   131,   132,   132,   133,   133,
+     134,   134,   135,   135,   136,   136,   137,   137,   138,   138,
+     139,   139,   147,   148,   149,   150,   151,   152,   153,   156,
+     161,   161,   172,   175,   176,   179,   184,   190,   195,   195,
+     202,   203,   206,   210,   214,   224,   233,   233,   246,   246,
+     256,   259,   263,   263,   271,   272,   273,   279,   280,   281,
+     282,   283,   284,   285,   286,   287,   288,   289,   290,   291,
+     292,   295,   295,   304,   313,   323,   323,   332,   333,   336,
+     336,   345,   345,   370,   370,   397,   397,   408,   408,   419,
+     420,   423,   424,   425,   430,   431,   436,   436,   447,   447,
+     454,   455,   458,   459,   460,   465,   465,   473,   473,   480,
+     481,   482,   487,   488,   489,   490,   491,   492,   496,   496,
+     509,   509,   522,   522,   533,   533,   540,   541,   542,   547,
+     547,   555,   555,   562,   563,   564,   569,   570,   571,   572,
+     573,   574,   575,   578,   578,   591,   591,   600,   615,   615,
+     626,   626,   633,   634,   637,   638,   639,   644,   644,   652,
+     652,   661,   662,   663,   668,   669,   670,   671,   672,   673,
+     674,   677,   677,   690,   690,   702,   711,   711,   728,   728,
+     739,   740,   741,   746,   747,   748,   749,   750,   753,   753,
+     762,   762,   773,   773,   784,   785,   788,   789,   790,   795,
+     795,   805,   805,   815,   816,   817,   820,   823,   824,   827,
+     827,   836,   836,   846,   846,   859,   860,   861,   867,   867,
+     875,   876,   877,   882,   883,   884,   885,   886,   887,   888,
+     891,   891,   900,   906,   906,   915,   915,   926,   927,   928,
+     933,   933,   941,   942,   943,   948,   949,   950,   951,   952,
+     955,   955,   964,   970,   976,   982,   982
   };
 
   void
@@ -2845,9 +2850,9 @@ namespace isc { namespace d2 {
 
 #line 14 "d2_parser.yy"
 } } // isc::d2
-#line 2849 "d2_parser.cc"
+#line 2854 "d2_parser.cc"
 
-#line 986 "d2_parser.yy"
+#line 991 "d2_parser.yy"
 
 
 void

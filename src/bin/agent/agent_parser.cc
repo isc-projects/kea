@@ -48,7 +48,12 @@
 
 #include <agent/parser_context.h>
 
-#line 52 "agent_parser.cc"
+// Avoid warnings with the error counter.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
+#line 57 "agent_parser.cc"
 
 
 #ifndef YY_
@@ -141,7 +146,7 @@
 
 #line 14 "agent_parser.yy"
 namespace isc { namespace agent {
-#line 145 "agent_parser.cc"
+#line 150 "agent_parser.cc"
 
   /// Build a parser object.
   AgentParser::AgentParser (isc::agent::ParserContext& ctx_yyarg)
@@ -382,51 +387,51 @@ namespace isc { namespace agent {
         switch (yykind)
     {
       case symbol_kind::S_STRING: // "constant string"
-#line 116 "agent_parser.yy"
+#line 121 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < std::string > (); }
-#line 388 "agent_parser.cc"
+#line 393 "agent_parser.cc"
         break;
 
       case symbol_kind::S_INTEGER: // "integer"
-#line 116 "agent_parser.yy"
+#line 121 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < int64_t > (); }
-#line 394 "agent_parser.cc"
+#line 399 "agent_parser.cc"
         break;
 
       case symbol_kind::S_FLOAT: // "floating point"
-#line 116 "agent_parser.yy"
+#line 121 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < double > (); }
-#line 400 "agent_parser.cc"
+#line 405 "agent_parser.cc"
         break;
 
       case symbol_kind::S_BOOLEAN: // "boolean"
-#line 116 "agent_parser.yy"
+#line 121 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < bool > (); }
-#line 406 "agent_parser.cc"
+#line 411 "agent_parser.cc"
         break;
 
       case symbol_kind::S_value: // value
-#line 116 "agent_parser.yy"
+#line 121 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 412 "agent_parser.cc"
+#line 417 "agent_parser.cc"
         break;
 
       case symbol_kind::S_map_value: // map_value
-#line 116 "agent_parser.yy"
+#line 121 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 418 "agent_parser.cc"
+#line 423 "agent_parser.cc"
         break;
 
       case symbol_kind::S_socket_type_value: // socket_type_value
-#line 116 "agent_parser.yy"
+#line 121 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 424 "agent_parser.cc"
+#line 429 "agent_parser.cc"
         break;
 
       case symbol_kind::S_auth_type_value: // auth_type_value
-#line 116 "agent_parser.yy"
+#line 121 "agent_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 430 "agent_parser.cc"
+#line 435 "agent_parser.cc"
         break;
 
       default:
@@ -700,224 +705,224 @@ namespace isc { namespace agent {
           switch (yyn)
             {
   case 2: // $@1: %empty
-#line 127 "agent_parser.yy"
+#line 132 "agent_parser.yy"
                        { ctx.ctx_ = ctx.NO_KEYWORDS; }
-#line 706 "agent_parser.cc"
+#line 711 "agent_parser.cc"
     break;
 
   case 4: // $@2: %empty
-#line 128 "agent_parser.yy"
+#line 133 "agent_parser.yy"
                        { ctx.ctx_ = ctx.CONFIG; }
-#line 712 "agent_parser.cc"
+#line 717 "agent_parser.cc"
     break;
 
   case 6: // $@3: %empty
-#line 129 "agent_parser.yy"
+#line 134 "agent_parser.yy"
                        { ctx.ctx_ = ctx.AGENT; }
-#line 718 "agent_parser.cc"
+#line 723 "agent_parser.cc"
     break;
 
   case 8: // $@4: %empty
-#line 137 "agent_parser.yy"
+#line 142 "agent_parser.yy"
                           {
     // Parse the Control-agent map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 728 "agent_parser.cc"
+#line 733 "agent_parser.cc"
     break;
 
   case 9: // sub_agent: "{" $@4 global_params "}"
-#line 141 "agent_parser.yy"
+#line 146 "agent_parser.yy"
                                {
     // parsing completed
 }
-#line 736 "agent_parser.cc"
+#line 741 "agent_parser.cc"
     break;
 
   case 10: // json: value
-#line 148 "agent_parser.yy"
+#line 153 "agent_parser.yy"
             {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 745 "agent_parser.cc"
+#line 750 "agent_parser.cc"
     break;
 
   case 11: // value: "integer"
-#line 154 "agent_parser.yy"
+#line 159 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 751 "agent_parser.cc"
+#line 756 "agent_parser.cc"
     break;
 
   case 12: // value: "floating point"
-#line 155 "agent_parser.yy"
+#line 160 "agent_parser.yy"
              { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 757 "agent_parser.cc"
+#line 762 "agent_parser.cc"
     break;
 
   case 13: // value: "boolean"
-#line 156 "agent_parser.yy"
+#line 161 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 763 "agent_parser.cc"
+#line 768 "agent_parser.cc"
     break;
 
   case 14: // value: "constant string"
-#line 157 "agent_parser.yy"
+#line 162 "agent_parser.yy"
               { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 769 "agent_parser.cc"
+#line 774 "agent_parser.cc"
     break;
 
   case 15: // value: "null"
-#line 158 "agent_parser.yy"
+#line 163 "agent_parser.yy"
                  { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 775 "agent_parser.cc"
+#line 780 "agent_parser.cc"
     break;
 
   case 16: // value: map
-#line 159 "agent_parser.yy"
+#line 164 "agent_parser.yy"
            { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 781 "agent_parser.cc"
+#line 786 "agent_parser.cc"
     break;
 
   case 17: // value: list_generic
-#line 160 "agent_parser.yy"
+#line 165 "agent_parser.yy"
                     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 787 "agent_parser.cc"
+#line 792 "agent_parser.cc"
     break;
 
   case 18: // $@5: %empty
-#line 164 "agent_parser.yy"
+#line 169 "agent_parser.yy"
                     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 798 "agent_parser.cc"
+#line 803 "agent_parser.cc"
     break;
 
   case 19: // map: "{" $@5 map_content "}"
-#line 169 "agent_parser.yy"
+#line 174 "agent_parser.yy"
                              {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 808 "agent_parser.cc"
+#line 813 "agent_parser.cc"
     break;
 
   case 20: // map_value: map
-#line 175 "agent_parser.yy"
+#line 180 "agent_parser.yy"
                { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 814 "agent_parser.cc"
+#line 819 "agent_parser.cc"
     break;
 
   case 23: // not_empty_map: "constant string" ":" value
-#line 189 "agent_parser.yy"
+#line 194 "agent_parser.yy"
                                   {
                   // map containing a single entry
                   ctx.unique(yystack_[2].value.as < std::string > (), ctx.loc2pos(yystack_[2].location));
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 824 "agent_parser.cc"
+#line 829 "agent_parser.cc"
     break;
 
   case 24: // not_empty_map: not_empty_map "," "constant string" ":" value
-#line 194 "agent_parser.yy"
+#line 199 "agent_parser.yy"
                                                       {
                   // map consisting of a shorter map followed by
                   // comma and string:value
                   ctx.unique(yystack_[2].value.as < std::string > (), ctx.loc2pos(yystack_[2].location));
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 835 "agent_parser.cc"
+#line 840 "agent_parser.cc"
     break;
 
   case 25: // not_empty_map: not_empty_map ","
-#line 200 "agent_parser.yy"
+#line 205 "agent_parser.yy"
                                    {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 843 "agent_parser.cc"
+#line 848 "agent_parser.cc"
     break;
 
   case 26: // $@6: %empty
-#line 205 "agent_parser.yy"
+#line 210 "agent_parser.yy"
                               {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 852 "agent_parser.cc"
+#line 857 "agent_parser.cc"
     break;
 
   case 27: // list_generic: "[" $@6 list_content "]"
-#line 208 "agent_parser.yy"
+#line 213 "agent_parser.yy"
                                {
 }
-#line 859 "agent_parser.cc"
+#line 864 "agent_parser.cc"
     break;
 
   case 30: // not_empty_list: value
-#line 215 "agent_parser.yy"
+#line 220 "agent_parser.yy"
                       {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 868 "agent_parser.cc"
+#line 873 "agent_parser.cc"
     break;
 
   case 31: // not_empty_list: not_empty_list "," value
-#line 219 "agent_parser.yy"
+#line 224 "agent_parser.yy"
                                            {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 877 "agent_parser.cc"
+#line 882 "agent_parser.cc"
     break;
 
   case 32: // not_empty_list: not_empty_list ","
-#line 223 "agent_parser.yy"
+#line 228 "agent_parser.yy"
                                      {
                   ctx.warnAboutExtraCommas(yystack_[0].location);
                   }
-#line 885 "agent_parser.cc"
+#line 890 "agent_parser.cc"
     break;
 
   case 33: // unknown_map_entry: "constant string" ":"
-#line 235 "agent_parser.yy"
+#line 240 "agent_parser.yy"
                                 {
     const std::string& where = ctx.contextName();
     const std::string& keyword = yystack_[1].value.as < std::string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 896 "agent_parser.cc"
+#line 901 "agent_parser.cc"
     break;
 
   case 34: // $@7: %empty
-#line 243 "agent_parser.yy"
+#line 248 "agent_parser.yy"
                                  {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 907 "agent_parser.cc"
+#line 912 "agent_parser.cc"
     break;
 
   case 35: // agent_syntax_map: "{" $@7 global_object "}"
-#line 248 "agent_parser.yy"
+#line 253 "agent_parser.yy"
                                {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 917 "agent_parser.cc"
+#line 922 "agent_parser.cc"
     break;
 
   case 36: // $@8: %empty
-#line 255 "agent_parser.yy"
+#line 260 "agent_parser.yy"
                              {
     // Let's create a MapElement that will represent it, add it to the
     // top level map (that's already on the stack) and put the new map
@@ -929,142 +934,142 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.AGENT);
 }
-#line 933 "agent_parser.cc"
+#line 938 "agent_parser.cc"
     break;
 
   case 37: // global_object: "Control-agent" $@8 ":" "{" global_params "}"
-#line 265 "agent_parser.yy"
+#line 270 "agent_parser.yy"
                                                     {
     // Ok, we're done with parsing control-agent. Let's take the map
     // off the stack.
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 944 "agent_parser.cc"
+#line 949 "agent_parser.cc"
     break;
 
   case 39: // global_object_comma: global_object ","
-#line 274 "agent_parser.yy"
+#line 279 "agent_parser.yy"
                                          {
     ctx.warnAboutExtraCommas(yystack_[0].location);
 }
-#line 952 "agent_parser.cc"
+#line 957 "agent_parser.cc"
     break;
 
   case 42: // global_params: global_params ","
-#line 280 "agent_parser.yy"
+#line 285 "agent_parser.yy"
                                    {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 960 "agent_parser.cc"
+#line 965 "agent_parser.cc"
     break;
 
   case 56: // $@9: %empty
-#line 302 "agent_parser.yy"
+#line 307 "agent_parser.yy"
                      {
     ctx.unique("http-host", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 969 "agent_parser.cc"
+#line 974 "agent_parser.cc"
     break;
 
   case 57: // http_host: "http-host" $@9 ":" "constant string"
-#line 305 "agent_parser.yy"
+#line 310 "agent_parser.yy"
                {
     ElementPtr host(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("http-host", host);
     ctx.leave();
 }
-#line 979 "agent_parser.cc"
+#line 984 "agent_parser.cc"
     break;
 
   case 58: // http_port: "http-port" ":" "integer"
-#line 311 "agent_parser.yy"
+#line 316 "agent_parser.yy"
                                    {
     ctx.unique("http-port", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("http-port", prf);
 }
-#line 989 "agent_parser.cc"
+#line 994 "agent_parser.cc"
     break;
 
   case 59: // $@10: %empty
-#line 317 "agent_parser.yy"
+#line 322 "agent_parser.yy"
                            {
     ctx.unique("trust-anchor", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 998 "agent_parser.cc"
+#line 1003 "agent_parser.cc"
     break;
 
   case 60: // trust_anchor: "trust-anchor" $@10 ":" "constant string"
-#line 320 "agent_parser.yy"
+#line 325 "agent_parser.yy"
                {
     ElementPtr ca(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("trust-anchor", ca);
     ctx.leave();
 }
-#line 1008 "agent_parser.cc"
+#line 1013 "agent_parser.cc"
     break;
 
   case 61: // $@11: %empty
-#line 326 "agent_parser.yy"
+#line 331 "agent_parser.yy"
                      {
     ctx.unique("cert-file", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1017 "agent_parser.cc"
+#line 1022 "agent_parser.cc"
     break;
 
   case 62: // cert_file: "cert-file" $@11 ":" "constant string"
-#line 329 "agent_parser.yy"
+#line 334 "agent_parser.yy"
                {
     ElementPtr cert(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("cert-file", cert);
     ctx.leave();
 }
-#line 1027 "agent_parser.cc"
+#line 1032 "agent_parser.cc"
     break;
 
   case 63: // $@12: %empty
-#line 335 "agent_parser.yy"
+#line 340 "agent_parser.yy"
                    {
     ctx.unique("key-file", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1036 "agent_parser.cc"
+#line 1041 "agent_parser.cc"
     break;
 
   case 64: // key_file: "key-file" $@12 ":" "constant string"
-#line 338 "agent_parser.yy"
+#line 343 "agent_parser.yy"
                {
     ElementPtr key(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("key-file", key);
     ctx.leave();
 }
-#line 1046 "agent_parser.cc"
+#line 1051 "agent_parser.cc"
     break;
 
   case 65: // cert_required: "cert-required" ":" "boolean"
-#line 344 "agent_parser.yy"
+#line 349 "agent_parser.yy"
                                            {
     ctx.unique("cert-required", ctx.loc2pos(yystack_[2].location));
     ElementPtr req(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("cert-required", req);
 }
-#line 1056 "agent_parser.cc"
+#line 1061 "agent_parser.cc"
     break;
 
   case 66: // $@13: %empty
-#line 350 "agent_parser.yy"
+#line 355 "agent_parser.yy"
                            {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1064 "agent_parser.cc"
+#line 1069 "agent_parser.cc"
     break;
 
   case 67: // user_context: "user-context" $@13 ":" map_value
-#line 352 "agent_parser.yy"
+#line 357 "agent_parser.yy"
                   {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
@@ -1087,19 +1092,19 @@ namespace isc { namespace agent {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1091 "agent_parser.cc"
+#line 1096 "agent_parser.cc"
     break;
 
   case 68: // $@14: %empty
-#line 375 "agent_parser.yy"
+#line 380 "agent_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1099 "agent_parser.cc"
+#line 1104 "agent_parser.cc"
     break;
 
   case 69: // comment: "comment" $@14 ":" "constant string"
-#line 377 "agent_parser.yy"
+#line 382 "agent_parser.yy"
                {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
@@ -1124,11 +1129,11 @@ namespace isc { namespace agent {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1128 "agent_parser.cc"
+#line 1133 "agent_parser.cc"
     break;
 
   case 70: // $@15: %empty
-#line 403 "agent_parser.yy"
+#line 408 "agent_parser.yy"
                                  {
     ctx.unique("hooks-libraries", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1136,91 +1141,91 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1140 "agent_parser.cc"
+#line 1145 "agent_parser.cc"
     break;
 
   case 71: // hooks_libraries: "hooks-libraries" $@15 ":" "[" hooks_libraries_list "]"
-#line 409 "agent_parser.yy"
+#line 414 "agent_parser.yy"
                                                              {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1149 "agent_parser.cc"
+#line 1154 "agent_parser.cc"
     break;
 
   case 76: // not_empty_hooks_libraries_list: not_empty_hooks_libraries_list ","
-#line 420 "agent_parser.yy"
+#line 425 "agent_parser.yy"
                                            {
         ctx.warnAboutExtraCommas(yystack_[0].location);
         }
-#line 1157 "agent_parser.cc"
+#line 1162 "agent_parser.cc"
     break;
 
   case 77: // $@16: %empty
-#line 425 "agent_parser.yy"
+#line 430 "agent_parser.yy"
                               {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1167 "agent_parser.cc"
+#line 1172 "agent_parser.cc"
     break;
 
   case 78: // hooks_library: "{" $@16 hooks_params "}"
-#line 429 "agent_parser.yy"
+#line 434 "agent_parser.yy"
                               {
     ctx.stack_.pop_back();
 }
-#line 1175 "agent_parser.cc"
+#line 1180 "agent_parser.cc"
     break;
 
   case 81: // hooks_params: hooks_params ","
-#line 435 "agent_parser.yy"
+#line 440 "agent_parser.yy"
                                  {
                 ctx.warnAboutExtraCommas(yystack_[0].location);
                 }
-#line 1183 "agent_parser.cc"
+#line 1188 "agent_parser.cc"
     break;
 
   case 85: // $@17: %empty
-#line 445 "agent_parser.yy"
+#line 450 "agent_parser.yy"
                  {
     ctx.unique("library", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1192 "agent_parser.cc"
+#line 1197 "agent_parser.cc"
     break;
 
   case 86: // library: "library" $@17 ":" "constant string"
-#line 448 "agent_parser.yy"
+#line 453 "agent_parser.yy"
                {
     ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1202 "agent_parser.cc"
+#line 1207 "agent_parser.cc"
     break;
 
   case 87: // $@18: %empty
-#line 454 "agent_parser.yy"
+#line 459 "agent_parser.yy"
                        {
     ctx.unique("parameters", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1211 "agent_parser.cc"
+#line 1216 "agent_parser.cc"
     break;
 
   case 88: // parameters: "parameters" $@18 ":" map_value
-#line 457 "agent_parser.yy"
+#line 462 "agent_parser.yy"
                   {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1220 "agent_parser.cc"
+#line 1225 "agent_parser.cc"
     break;
 
   case 89: // $@19: %empty
-#line 465 "agent_parser.yy"
+#line 470 "agent_parser.yy"
                                                       {
     ctx.unique("control-sockets", ctx.loc2pos(yystack_[2].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[2].location)));
@@ -1228,28 +1233,28 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKETS);
 }
-#line 1232 "agent_parser.cc"
+#line 1237 "agent_parser.cc"
     break;
 
   case 90: // control_sockets: "control-sockets" ":" "{" $@19 control_sockets_params "}"
-#line 471 "agent_parser.yy"
+#line 476 "agent_parser.yy"
                                         {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1241 "agent_parser.cc"
+#line 1246 "agent_parser.cc"
     break;
 
   case 93: // control_sockets_params: control_sockets_params ","
-#line 481 "agent_parser.yy"
+#line 486 "agent_parser.yy"
                                                      {
                           ctx.warnAboutExtraCommas(yystack_[0].location);
                           }
-#line 1249 "agent_parser.cc"
+#line 1254 "agent_parser.cc"
     break;
 
   case 98: // $@20: %empty
-#line 495 "agent_parser.yy"
+#line 500 "agent_parser.yy"
                                   {
     ctx.unique("dhcp4", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1257,20 +1262,20 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1261 "agent_parser.cc"
+#line 1266 "agent_parser.cc"
     break;
 
   case 99: // dhcp4_server_socket: "dhcp4" $@20 ":" "{" control_socket_params "}"
-#line 501 "agent_parser.yy"
+#line 506 "agent_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1270 "agent_parser.cc"
+#line 1275 "agent_parser.cc"
     break;
 
   case 100: // $@21: %empty
-#line 507 "agent_parser.yy"
+#line 512 "agent_parser.yy"
                                   {
     ctx.unique("dhcp6", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1278,20 +1283,20 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1282 "agent_parser.cc"
+#line 1287 "agent_parser.cc"
     break;
 
   case 101: // dhcp6_server_socket: "dhcp6" $@21 ":" "{" control_socket_params "}"
-#line 513 "agent_parser.yy"
+#line 518 "agent_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1291 "agent_parser.cc"
+#line 1296 "agent_parser.cc"
     break;
 
   case 102: // $@22: %empty
-#line 519 "agent_parser.yy"
+#line 524 "agent_parser.yy"
                             {
     ctx.unique("d2", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1299,71 +1304,71 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1303 "agent_parser.cc"
+#line 1308 "agent_parser.cc"
     break;
 
   case 103: // d2_server_socket: "d2" $@22 ":" "{" control_socket_params "}"
-#line 525 "agent_parser.yy"
+#line 530 "agent_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1312 "agent_parser.cc"
+#line 1317 "agent_parser.cc"
     break;
 
   case 106: // control_socket_params: control_socket_params ","
-#line 533 "agent_parser.yy"
+#line 538 "agent_parser.yy"
                                                    {
                          ctx.warnAboutExtraCommas(yystack_[0].location);
                          }
-#line 1320 "agent_parser.cc"
+#line 1325 "agent_parser.cc"
     break;
 
   case 112: // $@23: %empty
-#line 547 "agent_parser.yy"
+#line 552 "agent_parser.yy"
                          {
     ctx.unique("socket-name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1329 "agent_parser.cc"
+#line 1334 "agent_parser.cc"
     break;
 
   case 113: // socket_name: "socket-name" $@23 ":" "constant string"
-#line 550 "agent_parser.yy"
+#line 555 "agent_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 1339 "agent_parser.cc"
+#line 1344 "agent_parser.cc"
     break;
 
   case 114: // $@24: %empty
-#line 557 "agent_parser.yy"
+#line 562 "agent_parser.yy"
                          {
     ctx.unique("socket-type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.SOCKET_TYPE);
 }
-#line 1348 "agent_parser.cc"
+#line 1353 "agent_parser.cc"
     break;
 
   case 115: // socket_type: "socket-type" $@24 ":" socket_type_value
-#line 560 "agent_parser.yy"
+#line 565 "agent_parser.yy"
                           {
     ctx.stack_.back()->set("socket-type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1357 "agent_parser.cc"
+#line 1362 "agent_parser.cc"
     break;
 
   case 116: // socket_type_value: "unix"
-#line 566 "agent_parser.yy"
+#line 571 "agent_parser.yy"
                          { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
-#line 1363 "agent_parser.cc"
+#line 1368 "agent_parser.cc"
     break;
 
   case 117: // $@25: %empty
-#line 573 "agent_parser.yy"
+#line 578 "agent_parser.yy"
                                {
     ctx.unique("authentication", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1371,92 +1376,92 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.AUTHENTICATION);
 }
-#line 1375 "agent_parser.cc"
+#line 1380 "agent_parser.cc"
     break;
 
   case 118: // authentication: "authentication" $@25 ":" "{" auth_params "}"
-#line 579 "agent_parser.yy"
+#line 584 "agent_parser.yy"
                                                   {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1386 "agent_parser.cc"
+#line 1391 "agent_parser.cc"
     break;
 
   case 121: // auth_params: auth_params ","
-#line 588 "agent_parser.yy"
+#line 593 "agent_parser.yy"
                                {
                ctx.warnAboutExtraCommas(yystack_[0].location);
                }
-#line 1394 "agent_parser.cc"
+#line 1399 "agent_parser.cc"
     break;
 
   case 129: // $@26: %empty
-#line 602 "agent_parser.yy"
+#line 607 "agent_parser.yy"
                 {
     ctx.unique("type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.AUTH_TYPE);
 }
-#line 1403 "agent_parser.cc"
+#line 1408 "agent_parser.cc"
     break;
 
   case 130: // auth_type: "type" $@26 ":" auth_type_value
-#line 605 "agent_parser.yy"
+#line 610 "agent_parser.yy"
                         {
     ctx.stack_.back()->set("type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1412 "agent_parser.cc"
+#line 1417 "agent_parser.cc"
     break;
 
   case 131: // auth_type_value: "basic"
-#line 610 "agent_parser.yy"
+#line 615 "agent_parser.yy"
                        { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("basic", ctx.loc2pos(yystack_[0].location))); }
-#line 1418 "agent_parser.cc"
+#line 1423 "agent_parser.cc"
     break;
 
   case 132: // $@27: %empty
-#line 613 "agent_parser.yy"
+#line 618 "agent_parser.yy"
              {
     ctx.unique("realm", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1427 "agent_parser.cc"
+#line 1432 "agent_parser.cc"
     break;
 
   case 133: // realm: "realm" $@27 ":" "constant string"
-#line 616 "agent_parser.yy"
+#line 621 "agent_parser.yy"
                {
     ElementPtr realm(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("realm", realm);
     ctx.leave();
 }
-#line 1437 "agent_parser.cc"
+#line 1442 "agent_parser.cc"
     break;
 
   case 134: // $@28: %empty
-#line 622 "agent_parser.yy"
+#line 627 "agent_parser.yy"
                      {
     ctx.unique("directory", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1446 "agent_parser.cc"
+#line 1451 "agent_parser.cc"
     break;
 
   case 135: // directory: "directory" $@28 ":" "constant string"
-#line 625 "agent_parser.yy"
+#line 630 "agent_parser.yy"
                {
     ElementPtr directory(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("directory", directory);
     ctx.leave();
 }
-#line 1456 "agent_parser.cc"
+#line 1461 "agent_parser.cc"
     break;
 
   case 136: // $@29: %empty
-#line 631 "agent_parser.yy"
+#line 636 "agent_parser.yy"
                  {
     ctx.unique("clients", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1464,130 +1469,130 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CLIENTS);
 }
-#line 1468 "agent_parser.cc"
+#line 1473 "agent_parser.cc"
     break;
 
   case 137: // clients: "clients" $@29 ":" "[" clients_list "]"
-#line 637 "agent_parser.yy"
+#line 642 "agent_parser.yy"
                                                      {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1477 "agent_parser.cc"
+#line 1482 "agent_parser.cc"
     break;
 
   case 142: // not_empty_clients_list: not_empty_clients_list ","
-#line 648 "agent_parser.yy"
+#line 653 "agent_parser.yy"
                                                      {
                           ctx.warnAboutExtraCommas(yystack_[0].location);
                           }
-#line 1485 "agent_parser.cc"
+#line 1490 "agent_parser.cc"
     break;
 
   case 143: // $@30: %empty
-#line 653 "agent_parser.yy"
+#line 658 "agent_parser.yy"
                            {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1495 "agent_parser.cc"
+#line 1500 "agent_parser.cc"
     break;
 
   case 144: // basic_auth: "{" $@30 clients_params "}"
-#line 657 "agent_parser.yy"
+#line 662 "agent_parser.yy"
                                 {
     ctx.stack_.pop_back();
 }
-#line 1503 "agent_parser.cc"
+#line 1508 "agent_parser.cc"
     break;
 
   case 147: // clients_params: clients_params ","
-#line 663 "agent_parser.yy"
+#line 668 "agent_parser.yy"
                                      {
                   ctx.warnAboutExtraCommas(yystack_[0].location);
                   }
-#line 1511 "agent_parser.cc"
+#line 1516 "agent_parser.cc"
     break;
 
   case 155: // $@31: %empty
-#line 677 "agent_parser.yy"
+#line 682 "agent_parser.yy"
            {
     ctx.unique("user", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1520 "agent_parser.cc"
+#line 1525 "agent_parser.cc"
     break;
 
   case 156: // user: "user" $@31 ":" "constant string"
-#line 680 "agent_parser.yy"
+#line 685 "agent_parser.yy"
                {
     ElementPtr user(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("user", user);
     ctx.leave();
 }
-#line 1530 "agent_parser.cc"
+#line 1535 "agent_parser.cc"
     break;
 
   case 157: // $@32: %empty
-#line 686 "agent_parser.yy"
+#line 691 "agent_parser.yy"
                      {
     ctx.unique("user-file", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1539 "agent_parser.cc"
+#line 1544 "agent_parser.cc"
     break;
 
   case 158: // user_file: "user-file" $@32 ":" "constant string"
-#line 689 "agent_parser.yy"
+#line 694 "agent_parser.yy"
                {
     ElementPtr user(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("user-file", user);
     ctx.leave();
 }
-#line 1549 "agent_parser.cc"
+#line 1554 "agent_parser.cc"
     break;
 
   case 159: // $@33: %empty
-#line 695 "agent_parser.yy"
+#line 700 "agent_parser.yy"
                    {
     ctx.unique("password", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1558 "agent_parser.cc"
+#line 1563 "agent_parser.cc"
     break;
 
   case 160: // password: "password" $@33 ":" "constant string"
-#line 698 "agent_parser.yy"
+#line 703 "agent_parser.yy"
                {
     ElementPtr password(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("password", password);
     ctx.leave();
 }
-#line 1568 "agent_parser.cc"
+#line 1573 "agent_parser.cc"
     break;
 
   case 161: // $@34: %empty
-#line 704 "agent_parser.yy"
+#line 709 "agent_parser.yy"
                              {
     ctx.unique("password-file", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1577 "agent_parser.cc"
+#line 1582 "agent_parser.cc"
     break;
 
   case 162: // password_file: "password-file" $@34 ":" "constant string"
-#line 707 "agent_parser.yy"
+#line 712 "agent_parser.yy"
                {
     ElementPtr password(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("password-file", password);
     ctx.leave();
 }
-#line 1587 "agent_parser.cc"
+#line 1592 "agent_parser.cc"
     break;
 
   case 163: // $@35: %empty
-#line 717 "agent_parser.yy"
+#line 722 "agent_parser.yy"
                  {
     ctx.unique("loggers", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1595,102 +1600,102 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1599 "agent_parser.cc"
+#line 1604 "agent_parser.cc"
     break;
 
   case 164: // loggers: "loggers" $@35 ":" "[" loggers_entries "]"
-#line 723 "agent_parser.yy"
+#line 728 "agent_parser.yy"
                                                          {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1608 "agent_parser.cc"
+#line 1613 "agent_parser.cc"
     break;
 
   case 167: // loggers_entries: loggers_entries ","
-#line 732 "agent_parser.yy"
+#line 737 "agent_parser.yy"
                                        {
                    ctx.warnAboutExtraCommas(yystack_[0].location);
                    }
-#line 1616 "agent_parser.cc"
+#line 1621 "agent_parser.cc"
     break;
 
   case 168: // $@36: %empty
-#line 738 "agent_parser.yy"
+#line 743 "agent_parser.yy"
                              {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1626 "agent_parser.cc"
+#line 1631 "agent_parser.cc"
     break;
 
   case 169: // logger_entry: "{" $@36 logger_params "}"
-#line 742 "agent_parser.yy"
+#line 747 "agent_parser.yy"
                                {
     ctx.stack_.pop_back();
 }
-#line 1634 "agent_parser.cc"
+#line 1639 "agent_parser.cc"
     break;
 
   case 172: // logger_params: logger_params ","
-#line 748 "agent_parser.yy"
+#line 753 "agent_parser.yy"
                                    {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 1642 "agent_parser.cc"
+#line 1647 "agent_parser.cc"
     break;
 
   case 180: // $@37: %empty
-#line 762 "agent_parser.yy"
+#line 767 "agent_parser.yy"
            {
     ctx.unique("name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1651 "agent_parser.cc"
+#line 1656 "agent_parser.cc"
     break;
 
   case 181: // name: "name" $@37 ":" "constant string"
-#line 765 "agent_parser.yy"
+#line 770 "agent_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1661 "agent_parser.cc"
+#line 1666 "agent_parser.cc"
     break;
 
   case 182: // debuglevel: "debuglevel" ":" "integer"
-#line 771 "agent_parser.yy"
+#line 776 "agent_parser.yy"
                                      {
     ctx.unique("debuglevel", ctx.loc2pos(yystack_[2].location));
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1671 "agent_parser.cc"
+#line 1676 "agent_parser.cc"
     break;
 
   case 183: // $@38: %empty
-#line 777 "agent_parser.yy"
+#line 782 "agent_parser.yy"
                    {
     ctx.unique("severity", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1680 "agent_parser.cc"
+#line 1685 "agent_parser.cc"
     break;
 
   case 184: // severity: "severity" $@38 ":" "constant string"
-#line 780 "agent_parser.yy"
+#line 785 "agent_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1690 "agent_parser.cc"
+#line 1695 "agent_parser.cc"
     break;
 
   case 185: // $@39: %empty
-#line 786 "agent_parser.yy"
+#line 791 "agent_parser.yy"
                                     {
     ctx.unique("output_options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1698,122 +1703,122 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1702 "agent_parser.cc"
+#line 1707 "agent_parser.cc"
     break;
 
   case 186: // output_options_list: "output_options" $@39 ":" "[" output_options_list_content "]"
-#line 792 "agent_parser.yy"
+#line 797 "agent_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1711 "agent_parser.cc"
+#line 1716 "agent_parser.cc"
     break;
 
   case 189: // output_options_list_content: output_options_list_content ","
-#line 799 "agent_parser.yy"
+#line 804 "agent_parser.yy"
                                                                {
                                ctx.warnAboutExtraCommas(yystack_[0].location);
                                }
-#line 1719 "agent_parser.cc"
+#line 1724 "agent_parser.cc"
     break;
 
   case 190: // $@40: %empty
-#line 804 "agent_parser.yy"
+#line 809 "agent_parser.yy"
                              {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1729 "agent_parser.cc"
+#line 1734 "agent_parser.cc"
     break;
 
   case 191: // output_entry: "{" $@40 output_params_list "}"
-#line 808 "agent_parser.yy"
+#line 813 "agent_parser.yy"
                                     {
     ctx.stack_.pop_back();
 }
-#line 1737 "agent_parser.cc"
+#line 1742 "agent_parser.cc"
     break;
 
   case 194: // output_params_list: output_params_list ","
-#line 814 "agent_parser.yy"
+#line 819 "agent_parser.yy"
                                         {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 1745 "agent_parser.cc"
+#line 1750 "agent_parser.cc"
     break;
 
   case 200: // $@41: %empty
-#line 826 "agent_parser.yy"
+#line 831 "agent_parser.yy"
                {
     ctx.unique("output", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1754 "agent_parser.cc"
+#line 1759 "agent_parser.cc"
     break;
 
   case 201: // output: "output" $@41 ":" "constant string"
-#line 829 "agent_parser.yy"
+#line 834 "agent_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1764 "agent_parser.cc"
+#line 1769 "agent_parser.cc"
     break;
 
   case 202: // flush: "flush" ":" "boolean"
-#line 835 "agent_parser.yy"
+#line 840 "agent_parser.yy"
                            {
     ctx.unique("flush", ctx.loc2pos(yystack_[2].location));
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1774 "agent_parser.cc"
+#line 1779 "agent_parser.cc"
     break;
 
   case 203: // maxsize: "maxsize" ":" "integer"
-#line 841 "agent_parser.yy"
+#line 846 "agent_parser.yy"
                                {
     ctx.unique("maxsize", ctx.loc2pos(yystack_[2].location));
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1784 "agent_parser.cc"
+#line 1789 "agent_parser.cc"
     break;
 
   case 204: // maxver: "maxver" ":" "integer"
-#line 847 "agent_parser.yy"
+#line 852 "agent_parser.yy"
                              {
     ctx.unique("maxver", ctx.loc2pos(yystack_[2].location));
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1794 "agent_parser.cc"
+#line 1799 "agent_parser.cc"
     break;
 
   case 205: // $@42: %empty
-#line 853 "agent_parser.yy"
+#line 858 "agent_parser.yy"
                  {
     ctx.unique("pattern", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1803 "agent_parser.cc"
+#line 1808 "agent_parser.cc"
     break;
 
   case 206: // pattern: "pattern" $@42 ":" "constant string"
-#line 856 "agent_parser.yy"
+#line 861 "agent_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 1813 "agent_parser.cc"
+#line 1818 "agent_parser.cc"
     break;
 
 
-#line 1817 "agent_parser.cc"
+#line 1822 "agent_parser.cc"
 
             default:
               break;
@@ -2486,27 +2491,27 @@ namespace isc { namespace agent {
   const short
   AgentParser::yyrline_[] =
   {
-       0,   127,   127,   127,   128,   128,   129,   129,   137,   137,
-     148,   154,   155,   156,   157,   158,   159,   160,   164,   164,
-     175,   180,   181,   189,   194,   200,   205,   205,   211,   212,
-     215,   219,   223,   235,   243,   243,   255,   255,   271,   274,
-     278,   279,   280,   287,   288,   289,   290,   291,   292,   293,
-     294,   295,   296,   297,   298,   299,   302,   302,   311,   317,
-     317,   326,   326,   335,   335,   344,   350,   350,   375,   375,
-     403,   403,   414,   415,   418,   419,   420,   425,   425,   433,
-     434,   435,   438,   441,   442,   445,   445,   454,   454,   465,
-     465,   479,   480,   481,   488,   489,   490,   491,   495,   495,
-     507,   507,   519,   519,   531,   532,   533,   539,   540,   541,
-     542,   543,   547,   547,   557,   557,   566,   573,   573,   586,
-     587,   588,   593,   594,   595,   596,   597,   598,   599,   602,
-     602,   610,   613,   613,   622,   622,   631,   631,   642,   643,
-     646,   647,   648,   653,   653,   661,   662,   663,   668,   669,
-     670,   671,   672,   673,   674,   677,   677,   686,   686,   695,
-     695,   704,   704,   717,   717,   730,   731,   732,   738,   738,
-     746,   747,   748,   753,   754,   755,   756,   757,   758,   759,
-     762,   762,   771,   777,   777,   786,   786,   797,   798,   799,
-     804,   804,   812,   813,   814,   819,   820,   821,   822,   823,
-     826,   826,   835,   841,   847,   853,   853
+       0,   132,   132,   132,   133,   133,   134,   134,   142,   142,
+     153,   159,   160,   161,   162,   163,   164,   165,   169,   169,
+     180,   185,   186,   194,   199,   205,   210,   210,   216,   217,
+     220,   224,   228,   240,   248,   248,   260,   260,   276,   279,
+     283,   284,   285,   292,   293,   294,   295,   296,   297,   298,
+     299,   300,   301,   302,   303,   304,   307,   307,   316,   322,
+     322,   331,   331,   340,   340,   349,   355,   355,   380,   380,
+     408,   408,   419,   420,   423,   424,   425,   430,   430,   438,
+     439,   440,   443,   446,   447,   450,   450,   459,   459,   470,
+     470,   484,   485,   486,   493,   494,   495,   496,   500,   500,
+     512,   512,   524,   524,   536,   537,   538,   544,   545,   546,
+     547,   548,   552,   552,   562,   562,   571,   578,   578,   591,
+     592,   593,   598,   599,   600,   601,   602,   603,   604,   607,
+     607,   615,   618,   618,   627,   627,   636,   636,   647,   648,
+     651,   652,   653,   658,   658,   666,   667,   668,   673,   674,
+     675,   676,   677,   678,   679,   682,   682,   691,   691,   700,
+     700,   709,   709,   722,   722,   735,   736,   737,   743,   743,
+     751,   752,   753,   758,   759,   760,   761,   762,   763,   764,
+     767,   767,   776,   782,   782,   791,   791,   802,   803,   804,
+     809,   809,   817,   818,   819,   824,   825,   826,   827,   828,
+     831,   831,   840,   846,   852,   858,   858
   };
 
   void
@@ -2539,9 +2544,9 @@ namespace isc { namespace agent {
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2543 "agent_parser.cc"
+#line 2548 "agent_parser.cc"
 
-#line 862 "agent_parser.yy"
+#line 867 "agent_parser.yy"
 
 
 void
