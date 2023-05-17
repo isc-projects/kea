@@ -33,6 +33,11 @@ using namespace std;
 %code
 {
 #include <dhcp4/parser_context.h>
+
+// Avoid warnings with the error counter.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 }
 
 

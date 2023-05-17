@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,6 +33,11 @@ using namespace std;
 %code
 {
 #include <d2/parser_context.h>
+
+// Avoid warnings with the error counter.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 }
 
 
