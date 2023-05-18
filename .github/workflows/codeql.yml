@@ -44,7 +44,7 @@ jobs:
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Install dependencies
       run: |
-        ./hammer.py prepare-system -p local -w docs,mysql,netconf,perfdhcp,shell,tls,unittest
+        ./hammer.py prepare-system -p local -w docs,netconf,perfdhcp,shell,tls,unittest
 
     - name: Inspect system CPU
       run: cat /proc/cpuinfo
@@ -56,7 +56,7 @@ jobs:
     - name: Build Kea
       run: |
         autoreconf -i
-        ./configure --enable-shell --enable-debug --enable-generate-docs --enable-generate-messages --enable-generate-parser --enable-logger-checks --enable-perfdhcp --enable-shell --with-libyang --with-libyang-cpp --with-mysql --with-openssl --with-pgsql --with-sysrepo --with-sysrepo-cpp
+        ./configure --enable-shell --enable-debug --enable-generate-docs --enable-generate-messages --enable-generate-parser --enable-logger-checks --enable-perfdhcp --enable-shell --with-libyang --with-libyang-cpp --with-openssl --with-pgsql --with-sysrepo --with-sysrepo-cpp
         make -j2
 
     # ℹ️ Command-line programs to run using the OS shell.
