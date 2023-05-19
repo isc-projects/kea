@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,6 +112,9 @@ DELETE FROM dhcp6_client_class_dependency;
 DELETE FROM dhcp6_client_class_server;
 DELETE FROM dhcp6_client_class;
 DELETE FROM dhcp6_server WHERE tag != 'all'; -- preserve the special tag
+
+DELETE FROM lease6_relay_id;
+DELETE FROM lease6_remote_id;
 
 COMMIT;
 EOF

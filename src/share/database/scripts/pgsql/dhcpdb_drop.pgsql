@@ -1,4 +1,4 @@
--- Copyright (C) 2016-2022 Internet Systems Consortium.
+-- Copyright (C) 2016-2023 Internet Systems Consortium.
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -226,3 +226,7 @@ DROP FUNCTION IF EXISTS checkLease4Limits(user_context TEXT);
 DROP FUNCTION IF EXISTS checkLease6Limits(user_context TEXT);
 DROP FUNCTION IF EXISTS isJsonSupported();
 DROP FUNCTION IF EXISTS json_cast(json_candidate TEXT);
+
+-- v6 BLQ cross-tables
+DROP TABLE IF EXISTS lease6_relay_id;
+DROP TABLE IF EXISTS lease6_remote_id;

@@ -40,6 +40,26 @@ START TRANSACTION;
 
 UPDATE lease6 SET duid = E'\\\\x000000' WHERE duid = E'\\\\x00';
 
+-- Add the binary version of the IPv6 address for v6 BLQ prefix filter.
+ALTER TABLE lease6
+    ADD COLUMN binaddr BYTEA DEFAULT NULL;
+
+-- Create table for v6 BLQ by-relay-id.
+CREATE TABLE lease6_relay_id (
+    extended_info_id SERIAL PRIMARY KEY NOT NULL,
+    relay_id BYTEA NOT NULL,
+    lease_addr BYTEA NOT NULL);
+CREATE INDEX lease6_relay_id_by_id ON lease6_relay_id (relay_id, lease_addr ASC);
+CREATE INDEX lease6_relay_id_by_address ON lease6_relay_id (lease_addr);
+
+-- Create table for v6 BLQ by-remote-id.
+CREATE TABLE lease6_remote_id (
+    extended_info_id SERIAL PRIMARY KEY NOT NULL,
+    remote_id BYTEA NOT NULL,
+    lease_addr BYTEA NOT NULL);
+CREATE INDEX lease6_remote_id_by_id ON lease6_remote_id (remote_id, lease_addr ASC);
+CREATE INDEX lease6_remote_id_by_address ON lease6_remote_id (lease_addr);
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '17', minor = '0';
