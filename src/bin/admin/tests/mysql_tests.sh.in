@@ -753,6 +753,51 @@ mysql_upgrade_16_to_17_test() {
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 }
 
+mysql_upgrade_17_to_18_test() {
+    # lease4 client_id should support 255 long strings.
+    qry="insert into lease4 (address, client_id, subnet_id) values (1, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
+    run_statement "lease4_255_long_client_id" "$qry"
+
+    # lease4 relay_id should support 255 long strings.
+    qry="insert into lease4 (address, remote_id, subnet_id) values (2, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
+    run_statement "lease4_255_long_relay_id" "$qry"
+
+    # lease4 remote_id should support 255 long strings.
+    qry="insert into lease4 (address, remote_id, subnet_id) values (3, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
+    run_statement "lease4_255_long_remote_id" "$qry"
+
+    # hosts dhcp_identifier should support 255 long strings.
+    qry="insert into hosts (dhcp_identifier, dhcp_identifier_type) values ('123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 0);"
+    run_statement "hosts_255_long_dhcp_identifier" "$qry"
+
+    #lease6 duid should support 130 long strings.
+    qry="insert into lease6 values('::10',12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);"
+    run_statement "lease6_130_long_duid" "$qry"
+
+    #lease6 new binaddr column.
+    qry="select binaddr from lease6"
+    run_statement "lease6" "$qry"
+
+    qry="show indexes from lease6 where key_name = 'lease6_by_binaddr'";
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "show indexes from lease6 failed. (expected status code %d, returned %d)"
+    count=$(echo "${OUTPUT}" | grep -Fci lease6_by_binaddr)
+    assert_eq 1 "${count}" "lease6_by_binaddr wrong or missing. (expected count %d, actual %d)"
+
+    #lease6_relay_id new table.
+    run_command \
+        mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
+        'SELECT extended_info_id, relay_id, lease_addr FROM lease6_relay_id;'
+    assert_eq 0 "${EXIT_CODE}" "lease6_relay_id table is missing or broken. (expected status code %d, returned %d)"
+
+    #lease6_remote_id new table.
+    run_command \
+        mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
+        'SELECT extended_info_id, remote_id, lease_addr FROM lease6_remote_id;'
+    assert_eq 0 "${EXIT_CODE}" "lease6_remote_id table is missing or broken. (expected status code %d, returned %d)"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1431,25 +1476,8 @@ SET @disable_audit = 0;"
     # Check upgrade from 16.0 to 17.0.
     mysql_upgrade_16_to_17_test
 
-    # lease4 client_id should support 255 long strings.
-    qry="insert into lease4 (address, client_id, subnet_id) values (1, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
-    run_statement "lease4_255_long_client_id" "$qry"
-
-    # lease4 relay_id should support 255 long strings.
-    qry="insert into lease4 (address, remote_id, subnet_id) values (2, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
-    run_statement "lease4_255_long_relay_id" "$qry"
-
-    # lease4 remote_id should support 255 long strings.
-    qry="insert into lease4 (address, remote_id, subnet_id) values (3, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1);"
-    run_statement "lease4_255_long_remote_id" "$qry"
-
-    # hosts dhcp_identifier should support 255 long strings.
-    qry="insert into hosts (dhcp_identifier, dhcp_identifier_type) values ('123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 0);"
-    run_statement "hosts_255_long_dhcp_identifier" "$qry"
-
-    #lease6 duid should support 130 long strings.
-    qry="insert into lease6 values('::10',12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);"
-    run_statement "lease6_130_long_duid" "$qry"
+    # Check upgrade from 17.0 to 18.0.
+    mysql_upgrade_17_to_18_test
 
     # Let's wipe the whole database
     mysql_wipe

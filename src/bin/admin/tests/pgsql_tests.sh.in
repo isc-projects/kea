@@ -836,6 +836,23 @@ pgsql_upgrade_15_to_16_test() {
     assert_eq 0 "${EXIT_CODE}" "dhcp6_subnet is missing pd_allocator column. (expected status  code %d, returned %d)"
 }
 
+pgsql_upgrade_16_to_17_test() {
+    # Added binaddr column to lease6
+    run_command \
+        pgsql_execute "select binaddr from lease6;"
+    assert_eq 0 "${EXIT_CODE}" "lease6 is missing binaddr column. (expected status  code %d, returned %d)"
+
+    # Added lease6_relay_id table
+    run_command \
+        pgsql_execute "select extended_info_id, relay_id, lease_addr from lease6_relay_id;"
+    assert_eq 0 "${EXIT_CODE}" "lease6_relay_id table is missing or broken. (expected status code %d, returned %d)"
+
+    # Added lease6_remote_id table
+    run_command \
+        pgsql_execute "select extended_info_id, remote_id, lease_addr from lease6_remote_id;"
+    assert_eq 0 "${EXIT_CODE}" "lease6_remote_id table is missing or broken. (expected status code %d, returned %d)"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -897,6 +914,9 @@ pgsql_upgrade_test() {
 
     # Check 15 to 16 upgrade
     pgsql_upgrade_15_to_16_test
+
+    # Check 16 to 17 upgrade
+    pgsql_upgrade_16_to_17_test
 
     # Let's wipe the whole database
     pgsql_wipe

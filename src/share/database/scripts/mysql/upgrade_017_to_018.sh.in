@@ -199,7 +199,7 @@ CREATE TABLE lease6_relay_id (
     relay_id VARBINARY(130) NOT NULL,
     lease_addr BINARY(16) NOT NULL,
     PRIMARY KEY (extended_info_id),
-    INDEX key_lease6_relay_id_by_id (lease6_relay_id, lease_addr ASC),
+    INDEX key_lease6_relay_id_by_id (relay_id, lease_addr ASC),
     INDEX key_lease6_relay_id_by_address (lease_addr)
 )  ENGINE = INNODB;
 
