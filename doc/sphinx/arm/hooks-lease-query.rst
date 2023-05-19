@@ -446,6 +446,16 @@ defined in RFC 6607.
 
    The new query types are only supported with the memfile lease backend.
 
+.. _command-extended-info4-upgrade:
+
+The ``extended-info4-upgrade`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With SQL lease database backends the relay and remote IDs are in new columns
+so to make old leases (old means from an older Kea version) visible to
+the hook library the lease database must be upgraded. This is the function
+of the ``extended-info4-upgrade`` command.
+
 .. _bulk-lease-query-dhcpv6:
 
 DHCPv6 Bulk Leasequery
