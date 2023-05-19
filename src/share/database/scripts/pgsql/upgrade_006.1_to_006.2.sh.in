@@ -35,6 +35,8 @@ fi
 
 psql "$@" >/dev/null <<EOF
 
+START TRANSACTION;
+
 -- This line starts the schema upgrade to version 6.2.
 
 -- Starting from this version we allow specifying multiple IP reservations

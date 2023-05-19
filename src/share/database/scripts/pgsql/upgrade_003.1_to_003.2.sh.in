@@ -34,7 +34,6 @@ if [ "$VERSION" != "3.1" ]; then
 fi
 
 psql "$@" >/dev/null <<EOF
-
 START TRANSACTION;
 
 -- This line starts the schema upgrade to version 3.2.

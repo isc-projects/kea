@@ -19,7 +19,7 @@
 
 -- @dhcpdb_create.pgsql
 
--- Start a single transaction for the Entire script
+-- Start a single transaction for the entire script.
 START TRANSACTION;
 
 -- Holds the IPv4 leases.
