@@ -115,7 +115,7 @@ for i in $(get_source_files); do
   includes=$(grep -E '^#include' "${i}" | sort -V)
   unique_includes=$(grep -E '^#include' "${i}" | sort -uV)
   diff=$(posix_diff "${includes}" "${unique_includes}" | \
-    grep -F '#include' | grep -E '^\-|^\+' | sed -E 's/^([^-+ ]*)[-+ ]/\1/' )
+    grep -F '#include' | grep -E '^-|^\+' | sed -E 's/^([^-+ ]*)[-+ ]/\1/' )
   if test -n "${diff}"; then
     printf '%s has the following duplicate includes:\n%s\n\n' "${i}" "${diff}"
     found=true

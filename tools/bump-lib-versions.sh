@@ -129,7 +129,7 @@ for lib in $(git diff --name-only "${old_release_tag}" src/lib | cut -d '/' -f 3
     continue
   fi
 
-  old_version=$(grep '\-version\-info' "src/lib/${lib}/Makefile.am" | tr -s ' ' | rev | cut -d ' ' -f 1 | rev | cut -d ':' -f 1)
+  old_version=$(grep -- '-version-info' "src/lib/${lib}/Makefile.am" | tr -s ' ' | rev | cut -d ' ' -f 1 | rev | cut -d ':' -f 1)
   new_version=$((old_version + increment))
   sed -i "s/version-info .*/version-info ${new_version}:0:0/" "src/lib/${lib}/Makefile.am"
 done
@@ -141,7 +141,7 @@ if ! ${is_new_tag_stable_release} && ${is_old_tag_stable_release}; then
       continue
     fi
 
-    old_version=$(grep '\-version\-info' "src/lib/${lib}/Makefile.am" | tr -s ' ' | rev | cut -d ' ' -f 1 | rev | cut -d ':' -f 1)
+    old_version=$(grep -- '-version-info' "src/lib/${lib}/Makefile.am" | tr -s ' ' | rev | cut -d ' ' -f 1 | rev | cut -d ':' -f 1)
     new_version=$((old_version + increment_extra))
     sed -i "s/version-info .*/version-info ${new_version}:0:0/" "src/lib/${lib}/Makefile.am"
   done

@@ -37,7 +37,7 @@ fi
 # query information_schema for the right database.
 for arg in "${@}"
 do
-    if ! printf '%s' "${arg}" | grep -Eq '^\-\-'
+    if ! printf '%s' "${arg}" | grep -Eq -- '^--'
     then
         schema="$arg"
         break
