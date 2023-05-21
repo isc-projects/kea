@@ -5640,6 +5640,7 @@ UPDATE lease6 SET duid = E'\\x000000' WHERE duid = E'\\x00';
 -- Add the binary version of the IPv6 address for v6 BLQ prefix filter.
 ALTER TABLE lease6
     ADD COLUMN binaddr BYTEA DEFAULT NULL;
+CREATE INDEX lease6_by_binaddr ON lease6 (binaddr ASC);
 
 -- Create table for v6 BLQ by-relay-id.
 CREATE TABLE lease6_relay_id (
