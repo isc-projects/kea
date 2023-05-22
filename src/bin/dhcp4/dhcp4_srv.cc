@@ -2578,23 +2578,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // Get the context.
     AllocEngine::ClientContext4Ptr ctx = ex.getContext();
 
-    // Subnet should have been already selected when the context was created.
-    Subnet4Ptr subnet = ctx->subnet_;
-    if (!subnet) {
-        // This particular client is out of luck today. We do not have
-        // information about the subnet he is connected to. This likely means
-        // misconfiguration of the server (or some relays).
-
-        // Perhaps this should be logged on some higher level?
-        LOG_ERROR(bad_packet4_logger, DHCP4_PACKET_NAK_0001)
-            .arg(query->getLabel())
-            .arg(query->getRemoteAddr().toText())
-            .arg(query->getName());
-        resp->setType(DHCPNAK);
-        resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-        return;
-    }
-
     // Get the server identifier. It will be used to determine the state
     // of the client.
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
@@ -2613,8 +2596,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     }
 
-    HWAddrPtr hwaddr = query->getHWAddr();
-
     // "Fake" allocation is processing of DISCOVER message. We pretend to do an
     // allocation, but we do not put the lease in the database. That is ok,
     // because we do not guarantee that the user will get that exact lease. If
@@ -2622,21 +2603,67 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // it should include this hint. That will help us during the actual lease
     // allocation.
     bool fake_allocation = (query->getType() == DHCPDISCOVER);
-    Subnet4Ptr original_subnet = subnet;
 
-    // Get client-id. It is not mandatory in DHCPv4.
-    ClientIdPtr client_id = ex.getContext()->clientid_;
+    // Subnet should have been already selected when the context was created.
+    Subnet4Ptr subnet = ctx->subnet_;
+
+    // This flag controls whether or not the server should respond to the clients
+    // in the INIT-REBOOT state. We will initialize it to a configured value only
+    // when the client is in that state.
+    auto authoritative = false;
 
     // If there is no server id and there is a Requested IP Address option
     // the client is in the INIT-REBOOT state in which the server has to
     // determine whether the client's notion of the address is correct
     // and whether the client is known, i.e., has a lease.
-    if (!fake_allocation && !opt_serverid && opt_requested_address) {
-
+    auto init_reboot = (!fake_allocation && !opt_serverid && opt_requested_address);
+    if (init_reboot) {
         LOG_INFO(lease4_logger, DHCP4_INIT_REBOOT)
             .arg(query->getLabel())
             .arg(hint.toText());
 
+        // Find the authoritative flag configuration.
+        if (subnet) {
+            authoritative = subnet->getAuthoritative();
+        } else {
+            // If there is no subnet, use the global value.
+            auto flag = CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals()->
+                get(CfgGlobals::AUTHORITATIVE);
+            if (flag && (flag->getType() == data::Element::boolean)) {
+                authoritative = flag->boolValue();
+            }
+        }
+    }
+
+    // If there is no subnet configuration for that client we ignore the
+    // request from the INIT-REBOOT client if we're not authoritative, because
+    // we don't know whether the network configuration is correct for this
+    // client. We return DHCPNAK if we're authoritative, though.
+    if (!subnet && (!init_reboot || authoritative)) {
+        // This particular client is out of luck today. We do not have
+        // information about the subnet he is connected to. This likely means
+        // misconfiguration of the server (or some relays).
+
+        // Perhaps this should be logged on some higher level?
+        LOG_ERROR(bad_packet4_logger, DHCP4_PACKET_NAK_0001)
+            .arg(query->getLabel())
+            .arg(query->getRemoteAddr().toText())
+            .arg(query->getName());
+        resp->setType(DHCPNAK);
+        resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+        return;
+    }
+
+    HWAddrPtr hwaddr = query->getHWAddr();
+
+    Subnet4Ptr original_subnet = subnet;
+
+    // Get client-id. It is not mandatory in DHCPv4.
+    ClientIdPtr client_id = ex.getContext()->clientid_;
+
+    // In the INIT-REBOOT state, a client remembering its previously assigned
+    // address is trying to confirm whether or not this address is still usable.
+    if (init_reboot) {
         Lease4Ptr lease;
 
         auto const& classes = query->getClasses();
@@ -2649,7 +2676,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         //
         // We now issue at most two queries: get all the leases for specific
         // client-id and then get all leases for specific hw-address.
-        if (client_id) {
+        if (original_subnet && client_id) {
 
             // Get all the leases for this client-id
             Lease4Collection leases_client_id = LeaseMgrFactory::instance().getLease4(*client_id);
@@ -2678,7 +2705,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         // If we haven't found a lease yet, try again by hardware-address.
         // The logic is the same.
-        if (!lease && hwaddr) {
+        if (original_subnet && !lease && hwaddr) {
 
             // Get all leases for this particular hw-address.
             Lease4Collection leases_hwaddr = LeaseMgrFactory::instance().getLease4(*hwaddr);
@@ -2707,7 +2734,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Check the first error case: unknown client. We check this before
         // validating the address sent because we don't want to respond if
         // we don't know this client, except if we're authoritative.
-        bool authoritative = original_subnet->getAuthoritative();
         bool known_client = lease && lease->belongsToClient(hwaddr, client_id);
         if (!authoritative && !known_client) {
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
@@ -2722,7 +2748,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // If we know this client, check if his notion of the IP address is
         // correct, if we don't know him, check if we are authoritative.
         if ((known_client && (lease->addr_ != hint)) ||
-            (!known_client && authoritative)) {
+            (!known_client && authoritative) ||
+            (!original_subnet)) {
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_NAK_0002)
                 .arg(query->getLabel())

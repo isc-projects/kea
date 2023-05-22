@@ -154,6 +154,19 @@ namespace {
 ///   - Selects random allocator.
 ///   - One subnet with three distinct pools.
 ///   - Random allocator enabled globally.
+///
+/// - Configuration 18:
+///   - Two subnets, one with an address pool, one without.
+///   - cache-max-age set to 600
+///   - cache-threshold set to .50.
+///
+/// - Configuration 19:
+///   - No subnets.
+///   - Global authoritative flag is false.
+///
+/// - Configuration 20:
+///   - No subnets.
+///   - Global authoritative flag is true.
 const char* DORA_CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -605,6 +618,22 @@ const char* DORA_CONFIGS[] = {
         ],
         "valid-lifetime": 600
     })",
+
+    // Configuration 19
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"authoritative\": false,"
+        "\"subnet4\": []"
+    "}",
+
+    // Configuration 20
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"authoritative\": true,"
+        "\"subnet4\": []"
+    "}",
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -685,24 +714,32 @@ public:
     /// in use the client will get a different address.
     void selectingRequestAddress();
 
-    /// @brief  This test verifies that the client will get the address that it
+    /// @brief This test verifies that the client will get the address that it
     /// has been allocated when the client requests a different address.
     void selectingRequestNonMatchingAddress();
 
-    /// @brief  Test that the client in the INIT-REBOOT state can request the IP
+    /// @brief Test that the client in the INIT-REBOOT state can request the IP
     /// address it has and the address is returned. Also, check that if the
     /// client requests invalid address the server sends a DHCPNAK.
     void initRebootRequest();
 
-    /// @brief  Test that the client in the INIT-REBOOT state can request the IP
+    /// @brief Test that the client in the INIT-REBOOT state can request the IP
     /// address it has and the address is returned. Also, check that if the
     /// client is unknown the server sends a DHCPNAK.
     void authoritative();
 
-    /// @brief  Test that the client in the INIT-REBOOT state can request the IP
+    /// @brief Test that the client in the INIT-REBOOT state can request the IP
     /// address it has and the address is returned. Also, check that if  the
     /// client is unknown the request is dropped.
     void notAuthoritative();
+
+    /// @brief Test that the authoritative server sends a DHCPNAK to the client
+    /// in the INIT-REBOOT state when subnet selection fails.
+    void authoritativeSubnetSelectionFail();
+
+    /// @brief Test that the server does not respond to the client in the
+    /// INIT-REBOOT state when subnet selection fails.
+    void notAuthoritativeSubnetSelectionFail();
 
     /// @brief Check that the ciaddr returned by the server is correct for
     /// DHCPOFFER and DHCPNAK according to RFC2131, section 4.3.1.
@@ -1369,6 +1406,73 @@ TEST_F(DORATest, notAuthoritative) {
 TEST_F(DORATest, notAuthoritativeMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     notAuthoritative();
+}
+
+void
+DORATest::authoritativeSubnetSelectionFail() {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[15], *client.getServer());
+    client.includeClientId("11:22");
+    client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
+
+    // Current configuration contains a matching subnet from which
+    // the client should get a lease.
+    client.doDORA();
+
+    // Let's now reconfigure the server to remove the subnet. The
+    // global authoritative flag is true.
+    configure(DORA_CONFIGS[20], *client.getServer());
+
+    // Simulate that the client is in the INIT-REBOOT state. The
+    // client will request the previously assigned address and
+    // remove the server-id.
+    client.setState(Dhcp4Client::INIT_REBOOT);
+    ASSERT_NO_THROW_LOG(client.doRequest());
+
+    // The server should respond because it is authoritative.
+    auto resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+}
+
+TEST_F(DORATest, authoritativeSubnetSelectionFail) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    authoritativeSubnetSelectionFail();
+}
+
+TEST_F(DORATest, authoritativeSubnetSelectionFailMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    authoritativeSubnetSelectionFail();
+}
+
+void
+DORATest::notAuthoritativeSubnetSelectionFail() {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[15], *client.getServer());
+    client.includeClientId("11:22");
+    client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
+
+    client.doDORA();
+
+    configure(DORA_CONFIGS[19], *client.getServer());
+
+    client.setState(Dhcp4Client::INIT_REBOOT);
+    ASSERT_NO_THROW_LOG(client.doRequest());
+    // We are not authoritative so the server does not respond
+    // at all.
+    EXPECT_FALSE(client.getContext().response_);
+}
+
+TEST_F(DORATest, notAuthoritativeSubnetSelectionFail) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    notAuthoritativeSubnetSelectionFail();
+}
+
+TEST_F(DORATest, notAuthoritativeSubnetSelectionFailMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    notAuthoritativeSubnetSelectionFail();
 }
 
 void
