@@ -962,6 +962,14 @@ public:
 
     /// @brief Upgrade extended info (v4).
     ///
+    /// On SQL backends for all leases with a not null user context.
+    ///  - sanitize the user context
+    ///  - update relay and remote ids
+    ///  - when the lease was modified update it in the database
+    /// On memfile backend a similar action is done when the database is
+    /// loaded from the file. This function implements the new BLQ hook
+    /// command named "extended-info4-upgrade".
+    ///
     /// @param page_size The page size used for retrieval.
     /// @return The number of updates in the database.
     virtual size_t upgradeExtendedInfo(const LeasePageSize& page_size) = 0;
