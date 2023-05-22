@@ -898,3 +898,34 @@ TEST_F(CommandOptionsTest, ElapsedTime) {
     EXPECT_EQ(3, opt.getIncreaseElapsedTime());
     EXPECT_EQ(10, opt.getWaitForElapsedTime());
 }
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsWithoutRelayEncapsulation) {
+    CommandOptions opt;
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --o1r 32,00000E10 -l ethx all"));
+    EXPECT_TRUE(opt.isUseRelayedV6());
+    EXPECT_EQ(1, opt.getRelayOpts().size());
+
+    // --o1r must be used together with -A
+    EXPECT_THROW(process(opt, "perfdhcp -6 --o1r 32,00000E10 -l ethx all"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsNoComma) {
+    CommandOptions opt;
+
+    // --o1r must be followed by option code, a coma and hexstring
+    EXPECT_THROW(process(opt, "perfdhcp -6 --o1r 3200000E10 -l ethx all"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsNegativeOptionCode) {
+    CommandOptions opt;
+
+    // --o1r must be followed by positive option code, a coma and hexstring
+    EXPECT_THROW(process(opt, "perfdhcp -6 --o1r -32,00000E10 -l ethx all"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsWrongHexstring) {
+    CommandOptions opt;
+
+    // --o1r hexstring containing char Z which is not correct
+    EXPECT_THROW(process(opt, "perfdhcp -6 --o1r -32,Z0000E10 -l ethx all"), isc::InvalidParameter);
+}

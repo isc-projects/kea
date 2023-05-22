@@ -221,6 +221,7 @@ const int LONG_OPT_RELAY_1_OPTION = 400;
 bool
 CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     int opt = 0;                // Subsequent options returned by getopt()
+    int opt_long_index = 0;     // Holds index of long_option inside of long_options[]
     std::string drop_arg;       // Value of -D<value>argument
     size_t percent_loc = 0;     // Location of % sign in -D<value>
     double drop_percent = 0;    // % value (1..100) in -D<value%>
@@ -246,8 +247,10 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     while((opt = getopt_long(argc, argv,
                              "huv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
                              "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:C:y:Y:",
-                             long_options, NULL)) != -1) {
-        stream << " -" << static_cast<char>(opt);
+                             long_options, &opt_long_index)) != -1) {
+        stream << " -";
+        opt <= 'z' ? stream << static_cast<char>(opt) :
+                     stream << "-" << long_options[opt_long_index].name;
         if (optarg) {
             stream << " " << optarg;
         }
@@ -633,14 +636,14 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             try {
                 isc::util::encode::decodeHex(opt_text, bin);
             } catch (const BadValue& e) {
-                isc_throw(InvalidParameter, "Error during encoding option --o1r:"
+                isc_throw(InvalidParameter, "Error during decoding option --o1r:"
                                                 << e.what());
             }
 
             // Create and remember the option.
             OptionPtr option(new Option(Option::V6, code, bin));
             // For now, only 1 level of encapsulation is allowed for relay options,
-            // thus 1 key is hardcoded below. But in future, if needed, level of
+            // thus 1 key is hardcoded below. But in the future, if needed, level of
             // encapsulation of relay option could be taken from command option.
             auto relay_1_opts = relay_opts_.find(1);
             relay_1_opts->second.insert(make_pair(code, option));
