@@ -1,3 +1,9 @@
+2138.	[bug]		marcin
+	Fixed a bug in the DHCPv4 server that sent DHCPNAK to a client
+	in the INIT-REBOOT state when the server had no matching subnet
+	configuration for that client.
+	(Gitlab #2858)
+
 2137.	[func]		fdupont
 	A new command "extended-info4-upgrade" makes old leases
 	from SQL DHCPV4 lease database visible to Bulk Lease Queries.
