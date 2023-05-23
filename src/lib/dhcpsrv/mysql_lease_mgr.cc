@@ -3896,7 +3896,7 @@ MySqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
 }
 
 size_t
-MySqlLeaseMgr::upgradeExtendedInfo(const LeasePageSize& page_size) {
+MySqlLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& page_size) {
     auto check = CfgMgr::instance().getCurrentCfg()->
         getConsistency()->getExtendedInfoSanityCheck();
 

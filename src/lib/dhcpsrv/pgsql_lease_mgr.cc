@@ -3036,7 +3036,7 @@ PgSqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
 }
 
 size_t
-PgSqlLeaseMgr::upgradeExtendedInfo(const LeasePageSize& page_size) {
+PgSqlLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& page_size) {
     auto check = CfgMgr::instance().getCurrentCfg()->
         getConsistency()->getExtendedInfoSanityCheck();
 

@@ -379,7 +379,7 @@ public:
 
     /// @brief Stub implementation.
     virtual size_t
-    upgradeExtendedInfo(const LeasePageSize& /* page_size */) override;
+    upgradeExtendedInfo4(const LeasePageSize& /* page_size */) override;
 
     /// @brief Stub implementation.
     virtual size_t buildExtendedInfoTables6(bool /* update */,

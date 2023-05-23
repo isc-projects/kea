@@ -972,7 +972,7 @@ public:
     ///
     /// @param page_size The page size used for retrieval.
     /// @return The number of updates in the database.
-    virtual size_t upgradeExtendedInfo(const LeasePageSize& page_size) = 0;
+    virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) = 0;
 
     /// @brief Returns the setting indicating if lease extended info tables
     /// are enabled.

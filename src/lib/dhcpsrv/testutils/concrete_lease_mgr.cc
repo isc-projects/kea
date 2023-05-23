@@ -292,7 +292,7 @@ ConcreteLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
 }
 
 size_t
-ConcreteLeaseMgr::upgradeExtendedInfo(const LeasePageSize& /* page_size */) {
+ConcreteLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& /* page_size */) {
     return (0);
 }
 

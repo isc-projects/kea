@@ -3033,7 +3033,7 @@ Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
 }
 
 size_t
-Memfile_LeaseMgr::upgradeExtendedInfo(const LeasePageSize& /* page_size */) {
+Memfile_LeaseMgr::upgradeExtendedInfo4(const LeasePageSize& /* page_size */) {
     return (0);
 }
 

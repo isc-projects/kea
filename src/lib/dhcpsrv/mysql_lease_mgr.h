@@ -1132,7 +1132,7 @@ private:
     ///
     /// @param page_size The page size used for retrieval.
     /// @return The number of updates in the database.
-    virtual size_t upgradeExtendedInfo(const LeasePageSize& page_size) override;
+    virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) override;
 
     /// @brief Build extended info v6 tables.
     ///

@@ -1512,7 +1512,7 @@ public:
     ///
     /// @param page_size The page size used for retrieval.
     /// @return Always return 0 as this function is a noop for not SQL backends.
-    virtual size_t upgradeExtendedInfo(const LeasePageSize& page_size) override;
+    virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) override;
 
 protected:
 
