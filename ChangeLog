@@ -1,3 +1,8 @@
+2137.	[func]		fdupont
+	A new command "extended-info4-upgrade" makes old leases
+	from SQL DHCPV4 lease database visible to Bulk Lease Queries.
+	(Gitlab #2757)
+
 2136.	[func]		tmark
 	The default value, in kea-dhcp6, for preferred-lifetime is
 	now calculated as: 0.625 * valid-lifetime. This calculation
