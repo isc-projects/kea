@@ -124,9 +124,9 @@ public:
     /// @brief Test getLease4ByRemoteId.
     void testGetLeases4ByRemoteId();
 
-    /// @brief Test upgradeExtendedInfo.
-    void testUpgradeExtendedInfo(const CfgConsistency::ExtendedInfoSanity& check,
-                                 const LeasePageSize& page_size);
+    /// @brief Test upgradeExtendedInfo4.
+    void testUpgradeExtendedInfo4(const CfgConsistency::ExtendedInfoSanity& check,
+                                  const LeasePageSize& page_size);
 
     /// @brief Lease manager.
     LeaseMgr* lease_mgr_;
@@ -621,8 +621,8 @@ TEST_F(MySqlExtendedInfoTest, getLeases4ByRemoteIdMultiThreading) {
 }
 
 void
-MySqlExtendedInfoTest::testUpgradeExtendedInfo(const CfgConsistency::ExtendedInfoSanity& check,
-                                               const LeasePageSize& page_size) {
+MySqlExtendedInfoTest::testUpgradeExtendedInfo4(const CfgConsistency::ExtendedInfoSanity& check,
+                                                const LeasePageSize& page_size) {
     // Lease manager is created with empty tables.
     initLease4(false);
 
@@ -738,7 +738,7 @@ MySqlExtendedInfoTest::testUpgradeExtendedInfo(const CfgConsistency::ExtendedInf
         setExtendedInfoSanityCheck(check);
 
     size_t updated;
-    ASSERT_NO_THROW(updated = lease_mgr_->upgradeExtendedInfo(page_size));
+    ASSERT_NO_THROW(updated = lease_mgr_->upgradeExtendedInfo4(page_size));
 
     // Verify result.
     switch (check) {
@@ -925,44 +925,44 @@ MySqlExtendedInfoTest::testUpgradeExtendedInfo(const CfgConsistency::ExtendedInf
 
 }
 
-TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfoNone) {
-    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_NONE,
-                            LeasePageSize(100));
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4None) {
+    testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_NONE,
+                             LeasePageSize(100));
 }
 
-TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfoFix) {
-    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
-                            LeasePageSize(100));
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4Fix) {
+    testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                             LeasePageSize(100));
 }
 
-TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfoStrict) {
-    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
-                            LeasePageSize(100));
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4Strict) {
+    testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
+                             LeasePageSize(100));
 }
 
-TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfoPedantic) {
-    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
-                            LeasePageSize(100));
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4Pedantic) {
+    testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
+                             LeasePageSize(100));
 }
 
-TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo10) {
-    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
-                            LeasePageSize(10));
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_10) {
+    testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                             LeasePageSize(10));
 }
 
-TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo5) {
-    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
-                            LeasePageSize(5));
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_5) {
+    testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                             LeasePageSize(5));
 }
 
-TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo2) {
-    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
-                            LeasePageSize(2));
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_2) {
+    testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                             LeasePageSize(2));
 }
 
-TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo1) {
-    testUpgradeExtendedInfo(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
-                            LeasePageSize(1));
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_1) {
+    testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                             LeasePageSize(1));
 }
 
 }  // namespace
