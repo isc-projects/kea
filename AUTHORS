@@ -32,7 +32,7 @@ Primary developers:
  - Slawek Figiel (documentation)
  - Dan Theisen (documentation, option handling, shell scripts)
  - Marcin Godzina (documentation, release engineering, testing)
- - Piotrek Zadroga (documentation, options handling)
+ - Piotrek Zadroga (documentation, options handling, perfdhcp)
 
 Former developers who are no longer active:
  - Stephen Morris (Hooks, MySQL)

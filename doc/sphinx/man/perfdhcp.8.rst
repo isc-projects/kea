@@ -15,7 +15,7 @@
 Synopsis
 ~~~~~~~~
 
-:program:`perfdhcp` [**-1**] [**-4** | **-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-C** separator] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-J** remote-address-list-file] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-u**] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
+:program:`perfdhcp` [**-1**] [**-4** | **-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-C** separator] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-J** remote-address-list-file] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**--o1r** code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-u**] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
 
 Description
 ~~~~~~~~~~~
@@ -356,6 +356,19 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
    simulated. Currently the only supported encapsulation-level value is
    1, which means that the generated traffic is equivalent to the amount of
    traffic passing through a single relay agent.
+
+``--o1r code,hexstring``
+   This option is very similar to ``-o``, only that it forces ``perfdhcp``
+   to insert the specified extra option (or options if used several times)
+   into relayed DHCPv6 message at 1st level of encapsulation. The code
+   specifies the option code and the hexstring is a hexadecimal string that
+   defines the content of the option. Care should be taken as ``perfdhcp``
+   does not offer any kind of logic behind those options; they are simply
+   inserted into packets and sent as is. Be careful not to duplicate
+   options that are already inserted. For example, to insert client
+   class identifier (option code 60) with a string "docsis", use
+   "--o1r 60,646f63736973". The ``--o1r`` may be used multiple times. It must
+   be used together with ``-A``.
 
 Template-Related Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
