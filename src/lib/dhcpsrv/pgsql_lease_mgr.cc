@@ -360,6 +360,19 @@ PgSqlTaggedStatement tagged_statements[] = {
       "ORDER BY address "
       "LIMIT $2"},
 
+    // GET_LEASE6_BINADDR_PAGE
+    { 2, { OID_VARCHAR, OID_INT8 },
+      "get_lease6_binaddr_page",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context "
+      "FROM lease6 "
+      "WHERE address > $1 AND binaddr IS NULL "
+      "ORDER BY address "
+      "LIMIT $2"},
+
     // GET_LEASE6_SUBID
     { 1, { OID_INT8 },
       "get_lease6_subid",

@@ -350,6 +350,17 @@ tagged_statements = { {
                             "WHERE address > ? AND user_context IS NOT NULL "
                             "ORDER BY address "
                             "LIMIT ?"},
+    {MySqlLeaseMgr::GET_LEASE6_BINADDR_PAGE,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context "
+                            "FROM lease6 "
+                            "WHERE address > ? AND binaddr IS NULL "
+                            "ORDER BY address "
+                            "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "

@@ -696,6 +696,7 @@ public:
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
         GET_LEASE6_PAGE,             // Get page of leases beginning with an address
         GET_LEASE6_UCTX_PAGE,        // Get page of leases with user context
+        GET_LEASE6_BINADDR_PAGE,     // Get page of leases with null binary address
         GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_DUID,             // Get IPv6 leases by DUID
         GET_LEASE6_HOSTNAME,         // Get IPv6 leases by hostname

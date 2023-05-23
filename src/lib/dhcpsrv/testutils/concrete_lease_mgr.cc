@@ -297,6 +297,11 @@ ConcreteLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& /* page_size */) {
 }
 
 size_t
+ConcreteLeaseMgr::upgradeBinaryAddress6(const LeasePageSize& /* page_size */) {
+    return (0);
+}
+
+size_t
 ConcreteLeaseMgr::buildExtendedInfoTables6(bool /* update */,
                                            bool /* current */) {
     isc_throw(isc::NotImplemented, "ConcreteLeaseMgr:buildExtendedInfoTables6 not implemented");

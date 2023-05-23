@@ -1388,10 +1388,15 @@ public:
     /// @return The number of updates in the database or 0.
     size_t extractExtendedInfo4(bool update, bool current);
 
-    /// @brief Build extended info v6 tables.
+    /// @brief Upgrade binary address (v6).
     ///
-    /// @note: this method is a nop for memfile when update is false
-    /// as tables are built at start time.
+    /// @note: this method is a nop for memfile which uses IOAddress objects.
+    ///
+    /// @param page_size The page size used for retrieval.
+    /// @return Always return 0 as this function is a noop for not SQL backends.
+    virtual size_t upgradeBinaryAddress6(const LeasePageSize& page_size) override;
+
+    /// @brief Build extended info v6 tables.
     ///
     /// @param update Update extended info in database.
     /// @param current specify whether to use current (true) or staging
