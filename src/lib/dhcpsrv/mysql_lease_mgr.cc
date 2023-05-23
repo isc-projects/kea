@@ -402,8 +402,8 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+                        "state, user_context, binaddr) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::UPDATE_LEASE4,
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
                         "client_id = ?, valid_lifetime = ?, expire = ?, "
@@ -418,7 +418,7 @@ tagged_statements = { {
                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
                         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ?, "
-                        "state = ?, user_context = ? "
+                        "state = ?, user_context = ?, binaddr = ? "
                             "WHERE address = ? AND expire = ?"},
     {MySqlLeaseMgr::ALL_LEASE4_STATS,
                     "SELECT subnet_id, state, leases as state_count "
@@ -1089,7 +1089,7 @@ private:
 
 class MySqlLease6Exchange : public MySqlLeaseExchange {
     /// @brief Set number of database columns for this lease structure
-    static const size_t LEASE_COLUMNS = 17;
+    static const size_t LEASE_COLUMNS = 18;
 
 public:
 
@@ -1104,7 +1104,7 @@ public:
                             fqdn_fwd_(false), fqdn_rev_(false),
                             hostname_length_(0), hwtype_(0), hwaddr_source_(0),
                             state_(0), user_context_length_(0),
-                            user_context_null_(MLM_FALSE) {
+                            user_context_null_(MLM_FALSE), binaddr_length_(16) {
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
         memset(hostname_buffer_, 0, sizeof(hostname_buffer_));
@@ -1130,7 +1130,8 @@ public:
         columns_[14] = "hwaddr_source";
         columns_[15] = "state";
         columns_[16] = "user_context";
-        BOOST_STATIC_ASSERT(16 < LEASE_COLUMNS);
+        columns_[17] = "binaddr";
+        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
@@ -1266,7 +1267,7 @@ public:
             bind_[9].buffer_type = MYSQL_TYPE_TINY;
             bind_[9].buffer = reinterpret_cast<char*>(&lease_->fqdn_fwd_);
             bind_[9].is_unsigned = MLM_TRUE;
-            // bind_[7].is_null = &MLM_FALSE; // commented out for performance
+            // bind_[9].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
 
             // fqdn_rev: boolean
@@ -1373,11 +1374,25 @@ public:
                 bind_[16].buffer_type = MYSQL_TYPE_NULL;
             }
 
+            // binaddr: binary(16)
+            binaddr_ = lease->addr_.toBytes();
+            if (binaddr_.size() != 16) {
+                isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+            }
+
+            binaddr_length_ = 16;
+            bind_[17].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[17].buffer = reinterpret_cast<char*>(&binaddr_[0]);
+            bind_[17].buffer_length = 16;
+            bind_[17].length = &binaddr_length_;
+            // bind_[17].is_null = &MLM_FALSE; // commented out for performance
+                                               // reasons, see memset() above
+
             // Add the error flags
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(16 < LEASE_COLUMNS);
+            BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1536,14 +1551,14 @@ public:
         bind_[16].is_null = &user_context_null_;
 
         // Add the error flags
-        setErrorIndicators(bind_, error_, LEASE_COLUMNS);
+        setErrorIndicators(bind_, error_, LEASE_COLUMNS - 1);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(16 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(16 < LEASE_COLUMNS - 1);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[LEASE_COLUMNS]));
+        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[LEASE_COLUMNS - 1]));
     }
 
     /// @brief Copy Received Data into Lease6 Object
@@ -1698,6 +1713,8 @@ private:
     char                 user_context_[USER_CONTEXT_MAX_LEN];      ///< User context
     unsigned long        user_context_length_;                     ///< Length of user context
     my_bool              user_context_null_;                       ///< Used when user context is null
+    std::vector<uint8_t> binaddr_;                                 ///< Binary address
+    unsigned long        binaddr_length_;                          ///< Length of binary data
 };
 
 /// @brief MySql derivation of the statistical lease data query

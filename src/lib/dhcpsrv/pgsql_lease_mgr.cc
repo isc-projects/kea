@@ -418,16 +418,17 @@ PgSqlTaggedStatement tagged_statements[] = {
       "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"},
 
     // INSERT_LEASE6
-    { 17, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+    { 18, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
             OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
-            OID_VARCHAR, OID_BYTEA, OID_INT2, OID_INT2, OID_INT8, OID_TEXT },
+            OID_VARCHAR, OID_BYTEA, OID_INT2, OID_INT2, OID_INT8, OID_TEXT,
+            OID_BYTEA },
       "insert_lease6",
       "INSERT INTO lease6(address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)"},
+        "state, user_context, binaddr) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)"},
 
     // UPDATE_LEASE4
     { 15, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
@@ -441,18 +442,18 @@ PgSqlTaggedStatement tagged_statements[] = {
       "WHERE address = $14 AND expire = $15"},
 
     // UPDATE_LEASE6
-    { 19, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
+    { 20, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
             OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
             OID_BYTEA, OID_INT2, OID_INT2,
-            OID_INT8, OID_TEXT, OID_VARCHAR, OID_TIMESTAMP },
+            OID_INT8, OID_TEXT, OID_BYTEA, OID_VARCHAR, OID_TIMESTAMP },
       "update_lease6",
       "UPDATE lease6 SET address = $1, duid = $2, "
         "valid_lifetime = $3, expire = $4, subnet_id = $5, "
         "pref_lifetime = $6, lease_type = $7, iaid = $8, "
         "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
-        "state = $16, user_context = $17 "
-      "WHERE address = $18 AND expire = $19"},
+        "state = $16, user_context = $17, binaddr = $18 "
+      "WHERE address = $19 AND expire = $20"},
 
     // ALL_LEASE4_STATS
     { 0, { OID_NONE },
@@ -549,7 +550,7 @@ public:
           valid_lifetime_(0), valid_lifetime_str_(""), expire_(0),
           expire_str_(""), subnet_id_(0), subnet_id_str_(""), cltt_(0),
           fqdn_fwd_(false), fqdn_rev_(false), hostname_(""), state_str_(""),
-          user_context_("") {
+          user_context_(""), addr_bin_(16) {
     }
 
     virtual ~PgSqlLeaseExchange(){}
@@ -574,6 +575,7 @@ protected:
     std::string          hostname_;
     std::string          state_str_;
     std::string          user_context_;
+    std::vector<uint8_t> addr_bin_;
     //@}
 };
 
@@ -608,7 +610,7 @@ public:
         : lease_(), addr4_(0), client_id_length_(0),
           relay_id_length_(0), remote_id_length_(0) {
 
-        BOOST_STATIC_ASSERT(9 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(12 < LEASE_COLUMNS);
 
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -864,10 +866,11 @@ private:
     static const int HWTYPE_COL = 13;
     static const int HWADDR_SOURCE_COL = 14;
     static const int STATE_COL = 15;
-    static const size_t USER_CONTEXT_COL = 16;
+    static const int USER_CONTEXT_COL = 16;
+    static const int BINADDR_COL = 17;
     //@}
     /// @brief Number of columns in the table holding DHCPv6 leases.
-    static const size_t LEASE_COLUMNS = 17;
+    static const size_t LEASE_COLUMNS = 18;
 
 public:
 
@@ -902,7 +905,7 @@ public:
           preferred_lifetime_str_(""), hwtype_(0), hwtype_str_(""),
           hwaddr_source_(0), hwaddr_source_str_("") {
 
-        BOOST_STATIC_ASSERT(15 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
 
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
@@ -924,6 +927,7 @@ public:
         columns_.push_back("hwaddr_source");
         columns_.push_back("state");
         columns_.push_back("user_context");
+        columns_.push_back("binaddr");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -1038,6 +1042,9 @@ public:
                 user_context_ = "";
             }
             bind_array.add(user_context_);
+
+            addr_bin_ = lease_->addr_.toBytes();
+            bind_array.add(addr_bin_);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease6: "
