@@ -280,6 +280,9 @@ public:
     /// @brief Calls @c initAllocatorsAfterConfigure for each subnet.
     void initAllocatorsAfterConfigure();
 
+    /// @brief Clears all subnets from the configuration.
+    void clear();
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration

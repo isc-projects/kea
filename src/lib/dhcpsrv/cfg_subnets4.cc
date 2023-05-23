@@ -584,6 +584,11 @@ CfgSubnets4::initAllocatorsAfterConfigure() {
     }
 }
 
+void
+CfgSubnets4::clear() {
+    subnets_.clear();
+}
+
 ElementPtr
 CfgSubnets4::toElement() const {
     ElementPtr result = Element::createList();

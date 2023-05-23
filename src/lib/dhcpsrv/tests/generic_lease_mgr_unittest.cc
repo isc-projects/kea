@@ -84,12 +84,8 @@ GenericLeaseMgrTest::GenericLeaseMgrTest()
     }
 
     // Clear all subnets defined in previous tests.
-    for (Subnet4Ptr const& subnet : *CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll()) {
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->del(subnet);
-    }
-    for (Subnet6Ptr const& subnet : *CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll()) {
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->del(subnet);
-    }
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->clear();
 
     // Clear all stats.
     StatsMgr::instance().removeAll();
