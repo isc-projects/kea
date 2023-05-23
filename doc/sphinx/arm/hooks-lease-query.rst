@@ -446,57 +446,6 @@ defined in RFC 6607.
 
    The new query types are only supported with the memfile lease backend.
 
-.. _updating-existing-leases:
-
-Updating existing leases in SQL lease backends
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Bulk Lease Query required additions to the lease data stored. With SQL lease
-backends, leases created prior to the server being configured for Bulk Lease
-Query will not contain the new data required. In order to populate this data
-it is necessary to run an API command:
-
-.. _command-extended-info4-upgrade:
-
-For DHCPv4 lease data, the command is:
-
-::
-
-    {
-        "command": "extended-info4-upgrade"
-    }
-
-For DHCPv6 lease data, the command is (TO BE IMPLEMENTED):
-
-::
-
-    {
-        "command": "extended-info6-upgrade"
-    }
-
-
-In either case the response will indicate whether it succeeded or failed
-and include either the count of leases updated or the nature of the failure:
-
-::
-
-    {
-        "result": 0,
-        "text": "Upgraded 1000 leases"
-    }
-
-
-The command's operation is governed by ``extended-info-checks`` parameter
-under the sanity-checks element. Please see :ref:`sanity-checks4` or
-:ref:`sanity-checks6`.
-
-For large numbers of leases this command may take some time to complete.
-
-.. note::
-
-   Existing leases must have been created by Kea with ``store-extended-info``
-   enabled in order for the new data to be extracted and stored.
-
 .. _bulk-lease-query-dhcpv6:
 
 DHCPv6 Bulk Leasequery
@@ -649,3 +598,57 @@ or for DHCPv6:
      ],
      ...
    }
+
+.. _updating-existing-leases:
+
+Updating Existing Leases in SQL Lease Backends
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bulk Lease Query required additions to the lease data stored. With SQL lease
+backends, leases created prior to the server being configured for Bulk Lease
+Query will not contain the new data required. In order to populate this data
+it is necessary to run an API command:
+
+.. _command-extended-info4-upgrade:
+
+For DHCPv4 lease data, the command is:
+
+::
+
+    {
+        "command": "extended-info4-upgrade"
+    }
+
+.. _command-extended-info6-upgrade:
+
+For DHCPv6 lease data, the command is (TO BE IMPLEMENTED):
+
+::
+
+    {
+        "command": "extended-info6-upgrade"
+    }
+
+
+In either case the response will indicate whether it succeeded or failed
+and include either the count of leases updated or the nature of the failure:
+
+::
+
+    {
+        "result": 0,
+        "text": "Upgraded 1000 leases"
+    }
+
+
+The command's operation is governed by ``extended-info-checks`` parameter
+under the sanity-checks element. Please see :ref:`sanity-checks4` or
+:ref:`sanity-checks6`.
+
+For large numbers of leases this command may take some time to complete.
+
+.. note::
+
+   Existing leases must have been created by Kea with ``store-extended-info``
+   enabled in order for the new data to be extracted and stored.
+
