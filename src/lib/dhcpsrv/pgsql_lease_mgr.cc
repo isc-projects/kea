@@ -3167,6 +3167,78 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
 }
 
 size_t
+PgSqlLeaseMgr::upgradeBinaryAddress6(const LeasePageSize& page_size) {
+    auto check = CfgMgr::instance().getCurrentCfg()->
+        getConsistency()->getExtendedInfoSanityCheck();
+
+    size_t pages = 0;
+    size_t updated = 0;
+    IOAddress start_addr = IOAddress::IPV6_ZERO_ADDRESS();
+    for (;;) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_PAGE)
+            .arg(pages)
+            .arg(start_addr.toText())
+            .arg(updated);
+
+        // Prepare WHERE clause.
+        PsqlBindArray bind_array;
+
+        // Bind start address.
+        std::string start_addr_data = "0";
+        if (!start_addr.isV6Zero()) {
+            start_addr_data = start_addr.toText();
+        }
+        bind_array.add(start_addr_data);
+
+        // Bind page size value.
+        std::string page_size_data =
+            boost::lexical_cast<std::string>(page_size.page_size_);
+        bind_array.add(page_size_data);
+
+        Lease6Collection leases;
+
+        // Get a context.
+        {
+            PgSqlLeaseContextAlloc get_context(*this);
+            PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+            getLeaseCollection(ctx, GET_LEASE6_BINADDR_PAGE, bind_array, leases);
+        }
+
+        if (leases.empty()) {
+            // Done.
+            break;
+        }
+
+        ++pages;
+        start_addr = leases.back()->addr_;
+        for (auto lease : leases) {
+            try {
+                updateLease6(lease);
+                ++updated;
+            } catch (const NoSuchLease&) {
+                // The lease was modified in parallel:
+                // as its extended info was processed just ignore.
+                continue;
+            } catch (const std::exception& ex) {
+                // Something when wrong, for instance extract failed.
+                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                          DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_ERROR)
+                    .arg(lease->addr_.toText())
+                    .arg(ex.what());
+            }
+        }
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6)
+        .arg(pages)
+        .arg(updated);
+
+    return (updated);
+}
+
+size_t
 PgSqlLeaseMgr::buildExtendedInfoTables6(bool /* update */, bool /* current */) {
     isc_throw(isc::NotImplemented,
               "PgSqlLeaseMgr::buildExtendedInfoTables6 not implemented");

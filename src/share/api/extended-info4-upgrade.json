@@ -14,7 +14,7 @@
     "hook": "lease_query",
     "name": "extended-info4-upgrade",
     "resp-comment": [
-        "This command should be used when some old leases are present in the lease database using a SQL backend."
+        "This command should be used when some old IPv4 leases are present in the lease database using a SQL backend."
     ],
     "resp-syntax": [
         "{",
@@ -25,6 +25,6 @@
         "}"
     ],
     "support": [
-        "kea-dhcp6"
+        "kea-dhcp4"
     ]
 }

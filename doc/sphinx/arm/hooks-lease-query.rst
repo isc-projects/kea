@@ -607,7 +607,7 @@ Updating Existing Leases in SQL Lease Backends
 Bulk Lease Query required additions to the lease data stored. With SQL lease
 backends, leases created prior to the server being configured for Bulk Lease
 Query will not contain the new data required. In order to populate this data
-it is necessary to run an API command:
+it is necessary to run API commands:
 
 .. _command-extended-info4-upgrade:
 
@@ -619,9 +619,21 @@ For DHCPv4 lease data, the command is:
         "command": "extended-info4-upgrade"
     }
 
+.. _command-binary-address6-upgrade:
+
+For DHCPv6 lease data, there are two commands, for upgrading the binary
+address used for by link address query the command is:
+
+::
+
+    {
+        "command": "binary-address6-upgrade"
+    }
+
 .. _command-extended-info6-upgrade:
 
-For DHCPv6 lease data, the command is (TO BE IMPLEMENTED):
+for extended info used for by relay id and by remote id the command is
+(TO BE IMPLEMENTED):
 
 ::
 
@@ -630,7 +642,7 @@ For DHCPv6 lease data, the command is (TO BE IMPLEMENTED):
     }
 
 
-In either case the response will indicate whether it succeeded or failed
+In all cases the response will indicate whether it succeeded or failed
 and include either the count of leases updated or the nature of the failure:
 
 ::
@@ -641,14 +653,15 @@ and include either the count of leases updated or the nature of the failure:
     }
 
 
-The command's operation is governed by ``extended-info-checks`` parameter
-under the sanity-checks element. Please see :ref:`sanity-checks4` or
-:ref:`sanity-checks6`.
+The operation of extended info command is governed by ``extended-info-checks``
+parameter under the sanity-checks element. Please see :ref:`sanity-checks4`
+or :ref:`sanity-checks6`.
 
 For large numbers of leases this command may take some time to complete.
 
 .. note::
 
    Existing leases must have been created by Kea with ``store-extended-info``
-   enabled in order for the new data to be extracted and stored.
+   enabled in order for the new data from extended info to be extracted
+   and stored.
 

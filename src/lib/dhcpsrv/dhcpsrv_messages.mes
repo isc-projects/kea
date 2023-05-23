@@ -976,6 +976,19 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the MySQL database for the specified address.
 
+% DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6 upgrading IPv6 leases done in %1 pages with %2 updated leases
+The server upgraded binary addresses. The number of pages and the
+final count of updated leases are displayed.
+
+% DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_ERROR upgrading binary address for IPv6 lease at %1 failed with %2
+A debug message issued when the server failed to upgrade a binary address.
+The address of the lease and the error message are displayed.
+
+% DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_PAGE upgrading IPv6 lease binary addresses at page %1 starting at %2 (updated %3)
+A debug message issued when the server upgrades IPv6 lease binary addresses.
+The page number and started address, and the count of already updated leases
+are displayed.
+
 % DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4 upgrading IPv4 leases done in %1 pages with %2 updated leases
 The server upgraded extended info. The number of pages and the final count of
 updated leases are displayed.
@@ -1233,6 +1246,19 @@ lease from the PostgreSQL database for the specified address.
 % DHCPSRV_PGSQL_UPDATE_ADDR6 updating IPv6 lease for address %1, lease type %2
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
+
+% DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6 upgrading IPv6 leases done in %1 pages with %2 updated leases
+The server upgraded binary addresses. The number of pages and the
+final count of updated leases are displayed.
+
+% DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_ERROR upgrading binary address for IPv6 lease at %1 failed with %2
+A debug message issued when the server failed to upgrade a binary address.
+The address of the lease and the error message are displayed.
+
+% DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_PAGE upgrading IPv6 lease binary addresses at page %1 starting at %2 (updated %3)
+A debug message issued when the server upgrades IPv6 lease binary addresses.
+The page number and started address, and the count of already updated leases
+are displayed.
 
 % DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4 upgrading IPv4 leases done in %1 pages with %2 updated leases
 The server upgraded extended info. The number of pages and the final count of

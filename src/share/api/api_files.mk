@@ -1,3 +1,4 @@
+api_files += $(top_srcdir)/src/share/api/binary-address6-upgrade.json
 api_files += $(top_srcdir)/src/share/api/build-report.json
 api_files += $(top_srcdir)/src/share/api/cache-clear.json
 api_files += $(top_srcdir)/src/share/api/cache-flush.json

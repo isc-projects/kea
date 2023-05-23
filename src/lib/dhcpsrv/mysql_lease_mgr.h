@@ -1135,6 +1135,17 @@ private:
     /// @return The number of updates in the database.
     virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) override;
 
+    /// @brief Upgrade binary address (v6).
+    ///
+    /// On SQL backends for all leases with null binary address set this
+    /// new column. Memfile uses IOAddress objets so does not need it.
+    /// This function implements the new BLQ hook command named
+    /// "binary-address6-upgrade".
+    ///
+    /// @param page_size The page size used for retrieval.
+    /// @return The number of updates in the database.
+    virtual size_t upgradeBinaryAddress6(const LeasePageSize& page_size) override;
+
     /// @brief Build extended info v6 tables.
     ///
     /// @param update Update extended info in database.

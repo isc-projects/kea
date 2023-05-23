@@ -1,3 +1,4 @@
+src/share/api/binary-address6-upgrade.json
 src/share/api/build-report.json
 src/share/api/cache-clear.json
 src/share/api/cache-flush.json
