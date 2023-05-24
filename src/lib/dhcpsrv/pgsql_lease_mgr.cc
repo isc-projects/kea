@@ -3372,5 +3372,24 @@ PgSqlLeaseMgr::buildExtendedInfoTables6(bool /* update */, bool /* current */) {
               "PgSqlLeaseMgr::buildExtendedInfoTables6 not implemented");
 }
 
+void
+PgSqlLeaseMgr::wipeExtendedInfoTables6() {
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx(get_context.ctx_);
+
+    // Execute WIPE_RELAY_ID6.
+    StatementIndex const stindex1 = WIPE_RELAY_ID6;
+    PgSqlResult r1(PQexecPrepared(ctx->conn_, tagged_statements[stindex1].name,
+                                  0, 0, 0, 0, 0));
+    ctx->conn_.checkStatementError(r1, tagged_statements[stindex1]);
+
+    // Execute WIPE_REMOTE_ID6.
+    StatementIndex const stindex2 = WIPE_REMOTE_ID6;
+    PgSqlResult r2(PQexecPrepared(ctx->conn_, tagged_statements[stindex2].name,
+                                  0, 0, 0, 0, 0));
+    ctx->conn_.checkStatementError(r2, tagged_statements[stindex2]);
+}
+
 }  // namespace dhcp
 }  // namespace isc

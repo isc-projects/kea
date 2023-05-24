@@ -385,6 +385,10 @@ public:
     virtual size_t buildExtendedInfoTables6(bool /* update */,
                                             bool /* current */) override;
 
+    /// @brief Stub implementation.
+    virtual void
+    wipeExtendedInfoTables6() override;
+
     ///  @brief Pretends to write V4 leases to a file.
     virtual void writeLeases4(const std::string&) override;
 

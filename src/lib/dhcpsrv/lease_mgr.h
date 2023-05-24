@@ -1040,6 +1040,9 @@ public:
     /// @return The number of updates in the database or 0.
     virtual size_t buildExtendedInfoTables6(bool update, bool current) = 0;
 
+    /// @brief Wipe extended info table (v6).
+    virtual void wipeExtendedInfoTables6() = 0;
+
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.

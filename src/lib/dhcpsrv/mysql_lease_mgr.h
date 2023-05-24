@@ -1183,6 +1183,9 @@ private:
     /// @return The number of updates in the database or 0.
     virtual size_t buildExtendedInfoTables6(bool update, bool current) override;
 
+    /// @brief Wipe by-relay-id table (v6).
+    virtual void wipeExtendedInfoTables6() override;
+
     /// @brief Context RAII allocator.
     class MySqlLeaseContextAlloc {
     public:

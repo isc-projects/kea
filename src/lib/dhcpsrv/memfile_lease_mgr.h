@@ -1424,6 +1424,9 @@ public:
     /// @return The number of updates in the database or 0.
     virtual size_t buildExtendedInfoTables6(bool update, bool current) override;
 
+    /// @brief Wipe extended info table (v6).
+    virtual void wipeExtendedInfoTables6() override;
+
 private:
 
     /// @brief Returns existing IPv4 leases with a given relay-id.

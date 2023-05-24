@@ -3039,6 +3039,18 @@ Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer& remote_id,
     return (collection);
 }
 
+void
+Memfile_LeaseMgr::wipeExtendedInfoTables6() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        relay_id6_.clear();
+        remote_id6_.clear();
+    } else {
+        relay_id6_.clear();
+        remote_id6_.clear();
+    }
+}
+
 Lease6Collection
 Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
                                       const IOAddress& link_addr,
