@@ -76,6 +76,14 @@ TEST(IPRangePermutationTest, ipv4) {
         iterations.push_back(ordered_addrs);
     }
 
+    // We want to make sure that each new permutation instance produces a different
+    // sequence of addresses. It checks whether or not the random device has been
+    // initialized properly. If the random device uses the same seed for each
+    // new permutation, the output sequence is always the same. The test below
+    // checks that the sequences are different by comparing the respective addresses
+    // for two different permutations. It is ok if some of them are equal because it
+    // is statistically probable. The threshold of 20% should guard against some
+    // of them being equal without a risk of sporadic test failures.
     int overlaps = 0;
     for (auto i = 0; i < iterations[0].size(); ++i) {
         if (iterations[0][i] == iterations[1][i]) {
@@ -130,6 +138,14 @@ TEST(IPRangePermutationTest, ipv6) {
         iterations.push_back(ordered_addrs);
     }
 
+    // We want to make sure that each new permutation instance produces a different
+    // sequence of addresses. It checks whether or not the random device has been
+    // initialized properly. If the random device uses the same seed for each
+    // new permutation, the output sequence is always the same. The test below
+    // checks that the sequences are different by comparing the respective addresses
+    // for two different permutations. It is ok if some of them are equal because it
+    // is statistically probable. The threshold of 20% should guard against some
+    // of them being equal without a risk of sporadic test failures.
     int overlaps = 0;
     for (auto i = 0; i < iterations[0].size(); ++i) {
         if (iterations[0][i] == iterations[1][i]) {
@@ -185,6 +201,14 @@ TEST(IPRangePermutationTest, pd) {
 
     ASSERT_EQ(2, iterations.size());
 
+    // We want to make sure that each new permutation instance produces a different
+    // sequence of prefixes. It checks whether or not the random device has been
+    // initialized properly. If the random device uses the same seed for each
+    // new permutation, the output sequence is always the same. The test below
+    // checks that the sequences are different by comparing the respective prefixes
+    // for two different permutations. It is ok if some of them are equal because it
+    // is statistically probable. The threshold of 20% should guard against some
+    // of them being equal without a risk of sporadic test failures.
     int overlaps = 0;
     for (auto i = 0; i < iterations[0].size(); ++i) {
         if (iterations[0][i] == iterations[1][i]) {
