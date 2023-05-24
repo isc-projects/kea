@@ -3178,6 +3178,13 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
                                 uint8_t link_len,
                                 const IOAddress& lower_bound_address,
                                 const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_LINKADDR6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
     // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -3193,13 +3200,6 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_LINKADDR6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(link_addr.toText())
-        .arg(static_cast<unsigned>(link_len));
 
     Lease6Collection result;
     const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
@@ -3296,6 +3296,8 @@ PgSqlLeaseMgr::upgradeBinaryAddress6(const LeasePageSize& page_size) {
         start_addr = leases.back()->addr_;
         for (auto lease : leases) {
             try {
+                // Update to the same lease will fill the new column i.e.
+                // refresh does the job...
                 updateLease6(lease);
                 ++updated;
             } catch (const NoSuchLease&) {
@@ -3304,7 +3306,7 @@ PgSqlLeaseMgr::upgradeBinaryAddress6(const LeasePageSize& page_size) {
                 continue;
             } catch (const std::exception& ex) {
                 // Something when wrong, for instance extract failed.
-                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                LOG_ERROR(dhcpsrv_logger,
                           DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_ERROR)
                     .arg(lease->addr_.toText())
                     .arg(ex.what());

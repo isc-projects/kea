@@ -163,7 +163,7 @@ public:
 
     /// @brief Resource compare class.
     ///
-    /// Needed for using sets of Resource objets.
+    /// Needed for using sets of Resource objects.
     struct ResourceCompare {
         /// @brief Compare operator
         ///

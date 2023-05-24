@@ -463,7 +463,7 @@ Extended info tables build was finished. Some statistics are displayed, the
 updated in database is returned to the command interface.
 
 % DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR building extended info tables got an exception on the lease for %1: %2
-A debug message issued when the server is building extended info tables and
+An error message issued when the server is building extended info tables and
 receives an exception processing a lease.
 
 % DHCPSRV_MEMFILE_COMMIT committing to memory file database
@@ -985,7 +985,7 @@ The server upgraded binary addresses. The number of pages and the
 final count of updated leases are displayed.
 
 % DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_ERROR upgrading binary address for IPv6 lease at %1 failed with %2
-A debug message issued when the server failed to upgrade a binary address.
+An error message issued when the server failed to upgrade a binary address.
 The address of the lease and the error message are displayed.
 
 % DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_PAGE upgrading IPv6 lease binary addresses at page %1 starting at %2 (updated %3)
@@ -1260,7 +1260,7 @@ The server upgraded binary addresses. The number of pages and the
 final count of updated leases are displayed.
 
 % DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_ERROR upgrading binary address for IPv6 lease at %1 failed with %2
-A debug message issued when the server failed to upgrade a binary address.
+An error message issued when the server failed to upgrade a binary address.
 The address of the lease and the error message are displayed.
 
 % DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_PAGE upgrading IPv6 lease binary addresses at page %1 starting at %2 (updated %3)

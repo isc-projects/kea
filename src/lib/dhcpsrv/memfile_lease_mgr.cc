@@ -2511,6 +2511,14 @@ Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
                                       const LeasePageSize& page_size,
                                       const time_t& qry_start_time /* = 0 */,
                                       const time_t& qry_end_time /* = 0 */) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_RELAYID4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(relay_id))
+        .arg(qry_start_time)
+        .arg(qry_end_time);
+
     // Expecting IPv4 address.
     if (!lower_bound_address.isV4()) {
         isc_throw(InvalidAddressFamily, "expected IPv4 address while "
@@ -2528,14 +2536,6 @@ Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
         (qry_start_time > qry_end_time)) {
         isc_throw(BadValue, "start time must be before end time");
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_RELAYID4)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(idToText(relay_id))
-        .arg(qry_start_time)
-        .arg(qry_end_time);
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -2597,6 +2597,14 @@ Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
                                        const LeasePageSize& page_size,
                                        const time_t& qry_start_time /* = 0 */,
                                        const time_t& qry_end_time /* = 0 */) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_REMOTEID4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(remote_id))
+        .arg(qry_start_time)
+        .arg(qry_end_time);
+
     // Expecting IPv4 address.
     if (!lower_bound_address.isV4()) {
         isc_throw(InvalidAddressFamily, "expected IPv4 address while "
@@ -2614,14 +2622,6 @@ Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
         (qry_start_time > qry_end_time)) {
         isc_throw(BadValue, "start time must be before end time");
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_REMOTEID4)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(idToText(remote_id))
-        .arg(qry_start_time)
-        .arg(qry_end_time);
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -2683,6 +2683,14 @@ Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
                                       uint8_t link_len,
                                       const IOAddress& lower_bound_address,
                                       const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_RELAYID6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(relay_id.toText())
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
     // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -2698,14 +2706,6 @@ Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_RELAYID6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(relay_id.toText())
-        .arg(link_addr.toText())
-        .arg(static_cast<unsigned>(link_len));
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -2793,6 +2793,14 @@ Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
                                        uint8_t link_len,
                                        const IOAddress& lower_bound_address,
                                        const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_REMOTEID6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(remote_id))
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
     // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -2808,14 +2816,6 @@ Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_REMOTEID6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(idToText(remote_id))
-        .arg(link_addr.toText())
-        .arg(static_cast<unsigned>(link_len));
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -2898,6 +2898,13 @@ Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
                                    uint8_t link_len,
                                    const IOAddress& lower_bound_address,
                                    const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_LINKADDR6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
     // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -2913,13 +2920,6 @@ Memfile_LeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_LINKADDR6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(link_addr.toText())
-        .arg(static_cast<unsigned>(link_len));
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -3083,7 +3083,7 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
                 ++processed;
             }
         } catch (const std::exception& ex) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+            LOG_ERROR(dhcpsrv_logger,
                       DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR)
                 .arg(lease->addr_.toText())
                 .arg(ex.what());

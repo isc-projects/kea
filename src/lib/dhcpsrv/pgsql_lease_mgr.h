@@ -1093,7 +1093,7 @@ private:
     /// @brief Upgrade binary address (v6).
     ///
     /// On SQL backends for all leases with null binary address set this
-    /// new column. Memfile uses IOAddress objets so does not need it.
+    /// new column. Memfile uses IOAddress objects so does not need it.
     /// This function implements the new BLQ hook command named
     /// "binary-address6-upgrade".
     ///

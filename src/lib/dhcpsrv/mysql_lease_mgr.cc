@@ -3717,6 +3717,14 @@ MySqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
                                    const LeasePageSize& page_size,
                                    const time_t& qry_start_time /* = 0 */,
                                    const time_t& qry_end_time /* = 0 */) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_GET_RELAYID4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(relay_id))
+        .arg(qry_start_time)
+        .arg(qry_end_time);
+
     // Expecting IPv4 address.
     if (!lower_bound_address.isV4()) {
         isc_throw(InvalidAddressFamily, "expected IPv4 address while "
@@ -3736,14 +3744,6 @@ MySqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
     if (have_qst && have_qet && (qry_start_time > qry_end_time)) {
         isc_throw(BadValue, "start time must be before end time");
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_RELAYID4)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(idToText(relay_id))
-        .arg(qry_start_time)
-        .arg(qry_end_time);
 
     // Prepare WHERE clause
     size_t bindings = 3;
@@ -3829,6 +3829,14 @@ MySqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
                                     const LeasePageSize& page_size,
                                     const time_t& qry_start_time /* = 0 */,
                                     const time_t& qry_end_time /* = 0 */) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_GET_REMOTEID4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(remote_id))
+        .arg(qry_start_time)
+        .arg(qry_end_time);
+
     // Expecting IPv4 address.
     if (!lower_bound_address.isV4()) {
         isc_throw(InvalidAddressFamily, "expected IPv4 address while "
@@ -3848,14 +3856,6 @@ MySqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
     if (have_qst && have_qet && (qry_start_time > qry_end_time)) {
         isc_throw(BadValue, "start time must be before end time");
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_REMOTEID4)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(idToText(remote_id))
-        .arg(qry_start_time)
-        .arg(qry_end_time);
 
     // Prepare WHERE clause
     size_t bindings = 3;
@@ -4047,6 +4047,13 @@ MySqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
                                 uint8_t link_len,
                                 const IOAddress& lower_bound_address,
                                 const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_GET_LINKADDR6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
     // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -4062,13 +4069,6 @@ MySqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
     }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_LINKADDR6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(link_addr.toText())
-        .arg(static_cast<unsigned>(link_len));
 
     Lease6Collection result;
     const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
@@ -4181,6 +4181,8 @@ MySqlLeaseMgr::upgradeBinaryAddress6(const LeasePageSize& page_size) {
         start_addr = leases.back()->addr_;
         for (auto lease : leases) {
             try {
+                // Update to the same lease will fill the new column i.e.
+                // refresh does the job...
                 updateLease6(lease);
                 ++updated;
             } catch (const NoSuchLease&) {
@@ -4189,7 +4191,7 @@ MySqlLeaseMgr::upgradeBinaryAddress6(const LeasePageSize& page_size) {
                 continue;
             } catch (const std::exception& ex) {
                 // Something when wrong, for instance extract failed.
-                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                LOG_ERROR(dhcpsrv_logger,
                           DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_ERROR)
                     .arg(lease->addr_.toText())
                     .arg(ex.what());
