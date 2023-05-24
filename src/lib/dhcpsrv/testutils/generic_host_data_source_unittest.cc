@@ -3104,7 +3104,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
 
     if (!is_first_source_primary) {
         found = false;
-        for (unsigned i = 0; i < 2; ++i) {
+        for (unsigned i = 0; i < hosts.size(); ++i) {
             if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
                 ASSERT_EQ(1, hosts[i]->getIPv4SubnetID());
                 found = true;
@@ -3118,7 +3118,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
     }
     if (!is_second_source_primary) {
         found = false;
-        for (unsigned i = 0; i < 2; ++i) {
+        for (unsigned i = 0; i < hosts.size(); ++i) {
             if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
                 ASSERT_EQ(10, hosts[i]->getIPv4SubnetID());
                 found = true;
