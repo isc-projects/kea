@@ -511,6 +511,10 @@ tagged_statements = { {
                         "WHERE remote_id = ? AND lease_addr BETWEEN ? AND ? "
                         "ORDER BY lease_addr "
                         "LIMIT ?"},
+    {MySqlLeaseMgr::COUNT_RELAY_ID6,
+                    "SELECT COUNT(*) FROM lease6_relay_id"},
+    {MySqlLeaseMgr::COUNT_REMOTE_ID6,
+                    "SELECT COUNT(*) FROM lease6_remote_id"},
 } };  // tagged_statements
 
 }  // namespace

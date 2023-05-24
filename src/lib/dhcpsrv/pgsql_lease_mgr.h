@@ -754,6 +754,8 @@ public:
         GET_REMOTE_ID6,              // Get lease6_remote_id entries
         GET_RELAY_ID6_LINK,          // Get lease6_relay_id entries by link
         GET_REMOTE_ID6_LINK,         // Get lease6_remote_id entries by link
+        COUNT_RELAY_ID6,             // Count the lease6_relay_id number of entries
+        COUNT_REMOTE_ID6,            // Count the lease6_remote_id number of entries
         NUM_STATEMENTS               // Number of statements
     };
 

@@ -618,6 +618,16 @@ PgSqlTaggedStatement tagged_statements[] = {
       "ORDER BY lease_addr "
       "LIMIT $4"},
 
+    // COUNT_RELAY_ID6
+    { 0, { OID_NONE },
+      "count_relay_id6",
+      "SELECT COUNT(*) FROM lease6_relay_id"},
+
+    // COUNT_REMOTE_ID6
+    { 0, { OID_NONE },
+      "count_remote_id6",
+      "SELECT COUNT(*) FROM lease6_remote_id"},
+
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL }
 };
