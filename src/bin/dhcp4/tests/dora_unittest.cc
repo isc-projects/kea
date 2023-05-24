@@ -1454,12 +1454,20 @@ DORATest::notAuthoritativeSubnetSelectionFail() {
     client.includeClientId("11:22");
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
 
+    // Current configuration contains a matching subnet from which
+    // the client should get a lease.
     client.doDORA();
 
+    // Let's now reconfigure the server to remove the subnet. The
+    // global authoritative flag is true.
     configure(DORA_CONFIGS[19], *client.getServer());
 
+    // Simulate that the client is in the INIT-REBOOT state. The
+    // client will request the previously assigned address and
+    // remove the server-id.
     client.setState(Dhcp4Client::INIT_REBOOT);
     ASSERT_NO_THROW_LOG(client.doRequest());
+
     // We are not authoritative so the server does not respond
     // at all.
     EXPECT_FALSE(client.getContext().response_);
