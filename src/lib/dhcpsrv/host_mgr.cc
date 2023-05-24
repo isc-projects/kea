@@ -804,10 +804,12 @@ bool
 HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
               const uint8_t* identifier_begin, const size_t identifier_len,
               const HostMgrOperationTarget target) {
+    bool success = false;
+
     if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
         if (getCfgHostsForEdit()->del4(subnet_id, identifier_type,
                                        identifier_begin, identifier_len)) {
-            return (true);
+            success = true;
         }
     }
 
@@ -821,11 +823,11 @@ HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
         for (auto source : alternate_sources_) {
             if (source->del4(subnet_id, identifier_type,
                              identifier_begin, identifier_len)) {
-                return (true);
+                success = true;
             }
         }
     }
-    return (false);
+    return (success);
 }
 
 bool
@@ -839,10 +841,12 @@ bool
 HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
               const uint8_t* identifier_begin, const size_t identifier_len,
               const HostMgrOperationTarget target) {
+    bool success = false;
+
     if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
         if (getCfgHostsForEdit()->del6(subnet_id, identifier_type,
                                        identifier_begin, identifier_len)) {
-            return (true);
+            success = true;
         }
     }
 
@@ -856,11 +860,11 @@ HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
         for (auto source : alternate_sources_) {
             if (source->del6(subnet_id, identifier_type,
                              identifier_begin, identifier_len)) {
-                return (true);
+                success = true;
             }
         }
     }
-    return (false);
+    return (success);
 }
 
 bool
