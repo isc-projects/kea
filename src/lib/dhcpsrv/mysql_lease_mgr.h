@@ -725,6 +725,7 @@ public:
         GET_LEASE6_DUID,             // Get IPv6 leases by DUID
         GET_LEASE6_HOSTNAME,         // Get IPv6 leases by hostname
         GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
+        GET_LEASE6_LINK,             // Get page of lease6 by link
         INSERT_LEASE4,               // Add entry to lease4 table
         INSERT_LEASE6,               // Add entry to lease6 table
         UPDATE_LEASE4,               // Update a Lease4 entry

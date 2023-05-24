@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfg_db_access.h>
@@ -418,6 +418,20 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE state != $1 AND valid_lifetime != 4294967295 AND expire < $2 "
       "ORDER BY expire "
+      "LIMIT $3"},
+
+    // GET_LEASE6_LINK
+    { 3, { OID_BYTEA, OID_BYTEA, OID_INT8 },
+      "get_lease6_link",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context "
+      "FROM lease6 "
+      "WHERE binaddr IS NOT NULL "
+      "AND binaddr BETWEEN $1 and $2 "
+      "ORDER BY binaddr "
       "LIMIT $3"},
 
     // INSERT_LEASE4
@@ -2264,7 +2278,8 @@ PgSqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
     bind_array.add(lb_address_data);
 
     // Bind page size value
-    std::string page_size_data = boost::lexical_cast<std::string>(page_size.page_size_);
+    std::string page_size_data =
+        boost::lexical_cast<std::string>(page_size.page_size_);
     bind_array.add(page_size_data);
 
     // Get the leases
@@ -3159,11 +3174,77 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
-                                uint8_t /* link_len */,
-                                const IOAddress& /* lower_bound_address */,
-                                const LeasePageSize& /* page_size */) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByLink not implemented");
+PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
+                                uint8_t link_len,
+                                const IOAddress& lower_bound_address,
+                                const LeasePageSize& page_size) {
+    // Expecting IPv6 valid prefix and address.
+    if (!link_addr.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << link_addr);
+    }
+    if ((link_len == 0) || (link_len > 128)) {
+        isc_throw(OutOfRange, "invalid IPv6 prefix length "
+                  << static_cast<unsigned>(link_len));
+    }
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_LINKADDR6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
+    Lease6Collection result;
+    const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
+    const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
+    IOAddress start_addr = lower_bound_address;
+    if (lower_bound_address < first_addr) {
+        start_addr = first_addr;
+    } else if (last_addr <= lower_bound_address) {
+        // Range was already done.
+        return (result);
+    } else {
+        // The lower bound address is from the last call so skip it.
+        start_addr = IOAddress::increase(lower_bound_address);
+    }
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // Bind start address
+    std::vector<uint8_t> start_addr_data = start_addr.toBytes();
+    if (start_addr_data.size() != 16) {
+        isc_throw(DbOperationError, "start address is not 16 byte long");
+    }
+    bind_array.add(start_addr_data);
+
+    // Bind last address
+    std::vector<uint8_t> last_addr_data = last_addr.toBytes();
+    if (last_addr_data.size() != 16) {
+        isc_throw(DbOperationError, "last address is not 16 byte long");
+    }
+    bind_array.add(last_addr_data);
+
+    // Bind page size value
+        std::string page_size_data =
+        boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array.add(page_size_data);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Get the leases
+    getLeaseCollection(ctx, GET_LEASE6_LINK, bind_array, result);
+
+    return (result);
 }
 
 size_t

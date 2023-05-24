@@ -36,6 +36,12 @@ const vector<string> ADDRESS4 = {
     "192.0.2.4", "192.0.2.5", "192.0.2.6", "192.0.2.7"
 };
 
+/// @brief IPv6 addresses used in the tests.
+const vector<string> ADDRESS6 = {
+    "2001:db8::0", "2001:db8::1", "2001:db8::2", "2001:db8::3",
+    "2001:db8::4", "2001:db8::5", "2001:db8::6", "2001:db8::7"
+};
+
 /// @brief DUIDs used in the tests.
 const vector<string> DUIDS = {
     "wwwwwwww", "BBBBBBBB", "::::::::", "0123456789acdef",
@@ -64,6 +70,7 @@ public:
 
         lease_mgr_ = &(LeaseMgrFactory::instance());
         leases4.clear();
+        leases6.clear();
         MultiThreadingMgr::instance().setMode(false);
         now_ = time(0);
     }
@@ -76,6 +83,7 @@ public:
         destroyPgSQLSchema();
 
         leases4.clear();
+        leases6.clear();
         MultiThreadingMgr::instance().setMode(false);
     }
 
@@ -104,6 +112,23 @@ public:
         ASSERT_EQ(ADDRESS4.size(), leases4.size());
     }
 
+    /// @brief Create and set v6 leases.
+    void initLease6() {
+        ASSERT_EQ(ADDRESS6.size(), DUIDS.size());
+        for (size_t i = 0; i < ADDRESS6.size(); ++i) {
+            Lease6Ptr lease;
+            vector<uint8_t> duid_data = createFromString(DUIDS[i]);
+            DuidPtr duid(new DUID(duid_data));
+            IOAddress addr(ADDRESS6[i]);
+            ASSERT_NO_THROW(lease.reset(new Lease6(((i % 2) ? Lease::TYPE_NA : Lease::TYPE_PD), addr, duid,
+                                                   123, 1000, 2000,
+                                                   static_cast<SubnetID>(i))));
+            leases6.push_back(lease);
+            EXPECT_TRUE(lease_mgr_->addLease(lease));
+        }
+        ASSERT_EQ(ADDRESS6.size(), leases6.size());
+    }
+
     /// @brief Create a vector of uint8_t from a string.
     ///
     /// @param content A not empty string holding the content.
@@ -118,6 +143,9 @@ public:
     /// @brief Test initLease4.
     void testInitLease4();
 
+    /// @brief Test initLease6.
+    void testInitLease6();
+
     /// @brief Test getLease4ByRelayId.
     void testGetLeases4ByRelayId();
 
@@ -128,11 +156,17 @@ public:
     void testUpgradeExtendedInfo4(const CfgConsistency::ExtendedInfoSanity& check,
                                   const LeasePageSize& page_size);
 
+    /// @brief Test getLeases6ByLink.
+    void testGetLeases6ByLink();
+
     /// @brief Lease manager.
     LeaseMgr* lease_mgr_;
 
     /// @brief V4 leases.
     Lease4Collection leases4;
+
+    /// @brief V6 leases.
+    Lease6Collection leases6;
 
     /// @brief Current timestamp.
     time_t now_;
@@ -963,6 +997,107 @@ TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4_2) {
 TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4_1) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
                              LeasePageSize(1));
+}
+
+/// @brief Verifies that the lease manager can add the v6 leases.
+void
+PgSqlExtendedInfoTest::testInitLease6() {
+    initLease6();
+    EXPECT_EQ(8, leases6.size());
+    Lease6Collection got;
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6());
+    ASSERT_EQ(leases6.size(), got.size());
+    for (size_t i = 0; i < leases6.size(); ++i) {
+        ConstElementPtr expected = leases6[i]->toElement();
+        LeasePtr lease = got[i];
+        ASSERT_TRUE(lease);
+        EXPECT_TRUE(expected->equals(*lease->toElement()))
+            << "expected: " << expected->str() << "\n"
+            << "got: " << lease->toElement()->str() << "\n";
+    }
+}
+
+TEST_F(PgSqlExtendedInfoTest, initLease6) {
+    testInitLease6();
+}
+
+TEST_F(PgSqlExtendedInfoTest, initLease6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testInitLease6();
+}
+
+/// @brief Verifies that getLeases6ByLink works as expected.
+void
+PgSqlExtendedInfoTest::testGetLeases6ByLink() {
+    // Lease manager is created with empty tables.
+    initLease6();
+
+    // Create parameter values.
+    IOAddress link_addr(ADDRESS6[4]);
+    IOAddress other_link_addr("2001:db8:1::4");
+    IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
+
+    Lease6Collection got;
+    // Other link: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(other_link_addr,
+                                                       64,
+                                                       zero,
+                                                       LeasePageSize(10)));
+    EXPECT_EQ(0, got.size());
+
+    // Link: 8 entries.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(link_addr,
+                                                       64,
+                                                       zero,
+                                                       LeasePageSize(10)));
+
+    ASSERT_EQ(8, got.size());
+    Lease6Ptr lease;
+    for (size_t i = 0; i < 8; ++i) {
+        lease = got[i];
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(IOAddress(ADDRESS6[i]), lease->addr_);
+    }
+
+    // Link: initial partial: 4 entries.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(link_addr,
+                                                       64,
+                                                       zero,
+                                                       LeasePageSize(4)));
+    ASSERT_EQ(4, got.size());
+    for (size_t i = 0; i < 4; ++i) {
+        lease = got[i];
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(IOAddress(ADDRESS6[i]), lease->addr_);
+    }
+
+    // Link: next partial: 4 entries.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(link_addr,
+                                                       64,
+                                                       lease->addr_,
+                                                       LeasePageSize(4)));
+    ASSERT_EQ(4, got.size());
+    for (size_t i = 0; i < 4; ++i) {
+        lease = got[i];
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(IOAddress(ADDRESS6[i + 4]), lease->addr_);
+    }
+
+    // Link: further partial: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(link_addr,
+                                                       64,
+                                                       lease->addr_,
+                                                       LeasePageSize(4)));
+    EXPECT_EQ(0, got.size());
+}
+
+TEST_F(PgSqlExtendedInfoTest, getLeases6ByLink) {
+    testGetLeases6ByLink();
+}
+
+TEST_F(PgSqlExtendedInfoTest, getLeases6ByLinkMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLeases6ByLink();
 }
 
 }  // namespace
