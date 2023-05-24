@@ -64,7 +64,7 @@ public:
 struct LeaseStatsRow {
     /// @brief Default constructor
     LeaseStatsRow() :
-        subnet_id_(0), lease_type_(Lease::TYPE_NA),
+        subnet_id_(0), pool_id_(0), lease_type_(Lease::TYPE_NA),
         lease_state_(Lease::STATE_DEFAULT), state_count_(0) {
     }
 
@@ -75,9 +75,11 @@ struct LeaseStatsRow {
     /// @param subnet_id The subnet id to which this data applies
     /// @param lease_state The lease state counted
     /// @param state_count The count of leases in the lease state
+    /// @param pool_id The pool id to which this data applies or 0 if it is not
+    /// used
     LeaseStatsRow(const SubnetID& subnet_id, const uint32_t lease_state,
-                  const int64_t state_count)
-        : subnet_id_(subnet_id), lease_type_(Lease::TYPE_NA),
+                  const int64_t state_count, uint32_t pool_id = 0)
+        : subnet_id_(subnet_id), pool_id_(pool_id), lease_type_(Lease::TYPE_NA),
           lease_state_(lease_state), state_count_(state_count) {
     }
 
@@ -87,9 +89,12 @@ struct LeaseStatsRow {
     /// @param lease_type The lease type for this state count
     /// @param lease_state The lease state counted
     /// @param state_count The count of leases in the lease state
+    /// @param pool_id The pool id to which this data applies or 0 if it is not
+    /// used
     LeaseStatsRow(const SubnetID& subnet_id, const Lease::Type& lease_type,
-                  const uint32_t lease_state, const int64_t state_count)
-        : subnet_id_(subnet_id), lease_type_(lease_type),
+                  const uint32_t lease_state, const int64_t state_count,
+                  uint32_t pool_id = 0)
+        : subnet_id_(subnet_id), pool_id_(pool_id), lease_type_(lease_type),
           lease_state_(lease_state), state_count_(state_count) {
     }
 
@@ -100,14 +105,21 @@ struct LeaseStatsRow {
         }
 
         if (subnet_id_ == rhs.subnet_id_ &&
-            lease_type_ < rhs.lease_type_) {
-                return (true);
+            pool_id_ < rhs.pool_id_) {
+            return (true);
         }
 
         if (subnet_id_ == rhs.subnet_id_ &&
+            pool_id_ == rhs.pool_id_ &&
+            lease_type_ < rhs.lease_type_) {
+            return (true);
+        }
+
+        if (subnet_id_ == rhs.subnet_id_ &&
+            pool_id_ == rhs.pool_id_ &&
             lease_type_ == rhs.lease_type_ &&
             lease_state_ < rhs.lease_state_) {
-                return (true);
+            return (true);
         }
 
         return (false);
@@ -115,10 +127,16 @@ struct LeaseStatsRow {
 
     /// @brief The subnet ID to which this data applies
     SubnetID subnet_id_;
+
+    /// @brief The pool ID to which this data applies
+    uint32_t pool_id_;
+
     /// @brief The lease_type to which the count applies
     Lease::Type lease_type_;
+
     /// @brief The lease_state to which the count applies
     uint32_t lease_state_;
+
     /// @brief state_count The count of leases in the lease state
     int64_t state_count_;
 };
@@ -134,12 +152,17 @@ public:
     typedef enum {
         ALL_SUBNETS,
         SINGLE_SUBNET,
-        SUBNET_RANGE
+        SUBNET_RANGE,
+        ALL_SUBNET_POOLS
     } SelectMode;
 
-    /// @brief Default constructor
+    /// @brief Constructor to query statistics for all subnets
+    ///
     /// The query created will return statistics for all subnets
-    LeaseStatsQuery();
+    ///
+    /// @param select_mode The selection criteria which is either ALL_SUBNETS or
+    /// ALL_SUBNET_POOLS
+    LeaseStatsQuery(const SelectMode& select_mode = ALL_SUBNETS);
 
     /// @brief Constructor to query for a single subnet's stats
     ///
@@ -600,6 +623,19 @@ public:
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
 
+    /// @brief Creates and runs the IPv4 lease stats query for all subnets and
+    /// pools
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv4 lease statistical data for all subnets
+    /// and pools.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID and pool ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startPoolLeaseStatsQuery4();
+
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
     /// LeaseMgr derivations implement this method such that it creates and
@@ -656,6 +692,19 @@ public:
     ///
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+    /// @brief Creates and runs the IPv6 lease stats query for all subnets and
+    /// pools
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv6 lease statistical data for all subnets
+    /// and pools.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID and pool ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startPoolLeaseStatsQuery6();
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///

@@ -354,14 +354,7 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, false, false, "", HWAddrPtr())
-    {
-    }
-
-    /// @brief Copy constructor
-    ///
-    /// @param other the @c Lease4 object to be copied.
-    Lease4(const Lease4& other);
+    Lease4();
 
     /// @brief Returns Lease type
     ///
@@ -456,11 +449,6 @@ struct Lease4 : public Lease {
     /// hardware address and/or client identifier.
     bool belongsToClient(const HWAddrPtr& hw_address,
                          const ClientIdPtr& client_id) const;
-
-    /// @brief Assignment operator.
-    ///
-    /// @param other the @c Lease4 object to be assigned.
-    Lease4& operator=(const Lease4& other);
 
     /// @brief Compare two leases for equality
     ///
@@ -719,7 +707,7 @@ template <isc::util::DhcpSpace D>
 using LeaseTPtr = boost::shared_ptr<LeaseT<D>>;
 /// @}
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace
 
 #endif // LEASE_H

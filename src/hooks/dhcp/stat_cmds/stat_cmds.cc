@@ -78,6 +78,8 @@ public:
                 os << "[subnets " << first_subnet_id_
                    << " through " << last_subnet_id_ << "]";
                 break;
+            default:
+                os << "unsupported";
             }
 
             return (os.str());
@@ -450,6 +452,8 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
                 .startSubnetRangeLeaseStatsQuery4(params.first_subnet_id_,
                                                   params.last_subnet_id_);
         break;
+    default:
+        return (0);
     }
 
     // Create the result-set map.
@@ -579,6 +583,8 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
                 .startSubnetRangeLeaseStatsQuery6(params.first_subnet_id_,
                                                   params.last_subnet_id_);
         break;
+    default:
+        return (0);
     }
 
     // Create the result-set map.

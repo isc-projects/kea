@@ -312,5 +312,4 @@ protected:
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
-    
 #endif // TRACKING_LEASE_MGR_H

@@ -1796,6 +1796,11 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         // Add(update) the extended information on the lease.
         updateLease6ExtendedInfo(expired, ctx);
 
+        const auto& pool = ctx.subnet_->getPool(ctx.currentIA().type_, expired->addr_, false);
+        if (pool) {
+            expired->pool_id_ = pool->getID();
+        }
+
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease6(expired);
 
@@ -1814,7 +1819,6 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
                                        "cumulative-assigned-nas" : "cumulative-assigned-pds"),
                 static_cast<int64_t>(1));
 
-            const auto& pool = ctx.subnet_->getPool(ctx.currentIA().type_,expired->addr_, false);
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
@@ -1985,6 +1989,11 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         // Add(update) the extended information on the lease.
         updateLease6ExtendedInfo(lease, ctx);
 
+        const auto& pool = ctx.subnet_->getPool(ctx.currentIA().type_, lease->addr_, false);
+        if (pool) {
+            lease->pool_id_ = pool->getID();
+        }
+
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
 
@@ -2004,7 +2013,6 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                            "cumulative-assigned-nas" : "cumulative-assigned-pds"),
                     static_cast<int64_t>(1));
 
-                const auto& pool = ctx.subnet_->getPool(ctx.currentIA().type_, lease->addr_, false);
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", ctx.subnet_->getID(),
@@ -2332,6 +2340,10 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
         if (lease->reuseable_valid_lft_ == 0) {
+            const auto& pool = ctx.subnet_->getPool(ctx.currentIA().type_, lease->addr_, false);
+            if (pool) {
+                lease->pool_id_ = pool->getID();
+            }
             LeaseMgrFactory::instance().updateLease6(lease);
         }
 
@@ -4210,7 +4222,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     }
 
     // Get the context appropriate lifetime.
-    uint32_t valid_lft = (ctx.offer_lft_ ? ctx.offer_lft_ :  getValidLft(ctx));
+    uint32_t valid_lft = (ctx.offer_lft_ ? ctx.offer_lft_ : getValidLft(ctx));
 
     time_t now = time(NULL);
 
@@ -4290,6 +4302,10 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     }
 
     if (!ctx.fake_allocation_ || ctx.offer_lft_) {
+        const auto& pool = ctx.subnet_->getPool(Lease::TYPE_V4, lease->addr_, false);
+        if (pool) {
+            lease->pool_id_ = pool->getID();
+        }
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
         if (status) {
@@ -4305,22 +4321,18 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
                                        "cumulative-assigned-addresses"),
                 static_cast<int64_t>(1));
 
-            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(ctx.subnet_->getID());
-            if (subnet) {
-                const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
-                                                                     "assigned-addresses")),
-                        static_cast<int64_t>(1));
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                 "assigned-addresses")),
+                    static_cast<int64_t>(1));
 
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
-                                                                     "cumulative-assigned-addresses")),
-                        static_cast<int64_t>(1));
-                }
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                 "cumulative-assigned-addresses")),
+                    static_cast<int64_t>(1));
             }
 
             StatsMgr::instance().addValue("cumulative-assigned-addresses",
@@ -4363,7 +4375,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         setLeaseReusable(lease, ctx);
     }
 
-    if (!ctx.fake_allocation_  || ctx.offer_lft_) {
+    if (!ctx.fake_allocation_ || ctx.offer_lft_) {
         // If the lease is expired we have to reclaim it before
         // re-assigning it to the client. The lease reclamation
         // involves execution of hooks and DNS update.
@@ -4424,6 +4436,11 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     }
 
     if ((!ctx.fake_allocation_ || ctx.offer_lft_) && !skip && (lease->reuseable_valid_lft_ == 0)) {
+        const auto& pool = ctx.subnet_->getPool(Lease::TYPE_V4, lease->addr_, false);
+        if (pool) {
+            lease->pool_id_ = pool->getID();
+        }
+
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(lease);
 
@@ -4439,22 +4456,18 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
                                        "cumulative-assigned-addresses"),
                 static_cast<int64_t>(1));
 
-            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(ctx.subnet_->getID());
-            if (subnet) {
-                const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
-                                                                      "assigned-addresses")),
-                        static_cast<int64_t>(1));
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "assigned-addresses")),
+                    static_cast<int64_t>(1));
 
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
-                                                                      "cumulative-assigned-addresses")),
-                        static_cast<int64_t>(1));
-                }
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                           StatsMgr::generateName(".pool", pool->getID(),
+                                                                  "cumulative-assigned-addresses")),
+                    static_cast<int64_t>(1));
             }
 
             StatsMgr::instance().addValue("cumulative-assigned-addresses",
@@ -4551,6 +4564,10 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
     }
 
     if (!ctx.fake_allocation_ || ctx.offer_lft_) {
+        const auto& pool = ctx.subnet_->getPool(Lease::TYPE_V4, expired->addr_, false);
+        if (pool) {
+            expired->pool_id_ = pool->getID();
+        }
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(expired);
 
@@ -4565,22 +4582,18 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
                                    "cumulative-assigned-addresses"),
             static_cast<int64_t>(1));
 
-        const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(ctx.subnet_->getID());
-        if (subnet) {
-            const auto& pool = subnet->getPool(Lease::TYPE_V4, expired->addr_, false);
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
-                                                                  "assigned-addresses")),
-                    static_cast<int64_t>(1));
+        if (pool) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       StatsMgr::generateName(".pool", pool->getID(),
+                                                              "assigned-addresses")),
+                static_cast<int64_t>(1));
 
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
-                                                                  "cumulative-assigned-addresses")),
-                    static_cast<int64_t>(1));
-            }
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       StatsMgr::generateName(".pool", pool->getID(),
+                                                              "cumulative-assigned-addresses")),
+                static_cast<int64_t>(1));
         }
 
         StatsMgr::instance().addValue("cumulative-assigned-addresses",

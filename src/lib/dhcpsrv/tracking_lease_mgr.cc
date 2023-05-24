@@ -158,6 +158,5 @@ TrackingLeaseMgr::runCallbacksForSubnetID(CallbackType type, SubnetID subnet_id,
     }
 }
 
-
 } // end of namespace isc::dhcp
 } // end of namespace isc

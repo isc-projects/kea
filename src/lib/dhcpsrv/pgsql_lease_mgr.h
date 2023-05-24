@@ -538,6 +538,19 @@ public:
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4() override;
 
+    /// @brief Creates and runs the IPv4 lease stats query for all subnets and
+    /// pools
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv4 lease statistical data for all subnets
+    /// and pools.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID and pool ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startPoolLeaseStatsQuery4() override;
+
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
     /// It creates an instance of a PgSqlLeaseStatsQuery4 for a single subnet
@@ -569,6 +582,19 @@ public:
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6() override;
+
+    /// @brief Creates and runs the IPv6 lease stats query for all subnets and
+    /// pools
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv6 lease statistical data for all subnets
+    /// and pools.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID and pool ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startPoolLeaseStatsQuery6() override;
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
@@ -709,9 +735,11 @@ public:
         ALL_LEASE4_STATS,            // Fetches IPv4 lease statistics
         SUBNET_LEASE4_STATS,         // Fetched IPv4 lease stats for a single subnet.
         SUBNET_RANGE_LEASE4_STATS,   // Fetched IPv4 lease stats for a subnet range.
+        ALL_POOL_LEASE4_STATS,       // Fetches IPv4 lease pool statistics
         ALL_LEASE6_STATS,            // Fetches IPv6 lease statistics
         SUBNET_LEASE6_STATS,         // Fetched IPv6 lease stats for a single subnet.
         SUBNET_RANGE_LEASE6_STATS,   // Fetched IPv6 lease stats for a subnet range.
+        ALL_POOL_LEASE6_STATS,       // Fetches IPv6 lease pool statistics
         CHECK_LEASE4_LIMITS,         // Check if allocated IPv4 leases are inside the set limits.
         CHECK_LEASE6_LIMITS,         // Check if allocated IPv6 leases are inside the set limits.
         IS_JSON_SUPPORTED,           // Checks if JSON support is enabled in the database.

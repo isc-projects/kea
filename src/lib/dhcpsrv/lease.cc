@@ -309,34 +309,6 @@ Lease::syncCurrentExpirationTime(const Lease& from, Lease& to) {
     to.current_valid_lft_ = from.valid_lft_;
 }
 
-Lease4::Lease4(const Lease4& other)
-    : Lease(other.addr_, other.valid_lft_,
-            other.subnet_id_, other.cltt_, other.fqdn_fwd_,
-            other.fqdn_rev_, other.hostname_, other.hwaddr_) {
-
-    // Copy over fields derived from Lease.
-    state_ = other.state_;
-
-    // Copy the hardware address if it is defined.
-    if (other.hwaddr_) {
-        hwaddr_.reset(new HWAddr(*other.hwaddr_));
-    } else {
-        hwaddr_.reset();
-    }
-
-    if (other.client_id_) {
-        client_id_.reset(new ClientId(other.client_id_->getClientId()));
-    } else {
-        client_id_.reset();
-    }
-
-    if (other.getContext()) {
-        setContext(other.getContext());
-        relay_id_ = other.relay_id_;
-        remote_id_ = other.remote_id_;
-    }
-}
-
 Lease4::Lease4(const isc::asiolink::IOAddress& address,
                const HWAddrPtr& hw_address,
                const ClientIdPtr& client_id,
@@ -346,10 +318,12 @@ Lease4::Lease4(const isc::asiolink::IOAddress& address,
                const bool fqdn_fwd,
                const bool fqdn_rev,
                const std::string& hostname)
-
     : Lease(address, valid_lifetime, subnet_id, cltt, fqdn_fwd,
             fqdn_rev, hostname, hw_address),
       client_id_(client_id), remote_id_(), relay_id_() {
+}
+
+Lease4::Lease4() : Lease(0, 0, 0, 0, false, false, "", HWAddrPtr()) {
 }
 
 std::string
@@ -403,44 +377,6 @@ Lease4::decline(uint32_t probation_period) {
     fqdn_rev_ = false;
     state_ = STATE_DECLINED;
     valid_lft_ = probation_period;
-}
-
-Lease4&
-Lease4::operator=(const Lease4& other) {
-    if (this != &other) {
-        addr_ = other.addr_;
-        valid_lft_ = other.valid_lft_;
-        current_valid_lft_ = other.current_valid_lft_;
-        reuseable_valid_lft_ = other.reuseable_valid_lft_;
-        cltt_ = other.cltt_;
-        current_cltt_ = other.current_cltt_;
-        subnet_id_ = other.subnet_id_;
-        pool_id_ = other.pool_id_;
-        hostname_ = other.hostname_;
-        fqdn_fwd_ = other.fqdn_fwd_;
-        fqdn_rev_ = other.fqdn_rev_;
-        state_ = other.state_;
-
-        // Copy the hardware address if it is defined.
-        if (other.hwaddr_) {
-            hwaddr_.reset(new HWAddr(*other.hwaddr_));
-        } else {
-            hwaddr_.reset();
-        }
-
-        if (other.client_id_) {
-            client_id_.reset(new ClientId(other.client_id_->getClientId()));
-        } else {
-            client_id_.reset();
-        }
-
-        if (other.getContext()) {
-            setContext(other.getContext());
-            relay_id_ = other.relay_id_;
-            remote_id_ = other.remote_id_;
-        }
-    }
-    return (*this);
 }
 
 isc::data::ElementPtr

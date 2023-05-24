@@ -44,24 +44,24 @@ PgSqlTaggedStatement tagged_statements[] = {
     // DELETE_LEASE4
     { 2, { OID_INT8, OID_TIMESTAMP },
       "delete_lease4",
-      "DELETE FROM lease4 WHERE address = $1 AND expire = $2"},
+      "DELETE FROM lease4 WHERE address = $1 AND expire = $2" },
 
     // DELETE_LEASE4_STATE_EXPIRED
     { 2, { OID_INT8, OID_TIMESTAMP },
       "delete_lease4_state_expired",
       "DELETE FROM lease4 "
-          "WHERE state = $1 AND expire < $2"},
+          "WHERE state = $1 AND expire < $2" },
 
     // DELETE_LEASE6
     { 2, { OID_VARCHAR, OID_TIMESTAMP },
       "delete_lease6",
-      "DELETE FROM lease6 WHERE address = $1 AND expire = $2"},
+      "DELETE FROM lease6 WHERE address = $1 AND expire = $2" },
 
     // DELETE_LEASE6_STATE_EXPIRED
     { 2, { OID_INT8, OID_TIMESTAMP },
       "delete_lease6_state_expired",
       "DELETE FROM lease6 "
-          "WHERE state = $1 AND expire < $2"},
+          "WHERE state = $1 AND expire < $2" },
 
     // GET_LEASE4
     { 0, { OID_NONE },
@@ -70,7 +70,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
         "state, user_context, relay_id, remote_id, pool_id "
-      "FROM lease4"},
+      "FROM lease4" },
 
     // GET_LEASE4_ADDR
     { 1, { OID_INT8 },
@@ -80,7 +80,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
         "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
-      "WHERE address = $1"},
+      "WHERE address = $1" },
 
     // GET_LEASE4_CLIENTID
     { 1, { OID_BYTEA },
@@ -90,7 +90,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
         "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
-      "WHERE client_id = $1"},
+      "WHERE client_id = $1" },
 
     // GET_LEASE4_CLIENTID_SUBID
     { 2, { OID_BYTEA, OID_INT8 },
@@ -100,7 +100,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
         "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
-      "WHERE client_id = $1 AND subnet_id = $2"},
+      "WHERE client_id = $1 AND subnet_id = $2" },
 
     // GET_LEASE4_HWADDR
     { 1, { OID_BYTEA },
@@ -110,7 +110,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
         "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
-      "WHERE hwaddr = $1"},
+      "WHERE hwaddr = $1" },
 
     // GET_LEASE4_HWADDR_SUBID
     { 2, { OID_BYTEA, OID_INT8 },
@@ -120,7 +120,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
         "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
-      "WHERE hwaddr = $1 AND subnet_id = $2"},
+      "WHERE hwaddr = $1 AND subnet_id = $2" },
 
     // GET_LEASE4_PAGE
     { 2, { OID_INT8, OID_INT8 },
@@ -132,7 +132,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease4 "
       "WHERE address > $1 "
       "ORDER BY address "
-      "LIMIT $2"},
+      "LIMIT $2" },
 
     // GET_LEASE4_UCTX_PAGE
     { 2, { OID_INT8, OID_INT8 },
@@ -140,7 +140,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context, relay_id, remote_id "
+        "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
       "WHERE address > $1 AND user_context IS NOT NULL "
       "ORDER BY address "
@@ -154,7 +154,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
       "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
-      "WHERE subnet_id = $1"},
+      "WHERE subnet_id = $1" },
 
     // GET_LEASE4_HOSTNAME
     { 1, { OID_VARCHAR },
@@ -164,7 +164,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
       "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
-      "WHERE lower(hostname) = $1"},
+      "WHERE lower(hostname) = $1" },
 
     // GET_LEASE4_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
@@ -176,7 +176,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease4 "
       "WHERE state != $1 AND valid_lifetime != 4294967295 AND expire < $2 "
       "ORDER BY expire "
-      "LIMIT $3"},
+      "LIMIT $3" },
 
     // GET_LEASE4_RELAYID
     { 3, { OID_BYTEA, OID_INT8, OID_INT8 },
@@ -188,7 +188,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease4 "
       "WHERE relay_id = $1 and address > $2 "
       "ORDER BY address "
-      "LIMIT $3"},
+      "LIMIT $3" },
 
     // GET_LEASE4_RELAYID_QST
     { 4, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8 },
@@ -202,7 +202,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
        "THEN 0 ELSE valid_lifetime END) >= $3 "
       "ORDER BY address "
-      "LIMIT $4"},
+      "LIMIT $4" },
 
     // GET_LEASE4_RELAYID_QSET
     { 5, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8, OID_INT8 },
@@ -218,7 +218,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
        "THEN 0 ELSE valid_lifetime END) <= $4 "
       "ORDER BY address "
-      "LIMIT $5"},
+      "LIMIT $5" },
 
     // GET_LEASE4_RELAYID_QET
     { 4, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8 },
@@ -232,7 +232,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
        "THEN 0 ELSE valid_lifetime END) <= $3 "
       "ORDER BY address "
-      "LIMIT $4"},
+      "LIMIT $4" },
 
     // GET_LEASE4_REMOTEID
     { 3, { OID_BYTEA, OID_INT8, OID_INT8 },
@@ -244,7 +244,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease4 "
       "WHERE remote_id = $1 and address > $2 "
       "ORDER BY address "
-      "LIMIT $3"},
+      "LIMIT $3" },
 
     // GET_LEASE4_REMOTEID_QST
     { 4, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8 },
@@ -258,7 +258,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
        "THEN 0 ELSE valid_lifetime END) >= $3 "
       "ORDER BY address "
-      "LIMIT $4"},
+      "LIMIT $4" },
 
     // GET_LEASE4_REMOTEID_QSET
     { 5, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8, OID_INT8 },
@@ -274,7 +274,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
        "THEN 0 ELSE valid_lifetime END) <= $4 "
       "ORDER BY address "
-      "LIMIT $5"},
+      "LIMIT $5" },
 
     // GET_LEASE4_REMOTEID_QET
     { 4, { OID_BYTEA, OID_INT8, OID_INT8, OID_INT8 },
@@ -288,7 +288,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "and EXTRACT(EPOCH FROM expire) - (CASE valid_lifetime WHEN 4294967295 "
        "THEN 0 ELSE valid_lifetime END) <= $3 "
       "ORDER BY address "
-      "LIMIT $4"},
+      "LIMIT $4" },
 
     // GET_LEASE6
     { 0, { OID_NONE },
@@ -298,7 +298,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
-      "FROM lease6"},
+      "FROM lease6" },
 
     // GET_LEASE6_ADDR
     { 2, { OID_VARCHAR, OID_INT2 },
@@ -309,7 +309,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE address = $1 AND lease_type = $2"},
+      "WHERE address = $1 AND lease_type = $2" },
 
     // GET_LEASE6_DUID_IAID
     { 3, { OID_BYTEA, OID_INT8, OID_INT2 },
@@ -320,7 +320,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
+      "WHERE duid = $1 AND iaid = $2 AND lease_type = $3" },
 
     // GET_LEASE6_DUID_IAID_SUBID
     { 4, { OID_INT2, OID_BYTEA, OID_INT8, OID_INT8 },
@@ -332,7 +332,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "state, user_context, pool_id "
       "FROM lease6 "
       "WHERE lease_type = $1 "
-        "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
+        "AND duid = $2 AND iaid = $3 AND subnet_id = $4" },
 
     // GET_LEASE6_PAGE
     { 2, { OID_VARCHAR, OID_INT8 },
@@ -345,7 +345,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE address > $1 "
       "ORDER BY address "
-      "LIMIT $2"},
+      "LIMIT $2" },
 
     // GET_LEASE6_UCTX_PAGE
     { 2, { OID_VARCHAR, OID_INT8 },
@@ -354,7 +354,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, pool_id "
       "FROM lease6 "
       "WHERE address > $1 AND user_context IS NOT NULL "
       "ORDER BY address "
@@ -382,7 +382,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE subnet_id = $1"},
+      "WHERE subnet_id = $1" },
 
     // GET_LEASE6_DUID
     { 1, { OID_BYTEA },
@@ -393,7 +393,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE duid = $1"},
+      "WHERE duid = $1" },
 
     // GET_LEASE6_HOSTNAME
     { 1, { OID_VARCHAR },
@@ -404,7 +404,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE lower(hostname) = $1"},
+      "WHERE lower(hostname) = $1" },
 
     // GET_LEASE6_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
@@ -418,7 +418,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE state != $1 AND valid_lifetime != 4294967295 AND expire < $2 "
       "ORDER BY expire "
-      "LIMIT $3"},
+      "LIMIT $3" },
 
     // GET_LEASE6_LINK
     { 3, { OID_BYTEA, OID_BYTEA, OID_INT8 },
@@ -442,7 +442,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "INSERT INTO lease4(address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
         "state, user_context, relay_id, remote_id, pool_id) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"},
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)" },
 
     // INSERT_LEASE6
     { 19, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
@@ -455,7 +455,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, binaddr, pool_id) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)"},
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)" },
 
     // UPDATE_LEASE4
     { 16, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
@@ -466,7 +466,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "client_id = $3, valid_lifetime = $4, expire = $5, "
         "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9, "
         "state = $10, user_context = $11, relay_id = $12, remote_id = $13, pool_id = $14 "
-      "WHERE address = $15 AND expire = $16"},
+      "WHERE address = $15 AND expire = $16" },
 
     // UPDATE_LEASE6
     { 21, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
@@ -480,13 +480,13 @@ PgSqlTaggedStatement tagged_statements[] = {
         "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
         "state = $16, user_context = $17, binaddr = $18, pool_id = $19 "
-      "WHERE address = $20 AND expire = $21"},
+      "WHERE address = $20 AND expire = $21" },
 
     // ALL_LEASE4_STATS
     { 0, { OID_NONE },
       "all_lease4_stats",
       "SELECT subnet_id, state, leases as state_count"
-      "  FROM lease4_stat ORDER BY subnet_id, state"},
+      "  FROM lease4_stat ORDER BY subnet_id, state" },
 
     // SUBNET_LEASE4_STATS
     { 1, { OID_INT8 },
@@ -494,7 +494,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, state, leases as state_count"
       "  FROM lease4_stat "
       "  WHERE subnet_id = $1 "
-      "  ORDER BY state"},
+      "  ORDER BY state" },
 
     // SUBNET_RANGE_LEASE4_STATS
     { 2, { OID_INT8, OID_INT8 },
@@ -502,13 +502,19 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, state, leases as state_count"
       "  FROM lease4_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
-      "  ORDER BY subnet_id, state"},
+      "  ORDER BY subnet_id, state" },
+
+    // ALL_POOL_LEASE4_STATS
+    { 0, { OID_NONE },
+      "all_pool_lease4_stats",
+      "SELECT subnet_id, pool_id, state, leases as state_count"
+      "  FROM lease4_pool_stat ORDER BY subnet_id, pool_id, state" },
 
     // ALL_LEASE6_STATS,
     { 0, { OID_NONE },
-     "all_lease6_stats",
-     "SELECT subnet_id, lease_type, state, leases as state_count"
-     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
+      "all_lease6_stats",
+      "SELECT subnet_id, lease_type, state, leases as state_count"
+      "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
 
     // SUBNET_LEASE6_STATS
     { 1, { OID_INT8 },
@@ -525,6 +531,12 @@ PgSqlTaggedStatement tagged_statements[] = {
       "  FROM lease6_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
       "  ORDER BY subnet_id, lease_type, state" },
+
+    // ALL_POOL_LEASE6_STATS,
+    { 0, { OID_NONE },
+      "all_pool_lease6_stats",
+      "SELECT subnet_id, pool_id, lease_type, state, leases as state_count"
+      "  FROM lease6_pool_stat ORDER BY subnet_id, pool_id, lease_type, state" },
 
     // CHECK_LEASE4_LIMITS
     { 1, { OID_TEXT },
@@ -546,14 +558,14 @@ PgSqlTaggedStatement tagged_statements[] = {
       "get_lease4_count_by_class",
       "SELECT leases "
           "FROM lease4_stat_by_client_class "
-          "WHERE client_class = $1"},
+          "WHERE client_class = $1" },
 
     // GET_LEASE6_COUNT_BY_CLASS
     { 2, { OID_VARCHAR, OID_INT2 },
       "get_lease6_count_by_class",
       "SELECT leases "
           "FROM lease6_stat_by_client_class "
-          "WHERE client_class = $1 AND lease_type = $2"},
+          "WHERE client_class = $1 AND lease_type = $2" },
 
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
@@ -1274,10 +1286,11 @@ public:
     /// @param statement The lease data SQL prepared statement to execute
     /// @param fetch_type Indicates whether or not lease_type should be
     /// fetched from the result set
+    /// @param fetch_pool Indicates if query requires pool data
     PgSqlLeaseStatsQuery(PgSqlConnection& conn, PgSqlTaggedStatement& statement,
-                         const bool fetch_type)
+                         const bool fetch_type, const bool fetch_pool = false)
         : conn_(conn), statement_(statement), result_set_(), next_row_(0),
-         fetch_type_(fetch_type) {
+          fetch_type_(fetch_type), fetch_pool_(fetch_pool) {
     }
 
     /// @brief Constructor to query for a single subnet's stats
@@ -1291,7 +1304,7 @@ public:
     PgSqlLeaseStatsQuery(PgSqlConnection& conn, PgSqlTaggedStatement& statement,
                          const bool fetch_type, const SubnetID& subnet_id)
         : LeaseStatsQuery(subnet_id), conn_(conn), statement_(statement), result_set_(),
-          next_row_(0), fetch_type_(fetch_type) {
+          next_row_(0), fetch_type_(fetch_type), fetch_pool_(false) {
     }
 
     /// @brief Constructor to query for the stats for a range of subnets
@@ -1308,7 +1321,7 @@ public:
                          const bool fetch_type, const SubnetID& first_subnet_id,
                          const SubnetID& last_subnet_id)
         : LeaseStatsQuery(first_subnet_id, last_subnet_id), conn_(conn), statement_(statement),
-          result_set_(), next_row_(0), fetch_type_(fetch_type) {
+          result_set_(), next_row_(0), fetch_type_(fetch_type), fetch_pool_(false) {
     }
 
     /// @brief Destructor
@@ -1325,7 +1338,7 @@ public:
     /// a first and last subnet id for a subnet range.
     void start() {
 
-        if (getSelectMode() == ALL_SUBNETS) {
+        if (getSelectMode() == ALL_SUBNETS || getSelectMode() == ALL_SUBNET_POOLS) {
             // Run the query with no where clause parameters.
             result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
                                                              0, 0, 0, 0, 0)));
@@ -1378,6 +1391,13 @@ public:
         row.subnet_id_ = static_cast<SubnetID>(subnet_id);
         ++col;
 
+        // Fetch the pool id if we were told to do so.
+        if (fetch_pool_) {
+            PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+                                          row.pool_id_);
+            ++col;
+        }
+
         // Fetch the lease type if we were told to do so.
         if (fetch_type_) {
             uint32_t lease_type;
@@ -1428,6 +1448,9 @@ protected:
 
     /// @brief Indicates if query supplies lease type
     bool fetch_type_;
+
+    /// @brief Indicates if query requires pool data
+    bool fetch_pool_;
 
     /// @brief Received negative state count showing a problem
     static bool negative_count_;
@@ -2752,6 +2775,19 @@ PgSqlLeaseMgr::startLeaseStatsQuery4() {
 }
 
 LeaseStatsQueryPtr
+PgSqlLeaseMgr::startPoolLeaseStatsQuery4() {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
+                                                      tagged_statements[ALL_POOL_LEASE4_STATS],
+                                                      false, true));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
 PgSqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
     // Get a context
     PgSqlLeaseContextAlloc get_context(*this);
@@ -2790,6 +2826,19 @@ PgSqlLeaseMgr::startLeaseStatsQuery6() {
     LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
                                                       tagged_statements[ALL_LEASE6_STATS],
                                                       true));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startPoolLeaseStatsQuery6() {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
+                                                      tagged_statements[ALL_POOL_LEASE6_STATS],
+                                                      true, true));
     query->start();
     return(query);
 }

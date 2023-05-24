@@ -266,8 +266,10 @@ class MemfileLeaseStatsQuery : public LeaseStatsQuery {
 public:
     /// @brief Constructor for all subnets query
     ///
-    MemfileLeaseStatsQuery()
-        : rows_(0), next_pos_(rows_.end()) {
+    /// @param select_mode The selection criteria which is either ALL_SUBNETS or
+    /// ALL_SUBNET_POOLS
+    MemfileLeaseStatsQuery(const SelectMode& select_mode = ALL_SUBNETS)
+        : LeaseStatsQuery(select_mode), rows_(0), next_pos_(rows_.end()) {
     };
 
     /// @brief Constructor for single subnet query
@@ -335,8 +337,11 @@ public:
     /// @brief Constructor for an all subnets query
     ///
     /// @param storage4 A pointer to the v4 lease storage to be counted
-    MemfileLeaseStatsQuery4(Lease4Storage& storage4)
-        : MemfileLeaseStatsQuery(), storage4_(storage4) {
+    /// @param select_mode The selection criteria which is either ALL_SUBNETS or
+    /// ALL_SUBNET_POOLS
+    MemfileLeaseStatsQuery4(Lease4Storage& storage4,
+                            const SelectMode& select_mode = ALL_SUBNETS)
+        : MemfileLeaseStatsQuery(select_mode), storage4_(storage4) {
     };
 
     /// @brief Constructor for a single subnet query
@@ -363,7 +368,35 @@ public:
     /// @brief Creates the IPv4 lease statistical data result set
     ///
     /// The result set is populated by iterating over the IPv4 leases in
-    /// storage, in ascending order by address, accumulating the lease state
+    /// storage, in ascending order by subnet id or by subnet id and pool id,
+    /// accumulating the lease state counts per subnet or per subnet and pool.
+    /// At the completion of all entries for a given subnet or pool, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet or per subnet and pool.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    void start() {
+        switch (getSelectMode()) {
+        case ALL_SUBNETS:
+        case SINGLE_SUBNET:
+        case SUBNET_RANGE:
+            startSubnets();
+            break;
+
+        case ALL_SUBNET_POOLS:
+            startSubnetPools();
+            break;
+        }
+    }
+
+    /// @brief Creates the IPv4 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv4 leases in
+    /// storage, in ascending order by subnet id, accumulating the lease state
     /// counts per subnet.
     /// At the completion of all entries for a given subnet, the counts are
     /// used to create LeaseStatsRow instances which are appended to an
@@ -374,13 +407,14 @@ public:
     ///
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
-    void start() {
+    void startSubnets() {
         const Lease4StorageSubnetIdIndex& idx
             = storage4_.get<SubnetIdIndexTag>();
 
         // Set lower and upper bounds based on select mode
         Lease4StorageSubnetIdIndex::const_iterator lower;
         Lease4StorageSubnetIdIndex::const_iterator upper;
+
         switch (getSelectMode()) {
         case ALL_SUBNETS:
             lower = idx.begin();
@@ -396,6 +430,9 @@ public:
             lower = idx.lower_bound(getFirstSubnetID());
             upper = idx.upper_bound(getLastSubnetID());
             break;
+
+        default:
+            return;
         }
 
         // Return an empty set if there are no rows.
@@ -457,6 +494,122 @@ public:
         next_pos_ = rows_.begin();
     }
 
+    /// @brief Creates the IPv4 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv4 leases in
+    /// storage, in ascending order by subnet id and pool id, accumulating the
+    /// lease state counts per subnet and pool.
+    /// At the completion of all entries for a given subnet or pool, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet and pool.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    void startSubnetPools() {
+        const Lease4StorageSubnetIdPoolIdIndex& idx
+            = storage4_.get<SubnetIdPoolIdIndexTag>();
+
+        // Set lower and upper bounds based on select mode
+        Lease4StorageSubnetIdPoolIdIndex::const_iterator lower;
+        Lease4StorageSubnetIdPoolIdIndex::const_iterator upper;
+
+        switch (getSelectMode()) {
+        case ALL_SUBNET_POOLS:
+            lower = idx.begin();
+            upper = idx.end();
+            break;
+
+        default:
+            return;
+        }
+
+        // Return an empty set if there are no rows.
+        if (lower == upper) {
+            return;
+        }
+
+        // Iterate over the leases in order by subnet and pool, accumulating per
+        // subnet and pool counts for each state of interest.  As we finish each
+        // subnet or pool, add the appropriate rows to our result set.
+        SubnetID cur_id = 0;
+        uint32_t cur_pool_id = 0;
+        int64_t assigned = 0;
+        int64_t declined = 0;
+        for (Lease4StorageSubnetIdPoolIdIndex::const_iterator lease = lower;
+             lease != upper; ++lease) {
+            // If we've hit the next pool, add rows for the current subnet and
+            // pool and wipe the accumulators
+            if ((*lease)->pool_id_ != cur_pool_id) {
+                if (assigned > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id,
+                                                  Lease::STATE_DEFAULT,
+                                                  assigned, cur_pool_id));
+                    assigned = 0;
+                }
+
+                if (declined > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id,
+                                                  Lease::STATE_DECLINED,
+                                                  declined, cur_pool_id));
+                    declined = 0;
+                }
+
+                // Update current pool id
+                cur_pool_id = (*lease)->pool_id_;
+            }
+
+            // If we've hit the next subnet, add rows for the current subnet
+            // and wipe the accumulators
+            if ((*lease)->subnet_id_ != cur_id) {
+                if (cur_id > 0) {
+                    if (assigned > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned, cur_pool_id));
+                        assigned = 0;
+                    }
+
+                    if (declined > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id,
+                                                      Lease::STATE_DECLINED,
+                                                      declined, cur_pool_id));
+                        declined = 0;
+                    }
+                }
+
+                // Update current subnet id
+                cur_id = (*lease)->subnet_id_;
+
+                // Reset pool id
+                cur_pool_id = 0;
+            }
+
+            // Bump the appropriate accumulator
+            if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+                ++assigned;
+            } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+                ++declined;
+            }
+        }
+
+        // Make the rows for last subnet
+        if (assigned > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DEFAULT,
+                                          assigned, cur_pool_id));
+        }
+
+        if (declined > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DECLINED,
+                                          declined, cur_pool_id));
+        }
+
+        // Reset the next row position back to the beginning of the rows.
+        next_pos_ = rows_.begin();
+    }
+
 private:
     /// @brief The Memfile storage containing the IPv4 leases to analyze
     Lease4Storage& storage4_;
@@ -477,8 +630,11 @@ public:
     /// @brief Constructor
     ///
     /// @param storage6 A pointer to the v6 lease storage to be counted
-    MemfileLeaseStatsQuery6(Lease6Storage& storage6)
-        : MemfileLeaseStatsQuery(), storage6_(storage6) {
+    /// @param select_mode The selection criteria which is either ALL_SUBNETS or
+    /// ALL_SUBNET_POOLS
+    MemfileLeaseStatsQuery6(Lease6Storage& storage6,
+                            const SelectMode& select_mode = ALL_SUBNETS)
+        : MemfileLeaseStatsQuery(select_mode), storage6_(storage6) {
     };
 
     /// @brief Constructor for a single subnet query
@@ -505,17 +661,46 @@ public:
     /// @brief Creates the IPv6 lease statistical data result set
     ///
     /// The result set is populated by iterating over the IPv6 leases in
-    /// storage, in ascending order by subnet id, accumulating the lease state
-    /// counts per subnet. At the completion of all entries for a given subnet,
-    /// the counts are used to create LeaseStatsRow instances which are appended
-    /// to an internal vector.  The process results in a vector containing one
-    /// entry per state per lease type per subnet.
+    /// storage, in ascending order by subnet id or by subnet id and pool id,
+    /// accumulating the lease state counts per subnet or per subnet and pool.
+    /// At the completion of all entries for a given subnet or pool, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet or per subnet and pool.
     ///
     /// Currently the states counted are:
     ///
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
-    virtual void start() {
+    void start() {
+        switch (getSelectMode()) {
+        case ALL_SUBNETS:
+        case SINGLE_SUBNET:
+        case SUBNET_RANGE:
+            startSubnets();
+            break;
+
+        case ALL_SUBNET_POOLS:
+            startSubnetPools();
+            break;
+        }
+    }
+
+    /// @brief Creates the IPv6 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv6 leases in
+    /// storage, in ascending order by subnet id, accumulating the lease state
+    /// counts per subnet.
+    /// At the completion of all entries for a given subnet, the counts are
+    /// used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    virtual void startSubnets() {
         // Get the subnet_id index
         const Lease6StorageSubnetIdIndex& idx
             = storage6_.get<SubnetIdIndexTag>();
@@ -538,6 +723,9 @@ public:
             lower = idx.lower_bound(getFirstSubnetID());
             upper = idx.upper_bound(getLastSubnetID());
             break;
+
+        default:
+            return;
         }
 
         // Return an empty set if there are no rows.
@@ -618,6 +806,157 @@ public:
         if (assigned_pds > 0) {
             rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
                                           Lease::STATE_DEFAULT, assigned_pds));
+        }
+
+        // Set the next row position to the beginning of the rows.
+        next_pos_ = rows_.begin();
+    }
+
+    /// @brief Creates the IPv6 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv6 leases in
+    /// storage, in ascending order by subnet id and pool id, accumulating the
+    /// lease state counts per subnet and pool.
+    /// At the completion of all entries for a given subnet or pool, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet and pool.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    virtual void startSubnetPools() {
+        // Get the subnet_id index
+        const Lease6StorageSubnetIdPoolIdIndex& idx
+            = storage6_.get<SubnetIdPoolIdIndexTag>();
+
+        // Set lower and upper bounds based on select mode
+        Lease6StorageSubnetIdPoolIdIndex::const_iterator lower;
+        Lease6StorageSubnetIdPoolIdIndex::const_iterator upper;
+        switch (getSelectMode()) {
+        case ALL_SUBNET_POOLS:
+            lower = idx.begin();
+            upper = idx.end();
+            break;
+
+        default:
+            return;
+        }
+
+        // Return an empty set if there are no rows.
+        if (lower == upper) {
+            return;
+        }
+
+        // Iterate over the leases in order by subnet, accumulating per
+        // subnet counts for each state of interest.  As we finish each
+        // subnet, add the appropriate rows to our result set.
+        SubnetID cur_id = 0;
+        uint32_t cur_pool_id = 0;
+        int64_t assigned = 0;
+        int64_t declined = 0;
+        int64_t assigned_pds = 0;
+        for (Lease6StorageSubnetIdPoolIdIndex::const_iterator lease = lower;
+             lease != upper; ++lease) {
+            // If we've hit the next pool, add rows for the current subnet and
+            // pool and wipe the accumulators
+            if ((*lease)->pool_id_ != cur_pool_id) {
+                if (assigned > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                  Lease::STATE_DEFAULT,
+                                                  assigned, cur_pool_id));
+                    assigned = 0;
+                }
+
+                if (declined > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                  Lease::STATE_DECLINED,
+                                                  declined, cur_pool_id));
+                    declined = 0;
+                }
+
+                if (assigned_pds > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                                  Lease::STATE_DEFAULT,
+                                                  assigned_pds, cur_pool_id));
+                    assigned_pds = 0;
+                }
+
+                // Update current pool id
+                cur_pool_id = (*lease)->pool_id_;
+            }
+
+            // If we've hit the next subnet, add rows for the current subnet
+            // and wipe the accumulators
+            if ((*lease)->subnet_id_ != cur_id) {
+                if (cur_id > 0) {
+                    if (assigned > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned, cur_pool_id));
+                        assigned = 0;
+                    }
+
+                    if (declined > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                      Lease::STATE_DECLINED,
+                                                      declined, cur_pool_id));
+                        declined = 0;
+                    }
+
+                    if (assigned_pds > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned_pds, cur_pool_id));
+                        assigned_pds = 0;
+                    }
+                }
+
+                // Update current subnet id
+                cur_id = (*lease)->subnet_id_;
+
+                // Reset pool id
+                cur_pool_id = 0;
+            }
+
+            // Bump the appropriate accumulator
+            if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+                switch((*lease)->type_) {
+                case Lease::TYPE_NA:
+                    ++assigned;
+                    break;
+                case Lease::TYPE_PD:
+                    ++assigned_pds;
+                    break;
+                default:
+                    break;
+                }
+            } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+                // In theory only NAs can be declined
+                if (((*lease)->type_) == Lease::TYPE_NA) {
+                    ++declined;
+                }
+            }
+        }
+
+        // Make the rows for last subnet, unless there were no rows
+        if (assigned > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_DEFAULT, assigned,
+                                          cur_pool_id));
+        }
+
+        if (declined > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_DECLINED, declined,
+                                          cur_pool_id));
+        }
+
+        if (assigned_pds > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                          Lease::STATE_DEFAULT, assigned_pds,
+                                          cur_pool_id));
         }
 
         // Set the next row position to the beginning of the rows.
@@ -2098,6 +2437,19 @@ Memfile_LeaseMgr::startLeaseStatsQuery4() {
 }
 
 LeaseStatsQueryPtr
+Memfile_LeaseMgr::startPoolLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_, LeaseStatsQuery::ALL_SUBNET_POOLS));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
+    return(query);
+}
+
+LeaseStatsQueryPtr
 Memfile_LeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_, subnet_id));
     if (MultiThreadingMgr::instance().getMode()) {
@@ -2128,6 +2480,19 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startLeaseStatsQuery6() {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
+    return(query);
+}
+
+LeaseStatsQueryPtr
+Memfile_LeaseMgr::startPoolLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_, LeaseStatsQuery::ALL_SUBNET_POOLS));
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
         query->start();

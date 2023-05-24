@@ -166,7 +166,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context, relay_id, remote_id "
+                        "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE address > ? AND user_context IS NOT NULL "
                             "ORDER BY address "
@@ -345,7 +345,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE address > ? AND user_context IS NOT NULL "
                             "ORDER BY address "
@@ -456,6 +456,9 @@ tagged_statements = { {
                         "FROM lease4_stat "
                         "WHERE subnet_id >= ? and subnet_id <= ? "
                         "ORDER BY subnet_id, state"},
+    {MySqlLeaseMgr::ALL_POOL_LEASE4_STATS,
+                    "SELECT subnet_id, pool_id, state, leases as state_count "
+                        "FROM lease4_pool_stat ORDER BY subnet_id, pool_id, state"},
     {MySqlLeaseMgr::ALL_LEASE6_STATS,
                     "SELECT subnet_id, lease_type, state, leases as state_count "
                         "FROM lease6_stat ORDER BY subnet_id, lease_type, state"},
@@ -469,9 +472,15 @@ tagged_statements = { {
                         "FROM lease6_stat "
                         "WHERE subnet_id >= ? and subnet_id <= ? "
                         "ORDER BY subnet_id, lease_type, state"},
-    {MySqlLeaseMgr::CHECK_LEASE4_LIMITS, "SELECT checkLease4Limits(?)"},
-    {MySqlLeaseMgr::CHECK_LEASE6_LIMITS, "SELECT checkLease6Limits(?)"},
-    {MySqlLeaseMgr::IS_JSON_SUPPORTED, "SELECT isJsonSupported()"},
+    {MySqlLeaseMgr::ALL_POOL_LEASE6_STATS,
+                    "SELECT subnet_id, pool_id, lease_type, state, leases as state_count "
+                        "FROM lease6_pool_stat ORDER BY subnet_id, pool_id, lease_type, state"},
+    {MySqlLeaseMgr::CHECK_LEASE4_LIMITS,
+                    "SELECT checkLease4Limits(?)"},
+    {MySqlLeaseMgr::CHECK_LEASE6_LIMITS,
+                    "SELECT checkLease6Limits(?)"},
+    {MySqlLeaseMgr::IS_JSON_SUPPORTED,
+                    "SELECT isJsonSupported()"},
     {MySqlLeaseMgr::GET_LEASE4_COUNT_BY_CLASS,
                     "SELECT leases "
                         "FROM lease4_stat_by_client_class "
@@ -1797,15 +1806,17 @@ public:
     /// @param conn An open connection to the database housing the lease data
     /// @param statement_index Index of the query's prepared statement
     /// @param fetch_type Indicates if query supplies lease type
+    /// @param fetch_pool Indicates if query requires pool data
     /// @throw if statement index is invalid.
     MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
-                         const bool fetch_type)
+                         const bool fetch_type, const bool fetch_pool = false)
         : conn_(conn), statement_index_(statement_index), statement_(NULL),
-          fetch_type_(fetch_type),
+          fetch_type_(fetch_type), fetch_pool_(fetch_pool),
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
-          bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
+          bind_(fetch_type_ ? (fetch_pool_ ? 5 : 4) : (fetch_pool_ ? 4 : 3)),
+          subnet_id_(0), pool_id_(0), lease_type_(Lease::TYPE_NA),
+          state_(Lease::STATE_DEFAULT), state_count_(0) {
           validateStatement();
     }
 
@@ -1821,11 +1832,12 @@ public:
     MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
                          const bool fetch_type, const SubnetID& subnet_id)
         : LeaseStatsQuery(subnet_id), conn_(conn), statement_index_(statement_index),
-          statement_(NULL), fetch_type_(fetch_type),
+          statement_(NULL), fetch_type_(fetch_type), fetch_pool_(false),
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
-          bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
+          bind_(fetch_type_ ? 4 : 3), subnet_id_(0), pool_id_(0),
+          lease_type_(Lease::TYPE_NA), state_(Lease::STATE_DEFAULT),
+          state_count_(0) {
           validateStatement();
     }
 
@@ -1845,11 +1857,13 @@ public:
                          const bool fetch_type, const SubnetID& first_subnet_id,
                          const SubnetID& last_subnet_id)
         : LeaseStatsQuery(first_subnet_id, last_subnet_id), conn_(conn),
-          statement_index_(statement_index), statement_(NULL), fetch_type_(fetch_type),
+          statement_index_(statement_index), statement_(NULL),
+          fetch_type_(fetch_type), fetch_pool_(false),
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
-          bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
+          bind_(fetch_type_ ? 4 : 3), subnet_id_(0), pool_id_(0),
+          lease_type_(Lease::TYPE_NA), state_(Lease::STATE_DEFAULT),
+          state_count_(0) {
           validateStatement();
     }
 
@@ -1867,7 +1881,7 @@ public:
     /// entire result set.
     void start() {
         // Set up where clause inputs if needed.
-        if (getSelectMode() != ALL_SUBNETS) {
+        if (getSelectMode() != ALL_SUBNETS && getSelectMode() != ALL_SUBNET_POOLS) {
             MYSQL_BIND inbind[2];
             memset(inbind, 0, sizeof(inbind));
 
@@ -1894,6 +1908,15 @@ public:
         bind_[col].buffer = reinterpret_cast<char*>(&subnet_id_);
         bind_[col].is_unsigned = MLM_TRUE;
         ++col;
+
+        // Fetch the pool id if we were told to do so.
+        if (fetch_pool_) {
+            // pool id: uint32_t
+            bind_[col].buffer_type = MYSQL_TYPE_LONG;
+            bind_[col].buffer = reinterpret_cast<char*>(&pool_id_);
+            bind_[col].is_unsigned = MLM_TRUE;
+            ++col;
+        }
 
         // Fetch the lease type if we were told to do so.
         if (fetch_type_) {
@@ -1952,6 +1975,7 @@ public:
         int status = mysql_stmt_fetch(statement_);
         if (status == MLM_MYSQL_FETCH_SUCCESS) {
             row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
+            row.pool_id_ = pool_id_;
             row.lease_type_ = static_cast<Lease::Type>(lease_type_);
             row.lease_state_ = state_;
             if (state_count_ >= 0) {
@@ -1997,11 +2021,17 @@ private:
     /// @brief Indicates if query supplies lease type
     bool fetch_type_;
 
+    /// @brief Indicates if query requires pool data
+    bool fetch_pool_;
+
     /// @brief Bind array used to store the query result set;
     std::vector<MYSQL_BIND> bind_;
 
     /// @brief Receives subnet ID when fetching a row
     uint32_t subnet_id_;
+
+    /// @brief Receives pool ID when fetching a row
+    uint32_t pool_id_;
 
     /// @brief Receives the lease type when fetching a row
     uint32_t lease_type_;
@@ -3585,6 +3615,19 @@ MySqlLeaseMgr::startLeaseStatsQuery4() {
 }
 
 LeaseStatsQueryPtr
+MySqlLeaseMgr::startPoolLeaseStatsQuery4() {
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
+                                                      ALL_POOL_LEASE4_STATS,
+                                                      false, true));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
 MySqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
     // Get a context
     MySqlLeaseContextAlloc get_context(*this);
@@ -3623,6 +3666,19 @@ MySqlLeaseMgr::startLeaseStatsQuery6() {
     LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
                                                       ALL_LEASE6_STATS,
                                                       true));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startPoolLeaseStatsQuery6() {
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
+                                                      ALL_POOL_LEASE6_STATS,
+                                                      true, true));
     query->start();
     return(query);
 }

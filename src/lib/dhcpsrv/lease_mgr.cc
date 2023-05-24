@@ -197,12 +197,44 @@ LeaseMgr::recountLeaseStats4() {
                                row.state_count_);
         }
     }
-    // Can not update counters at pool level. This would require retrieving all
-    // leases and matching them one by one to one possible pool.
+
+    query = startPoolLeaseStatsQuery4();
+    if (!query) {
+        /// NULL means not backend does not support recounting.
+        return;
+    }
+
+    // Get counts per state per subnet and pool. Iterate over the result set
+    // updating the subnet and pool and global values.
+    while (query->getNextRow(row)) {
+        if (row.lease_state_ == Lease::STATE_DEFAULT) {
+            // Add to subnet and pool level value.
+            stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                      StatsMgr::generateName(".pool", row.pool_id_,
+                                                      "assigned-addresses")),
+                               row.state_count_);
+        } else if (row.lease_state_ == Lease::STATE_DECLINED) {
+            // Set subnet and pool level value.
+            stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                      StatsMgr::generateName(".pool", row.pool_id_,
+                                                      "declined-addresses")),
+                               row.state_count_);
+
+            // Add to subnet and pool level value.
+            // Declined leases also count as assigned.
+            stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                      StatsMgr::generateName(".pool", row.pool_id_,
+                                                      "assigned-addresses")),
+                               row.state_count_);
+        }
+    }
 }
 
-LeaseStatsQuery::LeaseStatsQuery()
-    : first_subnet_id_(0), last_subnet_id_(0), select_mode_(ALL_SUBNETS) {
+LeaseStatsQuery::LeaseStatsQuery(const SelectMode& select_mode)
+    : first_subnet_id_(0), last_subnet_id_(0), select_mode_(select_mode) {
+    if (select_mode != ALL_SUBNETS && select_mode != ALL_SUBNET_POOLS) {
+        isc_throw(BadValue, "LeaseStatsQuery: mode must be either ALL_SUBNETS or ALL_SUBNET_POOLS");
+    }
 }
 
 LeaseStatsQuery::LeaseStatsQuery(const SubnetID& subnet_id)
@@ -235,6 +267,11 @@ LeaseStatsQuery::LeaseStatsQuery(const SubnetID& first_subnet_id,
 
 LeaseStatsQueryPtr
 LeaseMgr::startLeaseStatsQuery4() {
+    return(LeaseStatsQueryPtr());
+}
+
+LeaseStatsQueryPtr
+LeaseMgr::startPoolLeaseStatsQuery4() {
     return(LeaseStatsQueryPtr());
 }
 
@@ -419,16 +456,68 @@ LeaseMgr::recountLeaseStats6() {
                 break;
 
             default:
-                // We dont' support TYPE_TAs yet
+                // We don't support TYPE_TAs yet
                 break;
         }
     }
-    // Can not update counters at pool level. This would require retrieving all
-    // leases and matching them one by one to one possible pool.
+
+    query = startPoolLeaseStatsQuery6();
+    if (!query) {
+        /// NULL means not backend does not support recounting.
+        return;
+    }
+
+    // Get counts per state per subnet and pool. Iterate over the result set
+    // updating the subnet and pool and global values.
+    while (query->getNextRow(row)) {
+        switch(row.lease_type_) {
+            case Lease::TYPE_NA:
+                if (row.lease_state_ == Lease::STATE_DEFAULT) {
+                    // Add to subnet and pool level value.
+                    stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              StatsMgr::generateName(".pool", row.pool_id_,
+                                                              "assigned-nas")),
+                                       row.state_count_);
+                } else if (row.lease_state_ == Lease::STATE_DECLINED) {
+                    // Set subnet and pool level value.
+                    stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              StatsMgr::generateName(".pool", row.pool_id_,
+                                                              "declined-addresses")),
+                                       row.state_count_);
+
+                    // Add to subnet and pool level value.
+                    // Declined leases also count as assigned.
+                    stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              StatsMgr::generateName(".pool", row.pool_id_,
+                                                              "assigned-nas")),
+                                       row.state_count_);
+                }
+                break;
+
+            case Lease::TYPE_PD:
+                if (row.lease_state_ == Lease::STATE_DEFAULT) {
+                    // Set subnet and pool level value.
+                    stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              StatsMgr::generateName(".pd-pool", row.pool_id_,
+                                                              "assigned-pds")),
+                                       row.state_count_);
+                }
+                break;
+
+            default:
+                // We don't support TYPE_TAs yet
+                break;
+        }
+    }
 }
 
 LeaseStatsQueryPtr
 LeaseMgr::startLeaseStatsQuery6() {
+    return(LeaseStatsQueryPtr());
+}
+
+LeaseStatsQueryPtr
+LeaseMgr::startPoolLeaseStatsQuery6() {
     return(LeaseStatsQueryPtr());
 }
 
