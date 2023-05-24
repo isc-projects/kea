@@ -4,11 +4,15 @@
     "brief": [
         "This command retrieves all host reservations for a specified subnet."
     ],
+    "cmd-comment": [
+        "Operation-target is optional; default is 'all'."
+    ],
     "cmd-syntax": [
         "{",
         "    \"command\": \"reservation-get-all\",",
         "    \"arguments\": {",
-        "        \"subnet-id\": <integer>",
+        "        \"subnet-id\": <integer>,",
+        "        \"operation-target\": <string (primary, alternate, all, default)>",
         "    }",
         "}"
     ],

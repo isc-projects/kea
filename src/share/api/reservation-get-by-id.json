@@ -4,12 +4,16 @@
     "brief": [
         "This command retrieves all host reservations for a specified identifier (type and value)."
     ],
+    "cmd-comment": [
+        "Operation-target is optional; default is 'all'."
+    ],
     "cmd-syntax": [
         "{",
         "    \"command\": \"reservation-get-by-id\",",
         "    \"arguments\": {",
         "        \"identifier-type\": <one of 'hw-address', 'duid', 'circuit-id', 'client-id' and 'flex-id'>,",
-        "        \"identifier\": <string>",
+        "        \"identifier\": <string>,",
+        "        \"operation-target\": <string (primary, alternate, all, default)>",
         "    }",
         "}"
     ],
