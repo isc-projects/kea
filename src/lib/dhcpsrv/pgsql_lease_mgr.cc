@@ -554,6 +554,70 @@ PgSqlTaggedStatement tagged_statements[] = {
           "FROM lease6_stat_by_client_class "
           "WHERE client_class = $1 AND lease_type = $2" },
 
+    // WIPE_RELAY_ID6
+    { 0, { OID_NONE },
+      "wipe_relay_id6",
+      "DELETE FROM lease6_relay_id"},
+
+    // WIPE_REMOTE_ID6
+    { 0, { OID_NONE },
+      "wipe_remote_id6",
+      "DELETE FROM lease6_remote_id"},
+
+    // DELETE_RELAY_ID6
+    { 1, { OID_BYTEA },
+      "delete_relay_id6",
+      "DELETE FROM lease6_relay_id WHERE lease_addr = $1"},
+
+    // DELETE_REMOTE_ID6
+    { 1, { OID_BYTEA },
+      "delete_remote_id6",
+      "DELETE FROM lease6_remote_id WHERE lease_addr = $1"},
+
+    // ADD_RELAY_ID6
+    { 2, { OID_BYTEA, OID_BYTEA },
+      "add_relay_id6",
+      "INSERT INTO lease6_relay_id(relay_id, lease_addr) "
+      "VALUES ($1, $2)"},
+
+    // ADD_REMOTE_ID6
+    { 2, { OID_BYTEA, OID_BYTEA },
+      "add_remote_id6",
+      "INSERT INTO lease6_remote_id(remote_id, lease_addr) "
+      "VALUES ($1, $2)"},
+
+    // GET_RELAY_ID6
+    { 3, { OID_BYTEA, OID_BYTEA, OID_INT8 },
+      "get_relay_id6",
+      "SELECT lease_addr FROM lease6_relay_id "
+      "WHERE relay_id = $1 AND lease_addr > $2 "
+      "ORDER BY lease_addr "
+      "LIMIT $3"},
+
+    // GET_REMOTE_ID6
+    { 3, { OID_BYTEA, OID_BYTEA, OID_INT8 },
+      "get_remote_id6",
+      "SELECT lease_addr FROM lease6_remote_id "
+      "WHERE remote_id = $1 AND lease_addr > $2 "
+      "ORDER BY lease_addr "
+      "LIMIT $3"},
+
+    // GET_RELAY_ID6_LINK
+    { 4, { OID_BYTEA, OID_BYTEA, OID_BYTEA, OID_INT8 },
+      "get_relay_id6_link",
+      "SELECT lease_addr FROM lease6_relay_id "
+      "WHERE relay_id = $1 AND lease_addr BETWEEN $2 and $3 "
+      "ORDER BY lease_addr "
+      "LIMIT $4"},
+
+    // GET_REMOTE_ID6_LINK
+    { 4, { OID_BYTEA, OID_BYTEA, OID_BYTEA, OID_INT8 },
+      "get_remote_id6_link",
+      "SELECT lease_addr FROM lease6_remote_id "
+      "WHERE remote_id = $1 AND lease_addr BETWEEN $2 and $3 "
+      "ORDER BY lease_addr "
+      "LIMIT $4"},
+
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL }
 };

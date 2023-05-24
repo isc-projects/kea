@@ -477,6 +477,40 @@ tagged_statements = { {
                     "SELECT leases "
                         "FROM lease6_stat_by_client_class "
                         "WHERE client_class = ? AND lease_type = ?"},
+    {MySqlLeaseMgr::WIPE_RELAY_ID6,
+                    "DELETE FROM lease6_relay_id"},
+    {MySqlLeaseMgr::WIPE_REMOTE_ID6,
+                    "DELETE FROM lease6_remote_id"},
+    {MySqlLeaseMgr::DELETE_RELAY_ID6,
+                    "DELETE FROM lease6_relay_id WHERE lease_addr = ?"},
+    {MySqlLeaseMgr::DELETE_REMOTE_ID6,
+                    "DELETE FROM lease6_remote_id WHERE lease_addr = ?"},
+    {MySqlLeaseMgr::ADD_RELAY_ID6,
+                    "INSERT INTO lease6_relay_id(relay_id, lease_addr) "
+                         "VALUES (?, ?)"},
+    {MySqlLeaseMgr::ADD_REMOTE_ID6,
+                    "INSERT INTO lease6_remote_id(remote_id, lease_addr) "
+                         "VALUES (?, ?)"},
+    {MySqlLeaseMgr::GET_RELAY_ID6,
+                    "SELECT lease_addr FROM lease6_relay_id "
+                        "WHERE relay_id = ? AND lease_addr > ? "
+                        "ORDER BY lease_addr "
+                        "LIMIT ?"},
+    {MySqlLeaseMgr::GET_REMOTE_ID6,
+                    "SELECT lease_addr FROM lease6_remote_id "
+                        "WHERE remote_id = ? AND lease_addr > ? "
+                        "ORDER BY lease_addr "
+                        "LIMIT ?"},
+    {MySqlLeaseMgr::GET_RELAY_ID6_LINK,
+                    "SELECT lease_addr FROM lease6_relay_id "
+                        "WHERE relay_id = ? AND lease_addr BETWEEN ? AND ? "
+                        "ORDER BY lease_addr "
+                        "LIMIT ?"},
+    {MySqlLeaseMgr::GET_REMOTE_ID6_LINK,
+                    "SELECT lease_addr FROM lease6_remote_id "
+                        "WHERE remote_id = ? AND lease_addr BETWEEN ? AND ? "
+                        "ORDER BY lease_addr "
+                        "LIMIT ?"},
 } };  // tagged_statements
 
 }  // namespace

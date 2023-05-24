@@ -768,6 +768,16 @@ public:
         IS_JSON_SUPPORTED,           // Checks if JSON support is enabled in the database.
         GET_LEASE4_COUNT_BY_CLASS,   // Fetches the IPv4 lease count for a given class.
         GET_LEASE6_COUNT_BY_CLASS,   // Fetches the IPv6 lease count for given class and lease type.
+        WIPE_RELAY_ID6,              // Wipe the lease6_relay_id table
+        WIPE_REMOTE_ID6,             // Wipe the lease6_remote_id table
+        DELETE_RELAY_ID6,            // Delete a lease6_relay_id entry by address
+        DELETE_REMOTE_ID6,           // Delete a lease6_remote_id entry by address
+        ADD_RELAY_ID6,               // Add a lease6_relay_id entry
+        ADD_REMOTE_ID6,              // Add a lease6_remote_id entry
+        GET_RELAY_ID6,               // Get lease6_relay_id entries
+        GET_REMOTE_ID6,              // Get lease6_remote_id entries
+        GET_RELAY_ID6_LINK,          // Get lease6_relay_id entries by link
+        GET_REMOTE_ID6_LINK,         // Get lease6_remote_id entries by link
         NUM_STATEMENTS               // Number of statements
     };
 
