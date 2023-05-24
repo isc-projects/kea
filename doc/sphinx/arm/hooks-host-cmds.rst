@@ -118,7 +118,7 @@ commands that only read the data use all data sources (JSON configuration and
 hosts database); the commands that modify the state (as ``reservation-add``,
 ``reservation-del``, and ``reservation-update``) only use the alternate source.
 
-The operation target accepts the fallowing values:
+The operation target accepts the following values:
 
 - ``primary`` - query the primary source - JSON configuration.
 - ``alternate`` - query the alternate source - hosts database(s).
