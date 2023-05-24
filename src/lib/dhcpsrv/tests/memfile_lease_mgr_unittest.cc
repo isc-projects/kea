@@ -100,6 +100,7 @@ public:
     using Memfile_LeaseMgr::setExtendedInfoTablesEnabled;
     using Memfile_LeaseMgr::relay_id6_;
     using Memfile_LeaseMgr::remote_id6_;
+    using Memfile_LeaseMgr::buildExtendedInfoTables6;
 };
 
 /// @brief Test fixture class for @c Memfile_LeaseMgr
@@ -4133,13 +4134,11 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6ExplicitSanitize) {
     EXPECT_FALSE(isc->contains("relay-info"));
 
     // Enable sanitizing.
-    CfgMgr::instance().getCurrentCfg()->getConsistency()->
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
         setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
 
-    // Now run buildExtendedInfoTables6 with update set to true.
-    size_t updated = 0;
-    EXPECT_NO_THROW(updated = lease_mgr->buildExtendedInfoTables6(true, true));
-    EXPECT_EQ(2, updated);
+    // Now run buildExtendedInfoTables6.
+    EXPECT_NO_THROW(lease_mgr->buildExtendedInfoTables6());
 
     // Check the lease with empty user context was updated.
     lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
@@ -4156,21 +4155,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6ExplicitSanitize) {
     EXPECT_FALSE(isc->contains("relays"));
     EXPECT_TRUE(isc->contains("relay-info"));
 
-    // Check the lease file was updated.
-    string new_content =
-        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-        "400,1000,8,100,0,7,128,1,1,,,1,,,,0\n"
-
-        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-        "200,200,8,100,0,7,128,1,1,,,1,"
-        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
-        " \"link\": \"2001:db8::4\"&#x2c"
-        " \"options\": \"0x00250006010203040506003500086464646464646464\""
-        "&#x2c \"peer\": \"2001:db8::5\"&#x2c"
-        " \"relay-id\": \"6464646464646464\"&#x2c"
-        " \"remote-id\": \"010203040506\" } ] } },,,0\n";
-    string expected = content + new_content;
-    EXPECT_EQ(expected, io.readFile());
+    // The lease file is not more updated.
 }
 
 /// @brief Checks that buildExtendedInfoTables6 can rebuild tables.
@@ -4232,9 +4217,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
     EXPECT_EQ(2, lease_mgr->remote_id6_.size());
 
     // Rebuild the tables.
-    size_t updated = 0;
-    EXPECT_NO_THROW(updated = lease_mgr->buildExtendedInfoTables6(false, false));
-    EXPECT_EQ(0, updated);
+    EXPECT_NO_THROW(lease_mgr->buildExtendedInfoTables6());
 
     // Check tables.
     ASSERT_EQ(1, lease_mgr->relay_id6_.size());

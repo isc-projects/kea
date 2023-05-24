@@ -1512,15 +1512,6 @@ private:
                              uint8_t link_len,
                              const asiolink::IOAddress& lower_bound_address,
                              const LeasePageSize& page_size);
-
-    /// @brief Build extended info v6 tables.
-    ///
-    /// @param update Update extended info in database.
-    /// @param current specify whether to use current (true) or staging
-    /// (false) config.
-    /// @return The number of updates in the database or 0.
-    size_t buildExtendedInfoTables6Internal(bool update, bool current);
-
 public:
 
     /// @brief Write V4 leases to a file.
@@ -1542,6 +1533,10 @@ public:
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.
+
+
+    /// @brief Build extended info v6 tables.
+    void buildExtendedInfoTables6();
 
     /// @brief Delete lease6 extended info from tables.
     ///

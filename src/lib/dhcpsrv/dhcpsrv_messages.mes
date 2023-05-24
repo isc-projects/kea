@@ -451,10 +451,10 @@ with the specified address to the memory file backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the memory file backend database.
 
-% DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6 building extended info tables with %1 sanity check level%2, tables %3
+% DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6 building extended info tables with %1 sanity check level, tables %2
 A debug message issued when the server is building extended info tables.
-The extended info sanity check level, update in file when requested
-and the fact tables are enabled or disabled are displayed.
+The extended info sanity check level and the fact tables are enabled
+or disabled are displayed.
 
 % DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4 extract extended info with %1 sanity check level%2
 A debug message issued when the server is extracting extended info.
@@ -465,7 +465,7 @@ are displayed.
 The code has issued a begin transaction call. For the memory file database
 this is a no-op.
 
-% DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 building extended info tables saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases were entered into tables
+% DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 building extended info tables saw %1 leases, extended info sanity checks modified %2 leases and %3 leases were entered into tables
 Extended info tables build was finished. Some statistics are displayed, the
 updated in database is returned to the command interface.
 

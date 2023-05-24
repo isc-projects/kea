@@ -997,7 +997,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
                                                  CSVLeaseFile6>(file6,
                                                                 lease_file6_,
                                                                 storage6_);
-            static_cast<void>(buildExtendedInfoTables6Internal(false, false));
+            buildExtendedInfoTables6();
         }
     }
 
@@ -3399,17 +3399,11 @@ Memfile_LeaseMgr::upgradeExtendedInfo4(const LeasePageSize& /* page_size */) {
     return (0);
 }
 
-size_t
-Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
-    CfgConsistencyPtr cfg;
-    if (current) {
-        cfg = CfgMgr::instance().getCurrentCfg()->getConsistency();
-    } else {
-        cfg = CfgMgr::instance().getStagingCfg()->getConsistency();
-    }
+void
+Memfile_LeaseMgr::buildExtendedInfoTables6() {
+    CfgConsistencyPtr cfg = CfgMgr::instance().getStagingCfg()->getConsistency();
     if (!cfg) {
-        isc_throw(Unexpected, "the " << (current ? "current" : "staging")
-                  << " consistency configuration is null");
+        isc_throw(Unexpected, "the staging consistency configuration is null");
     }
     auto check = cfg->getExtendedInfoSanityCheck();
     bool enabled = getExtendedInfoTablesEnabled();
@@ -3417,7 +3411,6 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
               DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6)
         .arg(CfgConsistency::sanityCheckToText(check))
-        .arg(update ? " updating in file" : "")
         .arg(enabled ? "enabled" : "disabled");
 
     // Clear tables when enabled.
@@ -3428,7 +3421,6 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
 
     size_t leases = 0;
     size_t modified = 0;
-    size_t updated = 0;
     size_t processed = 0;
 
     for (auto lease : storage6_) {
@@ -3436,10 +3428,6 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
         try {
             if (upgradeLease6ExtendedInfo(lease, check)) {
                 ++modified;
-                if (update && persistLeases(V6)) {
-                    lease_file6_->append(*lease);
-                    ++updated;
-                }
             }
             if (enabled && addExtendedInfo6(lease)) {
                 ++processed;
@@ -3455,10 +3443,7 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6)
         .arg(leases)
         .arg(modified)
-        .arg(updated)
         .arg(processed);
-
-    return (updated);
 }
 
 size_t
