@@ -507,7 +507,7 @@ TEST_F(CfgHostsTest, deleteForIPv4) {
     // Make sure the hosts and IP reservations were added.
     ASSERT_EQ(host_count, hosts_by_subnet.size());
     ASSERT_EQ(1, hosts_by_address.size());
-    
+
     // Delete one host.
     EXPECT_TRUE(cfg.del(subnet_id, address));
 
@@ -536,7 +536,7 @@ TEST_F(CfgHostsTest, deleteForIPv6) {
                                        increase(IOAddress(address), i)));
         cfg.add(host);
     }
-    
+
 
     // Get all inserted hosts.
     auto hosts_by_subnet_and_address = cfg.getAll6(subnet_id, address);
@@ -544,7 +544,7 @@ TEST_F(CfgHostsTest, deleteForIPv6) {
     // Make sure the hosts and IP reservations were added.
     ASSERT_EQ(1, hosts_by_subnet_and_address.size());
     ASSERT_EQ(host_count, hosts_by_subnet.size());
-    
+
     // Delete one host.
     EXPECT_TRUE(cfg.del(subnet_id, address));
 
@@ -616,7 +616,7 @@ TEST_F(CfgHostsTest, del4) {
     // Delete one host.
     EXPECT_TRUE(cfg.del4(subnet_id, Host::IdentifierType::IDENT_DUID,
                          &duids_[host_id]->getDuid()[0], duids_[host_id]->getDuid().size()));
-    
+
     // Check if the host is actually deleted.
     hosts_by_subnet = cfg.getAll4(subnet_id);
     hosts_by_address = cfg.getAll4(increase(address, host_id));
@@ -675,7 +675,7 @@ TEST_F(CfgHostsTest, del6) {
     // Delete one host.
     EXPECT_TRUE(cfg.del6(subnet_id, Host::IdentifierType::IDENT_DUID,
                          &duids_[host_id]->getDuid()[0], duids_[host_id]->getDuid().size()));
-    
+
     // Check if the host is actually deleted.
     hosts_by_subnet = cfg.getAll6(subnet_id);
     hosts_by_address = cfg.getAll6(increase(address, host_id));

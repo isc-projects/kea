@@ -145,7 +145,7 @@ ConstHostCollection
 HostMgr::getAll(const Host::IdentifierType& identifier_type,
                 const uint8_t* identifier_begin,
                 const size_t identifier_len) const {
-    return getAll(identifier_type, identifier_begin, identifier_len, 
+    return getAll(identifier_type, identifier_begin, identifier_len,
                   HostMgrOperationTarget::ALL_SOURCES);
 }
 
@@ -751,7 +751,7 @@ HostMgr::add(const HostPtr& host, const HostMgrOperationTarget target) {
         if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to add new host because there is "
                     "no hosts-database configured.");
-            
+
         }
 
         for (auto source : alternate_sources_) {
@@ -886,7 +886,7 @@ HostMgr::update(HostPtr const& host, const HostMgrOperationTarget target) {
             isc_throw(NoHostDataSourceManager,
                     "Unable to update existing host because there is no hosts-database configured.");
         }
-    
+
         for (HostDataSourcePtr const& source : alternate_sources_) {
             source->update(host);
         }

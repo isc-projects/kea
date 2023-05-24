@@ -4489,7 +4489,7 @@ HostMgrTest::testAdd(BaseHostDataSource& data_source1,
     HostMgr::instance().add(host, HostMgrOperationTarget::UNSPECIFIED_SOURCE);
 
     // Verify the hosts were added.
-    // ALL_SOURCES + PRIMARY_SOURCE targets for IPv4 and IPv6. 
+    // ALL_SOURCES + PRIMARY_SOURCE targets for IPv4 and IPv6.
     size_t hosts_in_primary_source = 2 * 2 * (is_first_source_primary || is_second_source_primary);
     // Default + ALL_SOURCES + ALTERNATE_SOURCES targets for IPv4 and IPv6.
     size_t hosts_in_alternate_sources = 3 * 2 * (!is_first_source_primary || !is_second_source_primary);

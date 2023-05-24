@@ -1141,7 +1141,7 @@ CfgHosts::del4(const SubnetID& subnet_id,
     const auto t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
                                                     identifier_begin + identifier_len),
                                                     identifier_type);
-    const auto& range = idx.equal_range(t);    
+    const auto& range = idx.equal_range(t);
     size_t erased = 0;
     for (auto key = range.first; key != range.second;) {
         if ((*key)->getIPv4SubnetID() != subnet_id) {
@@ -1191,7 +1191,7 @@ CfgHosts::del6(const SubnetID& subnet_id,
     const auto t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
                                                           identifier_begin + identifier_len),
                                                           identifier_type);
-    const auto& range = idx.equal_range(t);    
+    const auto& range = idx.equal_range(t);
     size_t erased_hosts = 0;
     size_t erased_reservations = 0;
     for (auto key = range.first; key != range.second;) {
