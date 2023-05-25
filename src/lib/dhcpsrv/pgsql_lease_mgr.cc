@@ -2978,8 +2978,67 @@ PgSqlLeaseMgr::rollback() {
 }
 
 void
-PgSqlLeaseMgr::deleteExtendedInfo6(const IOAddress& /* addr */) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::deleteExtendedInfo6 not implemented");
+PgSqlLeaseMgr::deleteExtendedInfo6(const IOAddress& addr) {
+    deleteRelayId6(addr);
+    deleteRemoteId6(addr);
+}
+
+void
+PgSqlLeaseMgr::deleteRelayId6(const IOAddress& addr) {
+    // Set up the WHERE clause value.
+    PsqlBindArray bind_array;
+
+    std::vector<uint8_t> addr_data = addr.toBytes();
+    // Do not check the address length as it does not really matter.
+    bind_array.add(addr_data);
+
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Delete from lease6_relay_id table.
+    StatementIndex stindex = DELETE_RELAY_ID6;
+
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
+
+    int s = PQresultStatus(r);
+
+    if (s != PGRES_COMMAND_OK) {
+        ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+    }
+}
+
+void
+PgSqlLeaseMgr::deleteRemoteId6(const IOAddress& addr) {
+    // Set up the WHERE clause value.
+    PsqlBindArray bind_array;
+
+    std::vector<uint8_t> addr_data = addr.toBytes();
+    // Do not check the address length as it does not really matter.
+    bind_array.add(addr_data);
+
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Delete from lease6_remote_id table.
+    StatementIndex stindex = DELETE_REMOTE_ID6;
+
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
+
+    int s = PQresultStatus(r);
+
+    if (s != PGRES_COMMAND_OK) {
+        ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+    }
 }
 
 void

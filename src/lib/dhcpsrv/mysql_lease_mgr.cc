@@ -3812,8 +3812,69 @@ MySqlLeaseMgr::checkError(MySqlLeaseContextPtr& ctx,
 }
 
 void
-MySqlLeaseMgr::deleteExtendedInfo6(const IOAddress& /* addr */) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExtendedInfo6 not implemented");
+MySqlLeaseMgr::deleteExtendedInfo6(const IOAddress& addr) {
+    deleteRelayId6(addr);
+    deleteRemoteId6(addr);
+}
+
+void
+MySqlLeaseMgr::deleteRelayId6(const IOAddress& addr) {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Bind the lease address.
+    MYSQL_BIND bind[1];
+    memset(bind, 0, sizeof(bind));
+
+    std::vector<uint8_t> addr_data = addr.toBytes();
+    // Do not check the address length as it does not really matter.
+    unsigned long addr_length = addr_data.size();
+    bind[0].buffer_type = MYSQL_TYPE_BLOB;
+    bind[0].buffer = reinterpret_cast<char*>(&addr_data[0]);
+    bind[0].buffer_length = addr_length;
+    bind[0].length = &addr_length;
+
+    // Delete from lease6_relay_id table.
+    StatementIndex stindex = DELETE_RELAY_ID6;
+
+    // Bind the input parameters to the statement.
+    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
+
+    // Execute.
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to execute");
+}
+
+void
+MySqlLeaseMgr::deleteRemoteId6(const IOAddress& addr) {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Bind the lease address.
+    MYSQL_BIND bind[1];
+    memset(bind, 0, sizeof(bind));
+
+    std::vector<uint8_t> addr_data = addr.toBytes();
+    // Do not check the address length as it does not really matter.
+    unsigned long addr_length = addr_data.size();
+    bind[0].buffer_type = MYSQL_TYPE_BLOB;
+    bind[0].buffer = reinterpret_cast<char*>(&addr_data[0]);
+    bind[0].buffer_length = addr_length;
+    bind[0].length = &addr_length;
+
+    // Delete from lease6_remote_id table.
+    StatementIndex stindex = DELETE_REMOTE_ID6;
+
+    // Bind the input parameters to the statement.
+    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
+
+    // Execute.
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to execute");
 }
 
 void

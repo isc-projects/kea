@@ -1071,6 +1071,7 @@ private:
                     int status, StatementIndex index,
                     const char* what) const;
 
+public:
     /// The following queries are used to fulfill Bulk Lease Query
     /// queries. They rely on relay data contained in lease's
     /// user-context when the extended-store-info flag is enabled.
@@ -1186,6 +1187,7 @@ private:
     /// @brief Wipe by-relay-id table (v6).
     virtual void wipeExtendedInfoTables6() override;
 
+private:
     /// @brief Context RAII allocator.
     class MySqlLeaseContextAlloc {
     public:
@@ -1289,6 +1291,15 @@ protected:
                               const std::vector<uint8_t>& remote_id) override;
 
 private:
+    /// @brief Delete lease6 extended info from by-relay-id table.
+    ///
+    /// @param addr The address of the lease.
+    void deleteRelayId6(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Delete lease6 extended info from by-remote-id table.
+    ///
+    /// @param addr The address of the lease.
+    void deleteRemoteId6(const isc::asiolink::IOAddress& addr);
 
     // Members
 

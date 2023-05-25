@@ -972,6 +972,7 @@ private:
     std::string
     checkLimits(isc::data::ConstElementPtr const& user_context, StatementIndex const stindex) const;
 
+public:
     /// @brief Checks if the IPv4 lease limits set in the given user context are exceeded.
     /// PostgreSQL implementation.
     ///
@@ -1146,6 +1147,7 @@ private:
     /// @brief Write V6 leases to a file.
     virtual void writeLeases6(const std::string& /*filename*/) override;
 
+private:
     /// @brief Context RAII allocator.
     class PgSqlLeaseContextAlloc {
     public:
@@ -1249,6 +1251,15 @@ protected:
                               const std::vector<uint8_t>& remote_id) override;
 
 private:
+    /// @brief Delete lease6 extended info from by-relay-id table.
+    ///
+    /// @param addr The address of the lease.
+    void deleteRelayId6(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Delete lease6 extended info from by-remote-id table.
+    ///
+    /// @param addr The address of the lease.
+    void deleteRemoteId6(const isc::asiolink::IOAddress& addr);
 
     // Members
 
