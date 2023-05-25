@@ -426,7 +426,7 @@ tagged_statements = { {
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
                         "state, user_context, binaddr, pool_id) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::UPDATE_LEASE4,
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
                         "client_id = ?, valid_lifetime = ?, expire = ?, "
@@ -1441,7 +1441,7 @@ public:
             // bind_[17].is_null = &MLM_FALSE; // commented out for performance
                                                // reasons, see memset() above
 
-	    // pool_id: unsigned int
+            // pool_id: unsigned int
             // Can use lease_->pool_id_ directly as it is of type uint32_t.
             bind_[18].buffer_type = MYSQL_TYPE_LONG;
             bind_[18].buffer = reinterpret_cast<char*>(&lease_->pool_id_);
@@ -1619,14 +1619,14 @@ public:
                                            // reasons, see memset() above
 
         // Add the error flags
-        setErrorIndicators(bind_, error_, LEASE_COLUMNS - 1);
+        setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
         BOOST_STATIC_ASSERT(18 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[LEASE_COLUMNS - 1]));
+        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[LEASE_COLUMNS]));
     }
 
     /// @brief Copy Received Data into Lease6 Object

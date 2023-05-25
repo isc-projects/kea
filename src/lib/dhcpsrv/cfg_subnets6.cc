@@ -441,45 +441,45 @@ CfgSubnets6::removeStatistics() {
 
         for (const auto& pool : subnet6->getPools(Lease::TYPE_NA)) {
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                 StatsMgr::generateName("pool", pool->getID(),
                                                                         "total-nas")));
 
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                 StatsMgr::generateName("pool", pool->getID(),
                                                                         "assigned-nas")));
 
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                 StatsMgr::generateName("pool", pool->getID(),
                                                                         "cumulative-assigned-nas")));
 
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                 StatsMgr::generateName("pool", pool->getID(),
                                                                         "declined-addresses")));
 
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                 StatsMgr::generateName("pool", pool->getID(),
                                                                         "reclaimed-declined-addresses")));
 
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pool", pool->getID(),
+                                                 StatsMgr::generateName("pool", pool->getID(),
                                                                         "reclaimed-leases")));
         }
 
         for (const auto& pool : subnet6->getPools(Lease::TYPE_PD)) {
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pd-pool", pool->getID(),
+                                                 StatsMgr::generateName("pd-pool", pool->getID(),
                                                                         "total-pds")));
 
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pd-pool", pool->getID(),
+                                                 StatsMgr::generateName("pd-pool", pool->getID(),
                                                                         "assigned-pds")));
 
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pd-pool", pool->getID(),
+                                                 StatsMgr::generateName("pd-pool", pool->getID(),
                                                                         "cumulative-assigned-pds")));
 
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
-                                                 StatsMgr::generateName(".pd-pool", pool->getID(),
+                                                 StatsMgr::generateName("pd-pool", pool->getID(),
                                                                         "reclaimed-leases")));
         }
     }
@@ -526,13 +526,13 @@ CfgSubnets6::updateStatistics() {
 
         for (const auto& pool : subnet6->getPools(Lease::TYPE_NA)) {
             stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                      StatsMgr::generateName(".pool", pool->getID(),
+                                                      StatsMgr::generateName("pool", pool->getID(),
                                                                              "total-nas")),
                                static_cast<int64_t>(pool->getCapacity()));
 
             const std::string& name_nas =
                 StatsMgr::generateName("subnet", subnet_id,
-                                       StatsMgr::generateName(".pool", pool->getID(),
+                                       StatsMgr::generateName("pool", pool->getID(),
                                        "cumulative-assigned-nas"));
             if (!stats_mgr.getObservation(name_nas)) {
                 stats_mgr.setValue(name_nas, static_cast<int64_t>(0));
@@ -541,13 +541,13 @@ CfgSubnets6::updateStatistics() {
 
         for (const auto& pool : subnet6->getPools(Lease::TYPE_PD)) {
             stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                      StatsMgr::generateName(".pd-pool", pool->getID(),
+                                                      StatsMgr::generateName("pd-pool", pool->getID(),
                                                                              "total-pds")),
                                static_cast<int64_t>(pool->getCapacity()));
 
             const std::string& name_nas =
                 StatsMgr::generateName("subnet", subnet_id,
-                                       StatsMgr::generateName(".pd-pool", pool->getID(),
+                                       StatsMgr::generateName("pd-pool", pool->getID(),
                                        "cumulative-assigned-pds"));
             if (!stats_mgr.getObservation(name_nas)) {
                 stats_mgr.setValue(name_nas, static_cast<int64_t>(0));

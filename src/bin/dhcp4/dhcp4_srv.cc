@@ -3664,7 +3664,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                         if (pool) {
                             StatsMgr::instance().addValue(
                                 StatsMgr::generateName("subnet", subnet->getID(),
-                                                       StatsMgr::generateName(".pool", pool->getID(), "assigned-addresses")),
+                                                       StatsMgr::generateName("pool", pool->getID(), "assigned-addresses")),
                                 static_cast<int64_t>(-1));
                         }
                     }
@@ -3836,7 +3836,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
         if (pool) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", subnet->getID(),
-                                       StatsMgr::generateName(".pool", pool->getID(), "declined-addresses")),
+                                       StatsMgr::generateName("pool", pool->getID(), "declined-addresses")),
                 static_cast<int64_t>(1));
         }
     }

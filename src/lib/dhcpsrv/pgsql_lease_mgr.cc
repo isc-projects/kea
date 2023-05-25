@@ -1095,7 +1095,7 @@ public:
             addr_bin_ = lease_->addr_.toBytes();
             bind_array.add(addr_bin_);
 
-	    pool_id_str_ = boost::lexical_cast<std::string>(lease->pool_id_);
+            pool_id_str_ = boost::lexical_cast<std::string>(lease->pool_id_);
             bind_array.add(pool_id_str_);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,

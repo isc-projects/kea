@@ -489,7 +489,7 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease) {
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "assigned-addresses")),
                     static_cast<int64_t>(1));
             }
@@ -506,7 +506,7 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease) {
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "declined-addresses")),
                     static_cast<int64_t>(1));
             }
@@ -531,7 +531,7 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
                                            StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
-                                                                  ".pool" : ".pd-pool", pool->getID(),
+                                                                  "pool" : "pd-pool", pool->getID(),
                                                                   lease->type_ == Lease::TYPE_NA ?
                                                                   "assigned-nas" : "assigned-pds")),
                     static_cast<int64_t>(1));
@@ -549,7 +549,7 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease) {
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "declined-addresses")),
                     static_cast<int64_t>(1));
             }
@@ -577,7 +577,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "assigned-addresses")),
                         static_cast<int64_t>(-1));
                 }
@@ -596,7 +596,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "declined-addresses")),
                     static_cast<int64_t>(-1));
             }
@@ -618,7 +618,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                     if (pool) {
                         StatsMgr::instance().addValue(
                             StatsMgr::generateName("subnet", subnet->getID(),
-                                                   StatsMgr::generateName(".pool", pool->getID(),
+                                                   StatsMgr::generateName("pool", pool->getID(),
                                                                           "assigned-addresses")),
                             static_cast<int64_t>(1));
                     }
@@ -637,7 +637,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "declined-addresses")),
                         static_cast<int64_t>(1));
                 }
@@ -659,7 +659,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "assigned-addresses")),
                         static_cast<int64_t>(1));
                 }
@@ -677,7 +677,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "declined-addresses")),
                         static_cast<int64_t>(1));
                 }
@@ -708,7 +708,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
                                                StatsMgr::generateName(existing->type_ == Lease::TYPE_NA ?
-                                                                      ".pool" : ".pd-pool", pool->getID(),
+                                                                      "pool" : "pd-pool", pool->getID(),
                                                                       existing->type_ == Lease::TYPE_NA ?
                                                                       "assigned-nas" : "assigned-pds")),
                         static_cast<int64_t>(-1));
@@ -728,7 +728,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "declined-addresses")),
                     static_cast<int64_t>(-1));
             }
@@ -752,7 +752,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                         StatsMgr::instance().addValue(
                             StatsMgr::generateName("subnet", subnet->getID(),
                                                    StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
-                                                                          ".pool" : ".pd-pool", pool->getID(),
+                                                                          "pool" : "pd-pool", pool->getID(),
                                                                           lease->type_ == Lease::TYPE_NA ?
                                                                           "assigned-nas" : "assigned-pds")),
                             static_cast<int64_t>(1));
@@ -772,7 +772,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "declined-addresses")),
                         static_cast<int64_t>(1));
                 }
@@ -796,7 +796,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
                                                StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
-                                                                      ".pool" : ".pd-pool", pool->getID(),
+                                                                      "pool" : "pd-pool", pool->getID(),
                                                                       lease->type_ == Lease::TYPE_NA ?
                                                                       "assigned-nas" : "assigned-pds")),
                         static_cast<int64_t>(1));
@@ -815,7 +815,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "declined-addresses")),
                         static_cast<int64_t>(1));
                 }
@@ -839,7 +839,7 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease) {
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "assigned-addresses")),
                     static_cast<int64_t>(-1));
             }
@@ -856,7 +856,7 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease) {
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "declined-addresses")),
                     static_cast<int64_t>(-1));
             }
@@ -881,7 +881,7 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
                                            StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
-                                                                  ".pool" : ".pd-pool", pool->getID(),
+                                                                  "pool" : "pd-pool", pool->getID(),
                                                                   lease->type_ == Lease::TYPE_NA ?
                                                                   "assigned-nas" : "assigned-pds")),
                     static_cast<int64_t>(-1));
@@ -899,7 +899,7 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "declined-addresses")),
                     static_cast<int64_t>(-1));
             }
@@ -2247,13 +2247,13 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                 for (const auto& pool : sub->getPools(Lease::TYPE_V4)) {
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "assigned-addresses")),
                         static_cast<int64_t>(0));
 
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "declined-addresses")),
                         static_cast<int64_t>(0));
                 }
@@ -2281,13 +2281,13 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                 for (const auto& pool : sub->getPools(Lease::TYPE_V4)) {
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "assigned-addresses")),
                         static_cast<int64_t>(0));
 
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "declined-addresses")),
                         static_cast<int64_t>(0));
                 }
@@ -2367,13 +2367,13 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                 for (const auto& pool : sub->getPools(Lease::TYPE_NA)) {
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "assigned-nas")),
                         static_cast<int64_t>(0));
 
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "declined-addresses")),
                         static_cast<int64_t>(0));
                 }
@@ -2381,7 +2381,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                 for (const auto& pool : sub->getPools(Lease::TYPE_PD)) {
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pd-pool", pool->getID(),
+                                               StatsMgr::generateName("pd-pool", pool->getID(),
                                                                       "assigned-pds")),
                         static_cast<int64_t>(0));
                 }
@@ -2413,13 +2413,13 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                 for (const auto& pool : sub->getPools(Lease::TYPE_NA)) {
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "assigned-nas")),
                         static_cast<int64_t>(0));
 
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "declined-addresses")),
                         static_cast<int64_t>(0));
                 }
@@ -2427,7 +2427,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                 for (const auto& pool : sub->getPools(Lease::TYPE_PD)) {
                     StatsMgr::instance().setValue(
                         StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName(".pd-pool", pool->getID(),
+                                               StatsMgr::generateName("pd-pool", pool->getID(),
                                                                       "assigned-pds")),
                         static_cast<int64_t>(0));
                 }

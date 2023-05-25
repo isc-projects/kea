@@ -1531,7 +1531,7 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ? ".pool" : ".pd-pool", pool->getID(),
+                                           StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ? "pool" : "pd-pool", pool->getID(),
                                                                   ctx.currentIA().type_ == Lease::TYPE_NA ? "assigned-nas" : "assigned-pds")),
                     static_cast<int64_t>(-1));
             }
@@ -1590,7 +1590,7 @@ AllocEngine::removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(candidate->type_ == Lease::TYPE_NA ? ".pool" : ".pd-pool", pool->getID(),
+                                           StatsMgr::generateName(candidate->type_ == Lease::TYPE_NA ? "pool" : "pd-pool", pool->getID(),
                                                                   candidate->type_ == Lease::TYPE_NA ? "assigned-nas" : "assigned-pds")),
                     static_cast<int64_t>(-1));
             }
@@ -1673,7 +1673,7 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ? ".pool" : ".pd-pool", pool->getID(),
+                                           StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ? "pool" : "pd-pool", pool->getID(),
                                                                   ctx.currentIA().type_ == Lease::TYPE_NA ? "assigned-nas" : "assigned-pds")),
                     static_cast<int64_t>(-1));
             }
@@ -1823,7 +1823,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                            StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                                  ".pool" : ".pd-pool", pool->getID(),
+                                                                  "pool" : "pd-pool", pool->getID(),
                                                                   ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                                   "assigned-nas" : "assigned-pds")),
                     static_cast<int64_t>(1));
@@ -1831,7 +1831,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                            StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                                  ".pool" : ".pd-pool", pool->getID(),
+                                                                  "pool" : "pd-pool", pool->getID(),
                                                                   ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                                   "cumulative-assigned-nas" : "cumulative-assigned-pds")),
                     static_cast<int64_t>(1));
@@ -2017,7 +2017,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                                StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                                      ".pool" : ".pd-pool", pool->getID(),
+                                                                      "pool" : "pd-pool", pool->getID(),
                                                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                                       "assigned-nas" : "assigned-pds")),
                         static_cast<int64_t>(1));
@@ -2025,7 +2025,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                                StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                                      ".pool" : ".pd-pool", pool->getID(),
+                                                                      "pool" : "pd-pool", pool->getID(),
                                                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                                       "cumulative-assigned-nas" : "cumulative-assigned-pds")),
                         static_cast<int64_t>(1));
@@ -2209,7 +2209,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                              ".pool" : ".pd-pool", pool->getID(),
+                                                              "pool" : "pd-pool", pool->getID(),
                                                               ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                               "assigned-nas" : "assigned-pds")),
                 static_cast<int64_t>(1));
@@ -2365,7 +2365,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                            StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                                  ".pool" : ".pd-pool", pool->getID(),
+                                                                  "pool" : "pd-pool", pool->getID(),
                                                                   ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                                   "assigned-nas" : "assigned-pds")),
                     static_cast<int64_t>(1));
@@ -2373,7 +2373,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                            StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                                  ".pool" : ".pd-pool", pool->getID(),
+                                                                  "pool" : "pd-pool", pool->getID(),
                                                                   ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                                   "cumulative-assigned-nas" : "cumulative-assigned-pds")),
                     static_cast<int64_t>(1));
@@ -2463,7 +2463,7 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                                StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                                      ".pool" : ".pd-pool", pool->getID(),
+                                                                      "pool" : "pd-pool", pool->getID(),
                                                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                                       "assigned-nas" : "assigned-pds")),
                         static_cast<int64_t>(1));
@@ -2471,7 +2471,7 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                                StatsMgr::generateName(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                                                      ".pool" : ".pd-pool", pool->getID(),
+                                                                      "pool" : "pd-pool", pool->getID(),
                                                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                                       "cumulative-assigned-nas" : "cumulative-assigned-pds")),
                         static_cast<int64_t>(1));
@@ -2898,13 +2898,13 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool" , pool->getID(),
+                                           StatsMgr::generateName("pool" , pool->getID(),
                                                                   "assigned-nas")),
                     static_cast<int64_t>(-1));
 
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pool" , pool->getID(),
+                                           StatsMgr::generateName("pool" , pool->getID(),
                                                                   "reclaimed-leases")),
                     static_cast<int64_t>(1));
             }
@@ -2923,13 +2923,13 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pd-pool" , pool->getID(),
+                                           StatsMgr::generateName("pd-pool" , pool->getID(),
                                                                   "assigned-pds")),
                     static_cast<int64_t>(-1));
 
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(".pd-pool" , pool->getID(),
+                                           StatsMgr::generateName("pd-pool" , pool->getID(),
                                                                   "reclaimed-leases")),
                     static_cast<int64_t>(1));
             }
@@ -3037,13 +3037,13 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
         if (pool) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", subnet->getID(),
-                                       StatsMgr::generateName(".pool" , pool->getID(),
+                                       StatsMgr::generateName("pool" , pool->getID(),
                                                               "assigned-addresses")),
                 static_cast<int64_t>(-1));
 
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", subnet->getID(),
-                                       StatsMgr::generateName(".pool" , pool->getID(),
+                                       StatsMgr::generateName("pool" , pool->getID(),
                                                               "reclaimed-leases")),
                 static_cast<int64_t>(1));
         }
@@ -3126,12 +3126,12 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
         const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
         if (pool) {
             stats_mgr.addValue(StatsMgr::generateName("subnet", subnet->getID(),
-                                                      StatsMgr::generateName(".pool" , pool->getID(),
+                                                      StatsMgr::generateName("pool" , pool->getID(),
                                                                              "declined-addresses")),
                 static_cast<int64_t>(-1));
 
             stats_mgr.addValue(StatsMgr::generateName("subnet", subnet->getID(),
-                                                      StatsMgr::generateName(".pool" , pool->getID(),
+                                                      StatsMgr::generateName("pool" , pool->getID(),
                                                                              "reclaimed-declined-addresses")),
                 static_cast<int64_t>(1));
         }
@@ -3198,12 +3198,12 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
         const auto& pool = subnet->getPool(lease->type_, lease->addr_, false);
         if (pool) {
             stats_mgr.addValue(StatsMgr::generateName("subnet", subnet->getID(),
-                                                      StatsMgr::generateName(".pool" , pool->getID(),
+                                                      StatsMgr::generateName("pool" , pool->getID(),
                                                                              "declined-addresses")),
                 static_cast<int64_t>(-1));
 
             stats_mgr.addValue(StatsMgr::generateName("subnet", subnet->getID(),
-                                                      StatsMgr::generateName(".pool" , pool->getID(),
+                                                      StatsMgr::generateName("pool" , pool->getID(),
                                                                              "reclaimed-declined-addresses")),
                 static_cast<int64_t>(-1));
         }
@@ -4109,7 +4109,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(),
+                                               StatsMgr::generateName("pool", pool->getID(),
                                                                       "assigned-addresses")),
                         static_cast<int64_t>(-1));
                 }
@@ -4324,13 +4324,13 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                  "assigned-addresses")),
                     static_cast<int64_t>(1));
 
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                  "cumulative-assigned-addresses")),
                     static_cast<int64_t>(1));
             }
@@ -4459,13 +4459,13 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "assigned-addresses")),
                     static_cast<int64_t>(1));
 
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                           StatsMgr::generateName(".pool", pool->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
                                                                   "cumulative-assigned-addresses")),
                     static_cast<int64_t>(1));
             }
@@ -4585,13 +4585,13 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         if (pool) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                       StatsMgr::generateName(".pool", pool->getID(),
+                                       StatsMgr::generateName("pool", pool->getID(),
                                                               "assigned-addresses")),
                 static_cast<int64_t>(1));
 
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                       StatsMgr::generateName(".pool", pool->getID(),
+                                       StatsMgr::generateName("pool", pool->getID(),
                                                               "cumulative-assigned-addresses")),
                 static_cast<int64_t>(1));
         }

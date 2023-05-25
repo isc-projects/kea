@@ -232,7 +232,7 @@ CSVLeaseFile4::readSubnetID(const CSVRow& row) {
 uint32_t
 CSVLeaseFile4::readPoolID(const CSVRow& row) {
     uint32_t pool_id =
-        row.readAndConvertAt<SubnetID>(getColumnIndex("pool_id"));
+        row.readAndConvertAt<uint32_t>(getColumnIndex("pool_id"));
     return (pool_id);
 }
 

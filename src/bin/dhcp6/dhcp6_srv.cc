@@ -3272,7 +3272,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pool", pool->getID(), "assigned-nas")),
+                                               StatsMgr::generateName("pool", pool->getID(), "assigned-nas")),
                         static_cast<int64_t>(-1));
                 }
             }
@@ -3480,7 +3480,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(".pd-pool", pool->getID(), "assigned-pds")),
+                                               StatsMgr::generateName("pd-pool", pool->getID(), "assigned-pds")),
                         static_cast<int64_t>(-1));
                 }
             }
@@ -4073,7 +4073,7 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
         if (pool) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", subnet->getID(),
-                                       StatsMgr::generateName(".pool", pool->getID(), "declined-addresses")),
+                                       StatsMgr::generateName("pool", pool->getID(), "declined-addresses")),
                 static_cast<int64_t>(1));
         }
     }
