@@ -1,3 +1,11 @@
+2141.	[bug]		razvan
+	The High Availability hook library is sending the 'origin'
+	parameter set to 'ha-partner' when sending lease update
+	commands which enables the forensic log hook library to
+	distinguish between administrator commands and HA partner
+	commands.
+	(Gitlab #2629)
+
 2140.	[func]		slawek
 	Implemented functions to delete the host reservations from the
 	JSON configuration. Updated the host manager to fully support
@@ -1295,7 +1303,7 @@ Kea 2.0.0 (stable) released on September 29, 2021
 	(Gitlab #2085)
 
 1947.	[bug]		marcin
-	Corrected a bug in the High Availablity hooks library that could
+	Corrected a bug in the High Availability hooks library that could
 	cause a standby server not to synchronize its lease database
 	after a temporary communication interruption with its partner.
 	(Gitlab #1959)
