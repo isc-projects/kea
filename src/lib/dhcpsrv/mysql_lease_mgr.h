@@ -1311,6 +1311,17 @@ private:
     /// @param addr The address of the lease.
     void deleteRemoteId6(const isc::asiolink::IOAddress& addr);
 
+    /// @brief Common part of from lease6 extended info tables.
+    ///
+    /// @param ctx Context.
+    /// @param stindex Index of statement being executed.
+    /// @param bind Selection MYSQL_BIND array.
+    /// @return List of addresses.
+    std::list<isc::asiolink::IOAddress>
+    getExtendedInfo6Common(MySqlLeaseContextPtr& ctx,
+                           StatementIndex stindex,
+                           std::vector<MYSQL_BIND>& bind);
+
     // Members
 
     /// @brief The parameters

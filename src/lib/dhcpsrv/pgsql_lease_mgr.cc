@@ -3403,6 +3403,31 @@ PgSqlLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& page_size) {
     return (updated);
 }
 
+std::list<IOAddress>
+PgSqlLeaseMgr::getExtendedInfo6Common(PgSqlLeaseContextPtr& ctx,
+                                      StatementIndex stindex,
+                                      db::PsqlBindArray& bind_array) {
+    PgSqlResult r(PQexecPrepared(ctx->conn_,
+                                 tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
+    ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+
+    int rows = PQntuples(r);
+    std::list<IOAddress> result;
+    for (int i = 0; i < rows; ++i) {
+        std::vector<uint8_t> addr_data;
+        PgSqlLeaseExchange::convertFromBytea(r, i, 0, addr_data);
+        if (addr_data.size() != 16) {
+            isc_throw(BadValue, "received lease6 address is not 16 byte long");
+        }
+        result.push_back(IOAddress::fromBytes(AF_INET6, &addr_data[0]));
+    }
+    return (result);
+}
+
 Lease6Collection
 PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
                                    const IOAddress& /* link_addr */,

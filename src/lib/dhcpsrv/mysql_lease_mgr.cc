@@ -4299,6 +4299,60 @@ MySqlLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& page_size) {
     return (updated);
 }
 
+std::list<IOAddress>
+MySqlLeaseMgr::getExtendedInfo6Common(MySqlLeaseContextPtr& ctx,
+                                      StatementIndex stindex,
+                                      std::vector<MYSQL_BIND>& bind) {
+    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], &bind[0]);
+    checkError(ctx, status, stindex, "unable to bind WHERE clause parameters");
+
+    // Set up the MYSQL_BIND array for the data being returned.
+    MYSQL_BIND outbind[1];
+    memset(outbind, 0, sizeof(outbind));
+
+    // Bind the lease address.
+    uint8_t addr_data[16];
+    unsigned long addr_size = 16;
+    outbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    outbind[0].buffer = reinterpret_cast<char*>(addr_data);
+    outbind[0].buffer_length = addr_size;
+    outbind[0].length = &addr_size;
+
+    status = mysql_stmt_bind_result(ctx->conn_.statements_[stindex], &outbind[0]);
+    checkError(ctx, status, stindex, "outbound binding failed");
+
+    // Execute the statement.
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to execute");
+
+    // Store all results.
+    status = mysql_stmt_store_result(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to set up for storing all results");
+
+    // Set up the fetch "release" object to release resources associated
+    // with the call to mysql_stmt_fetch when this method exits, then
+    // retrieve the data.
+    MySqlFreeResult fetch_release(ctx->conn_.statements_[stindex]);
+    std::list<IOAddress> result;
+    while ((status = mysql_stmt_fetch(ctx->conn_.statements_[stindex])) == 0) {
+        if (addr_size != 16) {
+            isc_throw(BadValue, "received lease6 address is not 16 byte long");
+        }
+        result.push_back(IOAddress::fromBytes(AF_INET6, addr_data));
+    }
+
+    // How did the fetch end?
+    if (status == 1) {
+        // Error - unable to fetch results.
+        checkError(ctx, status, stindex, "unable to fetch results");
+    } else if (status == MYSQL_DATA_TRUNCATED) {
+        // Data truncated - throw an exception indicating what was at fault.
+        isc_throw(DataTruncated, ctx->conn_.text_statements_[stindex]
+                  << " returned truncated data");
+    }
+    return (result);
+}
+
 Lease6Collection
 MySqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
                                    const IOAddress& /* link_addr */,
