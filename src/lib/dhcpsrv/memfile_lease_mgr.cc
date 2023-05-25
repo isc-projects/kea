@@ -3051,6 +3051,16 @@ Memfile_LeaseMgr::wipeExtendedInfoTables6() {
     }
 }
 
+size_t
+Memfile_LeaseMgr::byRelayId6size() const {
+    return (relay_id6_.size());
+}
+
+size_t
+Memfile_LeaseMgr::byRemoteId6size() const {
+    return (remote_id6_.size());
+}
+
 Lease6Collection
 Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
                                       const IOAddress& link_addr,

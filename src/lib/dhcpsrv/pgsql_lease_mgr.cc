@@ -3042,15 +3042,81 @@ PgSqlLeaseMgr::deleteRemoteId6(const IOAddress& addr) {
 }
 
 void
-PgSqlLeaseMgr::addRelayId6(const IOAddress& /* lease_addr */,
-                           const vector<uint8_t>& /* relay_id */) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::addRelayId6 not implemented");
+PgSqlLeaseMgr::addRelayId6(const IOAddress& lease_addr,
+                           const vector<uint8_t>& relay_id) {
+    // Set up the WHERE clause value.
+    PsqlBindArray bind_array;
+
+    // Bind the relay id.
+    if (relay_id.empty()) {
+        isc_throw(BadValue, "empty relay id");
+    }
+    bind_array.add(relay_id);
+
+    // Bind the lease address.
+    std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
+    if (lease_addr_data.size() != 16) {
+        isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+    }
+    bind_array.add(lease_addr_data);
+
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Add to lease6_remote_id table.
+    StatementIndex stindex =  ADD_RELAY_ID6;
+
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
+
+    int s = PQresultStatus(r);
+
+    if (s != PGRES_COMMAND_OK) {
+        ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+    }
 }
 
 void
-PgSqlLeaseMgr::addRemoteId6(const IOAddress& /* lease_addr */,
-                            const vector<uint8_t>& /* remote_id */) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::addRemoteId6 not implemented");
+PgSqlLeaseMgr::addRemoteId6(const IOAddress& lease_addr,
+                            const vector<uint8_t>& remote_id) {
+    // Set up the WHERE clause value.
+    PsqlBindArray bind_array;
+
+    // Bind the remote id.
+    if (remote_id.empty()) {
+        isc_throw(BadValue, "empty remote id");
+    }
+    bind_array.add(remote_id);
+
+    // Bind the lease address.
+    std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
+    if (lease_addr_data.size() != 16) {
+        isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+    }
+    bind_array.add(lease_addr_data);
+
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Add to lease6_remote_id table.
+    StatementIndex stindex =  ADD_REMOTE_ID6;
+
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
+
+    int s = PQresultStatus(r);
+
+    if (s != PGRES_COMMAND_OK) {
+        ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+    }
 }
 
 namespace {
@@ -3448,6 +3514,38 @@ PgSqlLeaseMgr::wipeExtendedInfoTables6() {
     PgSqlResult r2(PQexecPrepared(ctx->conn_, tagged_statements[stindex2].name,
                                   0, 0, 0, 0, 0));
     ctx->conn_.checkStatementError(r2, tagged_statements[stindex2]);
+}
+
+size_t
+PgSqlLeaseMgr::byRelayId6size() const {
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx(get_context.ctx_);
+
+    // Execute COUNT_RELAY_ID6.
+    StatementIndex stindex = COUNT_RELAY_ID6;
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
+                                 0, 0, 0, 0, 0));
+    ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+    uint64_t count;
+    PgSqlExchange::getColumnValue(r, 0, 0, count);
+    return (static_cast<size_t>(count));
+}
+
+size_t
+PgSqlLeaseMgr::byRemoteId6size() const {
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx(get_context.ctx_);
+
+    // Execute COUNT_REMOTE_ID6.
+    StatementIndex stindex = COUNT_REMOTE_ID6;
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
+                                 0, 0, 0, 0, 0));
+    ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
+    uint64_t count;
+    PgSqlExchange::getColumnValue(r, 0, 0, count);
+    return (static_cast<size_t>(count));
 }
 
 }  // namespace dhcp

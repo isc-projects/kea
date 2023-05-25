@@ -3829,11 +3829,11 @@ MySqlLeaseMgr::deleteRelayId6(const IOAddress& addr) {
 
     std::vector<uint8_t> addr_data = addr.toBytes();
     // Do not check the address length as it does not really matter.
-    unsigned long addr_length = addr_data.size();
+    unsigned long addr_size = addr_data.size();
     bind[0].buffer_type = MYSQL_TYPE_BLOB;
     bind[0].buffer = reinterpret_cast<char*>(&addr_data[0]);
-    bind[0].buffer_length = addr_length;
-    bind[0].length = &addr_length;
+    bind[0].buffer_length = addr_size;
+    bind[0].length = &addr_size;
 
     // Delete from lease6_relay_id table.
     StatementIndex stindex = DELETE_RELAY_ID6;
@@ -3859,11 +3859,11 @@ MySqlLeaseMgr::deleteRemoteId6(const IOAddress& addr) {
 
     std::vector<uint8_t> addr_data = addr.toBytes();
     // Do not check the address length as it does not really matter.
-    unsigned long addr_length = addr_data.size();
+    unsigned long addr_size = addr_data.size();
     bind[0].buffer_type = MYSQL_TYPE_BLOB;
     bind[0].buffer = reinterpret_cast<char*>(&addr_data[0]);
-    bind[0].buffer_length = addr_length;
-    bind[0].length = &addr_length;
+    bind[0].buffer_length = addr_size;
+    bind[0].length = &addr_size;
 
     // Delete from lease6_remote_id table.
     StatementIndex stindex = DELETE_REMOTE_ID6;
@@ -3878,15 +3878,91 @@ MySqlLeaseMgr::deleteRemoteId6(const IOAddress& addr) {
 }
 
 void
-MySqlLeaseMgr::addRelayId6(const IOAddress& /* lease_addr */,
-                           const vector<uint8_t>& /* relay_id */) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::addRelayId6 not implemented");
+MySqlLeaseMgr::addRelayId6(const IOAddress& lease_addr,
+                           const vector<uint8_t>& relay_id) {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Bind the relay id.
+    MYSQL_BIND bind[2];
+    memset(bind, 0, sizeof(bind));
+
+    unsigned long relay_id_size = relay_id.size();
+    if (relay_id_size == 0) {
+        isc_throw(BadValue, "empty relay id");
+    }
+    std::vector<uint8_t> relay_id_data = relay_id;
+    bind[0].buffer_type = MYSQL_TYPE_BLOB;
+    bind[0].buffer = reinterpret_cast<char*>(&relay_id_data[0]);
+    bind[0].buffer_length = relay_id_size;
+    bind[0].length = &relay_id_size;
+
+    // Bind the lease address.
+    std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
+    unsigned long lease_addr_length = lease_addr_data.size();
+    if (lease_addr_length != 16) {
+        isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+    }
+    bind[1].buffer_type = MYSQL_TYPE_BLOB;
+    bind[1].buffer = reinterpret_cast<char*>(&lease_addr_data[0]);
+    bind[1].buffer_length = lease_addr_length;
+    bind[1].length = &lease_addr_length;
+
+    // Add to lease6_relay_id table.
+    StatementIndex stindex = ADD_RELAY_ID6;
+
+    // Bind the input parameters to the statement.
+    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
+
+    // Execute.
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to execute");
 }
 
 void
-MySqlLeaseMgr::addRemoteId6(const IOAddress& /* lease_addr */,
-                            const vector<uint8_t>& /* remote_id */) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::addRemoteId6 not implemented");
+MySqlLeaseMgr::addRemoteId6(const IOAddress& lease_addr,
+                            const vector<uint8_t>& remote_id) {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Bind the remote id.
+    MYSQL_BIND bind[2];
+    memset(bind, 0, sizeof(bind));
+
+    unsigned long remote_id_size = remote_id.size();
+    if (remote_id_size == 0) {
+        isc_throw(BadValue, "empty remote id");
+    }
+    std::vector<uint8_t> remote_id_data = remote_id;
+    bind[0].buffer_type = MYSQL_TYPE_BLOB;
+    bind[0].buffer = reinterpret_cast<char*>(&remote_id_data[0]);
+    bind[0].buffer_length = remote_id_size;
+    bind[0].length = &remote_id_size;
+
+    // Bind the lease address.
+    std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
+    unsigned long lease_addr_length = lease_addr_data.size();
+    if (lease_addr_length != 16) {
+        isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+    }
+    bind[1].buffer_type = MYSQL_TYPE_BLOB;
+    bind[1].buffer = reinterpret_cast<char*>(&lease_addr_data[0]);
+    bind[1].buffer_length = lease_addr_length;
+    bind[1].length = &lease_addr_length;
+
+    // Add to lease6_remote_id table.
+    StatementIndex stindex = ADD_REMOTE_ID6;
+
+    // Bind the input parameters to the statement.
+    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
+
+    // Execute.
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to execute");
 }
 
 namespace {
@@ -4333,7 +4409,7 @@ MySqlLeaseMgr::buildExtendedInfoTables6(bool /* update */, bool /* current */) {
 
 void
 MySqlLeaseMgr::wipeExtendedInfoTables6() {
-    // Get a context
+    // Get a context.
     MySqlLeaseContextAlloc get_context(*this);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
@@ -4348,6 +4424,72 @@ MySqlLeaseMgr::wipeExtendedInfoTables6() {
     if (status != 0) {
         checkError(ctx, status, stindex, "unable to execute");
     }
+}
+
+size_t
+MySqlLeaseMgr::byRelayId6size() const {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    StatementIndex stindex = COUNT_RELAY_ID6;
+
+    // Bind the output.
+    MYSQL_BIND bind[1];
+    memset(bind, 0, sizeof(bind));
+
+    int64_t result = 0;
+    bind[0].buffer_type = MYSQL_TYPE_LONGLONG;
+    bind[0].buffer = reinterpret_cast<char*>(&result);
+
+    int status = mysql_stmt_bind_result(ctx->conn_.statements_[stindex], &bind[0]);
+    checkError(ctx, status, stindex, "unable to bind SELECT clause parameters");
+
+    // Execute.
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    if (status != 0) {
+        checkError(ctx, status, stindex, "unable to execute");
+    }
+
+    // Fetch the result.
+    status = mysql_stmt_fetch(ctx->conn_.statements_[stindex]);
+    if (status != 0) {
+        checkError(ctx, status, stindex, "unable to fetch results");
+    }
+    return(result);
+}
+
+size_t
+MySqlLeaseMgr::byRemoteId6size() const {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    StatementIndex stindex = COUNT_REMOTE_ID6;
+
+    // Bind the output.
+    MYSQL_BIND bind[1];
+    memset(bind, 0, sizeof(bind));
+
+    int64_t result = 0;
+    bind[0].buffer_type = MYSQL_TYPE_LONGLONG;
+    bind[0].buffer = reinterpret_cast<char*>(&result);
+
+    int status = mysql_stmt_bind_result(ctx->conn_.statements_[stindex], &bind[0]);
+    checkError(ctx, status, stindex, "unable to bind SELECT clause parameters");
+
+    // Execute.
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    if (status != 0) {
+        checkError(ctx, status, stindex, "unable to execute");
+    }
+
+    // Fetch the result.
+    status = mysql_stmt_fetch(ctx->conn_.statements_[stindex]);
+    if (status != 0) {
+        checkError(ctx, status, stindex, "unable to fetch results");
+    }
+    return(result);
 }
 
 }  // namespace dhcp

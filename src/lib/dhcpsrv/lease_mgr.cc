@@ -1266,5 +1266,15 @@ LeaseMgr::addExtendedInfo6(const Lease6Ptr& lease) {
     return (added);
 }
 
+size_t
+LeaseMgr::byRelayId6size() const {
+    return (0);
+}
+
+size_t
+LeaseMgr::byRemoteId6size() const {
+    return (0);
+}
+
 } // namespace isc::dhcp
 } // namespace isc

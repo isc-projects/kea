@@ -1187,6 +1187,16 @@ public:
     /// @brief Wipe by-relay-id table (v6).
     virtual void wipeExtendedInfoTables6() override;
 
+    /// @brief Return the by-relay-id table size.
+    ///
+    /// @return The size of the by-relay-id table.
+    virtual size_t byRelayId6size() const override;
+
+    /// @brief Return the by-remote-id table size.
+    ///
+    /// @return The size of the by-remote-id table.
+    virtual size_t byRemoteId6size() const override;
+
 private:
     /// @brief Context RAII allocator.
     class MySqlLeaseContextAlloc {
