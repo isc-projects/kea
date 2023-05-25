@@ -525,6 +525,14 @@ BEGIN
 END
 \$\$ LANGUAGE plpgsql;
 
+INSERT INTO lease4_pool_stat (subnet_id, pool_id, state, leases)
+    SELECT subnet_id, pool_id, state, count(*) FROM lease4
+    WHERE state = 0 OR state = 1 GROUP BY subnet_id, pool_id, state;
+
+INSERT INTO lease6_pool_stat (subnet_id, pool_id, lease_type, state, leases)
+    SELECT subnet_id, pool_id, lease_type, state, count(*) FROM lease6
+    WHERE state = 0 OR state = 1 GROUP BY subnet_id, pool_id, lease_type, state;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '17', minor = '0';
