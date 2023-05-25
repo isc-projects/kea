@@ -717,7 +717,8 @@ public:
         GET_LEASE4_REMOTEID_QSET,    // Get page of leases by remote ID and query start and end times.
         GET_LEASE4_REMOTEID_QET,     // Get page of leases by remote ID and query end time.
         GET_LEASE6,                  // Get all IPv6 leases
-        GET_LEASE6_ADDR,             // Get lease6 by address
+        GET_LEASE6_ADDR,             // Get lease6 by address and type
+        GET_LEASE6_ADDR_ANY,         // Get lease6 by address
         GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
         GET_LEASE6_PAGE,             // Get page of leases beginning with an address

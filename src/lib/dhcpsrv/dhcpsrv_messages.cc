@@ -172,7 +172,9 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_LINKADDR6 = "DHCPSRV_MYSQL_GE
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_PAGE4 = "DHCPSRV_MYSQL_GET_PAGE4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_PAGE6 = "DHCPSRV_MYSQL_GET_PAGE6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_RELAYID4 = "DHCPSRV_MYSQL_GET_RELAYID4";
+extern const isc::log::MessageID DHCPSRV_MYSQL_GET_RELAYID6 = "DHCPSRV_MYSQL_GET_RELAYID6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_REMOTEID4 = "DHCPSRV_MYSQL_GET_REMOTEID4";
+extern const isc::log::MessageID DHCPSRV_MYSQL_GET_REMOTEID6 = "DHCPSRV_MYSQL_GET_REMOTEID6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID4 = "DHCPSRV_MYSQL_GET_SUBID4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID6 = "DHCPSRV_MYSQL_GET_SUBID6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID_CLIENTID = "DHCPSRV_MYSQL_GET_SUBID_CLIENTID";
@@ -230,7 +232,9 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_LINKADDR6 = "DHCPSRV_PGSQL_GE
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_PAGE4 = "DHCPSRV_PGSQL_GET_PAGE4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_PAGE6 = "DHCPSRV_PGSQL_GET_PAGE6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_RELAYID4 = "DHCPSRV_PGSQL_GET_RELAYID4";
+extern const isc::log::MessageID DHCPSRV_PGSQL_GET_RELAYID6 = "DHCPSRV_PGSQL_GET_RELAYID6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_REMOTEID4 = "DHCPSRV_PGSQL_GET_REMOTEID4";
+extern const isc::log::MessageID DHCPSRV_PGSQL_GET_REMOTEID6 = "DHCPSRV_PGSQL_GET_REMOTEID6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID4 = "DHCPSRV_PGSQL_GET_SUBID4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID6 = "DHCPSRV_PGSQL_GET_SUBID6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID_CLIENTID = "DHCPSRV_PGSQL_GET_SUBID_CLIENTID";
@@ -452,7 +456,9 @@ const char* values[] = {
     "DHCPSRV_MYSQL_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",
     "DHCPSRV_MYSQL_GET_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2",
     "DHCPSRV_MYSQL_GET_RELAYID4", "obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5",
+    "DHCPSRV_MYSQL_GET_RELAYID6", "obtaining at most %1 IPv6 leases starting from address %2 with relay id %3 and link %4/%5",
     "DHCPSRV_MYSQL_GET_REMOTEID4", "obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5",
+    "DHCPSRV_MYSQL_GET_REMOTEID6", "obtaining at most %1 IPv6 leases starting from address %2 with remote id %3 and link %4/%5",
     "DHCPSRV_MYSQL_GET_SUBID4", "obtaining IPv4 leases for subnet ID %1",
     "DHCPSRV_MYSQL_GET_SUBID6", "obtaining IPv6 leases for subnet ID %1",
     "DHCPSRV_MYSQL_GET_SUBID_CLIENTID", "obtaining IPv4 lease for subnet ID %1 and client ID %2",
@@ -510,7 +516,9 @@ const char* values[] = {
     "DHCPSRV_PGSQL_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",
     "DHCPSRV_PGSQL_GET_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2",
     "DHCPSRV_PGSQL_GET_RELAYID4", "obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5",
+    "DHCPSRV_PGSQL_GET_RELAYID6", "obtaining at most %1 IPv6 leases starting from address %2 with relay id %3 and link %4/%5",
     "DHCPSRV_PGSQL_GET_REMOTEID4", "obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5",
+    "DHCPSRV_PGSQL_GET_REMOTEID6", "obtaining at most %1 IPv6 leases starting from address %2 with remote id %3 and link %4/%5",
     "DHCPSRV_PGSQL_GET_SUBID4", "obtaining IPv4 leases for subnet ID %1",
     "DHCPSRV_PGSQL_GET_SUBID6", "obtaining IPv6 leases for subnet ID %1",
     "DHCPSRV_PGSQL_GET_SUBID_CLIENTID", "obtaining IPv4 lease for subnet ID %1 and client ID %2",

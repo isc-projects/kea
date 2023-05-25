@@ -309,6 +309,15 @@ tagged_statements = { {
                         "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE address = ? AND lease_type = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_ADDR_ANY,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context "
+                            "FROM lease6 "
+                            "WHERE address = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -4354,21 +4363,335 @@ MySqlLeaseMgr::getExtendedInfo6Common(MySqlLeaseContextPtr& ctx,
 }
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
-                                   const IOAddress& /* link_addr */,
-                                   uint8_t /* link_len */,
-                                   const IOAddress& /* lower_bound_address */,
-                                   const LeasePageSize& /* page_size */) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getLeases6ByRelayId not implemented");
+MySqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
+                                   const IOAddress& link_addr,
+                                   uint8_t link_len,
+                                   const IOAddress& lower_bound_address,
+                                   const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_GET_RELAYID6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(relay_id.toText())
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
+    // Expecting IPv6 valid prefix and address.
+    if (!link_addr.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << link_addr);
+    }
+    if (link_len > 128) {
+        isc_throw(OutOfRange, "invalid IPv6 prefix length "
+                  << static_cast<unsigned>(link_len));
+    }
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    std::vector<uint8_t> relay_id_data = relay_id.getDuid();
+    unsigned long relay_id_size = relay_id_data.size();
+    if (relay_id_size == 0) {
+        isc_throw(BadValue, "empty relay id");
+    }
+
+    Lease6Collection result;
+    std::list<IOAddress> addresses;;
+
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    if (!link_len) {
+        // Bind the relay id.
+        MYSQL_BIND bind[3];
+        memset(bind, 0, sizeof(bind));
+
+        bind[0].buffer_type = MYSQL_TYPE_BLOB;
+        bind[0].buffer = reinterpret_cast<char*>(&relay_id_data[0]);
+        bind[0].buffer_length = relay_id_size;
+        bind[0].length = &relay_id_size;
+
+        // Bind the lower bound address.
+        std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
+        unsigned long lb_addr_size = lb_addr_data.size();
+        if (lb_addr_size != 16) {
+            isc_throw(DbOperationError, "lower bound address is not 16 byte long");
+        }
+        bind[1].buffer_type = MYSQL_TYPE_BLOB;
+        bind[1].buffer = reinterpret_cast<char*>(&lb_addr_data[0]);
+        bind[1].buffer_length = lb_addr_size;
+        bind[1].length = &lb_addr_size;
+
+        // Bind the size value.
+        uint32_t ps = static_cast<uint32_t>(page_size.page_size_);
+        bind[2].buffer_type = MYSQL_TYPE_LONG;
+        bind[2].buffer = reinterpret_cast<char*>(&ps);
+        bind[2].is_unsigned = MLM_TRUE;
+
+        // Get the lease addresses.
+        std::vector<MYSQL_BIND> inbind(&bind[0], &bind[3]);
+        addresses = getExtendedInfo6Common(ctx, GET_RELAY_ID6, inbind);
+    } else {
+        const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
+        const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
+        IOAddress start_addr = lower_bound_address;
+        if (lower_bound_address < first_addr) {
+            start_addr = first_addr;
+        } else if (last_addr <= lower_bound_address) {
+            // Range was already done.
+            return (result);
+        } else {
+            // The lower bound address is from the last call so skip it.
+            start_addr = IOAddress::increase(lower_bound_address);
+        }
+
+        // Bind the relay id.
+        MYSQL_BIND bind[4];
+        memset(bind, 0, sizeof(bind));
+
+        bind[0].buffer_type = MYSQL_TYPE_BLOB;
+        bind[0].buffer = reinterpret_cast<char*>(&relay_id_data[0]);
+        bind[0].buffer_length = relay_id_size;
+        bind[0].length = &relay_id_size;
+
+        // Bind the start address.
+        std::vector<uint8_t> start_addr_data = start_addr.toBytes();
+        unsigned long start_addr_size = start_addr_data.size();
+        if (start_addr_size != 16) {
+            isc_throw(DbOperationError, "start address is not 16 byte long");
+        }
+        bind[1].buffer_type = MYSQL_TYPE_BLOB;
+        bind[1].buffer = reinterpret_cast<char*>(&start_addr_data[0]);
+        bind[1].buffer_length = start_addr_size;
+        bind[1].length = &start_addr_size;
+
+        // Bind the last address.
+        std::vector<uint8_t> last_addr_data = last_addr.toBytes();
+        unsigned long last_addr_size = last_addr_data.size();
+        if (last_addr_size != 16) {
+            isc_throw(DbOperationError, "last address is not 16 byte long");
+        }
+        bind[2].buffer_type = MYSQL_TYPE_BLOB;
+        bind[2].buffer = reinterpret_cast<char*>(&last_addr_data[0]);
+        bind[2].buffer_length = last_addr_size;
+        bind[2].length = &last_addr_size;
+
+        // Bind the size value.
+        uint32_t ps = static_cast<uint32_t>(page_size.page_size_);
+        bind[3].buffer_type = MYSQL_TYPE_LONG;
+        bind[3].buffer = reinterpret_cast<char*>(&ps);
+        bind[3].is_unsigned = MLM_TRUE;
+
+        // Get the lease addresses.
+        std::vector<MYSQL_BIND> inbind(&bind[0], &bind[4]);
+        addresses = getExtendedInfo6Common(ctx, GET_RELAY_ID6_LINK, inbind);
+    }
+
+    // Short cut when nothing was found.
+    if (addresses.empty()) {
+        return (result);
+    }
+
+    // Return all leases with matching addresses.
+    IOAddress last_addr = lower_bound_address;
+    for (const IOAddress& addr : addresses) {
+        if (addr == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        last_addr = addr;
+
+        // Set up the WHERE clause value.
+        MYSQL_BIND inbind[1];
+        memset(inbind, 0, sizeof(inbind));
+
+        // Bind the lease address.
+        std::string addr_data = addr.toText();
+        unsigned long addr_size = addr_data.size();
+        inbind[0].buffer_type = MYSQL_TYPE_STRING;
+        inbind[0].buffer = const_cast<char*>(addr_data.c_str());
+        inbind[0].buffer_length = addr_size;
+        inbind[0].length = &addr_size;
+
+        // Get the lease.
+        Lease6Ptr lease;
+        getLease(ctx, GET_LEASE6_ADDR_ANY, inbind, lease);
+
+        if (lease) {
+            result.push_back(lease);
+        }
+    }
+    return (result);
 }
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
-                                    const IOAddress& /* link_addr */,
-                                    uint8_t /* link_len */,
-                                    const IOAddress& /* lower_bound_address */,
-                                    const LeasePageSize& /* page_size*/) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getLeases6ByRemoteId not implemented");
+MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
+                                    const IOAddress& link_addr,
+                                    uint8_t link_len,
+                                    const IOAddress& lower_bound_address,
+                                    const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_GET_REMOTEID6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(remote_id))
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
+    // Expecting IPv6 valid prefix and address.
+    if (!link_addr.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << link_addr);
+    }
+    if (link_len > 128) {
+        isc_throw(OutOfRange, "invalid IPv6 prefix length "
+                  << static_cast<unsigned>(link_len));
+    }
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    std::vector<uint8_t> remote_id_data = remote_id;
+    unsigned long remote_id_size = remote_id_data.size();
+    if (remote_id_size == 0) {
+        isc_throw(BadValue, "empty remote id");
+    }
+
+    Lease6Collection result;
+    std::list<IOAddress> addresses;;
+
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    if (!link_len) {
+        // Bind the remote id.
+        MYSQL_BIND bind[3];
+        memset(bind, 0, sizeof(bind));
+
+        bind[0].buffer_type = MYSQL_TYPE_BLOB;
+        bind[0].buffer = reinterpret_cast<char*>(&remote_id_data[0]);
+        bind[0].buffer_length = remote_id_size;
+        bind[0].length = &remote_id_size;
+
+        // Bind the lower bound address.
+        std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
+        unsigned long lb_addr_size = lb_addr_data.size();
+        if (lb_addr_size != 16) {
+            isc_throw(DbOperationError, "lower bound address is not 16 byte long");
+        }
+        bind[1].buffer_type = MYSQL_TYPE_BLOB;
+        bind[1].buffer = reinterpret_cast<char*>(&lb_addr_data[0]);
+        bind[1].buffer_length = lb_addr_size;
+        bind[1].length = &lb_addr_size;
+
+        // Bind the size value.
+        uint32_t ps = static_cast<uint32_t>(page_size.page_size_);
+        bind[2].buffer_type = MYSQL_TYPE_LONG;
+        bind[2].buffer = reinterpret_cast<char*>(&ps);
+        bind[2].is_unsigned = MLM_TRUE;
+
+        // Get the lease addresses.
+        std::vector<MYSQL_BIND> inbind(&bind[0], &bind[3]);
+        addresses = getExtendedInfo6Common(ctx, GET_REMOTE_ID6, inbind);
+    } else {
+        const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
+        const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
+        IOAddress start_addr = lower_bound_address;
+        if (lower_bound_address < first_addr) {
+            start_addr = first_addr;
+        } else if (last_addr <= lower_bound_address) {
+            // Range was already done.
+            return (result);
+        } else {
+            // The lower bound address is from the last call so skip it.
+            start_addr = IOAddress::increase(lower_bound_address);
+        }
+
+        // Bind the remote id.
+        MYSQL_BIND bind[4];
+        memset(bind, 0, sizeof(bind));
+
+        bind[0].buffer_type = MYSQL_TYPE_BLOB;
+        bind[0].buffer = reinterpret_cast<char*>(&remote_id_data[0]);
+        bind[0].buffer_length = remote_id_size;
+        bind[0].length = &remote_id_size;
+
+        // Bind the start address.
+        std::vector<uint8_t> start_addr_data = start_addr.toBytes();
+        unsigned long start_addr_size = start_addr_data.size();
+        if (start_addr_size != 16) {
+            isc_throw(DbOperationError, "start address is not 16 byte long");
+        }
+        bind[1].buffer_type = MYSQL_TYPE_BLOB;
+        bind[1].buffer = reinterpret_cast<char*>(&start_addr_data[0]);
+        bind[1].buffer_length = start_addr_size;
+        bind[1].length = &start_addr_size;
+
+        // Bind the last address.
+        std::vector<uint8_t> last_addr_data = last_addr.toBytes();
+        unsigned long last_addr_size = last_addr_data.size();
+        if (last_addr_size != 16) {
+            isc_throw(DbOperationError, "last address is not 16 byte long");
+        }
+        bind[2].buffer_type = MYSQL_TYPE_BLOB;
+        bind[2].buffer = reinterpret_cast<char*>(&last_addr_data[0]);
+        bind[2].buffer_length = last_addr_size;
+        bind[2].length = &last_addr_size;
+
+        // Bind the size value.
+        uint32_t ps = static_cast<uint32_t>(page_size.page_size_);
+        bind[3].buffer_type = MYSQL_TYPE_LONG;
+        bind[3].buffer = reinterpret_cast<char*>(&ps);
+        bind[3].is_unsigned = MLM_TRUE;
+
+        // Get the lease addresses.
+        std::vector<MYSQL_BIND> inbind(&bind[0], &bind[4]);
+        addresses = getExtendedInfo6Common(ctx, GET_REMOTE_ID6_LINK, inbind);
+    }
+
+    // Short cut when nothing was found.
+    if (addresses.empty()) {
+        return (result);
+    }
+
+    // Return all leases with matching addresses.
+    IOAddress last_addr = lower_bound_address;
+    for (const IOAddress& addr : addresses) {
+        if (addr == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        last_addr = addr;
+
+        // Set up the WHERE clause value.
+        MYSQL_BIND inbind[1];
+        memset(inbind, 0, sizeof(inbind));
+
+        // Bind the lease address.
+        std::string addr_data = addr.toText();
+        unsigned long addr_size = addr_data.size();
+        inbind[0].buffer_type = MYSQL_TYPE_STRING;
+        inbind[0].buffer = const_cast<char*>(addr_data.c_str());
+        inbind[0].buffer_length = addr_size;
+        inbind[0].length = &addr_size;
+
+        // Get the lease.
+        Lease6Ptr lease;
+        getLease(ctx, GET_LEASE6_ADDR_ANY, inbind, lease);
+
+        if (lease) {
+            result.push_back(lease);
+        }
+    }
+    return (result);
 }
 
 Lease6Collection

@@ -312,6 +312,17 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE address = cast($1 as inet) AND lease_type = $2"},
 
+    // GET_LEASE6_ADDR_ANY
+    { 1, { OID_VARCHAR },
+      "get_lease6_addr_nay",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context "
+      "FROM lease6 "
+      "WHERE address = $1"},
+
     // GET_LEASE6_DUID_IAID
     { 3, { OID_BYTEA, OID_INT8, OID_INT2 },
       "get_lease6_duid_iaid",
@@ -3429,21 +3440,274 @@ PgSqlLeaseMgr::getExtendedInfo6Common(PgSqlLeaseContextPtr& ctx,
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
-                                   const IOAddress& /* link_addr */,
-                                   uint8_t /* link_len */,
-                                   const IOAddress& /* lower_bound_address */,
-                                   const LeasePageSize& /* page_size */) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByRelayId not implemented");
+PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
+                                   const IOAddress& link_addr,
+                                   uint8_t link_len,
+                                   const IOAddress& lower_bound_address,
+                                   const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_RELAYID6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(relay_id.toText())
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
+    // Expecting IPv6 valid prefix and address.
+    if (!link_addr.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << link_addr);
+    }
+    if (link_len > 128) {
+        isc_throw(OutOfRange, "invalid IPv6 prefix length "
+                  << static_cast<unsigned>(link_len));
+    }
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    std::vector<uint8_t> relay_id_data = relay_id.getDuid();
+    if (relay_id_data.size() == 0) {
+        isc_throw(BadValue, "empty relay id");
+    }
+
+    Lease6Collection result;
+    std::list<IOAddress> addresses;;
+
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    if (!link_len) {
+        // Set up the WHERE clause value.
+        PsqlBindArray bind_array;
+
+        // Bind the relay id.
+        bind_array.add(relay_id_data);
+
+        // Bind the lower bound address.
+        std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
+        if (lb_addr_data.size() != 16) {
+            isc_throw(DbOperationError, "lower bound address is not 16 byte long");
+        }
+        bind_array.add(lb_addr_data);
+
+        // Bind page size value.
+        std::string page_size_data =
+            boost::lexical_cast<std::string>(page_size.page_size_);
+        bind_array.add(page_size_data);
+
+        addresses = getExtendedInfo6Common(ctx, GET_RELAY_ID6, bind_array);
+    } else {
+        const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
+        const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
+        IOAddress start_addr = lower_bound_address;
+        if (lower_bound_address < first_addr) {
+            start_addr = first_addr;
+        } else if (last_addr <= lower_bound_address) {
+            // Range was already done.
+            return (result);
+        } else {
+            // The lower bound address is from the last call so skip it.
+            start_addr = IOAddress::increase(lower_bound_address);
+        }
+
+        // Set up the WHERE clause value.
+        PsqlBindArray bind_array;
+
+        // Bind the relay id.
+        bind_array.add(relay_id_data);
+
+        // Bind the start address.
+        std::vector<uint8_t> start_addr_data = start_addr.toBytes();
+        if (start_addr_data.size() != 16) {
+            isc_throw(DbOperationError, "start address is not 16 byte long");
+        }
+        bind_array.add(start_addr_data);
+
+        // Bind the last address.
+        std::vector<uint8_t> last_addr_data = last_addr.toBytes();
+        if (last_addr_data.size() != 16) {
+            isc_throw(DbOperationError, "last address is not 16 byte long");
+        }
+        bind_array.add(last_addr_data);
+
+        // Bind page size value.
+        std::string page_size_data =
+            boost::lexical_cast<std::string>(page_size.page_size_);
+        bind_array.add(page_size_data);
+
+        addresses = getExtendedInfo6Common(ctx, GET_RELAY_ID6_LINK, bind_array);
+    }
+
+    // Short cut when nothing was found.
+    if (addresses.empty()) {
+        return (result);
+    }
+
+    // Return all leases with matching addresses.
+    IOAddress last_addr = lower_bound_address;
+    for (const IOAddress& addr : addresses) {
+        if (addr == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        last_addr = addr;
+
+        // Set up the WHERE clause value.
+        PsqlBindArray bind_array;
+
+        // Bind the lease address.
+        std::vector<uint8_t> addr_data = addr.toBytes();
+        bind_array.add(addr_data);
+
+        // Get the lease.
+        Lease6Ptr lease;
+        getLease(ctx, GET_LEASE6_ADDR_ANY, bind_array, lease);
+
+        if (lease) {
+            result.push_back(lease);
+        }
+    }
+    return (result);
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
-                                    const IOAddress& /* link_addr */,
-                                    uint8_t /* link_len */,
-                                    const IOAddress& /* lower_bound_address */,
-                                    const LeasePageSize& /* page_size*/) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::getLeases6ByRemoteId not implemented");
+PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
+                                    const IOAddress& link_addr,
+                                    uint8_t link_len,
+                                    const IOAddress& lower_bound_address,
+                                    const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_REMOTEID6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(remote_id))
+        .arg(link_addr.toText())
+        .arg(static_cast<unsigned>(link_len));
+
+    // Expecting IPv6 valid prefix and address.
+    if (!link_addr.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << link_addr);
+    }
+    if (link_len > 128) {
+        isc_throw(OutOfRange, "invalid IPv6 prefix length "
+                  << static_cast<unsigned>(link_len));
+    }
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    if (remote_id.size() == 0) {
+        isc_throw(BadValue, "empty remote id");
+    }
+
+    Lease6Collection result;
+    std::list<IOAddress> addresses;;
+
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    if (!link_len) {
+        // Set up the WHERE clause value.
+        PsqlBindArray bind_array;
+
+        // Bind the remote id.
+        bind_array.add(remote_id);
+
+        // Bind the lower bound address.
+        std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
+        if (lb_addr_data.size() != 16) {
+            isc_throw(DbOperationError, "lower bound address is not 16 byte long");
+        }
+        bind_array.add(lb_addr_data);
+
+        // Bind page size value.
+        std::string page_size_data =
+            boost::lexical_cast<std::string>(page_size.page_size_);
+        bind_array.add(page_size_data);
+
+        addresses = getExtendedInfo6Common(ctx, GET_REMOTE_ID6, bind_array);
+    } else {
+        const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
+        const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
+        IOAddress start_addr = lower_bound_address;
+        if (lower_bound_address < first_addr) {
+            start_addr = first_addr;
+        } else if (last_addr <= lower_bound_address) {
+            // Range was already done.
+            return (result);
+        } else {
+            // The lower bound address is from the last call so skip it.
+            start_addr = IOAddress::increase(lower_bound_address);
+        }
+
+        // Set up the WHERE clause value.
+        PsqlBindArray bind_array;
+
+        // Bind the remote id.
+        bind_array.add(remote_id);
+
+        // Bind the start address.
+        std::vector<uint8_t> start_addr_data = start_addr.toBytes();
+        if (start_addr_data.size() != 16) {
+            isc_throw(DbOperationError, "start address is not 16 byte long");
+        }
+        bind_array.add(start_addr_data);
+
+        // Bind the last address.
+        std::vector<uint8_t> last_addr_data = last_addr.toBytes();
+        if (last_addr_data.size() != 16) {
+            isc_throw(DbOperationError, "last address is not 16 byte long");
+        }
+        bind_array.add(last_addr_data);
+
+        // Bind page size value.
+        std::string page_size_data =
+            boost::lexical_cast<std::string>(page_size.page_size_);
+        bind_array.add(page_size_data);
+
+        addresses = getExtendedInfo6Common(ctx, GET_REMOTE_ID6_LINK, bind_array);
+    }
+
+    // Short cut when nothing was found.
+    if (addresses.empty()) {
+        return (result);
+    }
+
+    // Return all leases with matching addresses.
+    IOAddress last_addr = lower_bound_address;
+    for (const IOAddress& addr : addresses) {
+        if (addr == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        last_addr = addr;
+
+        // Set up the WHERE clause value.
+        PsqlBindArray bind_array;
+
+        // Bind the lease address.
+        std::vector<uint8_t> addr_data = addr.toBytes();
+        bind_array.add(addr_data);
+
+        // Get the lease.
+        Lease6Ptr lease;
+        getLease(ctx, GET_LEASE6_ADDR_ANY, bind_array, lease);
+
+        if (lease) {
+            result.push_back(lease);
+        }
+    }
+    return (result);
 }
 
 Lease6Collection
