@@ -3221,14 +3221,14 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
     // Bind start address
     std::vector<uint8_t> start_addr_data = start_addr.toBytes();
     if (start_addr_data.size() != 16) {
-        isc_throw(DbOperationError, "start address is not 16 byte long");
+        isc_throw(DbOperationError, "start address is not 16 bytes long");
     }
     bind_array.add(start_addr_data);
 
     // Bind last address
     std::vector<uint8_t> last_addr_data = last_addr.toBytes();
     if (last_addr_data.size() != 16) {
-        isc_throw(DbOperationError, "last address is not 16 byte long");
+        isc_throw(DbOperationError, "last address is not 16 bytes long");
     }
     bind_array.add(last_addr_data);
 

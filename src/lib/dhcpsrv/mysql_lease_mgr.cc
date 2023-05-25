@@ -1400,7 +1400,7 @@ public:
             // binaddr: binary(16)
             binaddr_ = lease->addr_.toBytes();
             if (binaddr_.size() != 16) {
-                isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+                isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
             }
 
             binaddr_length_ = 16;
@@ -4091,7 +4091,7 @@ MySqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
     // Bind start address
     std::vector<uint8_t> start_addr_data = start_addr.toBytes();
     if (start_addr_data.size() != 16) {
-        isc_throw(DbOperationError, "start address is not 16 byte long");
+        isc_throw(DbOperationError, "start address is not 16 bytes long");
     }
     unsigned long start_addr_size = 16;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
@@ -4102,7 +4102,7 @@ MySqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
     // Bind last address
     std::vector<uint8_t> last_addr_data = last_addr.toBytes();
     if (last_addr_data.size() != 16) {
-        isc_throw(DbOperationError, "last address is not 16 byte long");
+        isc_throw(DbOperationError, "last address is not 16 bytes long");
     }
     unsigned long last_addr_size = 16;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
