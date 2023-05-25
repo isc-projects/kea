@@ -61,7 +61,6 @@ public:
     }
 
     /// @brief Exposes protected methods and members.
-    using LeaseMgr::setExtendedInfoTablesEnabled;
     using Memfile_LeaseMgr::relay_id6_;
     using Memfile_LeaseMgr::remote_id6_;
     using Memfile_LeaseMgr::deleteExtendedInfo6;

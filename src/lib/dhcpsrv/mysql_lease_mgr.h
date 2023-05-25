@@ -1262,26 +1262,6 @@ protected:
 
     /// Extended information / Bulk Lease Query shared interface.
 
-    /// @brief Modifies the setting whether the lease extended info tables
-    /// are enabled.
-    ///
-    /// Transient redefine to refuse the enable setting.
-    /// @param enabled new setting.
-    virtual void setExtendedInfoTablesEnabled(const bool enabled) override {
-        if (enabled) {
-            isc_throw(isc::NotImplemented,
-                      "extended info tables are not yet supported by mysql");
-        }
-    }
-
-    /// @brief Decode parameters to set whether the lease extended info tables
-    /// are enabled.
-    ///
-    /// @note: common code in constructors.
-    ///
-    /// @param parameters The parameter map.
-    virtual void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& parameters) override;
-
     /// @brief Delete lease6 extended info from tables.
     ///
     /// @param addr The address of the lease.

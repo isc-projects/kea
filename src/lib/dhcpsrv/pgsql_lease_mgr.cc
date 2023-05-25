@@ -1620,18 +1620,13 @@ PgSqlLeaseMgr::PgSqlLeaseTrackingContextAlloc::~PgSqlLeaseTrackingContextAlloc()
     // If running in single-threaded mode, there's nothing to do here.
 }
 
-void
-PgSqlLeaseMgr::setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& /* parameters */) {
-    isc_throw(isc::NotImplemented, "extended info tables are not yet supported by mysql");
-}
-
 // PgSqlLeaseMgr Constructor and Destructor
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : TrackingLeaseMgr(), parameters_(parameters), timer_name_("") {
 
     // Check if the extended info tables are enabled.
-    LeaseMgr::setExtendedInfoTablesEnabled(parameters);
+    setExtendedInfoTablesEnabled(parameters);
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlLeaseMgr[";
@@ -1846,6 +1841,8 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
         .arg(lease->addr_.toText())
         .arg(lease->type_);
 
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
+
     // Get a context
     PgSqlLeaseTrackingContextAlloc get_context(*this, lease);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
@@ -1858,6 +1855,12 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
+
+    if (getExtendedInfoTablesEnabled()) {
+        // Expired leases can be removed leaving entries in extended info tables.
+        deleteExtendedInfo6(lease->addr_);
+        static_cast<void>(addExtendedInfo6(lease));
+    }
 
     // Run installed callbacks.
     if (hasCallbacks()) {
@@ -2530,6 +2533,10 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
         .arg(lease->addr_.toText())
         .arg(lease->type_);
 
+    // Get the recorded action and reset it.
+    Lease6::ExtendedInfoAction recorded_action = lease->extended_info_action_;
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
+
     // Get a context
     PgSqlLeaseTrackingContextAlloc get_context(*this, lease);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
@@ -2557,6 +2564,23 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
+
+    // Update extended info tables.
+    if (getExtendedInfoTablesEnabled()) {
+        switch (recorded_action) {
+        case Lease6::ACTION_IGNORE:
+            break;
+
+        case Lease6::ACTION_DELETE:
+            deleteExtendedInfo6(lease->addr_);
+            break;
+
+        case Lease6::ACTION_UPDATE:
+            deleteExtendedInfo6(lease->addr_);
+            static_cast<void>(addExtendedInfo6(lease));
+            break;
+        }
+    }
 
     // Run installed callbacks.
     if (hasCallbacks()) {
@@ -2634,6 +2658,8 @@ PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
               DHCPSRV_PGSQL_DELETE_ADDR)
         .arg(addr.toText());
 
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
+
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
 
@@ -2658,6 +2684,12 @@ PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
+        // Delete references from extended info tables.
+        if (getExtendedInfoTablesEnabled()) {
+            deleteExtendedInfo6(lease->addr_);
+        }
+
+        // Run installed callbacks.
         if (hasCallbacks()) {
             trackDeleteLease(lease, false);
         }
@@ -3067,7 +3099,7 @@ PgSqlLeaseMgr::addRelayId6(const IOAddress& lease_addr,
     // Bind the lease address.
     std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
     if (lease_addr_data.size() != 16) {
-        isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+        isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
     }
     bind_array.add(lease_addr_data);
 
@@ -3106,7 +3138,7 @@ PgSqlLeaseMgr::addRemoteId6(const IOAddress& lease_addr,
     // Bind the lease address.
     std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
     if (lease_addr_data.size() != 16) {
-        isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+        isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
     }
     bind_array.add(lease_addr_data);
 
@@ -3432,7 +3464,7 @@ PgSqlLeaseMgr::getExtendedInfo6Common(PgSqlLeaseContextPtr& ctx,
         std::vector<uint8_t> addr_data;
         PgSqlLeaseExchange::convertFromBytea(r, i, 0, addr_data);
         if (addr_data.size() != 16) {
-            isc_throw(BadValue, "received lease6 address is not 16 byte long");
+            isc_throw(BadValue, "received lease6 address is not 16 bytes long");
         }
         result.push_back(IOAddress::fromBytes(AF_INET6, &addr_data[0]));
     }
@@ -3491,7 +3523,7 @@ PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         // Bind the lower bound address.
         std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
         if (lb_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "lower bound address is not 16 byte long");
+            isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
         }
         bind_array.add(lb_addr_data);
 
@@ -3524,14 +3556,14 @@ PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         // Bind the start address.
         std::vector<uint8_t> start_addr_data = start_addr.toBytes();
         if (start_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "start address is not 16 byte long");
+            isc_throw(DbOperationError, "start address is not 16 bytes long");
         }
         bind_array.add(start_addr_data);
 
         // Bind the last address.
         std::vector<uint8_t> last_addr_data = last_addr.toBytes();
         if (last_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "last address is not 16 byte long");
+            isc_throw(DbOperationError, "last address is not 16 bytes long");
         }
         bind_array.add(last_addr_data);
 
@@ -3626,7 +3658,7 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         // Bind the lower bound address.
         std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
         if (lb_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "lower bound address is not 16 byte long");
+            isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
         }
         bind_array.add(lb_addr_data);
 
@@ -3659,14 +3691,14 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         // Bind the start address.
         std::vector<uint8_t> start_addr_data = start_addr.toBytes();
         if (start_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "start address is not 16 byte long");
+            isc_throw(DbOperationError, "start address is not 16 bytes long");
         }
         bind_array.add(start_addr_data);
 
         // Bind the last address.
         std::vector<uint8_t> last_addr_data = last_addr.toBytes();
         if (last_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "last address is not 16 byte long");
+            isc_throw(DbOperationError, "last address is not 16 bytes long");
         }
         bind_array.add(last_addr_data);
 

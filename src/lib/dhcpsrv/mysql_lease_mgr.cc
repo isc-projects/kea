@@ -2183,18 +2183,13 @@ MySqlLeaseMgr::MySqlLeaseTrackingContextAlloc::~MySqlLeaseTrackingContextAlloc()
     // If running in single-threaded mode, there's nothing to do here.
 }
 
-void
-MySqlLeaseMgr::setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& /* parameters */) {
-    isc_throw(isc::NotImplemented, "extended info tables are not yet supported by mysql");
-}
-
 // MySqlLeaseMgr Constructor and Destructor
 
 MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : TrackingLeaseMgr(), parameters_(parameters), timer_name_("") {
 
     // Check if the extended info tables are enabled.
-    LeaseMgr::setExtendedInfoTablesEnabled(parameters);
+    setExtendedInfoTablesEnabled(parameters);
 
     // Create unique timer name per instance.
     timer_name_ = "MySqlLeaseMgr[";
@@ -2397,6 +2392,8 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
         .arg(lease->addr_.toText())
         .arg(lease->type_);
 
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
+
     // Get a context
     MySqlLeaseTrackingContextAlloc get_context(*this, lease);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
@@ -2410,6 +2407,12 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
+
+    if (getExtendedInfoTablesEnabled()) {
+        // Expired leases can be removed leaving entries in extended info tables.
+        deleteExtendedInfo6(lease->addr_);
+        static_cast<void>(addExtendedInfo6(lease));
+    }
 
     // Run installed callbacks.
     if (hasCallbacks()) {
@@ -3301,6 +3304,10 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
         .arg(lease->addr_.toText())
         .arg(lease->type_);
 
+    // Get the recorded action and reset it.
+    Lease6::ExtendedInfoAction recorded_action = lease->extended_info_action_;
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
+
     // Get a context
     MySqlLeaseTrackingContextAlloc get_context(*this, lease);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
@@ -3346,6 +3353,23 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
+
+    // Update extended info tables.
+    if (getExtendedInfoTablesEnabled()) {
+        switch (recorded_action) {
+        case Lease6::ACTION_IGNORE:
+            break;
+
+        case Lease6::ACTION_DELETE:
+            deleteExtendedInfo6(lease->addr_);
+            break;
+
+        case Lease6::ACTION_UPDATE:
+            deleteExtendedInfo6(lease->addr_);
+            static_cast<void>(addExtendedInfo6(lease));
+            break;
+        }
+    }
 
     // Run installed callbacks.
     if (hasCallbacks()) {
@@ -3436,6 +3460,8 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
               DHCPSRV_MYSQL_DELETE_ADDR)
         .arg(addr.toText());
 
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
@@ -3473,6 +3499,12 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
+        // Delete references from extended info tables.
+        if (getExtendedInfoTablesEnabled()) {
+            deleteExtendedInfo6(lease->addr_);
+        }
+
+        // Run installed callbacks.
         if (hasCallbacks()) {
             trackDeleteLease(lease, false);
         }
@@ -3911,7 +3943,7 @@ MySqlLeaseMgr::addRelayId6(const IOAddress& lease_addr,
     std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
     unsigned long lease_addr_length = lease_addr_data.size();
     if (lease_addr_length != 16) {
-        isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+        isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
     }
     bind[1].buffer_type = MYSQL_TYPE_BLOB;
     bind[1].buffer = reinterpret_cast<char*>(&lease_addr_data[0]);
@@ -3955,7 +3987,7 @@ MySqlLeaseMgr::addRemoteId6(const IOAddress& lease_addr,
     std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
     unsigned long lease_addr_length = lease_addr_data.size();
     if (lease_addr_length != 16) {
-        isc_throw(DbOperationError, "lease6 address is not 16 byte long");
+        isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
     }
     bind[1].buffer_type = MYSQL_TYPE_BLOB;
     bind[1].buffer = reinterpret_cast<char*>(&lease_addr_data[0]);
@@ -4345,7 +4377,7 @@ MySqlLeaseMgr::getExtendedInfo6Common(MySqlLeaseContextPtr& ctx,
     std::list<IOAddress> result;
     while ((status = mysql_stmt_fetch(ctx->conn_.statements_[stindex])) == 0) {
         if (addr_size != 16) {
-            isc_throw(BadValue, "received lease6 address is not 16 byte long");
+            isc_throw(BadValue, "received lease6 address is not 16 bytes long");
         }
         result.push_back(IOAddress::fromBytes(AF_INET6, addr_data));
     }
@@ -4419,7 +4451,7 @@ MySqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
         unsigned long lb_addr_size = lb_addr_data.size();
         if (lb_addr_size != 16) {
-            isc_throw(DbOperationError, "lower bound address is not 16 byte long");
+            isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
         }
         bind[1].buffer_type = MYSQL_TYPE_BLOB;
         bind[1].buffer = reinterpret_cast<char*>(&lb_addr_data[0]);
@@ -4462,7 +4494,7 @@ MySqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         std::vector<uint8_t> start_addr_data = start_addr.toBytes();
         unsigned long start_addr_size = start_addr_data.size();
         if (start_addr_size != 16) {
-            isc_throw(DbOperationError, "start address is not 16 byte long");
+            isc_throw(DbOperationError, "start address is not 16 bytes long");
         }
         bind[1].buffer_type = MYSQL_TYPE_BLOB;
         bind[1].buffer = reinterpret_cast<char*>(&start_addr_data[0]);
@@ -4473,7 +4505,7 @@ MySqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         std::vector<uint8_t> last_addr_data = last_addr.toBytes();
         unsigned long last_addr_size = last_addr_data.size();
         if (last_addr_size != 16) {
-            isc_throw(DbOperationError, "last address is not 16 byte long");
+            isc_throw(DbOperationError, "last address is not 16 bytes long");
         }
         bind[2].buffer_type = MYSQL_TYPE_BLOB;
         bind[2].buffer = reinterpret_cast<char*>(&last_addr_data[0]);
@@ -4585,7 +4617,7 @@ MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
         unsigned long lb_addr_size = lb_addr_data.size();
         if (lb_addr_size != 16) {
-            isc_throw(DbOperationError, "lower bound address is not 16 byte long");
+            isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
         }
         bind[1].buffer_type = MYSQL_TYPE_BLOB;
         bind[1].buffer = reinterpret_cast<char*>(&lb_addr_data[0]);
@@ -4628,7 +4660,7 @@ MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         std::vector<uint8_t> start_addr_data = start_addr.toBytes();
         unsigned long start_addr_size = start_addr_data.size();
         if (start_addr_size != 16) {
-            isc_throw(DbOperationError, "start address is not 16 byte long");
+            isc_throw(DbOperationError, "start address is not 16 bytes long");
         }
         bind[1].buffer_type = MYSQL_TYPE_BLOB;
         bind[1].buffer = reinterpret_cast<char*>(&start_addr_data[0]);
@@ -4639,7 +4671,7 @@ MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         std::vector<uint8_t> last_addr_data = last_addr.toBytes();
         unsigned long last_addr_size = last_addr_data.size();
         if (last_addr_size != 16) {
-            isc_throw(DbOperationError, "last address is not 16 byte long");
+            isc_throw(DbOperationError, "last address is not 16 bytes long");
         }
         bind[2].buffer_type = MYSQL_TYPE_BLOB;
         bind[2].buffer = reinterpret_cast<char*>(&last_addr_data[0]);

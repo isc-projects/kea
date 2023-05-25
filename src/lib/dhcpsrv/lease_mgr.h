@@ -1023,13 +1023,21 @@ public:
     /// @return The number of updates in the database.
     virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) = 0;
 
-    /// @brief Returns the setting indicating if lease extended info tables
+    /// @brief Returns the setting indicating if lease6 extended info tables
     /// are enabled.
     ///
-    /// @return true if lease extended info tables are enabled or false
+    /// @return true if lease6 extended info tables are enabled or false
     /// if they are disabled.
     bool getExtendedInfoTablesEnabled() const {
         return (extended_info_tables_enabled_);
+    }
+
+    /// @brief Modifies the setting whether the lease6 extended info tables
+    /// are enabled.
+    ///
+    /// @param enabled new setting.
+    void setExtendedInfoTablesEnabled(const bool enabled) {
+        extended_info_tables_enabled_ = enabled;
     }
 
     /// @brief Build extended info v6 tables.
@@ -1061,24 +1069,13 @@ protected:
 
     /// Extended information / Bulk Lease Query shared interface.
 
-    /// @brief Modifies the setting whether the lease extended info tables
-    /// are enabled.
-    ///
-    /// @note This method is virtual so backend doing specific action
-    /// on value changes can intercept it by redefining it.
-    ///
-    /// @param enabled new setting.
-    virtual void setExtendedInfoTablesEnabled(const bool enabled) {
-        extended_info_tables_enabled_ = enabled;
-    }
-
     /// @brief Decode parameters to set whether the lease extended info tables
     /// are enabled.
     ///
     /// @note: common code in constructors.
     ///
     /// @param parameters The parameter map.
-    virtual void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& parameters);
+    void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Extract extended info from a lease6 and add it into tables.
     ///

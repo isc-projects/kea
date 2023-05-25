@@ -97,7 +97,6 @@ public:
     }
 
     using Memfile_LeaseMgr::lfcCallback;
-    using Memfile_LeaseMgr::setExtendedInfoTablesEnabled;
     using Memfile_LeaseMgr::relay_id6_;
     using Memfile_LeaseMgr::remote_id6_;
     using Memfile_LeaseMgr::buildExtendedInfoTables6;
