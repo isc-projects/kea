@@ -1048,6 +1048,20 @@ public:
     /// @return The number of updates in the database or 0.
     virtual size_t buildExtendedInfoTables6(bool update, bool current) = 0;
 
+    /// @brief Upgrade extended info (v6).
+    ///
+    /// On SQL backends for all leases with a not null user context.
+    ///  - sanitize the user context
+    ///  - update relay and remote id tables
+    ///  - when the lease was modified update it in the database
+    /// On memfile backend a similar action is done when the database is
+    /// loaded from the file. This function implements the new BLQ hook
+    /// command named "extended-info6-upgrade".
+    ///
+    /// @param page_size The page size used for retrieval.
+    /// @return The number of updates in the database.
+    virtual size_t upgradeExtendedInfo6(const LeasePageSize& page_size) = 0;
+
     /// @brief Wipe extended info table (v6).
     virtual void wipeExtendedInfoTables6() = 0;
 

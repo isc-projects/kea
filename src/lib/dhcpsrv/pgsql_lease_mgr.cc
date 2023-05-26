@@ -3818,6 +3818,90 @@ PgSqlLeaseMgr::buildExtendedInfoTables6(bool /* update */, bool /* current */) {
               "PgSqlLeaseMgr::buildExtendedInfoTables6 not implemented");
 }
 
+size_t
+PgSqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
+    auto check = CfgMgr::instance().getCurrentCfg()->
+        getConsistency()->getExtendedInfoSanityCheck();
+
+    // First step is to wipe tables if enabled.
+    if (getExtendedInfoTablesEnabled()) {
+        wipeExtendedInfoTables6();
+    }
+
+    size_t pages = 0;
+    size_t updated = 0;
+    IOAddress start_addr = IOAddress::IPV6_ZERO_ADDRESS();
+    for (;;) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6_PAGE)
+            .arg(pages)
+            .arg(start_addr.toText())
+            .arg(updated);
+
+        // Prepare WHERE clause.
+        PsqlBindArray bind_array;
+
+        // Bind start address.
+        std::string start_addr_str = "0";
+        if (!start_addr.isV6Zero()) {
+            start_addr_str = start_addr.toText();
+        }
+        bind_array.add(start_addr_str);
+
+        // Bind page size value.
+        std::string page_size_data =
+            boost::lexical_cast<std::string>(page_size.page_size_);
+        bind_array.add(page_size_data);
+
+        Lease6Collection leases;
+
+        // Get a context.
+        {
+            PgSqlLeaseContextAlloc get_context(*this);
+            PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+            getLeaseCollection(ctx, GET_LEASE6_UCTX_PAGE, bind_array, leases);
+        }
+
+        if (leases.empty()) {
+            // Done.
+            break;
+        }
+
+        ++pages;
+        start_addr = leases.back()->addr_;
+        for (auto lease : leases) {
+            try {
+                bool modified = upgradeLease6ExtendedInfo(lease, check);
+                if (modified) {
+                    updateLease6(lease);
+                }
+                bool added = (getExtendedInfoTablesEnabled() &&
+                              addExtendedInfo6(lease));
+                if (modified || added) {
+                    ++updated;
+                }
+            } catch (const NoSuchLease&) {
+                // The lease was modified in parallel:
+                // as its extended info was processed just ignore.
+                continue;
+            } catch (const std::exception& ex) {
+                // Something when wrong, for instance extract failed.
+                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                          DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6_ERROR)
+                    .arg(lease->addr_.toText())
+                    .arg(ex.what());
+            }
+        }
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6)
+        .arg(pages)
+        .arg(updated);
+
+    return (updated);
+}
+
 void
 PgSqlLeaseMgr::wipeExtendedInfoTables6() {
     // Get a context.
