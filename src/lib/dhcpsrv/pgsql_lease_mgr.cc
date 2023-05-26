@@ -144,7 +144,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease4 "
       "WHERE address > $1 AND user_context IS NOT NULL "
       "ORDER BY address "
-      "LIMIT $2"},
+      "LIMIT $2" },
 
     // GET_LEASE4_SUBID
     { 1, { OID_INT8 },
@@ -358,7 +358,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE address > $1 AND user_context IS NOT NULL "
       "ORDER BY address "
-      "LIMIT $2"},
+      "LIMIT $2" },
 
     // GET_LEASE6_BINADDR_PAGE
     { 2, { OID_VARCHAR, OID_INT8 },
@@ -367,11 +367,11 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, pool_id "
       "FROM lease6 "
       "WHERE address > $1 AND binaddr IS NULL "
       "ORDER BY address "
-      "LIMIT $2"},
+      "LIMIT $2" },
 
     // GET_LEASE6_SUBID
     { 1, { OID_INT8 },
@@ -427,12 +427,12 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, pool_id "
       "FROM lease6 "
       "WHERE binaddr IS NOT NULL "
       "AND binaddr BETWEEN $1 and $2 "
       "ORDER BY binaddr "
-      "LIMIT $3"},
+      "LIMIT $3" },
 
     // INSERT_LEASE4
     { 14, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
@@ -448,13 +448,13 @@ PgSqlTaggedStatement tagged_statements[] = {
     { 19, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
             OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
             OID_VARCHAR, OID_BYTEA, OID_INT2, OID_INT2, OID_INT8, OID_TEXT,
-            OID_BYTEA, OID_INT8},
+            OID_INT8, OID_BYTEA },
       "insert_lease6",
       "INSERT INTO lease6(address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context, binaddr, pool_id) "
+        "state, user_context, pool_id, binaddr) "
       "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)" },
 
     // UPDATE_LEASE4
@@ -472,14 +472,14 @@ PgSqlTaggedStatement tagged_statements[] = {
     { 21, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
             OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
             OID_BYTEA, OID_INT2, OID_INT2,
-            OID_INT8, OID_TEXT, OID_BYTEA, OID_INT8, OID_VARCHAR, OID_TIMESTAMP },
+            OID_INT8, OID_TEXT, OID_INT8, OID_BYTEA, OID_VARCHAR, OID_TIMESTAMP },
       "update_lease6",
       "UPDATE lease6 SET address = $1, duid = $2, "
         "valid_lifetime = $3, expire = $4, subnet_id = $5, "
         "pref_lifetime = $6, lease_type = $7, iaid = $8, "
         "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
-        "state = $16, user_context = $17, binaddr = $18, pool_id = $19 "
+        "state = $16, user_context = $17, pool_id = $18, binaddr = $19 "
       "WHERE address = $20 AND expire = $21" },
 
     // ALL_LEASE4_STATS
@@ -568,7 +568,7 @@ PgSqlTaggedStatement tagged_statements[] = {
           "WHERE client_class = $1 AND lease_type = $2" },
 
     // End of list sentinel
-    { 0,  { 0 }, NULL, NULL}
+    { 0,  { 0 }, NULL, NULL }
 };
 
 }  // namespace
@@ -592,7 +592,7 @@ public:
           hostname_(""), state_str_(""), user_context_(""), addr_bin_(16) {
     }
 
-    virtual ~PgSqlLeaseExchange(){}
+    virtual ~PgSqlLeaseExchange() {}
 
 protected:
 
@@ -628,6 +628,7 @@ private:
     /// These are used for both retrieving data and for looking up
     /// column labels for logging.  Note that their numeric order
     /// MUST match that of the column order in the Lease4 table.
+    //@{
     static const size_t ADDRESS_COL = 0;
     static const size_t HWADDR_COL = 1;
     static const size_t CLIENT_ID_COL = 2;
@@ -642,6 +643,7 @@ private:
     static const size_t RELAY_ID_COL = 11;
     static const size_t REMOTE_ID_COL = 12;
     static const size_t POOL_ID_COL = 13;
+    //@}
     /// @brief Number of columns in the table holding DHCPv4 leases.
     static const size_t LEASE_COLUMNS = 14;
 
@@ -673,6 +675,7 @@ public:
         columns_.push_back("user_context");
         columns_.push_back("relay_id");
         columns_.push_back("remote_id");
+        columns_.push_back("pool_id");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -800,7 +803,7 @@ public:
             expire_ = convertFromDatabaseTime(getRawColumnValue(r, row,
                                                                 EXPIRE_COL));
 
-            getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
+            getColumnValue(r, row, SUBNET_ID_COL, subnet_id_);
 
             // Recover from overflow (see createBindForSend)
             if (valid_lifetime_ == Lease::INFINITY_LFT) {
@@ -816,7 +819,7 @@ public:
             hostname_ = getRawColumnValue(r, row, HOSTNAME_COL);
 
             uint32_t state;
-            getColumnValue(r, row , STATE_COL, state);
+            getColumnValue(r, row, STATE_COL, state);
 
             HWAddrPtr hwaddr(new HWAddr(hwaddr_buffer_, hwaddr_length_,
                                         HTYPE_ETHER));
@@ -837,7 +840,7 @@ public:
             convertFromBytea(r, row, REMOTE_ID_COL, remote_id_buffer_,
                              sizeof(remote_id_buffer_), remote_id_length_);
 
-            getColumnValue(r, row , POOL_ID_COL, pool_id_);
+            getColumnValue(r, row, POOL_ID_COL, pool_id_);
 
             Lease4Ptr result(boost::make_shared<Lease4>(addr4_, hwaddr,
                                                         client_id_buffer_,
@@ -915,8 +918,8 @@ private:
     static const size_t HWADDR_SOURCE_COL = 14;
     static const size_t STATE_COL = 15;
     static const size_t USER_CONTEXT_COL = 16;
-    static const size_t BINADDR_COL = 17;
-    static const size_t POOL_ID_COL = 18;
+    static const size_t POOL_ID_COL = 17;
+    static const size_t BINADDR_COL = 18;
     //@}
     /// @brief Number of columns in the table holding DHCPv6 leases.
     static const size_t LEASE_COLUMNS = 19;
@@ -932,11 +935,11 @@ public:
     union Uiaid {
         /// @brief Constructor
         /// @param val unsigned 32 bit value for the IAID.
-        Uiaid(uint32_t val) : uval_(val){};
+        Uiaid(uint32_t val) : uval_(val) {};
 
         /// @brief Constructor
         /// @param val signed 32 bit value for the IAID.
-        Uiaid(int32_t val) : ival_(val){};
+        Uiaid(int32_t val) : ival_(val) {};
 
         /// @brief Return a string representing the signed 32-bit value.
         std::string dbInputString() {
@@ -976,6 +979,10 @@ public:
         columns_.push_back("hwaddr_source");
         columns_.push_back("state");
         columns_.push_back("user_context");
+        columns_.push_back("pool_id");
+        // all columns that are used in insert/update queries but are not also
+        // used in select queries must be added last - the next column is the
+        // first of this kind
         columns_.push_back("binaddr");
     }
 
@@ -1092,11 +1099,11 @@ public:
             }
             bind_array.add(user_context_);
 
-            addr_bin_ = lease_->addr_.toBytes();
-            bind_array.add(addr_bin_);
-
             pool_id_str_ = boost::lexical_cast<std::string>(lease->pool_id_);
             bind_array.add(pool_id_str_);
+
+            addr_bin_ = lease_->addr_.toBytes();
+            bind_array.add(addr_bin_);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease6: "
@@ -1140,15 +1147,15 @@ public:
                 cltt_ = expire_ - valid_lifetime_;
             }
 
-            getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
+            getColumnValue(r, row, SUBNET_ID_COL, subnet_id_);
 
-            getColumnValue(r, row , PREF_LIFETIME_COL, pref_lifetime_);
+            getColumnValue(r, row, PREF_LIFETIME_COL, pref_lifetime_);
 
             getLeaseTypeColumnValue(r, row, LEASE_TYPE_COL, lease_type_);
 
-            getColumnValue(r, row , IAID_COL, iaid_u_.ival_);
+            getColumnValue(r, row, IAID_COL, iaid_u_.ival_);
 
-            getColumnValue(r, row , PREFIX_LEN_COL, prefix_len_);
+            getColumnValue(r, row, PREFIX_LEN_COL, prefix_len_);
 
             getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
 
@@ -1159,9 +1166,9 @@ public:
             convertFromBytea(r, row, HWADDR_COL, hwaddr_buffer_,
                              sizeof(hwaddr_buffer_), hwaddr_length_);
 
-            getColumnValue(r, row , HWTYPE_COL, hwtype_);
+            getColumnValue(r, row, HWTYPE_COL, hwtype_);
 
-            getColumnValue(r, row , HWADDR_SOURCE_COL, hwaddr_source_);
+            getColumnValue(r, row, HWADDR_SOURCE_COL, hwaddr_source_);
 
             HWAddrPtr hwaddr;
 
@@ -1173,7 +1180,7 @@ public:
             }
 
             uint32_t state;
-            getColumnValue(r, row , STATE_COL, state);
+            getColumnValue(r, row, STATE_COL, state);
 
             user_context_ = getRawColumnValue(r, row, USER_CONTEXT_COL);
             ConstElementPtr ctx;
@@ -1185,7 +1192,7 @@ public:
                 }
             }
 
-            getColumnValue(r, row , POOL_ID_COL, pool_id_);
+            getColumnValue(r, row, POOL_ID_COL, pool_id_);
 
             Lease6Ptr result(boost::make_shared<Lease6>(lease_type_, addr,
                                                         duid_ptr,
@@ -1230,7 +1237,7 @@ public:
     void getLeaseTypeColumnValue(const PgSqlResult& r, const int row,
                                  const size_t col, Lease6::Type& value) const {
         uint32_t raw_value = 0;
-        getColumnValue(r, row , col, raw_value);
+        getColumnValue(r, row, col, raw_value);
         switch (raw_value) {
             case Lease6::TYPE_NA:
             case Lease6::TYPE_TA:
@@ -1393,7 +1400,7 @@ public:
 
         // Fetch the pool id if we were told to do so.
         if (fetch_pool_) {
-            PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+            PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
                                           row.pool_id_);
             ++col;
         }
@@ -1401,7 +1408,7 @@ public:
         // Fetch the lease type if we were told to do so.
         if (fetch_type_) {
             uint32_t lease_type;
-            PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+            PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
                                           lease_type);
             row.lease_type_ = static_cast<Lease::Type>(lease_type);
             ++col;
@@ -1410,7 +1417,7 @@ public:
         }
 
         // Fetch the lease state.
-        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+        PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
                                       row.lease_state_);
         ++col;
 
@@ -1816,7 +1823,7 @@ PgSqlLeaseMgr::getLeaseCollection(PgSqlLeaseContextPtr& ctx,
                       << tagged_statements[stindex].name);
     }
 
-    for(int i = 0; i < rows; ++ i) {
+    for(int i = 0; i < rows; ++i) {
         result.push_back(exchange->convertFromDatabase(r, i));
     }
 }

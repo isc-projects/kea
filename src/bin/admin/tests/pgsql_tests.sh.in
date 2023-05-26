@@ -490,7 +490,7 @@ pgsql_upgrade_12_to_13_test() {
     # -- lease counting tests --
 
     # Clean up.
-    query='DELETE FROM lease4; DELETE FROM lease6'
+    query="DELETE FROM lease4; DELETE FROM lease6"
     run_command \
         pgsql_execute "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -533,7 +533,7 @@ pgsql_upgrade_12_to_13_test() {
     assert_str_eq '' "${OUTPUT}" "INSERT INTO leases when upgrading from 11 to 12 failed. expected output %s, returned %s"
 
     # Check that @json_supported is NULL by default.
-    query='SELECT isJsonSupported()'
+    query="SELECT isJsonSupported()"
     run_command \
         pgsql_execute "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"

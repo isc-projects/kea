@@ -166,7 +166,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr subnet_id = element->get("subnet-id");
     if (!subnet_id || (subnet_id->getType() != Element::integer)) {
         isc_throw(BadValue, "subnet-id not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if (subnet_id->intValue() <= 0) {
@@ -183,7 +183,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr pool_id = element->get("pool-id");
     if (pool_id) {
         if (pool_id->getType() != Element::integer) {
-            isc_throw(BadValue, "pool-id is not a number");
+            isc_throw(BadValue, "pool-id is not an integer");
         }
 
         if (pool_id->intValue() < 0) {
@@ -219,7 +219,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr cltt = element->get("cltt");
     if (!cltt || (cltt->getType() != Element::integer)) {
         isc_throw(BadValue, "cltt is not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if (cltt->intValue() <= 0) {
@@ -233,7 +233,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr valid_lifetime = element->get("valid-lft");
     if (!valid_lifetime || (valid_lifetime->getType() != Element::integer)) {
         isc_throw(BadValue, "valid-lft is not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if (valid_lifetime->intValue() < 0) {
@@ -275,7 +275,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr state = element->get("state");
     if (!state || (state->getType() != Element::integer)) {
         isc_throw(BadValue, "state is not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_EXPIRED_RECLAIMED)) {
@@ -664,7 +664,7 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
         ConstElementPtr prefix_len = element->get("prefix-len");
         if (!prefix_len || (prefix_len->getType() != Element::integer)) {
             isc_throw(BadValue, "prefix-len is not present in the parsed lease"
-                      " or it is not a number");
+                      " or it is not an integer");
         }
 
         if ((prefix_len->intValue() < 1) || (prefix_len->intValue() > 128)) {
@@ -679,7 +679,7 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
     ConstElementPtr iaid = element->get("iaid");
     if (!iaid || (iaid->getType() != Element::integer)) {
         isc_throw(BadValue, "iaid is not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if (iaid->intValue() < 0) {
@@ -708,7 +708,7 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
     ConstElementPtr preferred_lft = element->get("preferred-lft");
     if (!preferred_lft || (preferred_lft->getType() != Element::integer)) {
         isc_throw(BadValue, "preferred-lft is not present in the parsed lease"
-                  " or is not a number");
+                  " or is not an integer");
     }
 
     if (preferred_lft->intValue() < 0) {

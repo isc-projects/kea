@@ -5753,7 +5753,7 @@ BEGIN
         UPDATE lease4_pool_stat
             SET leases = GREATEST(leases - 1, 0)
             WHERE subnet_id = old_subnet_id AND pool_id = old_pool_id
-            AND old_state = state;
+            AND state = old_state;
     END IF;
 END;
 $$ LANGUAGE plpgsql;
@@ -5914,7 +5914,7 @@ RETURNS text AS $$
     select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id' as text) as result;
 $$ LANGUAGE SQL;
 
--- Modify the function to output a memfile-ready CSV file.
+-- Adding support for pool ID in function to output a memfile-ready CSV file.
 -- Some columns that are SMALLINT in the lease4 table have their type promoted
 -- to INT in the declaration of this function for backwards compatibility with
 -- PostgreSQL versions.
@@ -5957,7 +5957,7 @@ RETURNS TEXT AS $$
     SELECT CAST('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source,pool_id' AS TEXT) AS result;
 $$ LANGUAGE SQL;
 
--- Modify the function to output a memfile-ready CSV file.
+-- Adding support for pool ID in function to output a memfile-ready CSV file.
 -- Some columns that are SMALLINT in the lease6 table have their type promoted
 -- to INT in the declaration of this function for backwards compatibility with
 -- PostgreSQL versions.
@@ -6006,7 +6006,7 @@ RETURNS TABLE (
     ORDER BY address;
 $$ LANGUAGE SQL;
 
--- Create a procedure that inserts a v4 lease from memfile data.
+-- Adding support for pool id in function that inserts a v4 lease from memfile data.
 -- Some columns that are SMALLINT in the lease4 table have their type promoted
 -- to INT in the declaration of this function for backwards compatibility with
 -- PostgreSQL versions.
@@ -6055,7 +6055,7 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
--- Create a procedure that inserts a v6 lease from memfile data.
+-- Adding support for pool id in function that inserts a v6 lease from memfile data.
 -- Some columns that are SMALLINT in the lease6 table have their type promoted
 -- to INT in the declaration of this function for backwards compatibility with
 -- PostgreSQL versions.

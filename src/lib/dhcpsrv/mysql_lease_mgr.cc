@@ -356,7 +356,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE address > ? AND binaddr IS NULL "
                             "ORDER BY address "
@@ -407,7 +407,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE binaddr IS NOT NULL "
                             "AND binaddr BETWEEN ? AND ? "
@@ -425,7 +425,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context, binaddr, pool_id) "
+                        "state, user_context, pool_id, binaddr) "
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::UPDATE_LEASE4,
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
@@ -441,7 +441,7 @@ tagged_statements = { {
                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
                         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ?, "
-                        "state = ?, user_context = ?, binaddr = ?, pool_id = ? "
+                        "state = ?, user_context = ?, pool_id = ?, binaddr = ? "
                             "WHERE address = ? AND expire = ?"},
     {MySqlLeaseMgr::ALL_LEASE4_STATS,
                     "SELECT subnet_id, state, leases as state_count "
@@ -574,7 +574,26 @@ public:
 /// in all MySqlLeaseMgr::xxx4() calls where it is used.
 
 class MySqlLease4Exchange : public MySqlLeaseExchange {
-    /// @brief Set number of database columns for this lease structure
+    /// These are used for both retrieving data and for looking up
+    /// column labels for logging.  Note that their numeric order
+    /// MUST match that of the column order in the Lease4 table.
+    //@{
+    static const size_t ADDRESS_COL = 0;
+    static const size_t HWADDR_COL = 1;
+    static const size_t CLIENT_ID_COL = 2;
+    static const size_t VALID_LIFETIME_COL = 3;
+    static const size_t EXPIRE_COL = 4;
+    static const size_t SUBNET_ID_COL = 5;
+    static const size_t FQDN_FWD_COL = 6;
+    static const size_t FQDN_REV_COL = 7;
+    static const size_t HOSTNAME_COL = 8;
+    static const size_t STATE_COL = 9;
+    static const size_t USER_CONTEXT_COL = 10;
+    static const size_t RELAY_ID_COL = 11;
+    static const size_t REMOTE_ID_COL = 12;
+    static const size_t POOL_ID_COL = 13;
+    //@}
+    /// @brief Number of columns in the table holding DHCPv4 leases.
     static const size_t LEASE_COLUMNS = 14;
 
 public:
@@ -600,20 +619,20 @@ public:
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
 
         // Set the column names (for error messages)
-        columns_[0] = "address";
-        columns_[1] = "hwaddr";
-        columns_[2] = "client_id";
-        columns_[3] = "valid_lifetime";
-        columns_[4] = "expire";
-        columns_[5] = "subnet_id";
-        columns_[6] = "fqdn_fwd";
-        columns_[7] = "fqdn_rev";
-        columns_[8] = "hostname";
-        columns_[9] = "state";
-        columns_[10] = "user_context";
-        columns_[11] = "relay_id";
-        columns_[12] = "remote_id";
-        columns_[13] = "pool_id";
+        columns_[ADDRESS_COL] = "address";
+        columns_[HWADDR_COL] = "hwaddr";
+        columns_[CLIENT_ID_COL] = "client_id";
+        columns_[VALID_LIFETIME_COL] = "valid_lifetime";
+        columns_[EXPIRE_COL] = "expire";
+        columns_[SUBNET_ID_COL] = "subnet_id";
+        columns_[FQDN_FWD_COL] = "fqdn_fwd";
+        columns_[FQDN_REV_COL] = "fqdn_rev";
+        columns_[HOSTNAME_COL] = "hostname";
+        columns_[STATE_COL] = "state";
+        columns_[USER_CONTEXT_COL] = "user_context";
+        columns_[RELAY_ID_COL] = "relay_id";
+        columns_[REMOTE_ID_COL] = "remote_id";
+        columns_[POOL_ID_COL] = "pool_id";
         BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
     }
 
@@ -1140,7 +1159,32 @@ private:
 /// in all MySqlLeaseMgr::xxx6() calls where it is used.
 
 class MySqlLease6Exchange : public MySqlLeaseExchange {
-    /// @brief Set number of database columns for this lease structure
+    /// @brief Column numbers for each column in the Lease6 table.
+    /// These are used for both retrieving data and for looking up
+    /// column labels for logging.  Note that their numeric order
+    /// MUST match that of the column order in the Lease6 table.
+    //@{
+    static const size_t ADDRESS_COL = 0;
+    static const size_t DUID_COL = 1;
+    static const size_t VALID_LIFETIME_COL = 2;
+    static const size_t EXPIRE_COL = 3;
+    static const size_t SUBNET_ID_COL = 4;
+    static const size_t PREF_LIFETIME_COL = 5;
+    static const size_t LEASE_TYPE_COL =  6;
+    static const size_t IAID_COL = 7;
+    static const size_t PREFIX_LEN_COL = 8;
+    static const size_t FQDN_FWD_COL = 9;
+    static const size_t FQDN_REV_COL = 10;
+    static const size_t HOSTNAME_COL = 11;
+    static const size_t HWADDR_COL = 12;
+    static const size_t HWTYPE_COL = 13;
+    static const size_t HWADDR_SOURCE_COL = 14;
+    static const size_t STATE_COL = 15;
+    static const size_t USER_CONTEXT_COL = 16;
+    static const size_t POOL_ID_COL = 17;
+    static const size_t BINADDR_COL = 18;
+    //@}
+    /// @brief Number of columns in the table holding DHCPv6 leases.
     static const size_t LEASE_COLUMNS = 19;
 
 public:
@@ -1165,25 +1209,25 @@ public:
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
 
         // Set the column names (for error messages)
-        columns_[0]  = "address";
-        columns_[1]  = "duid";
-        columns_[2]  = "valid_lifetime";
-        columns_[3]  = "expire";
-        columns_[4]  = "subnet_id";
-        columns_[5]  = "pref_lifetime";
-        columns_[6]  = "lease_type";
-        columns_[7]  = "iaid";
-        columns_[8]  = "prefix_len";
-        columns_[9]  = "fqdn_fwd";
-        columns_[10] = "fqdn_rev";
-        columns_[11] = "hostname";
-        columns_[12] = "hwaddr";
-        columns_[13] = "hwtype";
-        columns_[14] = "hwaddr_source";
-        columns_[15] = "state";
-        columns_[16] = "user_context";
-        columns_[17] = "binaddr";
-        columns_[18] = "pool_id";
+        columns_[ADDRESS_COL]  = "address";
+        columns_[DUID_COL]  = "duid";
+        columns_[VALID_LIFETIME_COL]  = "valid_lifetime";
+        columns_[EXPIRE_COL]  = "expire";
+        columns_[SUBNET_ID_COL]  = "subnet_id";
+        columns_[PREF_LIFETIME_COL]  = "pref_lifetime";
+        columns_[LEASE_TYPE_COL]  = "lease_type";
+        columns_[IAID_COL]  = "iaid";
+        columns_[PREFIX_LEN_COL]  = "prefix_len";
+        columns_[FQDN_FWD_COL]  = "fqdn_fwd";
+        columns_[FQDN_REV_COL] = "fqdn_rev";
+        columns_[HOSTNAME_COL] = "hostname";
+        columns_[HWADDR_COL] = "hwaddr";
+        columns_[HWTYPE_COL] = "hwtype";
+        columns_[HWADDR_SOURCE_COL] = "hwaddr_source";
+        columns_[STATE_COL] = "state";
+        columns_[USER_CONTEXT_COL] = "user_context";
+        columns_[POOL_ID_COL] = "pool_id";
+        columns_[BINADDR_COL] = "binaddr";
         BOOST_STATIC_ASSERT(18 < LEASE_COLUMNS);
     }
 
@@ -1427,6 +1471,14 @@ public:
                 bind_[16].buffer_type = MYSQL_TYPE_NULL;
             }
 
+            // pool_id: unsigned int
+            // Can use lease_->pool_id_ directly as it is of type uint32_t.
+            bind_[17].buffer_type = MYSQL_TYPE_LONG;
+            bind_[17].buffer = reinterpret_cast<char*>(&lease_->pool_id_);
+            bind_[17].is_unsigned = MLM_TRUE;
+            // bind_[17].is_null = &MLM_FALSE; // commented out for performance
+                                               // reasons, see memset() above
+
             // binaddr: binary(16)
             binaddr_ = lease->addr_.toBytes();
             if (binaddr_.size() != 16) {
@@ -1434,18 +1486,10 @@ public:
             }
 
             binaddr_length_ = 16;
-            bind_[17].buffer_type = MYSQL_TYPE_BLOB;
-            bind_[17].buffer = reinterpret_cast<char*>(&binaddr_[0]);
-            bind_[17].buffer_length = 16;
-            bind_[17].length = &binaddr_length_;
-            // bind_[17].is_null = &MLM_FALSE; // commented out for performance
-                                               // reasons, see memset() above
-
-            // pool_id: unsigned int
-            // Can use lease_->pool_id_ directly as it is of type uint32_t.
-            bind_[18].buffer_type = MYSQL_TYPE_LONG;
-            bind_[18].buffer = reinterpret_cast<char*>(&lease_->pool_id_);
-            bind_[18].is_unsigned = MLM_TRUE;
+            bind_[18].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[18].buffer = reinterpret_cast<char*>(&binaddr_[0]);
+            bind_[18].buffer_length = 16;
+            bind_[18].length = &binaddr_length_;
             // bind_[18].is_null = &MLM_FALSE; // commented out for performance
                                                // reasons, see memset() above
 

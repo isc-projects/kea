@@ -419,14 +419,14 @@ mysql_upgrade_13_to_14_test() {
     # -- lease counting tests --
 
     # Check that @json_supported is NULL by default.
-    query='SELECT @json_supported'
+    query="SELECT @json_supported"
     run_command \
         mysql_execute "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq "NULL" "${OUTPUT}" "${query}: expected output %s, returned %s"
 
     # Clean up.
-    query='DELETE FROM lease4; DELETE FROM lease6'
+    query="DELETE FROM lease4; DELETE FROM lease6"
     run_command \
         mysql_execute "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
