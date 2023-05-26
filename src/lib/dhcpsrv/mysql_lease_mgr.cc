@@ -2409,8 +2409,6 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     lease->updateCurrentExpirationTime();
 
     if (getExtendedInfoTablesEnabled()) {
-        // Expired leases can be removed leaving entries in extended info tables.
-        deleteExtendedInfo6(lease->addr_);
         static_cast<void>(addExtendedInfo6(lease));
     }
 

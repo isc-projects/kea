@@ -2099,17 +2099,6 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
             }
         }
 
-        // Delete references from extended info tables.
-        if (getExtendedInfoTablesEnabled()) {
-            // Swap if and for when v4 will be implemented.
-            if (universe == V6) {
-                for (typename IndexType::const_iterator lease = lower_limit;
-                     lease != upper_limit; ++lease) {
-                    deleteExtendedInfo6((*lease)->addr_);
-                }
-            }
-        }
-
         // Erase leases from memory.
         index.erase(lower_limit, upper_limit);
 
