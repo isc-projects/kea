@@ -630,9 +630,9 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     initSubnet(params, addr, len);
 
     // Add pools to it.
-    for (const auto& it : *pools_) {
+    for (const auto& pool : *pools_) {
         try {
-            subnet_->addPool(it);
+            subnet_->addPool(pool);
         } catch (const BadValue& ex) {
             // addPool() can throw BadValue if the pool is overlapping or
             // is out of bounds for the subnet.

@@ -528,7 +528,7 @@ CfgSubnets6::updateStatistics() {
             stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
                                                       StatsMgr::generateName("pool", pool->getID(),
                                                                              "total-nas")),
-                               static_cast<int64_t>(pool->getCapacity()));
+                               pool->getCapacity());
 
             const std::string& name_nas =
                 StatsMgr::generateName("subnet", subnet_id,
@@ -543,7 +543,7 @@ CfgSubnets6::updateStatistics() {
             stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
                                                       StatsMgr::generateName("pd-pool", pool->getID(),
                                                                              "total-pds")),
-                               static_cast<int64_t>(pool->getCapacity()));
+                               pool->getCapacity());
 
             const std::string& name_nas =
                 StatsMgr::generateName("subnet", subnet_id,
