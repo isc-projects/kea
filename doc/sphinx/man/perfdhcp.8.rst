@@ -360,7 +360,7 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
 ``--o1r code,hexstring``
    This option is very similar to ``-o``, only that it forces ``perfdhcp``
    to insert the specified extra option (or options if used several times)
-   into relayed DHCPv6 message at 1st level of encapsulation. The code
+   into relayed DHCPv6 message at first level of encapsulation. The code
    specifies the option code and the hexstring is a hexadecimal string that
    defines the content of the option. Care should be taken as ``perfdhcp``
    does not offer any kind of logic behind those options; they are simply

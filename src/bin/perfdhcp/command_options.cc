@@ -608,9 +608,8 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             // and must be used together with -A option.
             check((ipversion_ != 6),
                   "-6 must be explicitly specified before --o1r is used.");
-            if (v6_relay_encapsulation_level_ != 1) {
-                isc_throw(isc::InvalidParameter, "-A must be explicitly specified before --o1r is used.");
-            }
+            check(v6_relay_encapsulation_level_ <= 0,
+                  "-A must be explicitly specified before --o1r is used.");
 
             // custom option (expected format: code,hexstring)
             std::string opt_text = std::string(optarg);

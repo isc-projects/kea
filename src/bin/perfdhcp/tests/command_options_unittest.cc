@@ -899,6 +899,16 @@ TEST_F(CommandOptionsTest, ElapsedTime) {
     EXPECT_EQ(10, opt.getWaitForElapsedTime());
 }
 
+TEST_F(CommandOptionsTest, UseRelayV6OptionsWithoutV6) {
+    CommandOptions opt;
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --o1r 32,00000E10 -l ethx all"));
+    EXPECT_TRUE(opt.isUseRelayedV6());
+    EXPECT_EQ(1, opt.getRelayOpts().size());
+
+    // --o1r must be used together with -6
+    EXPECT_THROW(process(opt, "perfdhcp -A1 --o1r 32,00000E10 -l ethx all"), isc::InvalidParameter);
+}
+
 TEST_F(CommandOptionsTest, UseRelayV6OptionsWithoutRelayEncapsulation) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --o1r 32,00000E10 -l ethx all"));
