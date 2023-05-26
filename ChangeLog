@@ -1,3 +1,8 @@
+2144.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.3.8
+	development release.
+	(Gitlab #2885)
+
 2143.	[func]		razvan
 	Added v4 statistic counters per pool:
 	subnet[id].pool[id].assigned-addresses
