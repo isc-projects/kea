@@ -901,33 +901,33 @@ TEST_F(CommandOptionsTest, ElapsedTime) {
 
 TEST_F(CommandOptionsTest, UseRelayV6OptionsWithoutV6) {
     CommandOptions opt;
-    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --o1r 32,00000E10 -l ethx all"));
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 32,00000E10 -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
     EXPECT_EQ(1, opt.getRelayOpts().size());
 
-    // --o1r must be used together with -6
-    EXPECT_THROW(process(opt, "perfdhcp -A1 --o1r 32,00000E10 -l ethx all"), isc::InvalidParameter);
+    // --or must be used together with -6
+    EXPECT_THROW(process(opt, "perfdhcp -A1 --or 32,00000E10 -l ethx all"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, UseRelayV6OptionsWithoutRelayEncapsulation) {
     CommandOptions opt;
-    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --o1r 32,00000E10 -l ethx all"));
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 32,00000E10 -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
     EXPECT_EQ(1, opt.getRelayOpts().size());
 
-    // --o1r must be used together with -A
-    EXPECT_THROW(process(opt, "perfdhcp -6 --o1r 32,00000E10 -l ethx all"), isc::InvalidParameter);
+    // --or must be used together with -A
+    EXPECT_THROW(process(opt, "perfdhcp -6 --or 32,00000E10 -l ethx all"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, UseMultipleRelayV6Options) {
     CommandOptions opt;
-    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --o1r 32,00000E10 --o1r "
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 32,00000E10 --or "
                                  "23,20010DB800010000000000000000CAFE -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
     // 2 options expected at 1st level of encapsulation
     EXPECT_EQ(2, opt.getRelayOpts().size());
     // no options expected at 2nd level of encapsulation
-    EXPECT_EQ(0, opt.getRelayOpts(2).size());
+    EXPECT_THROW(opt.getRelayOpts(2), isc::OutOfRange);
 }
 
 TEST_F(CommandOptionsTest, UseRelayV6OptionsWithMultiSubnets) {
@@ -935,7 +935,7 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsWithMultiSubnets) {
     std::string relay_addr_list_full_path = getFullPath("relay6-list.txt");
     std::ostringstream cmd;
     cmd << "perfdhcp -6 -J " << relay_addr_list_full_path
-        << " -A1 --o1r 32,00000E10 --o1r 23,20010DB800010000000000000000CAFE -l ethx all";
+        << " -A1 --or 32,00000E10 --or 23,20010DB800010000000000000000CAFE -l ethx all";
     EXPECT_NO_THROW(process(opt, cmd.str()));
     EXPECT_EQ(relay_addr_list_full_path, opt.getRelayAddrListFile());
     EXPECT_TRUE(opt.checkMultiSubnet());
@@ -944,26 +944,64 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsWithMultiSubnets) {
     // 2 options expected at 1st level of encapsulation
     EXPECT_EQ(2, opt.getRelayOpts().size());
     // no options expected at 2nd level of encapsulation
-    EXPECT_EQ(0, opt.getRelayOpts(2).size());
+    EXPECT_THROW(opt.getRelayOpts(2), isc::OutOfRange);
 }
 
 TEST_F(CommandOptionsTest, UseRelayV6OptionsNoComma) {
     CommandOptions opt;
 
-    // --o1r must be followed by option code, a coma and hexstring
-    EXPECT_THROW(process(opt, "perfdhcp -6 --o1r 3200000E10 -l ethx all"), isc::InvalidParameter);
+    // --or must be followed by encapsulation-level, colon, option code, a coma and hexstring
+    // in case encapsulation-level and colon are skipped, encapsulation-level is by default 1
+    EXPECT_THROW(process(opt, "perfdhcp -6 --or 3200000E10 -l ethx all"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, UseRelayV6OptionsNegativeOptionCode) {
     CommandOptions opt;
 
-    // --o1r must be followed by positive option code, a coma and hexstring
-    EXPECT_THROW(process(opt, "perfdhcp -6 --o1r -32,00000E10 -l ethx all"), isc::InvalidParameter);
+    // --or must be followed by encapsulation-level, colon, positive option code, a coma and hexstring
+    // in case encapsulation-level and colon are skipped, encapsulation-level is by default 1
+    EXPECT_THROW(process(opt, "perfdhcp -6 --or -32,00000E10 -l ethx all"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, UseRelayV6OptionsWrongHexstring) {
     CommandOptions opt;
 
-    // --o1r hexstring containing char Z which is not correct
-    EXPECT_THROW(process(opt, "perfdhcp -6 --o1r 32,Z0000E10 -l ethx all"), isc::InvalidParameter);
+    // --or hexstring containing char Z which is not correct
+    EXPECT_THROW(process(opt, "perfdhcp -6 --or 32,Z0000E10 -l ethx all"), isc::InvalidParameter);
 }
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsWithEncapsulationLevel) {
+    CommandOptions opt;
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 1:32,00000E10 -l ethx all"));
+    EXPECT_TRUE(opt.isUseRelayedV6());
+    EXPECT_EQ(1, opt.getRelayOpts().size());
+}
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsWithNegativeEncapsulationLevel) {
+    CommandOptions opt;
+
+    // provided Relayed option encapsulation level must be a positive integer.
+    EXPECT_THROW(process(opt, "perfdhcp -6 -A1 --or -1:32,00000E10 -l ethx all"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsWithZeroEncapsulationLevel) {
+    CommandOptions opt;
+
+    // provided Relayed option encapsulation level must be a positive integer.
+    EXPECT_THROW(process(opt, "perfdhcp -6 -A1 --or 0:32,00000E10 -l ethx all"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsWithWrongEncapsulationLevel) {
+    CommandOptions opt;
+
+    // provided Relayed option encapsulation level must be a positive integer.
+    EXPECT_THROW(process(opt, "perfdhcp -6 -A1 --or x:32,00000E10 -l ethx all"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, UseRelayV6OptionsWithEncapsulationLevelValueTwo) {
+    CommandOptions opt;
+
+    // Relayed option encapsulation level supports only value 1 at the moment.
+    EXPECT_THROW(process(opt, "perfdhcp -6 -A1 --or 2:32,00000E10 -l ethx all"), isc::InvalidParameter);
+}
+

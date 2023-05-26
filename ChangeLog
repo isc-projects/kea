@@ -5,7 +5,6 @@
     encapsulation is supported.
     (Gitlab #2834)
 
-
 2141.	[bug]		razvan
 	The High Availability hook library is sending the 'origin'
 	parameter set to 'ha-partner' when sending lease update

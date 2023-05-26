@@ -216,7 +216,7 @@ CommandOptions::parse(int argc, char** const argv, bool print_cmd_line) {
 }
 
 const int LONG_OPT_SCENARIO = 300;
-const int LONG_OPT_RELAY_1_OPTION = 400;
+const int LONG_OPT_RELAY_OPTION = 400;
 
 bool
 CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
@@ -238,7 +238,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     struct option long_options[] = {
         {"scenario", required_argument, 0, LONG_OPT_SCENARIO},
-        {"o1r", required_argument, 0, LONG_OPT_RELAY_1_OPTION},
+        {"or",       required_argument, 0, LONG_OPT_RELAY_OPTION},
         {0,          0,                 0, 0}
     };
 
@@ -603,30 +603,54 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
         }
 
-        case LONG_OPT_RELAY_1_OPTION: {
+        case LONG_OPT_RELAY_OPTION: {
             // for now this is only available for v6
             // and must be used together with -A option.
             check((ipversion_ != 6),
-                  "-6 must be explicitly specified before --o1r is used.");
+                  "-6 must be explicitly specified before --or is used.");
             check(v6_relay_encapsulation_level_ <= 0,
-                  "-A must be explicitly specified before --o1r is used.");
+                  "-A must be explicitly specified before --or is used.");
 
-            // custom option (expected format: code,hexstring)
+            // custom option (expected format: encapsulation-level:code,hexstring)
             std::string opt_text = std::string(optarg);
+            size_t colon_loc = opt_text.find(':');
             size_t coma_loc = opt_text.find(',');
+
+            // if encapsulation level is skipped by user, let's assume it is 1
+            uint8_t option_encapsulation_level = 1;
+            if (colon_loc == std::string::npos) {
+                // if colon was not found, default encapsulation level will be used
+                // and let's reset colon_loc to -1 so option code could be parsed later
+                colon_loc = -1;
+            } else {
+                // Try to parse the encapsulation level
+                try {
+                    option_encapsulation_level =
+                        boost::lexical_cast<int>(opt_text.substr(0, colon_loc));
+                    check(option_encapsulation_level != 1, "Relayed option encapsulation level "
+                                                           "supports only value 1 at the moment.");
+                } catch (const boost::bad_lexical_cast&) {
+                    isc_throw(InvalidParameter,
+                              "Invalid relayed option encapsulation level specified for "
+                              "--or option, expected format: --or <integer>:<integer>,<hexstring>");
+                }
+            }
+
             check(coma_loc == std::string::npos,
-                  "--o1r option must provide option code, a coma and hexstring for"
-                  " the option content, e.g. --o1r 60,646f63736973 for sending option"
-                  " 60 (class-id) with the value 'docsis'");
+                  "--or option must provide encapsulation level, a colon, option code, a coma and "
+                  "hexstring for the option content, e.g. --or 1:60,646f63736973 for sending option"
+                  " 60 (class-id) with the value 'docsis' at first level of encapsulation");
             int code = 0;
 
             // Try to parse the option code
             try {
-                code = boost::lexical_cast<int>(opt_text.substr(0,coma_loc));
-                check(code <= 0, "Option code can't be negative");
+                code = boost::lexical_cast<int>(
+                    opt_text.substr(colon_loc + 1, coma_loc - colon_loc - 1));
+                check(code <= 0, "Option code can't be negative or zero");
             } catch (const boost::bad_lexical_cast&) {
-                isc_throw(InvalidParameter, "Invalid option code specified for "
-                                            "--o1r option, expected format: --o1r <integer>,<hexstring>");
+                isc_throw(InvalidParameter,
+                          "Invalid option code specified for "
+                          "--or option, expected format: --or <integer>:<integer>,<hexstring>");
             }
 
             // Now try to interpret the hexstring
@@ -635,17 +659,13 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             try {
                 isc::util::encode::decodeHex(opt_text, bin);
             } catch (const BadValue& e) {
-                isc_throw(InvalidParameter, "Error during decoding option --o1r:"
-                                                << e.what());
+                isc_throw(InvalidParameter, "Error during decoding option --or:" << e.what());
             }
 
             // Create and remember the option.
             OptionPtr option(new Option(Option::V6, code, bin));
-            // For now, only 1 level of encapsulation is allowed for relay options,
-            // thus 1 key is hardcoded below. But in the future, if needed, level of
-            // encapsulation of relay option could be taken from command option.
-            auto relay_1_opts = relay_opts_.find(1);
-            relay_1_opts->second.insert(make_pair(code, option));
+            auto relay_opts = relay_opts_.find(option_encapsulation_level);
+            relay_opts->second.insert(make_pair(code, option));
             break;
         }
         default:
@@ -876,6 +896,16 @@ CommandOptions::generateDuidTemplate() {
     // randomized before sending a packet to simulate different
     // clients.
     memcpy(&duid_template_[8], &mac_template_[0], 6);
+}
+
+const isc::dhcp::OptionCollection&
+CommandOptions::getRelayOpts(uint8_t encapsulation_level) const {
+    if (encapsulation_level > RELAY_OPTIONS_MAX_ENCAPSULATION) {
+        isc_throw(isc::OutOfRange,
+                  "Trying to access relay options at encapsulation level that doesn't exist");
+    }
+
+    return relay_opts_.find(encapsulation_level)->second;
 }
 
 uint8_t

@@ -384,10 +384,11 @@ public:
     ///
     /// @param encapsulation_level level of encapsulation, by default 1
     ///
+    /// @throws isc::OutOfRange When trying to access relay options at encapsulation
+    /// level that doesn't exist.
+    ///
     /// @return container with options.
-    const isc::dhcp::OptionCollection& getRelayOpts(uint8_t encapsulation_level = 1) const {
-        return relay_opts_.find(encapsulation_level)->second;
-    }
+    const isc::dhcp::OptionCollection& getRelayOpts(uint8_t encapsulation_level = 1) const;
 
     /// \brief Check if single-threaded mode is enabled.
     ///

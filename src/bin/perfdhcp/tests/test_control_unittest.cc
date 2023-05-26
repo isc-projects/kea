@@ -1500,7 +1500,7 @@ TEST_F(TestControlTest, Packet6Relayed) {
 
 TEST_F(TestControlTest, Packet6RelayedWithRelayOpts) {
     CommandOptions opt;
-    processCmdLine(opt, "perfdhcp -6 -l fake -A1 --o1r 32,00000E10 -L 10547 servers");
+    processCmdLine(opt, "perfdhcp -6 -l fake -A1 --or 1:32,00000E10 -L 10547 servers");
     NakedTestControl tc(opt);
     uint32_t transid = 123;
     boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
