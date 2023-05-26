@@ -314,7 +314,7 @@ PgSqlTaggedStatement tagged_statements[] = {
 
     // GET_LEASE6_ADDR_ANY
     { 1, { OID_VARCHAR },
-      "get_lease6_addr_nay",
+      "get_lease6_addr_any",
       "SELECT address, duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
@@ -3593,8 +3593,8 @@ PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         PsqlBindArray bind_array;
 
         // Bind the lease address.
-        std::vector<uint8_t> addr_data = addr.toBytes();
-        bind_array.add(addr_data);
+        std::string addr_str = addr.toText();
+        bind_array.add(addr_str);
 
         // Get the lease.
         Lease6Ptr lease;
@@ -3728,8 +3728,8 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         PsqlBindArray bind_array;
 
         // Bind the lease address.
-        std::vector<uint8_t> addr_data = addr.toBytes();
-        bind_array.add(addr_data);
+        std::string addr_str = addr.toText();
+        bind_array.add(addr_str);
 
         // Get the lease.
         Lease6Ptr lease;

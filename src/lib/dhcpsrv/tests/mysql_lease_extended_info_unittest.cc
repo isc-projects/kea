@@ -48,6 +48,31 @@ const vector<string> DUIDS = {
     "BBBBBBBB", "$$$$$$$$", "^^^^^^^^", "\xe5\xe5\xe5\xe5\xe5\xe5\xe5\xe5"
 };
 
+/// @brief A derivation of the lease manager exposing protected methods.
+class NakedMySqlLeaseMgr : public MySqlLeaseMgr {
+public:
+    /// @brief Constructor.
+    ///
+    /// Creates an instance of the lease manager.
+    ///
+    /// @param parameters Parameter map.
+    NakedMySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+        : MySqlLeaseMgr(parameters) {
+    }
+
+    /// @brief Destructor.
+    virtual ~NakedMySqlLeaseMgr() {
+    }
+
+    /// @brief Exposes protected methods.
+    using MySqlLeaseMgr::deleteExtendedInfo6;
+    using MySqlLeaseMgr::addRelayId6;
+    using MySqlLeaseMgr::addRemoteId6;
+};
+
+/// @brief Type of unique pointers to naked lease manager.
+typedef unique_ptr<NakedMySqlLeaseMgr> NakedMySqlLeaseMgrPtr;
+
 /// @brief Test fixture class for extended info tests.
 class MySqlExtendedInfoTest : public ::testing::Test {
 public:
@@ -56,19 +81,8 @@ public:
         // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
-        // Connect to the database.
-        try {
-            LeaseMgrFactory::create(validMySQLConnectionString());
-        } catch (...) {
-            std::cerr << "*** ERROR: unable to open database. The test\n"
-                         "*** environment is broken and must be fixed before\n"
-                         "*** the MySQL tests will run correctly.\n"
-                         "*** The reason for the problem is described in the\n"
-                         "*** accompanying exception output.\n";
-            throw;
-        }
-
-        lease_mgr_ = &(LeaseMgrFactory::instance());
+        pmap_ = DatabaseConnection::parse(validMySQLConnectionString());
+        lease_mgr_.reset();
         leases4.clear();
         leases6.clear();
         MultiThreadingMgr::instance().setMode(false);
@@ -77,14 +91,15 @@ public:
 
     /// @brief Destructor.
     ~MySqlExtendedInfoTest() {
-        LeaseMgrFactory::destroy();
-        // If data wipe enabled, delete transient data otherwise destroy
-        // the schema.
-        destroyMySQLSchema();
-
+        pmap_.clear();
+        lease_mgr_.reset();
         leases4.clear();
         leases6.clear();
         MultiThreadingMgr::instance().setMode(false);
+
+        // If data wipe enabled, delete transient data otherwise destroy
+        // the schema.
+        destroyMySQLSchema();
     }
 
     /// @brief Create and set v4 leases.
@@ -129,6 +144,23 @@ public:
         ASSERT_EQ(ADDRESS6.size(), leases6.size());
     }
 
+    /// @brief Start lease manager.
+    ///
+    /// @param enable When true enable extended info tables.
+    void start(bool enable) {
+        // Do not set unused pmap_["universe"].
+        if (enable) {
+            pmap_["extended-info-tables"] = "true";
+        }
+
+        ASSERT_NO_THROW(lease_mgr_.reset(new NakedMySqlLeaseMgr(pmap_)));
+        if (enable) {
+            EXPECT_TRUE(lease_mgr_->getExtendedInfoTablesEnabled());
+        } else {
+            EXPECT_FALSE(lease_mgr_->getExtendedInfoTablesEnabled());
+        }
+    }
+
     /// @brief Create a vector of uint8_t from a string.
     ///
     /// @param content A not empty string holding the content.
@@ -156,11 +188,23 @@ public:
     void testUpgradeExtendedInfo4(const CfgConsistency::ExtendedInfoSanity& check,
                                   const LeasePageSize& page_size);
 
+    /// @brief Test initLease6 with tables.
+    void testEnableTables();
+
+    /// @brief Test getLeases6ByRelayId.
+    void testGetLeases6ByRelayId();
+
+    /// @brief Test getLeases6ByRemoteId.
+    void testGetLeases6ByRemoteId();
+
     /// @brief Test getLeases6ByLink.
     void testGetLeases6ByLink();
 
+    /// @brief Parameter map.
+    DatabaseConnection::ParameterMap pmap_;
+
     /// @brief Lease manager.
-    LeaseMgr* lease_mgr_;
+    NakedMySqlLeaseMgrPtr lease_mgr_;
 
     /// @brief V4 leases.
     Lease4Collection leases4;
@@ -172,9 +216,32 @@ public:
     time_t now_;
 };
 
+/// @brief Verifies that the lease manager can start.
+TEST_F(MySqlExtendedInfoTest, startFalse) {
+    start(false);
+}
+
+/// @brief Verifies that the lease manager can start with MT.
+TEST_F(MySqlExtendedInfoTest, startFalseMultiThreading) {
+    MultiThreadingTest mt(true);
+    start(false);
+}
+
+/// @brief Verifies that the lease manager can start with tables.
+TEST_F(MySqlExtendedInfoTest, startTrue) {
+    start(true);
+}
+
+/// @brief Verifies that the lease manager can start with tables and MT.
+TEST_F(MySqlExtendedInfoTest, startTrueMultiThreading) {
+    MultiThreadingTest mt(true);
+    start(true);
+}
+
 /// @brief Verifies that the lease manager can add the v4 leases.
 void
 MySqlExtendedInfoTest::testInitLease4() {
+    start(false);
     initLease4();
     EXPECT_EQ(8, leases4.size());
     IOAddress zero = IOAddress::IPV4_ZERO_ADDRESS();
@@ -209,6 +276,7 @@ TEST_F(MySqlExtendedInfoTest, initLease4MultiThreading) {
 void
 MySqlExtendedInfoTest::testGetLeases4ByRelayId() {
     // Lease manager is created with empty tables.
+    start(false);
     initLease4(false);
 
     // Create leases.
@@ -438,6 +506,7 @@ TEST_F(MySqlExtendedInfoTest, getLeases4ByRelayIdMultiThreading) {
 void
 MySqlExtendedInfoTest::testGetLeases4ByRemoteId() {
     // Lease manager is created with empty tables.
+    start(false);
     initLease4(true);
 
     // Update leases.
@@ -662,6 +731,7 @@ void
 MySqlExtendedInfoTest::testUpgradeExtendedInfo4(const CfgConsistency::ExtendedInfoSanity& check,
                                                 const LeasePageSize& page_size) {
     // Lease manager is created with empty tables.
+    start(false);
     initLease4(false);
 
     // Create leases.
@@ -1006,6 +1076,7 @@ TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_1) {
 /// @brief Verifies that the lease manager can add the v6 leases.
 void
 MySqlExtendedInfoTest::testInitLease6() {
+    start(false);
     initLease6();
     EXPECT_EQ(8, leases6.size());
     Lease6Collection got;
@@ -1034,10 +1105,370 @@ TEST_F(MySqlExtendedInfoTest, initLease6MultiThreading) {
     testInitLease6();
 }
 
+/// @brief Verifies that the lease manager can add the v6 leases with tables.
+void
+MySqlExtendedInfoTest::testEnableTables() {
+    start(true);
+    initLease6();
+    EXPECT_EQ(8, leases6.size());
+    Lease6Collection got;
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6());
+    ASSERT_EQ(leases6.size(), got.size());
+    for (size_t i = 0; i < leases6.size(); ++i) {
+        ConstElementPtr expected = leases6[i]->toElement();
+        LeasePtr lease = got[i];
+        ASSERT_TRUE(lease);
+        EXPECT_TRUE(expected->equals(*lease->toElement()))
+            << "expected: " << expected->str() << "\n"
+            << "got: " << lease->toElement()->str() << "\n";
+    }
+}
+
+TEST_F(MySqlExtendedInfoTest, enableTables) {
+    testEnableTables();
+}
+
+TEST_F(MySqlExtendedInfoTest, enableTablesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testEnableTables();
+}
+
+/// @brief Verifies that getLeases6ByRelayId works as expected.
+void
+MySqlExtendedInfoTest::testGetLeases6ByRelayId() {
+    // Lease manager is created with empty tables.
+    start(true);
+    initLease6();
+    EXPECT_EQ(0, lease_mgr_->byRelayId6size());
+
+    // Create parameter values.
+    IOAddress lease_addr0(ADDRESS6[0]);
+    IOAddress lease_addr1(ADDRESS6[1]);
+    IOAddress lease_addr2(ADDRESS6[2]);
+    IOAddress link_addr(ADDRESS6[4]);
+    IOAddress other_link_addr("2001:db8:1::4");
+    IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
+    vector<uint8_t> relay_id_data0 = createFromString(DUIDS[0]);
+    DUID relay_id0(relay_id_data0);
+    vector<uint8_t> relay_id_data1 = createFromString(DUIDS[1]);
+    DUID relay_id1(relay_id_data1);
+    vector<uint8_t> relay_id_data2 = createFromString(DUIDS[2]);
+    DUID relay_id2(relay_id_data2);
+
+    // Fill the table.
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr0, relay_id_data0));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr0, relay_id_data0));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr0, relay_id_data1));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr1, relay_id_data0));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr1, relay_id_data1));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr2, relay_id_data1));
+    EXPECT_EQ(6, lease_mgr_->byRelayId6size());
+
+    Lease6Collection got;
+    // Unknown relay id #2, no link: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id2,
+                                                          zero,
+                                                          0,
+                                                          zero,
+                                                          LeasePageSize(100)));
+    EXPECT_EQ(0, got.size());
+
+    // Unknown relay id #2, link: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id2,
+                                                          link_addr,
+                                                          64,
+                                                          zero,
+                                                          LeasePageSize(100)));
+    EXPECT_EQ(0, got.size());
+
+    // Relay id #0, other link: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id0,
+                                                          other_link_addr,
+                                                          64,
+                                                          zero,
+                                                          LeasePageSize(100)));
+    EXPECT_EQ(0, got.size());
+
+    // Relay id #0, no link: 3 entries but 2 addresses.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id0,
+                                                          zero,
+                                                          0,
+                                                          zero,
+                                                          LeasePageSize(100)));
+    ASSERT_EQ(2, got.size());
+    Lease6Ptr lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr0, lease->addr_);
+    lease = got[1];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr1, lease->addr_);
+
+    // Relay id #1, no link, partial: 2 entries.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
+                                                          zero,
+                                                          0,
+                                                          zero,
+                                                          LeasePageSize(2)));
+    ASSERT_EQ(2, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr0, lease->addr_);
+    lease = got[1];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr1, lease->addr_);
+
+    // Relay id #1, no link, partial from previous: 1 entry.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
+                                                          zero,
+                                                          0,
+                                                          lease->addr_,
+                                                          LeasePageSize(2)));
+    ASSERT_EQ(1, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr2, lease->addr_);
+
+    // Add another entry for last tests.
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr0, relay_id_data1));
+    EXPECT_EQ(7, lease_mgr_->byRelayId6size());
+
+    // Relay id #1, link: 3 entries.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
+                                                          link_addr,
+                                                          64,
+                                                          zero,
+                                                          LeasePageSize(100)));
+    ASSERT_EQ(3, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr0, lease->addr_);
+    lease = got[1];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr1, lease->addr_);
+    lease = got[2];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr2, lease->addr_);
+
+    // Relay id #1, link, initial partial: 1 entry.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
+                                                          link_addr,
+                                                          64,
+                                                          zero,
+                                                          LeasePageSize(1)));
+    ASSERT_EQ(1, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr0, lease->addr_);
+
+    // Relay id #1, link, next partial: 1 entry.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
+                                                          link_addr,
+                                                          64,
+                                                          lease->addr_,
+                                                          LeasePageSize(1)));
+    ASSERT_EQ(1, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr1, lease->addr_);
+
+    // Relay id #1, link, next partial: 1 entry.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
+                                                          link_addr,
+                                                          64,
+                                                          lease->addr_,
+                                                          LeasePageSize(1)));
+    ASSERT_EQ(1, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr2, lease->addr_);
+
+    // Relay id #1, link, final partial: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
+                                                          link_addr,
+                                                          64,
+                                                          lease->addr_,
+                                                          LeasePageSize(1)));
+    EXPECT_EQ(0, got.size());
+}
+
+TEST_F(MySqlExtendedInfoTest, getLeases6ByRelayId) {
+    testGetLeases6ByRelayId();
+}
+
+TEST_F(MySqlExtendedInfoTest, getLeases6ByRelayIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLeases6ByRelayId();
+}
+
+/// @brief Verifies that getLeases6ByRemoteId works as expected.
+void
+MySqlExtendedInfoTest::testGetLeases6ByRemoteId() {
+    // Lease manager is created with empty tables.
+    start(true);
+    initLease6();
+    EXPECT_EQ(0, lease_mgr_->byRemoteId6size());
+
+    // Create parameter values.
+    IOAddress lease_addr0(ADDRESS6[0]);
+    IOAddress lease_addr1(ADDRESS6[1]);
+    IOAddress lease_addr2(ADDRESS6[2]);
+    IOAddress link_addr(ADDRESS6[4]);
+    IOAddress other_link_addr("2001:db8:1::4");
+    IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
+    vector<uint8_t> remote_id0 = createFromString(DUIDS[0]);
+    vector<uint8_t> remote_id1 = createFromString(DUIDS[1]);
+    vector<uint8_t> remote_id2 = createFromString(DUIDS[2]);
+
+    // Fill the table.
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr0, remote_id0));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr0, remote_id0));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr0, remote_id1));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr1, remote_id0));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr1, remote_id1));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr2, remote_id1));
+    EXPECT_EQ(6, lease_mgr_->byRemoteId6size());
+
+    Lease6Collection got;
+    // Unknown remote id #2, no link: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id2,
+                                                           zero,
+                                                           0,
+                                                           zero,
+                                                           LeasePageSize(10)));
+    EXPECT_EQ(0, got.size());
+
+    // Unknown remote id #2, link: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id2,
+                                                           link_addr,
+                                                           64,
+                                                           zero,
+                                                           LeasePageSize(10)));
+    EXPECT_EQ(0, got.size());
+
+    // Remote id #0, other link: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id0,
+                                                           other_link_addr,
+                                                           64,
+                                                           zero,
+                                                           LeasePageSize(10)));
+    EXPECT_EQ(0, got.size());
+
+    // Remote id #0, no link: 3 entries but 2 addresses.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id0,
+                                                           zero,
+                                                           0,
+                                                           zero,
+                                                           LeasePageSize(10)));
+    ASSERT_EQ(2, got.size());
+    Lease6Ptr lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr0, lease->addr_);
+    lease = got[1];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr1, lease->addr_);
+
+    // Remote id #1, no link, partial: 2 entries.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
+                                                           zero,
+                                                           0,
+                                                           zero,
+                                                           LeasePageSize(2)));
+    ASSERT_EQ(2, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr0, lease->addr_);
+    lease = got[1];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr1, lease->addr_);
+
+    // Remote id #1, no link, partial from previous: 1 entry.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
+                                                           zero,
+                                                           0,
+                                                           lease->addr_,
+                                                           LeasePageSize(2)));
+    ASSERT_EQ(1, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr2, lease->addr_);
+
+    // Add another entry for last tests.
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr0, remote_id1));
+    EXPECT_EQ(7, lease_mgr_->byRemoteId6size());
+
+    // Remote id #1, link: 3 entries.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
+                                                           link_addr,
+                                                           64,
+                                                           zero,
+                                                           LeasePageSize(10)));
+    ASSERT_EQ(3, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr0, lease->addr_);
+    lease = got[1];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr1, lease->addr_);
+    lease = got[2];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr2, lease->addr_);
+
+    // Remote id #1, link, initial partial: 1 entry.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
+                                                           link_addr,
+                                                           64,
+                                                           zero,
+                                                           LeasePageSize(1)));
+    ASSERT_EQ(1, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr0, lease->addr_);
+
+    // Remote id #1, link, next partial: 1 entry.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
+                                                           link_addr,
+                                                           64,
+                                                           lease->addr_,
+                                                           LeasePageSize(1)));
+    ASSERT_EQ(1, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr1, lease->addr_);
+
+    // Remote id #1, link, next partial: 1 entry.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
+                                                           link_addr,
+                                                           64,
+                                                           lease->addr_,
+                                                           LeasePageSize(1)));
+    ASSERT_EQ(1, got.size());
+    lease = got[0];
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lease_addr2, lease->addr_);
+
+    // Remote id #1, link, final partial: nothing.
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
+                                                           link_addr,
+                                                           64,
+                                                           lease->addr_,
+                                                           LeasePageSize(1)));
+    EXPECT_EQ(0, got.size());
+}
+
+TEST_F(MySqlExtendedInfoTest, getLeases6ByRemoteId) {
+    testGetLeases6ByRemoteId();
+}
+
+TEST_F(MySqlExtendedInfoTest, getLeases6ByRemoteIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLeases6ByRemoteId();
+}
+
 /// @brief Verifies that getLeases6ByLink works as expected.
 void
 MySqlExtendedInfoTest::testGetLeases6ByLink() {
     // Lease manager is created with empty tables.
+    start(false);
     initLease6();
 
     // Create parameter values.
