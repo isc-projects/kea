@@ -772,6 +772,13 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
         status->set("multi-threading-enabled", Element::create(false));
     }
 
+    status->set("extended-info-tables",
+                Element::create(LeaseMgrFactory::instance().getExtendedInfoTablesEnabled()));
+    status->set("by-relay-id-table-size",
+                Element::create(static_cast<long long>(LeaseMgrFactory::instance().byRelayId6size())));
+    status->set("by-remote-id-table-size",
+                Element::create(static_cast<long long>(LeaseMgrFactory::instance().byRemoteId6size())));
+
     // Iterate through the interfaces and get all the errors.
     ElementPtr socket_errors(Element::createList());
     for (IfacePtr const& interface : IfaceMgr::instance().getIfaces()) {

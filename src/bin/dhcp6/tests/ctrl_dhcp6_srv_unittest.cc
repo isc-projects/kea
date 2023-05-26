@@ -1094,6 +1094,18 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     ASSERT_TRUE(found_queue_stats);
     EXPECT_FALSE(found_queue_stats->str().empty());
 
+    auto found_extended_info_tables = arguments->get("extended-info-tables");
+    ASSERT_TRUE(found_extended_info_tables);
+    EXPECT_FALSE(found_extended_info_tables->boolValue());
+
+    auto found_by_relay_id_table_size = arguments->get("by-relay-id-table-size");
+    ASSERT_TRUE(found_by_relay_id_table_size);
+    EXPECT_LE(0, found_by_relay_id_table_size->intValue());
+
+    auto found_by_remote_id_table_size = arguments->get("by-remote-id-table-size");
+    ASSERT_TRUE(found_by_remote_id_table_size);
+    EXPECT_LE(0, found_by_remote_id_table_size->intValue());
+
     MultiThreadingMgr::instance().setMode(true);
     MultiThreadingMgr::instance().setThreadPoolSize(4);
     MultiThreadingMgr::instance().setPacketQueueSize(64);
