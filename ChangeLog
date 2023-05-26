@@ -1,9 +1,9 @@
 2142.	[func]		piotrek
 	New command option was added to perfdhcp: --or.
-    It allows to insert extra option(s) to relayed DHCPv6 message
-    at given level of encapsulation. For now only first level of
-    encapsulation is supported.
-    (Gitlab #2834)
+	It allows to insert extra option(s) to relayed DHCPv6 message
+	at given level of encapsulation. For now only first level of
+	encapsulation is supported.
+	(Gitlab #2834)
 
 2141.	[bug]		razvan
 	The High Availability hook library is sending the 'origin'
