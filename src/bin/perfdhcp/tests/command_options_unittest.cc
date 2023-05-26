@@ -1005,3 +1005,13 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsWithEncapsulationLevelValueTwo) {
     EXPECT_THROW(process(opt, "perfdhcp -6 -A1 --or 2:32,00000E10 -l ethx all"), isc::InvalidParameter);
 }
 
+TEST_F(CommandOptionsTest, UseRelayV6OptionsDuplicated) {
+    CommandOptions opt;
+
+    // multiple relayed options with the same option code are supported.
+    EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 1:32,00000E10  --or 32,00000E11 -l ethx all"));
+    EXPECT_TRUE(opt.isUseRelayedV6());
+    EXPECT_EQ(2, opt.getRelayOpts().size());
+}
+
+

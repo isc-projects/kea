@@ -365,8 +365,7 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
    specifies the option code and the hexstring is a hexadecimal string that
    defines the content of the option. Care should be taken as ``perfdhcp``
    does not offer any kind of logic behind those options; they are simply
-   inserted into packets and sent as is. Be careful not to duplicate
-   options that are already inserted. Please notice that ``encapsulation-level:``
+   inserted into packets and sent as is. Please notice that ``encapsulation-level:``
    is optional and if omitted, default encapsulation-level value 1 is used.
    For example, to insert client class identifier (option code 60) with a
    string "docsis" at first level of encapsulation, use "--or 60,646f63736973"
