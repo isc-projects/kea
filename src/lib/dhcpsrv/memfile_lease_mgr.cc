@@ -393,6 +393,7 @@ public:
         }
     }
 
+private:
     /// @brief Creates the IPv4 lease statistical data result set
     ///
     /// The result set is populated by iterating over the IPv4 leases in
@@ -610,7 +611,6 @@ public:
         next_pos_ = rows_.begin();
     }
 
-private:
     /// @brief The Memfile storage containing the IPv4 leases to analyze
     Lease4Storage& storage4_;
 };
@@ -686,6 +686,7 @@ public:
         }
     }
 
+private:
     /// @brief Creates the IPv6 lease statistical data result set
     ///
     /// The result set is populated by iterating over the IPv6 leases in
@@ -963,7 +964,6 @@ public:
         next_pos_ = rows_.begin();
     }
 
-private:
     /// @brief The Memfile storage containing the IPv6 leases to analyze
     Lease6Storage& storage6_;
 };
