@@ -91,20 +91,20 @@ private:
     /// These are used for both retrieving data and for looking up
     /// column labels for logging.  Note that their numeric order
     /// MUST match that of the column order in the hosts table.
-    static const int HOST_ID_COL = 0;
-    static const int DHCP_IDENTIFIER_COL = 1;
-    static const int DHCP_IDENTIFIER_TYPE_COL = 2;
-    static const int DHCP4_SUBNET_ID_COL = 3;
-    static const int DHCP6_SUBNET_ID_COL = 4;
-    static const int IPV4_ADDRESS_COL = 5;
-    static const int HOSTNAME_COL = 6;
-    static const int DHCP4_CLIENT_CLASSES_COL = 7;
-    static const int DHCP6_CLIENT_CLASSES_COL = 8;
-    static const int USER_CONTEXT_COL = 9;
-    static const int DHCP4_NEXT_SERVER_COL = 10;
-    static const int DHCP4_SERVER_HOSTNAME_COL = 11;
-    static const int DHCP4_BOOT_FILE_NAME_COL = 12;
-    static const int AUTH_KEY_COL = 13;
+    static const size_t HOST_ID_COL = 0;
+    static const size_t DHCP_IDENTIFIER_COL = 1;
+    static const size_t DHCP_IDENTIFIER_TYPE_COL = 2;
+    static const size_t DHCP4_SUBNET_ID_COL = 3;
+    static const size_t DHCP6_SUBNET_ID_COL = 4;
+    static const size_t IPV4_ADDRESS_COL = 5;
+    static const size_t HOSTNAME_COL = 6;
+    static const size_t DHCP4_CLIENT_CLASSES_COL = 7;
+    static const size_t DHCP6_CLIENT_CLASSES_COL = 8;
+    static const size_t USER_CONTEXT_COL = 9;
+    static const size_t DHCP4_NEXT_SERVER_COL = 10;
+    static const size_t DHCP4_SERVER_HOSTNAME_COL = 11;
+    static const size_t DHCP4_BOOT_FILE_NAME_COL = 12;
+    static const size_t AUTH_KEY_COL = 13;
     /// @brief Number of columns returned for SELECT queries sent by this class.
     static const size_t HOST_COLUMNS = 14;
 
@@ -1095,6 +1095,7 @@ public:
         columns_[2] = "prefix_len";
         columns_[3] = "type";
         columns_[4] = "dhcp6_iaid";
+
         BOOST_STATIC_ASSERT(5 < RESRV_COLUMNS);
     }
 
@@ -1168,20 +1169,18 @@ private:
 class PgSqlOptionExchange : public PgSqlExchange {
 private:
 
-    static const int OPTION_ID_COL = 0;
-    static const int CODE_COL = 1;
-    static const int VALUE_COL = 2;
-    static const int FORMATTED_VALUE_COL = 3;
-    static const int SPACE_COL = 4;
-    static const int PERSISTENT_COL = 5;
-    static const int CANCELLED_COL = 6;
-    static const int USER_CONTEXT_COL = 7;
-    static const int DHCP_CLIENT_CLASS_COL = 8;
-    static const int DHCP_SUBNET_ID_COL = 9;
-    static const int HOST_ID_COL = 10;
-
+    static const size_t OPTION_ID_COL = 0;
+    static const size_t CODE_COL = 1;
+    static const size_t VALUE_COL = 2;
+    static const size_t FORMATTED_VALUE_COL = 3;
+    static const size_t SPACE_COL = 4;
+    static const size_t PERSISTENT_COL = 5;
+    static const size_t CANCELLED_COL = 6;
+    static const size_t USER_CONTEXT_COL = 7;
+    static const size_t DHCP_SUBNET_ID_COL = 8;
+    static const size_t HOST_ID_COL = 9;
     /// @brief Number of columns in the option tables holding bindable values.
-    static const size_t OPTION_COLUMNS = 11;
+    static const size_t OPTION_COLUMNS = 10;
 
 public:
 
@@ -1197,11 +1196,10 @@ public:
         columns_[PERSISTENT_COL] = "persistent";
         columns_[CANCELLED_COL] = "cancelled";
         columns_[USER_CONTEXT_COL] = "user_context";
-        columns_[DHCP_CLIENT_CLASS_COL] = "dhcp_client_class";
         columns_[DHCP_SUBNET_ID_COL] = "dhcp_subnet_id";
         columns_[HOST_ID_COL] = "host_id";
 
-        BOOST_STATIC_ASSERT(11 <= OPTION_COLUMNS);
+        BOOST_STATIC_ASSERT(10 <= OPTION_COLUMNS);
     }
 
     /// @brief Creates binding array to insert option data into database.

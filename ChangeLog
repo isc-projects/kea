@@ -1,3 +1,29 @@
+2143.	[func]		razvan
+	Added v4 statistic counters per pool:
+	subnet[id].pool[id].assigned-addresses
+	subnet[id].pool[id].cumulative-assigned-addresses
+	subnet[id].pool[id].declined-addresses
+	subnet[id].pool[id].reclaimed-declined-addresses
+	subnet[id].pool[id].reclaimed-leases
+	subnet[id].pool[id].total-addresses
+	Added v6 statistic counters per pool:
+	subnet[id].pool[id].assigned-nas
+	subnet[id].pd-pool[id].assigned-pds
+	subnet[id].pool[id].cumulative-assigned-nas
+	subnet[id].pd-pool[id].cumulative-assigned-pds
+	subnet[id].pool[id].declined-addresses
+	subnet[id].pool[id].reclaimed-declined-addresses
+	subnet[id].pool[id].reclaimed-leases
+	subnet[id].pd-pool[id].reclaimed-leases
+	subnet[id].pool[id].total-nas
+	subnet[id].pd-pool[id].total-pds
+	Counters are stored in the lease storage and after schema
+	upgrade all existing leases are considered to be part of pool
+	ID 0. On lease update, the counters will be updated accordingly
+	including pool IDs and statistics will converge to real values
+	over time.
+	(Gitlab #145)
+
 2142.	[func]		piotrek
 	New command option was added to perfdhcp: --or.
 	It allows to insert extra option(s) to relayed DHCPv6 message
