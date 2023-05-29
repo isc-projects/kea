@@ -950,7 +950,7 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsWithMultiSubnets) {
 TEST_F(CommandOptionsTest, UseRelayV6OptionsNoComma) {
     CommandOptions opt;
 
-    // --or must be followed by encapsulation-level, colon, option code, a coma and hexstring
+    // --or must be followed by encapsulation-level, colon, option code, a comma and hexstring
     // in case encapsulation-level and colon are skipped, encapsulation-level is by default 1
     EXPECT_THROW(process(opt, "perfdhcp -6 --or 3200000E10 -l ethx all"), isc::InvalidParameter);
 }
@@ -958,7 +958,7 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsNoComma) {
 TEST_F(CommandOptionsTest, UseRelayV6OptionsNegativeOptionCode) {
     CommandOptions opt;
 
-    // --or must be followed by encapsulation-level, colon, positive option code, a coma and hexstring
+    // --or must be followed by encapsulation-level, colon, positive option code, a comma and hexstring
     // in case encapsulation-level and colon are skipped, encapsulation-level is by default 1
     EXPECT_THROW(process(opt, "perfdhcp -6 --or -32,00000E10 -l ethx all"), isc::InvalidParameter);
 }

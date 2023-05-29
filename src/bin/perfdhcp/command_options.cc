@@ -471,16 +471,16 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
             // custom option (expected format: code,hexstring)
             std::string opt_text = std::string(optarg);
-            size_t coma_loc = opt_text.find(',');
-            check(coma_loc == std::string::npos,
-                  "-o option must provide option code, a coma and hexstring for"
+            size_t comma_loc = opt_text.find(',');
+            check(comma_loc == std::string::npos,
+                  "-o option must provide option code, a comma and hexstring for"
                   " the option content, e.g. -o60,646f63736973 for sending option"
                   " 60 (class-id) with the value 'docsis'");
             int code = 0;
 
             // Try to parse the option code
             try {
-                code = boost::lexical_cast<int>(opt_text.substr(0,coma_loc));
+                code = boost::lexical_cast<int>(opt_text.substr(0, comma_loc));
                 check(code <= 0, "Option code can't be negative");
             } catch (const boost::bad_lexical_cast&) {
                 isc_throw(InvalidParameter, "Invalid option code specified for "
@@ -488,7 +488,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             }
 
             // Now try to interpret the hexstring
-            opt_text = opt_text.substr(coma_loc + 1);
+            opt_text = opt_text.substr(comma_loc + 1);
             std::vector<uint8_t> bin;
             try {
                 isc::util::encode::decodeHex(opt_text, bin);
@@ -614,7 +614,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             // custom option (expected format: encapsulation-level:code,hexstring)
             std::string opt_text = std::string(optarg);
             size_t colon_loc = opt_text.find(':');
-            size_t coma_loc = opt_text.find(',');
+            size_t comma_loc = opt_text.find(',');
 
             // if encapsulation level is skipped by user, let's assume it is 1
             uint8_t option_encapsulation_level = 1;
@@ -636,8 +636,8 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                 }
             }
 
-            check(coma_loc == std::string::npos,
-                  "--or option must provide encapsulation level, a colon, option code, a coma and "
+            check(comma_loc == std::string::npos,
+                  "--or option must provide encapsulation level, a colon, option code, a comma and "
                   "hexstring for the option content, e.g. --or 1:60,646f63736973 for sending option"
                   " 60 (class-id) with the value 'docsis' at first level of encapsulation");
             int code = 0;
@@ -645,7 +645,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             // Try to parse the option code
             try {
                 code = boost::lexical_cast<int>(
-                    opt_text.substr(colon_loc + 1, coma_loc - colon_loc - 1));
+                    opt_text.substr(colon_loc + 1, comma_loc - colon_loc - 1));
                 check(code <= 0, "Option code can't be negative or zero");
             } catch (const boost::bad_lexical_cast&) {
                 isc_throw(InvalidParameter,
@@ -654,7 +654,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             }
 
             // Now try to interpret the hexstring
-            opt_text = opt_text.substr(coma_loc + 1);
+            opt_text = opt_text.substr(comma_loc + 1);
             std::vector<uint8_t> bin;
             try {
                 isc::util::encode::decodeHex(opt_text, bin);
@@ -1394,7 +1394,7 @@ DHCPv6 only options:
     <encapsulation-level> value is 1, which means that the generated
     traffic is an equivalent of the traffic passing through a single
     relay agent.
---or encapsulation-level:<code,hexstring>: Send custom option included
+--or encapsulation-level:<code,hexstring>: Send given option included
     to simulated DHCPv6 relayed traffic at given level of encapsulation
     with the specified code and the specified buffer in hexstring format.
     Currently the only supported encapsulation-level value is 1.
