@@ -63,7 +63,7 @@ FreeLeaseQueueAllocator::pickAddressInternal(const ClientClasses& client_classes
         return (pool_type_ == Lease::TYPE_V4 ? IOAddress::IPV4_ZERO_ADDRESS() : IOAddress::IPV6_ZERO_ADDRESS());
     }
     // Get a random pool from the available ones.
-    auto pool = pools[available[getRandomNumber(available.size() - 1)]];
+    auto const& pool = pools[available[getRandomNumber(available.size() - 1)]];
 
     // Get or create the pool state.
     auto pool_state = getPoolState(pool);
@@ -114,7 +114,7 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         return (IOAddress::IPV6_ZERO_ADDRESS());
     }
     // Get a random pool from the available ones.
-    auto pool = pools[available[getRandomNumber(available.size() - 1)]];
+    auto const& pool = pools[available[getRandomNumber(available.size() - 1)]];
     pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
     if (!pool6) {
         // Something is gravely wrong here

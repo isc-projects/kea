@@ -387,7 +387,7 @@ pgsql_upgrade_7_0_to_8_0_test() {
 
     # Check lease6Dump*().
     run_command \
-        pgsql_execute "INSERT INTO lease6 VALUES('::10',E'\\\\x3230',30,TO_TIMESTAMP(1678900000),40,50,1,60,70,'t','t','one,example,com',0,E'\\\\x3830',16,0,'{ \"a\": 1, \"b\": 2 }',NULL)"
+        pgsql_execute "INSERT INTO lease6 VALUES('::10',E'\\\\x3230',30,TO_TIMESTAMP(1678900000),40,50,1,60,70,'t','t','one,example,com',0,E'\\\\x3830',16,0,'{ \"a\": 1, \"b\": 2 }',0,NULL)"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -829,6 +829,16 @@ pgsql_upgrade_15_to_16_test() {
 }
 
 pgsql_upgrade_16_to_17_test() {
+    # Added lease4_pool_stat table
+    run_command \
+        pgsql_execute "SELECT subnet_id, pool_id, state, leases FROM lease4_pool_stat"
+    assert_eq 0 "${EXIT_CODE}" "lease4_pool_stat table is missing or broken. (expected status code %d, returned %d)"
+
+    # Added lease6_pool_stat table
+    run_command \
+        pgsql_execute "SELECT subnet_id, pool_id, lease_type, state, leases FROM lease6_pool_stat"
+    assert_eq 0 "${EXIT_CODE}" "lease6_pool_stat table is missing or broken. (expected status code %d, returned %d)"
+
     # Added binaddr column to lease6
     run_command \
         pgsql_execute "select binaddr from lease6"
@@ -843,16 +853,6 @@ pgsql_upgrade_16_to_17_test() {
     run_command \
         pgsql_execute "select extended_info_id, remote_id, lease_addr from lease6_remote_id"
     assert_eq 0 "${EXIT_CODE}" "lease6_remote_id table is missing or broken. (expected status code %d, returned %d)"
-
-    # Added lease4_pool_stat table
-    run_command \
-        pgsql_execute "SELECT subnet_id, pool_id, state, leases FROM lease4_pool_stat"
-    assert_eq 0 "${EXIT_CODE}" "lease4_pool_stat table is missing or broken. (expected status code %d, returned %d)"
-
-    # Added lease6_pool_stat table
-    run_command \
-        pgsql_execute "SELECT subnet_id, pool_id, lease_type, state, leases FROM lease6_pool_stat"
-    assert_eq 0 "${EXIT_CODE}" "lease6_pool_stat table is missing or broken. (expected status code %d, returned %d)"
 }
 
 pgsql_upgrade_test() {
@@ -1046,9 +1046,9 @@ pgsql_lease6_dump_test() {
     # Because shell evaluates the double quoted string one more time, they need to be doubled.
     # Otherwise, the value is interpreted as ASCII instead of raw bytes.
     insert_sql="\
-insert into lease6 values('::10',E'\\\\x323033',30,TO_TIMESTAMP(1642000000),40,50,1,60,70,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,'',NULL); \
-insert into lease6 values('::11',E'\\\\x323133',30,TO_TIMESTAMP(1643210000),40,50,1,60,70,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }',NULL); \
-insert into lease6 values('::12',E'\\\\x323233',30,TO_TIMESTAMP(1643212345),40,50,1,60,70,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }',NULL)"
+insert into lease6 values('::10',E'\\\\x323033',30,TO_TIMESTAMP(1642000000),40,50,1,60,70,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,'',0,NULL); \
+insert into lease6 values('::11',E'\\\\x323133',30,TO_TIMESTAMP(1643210000),40,50,1,60,70,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }',0,NULL); \
+insert into lease6 values('::12',E'\\\\x323233',30,TO_TIMESTAMP(1643212345),40,50,1,60,70,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }',0,NULL)"
 
     run_command \
         pgsql_execute "$insert_sql"

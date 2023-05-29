@@ -2212,7 +2212,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                                                               "pool" : "pd-pool", pool->getID(),
                                                               ctx.currentIA().type_ == Lease::TYPE_NA ?
                                                               "assigned-nas" : "assigned-pds")),
-                static_cast<int64_t>(1));
+                static_cast<int64_t>(-1));
         }
 
         // Add it to the removed leases list.
@@ -3205,7 +3205,7 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
             stats_mgr.addValue(StatsMgr::generateName("subnet", subnet->getID(),
                                                       StatsMgr::generateName("pool" , pool->getID(),
                                                                              "reclaimed-declined-addresses")),
-                static_cast<int64_t>(-1));
+                static_cast<int64_t>(1));
         }
     }
 
@@ -3287,7 +3287,6 @@ AllocEngine::labelNetworkOrSubnet(SubnetPtr subnet) {
 
     return(ss.str());
 }
-
 
 }  // namespace dhcp
 }  // namespace isc
@@ -4157,7 +4156,6 @@ AllocEngine::getOfferLft(const ClientContext4& ctx) {
 
     return (offer_lft.unspecified() ? 0 : offer_lft.get());
 }
-
 
 uint32_t
 AllocEngine::getValidLft(const ClientContext4& ctx) {

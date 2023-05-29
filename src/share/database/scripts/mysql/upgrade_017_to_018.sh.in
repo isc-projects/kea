@@ -76,31 +76,6 @@ ALTER TABLE lease6
 
 UPDATE lease6 SET duid = UNHEX('000000') WHERE duid = UNHEX('00');
 
--- Add the binary version of the IPv6 address for v6 BLQ prefix filter.
-ALTER TABLE lease6
-    ADD COLUMN binaddr BINARY(16) DEFAULT NULL;
-CREATE INDEX lease6_by_binaddr ON lease6 (binaddr ASC);
-
--- Create table for v6 BLQ by-relay-id.
-CREATE TABLE lease6_relay_id (
-    extended_info_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    relay_id VARBINARY(130) NOT NULL,
-    lease_addr BINARY(16) NOT NULL,
-    PRIMARY KEY (extended_info_id),
-    INDEX key_lease6_relay_id_by_id (relay_id, lease_addr ASC),
-    INDEX key_lease6_relay_id_by_address (lease_addr)
-)  ENGINE = INNODB;
-
--- Create table for v6 BLQ by-remote-id.
-CREATE TABLE lease6_remote_id (
-    extended_info_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    remote_id VARBINARY(255) NOT NULL,
-    lease_addr BINARY(16) NOT NULL,
-    PRIMARY KEY (extended_info_id),
-    INDEX key_lease6_remote_id_by_id (remote_id, lease_addr ASC),
-    INDEX key_lease6_remote_id_by_address (lease_addr)
-)  ENGINE = INNODB;
-
 # Add pool_id column to the lease4 table.
 ALTER TABLE lease4
     ADD COLUMN pool_id INT UNSIGNED NOT NULL DEFAULT 0;
@@ -558,6 +533,31 @@ INSERT INTO lease4_pool_stat (subnet_id, pool_id, state, leases)
 INSERT INTO lease6_pool_stat (subnet_id, pool_id, lease_type, state, leases)
     SELECT subnet_id, pool_id, lease_type, state, count(*) FROM lease6
     WHERE state = 0 OR state = 1 GROUP BY subnet_id, pool_id, lease_type, state;
+
+-- Add the binary version of the IPv6 address for v6 BLQ prefix filter.
+ALTER TABLE lease6
+    ADD COLUMN binaddr BINARY(16) DEFAULT NULL;
+CREATE INDEX lease6_by_binaddr ON lease6 (binaddr ASC);
+
+-- Create table for v6 BLQ by-relay-id.
+CREATE TABLE lease6_relay_id (
+    extended_info_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    relay_id VARBINARY(130) NOT NULL,
+    lease_addr BINARY(16) NOT NULL,
+    PRIMARY KEY (extended_info_id),
+    INDEX key_lease6_relay_id_by_id (relay_id, lease_addr ASC),
+    INDEX key_lease6_relay_id_by_address (lease_addr)
+)  ENGINE = INNODB;
+
+-- Create table for v6 BLQ by-remote-id.
+CREATE TABLE lease6_remote_id (
+    extended_info_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    remote_id VARBINARY(255) NOT NULL,
+    lease_addr BINARY(16) NOT NULL,
+    PRIMARY KEY (extended_info_id),
+    INDEX key_lease6_remote_id_by_id (remote_id, lease_addr ASC),
+    INDEX key_lease6_remote_id_by_address (lease_addr)
+)  ENGINE = INNODB;
 
 -- Update the schema version number.
 UPDATE schema_version

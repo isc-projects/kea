@@ -516,7 +516,6 @@ private:
         // Set lower and upper bounds based on select mode
         Lease4StorageSubnetIdPoolIdIndex::const_iterator lower;
         Lease4StorageSubnetIdPoolIdIndex::const_iterator upper;
-
         switch (getSelectMode()) {
         case ALL_SUBNET_POOLS:
             lower = idx.begin();
@@ -702,7 +701,6 @@ private:
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
     virtual void startSubnets() {
-        // Get the subnet_id index
         const Lease6StorageSubnetIdIndex& idx
             = storage6_.get<SubnetIdIndexTag>();
 
@@ -828,7 +826,6 @@ private:
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
     virtual void startSubnetPools() {
-        // Get the subnet_id index
         const Lease6StorageSubnetIdPoolIdIndex& idx
             = storage6_.get<SubnetIdPoolIdIndexTag>();
 
