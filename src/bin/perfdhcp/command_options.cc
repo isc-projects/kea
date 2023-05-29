@@ -1254,7 +1254,8 @@ R"(perfdhcp [-1] [-4 | -6] [-A encapsulation-level] [-b base] [-B] [-c]
          [-h] [-i] [-I ip-offset] [-J remote-address-list-file]
          [-l local-address|interface] [-L local-port] [-M mac-list-file]
          [-n num-request] [-N remote-port] [-O random-offset]
-         [-o code,hexstring] [-p test-period] [-P preload] [-r rate]
+         [-o code,hexstring] [--or encapsulation-level:code,hexstring]
+         [-p test-period] [-P preload] [-r rate]
          [-R num-clients] [-s seed] [-S srvid-offset] [--scenario name]
          [-t report] [-T template-file] [-u] [-v] [-W exit-wait-time]
          [-w script_name] [-x diagnostic-selector] [-X xid-offset] [server]
@@ -1393,6 +1394,11 @@ DHCPv6 only options:
     <encapsulation-level> value is 1, which means that the generated
     traffic is an equivalent of the traffic passing through a single
     relay agent.
+--or encapsulation-level:<code,hexstring>: Send custom option included
+    to simulated DHCPv6 relayed traffic at given level of encapsulation
+    with the specified code and the specified buffer in hexstring format.
+    Currently the only supported encapsulation-level value is 1.
+    Must be used together with -A.
 
 The remaining options are typically used in conjunction with -r:
 
