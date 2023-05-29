@@ -1090,8 +1090,8 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     size_t erased_hosts = 0;
     size_t erased_addresses = 0;
     if (addr.isV4()) {
-        // Delete IPv4 reservation and host.
         HostContainerIndex4& idx = hosts_.get<4>();
+        // Delete IPv4 reservation and host.
         for (auto host : getAll4(subnet_id, addr)) {
             erased_hosts += idx.erase(host->getHostId());
         }
@@ -1099,16 +1099,14 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     } else {
         HostContainer6Index1& idx6 = hosts6_.get<1>();
         HostContainerIndex4& idx = hosts_.get<4>();
-
         // Delete IPv6 reservations.
         const auto& range = idx6.equal_range(boost::make_tuple(subnet_id, addr));
-        idx6.erase(range.first, range.second);
         erased_addresses = boost::distance(range);
-
         // Delete hosts.
         for (auto key = range.first; key != range.second; ++key) {
             erased_hosts += idx.erase(key->host_->getHostId());
         }
+        idx6.erase(range.first, range.second);
     }
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL)
