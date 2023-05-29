@@ -39,7 +39,7 @@ FreeLeaseQueueAllocator::pickAddressInternal(const ClientClasses& client_classes
                                              const IdentifierBaseTypePtr&,
                                              const IOAddress&) {
     auto subnet = subnet_.lock();
-    auto pools = subnet->getPools(pool_type_);
+    auto const& pools = subnet->getPools(pool_type_);
     if (pools.empty()) {
         // No pools, no allocation.
         return (pool_type_ == Lease::TYPE_V4 ? IOAddress::IPV4_ZERO_ADDRESS() : IOAddress::IPV6_ZERO_ADDRESS());
@@ -86,7 +86,7 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                                             const IOAddress&,
                                             uint8_t hint_prefix_length) {
     auto subnet = subnet_.lock();
-    auto pools = subnet->getPools(pool_type_);
+    auto const& pools = subnet->getPools(pool_type_);
     if (pools.empty()) {
         // No pool, no allocation.
         return (IOAddress::IPV6_ZERO_ADDRESS());
@@ -137,7 +137,7 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
 void
 FreeLeaseQueueAllocator::initAfterConfigureInternal() {
     auto subnet = subnet_.lock();
-    auto pools = subnet->getPools(pool_type_);
+    auto const& pools = subnet->getPools(pool_type_);
     if (pools.empty()) {
         // If there are no pools there is nothing to do.
         return;

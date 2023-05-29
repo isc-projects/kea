@@ -49,6 +49,12 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     if (lease_info->contains("subnet-id")) {
         subnet_id = getUint32(lease_info, "subnet-id");
     }
+
+    uint32_t pool_id = 0;
+    if (lease_info->contains("pool-id")) {
+        pool_id = getUint32(lease_info, "pool-id");
+    }
+
     ConstSubnet4Ptr subnet;
     if (subnet_id) {
         // If subnet-id is specified, it has to match.
@@ -170,6 +176,7 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                            fqdn_fwd, fqdn_rev, hostname));
     l->state_ = state;
     l->setContext(ctx);
+    l->pool_id_ = pool_id;
 
     // Sanitize extended info.
     if (ctx) {
@@ -230,6 +237,11 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     SubnetID subnet_id = 0;
     if (lease_info->contains("subnet-id")) {
         subnet_id = getUint32(lease_info, "subnet-id");
+    }
+
+    uint32_t pool_id = 0;
+    if (lease_info->contains("pool-id")) {
+        pool_id = getUint32(lease_info, "pool-id");
     }
 
     // Check if the subnet-id specified is sane.
@@ -377,6 +389,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     l->cltt_ = cltt;
     l->state_ = state;
     l->setContext(ctx);
+    l->pool_id_ = pool_id;
 
     // Sanitize extended info.
     if (ctx) {
