@@ -638,8 +638,8 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
             check(comma_loc == std::string::npos,
                   "--or option must provide encapsulation level, a colon, option code, a comma and "
-                  "hexstring for the option content, e.g. --or 1:60,646f63736973 for sending option"
-                  " 60 (class-id) with the value 'docsis' at first level of encapsulation");
+                  "hexstring for the option content, e.g. --or 1:38,31323334 for sending option"
+                  " 38 (subscriber-id) with the value 1234 at first level of encapsulation");
             int code = 0;
 
             // Try to parse the option code

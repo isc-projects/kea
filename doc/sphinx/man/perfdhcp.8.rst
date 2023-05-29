@@ -367,9 +367,9 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
    does not offer any kind of logic behind those options; they are simply
    inserted into packets and sent as is. Please notice that ``encapsulation-level:``
    is optional and if omitted, default encapsulation-level value 1 is used.
-   For example, to insert client class identifier (option code 60) with a
-   string "docsis" at first level of encapsulation, use "--or 60,646f63736973"
-   or "--or 1:60,646f63736973". The ``--or`` may be used multiple times.
+   For example, to insert Subscriber identifier (option code 38) with a
+   value 1234 at first level of encapsulation, use ``--or 38,31323334``
+   or ``--or 1:38,31323334``. The ``--or`` may be used multiple times.
    It must be used together with ``-A``.
 
 Template-Related Options
