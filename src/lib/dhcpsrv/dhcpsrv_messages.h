@@ -1,4 +1,4 @@
-// File created from dhcpsrv_messages.mes
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes
 
 #ifndef DHCPSRV_MESSAGES_H
 #define DHCPSRV_MESSAGES_H

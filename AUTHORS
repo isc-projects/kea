@@ -7,7 +7,7 @@ Primary developers:
                     host reservation, MAC extraction in DHCPv6,
                     statistics manager, kea-shell, netconf, flex/bison
                     parsers, flex-id, documentation, config backend,
-                    ddns_tuning)
+                    ddns_tuning, CI, documentation)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
                      control agent, shared networks, high availability,
@@ -23,13 +23,14 @@ Primary developers:
                    GSS-TSIG, bulk leasequery)
  - Razvan Becheriu (cassandra, netconf, multi-threading, forensic logging,
                     run script hook, multi-threading mode of high availability,
-                    GSS-TSIG)
+                    GSS-TSIG, statistics)
  - Vicky Risk (documentation)
  - Suzanne Goldlust (documentation)
  - Andrei Pavel (build system, documentation, hammer, netconf, perfdhcp,
-                 release engineering, shell scripts, testing, limits)
+                 release engineering, shell scripts, testing, limits,
+                 statistics)
  - Peter Davies (documentation)
- - Slawek Figiel (documentation)
+ - Slawek Figiel (documentation, host reservations)
  - Dan Theisen (documentation, option handling, shell scripts)
  - Marcin Godzina (documentation, release engineering, testing)
  - Piotrek Zadroga (documentation, options handling, perfdhcp)
