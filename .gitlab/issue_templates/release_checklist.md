@@ -29,11 +29,14 @@ For new stable releases or maintenance releases, please don't use `kea-dev` buil
 1. Prepare Release Notes
    1. [ ] Create Release Notes on Kea GitLab wiki and notify @tomek about that. It should be created under "release notes" directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/release%20notes/release-notes-2.1.0
    1. [ ] Finish release notes and conduct its review. Also please notify @sgoldlust or @vicky that release notes are ready for review.
-1. [ ] Run [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/) as running parameter `TarballOrPkg` select `packages` and [release-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/) to test repositories for correctness.
+1. [ ] Check that packges can be uploaded to cloudsmith.
+   1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
+   1. Click `Build with Parameters`.
+   1. Pick the latest pkg build in the `Packages` field, and the corresponding tarball build in the `Tarball` field, leave the rest as they are `PrivPubRepos: "private"`, `TarballOrPkg: "packages"`, `TestProdRepos: "testing"` and click `Build`.
    1. If a new Cloudsmith repository is used, then:
       1. [ ] Make sure freeradius packages are uploaded to the Cloudsmith repository or copied from a previous repository.
       1. [ ] Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
-1. [ ] Check if ReadTheDocs can build Kea documentation.
+1. [ ] Check if ReadTheDocs can build Kea documentation. Alternatively, look for failures in emails if you know that the ReadTheDocs webhook is working.
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds) and wait for the build to complete.
 
 The following steps may involve changing files in the repository.
@@ -96,16 +99,17 @@ This is the last moment to freeze code! :snowflake:
       1. It's advised to search for previous version numbers, some of them are statically added in statements that are no longer valid.
 1. [ ] Upload tarballs to repo.isc.org using Jenkins and send sanity checks request.
    1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
-   1. Click "Build with Parameters".
-   1. In field "Tarball" select picked tarball build.
-   1. In field "Release_Candidate" pick:
-      1. rc1 if this is the first selected build for release, it will push the selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
+   1. Click `Build with Parameters`.
+   1. In field `Tarball` select picked tarball build.
+   1. In field `Pkg` select the corresponding pkg job.
+   1. In field `Release_Candidate` pick:
+      1. `rc1` if this is the first selected build for release, it will push the selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
       1. next rc# if this is a respin after some fixes (note: it is not possible to pick previous rc number - it will result in an error)
    1. Submit the job that will automatically:
       1. Upload the tarballs <br>
       and if this is not the final version:
       1. Create a GitLab issue for sanity checks, put there the announcement
-      1. Send Sanity Checks announcement via email to dhcp-team@isc.org and to DHCP channel on Mattermost.<br>
+      1. Send Sanity Checks announcement on the Kea/DHCP channel on Mattermost.<br>
       The announcement includes:
          - a link to chapter 4 Sanity Checks of the release process: [KeaReleaseProcess - SanityChecks](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess#4.%20Sanity%20Checks)
          - a link to the GitLab issue
@@ -120,11 +124,12 @@ This is the last moment to freeze code! :snowflake:
    Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit description: <br>
    1. [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/)
    1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/)
-1. [ ] Upload final tarballs to repo.isc.org
+1. [ ] Upload final tarballs to repo.isc.org.
    1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
-   1. Click "Build with Parameters"
-   1. In field "Tarball" select picked tarball build
-   1. In field "Release_Candidate" pick final <br>
+   1. Click `Build with Parameters`.
+   1. In field `Tarball` select picked tarball build.
+   1. In field `Pkg` select the corresponding pkg job.
+   1. In field `Release_Candidate` pick `final`. <br>
    This job will also:
       - open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) for signing final tarballs on repo.isc.org
       - create Git tags `Kea-a.b.c` in Kea main and premium repositories
@@ -132,18 +137,18 @@ This is the last moment to freeze code! :snowflake:
       - if release enginner do NOT have signing key, please contact team member.
 1. [ ] Upload final RPM & DEB packages, tarballs and sign files to cloudsmith.io
    1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
-   1. Click "Build with Parameters" link
-   1. Pick your selected pkg build in Packages field, and select `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build` button.
-      - this step is also veryfing sign files
+   1. Click `Build with Parameters`.
+   1. Pick your selected pkg build in the `Packages` field, the corresponding tarball build in the `Tarball` field, `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build`.
+      - This step also verifies sign files.
    1. When it finishes run check: [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
 1. [ ] Update ReadTheDocs
-   1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
+   1. Trick ReadTheDocs into pulling the latest tags. Click `Build version` on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
    1. Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
-   1. For stable releases, change the default version to point to this stable release.
+   1. If it's a stable release, change the default version to point to this stable release. `Admin -> Advanced Settings -> Default version* -> Kea-a.b.c`.
 1. [ ] Create an issue and a merge request to bump up Kea version in `configure.ac` to next development version which could be, based on just released version `a.b.c`:
-    * `a.b.z-git` where `z == c + 1` or
-    * `a.y.0-git` where `y == b + 1` or
-    * `x.1.0-git` where `x == a + 1`
+    * `a.b.z-git` where `z == c + 1` most of the time, or
+    * `a.y.0-git` where `y == b + 2` if a new development series starts, or
+    * `x.1.0-git` where `x == a + 1` when the released minor version `b` is 9 and `a.b.c` was the last version in the development series and a new development version is coming up next.
 1. [ ] Send a request for publishing the release on the Support Mattermost channel linking the Signing issue and the release checklist issue.
 
 
