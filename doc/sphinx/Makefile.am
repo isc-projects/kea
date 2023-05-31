@@ -148,17 +148,11 @@ PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
 
 pdf: $(main_sources) api-files.txt mes-files.txt $(srcdir)/arm/platforms.rst
 	$(SPHINXBUILD) -M latex $(srcdir) $(sphinxbuilddir) $(sphinxopts)
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
-	-cd $(abs_sphinxbuilddir)/latex && makeindex -s python.ist kea-arm.idx
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
 	cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
-	-cd $(abs_sphinxbuilddir)/latex && makeindex -s python.ist kea-messages.idx
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
+	cd $(abs_sphinxbuilddir)/latex && makeindex -s python.ist kea-arm.idx
+	cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
+	cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
+	cd $(abs_sphinxbuilddir)/latex && makeindex -s python.ist kea-messages.idx
 	cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
 
 html: $(main_sources) api-files.txt mes-files.txt $(srcdir)/arm/platforms.rst
