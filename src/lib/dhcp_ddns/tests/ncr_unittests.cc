@@ -36,7 +36,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Valid Remove.
      "{"
@@ -48,7 +48,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
      // Valid Add with IPv6 address
      "{"
@@ -60,9 +60,9 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
-    // Missing use-conflict-resolution
+     // Missing conflict-resolution-mode
      "{"
      " \"change-type\" : 0 , "
      " \"forward-change\" : true , "
@@ -72,6 +72,18 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 "
+     "}",
+     // Has use-conflict-resolution instead of mode
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolutione\": true"
      "}"
 };
 
@@ -89,7 +101,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Invalid forward change.
      "{"
@@ -101,7 +113,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Invalid reverse change.
      "{"
@@ -113,7 +125,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Forward and reverse change both false.
      "{"
@@ -125,7 +137,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Blank FQDN
      "{"
@@ -137,7 +149,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Malformed FQDN
      "{"
@@ -149,7 +161,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Bad IP address
      "{"
@@ -161,7 +173,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Blank DHCID
      "{"
@@ -173,7 +185,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Odd number of digits in DHCID
      "{"
@@ -185,7 +197,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Text in DHCID
      "{"
@@ -197,7 +209,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"THIS IS BOGUS!!!\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Invalid lease expiration string
      "{"
@@ -209,7 +221,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"Wed Jun 26 13:46:46 EDT 2013\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Non-integer for lease length.
      "{"
@@ -221,8 +233,20 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : \"BOGUS\", "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
+    // Invalid conflict-resolution-mode
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300, "
+     " \"conflict-resolution-mode\": \"bogus\""
+     "}"
     // Invalid use-conflict-resolution
      "{"
      " \"change-type\" : 0 , "
@@ -233,7 +257,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": 777"
+     " \"use-conflict-resolution\": \"bogus\""
      "}"
 };
 
@@ -553,7 +577,7 @@ TEST(NameChangeRequestTest, basicJsonTest) {
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease-expires-on\":\"20130121132405\","
                             "\"lease-length\":1300,"
-                            "\"use-conflict-resolution\":true"
+                            "\"conflict-resolution-mode\":\"check-with-dhcid\""
                           "}";
 
     // Verify that a NameChangeRequests can be instantiated from the
@@ -639,7 +663,7 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease-expires-on\":\"20130121132405\","
                             "\"lease-length\":1300,"
-                            "\"use-conflict-resolution\":true"
+                            "\"conflict-resolution-mode\":\"check-with-dhcid\""
                           "}";
 
     // Create a request from JSON directly.
@@ -726,17 +750,56 @@ TEST(NameChangeRequestTest, useConflictResolutionParsing) {
     NameChangeRequestPtr ncr;
     ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_true));
     ASSERT_TRUE(ncr);
-    EXPECT_TRUE(ncr->useConflictResolution());
+    EXPECT_EQ(CHECK_WITH_DHCID, ncr->getConflictResolutionMode());
 
     std::string its_false(base_json + ",\"use-conflict-resolution\": false}");
     ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_false));
     ASSERT_TRUE(ncr);
-    EXPECT_FALSE(ncr->useConflictResolution());
+    EXPECT_EQ(NO_CHECK_WITH_DHCID, ncr->getConflictResolutionMode());
 
     std::string its_missing(base_json + "}");
     ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_true));
     ASSERT_TRUE(ncr);
-    EXPECT_TRUE(ncr->useConflictResolution());
+    EXPECT_EQ(CHECK_WITH_DHCID, ncr->getConflictResolutionMode());
+}
+
+TEST(NameChangeRequestTest, ConflictResolutionModeParsing) {
+    std::string base_json =
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300 ";
+
+    std::string its_check_with_dhcid(base_json + ",\"conflict-resolution-mode\": \"check-with-dhcid\"}");
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_check_with_dhcid));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), CHECK_WITH_DHCID);
+
+    std::string its_no_check_with_dhcid(base_json + ",\"conflict-resolution-mode\": \"no-check-with-dhcid\"}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_no_check_with_dhcid));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), NO_CHECK_WITH_DHCID);
+
+    std::string its_check_exists_with_dhcid(base_json + ",\"conflict-resolution-mode\": \"check-exists-with-dhcid\"}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_check_exists_with_dhcid));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), CHECK_EXISTS_WITH_DHCID);
+
+    std::string its_no_check_without_dhcid(base_json + ",\"conflict-resolution-mode\": \"no-check-without-dhcid\"}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_no_check_without_dhcid));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), NO_CHECK_WITHOUT_DHCID);
+
+    std::string its_missing(base_json + "}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_missing));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), CHECK_WITH_DHCID);
 }
 
 } // end of anonymous namespace

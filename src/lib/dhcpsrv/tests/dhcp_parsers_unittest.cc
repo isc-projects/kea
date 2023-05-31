@@ -2808,8 +2808,8 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_TRUE(subnet->getDdnsUpdateOnRenew().unspecified());
     EXPECT_FALSE(subnet->getDdnsUpdateOnRenew().get());
 
-    EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
-    EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
+    EXPECT_TRUE(subnet->getDdnsConflictResolutionMode().unspecified());
+    EXPECT_EQ("", subnet->getDdnsConflictResolutionMode().get());
 
     EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_V4));
     EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_V4));
@@ -2909,8 +2909,8 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_TRUE(subnet->getDdnsUpdateOnRenew().unspecified());
     EXPECT_FALSE(subnet->getDdnsUpdateOnRenew().get());
 
-    EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
-    EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
+    EXPECT_TRUE(subnet->getDdnsConflictResolutionMode().unspecified());
+    EXPECT_EQ("", subnet->getDdnsConflictResolutionMode().get());
 
     EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_NA));
     EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_TA));
@@ -3008,8 +3008,8 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().unspecified());
     EXPECT_FALSE(network->getDdnsUpdateOnRenew().get());
 
-    EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
-    EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
+    EXPECT_TRUE(network->getDdnsConflictResolutionMode().unspecified());
+    EXPECT_EQ("", network->getDdnsConflictResolutionMode().get());
 
     EXPECT_TRUE(network->getAllocatorType().unspecified());
     EXPECT_TRUE(network->getAllocatorType().get().empty());
@@ -3101,8 +3101,8 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().unspecified());
     EXPECT_FALSE(network->getDdnsUpdateOnRenew().get());
 
-    EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
-    EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
+    EXPECT_TRUE(network->getDdnsConflictResolutionMode().unspecified());
+    EXPECT_EQ("", network->getDdnsConflictResolutionMode().get());
 
     EXPECT_TRUE(network->getAllocatorType().unspecified());
     EXPECT_TRUE(network->getAllocatorType().get().empty());

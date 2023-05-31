@@ -98,9 +98,10 @@ protected:
     /// - ddns-replace-client-name
     /// - ddns-generated-prefix
     /// - ddns-qualifying-suffix
-    /// - ddns-use-conflict-resolution
+    /// - ddns-use-conflict-resolution (retained for backward compatibility)
     /// - ddns-update-on-renew
     /// - ddns-ttl-percent
+    /// - ddns-conflict-resolution-mode
     ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.

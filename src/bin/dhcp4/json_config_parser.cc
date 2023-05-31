@@ -687,6 +687,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
                  (config_pair.first == "ddns-qualifying-suffix") ||
                  (config_pair.first == "ddns-update-on-renew") ||
                  (config_pair.first == "ddns-use-conflict-resolution") ||
+                 (config_pair.first == "ddns-conflict-resolution-mode") ||
                  (config_pair.first == "ddns-ttl-percent") ||
                  (config_pair.first == "store-extended-info") ||
                  (config_pair.first == "statistic-default-sample-count") ||

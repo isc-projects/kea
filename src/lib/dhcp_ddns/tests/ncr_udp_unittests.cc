@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Valid Remove.
      "{"
@@ -54,7 +54,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": false"
+     " \"conflict-resolution-mode\": \"no-check-with-dhcid\""
      "}",
      // Valid Add with IPv6 address
      "{"
@@ -66,7 +66,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\" : true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}"
 };
 
@@ -258,7 +258,9 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
         EXPECT_EQ(NameChangeListener::SUCCESS, result_);
 
         // Verify the received request matches the sent request.
-        EXPECT_TRUE(checkSendVsReceived(sent_ncr_, received_ncr_));
+        EXPECT_TRUE(checkSendVsReceived(sent_ncr_, received_ncr_))
+            << "sent_ncr_" << (sent_ncr_ ? sent_ncr_->toText() : "<null>")
+            << "recv_ncr_ " << (received_ncr_ ? received_ncr_->toText() : "<null>");
     }
 
     // Verify we can gracefully stop listening.

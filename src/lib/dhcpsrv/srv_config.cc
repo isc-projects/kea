@@ -1022,15 +1022,6 @@ DdnsParams::getUpdateOnRenew() const {
     return (subnet_->getDdnsUpdateOnRenew().get());
 }
 
-bool
-DdnsParams::getUseConflictResolution() const {
-    if (!subnet_) {
-        return (true);
-    }
-
-    return (subnet_->getDdnsUseConflictResolution().get());
-}
-
 util::Optional<double>
 DdnsParams::getTtlPercent() const {
     if (!subnet_) {
@@ -1038,6 +1029,15 @@ DdnsParams::getTtlPercent() const {
     }
 
     return (subnet_->getDdnsTtlPercent());
+}
+
+std::string
+DdnsParams::getConflictResolutionMode() const {
+    if (!subnet_) {
+        return ("check-with-dhcid");
+    }
+
+    return (subnet_->getDdnsConflictResolutionMode().get());
 }
 
 } // namespace dhcp

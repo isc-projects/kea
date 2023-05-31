@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,7 +99,7 @@ public:
         " \"dhcid\" : \"0102030405060708\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
         const char* dhcids[] = { "111111", "222222", "333333", "444444" };
@@ -880,7 +880,7 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
     // Put each transaction on the queue.
     canned_ncrs_[0]->setChangeType(dhcp_ddns::CHG_ADD);
     canned_ncrs_[0]->setReverseChange(true);
-    canned_ncrs_[0]->setConflictResolution(false);
+    canned_ncrs_[0]->setConflictResolutionMode(dhcp_ddns::NO_CHECK_WITH_DHCID);
     ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
 
     // Call sweep once, this should:
@@ -938,7 +938,7 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
     // Put each transaction on the queue.
     canned_ncrs_[0]->setChangeType(dhcp_ddns::CHG_REMOVE);
     canned_ncrs_[0]->setReverseChange(true);
-    canned_ncrs_[0]->setConflictResolution(false);
+    canned_ncrs_[0]->setConflictResolutionMode(dhcp_ddns::NO_CHECK_WITH_DHCID);
     ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
 
     // Call sweep once, this should:

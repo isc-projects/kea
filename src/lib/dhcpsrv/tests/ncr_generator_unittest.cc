@@ -137,6 +137,8 @@ public:
     /// NameChangeRequest.
     /// @param fqdn The expected string value of the FQDN, if blank the
     /// check is skipped
+    /// @param conflict_resolution_mode expected value of conflict resolution
+    /// mode.
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -144,7 +146,8 @@ public:
                                  const uint64_t expires,
                                  const uint16_t len,
                                  const std::string& fqdn="",
-                                 const bool use_conflict_resolution = true) {
+                                 const ConflictResolutionMode
+                                 conflict_resolution_mode = CHECK_WITH_DHCID) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = CfgMgr::instance().getD2ClientMgr().peekAt(0));
         ASSERT_TRUE(ncr);
@@ -157,7 +160,7 @@ public:
         EXPECT_EQ(expires, ncr->getLeaseExpiresOn());
         EXPECT_EQ(len, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
-        EXPECT_EQ(use_conflict_resolution, ncr->useConflictResolution());
+        EXPECT_EQ(conflict_resolution_mode, ncr->getConflictResolutionMode());
 
         if (!fqdn.empty()) {
            EXPECT_EQ(fqdn, ncr->getFqdn());
@@ -225,10 +228,11 @@ public:
     /// @param rev Perform reverse update.
     /// @param fqdn Hostname.
     /// @param exp_dhcid Expected DHCID.
-    /// @param exp_use_cr expected value of conflict resolution flag
+    /// @param exp_cr_mode expected value of conflict resolution mode.
+    /// @param ttl_percent expected value of TTL percent.
     void testNCR(const NameChangeType chg_type, const bool fwd, const bool rev,
                  const std::string& fqdn, const std::string exp_dhcid,
-                 const bool exp_use_cr = true,
+                 const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
                  const Optional<double> ttl_percent = Optional<double>()) {
         // Queue NCR.
         ASSERT_NO_FATAL_FAILURE(sendNCR(chg_type, fwd, rev, fqdn));
@@ -240,7 +244,7 @@ public:
 
         // Check the details of the NCR.
         verifyNameChangeRequest(chg_type, rev, fwd, lease_->addr_.toText(), exp_dhcid,
-                                lease_->cltt_ + ttl, ttl, fqdn, exp_use_cr);
+                                lease_->cltt_ + ttl, ttl, fqdn, exp_cr_mode);
     }
 
     /// @brief Test that calling queueNCR for NULL lease doesn't cause
@@ -273,7 +277,7 @@ public:
     virtual void initLease() {
         Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 100, 200, 300, 400, SubnetID(1)));
         // Normally, this would be set via defaults
-        subnet->setDdnsUseConflictResolution(true);
+        subnet->setDdnsConflictResolutionMode("check-with-dhcid");
 
         Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                                 IOAddress("2001:db8:1::200")));
@@ -446,21 +450,35 @@ TEST_F(NCRGenerator6Test, nullLease) {
     }
 }
 
-// Verify that conflict resolution is set correctly by v6 queueNCR()
-TEST_F(NCRGenerator6Test, useConflictResolution) {
+// Verify that conflict resolution mode is set correctly by v6 queueNCR()
+TEST_F(NCRGenerator6Test, conflictResolutionMode) {
     {
-        SCOPED_TRACE("Subnet flag is false");
-        subnet_->setDdnsUseConflictResolution(false);
+        SCOPED_TRACE("Subnet mode is check-with-dhcid");
+        subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
         testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
                 "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3D0ECCEA5E0DD71730F392119A",
-                false);
+                CHECK_WITH_DHCID);
     }
     {
-        SCOPED_TRACE("Subnet flag is true");
-        subnet_->setDdnsUseConflictResolution(true);
+        SCOPED_TRACE("Subnet mode is no-check-with-dhcid");
+        subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
         testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
                 "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3D0ECCEA5E0DD71730F392119A",
-                true);
+                NO_CHECK_WITH_DHCID);
+    }
+    {
+        SCOPED_TRACE("Subnet mode is check-exists-with-dhcid");
+        subnet_->setDdnsConflictResolutionMode("check-exists-with-dhcid");
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3D0ECCEA5E0DD71730F392119A",
+                CHECK_EXISTS_WITH_DHCID);
+    }
+    {
+        SCOPED_TRACE("Subnet mode is no-check-without-dhcid");
+        subnet_->setDdnsConflictResolutionMode("no-check-without-dhcid");
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3D0ECCEA5E0DD71730F392119A",
+                NO_CHECK_WITHOUT_DHCID);
     }
 }
 
@@ -483,7 +501,7 @@ public:
 
         Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(1)));
         // Normally, this would be set via defaults
-        subnet->setDdnsUseConflictResolution(true);
+        subnet->setDdnsConflictResolutionMode("check-with-dhcid");
 
         Pool4Ptr pool(new Pool4(IOAddress("192.0.2.100"),
                                 IOAddress("192.0.2.200")));
@@ -664,21 +682,39 @@ TEST_F(NCRGenerator4Test, nullLease) {
     }
 }
 
-// Verify that conflict resolution is set correctly by v4 queueNCR()
-TEST_F(NCRGenerator4Test, useConflictResolution) {
+// Verify that conflict resolution mode is set correctly by v4 queueNCR()
+TEST_F(NCRGenerator4Test, conflictResolutionMode) {
     {
-        SCOPED_TRACE("Subnet flag is false");
-        subnet_->setDdnsUseConflictResolution(false);
+        SCOPED_TRACE("Subnet mode is check-with-dhcid");
+        subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
         testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
-                "B03AB370BFF46BFA309AE7BFD", false);
+                "B03AB370BFF46BFA309AE7BFD",
+                CHECK_WITH_DHCID);
     }
     {
-        SCOPED_TRACE("Subnet flag is true");
-        subnet_->setDdnsUseConflictResolution(true);
+        SCOPED_TRACE("Subnet mode is no-check-with-dhcid");
+        subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
         testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
-                "B03AB370BFF46BFA309AE7BFD", true);
+                "B03AB370BFF46BFA309AE7BFD",
+                NO_CHECK_WITH_DHCID);
+    }
+    {
+        SCOPED_TRACE("Subnet mode is check-exists-with-dhcid");
+        subnet_->setDdnsConflictResolutionMode("check-exists-with-dhcid");
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
+                "B03AB370BFF46BFA309AE7BFD",
+                CHECK_EXISTS_WITH_DHCID);
+    }
+    {
+        SCOPED_TRACE("Subnet mode is no-check-without-dhcid");
+        subnet_->setDdnsConflictResolutionMode("no-check-without-dhcid");
+        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
+                "B03AB370BFF46BFA309AE7BFD",
+                NO_CHECK_WITHOUT_DHCID);
     }
 }
 
@@ -722,7 +758,7 @@ TEST_F(NCRGenerator4Test, withTtlPercent) {
         subnet_->setDdnsTtlPercent(ttl_percent);
         testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
-                "B03AB370BFF46BFA309AE7BFD", true, ttl_percent);
+                "B03AB370BFF46BFA309AE7BFD", CHECK_WITH_DHCID, ttl_percent);
     }
     {
         SCOPED_TRACE("Ttl percent of 1.5");
@@ -730,7 +766,7 @@ TEST_F(NCRGenerator4Test, withTtlPercent) {
         subnet_->setDdnsTtlPercent(ttl_percent);
         testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
-                "B03AB370BFF46BFA309AE7BFD", true, ttl_percent);
+                "B03AB370BFF46BFA309AE7BFD", CHECK_WITH_DHCID, ttl_percent);
     }
 }
 

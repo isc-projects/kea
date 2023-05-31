@@ -429,7 +429,7 @@ public:
                                               : D2ClientConfig::RCM_NEVER);
         subnet_->setDdnsGeneratedPrefix("myhost");
         subnet_->setDdnsQualifyingSuffix("example.com");
-        subnet_->setDdnsUseConflictResolution(true);
+        subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
 
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -794,7 +794,7 @@ public:
     /// @param not_strict_expire_check - when true the comparison of the NCR
     /// lease expiration time is conducted as greater than or equal to rather
     /// equal to CLTT plus lease ttl .
-    /// @param exp_use_cr expected value of conflict resolution flag
+    /// @param exp_conflict_resolution_mode expected value of conflict resolution mode
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -803,7 +803,8 @@ public:
                                  const time_t cltt,
                                  const uint16_t valid_lft,
                                  const bool not_strict_expire_check = false,
-                                 const bool exp_use_cr = true,
+                                 const ConflictResolutionMode
+                                 exp_conflict_resolution_mode = CHECK_WITH_DHCID,
                                  Optional<double> ttl_percent = Optional<double>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
@@ -834,7 +835,7 @@ public:
 
         EXPECT_EQ(ttl, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
-        EXPECT_EQ(exp_use_cr, ncr->useConflictResolution());
+        EXPECT_EQ(exp_conflict_resolution_mode, ncr->getConflictResolutionMode());
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
@@ -1147,7 +1148,7 @@ TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
     Lease4Ptr old_lease;
 
     ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
-    subnet_->setDdnsUseConflictResolution(false);
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
@@ -1156,7 +1157,7 @@ TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
                             "192.0.2.3", "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436965"
                             "B68B6D438D98E680BF10B09F3BCF",
-                            lease->cltt_, 100, false, false);
+                            lease->cltt_, 100, false, NO_CHECK_WITH_DHCID);
 }
 
 
@@ -2879,7 +2880,87 @@ TEST_F(NameDhcpv4SrvTest, withDdnsTtlPercent) {
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             resp->getYiaddr().toText(),
                             "client1.example.com.", "",
-                            time(NULL), lease->valid_lft_, true, true, Optional<double>(.25));
+                            time(NULL), lease->valid_lft_, true,
+                            CHECK_WITH_DHCID, Optional<double>(.25));
+}
+
+// Verify that conflict resolution mode is set to "check-with-dhcid" in the NCR
+// when it is configured for the lease's subnet
+TEST_F(NameDhcpv4SrvTest, checkWithDHCIDConflictResolutionMode) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, CHECK_WITH_DHCID);
+}
+
+// Verify that conflict resolution mode is set to "no-check-with-dhcid" in the NCR
+// when it is configured for the lease's subnet
+TEST_F(NameDhcpv4SrvTest, noCheckWithDHCIDConflictResolutionMode) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, NO_CHECK_WITH_DHCID);
+}
+
+// Verify that conflict resolution mode is set to "no-check-without-dhcid" in the NCR
+// when it is configured for the lease's subnet
+TEST_F(NameDhcpv4SrvTest, noCheckWithoutDHCIDConflictResolutionMode) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsConflictResolutionMode("no-check-without-dhcid");
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, NO_CHECK_WITHOUT_DHCID);
+}
+
+// Verify that conflict resolution mode is set to "check-exists-with-dhcid" in the NCR
+// when it is configured for the lease's subnet
+TEST_F(NameDhcpv4SrvTest, checkExistsDHCIDConflictResolutionMode) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsConflictResolutionMode("check-exists-with-dhcid");
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, CHECK_EXISTS_WITH_DHCID);
 }
 
 } // end of anonymous namespace

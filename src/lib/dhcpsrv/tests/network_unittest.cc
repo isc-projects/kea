@@ -179,7 +179,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("cache-threshold", Element::create(.25));
     globals_->set("cache-max-age", Element::create(20));
     globals_->set("ddns-update-on-renew", Element::create(true));
-    globals_->set("ddns-use-conflict-resolution", Element::create(true));
+    globals_->set("ddns-conflict-resolution-mode", Element::create("check-with-dhcid"));
     globals_->set("allocator", Element::create("random"));
     globals_->set("offer-lifetime", Element::create(45));
     globals_->set("ddns-ttl-percent", Element::create(0.75));
@@ -350,10 +350,10 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              false, true);
     }
     {
-        SCOPED_TRACE("ddns-use-conflict-resolution");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUseConflictResolution,
-                                             &Network4::setDdnsUseConflictResolution,
-                                             false, true);
+        SCOPED_TRACE("ddns-conflict-resolution-mode");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsConflictResolutionMode,
+                                             &Network4::setDdnsConflictResolutionMode,
+                                             "no-check-with-dhcid", "check-with-dhcid");
     }
     {
         SCOPED_TRACE("allocator");
@@ -397,10 +397,10 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
     globals_->set("ddns-update-on-renew", Element::create(true));
-    globals_->set("ddns-use-conflict-resolution", Element::create(true));
     globals_->set("allocator", Element::create("random"));
     globals_->set("pd-allocator", Element::create("random"));
     globals_->set("ddns-ttl-percent", Element::create(0.55));
+    globals_->set("ddns-conflict-resolution-mode", Element::create("check-with-dhcid"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -474,10 +474,10 @@ TEST_F(NetworkTest, inheritanceSupport6) {
                                              false, true);
     }
     {
-        SCOPED_TRACE("ddns-use-conflict-resolution");
-        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsUseConflictResolution,
-                                             &Network6::setDdnsUseConflictResolution,
-                                             false, true);
+        SCOPED_TRACE("ddns-conflict-resolution-mode");
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsConflictResolutionMode,
+                                             &Network6::setDdnsConflictResolutionMode,
+                                             "no-check-with-dhcid", "check-with-dhcid");
     }
     {
         SCOPED_TRACE("allocator");

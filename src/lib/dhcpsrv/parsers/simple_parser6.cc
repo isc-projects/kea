@@ -97,12 +97,13 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ip-reservations-unique",           Element::boolean },
     { "reservations-lookup-first",        Element::boolean },
     { "ddns-update-on-renew",             Element::boolean },
-    { "ddns-use-conflict-resolution",     Element::boolean },
+    { "ddns-use-conflict-resolution",     Element::boolean },  // deprecated
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
     { "allocator",                        Element::string },
     { "pd-allocator",                     Element::string },
     { "ddns-ttl-percent",                 Element::real },
+    { "ddns-conflict-resolution-mode",    Element::string },
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -137,10 +138,10 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "ip-reservations-unique",           Element::boolean, "true" },
     { "reservations-lookup-first",        Element::boolean, "false" },
     { "ddns-update-on-renew",             Element::boolean, "false" },
-    { "ddns-use-conflict-resolution",     Element::boolean, "true" },
     { "parked-packet-limit",              Element::integer, "256" },
     { "allocator",                        Element::string,  "iterative" },
     { "pd-allocator",                     Element::string,  "iterative" },
+    { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
 };
 
 /// @brief This table defines all option definition parameters.
@@ -250,10 +251,11 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean },  // deprecated
     { "allocator",                      Element::string },
     { "pd-allocator",                   Element::string },
     { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -397,10 +399,11 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }, // deprecated
     { "allocator",                      Element::string },
     { "pd-allocator",                   Element::string },
     { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv6.

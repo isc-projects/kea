@@ -265,8 +265,8 @@ Network::toElement() const {
         map->set("ddns-update-on-renew", Element::create(ddns_update_on_renew_));
     }
 
-    if (!ddns_use_conflict_resolution_.unspecified()) {
-        map->set("ddns-use-conflict-resolution", Element::create(ddns_use_conflict_resolution_));
+    if (!ddns_conflict_resolution_mode_.unspecified()) {
+        map->set("ddns-conflict-resolution-mode", Element::create(ddns_conflict_resolution_mode_));
     }
 
     if (!allocator_type_.unspecified()) {

@@ -141,6 +141,11 @@ using namespace std;
   PARKED_PACKET_LIMIT "parked-packet-limit"
   ALLOCATOR "allocator"
   PD_ALLOCATOR "pd-allocator"
+  DDNS_CONFLICT_RESOLUTION_MODE "ddns-conflict-resolution-mode"
+  CHECK_WITH_DHCID "check-with-dhcid"
+  NO_CHECK_WITH_DHCID "no-check-with-dhcid"
+  CHECK_EXISTS_WITH_DHCID "check-exists-with-dhcid"
+  NO_CHECK_WITHOUT_DHCID "no-check-without-dhcid"
 
   SHARED_NETWORKS "shared-networks"
 
@@ -304,6 +309,7 @@ using namespace std;
 %type <ElementPtr> duid_type
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> ddns_replace_client_name_value
+%type <ElementPtr> ddns_conflict_resolution_mode_value
 
 %printer { yyoutput << $$; } <*>;
 
@@ -557,6 +563,7 @@ global_param: data_directory
             | ddns_qualifying_suffix
             | ddns_update_on_renew
             | ddns_use_conflict_resolution
+            | ddns_conflict_resolution_mode
             | ddns_ttl_percent
             | store_extended_info
             | statistic_default_sample_count
@@ -739,6 +746,29 @@ ddns_use_conflict_resolution: DDNS_USE_CONFLICT_RESOLUTION COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ddns-use-conflict-resolution", b);
 };
+
+ddns_conflict_resolution_mode: DDNS_CONFLICT_RESOLUTION_MODE {
+    ctx.unique("ddns-conflict-resolution-mode", ctx.loc2pos(@1));
+    ctx.enter(ctx.DDNS_CONFLICT_RESOLUTION_MODE);
+} COLON ddns_conflict_resolution_mode_value {
+    ctx.stack_.back()->set("ddns-conflict-resolution-mode", $4);
+    ctx.leave();
+};
+
+ddns_conflict_resolution_mode_value:
+    CHECK_WITH_DHCID {
+      $$ = ElementPtr(new StringElement("check-with-dhcid", ctx.loc2pos(@1)));
+      }
+  | NO_CHECK_WITH_DHCID {
+      $$ = ElementPtr(new StringElement("no-check-with-dhcid", ctx.loc2pos(@1)));
+      }
+  | CHECK_EXISTS_WITH_DHCID {
+      $$ = ElementPtr(new StringElement("check-exists-with-dhcid", ctx.loc2pos(@1)));
+      }
+  | NO_CHECK_WITHOUT_DHCID {
+      $$ = ElementPtr(new StringElement("no-check-without-dhcid", ctx.loc2pos(@1)));
+      }
+  ;
 
 ddns_ttl_percent: DDNS_TTL_PERCENT COLON FLOAT {
     ctx.unique("ddns-ttl-percent", ctx.loc2pos(@1));
@@ -1598,6 +1628,7 @@ subnet6_param: preferred_lifetime
              | ddns_qualifying_suffix
              | ddns_update_on_renew
              | ddns_use_conflict_resolution
+             | ddns_conflict_resolution_mode
              | ddns_ttl_percent
              | store_extended_info
              | allocator
@@ -1775,6 +1806,7 @@ shared_network_param: name
                     | ddns_qualifying_suffix
                     | ddns_update_on_renew
                     | ddns_use_conflict_resolution
+                    | ddns_conflict_resolution_mode
                     | ddns_ttl_percent
                     | store_extended_info
                     | allocator

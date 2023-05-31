@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,6 +61,14 @@ enum NameChangeFormat {
   FMT_JSON
 };
 
+// DDNS Conflict resolution modes
+enum ConflictResolutionMode {
+   CHECK_WITH_DHCID,
+   NO_CHECK_WITH_DHCID,
+   CHECK_EXISTS_WITH_DHCID,
+   NO_CHECK_WITHOUT_DHCID
+};
+
 /// @brief Function which converts labels to  NameChangeFormat enum values.
 ///
 /// @param fmt_str text to convert to an enum.
@@ -79,6 +87,26 @@ extern NameChangeFormat stringToNcrFormat(const std::string& fmt_str);
 /// @return std:string containing the text label if the value is valid, or
 /// "UNKNOWN" if not.
 extern std::string ncrFormatToString(NameChangeFormat format);
+
+/// @brief Function which converts string to ConflictResolutionMode enum values.
+///
+/// @param fmt_str text to convert to an enum.
+/// Valid string values: "check-with-dhcid", "no-check-with-dhcid",
+///                      "check-exists-with-dhcid", "no-check-without-dhcid"
+///
+/// @return ConflictResolutionMode value which maps to the given string.
+///
+/// @throw isc::BadValue if given a string value which does not map to an
+/// enum value.
+ConflictResolutionMode StringToConflictResolutionMode(const std::string& mode_str);
+
+/// @brief Function which converts ConflictResolutionMode enums to text labels.
+///
+/// @param format enum value to convert to label
+///
+/// @return std:string containing the text label if the value is valid, or
+/// "unknown" if not.
+std::string ConflictResolutionModeToString(const ConflictResolutionMode& mode);
 
 /// @brief Container class for handling the DHCID value within a
 /// NameChangeRequest. It provides conversion to and from string for JSON
@@ -253,7 +281,8 @@ public:
     /// expires.
     /// @param lease_length the amount of time in seconds for which the
     /// lease is valid (TTL).
-    /// @param conflict_resolution indicates whether or not conflict resolution
+    /// @param conflict_resolution_mode conflict resolution mode to use, defaults
+    /// to CHECK_WITH_DHCID.
     /// (per RFC 4703) is enabled.
     NameChangeRequest(const NameChangeType change_type,
                       const bool forward_change, const bool reverse_change,
@@ -261,7 +290,8 @@ public:
                       const D2Dhcid& dhcid,
                       const uint64_t lease_expires_on,
                       const uint32_t lease_length,
-                      const bool conflict_resolution = true);
+                      const ConflictResolutionMode
+                      conflict_resolution_mode = CHECK_WITH_DHCID);
 
     /// @brief Static method for creating a NameChangeRequest from a
     /// buffer containing a marshalled request in a given format.
@@ -657,27 +687,39 @@ public:
     /// Element
     void setLeaseLength(isc::data::ConstElementPtr element);
 
-    /// @brief Checks if conflict resolution is enabled
+    /// @brief Fetches the conflict resolution mode
     ///
     /// @return a true if the conflict resolution is enabled.
-    bool useConflictResolution() const {
-        return (conflict_resolution_);
+    ConflictResolutionMode getConflictResolutionMode() const {
+        return (conflict_resolution_mode_);
     }
 
-    /// @brief Sets the conflict resolution flag to the given value.
+    /// @brief Sets the conflict resolution mode to the given value.
     ///
     /// @param value contains the new value to assign to the conflict
-    /// resolution flag
-    void setConflictResolution(const bool value);
+    /// resolution mode
+    void setConflictResolutionMode(const ConflictResolutionMode value);
 
-    /// @brief Sets the conflict resolution flag to the value of the given Element.
+    /// @brief Sets the conflict resolution mode to the value of the given Element.
+    ///
+    /// @param element is a enum Element containing the conflict resolution mode
+    /// value.
+    ///
+    /// @throw NcrMessageError if the element is not an enum Element.
+    void setConflictResolutionMode(isc::data::ConstElementPtr element);
+
+    /// @brief Sets the conflict resolution mode based on the value of
+    /// the given boolean Element.
+    ///
+    /// This function is used to translate use-conflict-resolution sent by
+    /// older versions of Kea.
     ///
     /// @param element is a boolean Element containing the conflict resolution flag
     /// value.
     ///
     /// @throw NcrMessageError if the element is not a boolean
     /// Element
-    void setConflictResolution(isc::data::ConstElementPtr element);
+    void translateUseConflictResolution(isc::data::ConstElementPtr element);
 
     /// @brief Fetches the request status.
     ///
@@ -747,8 +789,8 @@ private:
     /// @brief The amount of time in seconds for which the lease is valid (TTL).
     uint32_t lease_length_;
 
-    /// @brief Indicates if conflict resolution is enabled.
-    bool conflict_resolution_;
+    /// @brief Indicates the conflict resolution mode.
+    ConflictResolutionMode conflict_resolution_mode_;
 
     /// @brief The processing status of the request.  Used internally.
     NameChangeStatus status_;

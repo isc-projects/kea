@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -344,6 +344,8 @@ public:
         /// Used while parsing compatibility parameters
         COMPATIBILITY,
 
+        /// Used while parsing Dhcp6/ddns-conflict-resolution-mode.
+        DDNS_CONFLICT_RESOLUTION_MODE,
     } ParserContext;
 
     /// @brief File name

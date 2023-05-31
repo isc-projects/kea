@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -490,6 +490,75 @@ extern void checkContext(NameChangeTransactionPtr trans, const int exp_state,
 
 /// @brief Macro for calling checkContext() that supplies invocation location
 #define CHECK_CONTEXT(a,b,c) checkContext(a,b,c,__FILE__,__LINE__)
+
+/// @brief Verifies a forward mapping replacement DNS update request
+/// with the "check-exists-with-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// replacing a forward DNS mapping with the "check-exists-with-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkExistsReplaceFwdAddressRequest(NameChangeTransaction& tran);
+/// @brief Verifies a forward mapping removal DNS update request
+/// with the "check-exists-with-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing a forward DNS mapping with the "check-exists-with-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkExistsRemoveFwdAddressRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a forward RR removal DNS update request
+/// with the "check-exists-with-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing a forward RR DNS entries with the "check-exists-with-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkExistsRemoveFwdRRsRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a simple forward mapping replacement DNS update request
+/// with the "no-check-without-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// replacing a forward DNS mapping with the "no-check-without-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkSimpleReplaceFwdAddressWithoutDHCIDRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a simple forward RR removal DNS update request
+/// with the "no-check-without-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing forward RR DNS entries with the "no-check-without-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkSimpleRemoveFwdRRsWithoutDHCIDRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a reverse mapping replacement DNS update request
+/// with the "no-check-without-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// replacing a reverse DNS mapping with the "no-check-without-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkSimpleReplaceRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a simple reverse RR removal DNS update request
+/// with the "no-check-without-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing reverse RR DNS entries with the "no-check-without-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void  checkSimpleRemoveRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran);
 
 } // namespace isc::d2
 } // namespace isc

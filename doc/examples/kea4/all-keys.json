@@ -211,7 +211,25 @@
         // resolution as described in RFC 4703 should be employed for the
         // given update request. The default value for this flag is true.
         // It may be specified at the global, shared-network, and subnet levels.
+        // This field has been replaced by ddns-conflict-resolution-mode.
+        // Parsing is maintained only for backwards compatibility.
         "ddns-use-conflict-resolution": true,
+
+        // Enumeration, which is passed to kea-dhcp-ddns with each DDNS
+        // update request to indicate the mode used for resolving conflicts
+        // while performing DDNS updates. The acceptable values are:
+        // check-with-dhcid (this includes adding a DHCID record and checking
+        // that record via conflict detection as per RFC 4703,
+        // no-check-with-dhcid (this will ignore conflict detection but add
+        // a DHCID record when creating/updating an entry),
+        // check-exists-with-dhcid (this will check if there is an existing
+        // DHCID record but does not verify the value of the record matches
+        // the update. This will also update the DHCID record for the entry),
+        // no-check-without-dhcid (this ignores conflict detection and will
+        // not add a DHCID record when creating/updating a DDNS entry).
+        // The default value is "check-with-dhcid". It may be
+        // specified at the global, shared-network and subnet levels.
+        "ddns-conflict-resolution-mode": "check-with-dhcid",
 
         // When greater than 0.0, it is the percent of the lease's lifetime
         // to use for the DNS TTL.
@@ -752,7 +770,12 @@
                 "ddns-update-on-renew": true,
 
                 // Shared-network level value. See description at the global level.
+                // This field has been replaced by ddns-conflict-resolution-mode.
+                // Parsing is maintained only for backwards compatibility.
                 "ddns-use-conflict-resolution": true,
+
+                // Shared-network level value. See description at the global level.
+                "ddns-conflict-resolution-mode": "check-with-dhcid",
 
                 // Shared-network level value. See description at the global level.
                 "ddns-ttl-percent": 0.65,
@@ -894,7 +917,12 @@
                         "ddns-update-on-renew": true,
 
                         // Subnet-level value. See description at the global level.
+                        // This field has been replaced by ddns-conflict-resolution-mode.
+                        // Parsing is maintained only for backwards compatibility.
                         "ddns-use-conflict-resolution": true,
+
+                        // Subnet-level value. See description at the global level.
+                        "ddns-conflict-resolution-mode": "check-with-dhcid",
 
                         // Subnet-level value. See description at the global level.
                         "ddns-ttl-percent": 0.55,

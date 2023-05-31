@@ -219,7 +219,7 @@ public:
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
           cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
-          ddns_use_conflict_resolution_(), ddns_ttl_percent_(), allocator_type_(),
+          ddns_conflict_resolution_mode_(), ddns_ttl_percent_(), allocator_type_(),
           default_allocator_type_() {
     }
 
@@ -779,22 +779,23 @@ public:
         ddns_update_on_renew_ = ddns_update_on_renew;
     }
 
-    /// @brief Returns ddns-use-conflict-resolution
+
+    /// @brief Returns ib-ddns-conflict-resolution-mode
     ///
     /// @param inheritance inheritance mode to be used.
-    util::Optional<bool>
-    getDdnsUseConflictResolution(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getDdnsUseConflictResolution,
-                                     ddns_use_conflict_resolution_,
+    util::Optional<std::string>
+    getDdnsConflictResolutionMode(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsConflictResolutionMode,
+                                     ddns_conflict_resolution_mode_,
                                      inheritance,
-                                     CfgGlobals::DDNS_USE_CONFLICT_RESOLUTION));
+                                     CfgGlobals::DDNS_CONFLICT_RESOLUTION_MODE));
     }
 
-    /// @brief Sets new ddns-use-conflict-resolution
+    /// @brief Sets new ib-ddns-conflict-resolution-mode
     ///
     /// @param ddns_use_conflict_resolution New value to use.
-    void setDdnsUseConflictResolution(const util::Optional<bool>& ddns_use_conflict_resolution) {
-        ddns_use_conflict_resolution_ = ddns_use_conflict_resolution;
+    void setDdnsConflictResolutionMode(const util::Optional<std::string>& ddns_conflict_resolution_mode) {
+        ddns_conflict_resolution_mode_ = ddns_conflict_resolution_mode;
     }
 
     /// @brief Returns allocator type.
@@ -1227,8 +1228,8 @@ protected:
     /// @brief Should Kea perform updates when leases are extended
     util::Optional<bool> ddns_update_on_renew_;
 
-    /// @brief Used to to tell kea-dhcp-ddns whether or not to use conflict resolution.
-    util::Optional<bool> ddns_use_conflict_resolution_;
+    /// @brief DDNS conflict resolution mode
+    util::Optional<std::string> ddns_conflict_resolution_mode_;
 
     /// @brief Percentage of the lease lifetime to use for DNS TTL.
     util::Optional<double> ddns_ttl_percent_;

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,6 +39,46 @@ std::string ncrFormatToString(NameChangeFormat format) {
 
     std::ostringstream stream;
     stream  << "UNKNOWN(" << format << ")";
+    return (stream.str());
+}
+
+ConflictResolutionMode StringToConflictResolutionMode(const std::string& mode_str) {
+    if (mode_str == "check-with-dhcid") {
+        return (CHECK_WITH_DHCID);
+    }
+
+    if (mode_str == "no-check-with-dhcid") {
+        return (NO_CHECK_WITH_DHCID);
+    }
+
+    if (mode_str == "check-exists-with-dhcid") {
+        return (CHECK_EXISTS_WITH_DHCID);
+    }
+
+    if (mode_str == "no-check-without-dhcid") {
+        return (NO_CHECK_WITHOUT_DHCID);
+    }
+
+    isc_throw(BadValue, "Invalid ConflictResolutionMode: " << mode_str);
+}
+
+std::string
+ConflictResolutionModeToString(const ConflictResolutionMode& mode) {
+    switch (mode) {
+    case CHECK_WITH_DHCID:
+        return ("check-with-dhcid");
+    case NO_CHECK_WITH_DHCID:
+        return ("no-check-with-dhcid");
+    case CHECK_EXISTS_WITH_DHCID:
+        return ("check-exists-with-dhcid");
+    case NO_CHECK_WITHOUT_DHCID:
+        return ("no-check-without-dhcid");
+    default:
+        break;
+    }
+
+    std::ostringstream stream;
+    stream  << "unknown(" << mode << ")";
     return (stream.str());
 }
 
@@ -225,7 +265,8 @@ operator<<(std::ostream& os, const D2Dhcid& dhcid) {
 NameChangeRequest::NameChangeRequest()
     : change_type_(CHG_ADD), forward_change_(false),
     reverse_change_(false), fqdn_(""), ip_io_address_("0.0.0.0"),
-    dhcid_(), lease_expires_on_(), lease_length_(0), conflict_resolution_(true),
+    dhcid_(), lease_expires_on_(), lease_length_(0),
+    conflict_resolution_mode_(CHECK_WITH_DHCID),
     status_(ST_NEW) {
 }
 
@@ -235,11 +276,12 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const D2Dhcid& dhcid,
             const uint64_t lease_expires_on,
             const uint32_t lease_length,
-            const bool conflict_resolution)
+            const ConflictResolutionMode conflict_resolution_mode)
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_io_address_("0.0.0.0"),
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
-    lease_length_(lease_length), conflict_resolution_(conflict_resolution),
+    lease_length_(lease_length),
+    conflict_resolution_mode_(conflict_resolution_mode),
     status_(ST_NEW) {
 
     // User setter to validate fqdn.
@@ -369,13 +411,19 @@ NameChangeRequest::fromJSON(const std::string& json) {
     element = ncr->getElement("lease-length", element_map);
     ncr->setLeaseLength(element);
 
-    // For backward compatibility  use-conflict-resolution is optional
-    // and defaults to true.
-    auto found = element_map.find("use-conflict-resolution");
+    // conflict-resolution-mode supercedes use-conflict-resolution.
+    // Both are optional for backward compatibility.  The default
+    // mode is CHECK_WITH_DHCID.
+    auto found = element_map.find("conflict-resolution-mode");
     if (found != element_map.end()) {
-        ncr->setConflictResolution(found->second);
+        ncr->setConflictResolutionMode(found->second);
     } else {
-        ncr->setConflictResolution(true);
+        found = element_map.find("use-conflict-resolution");
+        if (found != element_map.end()) {
+            ncr->translateUseConflictResolution(found->second);
+        } else {
+            ncr->setConflictResolutionMode(CHECK_WITH_DHCID);
+        }
     }
 
     // All members were in the Element set and were correct lexically. Now
@@ -404,8 +452,9 @@ NameChangeRequest::toJSON() const  {
         << "\"dhcid\":\"" << getDhcid().toStr() << "\","
         << "\"lease-expires-on\":\""  << getLeaseExpiresOnStr() << "\","
         << "\"lease-length\":" << getLeaseLength() << ","
-        << "\"use-conflict-resolution\":"
-        << (useConflictResolution() ? "true" : "false") << "}";
+        << "\"conflict-resolution-mode\":"
+        << "\"" <<ConflictResolutionModeToString(getConflictResolutionMode()) << "\""
+        << "}";
 
     return (stream.str());
 }
@@ -616,24 +665,33 @@ NameChangeRequest::setLeaseLength(isc::data::ConstElementPtr element) {
 }
 
 void
-NameChangeRequest::setConflictResolution(const bool value) {
-    conflict_resolution_ = value;
+NameChangeRequest::translateUseConflictResolution(isc::data::ConstElementPtr element) {
+    try {
+        bool value = element->boolValue();
+        setConflictResolutionMode(value ? CHECK_WITH_DHCID : NO_CHECK_WITH_DHCID);
+    } catch (const isc::data::TypeError& ex) {
+        // We expect a boolean Element type, don't have one.
+        isc_throw(NcrMessageError, "Wrong data type for use-conflict-resolution: "
+                  << ex.what());
+    }
 }
 
 void
-NameChangeRequest::setConflictResolution(isc::data::ConstElementPtr element) {
-    bool value;
-    try {
-        // Get the element's boolean value.
-        value = element->boolValue();
-    } catch (const isc::data::TypeError& ex) {
-        // We expect a boolean Element type, don't have one.
-        isc_throw(NcrMessageError,
-                  "Wrong data type for use-conflict-resolution: " << ex.what());
-    }
+NameChangeRequest::setConflictResolutionMode(const ConflictResolutionMode value) {
+    conflict_resolution_mode_ = value;
+}
 
-    // Good to go, make the assignment.
-    setConflictResolution(value);
+void
+NameChangeRequest::setConflictResolutionMode(isc::data::ConstElementPtr element) {
+    try {
+        // Get the element's string value.
+        auto value = StringToConflictResolutionMode(element->stringValue());
+        setConflictResolutionMode(value);
+    } catch (const isc::data::TypeError& ex) {
+        // We expect a string Element type, don't have one.
+        isc_throw(NcrMessageError, "Wrong data type for conflict-resolution-mode: "
+                  << ex.what());
+    }
 }
 
 void
@@ -667,7 +725,8 @@ NameChangeRequest::toText() const {
            << "DHCID: [" << dhcid_.toStr() << "]" << std::endl
            << "Lease Expires On: " << getLeaseExpiresOnStr() << std::endl
            << "Lease Length: " << lease_length_ << std::endl
-           << "Conflict Resolution: " << (conflict_resolution_ ? "yes" : "no")
+           << "Conflict Resolution Mode: "
+           << ConflictResolutionModeToString(getConflictResolutionMode())
            << std::endl;
 
     return (stream.str());
@@ -683,7 +742,7 @@ NameChangeRequest::operator == (const NameChangeRequest& other) const {
             (dhcid_ == other.dhcid_) &&
             (lease_expires_on_ == other.lease_expires_on_) &&
             (lease_length_ == other.lease_length_) &&
-            (conflict_resolution_ == other.conflict_resolution_));
+            (conflict_resolution_mode_ == other.conflict_resolution_mode_));
 }
 
 bool

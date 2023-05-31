@@ -858,6 +858,54 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"ddns-conflict-resolution-mode\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_CONFLICT_RESOLUTION_MODE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-conflict-resolution-mode", driver.loc_);
+    }
+}
+
+(?i:\"check-with-dhcid\") {
+    if (driver.ctx_ == isc::dhcp::Parser4Context::DDNS_CONFLICT_RESOLUTION_MODE) {
+        return isc::dhcp::Dhcp4Parser::make_CHECK_WITH_DHCID(driver.loc_);
+    }
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+    return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
+}
+
+(?i:\"no-check-with-dhcid\") {
+    if (driver.ctx_ == isc::dhcp::Parser4Context::DDNS_CONFLICT_RESOLUTION_MODE) {
+        return isc::dhcp::Dhcp4Parser::make_NO_CHECK_WITH_DHCID(driver.loc_);
+    }
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+    return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
+}
+
+(?i:\"check-exists-with-dhcid\") {
+    if (driver.ctx_ == isc::dhcp::Parser4Context::DDNS_CONFLICT_RESOLUTION_MODE) {
+        return isc::dhcp::Dhcp4Parser::make_CHECK_EXISTS_WITH_DHCID(driver.loc_);
+    }
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+    return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
+}
+
+(?i:\"no-check-without-dhcid\") {
+    if (driver.ctx_ == isc::dhcp::Parser4Context::DDNS_CONFLICT_RESOLUTION_MODE) {
+        return isc::dhcp::Dhcp4Parser::make_NO_CHECK_WITHOUT_DHCID(driver.loc_);
+    }
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+    return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
+}
+
+
 \"ddns-ttl-percent\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

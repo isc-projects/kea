@@ -1,13 +1,13 @@
-// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
+//
 #include <config.h>
 
 #include <asiolink/io_service.h>
-#include <d2/simple_add.h>
+#include <d2/simple_add_without_dhcid.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/testutils/nc_test_utils.h>
 #include <dns/messagerenderer.h>
@@ -21,22 +21,22 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Test class derived from SimpleAddTransaction to provide visibility
+/// @brief Test class derived from SimpleAddWithoutDHCIDTransaction to provide visibility
 // to protected methods.
-class SimpleAddStub : public SimpleAddTransaction {
+class SimpleAddWithoutDHCIDStub : public SimpleAddWithoutDHCIDTransaction {
 public:
-    SimpleAddStub(asiolink::IOServicePtr& io_service,
+    SimpleAddWithoutDHCIDStub(asiolink::IOServicePtr& io_service,
                   dhcp_ddns::NameChangeRequestPtr& ncr,
                   DdnsDomainPtr& forward_domain,
                   DdnsDomainPtr& reverse_domain,
                   D2CfgMgrPtr& cfg_mgr)
-        : SimpleAddTransaction(io_service, ncr, forward_domain, reverse_domain,
+        : SimpleAddWithoutDHCIDTransaction(io_service, ncr, forward_domain, reverse_domain,
                                cfg_mgr),
           simulate_send_exception_(false),
           simulate_build_request_exception_(false) {
     }
 
-    virtual ~SimpleAddStub() {
+    virtual ~SimpleAddWithoutDHCIDStub() {
     }
 
     /// @brief Simulates sending update requests to the DNS server
@@ -78,7 +78,7 @@ public:
     virtual D2UpdateMessagePtr prepNewRequest(DdnsDomainPtr domain) {
         if (simulate_build_request_exception_) {
             simulate_build_request_exception_ = false;
-            isc_throw (SimpleAddTransactionError,
+            isc_throw (SimpleAddWithoutDHCIDTransactionError,
                        "Simulated build requests exception");
         }
 
@@ -156,36 +156,36 @@ public:
     using StateModel::postNextEvent;
     using StateModel::setState;
     using StateModel::initDictionaries;
-    using SimpleAddTransaction::defineEvents;
-    using SimpleAddTransaction::verifyEvents;
-    using SimpleAddTransaction::defineStates;
-    using SimpleAddTransaction::verifyStates;
-    using SimpleAddTransaction::readyHandler;
-    using SimpleAddTransaction::selectingFwdServerHandler;
-    using SimpleAddTransaction::getCurrentServer;
-    using SimpleAddTransaction::setDnsUpdateStatus;
-    using SimpleAddTransaction::replacingFwdAddrsHandler;
-    using SimpleAddTransaction::selectingRevServerHandler;
-    using SimpleAddTransaction::replacingRevPtrsHandler;
-    using SimpleAddTransaction::processAddOkHandler;
-    using SimpleAddTransaction::processAddFailedHandler;
-    using SimpleAddTransaction::buildReplaceFwdAddressRequest;
-    using SimpleAddTransaction::buildReplaceRevPtrsRequest;
+    using SimpleAddWithoutDHCIDTransaction::defineEvents;
+    using SimpleAddWithoutDHCIDTransaction::verifyEvents;
+    using SimpleAddWithoutDHCIDTransaction::defineStates;
+    using SimpleAddWithoutDHCIDTransaction::verifyStates;
+    using SimpleAddWithoutDHCIDTransaction::readyHandler;
+    using SimpleAddWithoutDHCIDTransaction::selectingFwdServerHandler;
+    using SimpleAddWithoutDHCIDTransaction::getCurrentServer;
+    using SimpleAddWithoutDHCIDTransaction::setDnsUpdateStatus;
+    using SimpleAddWithoutDHCIDTransaction::replacingFwdAddrsHandler;
+    using SimpleAddWithoutDHCIDTransaction::selectingRevServerHandler;
+    using SimpleAddWithoutDHCIDTransaction::replacingRevPtrsHandler;
+    using SimpleAddWithoutDHCIDTransaction::processAddOkHandler;
+    using SimpleAddWithoutDHCIDTransaction::processAddFailedHandler;
+    using SimpleAddWithoutDHCIDTransaction::buildReplaceFwdAddressRequest;
+    using SimpleAddWithoutDHCIDTransaction::buildReplaceRevPtrsRequest;
 };
 
-typedef boost::shared_ptr<SimpleAddStub> SimpleAddStubPtr;
+typedef boost::shared_ptr<SimpleAddWithoutDHCIDStub> SimpleAddWithoutDHCIDStubPtr;
 
-/// @brief Test fixture for testing SimpleAddTransaction
+/// @brief Test fixture for testing SimpleAddWithoutDHCIDTransaction
 ///
-/// Note this class uses SimpleAddStub class to exercise non-public
-/// aspects of SimpleAddTransaction.
-class SimpleAddTransactionTest : public TransactionTest {
+/// Note this class uses SimpleAddWithoutDHCIDStub class to exercise non-public
+/// aspects of SimpleAddWithoutDHCIDTransaction.
+class SimpleAddWithoutDHCIDTransactionTest : public TransactionTest {
 public:
 
-    SimpleAddTransactionTest() {
+    SimpleAddWithoutDHCIDTransactionTest() {
     }
 
-    virtual ~SimpleAddTransactionTest() {
+    virtual ~SimpleAddWithoutDHCIDTransactionTest() {
     }
 
     /// @brief Creates a transaction which requests an IPv4 DNS update.
@@ -196,12 +196,12 @@ public:
     /// will have either the forward, reverse, or both domains populated.
     ///
     /// @param change_mask determines which change directions are requested
-    SimpleAddStubPtr makeTransaction4(int change_mask = FWD_AND_REV_CHG) {
+    SimpleAddWithoutDHCIDStubPtr makeTransaction4(int change_mask = FWD_AND_REV_CHG) {
         // Creates IPv4 remove request, forward, and reverse domains.
         setupForIPv4Transaction(dhcp_ddns::CHG_ADD, change_mask);
 
         // Now create the test transaction as would occur in update manager.
-        return (SimpleAddStubPtr(new SimpleAddStub(io_service_, ncr_,
+        return (SimpleAddWithoutDHCIDStubPtr(new SimpleAddWithoutDHCIDStub(io_service_, ncr_,
                                                forward_domain_,
                                                reverse_domain_, cfg_mgr_)));
     }
@@ -214,12 +214,12 @@ public:
     /// will have either the forward, reverse, or both domains populated.
     ///
     /// @param change_mask determines which change directions are requested
-    SimpleAddStubPtr makeTransaction6(int change_mask = FWD_AND_REV_CHG) {
+    SimpleAddWithoutDHCIDStubPtr makeTransaction6(int change_mask = FWD_AND_REV_CHG) {
         // Creates IPv6 remove request, forward, and reverse domains.
         setupForIPv6Transaction(dhcp_ddns::CHG_ADD, change_mask);
 
         // Now create the test transaction as would occur in update manager.
-        return (SimpleAddStubPtr(new SimpleAddStub(io_service_, ncr_,
+        return (SimpleAddWithoutDHCIDStubPtr(new SimpleAddWithoutDHCIDStub(io_service_, ncr_,
                                                forward_domain_,
                                                reverse_domain_,
                                                cfg_mgr_)));
@@ -239,10 +239,10 @@ public:
     /// @param change_mask determines which change directions are requested
     /// @param family selects between an IPv4 (AF_INET) and IPv6 (AF_INET6)
     /// transaction.
-    SimpleAddStubPtr prepHandlerTest(unsigned int state, unsigned int event,
+    SimpleAddWithoutDHCIDStubPtr prepHandlerTest(unsigned int state, unsigned int event,
                                    unsigned int change_mask = FWD_AND_REV_CHG,
                                    short family = AF_INET) {
-        SimpleAddStubPtr name_add =  (family == AF_INET ?
+        SimpleAddWithoutDHCIDStubPtr name_add =  (family == AF_INET ?
                                     makeTransaction4(change_mask) :
                                     makeTransaction6(change_mask));
         name_add->initDictionaries();
@@ -252,11 +252,11 @@ public:
     }
 };
 
-/// @brief Tests SimpleAddTransaction construction.
+/// @brief Tests SimpleAddWithoutDHCIDTransaction construction.
 /// This test verifies that:
 /// 1. Construction with invalid type of request
 /// 2. Valid construction functions properly
-TEST(SimpleAddTransaction, construction) {
+TEST(SimpleAddWithoutDHCIDTransaction, construction) {
     asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
     D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
@@ -270,7 +270,7 @@ TEST(SimpleAddTransaction, construction) {
         " \"dhcid\" : \"0102030405060708\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"conflict-resolution-mode\" : \"no-check-with-dhcid\""
+        " \"conflict-resolution-mode\" : \"no-check-without-dhcid\""
         "}";
 
     dhcp_ddns::NameChangeRequestPtr ncr;
@@ -284,20 +284,20 @@ TEST(SimpleAddTransaction, construction) {
     ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", servers)));
 
     // Verify that construction with wrong change type fails.
-    EXPECT_THROW(SimpleAddTransaction(io_service, ncr,
+    EXPECT_THROW(SimpleAddWithoutDHCIDTransaction(io_service, ncr,
                                     forward_domain, reverse_domain, cfg_mgr),
-                                    SimpleAddTransactionError);
+                                    SimpleAddWithoutDHCIDTransactionError);
 
     // Verify that a valid construction attempt works.
     ncr->setChangeType(isc::dhcp_ddns::CHG_ADD);
-    EXPECT_NO_THROW(SimpleAddTransaction(io_service, ncr,
+    EXPECT_NO_THROW(SimpleAddWithoutDHCIDTransaction(io_service, ncr,
                                        forward_domain, reverse_domain,
                                        cfg_mgr));
 }
 
 /// @brief Tests event and state dictionary construction and verification.
-TEST_F(SimpleAddTransactionTest, dictionaryCheck) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, dictionaryCheck) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     ASSERT_NO_THROW(name_add = makeTransaction4());
     // Verify that the event and state dictionary validation fails prior
     // dictionary construction.
@@ -315,40 +315,40 @@ TEST_F(SimpleAddTransactionTest, dictionaryCheck) {
 
 /// @brief Tests construction of a DNS update request for replacing a forward
 /// dns entry.
-TEST_F(SimpleAddTransactionTest, buildReplaceFwdAddressRequest) {
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, buildReplaceFwdAddressRequest) {
     // Create a IPv4 forward replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
-    SimpleAddStubPtr name_add;
+    SimpleAddWithoutDHCIDStubPtr name_add;
     ASSERT_NO_THROW(name_add = makeTransaction4());
     ASSERT_NO_THROW(name_add->buildReplaceFwdAddressRequest());
-    checkSimpleReplaceFwdAddressRequest(*name_add);
+    checkSimpleReplaceFwdAddressWithoutDHCIDRequest(*name_add);
 
     // Create a IPv6 forward replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
     ASSERT_NO_THROW(name_add = makeTransaction6());
     ASSERT_NO_THROW(name_add->buildReplaceFwdAddressRequest());
-    checkSimpleReplaceFwdAddressRequest(*name_add);
+    checkSimpleReplaceFwdAddressWithoutDHCIDRequest(*name_add);
 }
 
 /// @brief Tests the construction of a DNS update request for replacing a
 /// reverse dns entry.
-TEST_F(SimpleAddTransactionTest, buildReplaceRevPtrsRequest) {
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, buildReplaceRevPtrsRequest) {
     // Create a IPv4 reverse replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
-    SimpleAddStubPtr name_add;
+    SimpleAddWithoutDHCIDStubPtr name_add;
     ASSERT_NO_THROW(name_add = makeTransaction4());
     ASSERT_NO_THROW(name_add->buildReplaceRevPtrsRequest());
-    checkReplaceRevPtrsRequest(*name_add);
+    checkSimpleReplaceRevPtrsWithoutDHCIDRequest(*name_add);
 
     // Create a IPv6 reverse replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
     ASSERT_NO_THROW(name_add = makeTransaction6());
     ASSERT_NO_THROW(name_add->buildReplaceRevPtrsRequest());
-    checkReplaceRevPtrsRequest(*name_add);
+    checkSimpleReplaceRevPtrsWithoutDHCIDRequest(*name_add);
 }
 
 // Tests the readyHandler functionality.
@@ -360,8 +360,8 @@ TEST_F(SimpleAddTransactionTest, buildReplaceRevPtrsRequest) {
 // 3. Posted event is START_EVT and request includes only a reverse change
 // 4. Posted event is invalid
 //
-TEST_F(SimpleAddTransactionTest, readyHandler) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, readyHandler) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
 
     // Create a transaction which includes only a forward change.
     ASSERT_NO_THROW(
@@ -412,7 +412,7 @@ TEST_F(SimpleAddTransactionTest, readyHandler) {
     );
 
     // Running the readyHandler should throw.
-    EXPECT_THROW(name_add->readyHandler(), SimpleAddTransactionError);
+    EXPECT_THROW(name_add->readyHandler(), SimpleAddWithoutDHCIDTransactionError);
 }
 
 // Tests the selectingFwdServerHandler functionality.
@@ -422,8 +422,8 @@ TEST_F(SimpleAddTransactionTest, readyHandler) {
 // 2. Posted event is SERVER_IO_ERROR_EVT
 // 3. Posted event is invalid
 //
-TEST_F(SimpleAddTransactionTest, selectingFwdServerHandler) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, selectingFwdServerHandler) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_add = prepHandlerTest(NameChangeTransaction::SELECTING_FWD_SERVER_ST,
@@ -445,7 +445,7 @@ TEST_F(SimpleAddTransactionTest, selectingFwdServerHandler) {
         ASSERT_TRUE(name_add->getCurrentServer());
 
         // Verify that we transitioned correctly.
-        CHECK_CONTEXT(name_add, SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
+        CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
                       NameChangeTransaction::SERVER_SELECTED_EVT);
 
         // Post a server IO error event.  This simulates an IO error occurring
@@ -469,23 +469,23 @@ TEST_F(SimpleAddTransactionTest, selectingFwdServerHandler) {
 
     // Running the handler should throw.
     EXPECT_THROW(name_add->selectingFwdServerHandler(),
-                 SimpleAddTransactionError);
+                 SimpleAddWithoutDHCIDTransactionError);
 }
 
 // ************************ replacingFwdAddrHandler Tests *****************
 
 // Tests that replacingFwdAddrsHandler rejects invalid events.
-TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_InvalidEvent) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingFwdAddrsHandler_InvalidEvent) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler but with
     // an invalid event.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
                                    NameChangeTransaction::StateModel::NOP_EVT)
     );
 
     // Running the handler should throw.
-    EXPECT_THROW(name_add->replacingFwdAddrsHandler(), SimpleAddTransactionError);
+    EXPECT_THROW(name_add->replacingFwdAddrsHandler(), SimpleAddWithoutDHCIDTransactionError);
 }
 
 // Tests replacingFwdAddrsHandler with the following scenario:
@@ -495,12 +495,12 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_InvalidEvent) {
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
-                                   SimpleAddTransaction::SERVER_SELECTED_EVT, FORWARD_CHG)
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
+                                   SimpleAddWithoutDHCIDTransaction::SERVER_SELECTED_EVT, FORWARD_CHG)
     );
 
     // Should not be an update message yet.
@@ -515,11 +515,11 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK) {
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkSimpleReplaceFwdAddressRequest(*name_add);
+    checkSimpleReplaceFwdAddressWithoutDHCIDRequest(*name_add);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
-    CHECK_CONTEXT(name_add, SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
+    CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
                   NameChangeTransaction::NOP_EVT);
 
     // Simulate receiving a successful update response.
@@ -544,12 +544,12 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK) {
 //  The update request is sent without error.
 //  A server response is received which indicates the update was rejected.
 //
-TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_OtherRcode) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingFwdAddrsHandler_OtherRcode) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
-                                   SimpleAddTransaction::SERVER_SELECTED_EVT, FWD_AND_REV_CHG)
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
+                                   SimpleAddWithoutDHCIDTransaction::SERVER_SELECTED_EVT, FWD_AND_REV_CHG)
     );
 
     // Select a server to satisfy log statements.
@@ -581,13 +581,13 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_OtherRcode) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingFwdAddrsHandler_Timeout) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
 
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
-                                   SimpleAddTransaction::SERVER_SELECTED_EVT, FWD_AND_REV_CHG)
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
+                                   SimpleAddWithoutDHCIDTransaction::SERVER_SELECTED_EVT, FWD_AND_REV_CHG)
     );
 
     // Select a server to satisfy log statements.
@@ -614,11 +614,11 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            CHECK_CONTEXT(name_add, SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
+            CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
                           NameChangeTransaction::SERVER_SELECTED_EVT);
         } else {
             // Server retries should be exhausted, time for a new server.
-            CHECK_CONTEXT(name_add, SimpleAddTransaction::SELECTING_FWD_SERVER_ST,
+            CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::SELECTING_FWD_SERVER_ST,
                           NameChangeTransaction::SERVER_IO_ERROR_EVT);
         }
     }
@@ -631,13 +631,13 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
 //  The update request is sent but a corrupt response is received, this occurs
 //  MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
 
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
-                                   SimpleAddTransaction::SERVER_SELECTED_EVT, FWD_AND_REV_CHG)
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
+                                   SimpleAddWithoutDHCIDTransaction::SERVER_SELECTED_EVT, FWD_AND_REV_CHG)
     );
 
     // Select a server to satisfy log statements.
@@ -663,11 +663,11 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            CHECK_CONTEXT(name_add, SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
+            CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
                           NameChangeTransaction::SERVER_SELECTED_EVT);
         } else {
             // Server retries should be exhausted, time for a new server.
-            CHECK_CONTEXT(name_add, SimpleAddTransaction::SELECTING_FWD_SERVER_ST,
+            CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::SELECTING_FWD_SERVER_ST,
                           NameChangeTransaction::SERVER_IO_ERROR_EVT);
         }
     }
@@ -680,8 +680,8 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
 // 2. Posted event is SERVER_IO_ERROR_EVT
 // 3. Posted event is invalid
 //
-TEST_F(SimpleAddTransactionTest, selectingRevServerHandler) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, selectingRevServerHandler) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_add = prepHandlerTest(NameChangeTransaction::SELECTING_REV_SERVER_ST,
@@ -703,7 +703,7 @@ TEST_F(SimpleAddTransactionTest, selectingRevServerHandler) {
         ASSERT_TRUE(name_add->getCurrentServer());
 
         // Verify that we transitioned correctly.
-        CHECK_CONTEXT(name_add, SimpleAddTransaction::REPLACING_REV_PTRS_ST,
+        CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
                       NameChangeTransaction::SERVER_SELECTED_EVT);
 
         // Post a server IO error event.  This simulates an IO error occurring
@@ -727,24 +727,24 @@ TEST_F(SimpleAddTransactionTest, selectingRevServerHandler) {
 
     // Running the handler should throw.
     EXPECT_THROW(name_add->selectingRevServerHandler(),
-                 SimpleAddTransactionError);
+                 SimpleAddWithoutDHCIDTransactionError);
 }
 
 //************************** replacingRevPtrsHandler tests *****************
 
 // Tests that replacingRevPtrsHandler rejects invalid events.
-TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_InvalidEvent) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingRevPtrsHandler_InvalidEvent) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler but with
     // an invalid event.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_REV_PTRS_ST,
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
                                    NameChangeTransaction::StateModel::NOP_EVT)
     );
 
     // Running the handler should throw.
     EXPECT_THROW(name_add->replacingRevPtrsHandler(),
-                 SimpleAddTransactionError);
+                 SimpleAddWithoutDHCIDTransactionError);
 }
 
 // Tests replacingRevPtrsHandler with the following scenario:
@@ -754,12 +754,12 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_InvalidEvent) {
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_FwdOnlyAddOK) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingRevPtrsHandler_FwdOnlyAddOK) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_REV_PTRS_ST,
-                                   SimpleAddTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
+                                   SimpleAddWithoutDHCIDTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
     // Should not be an update message yet.
@@ -774,11 +774,11 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_FwdOnlyAddOK) {
     EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkReplaceRevPtrsRequest(*name_add);
+    checkSimpleReplaceRevPtrsWithoutDHCIDRequest(*name_add);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
-    CHECK_CONTEXT(name_add, SimpleAddTransaction::REPLACING_REV_PTRS_ST,
+    CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
                   NameChangeTransaction::NOP_EVT);
 
     // Simulate receiving a successful update response.
@@ -804,12 +804,12 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_FwdOnlyAddOK) {
 //  The update request is sent without error.
 //  A server response is received which indicates the update was rejected.
 //
-TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_OtherRcode) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingRevPtrsHandler_OtherRcode) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_REV_PTRS_ST,
-                                   SimpleAddTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
+                                   SimpleAddWithoutDHCIDTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
     // Select a server to satisfy log statements.
@@ -841,12 +841,12 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_OtherRcode) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_Timeout) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingRevPtrsHandler_Timeout) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_REV_PTRS_ST,
-                                   SimpleAddTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
+                                   SimpleAddWithoutDHCIDTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
     // Select a server to satisfy log statements.
@@ -872,11 +872,11 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_Timeout) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            CHECK_CONTEXT(name_add, SimpleAddTransaction::REPLACING_REV_PTRS_ST,
+            CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
                           NameChangeTransaction::SERVER_SELECTED_EVT);
         } else {
             // Server retries should be exhausted, time for a new server.
-            CHECK_CONTEXT(name_add, SimpleAddTransaction::SELECTING_REV_SERVER_ST,
+            CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::SELECTING_REV_SERVER_ST,
                           NameChangeTransaction::SERVER_IO_ERROR_EVT);
         }
     }
@@ -889,12 +889,12 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_Timeout) {
 //  The update request is sent but a corrupt response is received, this occurs
 //  MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_REV_PTRS_ST,
-                                   SimpleAddTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
+                                   SimpleAddWithoutDHCIDTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
     // Select a server to satisfy log statements.
@@ -920,11 +920,11 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            CHECK_CONTEXT(name_add, SimpleAddTransaction::REPLACING_REV_PTRS_ST,
+            CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
                           NameChangeTransaction::SERVER_SELECTED_EVT);
         } else {
             // Server retries should be exhausted, time for a new server.
-            CHECK_CONTEXT(name_add, SimpleAddTransaction::SELECTING_REV_SERVER_ST,
+            CHECK_CONTEXT(name_add, SimpleAddWithoutDHCIDTransaction::SELECTING_REV_SERVER_ST,
                           NameChangeTransaction::SERVER_IO_ERROR_EVT);
         }
     }
@@ -936,8 +936,8 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
 // 1. Posted event is UPDATE_OK_EVT
 // 2. Posted event is invalid
 //
-TEST_F(SimpleAddTransactionTest, processAddOkHandler) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, processAddOkHandler) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_add = prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_OK_ST,
@@ -961,7 +961,7 @@ TEST_F(SimpleAddTransactionTest, processAddOkHandler) {
     );
 
     // Running the handler should throw.
-    EXPECT_THROW(name_add->processAddOkHandler(), SimpleAddTransactionError);
+    EXPECT_THROW(name_add->processAddOkHandler(), SimpleAddWithoutDHCIDTransactionError);
 }
 
 // Tests the processAddFailedHandler functionality.
@@ -970,8 +970,8 @@ TEST_F(SimpleAddTransactionTest, processAddOkHandler) {
 // 1. Posted event is UPDATE_FAILED_EVT
 // 2. Posted event is invalid
 //
-TEST_F(SimpleAddTransactionTest, processAddFailedHandler) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, processAddFailedHandler) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_add = prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
@@ -996,13 +996,13 @@ TEST_F(SimpleAddTransactionTest, processAddFailedHandler) {
     );
 
     // Running the handler should throw.
-    EXPECT_THROW(name_add->processAddFailedHandler(), SimpleAddTransactionError);
+    EXPECT_THROW(name_add->processAddFailedHandler(), SimpleAddWithoutDHCIDTransactionError);
 }
 
 // Tests the processAddFailedHandler functionality.
 // It verifies behavior for posted event of NO_MORE_SERVERS_EVT.
-TEST_F(SimpleAddTransactionTest, processAddFailedHandler_NoMoreServers) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, processAddFailedHandler_NoMoreServers) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_add = prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
@@ -1026,11 +1026,11 @@ TEST_F(SimpleAddTransactionTest, processAddFailedHandler_NoMoreServers) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The send update request fails due to an unexpected exception.
 //
-TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_SendUpdateException) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingFwdAddrsHandler_SendUpdateException) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
                                    NameChangeTransaction::SERVER_SELECTED_EVT, FORWARD_CHG)
     );
 
@@ -1056,11 +1056,11 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_SendUpdateException) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The send update request fails due to an unexpected exception.
 //
-TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_SendUpdateException) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingRevPtrsHandler_SendUpdateException) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_REV_PTRS_ST,
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
                                    NameChangeTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
@@ -1086,11 +1086,11 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_SendUpdateException) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The request build fails due to an unexpected exception.
 //
-TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_BuildRequestException) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingFwdAddrsHandler_BuildRequestException) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_FWD_ADDRS_ST,
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_FWD_ADDRS_ST,
                                    NameChangeTransaction::SERVER_SELECTED_EVT, FORWARD_CHG)
     );
 
@@ -1122,11 +1122,11 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_BuildRequestException)
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The request build fails due to an unexpected exception.
 //
-TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_BuildRequestException) {
-    SimpleAddStubPtr name_add;
+TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingRevPtrsHandler_BuildRequestException) {
+    SimpleAddWithoutDHCIDStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_add = prepHandlerTest(SimpleAddTransaction::REPLACING_REV_PTRS_ST,
+        name_add = prepHandlerTest(SimpleAddWithoutDHCIDTransaction::REPLACING_REV_PTRS_ST,
                                    NameChangeTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 

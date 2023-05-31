@@ -96,12 +96,13 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "ip-reservations-unique",           Element::boolean },
     { "reservations-lookup-first",        Element::boolean },
     { "ddns-update-on-renew",             Element::boolean },
-    { "ddns-use-conflict-resolution",     Element::boolean },
+    { "ddns-use-conflict-resolution",     Element::boolean }, // deprecated
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
     { "allocator",                        Element::string },
     { "offer-lifetime",                   Element::integer },
     { "ddns-ttl-percent",                 Element::real },
+    { "ddns-conflict-resolution-mode",    Element::string },
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -141,9 +142,9 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ip-reservations-unique",           Element::boolean, "true" },
     { "reservations-lookup-first",        Element::boolean, "false" },
     { "ddns-update-on-renew",             Element::boolean, "false" },
-    { "ddns-use-conflict-resolution",     Element::boolean, "true" },
     { "parked-packet-limit",              Element::integer, "256" },
     { "allocator",                        Element::string,  "iterative" },
+    { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
 };
 
 /// @brief This table defines all option definition parameters.
@@ -255,10 +256,11 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }, // deprecated
     { "allocator",                      Element::string },
     { "offer-lifetime",                 Element::integer },
     { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -383,10 +385,11 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "ddns-use-conflict-resolution",   Element::boolean }, // deprecated
     { "allocator",                      Element::string },
     { "offer-lifetime",                 Element::integer },
     { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv4.

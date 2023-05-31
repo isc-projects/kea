@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -297,7 +297,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
         " \"dhcid\" : \"010203040A7F8E3D\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
     // Start queue manager with known good config.
@@ -525,7 +525,7 @@ TEST_F(D2ProcessTest, canShutdown) {
         " \"dhcid\" : \"010203040A7F8E3D\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
     // Manually enqueue a request.  This lets us test logic with queue

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,10 @@
 #include <d2/nc_remove.h>
 #include <d2/simple_add.h>
 #include <d2/simple_remove.h>
+#include <d2/check_exists_add.h>
+#include <d2/check_exists_remove.h>
+#include <d2/simple_add_without_dhcid.h>
+#include <d2/simple_remove_without_dhcid.h>
 
 #include <sstream>
 #include <iostream>
@@ -199,24 +203,52 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     // the transaction's IO.
     NameChangeTransactionPtr trans;
     if (next_ncr->getChangeType() == dhcp_ddns::CHG_ADD) {
-        if (next_ncr->useConflictResolution()) {
+        switch(next_ncr->getConflictResolutionMode()) {
+        case dhcp_ddns::CHECK_WITH_DHCID:
             trans.reset(new NameAddTransaction(io_service_, next_ncr,
                                                forward_domain, reverse_domain,
                                                cfg_mgr_));
-        } else {
+            break;
+        case dhcp_ddns::CHECK_EXISTS_WITH_DHCID:
+            trans.reset(new CheckExistsAddTransaction(io_service_, next_ncr,
+                                                      forward_domain, reverse_domain,
+                                                      cfg_mgr_));
+            break;
+        case dhcp_ddns::NO_CHECK_WITHOUT_DHCID:
+            trans.reset(new SimpleAddWithoutDHCIDTransaction(io_service_, next_ncr,
+                                                             forward_domain, reverse_domain,
+                                                             cfg_mgr_));
+            break;
+        default:
+            // dhcp_ddns::NO_CHECK_WITH_DHCID
             trans.reset(new SimpleAddTransaction(io_service_, next_ncr,
                                                  forward_domain, reverse_domain,
                                                  cfg_mgr_));
+            break;
         }
     } else {
-        if (next_ncr->useConflictResolution()) {
+        switch(next_ncr->getConflictResolutionMode()) {
+        case dhcp_ddns::CHECK_WITH_DHCID:
             trans.reset(new NameRemoveTransaction(io_service_, next_ncr,
                                                   forward_domain, reverse_domain,
                                                   cfg_mgr_));
-        } else {
+            break;
+        case dhcp_ddns::CHECK_EXISTS_WITH_DHCID:
+            trans.reset(new CheckExistsRemoveTransaction(io_service_, next_ncr,
+                                                         forward_domain, reverse_domain,
+                                                         cfg_mgr_));
+            break;
+        case dhcp_ddns::NO_CHECK_WITHOUT_DHCID:
+            trans.reset(new SimpleRemoveWithoutDHCIDTransaction(io_service_, next_ncr,
+                                                                forward_domain, reverse_domain,
+                                                                cfg_mgr_));
+            break;
+        default:
+            // dhcp_ddns::NO_CHECK_WITH_DHCID
             trans.reset(new SimpleRemoveTransaction(io_service_, next_ncr,
                                                     forward_domain, reverse_domain,
                                                     cfg_mgr_));
+            break;
         }
     }
 

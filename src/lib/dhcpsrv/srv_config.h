@@ -141,15 +141,6 @@ public:
     /// @return True if updates should always be performed.
     bool getUpdateOnRenew() const;
 
-    /// @brief Returns whether or not keah-dhcp-ddns should use conflict resolution
-    ///
-    /// This value is communicated to D2 via the NCR.  When true, D2 should follow
-    /// follow conflict resolution steps described in RFC 4703.  If not, it should
-    /// simple add or remove entries.
-    ///
-    /// @return True if conflict resolution should be used.
-    bool getUseConflictResolution() const;
-
     /// @brief Returns percent of lease lifetime to use for TTL
     ///
     /// This value, if greater than zero, is used to calculate the lease lifetime
@@ -157,6 +148,13 @@ public:
     ///
     /// @return TTL percent as an Optional.
     util::Optional<double> getTtlPercent() const;
+
+    /// @brief Returns the DDNS config resolution mode for kea-dhcp-ddns
+    ///
+    /// This value is communicated to D2 via the NCR.
+    ///
+    /// @return the DDNS conflict resolution mode
+    std::string getConflictResolutionMode() const;
 
     /// @brief Returns the subnet-id of the subnet associated with these parameters
     ///

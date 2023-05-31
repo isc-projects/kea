@@ -50,12 +50,16 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         return;
     }
 
-    bool use_conflict_resolution = true;
-    util::Optional<double> ddns_ttl_percent;
-    if (subnet) {
-        use_conflict_resolution = subnet->getDdnsUseConflictResolution();
-        ddns_ttl_percent = subnet->getDdnsTtlPercent();
-    }
+     ConflictResolutionMode conflict_resolution_mode = CHECK_WITH_DHCID;
+     util::Optional<double> ddns_ttl_percent;
+     if (subnet) {
+         auto mode = subnet->getDdnsConflictResolutionMode();
+         if (!mode.empty()) {
+             conflict_resolution_mode = StringToConflictResolutionMode(mode);
+         }
+
+         ddns_ttl_percent = subnet->getDdnsTtlPercent();
+     }
 
     try {
         // Create DHCID
@@ -71,7 +75,7 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
             (new NameChangeRequest(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                                    lease->hostname_, lease->addr_.toText(),
                                    dhcid, lease->cltt_ + ttl,
-                                   ttl, use_conflict_resolution));
+                                   ttl, conflict_resolution_mode));
 
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
             .arg(label)

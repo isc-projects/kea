@@ -40,6 +40,10 @@ libd2_la_SOURCES += d2_controller.cc d2_controller.h
 libd2_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 libd2_la_SOURCES += simple_add.cc simple_add.h
 libd2_la_SOURCES += simple_remove.cc simple_remove.h
+libd2_la_SOURCES += simple_add_without_dhcid.cc simple_add_without_dhcid.h
+libd2_la_SOURCES += simple_remove_without_dhcid.cc simple_remove_without_dhcid.h
+libd2_la_SOURCES += check_exists_add.cc check_exists_add.h
+libd2_la_SOURCES += check_exists_remove.cc check_exists_remove.h
 
 sbin_PROGRAMS = kea-dhcp-ddns
 

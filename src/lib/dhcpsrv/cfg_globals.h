@@ -75,6 +75,7 @@ public:
         PARKED_PACKET_LIMIT,
         ALLOCATOR,
         DDNS_TTL_PERCENT,
+        DDNS_CONFLICT_RESOLUTION_MODE,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,

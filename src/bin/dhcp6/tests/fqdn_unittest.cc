@@ -131,7 +131,7 @@ public:
         subnet_->setDdnsQualifyingSuffix("example.com");
         subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
         subnet_->setHostnameCharReplacement("x");
-        subnet_->setDdnsUseConflictResolution(true);
+        subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
 
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -597,7 +597,7 @@ public:
     /// NameChangeRequest.
     /// @param fqdn The expected string value of the FQDN, if blank the
     /// check is skipped
-    /// @param exp_use_cr expected value of NCR::conflict_resolution_
+    /// @param exp_cr_mode expected value of NCR::conflict_resolution_mode_
     /// @param ddns_ttl_percent expected value of ddns_ttl_percent used for
     /// the NCR
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
@@ -607,7 +607,7 @@ public:
                                  const uint64_t expires,
                                  const uint16_t valid_lft,
                                  const std::string& fqdn = "",
-                                 const bool exp_use_cr = true,
+                                 const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
                                  util::Optional<double> exp_ddns_ttl_percent
                                  = util::Optional<double>()) {
         NameChangeRequestPtr ncr;
@@ -635,7 +635,7 @@ public:
            EXPECT_EQ(fqdn, ncr->getFqdn());
         }
 
-        EXPECT_EQ(exp_use_cr, ncr->useConflictResolution());
+        EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
@@ -863,7 +863,7 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
 
     // Create NameChangeRequest for the first allocated address.
     AllocEngine::ClientContext6 ctx;
-    subnet_->setDdnsUseConflictResolution(false);
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
     ctx.subnet_ = subnet_;
     ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
@@ -874,7 +874,7 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500, "", false);
+                            0, 500, "", NO_CHECK_WITH_DHCID);
 }
 
 // Checks that NameChangeRequests to add entries are not
@@ -2159,7 +2159,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
 
     // Create NameChangeRequest for the first allocated address.
     AllocEngine::ClientContext6 ctx;
-    subnet_->setDdnsUseConflictResolution(false);
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
     subnet_->setDdnsTtlPercent(Optional<double>(0.10));
     ctx.subnet_ = subnet_;
     ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
@@ -2171,7 +2171,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500, "", false, subnet_->getDdnsTtlPercent());
+                            0, 500, "", NO_CHECK_WITH_DHCID, subnet_->getDdnsTtlPercent());
 }
 
 } // end of anonymous namespace

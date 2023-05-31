@@ -5200,6 +5200,7 @@ TEST_F(Dhcp6ParserTest, d2ClientConfigValid) {
 
     // ddns-send-updates should be global default
     checkGlobal("ddns-send-updates", true);
+    checkGlobal("ddns-conflict-resolution-mode", "check-with-dhcid");
 
     // The following, deprecated dhcp-ddns parameters,
     // should all have global default values.
@@ -8411,6 +8412,74 @@ TEST_F(Dhcp6ParserTest, templateClientClassValidPreferredLifetime) {
     ASSERT_TRUE(class_def);
     ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(class_def.get()));
     EXPECT_TRUE(class_def->getValid().unspecified());
+}
+
+// This test checks that ddns-conflict-resolution-mode value can be specified at
+// global and subnet levels.
+TEST_F(Dhcp6ParserTest, storeDdnsConflictResolutionMode) {
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        "{ "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"ddns-conflict-resolution-mode\": \"check-with-dhcid\","
+        "    \"subnet\": \"2001:db8:1::/64\""
+        "},"
+        "{ "
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::ffff\" } ],"
+        "    \"ddns-conflict-resolution-mode\": \"check-exists-with-dhcid\","
+        "    \"subnet\": \"2001:db8:2::/64\""
+        "},"
+        "{"
+        "    \"pools\": [ { \"pool\": \"2001:db8:3::1 - 2001:db8:3::ffff\" } ],"
+        "    \"ddns-conflict-resolution-mode\": \"no-check-without-dhcid\","
+        "    \"subnet\": \"2001:db8:3::/64\""
+        "},"
+        "{"
+        "    \"pools\": [ { \"pool\": \"2001:db8:4::1 - 2001:db8:4::ffff\" } ],"
+        "    \"ddns-conflict-resolution-mode\": \"no-check-with-dhcid\","
+        "    \"subnet\": \"2001:db8:4::/64\""
+        "},"
+        "{"
+        "    \"pools\": [ { \"pool\": \"2001:db8:5::1 - 2001:db8:5::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:5::/64\""
+        "} ],"
+        "\"valid-lifetime\": 4000,"
+        "\"ddns-conflict-resolution-mode\": \"no-check-with-dhcid\" }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    // Check global value.
+    checkGlobal("ddns-conflict-resolution-mode", "no-check-with-dhcid");
+
+    // Check values for all the subnets.
+    std::string expectedValues[] = {
+        "check-with-dhcid",
+        "check-exists-with-dhcid",
+        "no-check-without-dhcid",
+        "no-check-with-dhcid",
+        "no-check-with-dhcid"
+    };
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    char addr[20];
+    Subnet6Ptr subnet1;
+    for (int i = 0; i < 5; i++) {
+        snprintf(addr, sizeof(addr), "2001:db8:%d::1", i+1);
+        subnet1 = cfg->selectSubnet(IOAddress(addr));
+        ASSERT_TRUE(subnet1);
+        // Reset the fetch global function to staging (vs current) config.
+        subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+            return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+        });
+        EXPECT_EQ(expectedValues[i], subnet1->getDdnsConflictResolutionMode().get());
+    }
 }
 
 }  // namespace

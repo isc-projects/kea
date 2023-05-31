@@ -1,13 +1,13 @@
-// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
+//
 #include <config.h>
 
 #include <asiolink/io_service.h>
-#include <d2/simple_remove.h>
+#include <d2/simple_remove_without_dhcid.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/testutils/nc_test_utils.h>
 #include <dns/messagerenderer.h>
@@ -22,22 +22,22 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Test class derived from SimpleRemoveTransaction to provide visibility
+/// @brief Test class derived from SimpleRemoveWithoutDHCIDTransaction to provide visibility
 // to protected methods.
-class SimpleRemoveStub : public SimpleRemoveTransaction {
+class SimpleRemoveWithoutDHCIDStub : public SimpleRemoveWithoutDHCIDTransaction {
 public:
-    SimpleRemoveStub(asiolink::IOServicePtr& io_service,
+    SimpleRemoveWithoutDHCIDStub(asiolink::IOServicePtr& io_service,
                    dhcp_ddns::NameChangeRequestPtr& ncr,
                    DdnsDomainPtr& forward_domain,
                    DdnsDomainPtr& reverse_domain,
                    D2CfgMgrPtr& cfg_mgr)
-        : SimpleRemoveTransaction(io_service, ncr, forward_domain,
+        : SimpleRemoveWithoutDHCIDTransaction(io_service, ncr, forward_domain,
                                 reverse_domain, cfg_mgr),
           simulate_send_exception_(false),
           simulate_build_request_exception_(false) {
     }
 
-    virtual ~SimpleRemoveStub() {
+    virtual ~SimpleRemoveWithoutDHCIDStub() {
     }
 
     /// @brief Simulates sending update requests to the DNS server
@@ -79,7 +79,7 @@ public:
     virtual D2UpdateMessagePtr prepNewRequest(DdnsDomainPtr domain) {
         if (simulate_build_request_exception_) {
             simulate_build_request_exception_ = false;
-            isc_throw (SimpleRemoveTransactionError,
+            isc_throw (SimpleRemoveWithoutDHCIDTransactionError,
                        "Simulated build requests exception");
         }
 
@@ -157,35 +157,35 @@ public:
     using StateModel::postNextEvent;
     using StateModel::setState;
     using StateModel::initDictionaries;
-    using SimpleRemoveTransaction::defineEvents;
-    using SimpleRemoveTransaction::verifyEvents;
-    using SimpleRemoveTransaction::defineStates;
-    using SimpleRemoveTransaction::verifyStates;
-    using SimpleRemoveTransaction::readyHandler;
-    using SimpleRemoveTransaction::selectingFwdServerHandler;
-    using SimpleRemoveTransaction::getCurrentServer;
-    using SimpleRemoveTransaction::setDnsUpdateStatus;
-    using SimpleRemoveTransaction::removingFwdRRsHandler;
-    using SimpleRemoveTransaction::selectingRevServerHandler;
-    using SimpleRemoveTransaction::removingRevPtrsHandler;
-    using SimpleRemoveTransaction::processRemoveOkHandler;
-    using SimpleRemoveTransaction::processRemoveFailedHandler;
-    using SimpleRemoveTransaction::buildRemoveFwdRRsRequest;
-    using SimpleRemoveTransaction::buildRemoveRevPtrsRequest;
+    using SimpleRemoveWithoutDHCIDTransaction::defineEvents;
+    using SimpleRemoveWithoutDHCIDTransaction::verifyEvents;
+    using SimpleRemoveWithoutDHCIDTransaction::defineStates;
+    using SimpleRemoveWithoutDHCIDTransaction::verifyStates;
+    using SimpleRemoveWithoutDHCIDTransaction::readyHandler;
+    using SimpleRemoveWithoutDHCIDTransaction::selectingFwdServerHandler;
+    using SimpleRemoveWithoutDHCIDTransaction::getCurrentServer;
+    using SimpleRemoveWithoutDHCIDTransaction::setDnsUpdateStatus;
+    using SimpleRemoveWithoutDHCIDTransaction::removingFwdRRsHandler;
+    using SimpleRemoveWithoutDHCIDTransaction::selectingRevServerHandler;
+    using SimpleRemoveWithoutDHCIDTransaction::removingRevPtrsHandler;
+    using SimpleRemoveWithoutDHCIDTransaction::processRemoveOkHandler;
+    using SimpleRemoveWithoutDHCIDTransaction::processRemoveFailedHandler;
+    using SimpleRemoveWithoutDHCIDTransaction::buildRemoveFwdRRsRequest;
+    using SimpleRemoveWithoutDHCIDTransaction::buildRemoveRevPtrsRequest;
 };
 
-typedef boost::shared_ptr<SimpleRemoveStub> SimpleRemoveStubPtr;
+typedef boost::shared_ptr<SimpleRemoveWithoutDHCIDStub> SimpleRemoveWithoutDHCIDStubPtr;
 
-/// @brief Test fixture for testing SimpleRemoveTransaction
+/// @brief Test fixture for testing SimpleRemoveWithoutDHCIDTransaction
 ///
-/// Note this class uses SimpleRemoveStub class to exercise non-public
-/// aspects of SimpleRemoveTransaction.
-class SimpleRemoveTransactionTest : public TransactionTest {
+/// Note this class uses SimpleRemoveWithoutDHCIDStub class to exercise non-public
+/// aspects of SimpleRemoveWithoutDHCIDTransaction.
+class SimpleRemoveWithoutDHCIDTransactionTest : public TransactionTest {
 public:
-    SimpleRemoveTransactionTest() {
+    SimpleRemoveWithoutDHCIDTransactionTest() {
     }
 
-    virtual ~SimpleRemoveTransactionTest() {
+    virtual ~SimpleRemoveWithoutDHCIDTransactionTest() {
     }
 
     /// @brief Creates a transaction which requests an IPv4 DNS update.
@@ -196,12 +196,12 @@ public:
     /// will have either the forward, reverse, or both domains populated.
     ///
     /// @param change_mask determines which change directions are requested
-    SimpleRemoveStubPtr makeTransaction4(int change_mask) {
+    SimpleRemoveWithoutDHCIDStubPtr makeTransaction4(int change_mask) {
         // Creates IPv4 remove request, forward, and reverse domains.
         setupForIPv4Transaction(dhcp_ddns::CHG_REMOVE, change_mask);
 
         // Now create the test transaction as would occur in update manager.
-        return (SimpleRemoveStubPtr(new SimpleRemoveStub(io_service_, ncr_,
+        return (SimpleRemoveWithoutDHCIDStubPtr(new SimpleRemoveWithoutDHCIDStub(io_service_, ncr_,
                                                      forward_domain_,
                                                      reverse_domain_,
                                                      cfg_mgr_)));
@@ -215,12 +215,12 @@ public:
     /// will have either the forward, reverse, or both domains populated.
     ///
     /// @param change_mask determines which change directions are requested
-    SimpleRemoveStubPtr makeTransaction6(int change_mask) {
+    SimpleRemoveWithoutDHCIDStubPtr makeTransaction6(int change_mask) {
         // Creates IPv6 remove request, forward, and reverse domains.
         setupForIPv6Transaction(dhcp_ddns::CHG_REMOVE, change_mask);
 
         // Now create the test transaction as would occur in update manager.
-        return (SimpleRemoveStubPtr(new SimpleRemoveStub(io_service_, ncr_,
+        return (SimpleRemoveWithoutDHCIDStubPtr(new SimpleRemoveWithoutDHCIDStub(io_service_, ncr_,
                                                      forward_domain_,
                                                      reverse_domain_,
                                                      cfg_mgr_)));
@@ -240,10 +240,10 @@ public:
     /// @param change_mask determines which change directions are requested
     /// @param family selects between an IPv4 (AF_INET) and IPv6 (AF_INET6)
     /// transaction.
-    SimpleRemoveStubPtr prepHandlerTest(unsigned int state, unsigned int event,
+    SimpleRemoveWithoutDHCIDStubPtr prepHandlerTest(unsigned int state, unsigned int event,
                                       unsigned int change_mask = FWD_AND_REV_CHG,
                                       short family = AF_INET) {
-        SimpleRemoveStubPtr name_remove = (family == AF_INET ?
+        SimpleRemoveWithoutDHCIDStubPtr name_remove = (family == AF_INET ?
                                          makeTransaction4(change_mask) :
                                          makeTransaction6(change_mask));
         name_remove->initDictionaries();
@@ -254,11 +254,11 @@ public:
 
 };
 
-/// @brief Tests SimpleRemoveTransaction construction.
+/// @brief Tests SimpleRemoveWithoutDHCIDTransaction construction.
 /// This test verifies that:
 /// 1. Construction with invalid type of request
 /// 2. Valid construction functions properly
-TEST(SimpleRemoveTransaction, construction) {
+TEST(SimpleRemoveWithoutDHCIDTransaction, construction) {
     asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
     D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
@@ -272,7 +272,7 @@ TEST(SimpleRemoveTransaction, construction) {
         " \"dhcid\" : \"0102030405060708\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"conflict-resolution-mode\" : \"no-check-with-dhcid\""
+        " \"use-conflict-resolution\" : true "
         "}";
 
     dhcp_ddns::NameChangeRequestPtr ncr;
@@ -286,20 +286,20 @@ TEST(SimpleRemoveTransaction, construction) {
     ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", servers)));
 
     // Verify that construction with wrong change type fails.
-    EXPECT_THROW(SimpleRemoveTransaction(io_service, ncr,
+    EXPECT_THROW(SimpleRemoveWithoutDHCIDTransaction(io_service, ncr,
                                        forward_domain, reverse_domain, cfg_mgr),
-                                       SimpleRemoveTransactionError);
+                                       SimpleRemoveWithoutDHCIDTransactionError);
 
     // Verify that a valid construction attempt works.
     ncr->setChangeType(isc::dhcp_ddns::CHG_REMOVE);
-    EXPECT_NO_THROW(SimpleRemoveTransaction(io_service, ncr,
+    EXPECT_NO_THROW(SimpleRemoveWithoutDHCIDTransaction(io_service, ncr,
                                           forward_domain, reverse_domain,
                                           cfg_mgr));
 }
 
 /// @brief Tests event and state dictionary construction and verification.
-TEST_F(SimpleRemoveTransactionTest, dictionaryCheck) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, dictionaryCheck) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     ASSERT_NO_THROW(name_remove = makeTransaction4(FWD_AND_REV_CHG));
     // Verify that the event and state dictionary validation fails prior
     // dictionary construction.
@@ -317,40 +317,40 @@ TEST_F(SimpleRemoveTransactionTest, dictionaryCheck) {
 
 /// @brief Tests construction of a DNS update request for removing forward
 /// dns RR entries.
-TEST_F(SimpleRemoveTransactionTest, buildRemoveFwdRRsRequest) {
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, buildRemoveFwdRRsRequest) {
     // Create a IPv4 forward replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
-    SimpleRemoveStubPtr name_remove;
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     ASSERT_NO_THROW(name_remove = makeTransaction4(FORWARD_CHG));
     ASSERT_NO_THROW(name_remove->buildRemoveFwdRRsRequest());
-    checkSimpleRemoveFwdRRsRequest(*name_remove);
+    checkSimpleRemoveFwdRRsWithoutDHCIDRequest(*name_remove);
 
     // Create a IPv6 forward replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
     ASSERT_NO_THROW(name_remove = makeTransaction6(FORWARD_CHG));
     ASSERT_NO_THROW(name_remove->buildRemoveFwdRRsRequest());
-    checkSimpleRemoveFwdRRsRequest(*name_remove);
+    checkSimpleRemoveFwdRRsWithoutDHCIDRequest(*name_remove);
 }
 
 /// @brief Tests the construction of a DNS update request for removing a
 /// reverse dns entry.
-TEST_F(SimpleRemoveTransactionTest, buildRemoveRevPtrsRequest) {
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, buildRemoveRevPtrsRequest) {
     // Create a IPv4 reverse replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
-    SimpleRemoveStubPtr name_remove;
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     ASSERT_NO_THROW(name_remove = makeTransaction4(REVERSE_CHG));
     ASSERT_NO_THROW(name_remove->buildRemoveRevPtrsRequest());
-    checkSimpleRemoveRevPtrsRequest(*name_remove);
+    checkSimpleRemoveRevPtrsWithoutDHCIDRequest(*name_remove);
 
     // Create a IPv6 reverse replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
     ASSERT_NO_THROW(name_remove = makeTransaction6(REVERSE_CHG));
     ASSERT_NO_THROW(name_remove->buildRemoveRevPtrsRequest());
-    checkSimpleRemoveRevPtrsRequest(*name_remove);
+    checkSimpleRemoveRevPtrsWithoutDHCIDRequest(*name_remove);
 }
 
 // Tests the readyHandler functionality.
@@ -362,8 +362,8 @@ TEST_F(SimpleRemoveTransactionTest, buildRemoveRevPtrsRequest) {
 // 3. Posted event is START_EVT and request includes only a reverse change
 // 4. Posted event is invalid
 //
-TEST_F(SimpleRemoveTransactionTest, readyHandler) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, readyHandler) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
 
     // Create a transaction which includes only a forward change.
     ASSERT_NO_THROW(
@@ -415,7 +415,7 @@ TEST_F(SimpleRemoveTransactionTest, readyHandler) {
     );
 
     // Running the readyHandler should throw.
-    EXPECT_THROW(name_remove->readyHandler(), SimpleRemoveTransactionError);
+    EXPECT_THROW(name_remove->readyHandler(), SimpleRemoveWithoutDHCIDTransactionError);
 }
 
 
@@ -426,8 +426,8 @@ TEST_F(SimpleRemoveTransactionTest, readyHandler) {
 // 2. Posted event is SERVER_IO_ERROR_EVT
 // 3. Posted event is invalid
 //
-TEST_F(SimpleRemoveTransactionTest, selectingFwdServerHandler) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, selectingFwdServerHandler) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_remove = prepHandlerTest(NameChangeTransaction::SELECTING_FWD_SERVER_ST,
@@ -449,7 +449,7 @@ TEST_F(SimpleRemoveTransactionTest, selectingFwdServerHandler) {
         ASSERT_TRUE(name_remove->getCurrentServer());
 
         // Verify that we transitioned correctly.
-        CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+        CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                       NameChangeTransaction::SERVER_SELECTED_EVT);
 
         // Post a server IO error event.  This simulates an IO error occurring
@@ -473,24 +473,24 @@ TEST_F(SimpleRemoveTransactionTest, selectingFwdServerHandler) {
 
     // Running the handler should throw.
     EXPECT_THROW(name_remove->selectingFwdServerHandler(),
-                 SimpleRemoveTransactionError);
+                 SimpleRemoveWithoutDHCIDTransactionError);
 }
 
 // ************************ removingFwdRRsHandler Tests *****************
 
 // Tests that removingFwdRRsHandler rejects invalid events.
-TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_InvalidEvent) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingFwdRRsHandler_InvalidEvent) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler but with
     // an invalid event.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                                       StateModel::NOP_EVT)
     );
 
     // Running the handler should throw.
     EXPECT_THROW(name_remove->removingFwdRRsHandler(),
-                 SimpleRemoveTransactionError);
+                 SimpleRemoveWithoutDHCIDTransactionError);
 }
 
 // Tests removingFwdRRsHandler with the following scenario:
@@ -500,11 +500,11 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_InvalidEvent) {
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_FwdOnlyOK) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingFwdRRsHandler_FwdOnlyOK) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                                       NameChangeTransaction::SERVER_SELECTED_EVT, FORWARD_CHG)
     );
 
@@ -520,11 +520,11 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_FwdOnlyOK) {
     EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
 
     // Verify that an update message was constructed properly.
-    checkSimpleRemoveFwdRRsRequest(*name_remove);
+    checkSimpleRemoveFwdRRsWithoutDHCIDRequest(*name_remove);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
-    CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+    CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                   NameChangeTransaction::NOP_EVT);
 
     // Simulate receiving a successful update response.
@@ -549,11 +549,11 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_FwdOnlyOK) {
 //  The update request is sent without error.
 //  A server response is received which indicates the update was rejected.
 //
-TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_OtherRcode) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingFwdRRsHandler_OtherRcode) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                                       NameChangeTransaction::SERVER_SELECTED_EVT,
                                       FWD_AND_REV_CHG)
     );
@@ -588,12 +588,12 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_OtherRcode) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_Timeout) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingFwdRRsHandler_Timeout) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
 
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                                       NameChangeTransaction::SERVER_SELECTED_EVT,
                                       FWD_AND_REV_CHG)
     );
@@ -621,11 +621,11 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_Timeout) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+            CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                           NameChangeTransaction::SERVER_SELECTED_EVT);
         } else {
             // Server retries should be exhausted, time for a new server.
-            CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::SELECTING_FWD_SERVER_ST,
+            CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::SELECTING_FWD_SERVER_ST,
                           NameChangeTransaction::SERVER_IO_ERROR_EVT);
         }
     }
@@ -638,12 +638,12 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_Timeout) {
 //  The update request is sent but a corrupt response is received, this occurs
 //  MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_InvalidResponse) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingFwdRRsHandler_InvalidResponse) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
 
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                                     NameChangeTransaction::UPDATE_OK_EVT, FWD_AND_REV_CHG)
     );
 
@@ -670,11 +670,11 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_InvalidResponse) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+            CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                           NameChangeTransaction::SERVER_SELECTED_EVT);
         } else {
             // Server retries should be exhausted, time for a new server.
-            CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::SELECTING_FWD_SERVER_ST,
+            CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::SELECTING_FWD_SERVER_ST,
                           NameChangeTransaction::SERVER_IO_ERROR_EVT);
         }
     }
@@ -688,8 +688,8 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_InvalidResponse) {
 // 2. Posted event is SERVER_IO_ERROR_EVT
 // 3. Posted event is invalid
 //
-TEST_F(SimpleRemoveTransactionTest, selectingRevServerHandler) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, selectingRevServerHandler) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_remove = prepHandlerTest(NameChangeTransaction::SELECTING_REV_SERVER_ST,
@@ -711,7 +711,7 @@ TEST_F(SimpleRemoveTransactionTest, selectingRevServerHandler) {
         ASSERT_TRUE(name_remove->getCurrentServer());
 
         // Verify that we transitioned correctly.
-        CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                       NameChangeTransaction::SERVER_SELECTED_EVT);
 
         // Post a server IO error event.  This simulates an IO error occurring
@@ -735,24 +735,24 @@ TEST_F(SimpleRemoveTransactionTest, selectingRevServerHandler) {
 
     // Running the handler should throw.
     EXPECT_THROW(name_remove->selectingRevServerHandler(),
-                 SimpleRemoveTransactionError);
+                 SimpleRemoveWithoutDHCIDTransactionError);
 }
 
 //************************** removingRevPtrsHandler tests *****************
 
 // Tests that removingRevPtrsHandler rejects invalid events.
-TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_InvalidEvent) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingRevPtrsHandler_InvalidEvent) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler but with
     // an invalid event.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                                     StateModel::NOP_EVT)
     );
 
     // Running the handler should throw.
     EXPECT_THROW(name_remove->removingRevPtrsHandler(),
-                 SimpleRemoveTransactionError);
+                 SimpleRemoveWithoutDHCIDTransactionError);
 }
 
 // Tests removingRevPtrsHandler with the following scenario:
@@ -762,11 +762,11 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_InvalidEvent) {
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_RevOnlyOK) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingRevPtrsHandler_RevOnlyOK) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                                       NameChangeTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
@@ -782,11 +782,11 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_RevOnlyOK) {
     EXPECT_NO_THROW(name_remove->removingRevPtrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkSimpleRemoveRevPtrsRequest(*name_remove);
+    checkSimpleRemoveRevPtrsWithoutDHCIDRequest(*name_remove);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
-    CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+    CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                   StateModel::NOP_EVT);
 
     // Simulate receiving a successful update response.
@@ -812,11 +812,11 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_RevOnlyOK) {
 //  The update request is sent without error.
 //  A server response is received which indicates FQDN is NOT in use.
 //
-TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_FqdnNotInUse) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingRevPtrsHandler_FqdnNotInUse) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                                     NameChangeTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
@@ -832,11 +832,11 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_FqdnNotInUse) {
     EXPECT_NO_THROW(name_remove->removingRevPtrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkSimpleRemoveRevPtrsRequest(*name_remove);
+    checkSimpleRemoveRevPtrsWithoutDHCIDRequest(*name_remove);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
-    CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+    CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                   StateModel::NOP_EVT);
 
     // Simulate receiving a RRSET does not exist.
@@ -862,11 +862,11 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_FqdnNotInUse) {
 //  The update request is sent without error.
 //  A server response is received which indicates the update was rejected.
 //
-TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_OtherRcode) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingRevPtrsHandler_OtherRcode) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                                     NameChangeTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
@@ -899,11 +899,11 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_OtherRcode) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_Timeout) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingRevPtrsHandler_Timeout) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                                       NameChangeTransaction::SERVER_SELECTED_EVT,
                                       REVERSE_CHG)
     );
@@ -931,7 +931,7 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_Timeout) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+            CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                           NameChangeTransaction::SERVER_SELECTED_EVT);
         } else {
             // Server retries should be exhausted, time for a new server.
@@ -949,11 +949,11 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_Timeout) {
 //  The update request is sent but a corrupt response is received, this occurs
 //  MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_CorruptResponse) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingRevPtrsHandler_CorruptResponse) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create the transaction.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                                     NameChangeTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
@@ -980,7 +980,7 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_CorruptResponse) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            CHECK_CONTEXT(name_remove, SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+            CHECK_CONTEXT(name_remove, SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                           NameChangeTransaction::SERVER_SELECTED_EVT);
         } else {
             // Server retries should be exhausted, time for a new server.
@@ -996,8 +996,8 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_CorruptResponse) {
 // 1. Posted event is UPDATE_OK_EVT
 // 2. Posted event is invalid
 //
-TEST_F(SimpleRemoveTransactionTest, processRemoveOkHandler) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, processRemoveOkHandler) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_remove = prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_OK_ST,
@@ -1022,7 +1022,7 @@ TEST_F(SimpleRemoveTransactionTest, processRemoveOkHandler) {
 
     // Running the handler should throw.
     EXPECT_THROW(name_remove->processRemoveOkHandler(),
-                 SimpleRemoveTransactionError);
+                 SimpleRemoveWithoutDHCIDTransactionError);
 }
 
 // Tests the processRemoveFailedHandler functionality.
@@ -1031,8 +1031,8 @@ TEST_F(SimpleRemoveTransactionTest, processRemoveOkHandler) {
 // 1. Posted event is UPDATE_FAILED_EVT
 // 2. Posted event is invalid
 //
-TEST_F(SimpleRemoveTransactionTest, processRemoveFailedHandler) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, processRemoveFailedHandler) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_remove = prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
@@ -1058,13 +1058,13 @@ TEST_F(SimpleRemoveTransactionTest, processRemoveFailedHandler) {
 
     // Running the handler should throw.
     EXPECT_THROW(name_remove->processRemoveFailedHandler(),
-                 SimpleRemoveTransactionError);
+                 SimpleRemoveWithoutDHCIDTransactionError);
 }
 
 // Tests the processRemoveFailedHandler functionality.
 // It verifies behavior for posted event of NO_MORE_SERVERS_EVT.
-TEST_F(SimpleRemoveTransactionTest, processRemoveFailedHandler_NoMoreServers) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, processRemoveFailedHandler_NoMoreServers) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_remove = prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
@@ -1084,8 +1084,8 @@ TEST_F(SimpleRemoveTransactionTest, processRemoveFailedHandler_NoMoreServers) {
 
 // Tests the processRemoveFailedHandler functionality.
 // It verifies behavior for posted event of SERVER_IO_ERROR_EVT.
-TEST_F(SimpleRemoveTransactionTest, processRemoveFailedHandler_ServerIOError) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, processRemoveFailedHandler_ServerIOError) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
         name_remove = prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
@@ -1109,11 +1109,11 @@ TEST_F(SimpleRemoveTransactionTest, processRemoveFailedHandler_ServerIOError) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The send update request fails due to an unexpected exception.
 //
-TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_SendUpdateException) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingFwdRRsHandler_SendUpdateException) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                                     NameChangeTransaction::SERVER_SELECTED_EVT, FORWARD_CHG)
     );
 
@@ -1139,11 +1139,11 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_SendUpdateException) {
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The send update request fails due to an unexpected exception.
 //
-TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_SendUpdateException) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingRevPtrsHandler_SendUpdateException) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                                     NameChangeTransaction::SERVER_SELECTED_EVT, REVERSE_CHG)
     );
 
@@ -1169,11 +1169,11 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPtrsHandler_SendUpdateException) 
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The request build fails due to an unexpected exception.
 //
-TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_BuildRequestException) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingFwdRRsHandler_BuildRequestException) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_FWD_RRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_FWD_RRS_ST,
                                     NameChangeTransaction::SERVER_SELECTED_EVT, FORWARD_CHG)
     );
 
@@ -1205,11 +1205,11 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_BuildRequestException)
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The request build fails due to an unexpected exception.
 //
-TEST_F(SimpleRemoveTransactionTest, removingRevPTRsHandler_BuildRequestException) {
-    SimpleRemoveStubPtr name_remove;
+TEST_F(SimpleRemoveWithoutDHCIDTransactionTest, removingRevPTRsHandler_BuildRequestException) {
+    SimpleRemoveWithoutDHCIDStubPtr name_remove;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(
-        name_remove = prepHandlerTest(SimpleRemoveTransaction::REMOVING_REV_PTRS_ST,
+        name_remove = prepHandlerTest(SimpleRemoveWithoutDHCIDTransaction::REMOVING_REV_PTRS_ST,
                                     NameChangeTransaction::SERVER_SELECTED_EVT, FORWARD_CHG)
     );
 
