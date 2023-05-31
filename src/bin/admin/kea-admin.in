@@ -689,6 +689,13 @@ stringify_positions_in_line() {
 
 # Entry point for the lease-upload command.
 lease_upload() {
+    # Check the lease type was given
+    if [ ${dhcp_version} -eq 0 ]; then
+        log_error "lease-upload: lease type -4 or -6 needs to be specified"
+        usage
+        exit 1
+    fi
+
     # Check that an input file was specified.
     if test -z "${input_file-}"; then
         log_error 'you must specify an input file with -i or --input for lease-upload'
@@ -720,12 +727,8 @@ lease_upload() {
     # to be further processed by a procedure.
     if test "${dhcp_version}" = '4'; then
         string_columns='address hwaddr client_id hostname user_context'
-    elif test "${dhcp_version}" = '6'; then
-        string_columns='address duid hostname hwaddr user_context'
     else
-        log_error "lease-upload: lease type -4 or -6 needs to be specified"
-        usage
-        exit 1
+        string_columns='address duid hostname hwaddr user_context'
     fi
 
     # Get positions of string columns.
