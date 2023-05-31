@@ -8,6 +8,7 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
+.. iscman:: kea-dhcp4
 
 ``kea-dhcp4`` - DHCPv4 server in Kea
 ------------------------------------

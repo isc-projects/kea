@@ -8,6 +8,7 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
+.. iscman:: kea-dhcp6
 
 ``kea-dhcp6`` - DHCPv6 server in Kea
 ------------------------------------
