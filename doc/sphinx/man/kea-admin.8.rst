@@ -55,11 +55,16 @@ Arguments
       The first line of the file contains the column names. This can be used
       as a way to switch from a database backend to a memfile backend.
       Alternatively, it can be used as a diagnostic tool, so it provides a
-      portable form of the lease data.
+      portable form of the lease data. There are other mandatory arguments
+      that must be used together with this command. Either ``-4`` or ``-6`` must
+      be specified. Also ``-o`` or ``--output`` must be provided.
 
    ``lease-upload``
       Uploads leases from a CSV (comma-separated values) text file to a MySQL or
       a PostgreSQL lease database. The CSV file needs to be in memfile format.
+      There are other mandatory arguments that must be used together with this
+      command. Either ``-4`` or ``-6`` must be specified.
+      Also ``-i`` or ``--input`` must be provided.
 
    ``stats-recount``
       Recounts lease statistics for a MySQL or PostgreSQL database.
@@ -71,6 +76,10 @@ Arguments
 ``-h|--host hostname``
    Specifies the hostname when connecting to a database.
    The default value is ``localhost``.
+
+``-i|--input input_file``
+   Specifies the CSV (comma-separated values) text file with leases to be uploaded.
+   Required for ``lease-upload``.
 
 ``-P|--port port``
    Specifies the port when connecting to a database. If not specified,
