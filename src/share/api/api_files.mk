@@ -23,6 +23,7 @@ api_files += $(top_srcdir)/src/share/api/config-write.json
 api_files += $(top_srcdir)/src/share/api/dhcp-disable.json
 api_files += $(top_srcdir)/src/share/api/dhcp-enable.json
 api_files += $(top_srcdir)/src/share/api/extended-info4-upgrade.json
+api_files += $(top_srcdir)/src/share/api/extended-info6-upgrade.json
 api_files += $(top_srcdir)/src/share/api/gss-tsig-get-all.json
 api_files += $(top_srcdir)/src/share/api/gss-tsig-get.json
 api_files += $(top_srcdir)/src/share/api/gss-tsig-key-del.json

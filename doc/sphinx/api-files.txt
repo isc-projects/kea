@@ -23,6 +23,7 @@ src/share/api/config-write.json
 src/share/api/dhcp-disable.json
 src/share/api/dhcp-enable.json
 src/share/api/extended-info4-upgrade.json
+src/share/api/extended-info6-upgrade.json
 src/share/api/gss-tsig-get-all.json
 src/share/api/gss-tsig-get.json
 src/share/api/gss-tsig-key-del.json

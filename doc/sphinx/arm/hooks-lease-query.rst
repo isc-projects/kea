@@ -630,8 +630,7 @@ For DHCPv6 lease data, the command is:
 .. isccmd:: extended-info6-upgrade
 .. _command-extended-info6-upgrade:
 
-for extended info used for by relay id and by remote id the command is
-(TO BE IMPLEMENTED):
+for extended info used for by relay id and by remote id the command is:
 
 ::
 
@@ -650,6 +649,17 @@ and include either the count of leases updated or the nature of the failure:
         "text": "Upgraded 1000 leases"
     }
 
+
+This ``extended-info6-upgrade`` command must be called when:
+
+- the database schema was upgraded from a previous version
+
+- Bulk Lease Query was not enabled (tables are maintained only when v6 BLQ is
+  enabled)
+
+- data in tables do not seem to be consistent (tables are not maintained in
+  an atomic way so consistency is not guaranteed. For instance when a database
+  is shared between several servers races can happen between updates)
 
 The operation of extended info command is governed by ``extended-info-checks``
 parameter under the sanity-checks element. Please see :ref:`sanity-checks4`

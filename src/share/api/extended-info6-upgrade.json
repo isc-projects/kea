@@ -1,0 +1,30 @@
+{
+    "access": "write",
+    "avail": "2.3.9",
+    "brief": [
+        "This command sanitizes extended info of all IPv6 leases and rebuilds when they are enabled relay and remote ID tables in the SQL lease database."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"extended-info6-upgrade\"",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-extended-info6-upgrade\"/>",
+    "hook": "lease_query",
+    "name": "extended-info6-upgrade",
+    "resp-comment": [
+        "This command should be used when some old IPv6 leases are present in the lease database using a SQL backend to make them visible to the ."
+    ],
+    "resp-syntax": [
+        "{",
+        "  \"arguments\": {",
+        "  },",
+        "  \"result\": 0,",
+        "  \"text\": \"Upgraded 1000 leases\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}
