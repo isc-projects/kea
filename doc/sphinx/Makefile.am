@@ -177,6 +177,7 @@ mans: $(man_sources) api-files.txt mes-files.txt
 #   pip install pip-tools
 # Run this when dependencies are added, changed or removed.
 update-python-dependencies: ./src/requirements.in
+	rm ./src/requirements.txt
 	pip-compile -r ./src/requirements.in
 
 clean-local:
