@@ -691,7 +691,7 @@ stringify_positions_in_line() {
 lease_upload() {
     # Check the lease type was given
     if [ ${dhcp_version} -eq 0 ]; then
-        log_error "lease-upload: lease type -4 or -6 needs to be specified"
+        log_error "lease-upload: lease type ( -4 or -6 ) needs to be specified"
         usage
         exit 1
     fi
