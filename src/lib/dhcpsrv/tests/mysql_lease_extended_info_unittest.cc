@@ -200,6 +200,11 @@ public:
     /// @brief Test getLeases6ByLink.
     void testGetLeases6ByLink();
 
+    /// @brief Test upgradeExtendedInfo6.
+    void testUpgradeExtendedInfo6(const CfgConsistency::ExtendedInfoSanity& check,
+                                  bool extended_info_table_enable,
+                                  const LeasePageSize& page_size);
+
     /// @brief Parameter map.
     DatabaseConnection::ParameterMap pmap_;
 
@@ -1537,6 +1542,166 @@ TEST_F(MySqlExtendedInfoTest, getLeases6ByLink) {
 TEST_F(MySqlExtendedInfoTest, getLeases6ByLinkMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases6ByLink();
+}
+
+void
+MySqlExtendedInfoTest::testUpgradeExtendedInfo6(const CfgConsistency::ExtendedInfoSanity& check,
+                                                bool extended_info_table_enable,
+                                                const LeasePageSize& page_size) {
+    // Lease manager is created with empty tables.
+    start(false);
+    initLease6();
+
+    IOAddress zero = IOAddress::IPV6_ZERO_ADDRESS();
+
+    // Set empty user context to first lease.
+    leases6[0]->setContext(Element::createMap());
+    Lease6Ptr copy(new Lease6(*leases6[0]));
+    EXPECT_NO_THROW(lease_mgr_->updateLease6(copy));
+
+    // Set old extended info format to second lease.
+    string txt1 = "{ \"ISC\": { \"relays\": [ { \"hop\": 44,";
+    txt1 += " \"link\": \"2001:db8::4\", \"peer\": \"2001:db8::5\",";
+    txt1 += " \"options\": \"0x00250006010203040506003500086464646464646464\"";
+    txt1 += " } ] } }";
+    EXPECT_NO_THROW(leases6[1]->setContext(Element::fromJSON(txt1)));
+    copy.reset(new Lease6(*leases6[1]));
+    EXPECT_NO_THROW(lease_mgr_->updateLease6(copy));
+
+    // Set extended info consistency.
+    CfgMgr::instance().getCurrentCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(check);
+
+    // Set extended info table enable flag.
+    lease_mgr_->setExtendedInfoTablesEnabled(extended_info_table_enable);
+
+    size_t updated;
+    ASSERT_NO_THROW(updated = lease_mgr_->upgradeExtendedInfo6(page_size));
+
+    // Put something in extended info tables.
+    ASSERT_NO_THROW(lease_mgr_->wipeExtendedInfoTables6());
+    ASSERT_NO_THROW(lease_mgr_->addRelayId6(ADDRESS6[4],
+                                            createFromString(DUIDS[4])));
+    ASSERT_NO_THROW(lease_mgr_->addRemoteId6(ADDRESS6[5],
+                                             createFromString(DUIDS[5])));
+
+    // Verify result.
+    if (check == CfgConsistency::EXTENDED_INFO_CHECK_NONE) {
+        if (!extended_info_table_enable) {
+            // Nothing was done.
+            EXPECT_EQ(0, updated);
+            EXPECT_EQ(1, lease_mgr_->byRelayId6size());
+            EXPECT_EQ(1, lease_mgr_->byRemoteId6size());
+
+            // Check first lease.
+            Lease6Ptr lease = lease_mgr_->getLease6(Lease::TYPE_PD,
+                                                    IOAddress(ADDRESS6[0]));
+            ASSERT_TRUE(lease);
+            ConstElementPtr expected = leases6[0]->toElement();
+            EXPECT_TRUE(expected->equals(*lease->toElement()))
+                << "expected: " << expected->str() << "\n"
+                << "got: " << lease->toElement()->str() << "\n";
+
+            // Check second lease.
+            lease = lease_mgr_->getLease6(Lease::TYPE_NA,
+                                          IOAddress(ADDRESS6[1]));
+            ASSERT_TRUE(lease);
+            expected = leases6[1]->toElement();
+            EXPECT_TRUE(expected->equals(*lease->toElement()))
+                << "expected: " << expected->str() << "\n"
+                << "got: " << lease->toElement()->str() << "\n";
+
+            // Check third lease.
+            lease = lease_mgr_->getLease6(Lease::TYPE_PD,
+                                          IOAddress(ADDRESS6[2]));
+            ASSERT_TRUE(lease);
+            expected = leases6[2]->toElement();
+            EXPECT_TRUE(expected->equals(*lease->toElement()))
+                << "expected: " << expected->str() << "\n"
+                << "got: " << lease->toElement()->str() << "\n";
+
+            // Check relay id.
+            Lease6Collection got;
+            vector<uint8_t> relay_id_data = createFromString(DUIDS[4]);
+            DUID relay_id(relay_id_data);
+            EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id,
+                                                                  zero,
+                                                                  0,
+                                                                  zero,
+                                                                  LeasePageSize(100)));
+            ASSERT_EQ(1, got.size());
+            EXPECT_EQ(IOAddress(ADDRESS6[4]), got[0]->addr_);
+
+            // Check remote id.
+            vector<uint8_t> remote_id = createFromString(DUIDS[5]);
+            EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id,
+                                                                   zero,
+                                                                   0,
+                                                                   zero,
+                                                                   LeasePageSize(100)));
+            ASSERT_EQ(1, got.size());
+            EXPECT_EQ(IOAddress(ADDRESS6[5]), got[0]->addr_);
+        } else {
+            // Tables were rebuilt with only the third lease.
+#if 0
+            EXPECT_EQ(1, updated);
+            EXPECT_EQ(2, lease_mgr_->byRelayId6size());
+            EXPECT_EQ(2, lease_mgr_->byRemoteId6size());
+#endif
+
+            // Check first lease.
+            Lease6Ptr lease = lease_mgr_->getLease6(Lease::TYPE_PD,
+                                                    IOAddress(ADDRESS6[0]));
+            ASSERT_TRUE(lease);
+            ConstElementPtr expected = leases6[0]->toElement();
+            EXPECT_TRUE(expected->equals(*lease->toElement()))
+                << "expected: " << expected->str() << "\n"
+                << "got: " << lease->toElement()->str() << "\n";
+
+            // Check second lease.
+            lease = lease_mgr_->getLease6(Lease::TYPE_NA,
+                                          IOAddress(ADDRESS6[1]));
+            ASSERT_TRUE(lease);
+            expected = leases6[1]->toElement();
+            EXPECT_TRUE(expected->equals(*lease->toElement()))
+                << "expected: " << expected->str() << "\n"
+                << "got: " << lease->toElement()->str() << "\n";
+
+            // Check third lease.
+            lease = lease_mgr_->getLease6(Lease::TYPE_PD,
+                                          IOAddress(ADDRESS6[2]));
+            ASSERT_TRUE(lease);
+            expected = leases6[2]->toElement();
+            EXPECT_TRUE(expected->equals(*lease->toElement()))
+                << "expected: " << expected->str() << "\n"
+                << "got: " << lease->toElement()->str() << "\n";
+        }
+    } else {
+    }
+}
+
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo6NoCheckDisabled) {
+    testUpgradeExtendedInfo6(CfgConsistency::EXTENDED_INFO_CHECK_NONE,
+                             false,
+                             LeasePageSize(100));
+}
+
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo6NoCheckEnabled) {
+    testUpgradeExtendedInfo6(CfgConsistency::EXTENDED_INFO_CHECK_NONE,
+                             true,
+                             LeasePageSize(100));
+}
+
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo6FixkDisabled) {
+    testUpgradeExtendedInfo6(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                             false,
+                             LeasePageSize(100));
+}
+
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo6FixEnabled) {
+    testUpgradeExtendedInfo6(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
+                             true,
+                             LeasePageSize(100));
 }
 
 }  // namespace
