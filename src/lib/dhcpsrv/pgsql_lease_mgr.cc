@@ -319,9 +319,9 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE address = $1"},
+      "WHERE address = $1" },
 
     // GET_LEASE6_DUID_IAID
     { 3, { OID_BYTEA, OID_INT8, OID_INT2 },
@@ -568,34 +568,34 @@ PgSqlTaggedStatement tagged_statements[] = {
     // WIPE_RELAY_ID6
     { 0, { OID_NONE },
       "wipe_relay_id6",
-      "DELETE FROM lease6_relay_id"},
+      "DELETE FROM lease6_relay_id" },
 
     // WIPE_REMOTE_ID6
     { 0, { OID_NONE },
       "wipe_remote_id6",
-      "DELETE FROM lease6_remote_id"},
+      "DELETE FROM lease6_remote_id" },
 
     // DELETE_RELAY_ID6
     { 1, { OID_BYTEA },
       "delete_relay_id6",
-      "DELETE FROM lease6_relay_id WHERE lease_addr = $1"},
+      "DELETE FROM lease6_relay_id WHERE lease_addr = $1" },
 
     // DELETE_REMOTE_ID6
     { 1, { OID_BYTEA },
       "delete_remote_id6",
-      "DELETE FROM lease6_remote_id WHERE lease_addr = $1"},
+      "DELETE FROM lease6_remote_id WHERE lease_addr = $1" },
 
     // ADD_RELAY_ID6
     { 2, { OID_BYTEA, OID_BYTEA },
       "add_relay_id6",
       "INSERT INTO lease6_relay_id(relay_id, lease_addr) "
-      "VALUES ($1, $2)"},
+      "VALUES ($1, $2)" },
 
     // ADD_REMOTE_ID6
     { 2, { OID_BYTEA, OID_BYTEA },
       "add_remote_id6",
       "INSERT INTO lease6_remote_id(remote_id, lease_addr) "
-      "VALUES ($1, $2)"},
+      "VALUES ($1, $2)" },
 
     // GET_RELAY_ID6
     { 3, { OID_BYTEA, OID_BYTEA, OID_INT8 },
@@ -603,7 +603,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT lease_addr FROM lease6_relay_id "
       "WHERE relay_id = $1 AND lease_addr > $2 "
       "ORDER BY lease_addr "
-      "LIMIT $3"},
+      "LIMIT $3" },
 
     // GET_REMOTE_ID6
     { 3, { OID_BYTEA, OID_BYTEA, OID_INT8 },
@@ -611,7 +611,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT lease_addr FROM lease6_remote_id "
       "WHERE remote_id = $1 AND lease_addr > $2 "
       "ORDER BY lease_addr "
-      "LIMIT $3"},
+      "LIMIT $3" },
 
     // GET_RELAY_ID6_LINK
     { 4, { OID_BYTEA, OID_BYTEA, OID_BYTEA, OID_INT8 },
@@ -619,7 +619,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT lease_addr FROM lease6_relay_id "
       "WHERE relay_id = $1 AND lease_addr BETWEEN $2 and $3 "
       "ORDER BY lease_addr "
-      "LIMIT $4"},
+      "LIMIT $4" },
 
     // GET_REMOTE_ID6_LINK
     { 4, { OID_BYTEA, OID_BYTEA, OID_BYTEA, OID_INT8 },
@@ -627,20 +627,20 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT lease_addr FROM lease6_remote_id "
       "WHERE remote_id = $1 AND lease_addr BETWEEN $2 and $3 "
       "ORDER BY lease_addr "
-      "LIMIT $4"},
+      "LIMIT $4" },
 
     // COUNT_RELAY_ID6
     { 0, { OID_NONE },
       "count_relay_id6",
-      "SELECT COUNT(*) FROM lease6_relay_id"},
+      "SELECT COUNT(*) FROM lease6_relay_id" },
 
     // COUNT_REMOTE_ID6
     { 0, { OID_NONE },
       "count_remote_id6",
-      "SELECT COUNT(*) FROM lease6_remote_id"},
+      "SELECT COUNT(*) FROM lease6_remote_id" },
 
     // End of list sentinel
-    { 0,  { 0 }, NULL, NULL }
+    { 0, { 0 }, 0, 0 }
 };
 
 }  // namespace
