@@ -3034,7 +3034,7 @@ DDNS-related parameters are split into two groups:
     -  ``ddns-generated-prefix``
     -  ``ddns-qualifying-suffix``
     -  ``ddns-update-on-renew``
-    -  ``ddns-use-conflict-resolution``
+    -  ``ddns-conflict-resolution-mode``
     -  ``ddns-ttl-percent``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
@@ -3074,7 +3074,7 @@ The default configuration and values would appear as follows:
         "ddns-generated-prefix": "myhost",
         "ddns-qualifying-suffix": "",
         "ddns-update-on-renew": false,
-        "ddns-use-conflict-resolution": true,
+        "ddns-conflict-resolution-mode": "check-with-dhcid",
         "hostname-char-set": "",
         "hostname-char-replacement": "",
         ...
@@ -3120,23 +3120,50 @@ to add DNS entries or they were somehow lost by the DNS server.
     Setting ``ddns-update-on-renew`` to ``true`` may impact performance, especially
     for servers with numerous clients that renew often.
 
-The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
-The value of this parameter is passed by :iscman:`kea-dhcp6` to D2 with each DNS update
-request.  When ``true`` (the default value), D2 employs conflict resolution,
-as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
-attempting to fulfill the update request. When ``false``, D2 simply attempts
-to update the DNS entries per the request, regardless of whether they
-conflict with existing entries owned by other DHCPv6 clients.
+The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.  This
+boolean parameter was passed through to D2 and enabled or disabled conflict resolution
+as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__.  Beginning with
+Kea 2.4.0, it is deprecated and replaced by ``ddns-conflict-resolution-mode`` which
+offers four modes of conflict resolution-related behavior:
+
+    - ``check-with-dhcid`` - The default mode, it instructs D2 to carry out RFC
+      4703-compliant conflict resolution.  Existing DNS entries may only be
+      overwritten if they have a DHCID record and it matches the client's DHCID.
+      This is equivalent to ``ddns-use-conflict-resolution``: true;
+
+    - ``no-check-with-dhcid`` - Existing DNS entries may be overwritten by any
+      client, whether or not those entries include a DHCID record.  The new entries
+      will include a DHCID record for the client to whom they belong.
+      This is equivalent to ``ddns-use-conflict-resolution``: false;
+
+    - ``check-exists-with-dhcid`` - Existing DNS entries may only be overwritten
+      if they have a DHCID record. The DHCID record need not match the client's DHCID.
+      This mode provides a way to protect static DNS entries (those that do not have
+      a DHCID record) while allowing dynamic entries (those that do have a DHCID
+      record) to be overwritten by any client.  This behavior was not supported
+      prior to Kea 2.4.0.
+
+    - ``no-check-without-dhcid`` - Existing DNS entries may be overwritten by
+      any client. New entries will not include DHCID records.  This behavior was
+      not supported prior to Kea 2.4.0.
 
 .. note::
 
-    Setting ``ddns-use-conflict-resolution`` to ``false`` disables the overwrite
-    safeguards that the rules of conflict resolution (from
+    For backward compatibility, ddns-use-conflict-resolution is still accepted in
+    JSON configuration.  The server will replace the value internally, with the
+    ``ddns-conflict-resolution-mode`` and an appropriate vavlue: `
+    `check-with-dhcid`` for ``true`` and ``no-check-with-dhcid`` for ``false``.
+
+.. note::
+
+    Setting ``ddns-conflict-resolution-mode`` to any value other than
+    ``check-with-dhcid`` disables the one or more overwrite safeguards
+    that the rules of conflict resolution (from
     `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__) are intended to
     prevent. This means that existing entries for an FQDN or an
     IP address made for Client-A can be deleted or replaced by entries
     for Client-B. Furthermore, there are two scenarios by which entries
-    for multiple clients for the same key (e.g. FQDN or IP) can be created.
+    for multiple clients for the same key (e.g. FQDN or IP) can be created
 
     1. Client-B uses the same FQDN as Client-A but a different IP address.
     In this case, the forward DNS entries (AAAA and DHCID RRs) for
