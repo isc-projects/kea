@@ -65,6 +65,8 @@
 // id will be used to search for the reservations within the database.
   "subnet6": [
     {
+      "id": 1,
+
       "subnet": "2001:db8:1::/48",
 
       "pools": [ { "pool": "2001:db8:1::/80" } ],

@@ -85,7 +85,8 @@ A very simple configuration for DHCPv4 could look like this:
            "rebind-timer": 2000,
            "subnet4": [{
               "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
-              "subnet": "192.0.2.0/24"
+              "subnet": "192.0.2.0/24",
+              "id": 1
            }],
 
           # Now loggers are inside the DHCPv4 object.
@@ -133,6 +134,7 @@ example JSON comment looks like this:
 
    "Dhcp4": {
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.2.0/24",
            "pools": [{ "pool": "192.0.2.10 - 192.0.2.20" }],
            "comment": "second floor"
@@ -157,6 +159,7 @@ example user context looks like this:
 
    "Dhcp4": {
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.2.0/24",
            "pools": [{ "pool": "192.0.2.10 - 192.0.2.20" }],
            "user-context": {

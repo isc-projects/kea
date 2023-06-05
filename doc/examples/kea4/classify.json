@@ -81,6 +81,7 @@
     // This one is for VoIP devices only.
     {
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+        "id": 1,
         "subnet": "192.0.2.0/24",
         "client-class": "VoIP",
         "interface": "eth0"
@@ -93,6 +94,7 @@
     // be assigned to this class.
     {
         "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
+        "id": 2,
         "subnet": "192.0.3.0/24",
         "reservations": [
         {
@@ -121,6 +123,7 @@
            } ],
 
         "subnet": "192.0.4.0/23",
+        "id": 3,
         "interface": "eth1"
     }
   ],

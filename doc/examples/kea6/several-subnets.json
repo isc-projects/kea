@@ -33,13 +33,13 @@
 // least subnet and pool entries.
   "subnet6": [
   {    "pools": [ { "pool": "2001:db8:1::/80" } ],
-       "subnet": "2001:db8:1::/64"  },
+       "id": 1, "subnet": "2001:db8:1::/64"  },
   {    "pools": [ { "pool": "2001:db8:2::/80" } ],
-       "subnet": "2001:db8:2::/64"  },
+       "id": 2, "subnet": "2001:db8:2::/64"  },
   {    "pools": [ { "pool": "2001:db8:3::/80" } ],
-       "subnet": "2001:db8:3::/64"  },
+       "id": 3, "subnet": "2001:db8:3::/64"  },
   {    "pools": [ { "pool": "2001:db8:4::/80" } ],
-       "subnet": "2001:db8:4::/64"  } ],
+       "id": 4, "subnet": "2001:db8:4::/64"  } ],
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be

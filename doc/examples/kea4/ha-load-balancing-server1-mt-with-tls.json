@@ -204,6 +204,9 @@
     // This example contains a single subnet declaration.
     "subnet4": [
         {
+            // Subnet id.
+            "id": 1,
+
             // Subnet prefix.
             "subnet": "192.0.3.0/24",
 

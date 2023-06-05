@@ -41,6 +41,8 @@
 // least subnet and pool entries.
   "subnet6": [
     {
+        "id": 1,
+
         "subnet": "2001:db8:1::/48",
 
         // This directive tells Kea that reservations may be made both in-pool

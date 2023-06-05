@@ -111,6 +111,8 @@
     // least subnet and pool entries.
     "subnet6": [
         {
+            "id": 1,
+
             "subnet": "2001:db8:1::/64",
 
             "pools": [

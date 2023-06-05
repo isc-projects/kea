@@ -137,6 +137,7 @@
                 "pool":  "192.0.2.1 - 192.0.2.200",
                 "user-context": { "info": "what a large pool" }
             } ],
+            "id": 1,
             "subnet": "192.0.2.0/24",
             "user-context": {
                 "comment": "Our first subnet!"
@@ -149,11 +150,13 @@
             // This causes Kea to ignore client-id values in this subnet
             // and rely exclusively on MAC addresses.
             "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
+            "id": 2,
             "subnet": "192.0.3.0/24",
             "match-client-id": false
         },
         {
             "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
+            "id": 3,
             "subnet": "192.0.4.0/24",
 
             // Sometimes the relay may use an IPv4 address that does
@@ -169,6 +172,7 @@
             // This causes Kea to reply to requests for unknown IP addresses
             // with a DHCPNAK message.
             "pools": [ { "pool": "192.0.5.100 - 192.0.5.200" } ],
+            "id": 4,
             "subnet": "192.0.5.0/24",
             "authoritative": true
         }

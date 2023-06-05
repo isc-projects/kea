@@ -63,6 +63,7 @@
     // here. We tell Kea that it is directly available over local interface.
     "subnet4": [
       {
+        "id": 1,
         "interface": "eth0",
         "pools": [
           {

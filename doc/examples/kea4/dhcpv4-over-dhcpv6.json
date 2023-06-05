@@ -19,7 +19,9 @@
   "valid-lifetime": 4000,
 
   "subnet4": [
-   {    "subnet": "10.10.10.0/24",
+   {
+        "id": 100,
+        "subnet": "10.10.10.0/24",
 // Don't forget the "4o6-" before "interface" here!
         "4o6-interface": "eth0",
         "4o6-subnet": "2001:db8:1:1::/64",

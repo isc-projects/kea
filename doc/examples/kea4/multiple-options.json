@@ -37,6 +37,7 @@
 // for the pool.
   "subnet4": [
     {
+       "id": 1,
        "subnet": "192.0.2.0/24",
        "option-data": [
             // When specifying options, you typically need to specify

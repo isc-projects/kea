@@ -27,6 +27,7 @@
         // This is regular subnet. It's not part of any shared-network.
         "subnet6": [
             {
+                "id": 1,
                 "pools": [ { "pool": "2001:db8:2::/80" } ],
                 "subnet": "2001:db8:2::/64",
                 "interface": "eth0"
@@ -113,6 +114,7 @@
                     // are out-of-pool.
                     // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
+                    "id": 2,
                     "subnet": "2001:db8:1::/64",
                     "pools": [ { "pool": "2001:db8:1:0:abcd::/80" } ],
                     "valid-lifetime": 40
@@ -140,6 +142,7 @@
                     // are out-of-pool.
                     // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
+                    "id": 3,
                     "subnet": "3000::/16",
                     "valid-lifetime": 40
                 }

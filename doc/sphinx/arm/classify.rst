@@ -997,6 +997,7 @@ this subnet. Such a configuration can be achieved in the following way:
        ],
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
                "client-class": "Client_foo"
@@ -1031,6 +1032,7 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
        ],
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
                "client-class": "Client_enterprise"
@@ -1075,6 +1077,7 @@ to use this pool. Such a configuration can be achieved in the following way:
        ],
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [
                    {
@@ -1113,6 +1116,8 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
        ],
        "subnet6": [
            {
+               "id": 1,
+
                "subnet": "2001:db8:1::/64",
 
                "pools": [

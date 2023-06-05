@@ -271,6 +271,7 @@ Server 1:
        }],
 
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.250"
@@ -317,6 +318,7 @@ Server 2:
        }],
 
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.250"
@@ -702,6 +704,7 @@ only difference that ``this-server-name`` should be set to "server2" and
        }],
 
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.150",
@@ -1011,6 +1014,7 @@ library configuration has been removed from this example.
        }],
 
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.125",
@@ -1097,6 +1101,7 @@ The following is an example configuration of the primary server in a
        }],
 
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.250",
@@ -1174,6 +1179,7 @@ The following is an example configuration file for the primary server in a
        }],
 
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.250"

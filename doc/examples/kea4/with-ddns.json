@@ -35,7 +35,8 @@
     {
        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
-       "interface": "eth0"
+       "interface": "eth0",
+       "id": 1
     }
   ],
 

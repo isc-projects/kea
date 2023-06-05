@@ -51,16 +51,19 @@
   "subnet4": [
   {
       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+      "id": 1,
       "subnet": "192.0.2.0/24"
   },
   {
 // This particular subnet has match-client-id value changed.
       "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
+      "id": 2,
       "subnet": "192.0.3.0/24",
       "match-client-id": false
   },
   {
       "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
+      "id": 3,
       "subnet": "192.0.4.0/24"
   } ],
 

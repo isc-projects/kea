@@ -24,6 +24,7 @@
 // Define a single subnet.
   "subnet6": [
     {
+      "id": 1,
       "pools": [
         {
           "pool": "2001:db8:1::/80",

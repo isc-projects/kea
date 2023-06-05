@@ -262,6 +262,7 @@ of these subnets. For example:
         "Dhcp4": {
             "subnet4": [
                 {
+                    "id": 1,
                     "subnet": "192.0.2.0/24",
                     "pools": [
                         {
@@ -289,6 +290,7 @@ logging for an IPv6 subnet:
         "Dhcp6": {
             "subnet6": [
                 {
+                    "id": 1,
                     "subnet": "2001:db8:1::/64",
                     "pools": [
                         {

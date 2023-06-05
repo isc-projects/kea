@@ -22,7 +22,8 @@
   "rebind-timer": 2000,
 
   "subnet6": [
-   {    "subnet": "2001:db8:1:1::/64",
+   {    "id": 1,
+        "subnet": "2001:db8:1:1::/64",
         "interface": "eth0",
         "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ] }
   ],

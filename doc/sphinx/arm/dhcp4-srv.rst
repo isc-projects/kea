@@ -155,6 +155,7 @@ be created. The basic configuration is as follows:
    # Finally, we list the subnets from which we will be leasing addresses.
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [
                    {
@@ -300,14 +301,17 @@ syntax would be used:
    {
    "subnet4": [
        {
+           "id": 1,
            "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
            "subnet": "192.0.2.0/24"
        },
        {
+           "id": 2,
            "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
            "subnet": "192.0.3.0/24"
        },
        {
+           "id": 3,
            "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
            "subnet": "192.0.4.0/24"
        }
@@ -2951,6 +2955,7 @@ options and sub-options, using the respective option code.
    ],
    "subnet4": [
        {
+           "id": 1,
            "subnet": "192.0.2.0/24",
            "reservations": [
                {
@@ -3019,6 +3024,7 @@ configuration looks like this:
    "Dhcp4": {
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "option-data": [
                {
@@ -3210,6 +3216,7 @@ class are allowed to use that pool.
    "Dhcp4": {
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
                "client-class": "VENDOR_CLASS_docsis3.0"
@@ -3249,6 +3256,7 @@ DNS servers set to 192.0.2.1 and 192.0.2.2.
        ],
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
                "client-class": "Client_foo"
@@ -4044,11 +4052,13 @@ for a particular subnet. Consider the following simplified server configuration:
        "match-client-id": true,
        "subnet4": [
        {
+           "id": 1,
            "subnet": "192.0.10.0/24",
            "pools": [ { "pool": "192.0.2.23-192.0.2.87" } ],
            "match-client-id": false
        },
        {
+           "id": 1,
            "subnet": "10.0.0.0/8",
            "pools": [ { "pool": "10.0.0.23-10.0.2.99" } ]
        }
@@ -4188,6 +4198,7 @@ ISC tested the following configuration:
 
        "subnet4": [
        {
+           "id": 1,
            "subnet": "10.10.10.0/24",
            "4o6-interface": "eno33554984",
            "4o6-subnet": "2001:db8:1:1::/64",
@@ -4462,6 +4473,7 @@ enable the option for the whole subnet, the following configuration can be used:
     {
     "subnet4": [
         {
+            "id": 1,
             "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
             "subnet": "192.0.2.0/24",
             "option-data": [
@@ -4645,6 +4657,7 @@ in a subnet:
    {
    "subnet4": [
        {
+           "id": 1,
            "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
            "subnet": "192.0.2.0/24",
            "interface": "eth0",
@@ -4839,6 +4852,7 @@ configuration:
        {
            "subnet4": [
            {
+               "id": 1,
                "subnet": "10.0.0.0/24",
                "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ],
                "ddns-qualifying-suffix": "example.isc.org.",
@@ -4868,6 +4882,7 @@ different clients with different domain names:
        {
            "subnet4": [
            {
+               "id": 1,
                "subnet": "10.0.0.0/24",
                "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ],
                "reservations": [
@@ -4924,9 +4939,11 @@ example demonstrates how standard options can be defined:
                }
                ]
            }
-           ]
+           ],
+           ...
        }
-       ]
+       ],
+       ...
    }
 
 Vendor-specific options can be reserved in a similar manner:
@@ -4952,9 +4969,11 @@ Vendor-specific options can be reserved in a similar manner:
                }
                ]
            }
-           ]
+           ],
+           ...
        }
-       ]
+       ],
+       ...
    }
 
 Options defined at the host level have the highest priority. In other words,
@@ -4987,9 +5006,11 @@ message fields:
                "server-hostname": "server-hostname.example.org",
                "boot-file-name": "/tmp/bootfile.efi"
            }
-           ]
+           ],
+           ...
        }
-       ]
+       ],
+       ...
    }
 
 Note that those parameters can be specified in combination with other
@@ -5037,6 +5058,7 @@ to them.
        ],
        "subnet4": [
        {
+           "id": 1,
            "subnet": "10.0.0.0/24",
            "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ],
            "reservations": [
@@ -5254,6 +5276,7 @@ An example configuration that disables reservations looks as follows:
       "Dhcp4": {
         "subnet4": [
           {
+            "id": 1,
             "pools": [
               {
                 "pool": "192.0.2.10-192.0.2.100"
@@ -5285,6 +5308,7 @@ An example configuration using global reservations is shown below:
         ],
         "subnet4": [
           {
+            "id": 1,
             "pools": [
               {
                 "pool": "192.0.2.10-192.0.2.100"
@@ -5401,7 +5425,8 @@ An example configuration that disables reservations looks as follows:
           {
             "reservations-global": false,
             "reservations-in-subnet": false,
-            "subnet": "192.0.2.0/24"
+            "subnet": "192.0.2.0/24",
+            "id": 1
           }
         ]
       }
@@ -5432,7 +5457,8 @@ An example configuration using global reservations is shown below:
                 "pool": "192.0.2.10-192.0.2.100"
               }
             ],
-            "subnet": "192.0.2.0/24"
+            "subnet": "192.0.2.0/24",
+            "id": 1
           }
         ]
       }
@@ -5554,6 +5580,7 @@ following can be used:
        "valid-lifetime": 600,
        "subnet4": [
        {
+           "id": 1,
            "subnet": "10.0.0.0/24",
            # It is replaced by the "reservations-global",
            # "reservations-in-subnet", and "reservations-out-of-pool"
@@ -5613,6 +5640,7 @@ within the subnet as follows:
         ],
         "subnet4": [
             {
+                "id": 1,
                 "subnet": "192.0.2.0/24",
                 "reservations": [
                     {
@@ -5689,6 +5717,7 @@ following example:
             {
             "subnet4": [
                 {
+                    "id": 1,
                     "subnet": "192.0.2.0/24",
                     "pools": [
                         {
@@ -5698,6 +5727,7 @@ following example:
                     ]
                 },
                 {
+                    "id": 2,
                     "subnet": "192.0.3.0/24",
                     "pools": [
                         {
@@ -5784,6 +5814,7 @@ the same IP address but different MAC addresses:
        "ip-reservations-unique": false,
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "reservations": [
                    {
@@ -5873,6 +5904,7 @@ have reservations) will get their default router configured.
 
         "subnet4": [
             {
+                "id": 1,
                 "subnet": "192.0.2.0/24",
                 "pools": [
                     {
@@ -5913,6 +5945,7 @@ redirects those customers to a captive portal urging them to bring their account
 
         "subnet4": [
             {
+                "id": 1,
                 "subnet": "192.0.2.0/24",
                 "pools": [
                     {
@@ -6006,10 +6039,12 @@ introduced:
                # There are two subnets in this example.
                "subnet4": [
                    {
+                       "id": 1,
                        "subnet": "10.0.0.0/8",
                        "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ]
                    },
                    {
+                       "id": 2,
                        "subnet": "192.0.2.0/24",
                        "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
                    }
@@ -6025,6 +6060,7 @@ introduced:
        # This is a regular subnet. It is not part of any shared network.
        "subnet4": [
            {
+               "id": 3,
                "subnet": "192.0.3.0/24",
                "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
                "interface": "eth1"
@@ -6076,6 +6112,7 @@ then override its value in the subnet scope. For example:
 
            "subnet4": [
                {
+                   "id": 1,
                    "subnet": "10.0.0.0/8",
                    "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ],
 
@@ -6092,6 +6129,7 @@ then override its value in the subnet scope. For example:
                    } ]
                },
                {
+                    "id": 2,
                     "subnet": "192.0.2.0/24",
                     "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ],
 
@@ -6141,11 +6179,13 @@ example of what **NOT** to do:
            "name": "office-floor-2",
            "subnet4": [
                {
+                   "id": 1,
                    "subnet": "10.0.0.0/8",
                    "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ],
                    "interface": "eth0"
                },
                {
+                    "id": 2,
                     "subnet": "192.0.2.0/24",
                     "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ],
 
@@ -6177,10 +6217,12 @@ shown in the example below.
 
            "subnet4": [
                {
+                   "id": 1,
                    "subnet": "10.0.0.0/8",
                    "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ]
                },
                {
+                    "id": 2,
                     "subnet": "192.0.2.0/24",
                     "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
                }
@@ -6209,6 +6251,7 @@ of what **NOT** to do:
            "name": "kakapo",
            "subnet4": [
                {
+                   "id": 1,
                    "subnet": "192.0.2.0/26",
                    "relay": {
                        "ip-addresses": [ "192.1.1.1" ]
@@ -6216,6 +6259,7 @@ of what **NOT** to do:
                    "pools": [ { "pool": "192.0.2.63 - 192.0.2.63" } ]
                },
                {
+                   "id": 2,
                    "subnet": "10.0.0.0/24",
                    "relay": {
                        # Specifying a different relay address for this
@@ -6248,10 +6292,12 @@ shared network.
            },
            "subnet4": [
                {
+                   "id": 1,
                    "subnet": "192.0.2.0/26",
                    "pools": [ { "pool": "192.0.2.63 - 192.0.2.63" } ]
                },
                {
+                   "id": 2,
                    "subnet": "10.0.0.0/24",
                    "pools": [ { "pool": "10.0.0.16 - 10.0.0.16" } ]
                }
@@ -6309,10 +6355,12 @@ following example:
                "interface": "eth0",
                "subnet4": [
                    {
+                       "id": 1,
                        "subnet": "192.0.2.0/26",
                        "pools": [ { "pool": "192.0.2.1 - 192.0.2.63" } ]
                    },
                    {
+                       "id": 2,
                        "subnet": "10.0.0.0/24",
                        "pools": [ { "pool": "10.0.0.2 - 10.0.0.250" } ],
                        "client-class": "b-devices"
@@ -6359,11 +6407,13 @@ on option 93 values.
                "interface": "eth0",
                "subnet4": [
                    {
+                       "id": 1,
                        "subnet": "192.0.2.0/26",
                        "pools": [ { "pool": "192.0.2.1 - 192.0.2.63" } ],
                        "client-class": "a-devices"
                    },
                    {
+                       "id": 2,
                        "subnet": "10.0.0.0/24",
                        "pools": [ { "pool": "10.0.0.2 - 10.0.0.250" } ],
                        "client-class": "b-devices"
@@ -6574,6 +6624,7 @@ selects that subnet for a relay with address 10.0.0.1.
      "Dhcp4": {
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
                "relay": {
@@ -6610,6 +6661,7 @@ everything connected behind the modems should get addresses from the
    "Dhcp4": {
        "subnet4": [
            {
+               "id": 1,
                "subnet": "10.1.1.0/24",
                "pools":  [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
                "client-class": "docsis3.0",
@@ -6618,6 +6670,7 @@ everything connected behind the modems should get addresses from the
                }
            },
            {
+               "id": 2,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
                "relay": {
@@ -7409,6 +7462,7 @@ of LED devices could be configured in the following way:
    "Dhcp4": {
        "subnet4": [
            {
+           "id": 1,
            "subnet": "192.0.2.0/24",
            "pools": [
            {

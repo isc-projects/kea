@@ -81,6 +81,7 @@
   "subnet6": [
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
+      "id": 1,
       "subnet": "2001:db8:1::/64",
       "interface": "eth0"
     }

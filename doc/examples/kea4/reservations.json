@@ -61,6 +61,7 @@
   "subnet4": [
     {
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+        "id": 1,
         "subnet": "192.0.2.0/24",
         "interface": "eth0",
         // This directive tells Kea that reservations may be made both in-pool

@@ -137,6 +137,8 @@
 // are the same as in the regular scenario.
     "subnet6": [
         {
+            "id": 1,
+
             "subnet": "2001:db8::/47",
 
             "pools": [ { "pool": "2001:db8::/64" } ],

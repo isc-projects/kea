@@ -156,6 +156,7 @@ be created. The basic configuration is as follows:
    # Finally, we list the subnets from which we will be leasing addresses.
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [
                    {
@@ -261,10 +262,12 @@ syntax would be used:
    {
    "subnet6": [
        {
+           "id": 1,
            "pools": [ { "pool": "2001:db8:1::/112" } ],
            "subnet": "2001:db8:1::/64"
        },
        {
+           "id": 2,
            "pools": [ { "pool": "2001:db8:2::1-2001:db8:2::ffff" } ],
            "subnet": "2001:db8:2::/64"
        }
@@ -1143,12 +1146,14 @@ second subnet, use a command similar to the following:
    "Dhcp6": {
        "subnet6": [
        {
+           "id": 1,
            "subnet": "2001:db8:1::/64",
            "pools": [
                { "pool": "2001:db8:1::1-2001:db8:1::ffff" }
            ]
        },
        {
+           "id": 2,
            "subnet": "2001:db8:2::/64",
            "pools": [
                { "pool": "2001:db8:2::/64" }
@@ -1195,6 +1200,7 @@ for the subnet:
    "Dhcp6": {
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:d8b:1::/64",
                "pd-pools": [
                    {
@@ -1230,6 +1236,7 @@ and which is delegated a prefix from this pool.
    "Dhcp6": {
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:1::/48",
                "pd-pools": [
                    {
@@ -2605,6 +2612,7 @@ may be configured as follows:
    "Dhcp6": {
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:beef::/48",
                "pools": [
                     {
@@ -2634,6 +2642,7 @@ shown below:
      "Dhcp6": {
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:beef::/48",
                "rapid-commit": true,
                "pools": [
@@ -2704,6 +2713,7 @@ with a value of "vlan123":
    "Dhcp6": {
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:beef::/48",
                "pools": [
                     {
@@ -2869,6 +2879,7 @@ servers set to 2001:db8:0::1 and 2001:db8:2::1.
        ],
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
                "client-class": "Client_enterprise"
@@ -2888,6 +2899,7 @@ eRouter1.0 client class are allowed to use that pool.
    "Dhcp6": {
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [
                     {
@@ -3559,6 +3571,7 @@ ISC tested the following configuration:
        "rebind-timer": 2000,
 
        "subnet6": [ {
+           "id": 1,
            "subnet": "2001:db8:1:1::/64",
            "interface": "eno33554984",
            "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ]
@@ -3936,6 +3949,7 @@ specific hosts:
    {
    "subnet6": [
        {
+           "id": 1,
            "subnet": "2001:db8:1::/48",
            "pools": [ { "pool": "2001:db8:1::/80" } ],
            "pd-pools": [
@@ -4135,6 +4149,7 @@ configuration:
    {
    "subnet6": [
        {
+           "id": 1,
            "subnet": "2001:db8:1::/48",
            "pools": [ { "pool": "2001:db8:1::/80" } ],
            "ddns-qualifying-suffix": "example.isc.org.",
@@ -4166,6 +4181,7 @@ different clients with different domain names:
    {
      "subnet6": [
        {
+           "id": 1,
            "subnet": "2001:db8:1::/48",
            "pools": [ { "pool": "2001:db8:1::/80" } ],
            "reservations": [
@@ -4294,7 +4310,9 @@ to them.
        }
        ],
        "subnet6": [
-       {   "pools": [ { "pool": "2001:db8:1::/64" } ],
+       {
+           "id": 1,
+           "pools": [ { "pool": "2001:db8:1::/64" } ],
            "subnet": "2001:db8:1::/48",
            "reservations": [
            {
@@ -4511,6 +4529,7 @@ An example configuration that disables reservations looks as follows:
       "Dhcp6": {
         "subnet6": [
           {
+            "id": 1,
             "pools": [
               {
                 "pool": "2001:db8:1::-2001:db8:1::100"
@@ -4542,6 +4561,7 @@ An example configuration using global reservations is shown below:
         ],
         "subnet6": [
           {
+            "id": 1,
             "pools": [
               {
                 "pool": "2001:db8:1::-2001:db8:1::100"
@@ -4658,7 +4678,8 @@ An example configuration that disables reservations looks as follows:
           {
             "reservations-global": false,
             "reservations-in-subnet": false,
-            "subnet": "2001:db8:1::/64"
+            "subnet": "2001:db8:1::/64",
+            "id": 1
           }
         ]
       }
@@ -4689,7 +4710,8 @@ An example configuration using global reservations is shown below:
                 "pool": "2001:db8:1::-2001:db8:1::100"
               }
             ],
-            "subnet": "2001:db8:1::/64"
+            "subnet": "2001:db8:1::/64",
+            "id": 1
           }
         ]
       }
@@ -4861,6 +4883,7 @@ within the subnet as follows:
         ],
         "subnet6": [
             {
+                "id": 1,
                 "subnet": "2001:db8:1::/64",
                 "reservations": [
                     {
@@ -4937,6 +4960,7 @@ following example:
             {
             "subnet6": [
                 {
+                    "id": 1,
                     "subnet": "2001:db8:1::/64",
                     "pools": [
                         {
@@ -4946,6 +4970,7 @@ following example:
                     ]
                 },
                 {
+                    "id": 2,
                     "subnet": "2001:db8:2::/64",
                     "pools": [
                         {
@@ -5023,6 +5048,7 @@ the same IPv6 address but different MAC addresses:
        "ip-reservations-unique": false,
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:1::/64",
                "reservations": [
                    {
@@ -5114,6 +5140,7 @@ have reservations) will get their default DNS server configured.
 
         "subnet6": [
             {
+                "id": 1,
                 "subnet": "2001:db8:1::/48",
                 "pools": [
                     {
@@ -5155,6 +5182,7 @@ their accounts up to date.
 
         "subnet6": [
             {
+                "id": 1,
                 "subnet": "2001:db8:1::/48",
                 "pools": [
                     {
@@ -5255,10 +5283,12 @@ introduced:
            # There are two subnets in this example.
            "subnet6": [
                {
+                   "id": 1,
                    "subnet": "2001:db8::/48",
                    "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
                },
                {
+                   "id": 2,
                    "subnet": "3ffe:ffe::/64",
                    "pools": [ { "pool":  "3ffe:ffe::/64" } ]
                }
@@ -5274,6 +5304,7 @@ introduced:
        # This is a regular subnet. It is not part of any shared-network.
        "subnet6": [
            {
+               "id": 3,
                "subnet": "2001:db9::/48",
                "pools": [ { "pool":  "2001:db9::/64" } ],
                "relay": {
@@ -5326,6 +5357,7 @@ then override its value in the subnet scope. For example:
 
            "subnet6": [
                {
+                   "id": 1,
                    "subnet": "2001:db8:1::/48",
                    "pools": [ { "pool":  "2001:db8:1::1 - 2001:db8:1::ffff" } ],
 
@@ -5342,6 +5374,7 @@ then override its value in the subnet scope. For example:
                    } ]
                },
                {
+                    "id": 2,
                     "subnet": "2001:db8:2::/48",
                     "pools": [ { "pool":  "2001:db8:2::1 - 2001:db8:2::ffff" } ],
 
@@ -5418,11 +5451,13 @@ of what **NOT** to do:
            "name": "office-floor-2",
            "subnet6": [
                {
+                   "id": 1,
                    "subnet": "2001:db8::/64",
                    "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ],
                    "interface": "eth0"
                },
                {
+                    "id": 2,
                     "subnet": "3ffe:abcd::/64",
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
                     ...
@@ -5454,10 +5489,12 @@ shown in the example below.
 
            "subnet6": [
                {
+                   "id": 1,
                    "subnet": "2001:db8::/64",
                    "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
                },
                {
+                    "id": 2,
                     "subnet": "3ffe:abcd::/64",
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ]
                }
@@ -5486,6 +5523,7 @@ of what **NOT** to do:
            "name": "kakapo",
            "subnet6": [
                {
+                   "id": 1,
                    "subnet": "2001:db8::/64",
                    "relay": {
                        "ip-addresses": [ "2001:db8::1234" ]
@@ -5493,6 +5531,7 @@ of what **NOT** to do:
                    "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
                },
                {
+                   "id": 2,
                    "subnet": "3ffe:abcd::/64",
                    "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
                    "relay": {
@@ -5525,10 +5564,12 @@ shared network.
            },
            "subnet6": [
                {
+                   "id": 1,
                    "subnet": "2001:db8::/64",
                    "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
                },
                {
+                    "id": 2,
                     "subnet": "3ffe:abcd::/64",
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ]
                }
@@ -5588,10 +5629,12 @@ following example:
                },
                "subnet6": [
                    {
+                       "id": 1,
                        "subnet": "2001:db8:1::/64",
                        "pools": [ { "pool": "2001:db8:1::20 - 2001:db8:1::ff" } ]
                    },
                    {
+                       "id": 2,
                        "subnet": "2001:db8:3::/64",
                        "pools": [ { "pool": "2001:db8:3::20 - 2001:db8:3::ff" } ],
                        "client-class": "b-devices"
@@ -5641,11 +5684,13 @@ on option 1234 values.
                },
                "subnet6": [
                    {
+                       "id": 1,
                        "subnet": "2001:db8:1::/64",
                        "pools": [ { "pool": "2001:db8:1::20 - 2001:db8:1::ff" } ],
                        "client-class": "a-devices"
                    },
                    {
+                       "id": 2,
                        "subnet": "2001:db8:3::/64",
                        "pools": [ { "pool": "2001:db8:3::20 - 2001:db8:3::ff" } ],
                        "client-class": "b-devices"
@@ -6112,6 +6157,7 @@ selects that subnet for a relay with address 3000::1.
    "Dhcp6": {
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [
                     {
@@ -6151,6 +6197,7 @@ The following configuration can serve that situation:
    "Dhcp6": {
        "subnet6": [
            {
+               "id": 1,
                "subnet": "3000::/64",
                "pools": [
                    { "pool": "3000::2 - 3000::ffff" }
@@ -6161,6 +6208,7 @@ The following configuration can serve that situation:
                }
            },
            {
+               "id": 2,
                "subnet": "2001:db8:1::/64",
                "pools": [
                     {
@@ -7231,6 +7279,7 @@ option is actually needed. An example configuration looks as follows:
                    "lw4over6-bind-prefix-len": 56
                }
            } ],
+           "id": 1,
            "subnet": "2001:db8::/32",
 
            # This is a subnet-specific context. Any type of

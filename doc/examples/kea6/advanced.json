@@ -144,6 +144,7 @@
         }
         ], // end of pools
 
+        "id": 1,
         "subnet": "2001:db8:1::/64",
         "interface": "eth0",
 

@@ -303,6 +303,7 @@ The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example
 ::
 
     "subnet4": [{
+        "id": 1,
         "subnet": "192.0.2.0/24",
         "pools": [{
             "pool": "192.0.2.10 - 192.0.2.20"

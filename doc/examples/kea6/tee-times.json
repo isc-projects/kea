@@ -31,12 +31,14 @@
   "subnet6": [
   {
         //  This subnet use default calculation
+        "id": 1,
         "subnet": "2001:db8:1::/64",
         "pools": [ { "pool": "2001:db8:1::/80" } ]
   },
   {
         // This subnet will use explicit values. Explicit
         // values override calculation.
+       "id": 2,
        "subnet": "2001:db8:2::/64",
        "pools": [ { "pool": "2001:db8:2::/80" } ],
        "renew-timer":  1000,
@@ -44,6 +46,7 @@
   },
   {
         // This subnet will use custom percents
+       "id": 3,
        "subnet": "2001:db8:3::/64",
        "pools": [ { "pool": "2001:db8:3::/80" } ],
        "t1-percent": .45,
