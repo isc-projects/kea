@@ -280,6 +280,7 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS;
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER;
 extern const isc::log::MessageID DHCPSRV_UNEXPECTED_NAME;
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB;
+extern const isc::log::MessageID DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET;
 
 } // namespace dhcp
 } // namespace isc

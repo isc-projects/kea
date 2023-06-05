@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/flq_allocation_state.h>
 #include <dhcpsrv/flq_allocator.h>
 #include <dhcpsrv/iterative_allocation_state.h>
@@ -72,6 +73,11 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
     : id_(id == 0 ? generateNextID() : id), prefix_(prefix),
       prefix_len_(len),
       shared_network_name_() {
+    if ((id == 0) && (id_ == 1)) {
+        // Emit a warning on the first auto-numbered subnet.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET)
+            .arg(toText());
+    }
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,

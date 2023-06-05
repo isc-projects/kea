@@ -279,6 +279,7 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS = "DHCPS
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER = "DHCPSRV_TIMERMGR_UNREGISTER_TIMER";
 extern const isc::log::MessageID DHCPSRV_UNEXPECTED_NAME = "DHCPSRV_UNEXPECTED_NAME";
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB = "DHCPSRV_UNKNOWN_DB";
+extern const isc::log::MessageID DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET = "DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET";
 
 } // namespace dhcp
 } // namespace isc
@@ -558,6 +559,7 @@ const char* values[] = {
     "DHCPSRV_TIMERMGR_UNREGISTER_TIMER", "unregistering timer: %1",
     "DHCPSRV_UNEXPECTED_NAME", "database access parameters passed through '%1', expected 'lease-database'",
     "DHCPSRV_UNKNOWN_DB", "unknown database type: %1",
+    "DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET", "a subnet was configured unnumbered: %1",
     NULL
 };
 

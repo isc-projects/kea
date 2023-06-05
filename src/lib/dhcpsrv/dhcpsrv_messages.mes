@@ -1392,3 +1392,7 @@ indicate an error in the source code, please submit a bug report.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
+
+% DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET a subnet was configured unnumbered: %1
+A warning message issued when a subnet was configured with a zero or without
+an id. The prefix of the subnet is displayed.
