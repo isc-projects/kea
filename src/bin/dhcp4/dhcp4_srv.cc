@@ -262,7 +262,8 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // Check the DROP special class.
     if (query_->inClass("DROP")) {
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0013)
-            .arg(query_->toText()).arg(query_->getHWAddr()->toText(false));;
+            .arg(query_->getHWAddr() ? query_->getHWAddr()->toText(false) : "(undefined)")
+            .arg(query_->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
         drop = true;
@@ -983,7 +984,8 @@ Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
             if (query->inClass("DROP")) {
                 LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING,
                           DHCP4_PACKET_DROP_0014)
-                    .arg(query->toText()).arg(query->getHWAddr()->toText(false));;
+                    .arg(query->getHWAddr() ? query->getHWAddr()->toText(false) : "(undefined)")
+                    .arg(query->toText());
                 isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                           static_cast<int64_t>(1));
                 return (false);
@@ -1299,7 +1301,8 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     // Check the DROP special class.
     if (query->inClass("DROP")) {
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0010)
-            .arg(query->toText()).arg(query->getHWAddr()->toText(false));
+            .arg(query->getHWAddr() ? query->getHWAddr()->toText(false) : "(undefined)")
+            .arg(query->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
         return;
