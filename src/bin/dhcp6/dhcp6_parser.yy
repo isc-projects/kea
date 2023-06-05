@@ -741,10 +741,17 @@ ddns_update_on_renew: DDNS_UPDATE_ON_RENEW COLON BOOLEAN {
     ctx.stack_.back()->set("ddns-update-on-renew", b);
 };
 
+// ddns-use-conflict-resolutions is deprecated. We translate it
+// to ddns-conflict-resolution-mode.  If they happen to specify
+// both the server parsing should detect it.
 ddns_use_conflict_resolution: DDNS_USE_CONFLICT_RESOLUTION COLON BOOLEAN {
     ctx.unique("ddns-use-conflict-resolution", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("ddns-use-conflict-resolution", b);
+    ctx.warning(@2, "ddns-use-conflict-resolution is deprecated. "
+             "Substituting ddns-conflict-resolution-mode");
+    ElementPtr mode(new StringElement(b->boolValue() ? "check-with-dhcid"
+                                      : "no-check-with-dhcid"));
+    ctx.stack_.back()->set("ddns-conflict-resolution-mode", mode);
 };
 
 ddns_conflict_resolution_mode: DDNS_CONFLICT_RESOLUTION_MODE {

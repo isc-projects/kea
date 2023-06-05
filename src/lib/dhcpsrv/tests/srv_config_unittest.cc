@@ -1772,7 +1772,8 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
     conf.addConfiguredGlobal("ddns-update-on-renew", Element::create(true));
-    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(false));
+    conf.addConfiguredGlobal("ddns-conflict-resolution-mode",
+                             Element::create("no-check-with-dhcid"));
     conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(77.0));
 
     // Get DDNS params for no subnet.

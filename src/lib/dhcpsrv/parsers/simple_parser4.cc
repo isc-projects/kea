@@ -96,7 +96,6 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "ip-reservations-unique",           Element::boolean },
     { "reservations-lookup-first",        Element::boolean },
     { "ddns-update-on-renew",             Element::boolean },
-    { "ddns-use-conflict-resolution",     Element::boolean }, // deprecated
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
     { "allocator",                        Element::string },
@@ -256,7 +255,6 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }, // deprecated
     { "allocator",                      Element::string },
     { "offer-lifetime",                 Element::integer },
     { "ddns-ttl-percent",               Element::real },
@@ -385,7 +383,6 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }, // deprecated
     { "allocator",                      Element::string },
     { "offer-lifetime",                 Element::integer },
     { "ddns-ttl-percent",               Element::real },

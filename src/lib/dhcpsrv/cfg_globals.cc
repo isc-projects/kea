@@ -48,7 +48,6 @@ CfgGlobals::nameToIndex = {
     { "ip-reservations-unique", IP_RESERVATIONS_UNIQUE },
     { "reservations-lookup-first", RESERVATIONS_LOOKUP_FIRST },
     { "ddns-update-on-renew", DDNS_UPDATE_ON_RENEW },
-    { "ddns-use-conflict-resolution", DDNS_USE_CONFLICT_RESOLUTION },
     { "parked-packet-limit", PARKED_PACKET_LIMIT },
     { "allocator", ALLOCATOR },
     { "ddns-ttl-percent", DDNS_TTL_PERCENT },
@@ -137,6 +136,7 @@ CfgGlobals::set(const std::string& name, ConstElementPtr value) {
     if (it == nameToIndex.cend()) {
         isc_throw(NotFound, "invalid global parameter name '" << name << "'");
     }
+
     set(it->second, value);
 }
 

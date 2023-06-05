@@ -213,7 +213,7 @@
         // It may be specified at the global, shared-network, and subnet levels.
         // This field has been replaced by ddns-conflict-resolution-mode.
         // Parsing is maintained only for backwards compatibility.
-        "ddns-use-conflict-resolution": true,
+        // "ddns-use-conflict-resolution": true,
 
         // Enumeration, which is passed to kea-dhcp-ddns with each DDNS
         // update request to indicate the mode used for resolving conflicts
@@ -772,7 +772,7 @@
                 // Shared-network level value. See description at the global level.
                 // This field has been replaced by ddns-conflict-resolution-mode.
                 // Parsing is maintained only for backwards compatibility.
-                "ddns-use-conflict-resolution": true,
+                // "ddns-use-conflict-resolution": true,
 
                 // Shared-network level value. See description at the global level.
                 "ddns-conflict-resolution-mode": "check-with-dhcid",
@@ -916,10 +916,10 @@
                         // Subnet-level value. See description at the global level.
                         "ddns-update-on-renew": true,
 
-                        // Subnet-level value. See description at the global level.
+                        // Shared-network level value. See description at the global level.
                         // This field has been replaced by ddns-conflict-resolution-mode.
                         // Parsing is maintained only for backwards compatibility.
-                        "ddns-use-conflict-resolution": true,
+                        // "ddns-use-conflict-resolution": true,
 
                         // Subnet-level value. See description at the global level.
                         "ddns-conflict-resolution-mode": "check-with-dhcid",

@@ -271,17 +271,10 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
         network->setDdnsTtlPercent(getDouble(network_data, "ddns-ttl-percent"));
     }
 
+    // For backward compatibility, ddns-conflict-resolution-mode is optional.
     if (network_data->contains("ddns-conflict-resolution-mode")) {
         network->setDdnsConflictResolutionMode(getString(network_data,
                                                          "ddns-conflict-resolution-mode"));
-    } else {
-        // For backward compatibility, look for ddns-use-conflict-resolution.
-        // We might consider emitting a debug log?
-        if (network_data->contains("ddns-use-conflict-resolution")) {
-            auto value = getBoolean(network_data, "ddns-use-conflict-resolution");
-            network->setDdnsConflictResolutionMode(value ? "check-with-dhcid"
-                                                   : "no-check_with-dhcid");
-        }
     }
 }
 
