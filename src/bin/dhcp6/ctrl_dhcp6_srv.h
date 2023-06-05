@@ -85,6 +85,7 @@ public:
     /// - config-reload
     /// - config-set
     /// - config-get
+    /// - config-hash-get
     /// - config-test
     /// - dhcp-disable
     /// - dhcp-enable
@@ -193,9 +194,9 @@ private:
     commandConfigReloadHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'get-config' command
+    /// @brief handler for processing 'config-get' command
     ///
-    /// This handler processes get-config command, which retrieves
+    /// This handler processes config-get command, which retrieves
     /// the current configuration and returns it in response.
     ///
     /// @param command (ignored)
@@ -205,9 +206,21 @@ private:
     commandConfigGetHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'write-config' command
+    /// @brief handler for processing 'config-hash-get' command
     ///
-    /// This handle processes write-config command, which writes the
+    /// This handler processes config-hash-get command, which retrieves
+    /// the hash of the current configuration and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return hash of current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    commandConfigHashGetHandler(const std::string& command,
+                                isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'config-write' command
+    ///
+    /// This handle processes config-write command, which writes the
     /// current configuration to disk. This command takes one optional
     /// parameter called filename. If specified, the current configuration
     /// will be written to that file. If not specified, the file used during

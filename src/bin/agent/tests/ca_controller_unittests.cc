@@ -480,6 +480,7 @@ TEST_F(CtrlAgentControllerTest, registeredCommands) {
     // Check that the following command are really available.
     checkCommandRegistered("build-report");
     checkCommandRegistered("config-get");
+    checkCommandRegistered("config-hash-get");
     checkCommandRegistered("config-reload");
     checkCommandRegistered("config-set");
     checkCommandRegistered("config-test");

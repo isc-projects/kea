@@ -85,6 +85,7 @@ public:
     /// - config-reload
     /// - config-set
     /// - config-get
+    /// - config-hash-get
     /// - config-test
     /// - dhcp-disable
     /// - dhcp-enable

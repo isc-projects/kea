@@ -576,6 +576,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-backend-pull\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-hash-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
@@ -827,6 +828,33 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configGet) {
     ASSERT_EQ(Element::map, cfg->getType());
     EXPECT_TRUE(cfg->get("Dhcp6"));
     EXPECT_TRUE(cfg->get("Dhcp6")->get("loggers"));
+}
+
+// Tests if the server returns the hash of its configuration using
+// config-hash-get.
+TEST_F(CtrlChannelDhcpv6SrvTest, configHashGet) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"config-hash-get\" }", response);
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr args = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    // Ok, now roughly check if the response seems legit.
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+    ConstElementPtr hash = args->get("hash");
+    ASSERT_TRUE(hash);
+    ASSERT_EQ(Element::string, hash->getType());
+    // SHA-256 -> 64 hex digits.
+    EXPECT_EQ(64, hash->stringValue().size());
 }
 
 // Verify that the "config-test" command will do what we expect.
@@ -1447,6 +1475,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-backend-pull");
     checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-hash-get");
     checkListCommands(rsp, "config-reload");
     checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-test");
