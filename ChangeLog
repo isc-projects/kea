@@ -1,3 +1,9 @@
+2155.	[func]		fdupont
+	Added the config-hash-get command which returns the
+	SHA-256 hash of the current configuration, helping
+	in detecting changes.
+	(Gitlab #2707)
+
 2154.	[doc]		darren
 	Corrected minor typo in table in section 8.2.10 of the ARM where
 	type was shown as ipv6-address and should have said ipv4-address.
