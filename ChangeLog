@@ -1,3 +1,11 @@
+2168.	[func]		fdupont
+	Cross-reference tables to bind relay and remote
+	identifiers from extended info of DHCPv6 leases
+	were added to SQL backends. A new command
+	"extended-info6-upgrade" (re)builds these tables
+	making leases visible to Bulk Lease Queries.
+	(Gitlab #2869)
+
 2167.   [func]      tmark
 	The kea-dhcp<4/6> parameter, ddns-use-conflict-resolution,
 	has been deprecated and replaced with
