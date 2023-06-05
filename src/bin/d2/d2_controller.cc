@@ -62,6 +62,9 @@ D2Controller::registerCommands() {
     CommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
         std::bind(&D2Controller::configGetHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand(CONFIG_HASH_GET_COMMAND,
+        std::bind(&D2Controller::configHashGetHandler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand(CONFIG_RELOAD_COMMAND,
         std::bind(&D2Controller::configReloadHandler, this, ph::_1, ph::_2));
 
@@ -106,6 +109,7 @@ D2Controller::deregisterCommands() {
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_GET_COMMAND);
+        CommandMgr::instance().deregisterCommand(CONFIG_HASH_GET_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_RELOAD_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_SET_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);

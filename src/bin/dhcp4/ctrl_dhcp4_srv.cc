@@ -9,6 +9,7 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <config/command_mgr.h>
+#include <cryptolink/crypto_hash.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
@@ -25,6 +26,7 @@
 #include <hooks/hooks_manager.h>
 #include <process/cfgrpt/config_report.h>
 #include <stats/stats_mgr.h>
+#include <util/encode/hex.h>
 #include <util/multi_threading_mgr.h>
 
 #include <signal.h>
@@ -287,6 +289,27 @@ ControlledDhcpv4Srv::commandConfigGetHandler(const string&,
     ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
 
     return (createAnswer(CONTROL_RESULT_SUCCESS, config));
+}
+
+ConstElementPtr
+ControlledDhcpv4Srv::commandConfigHashGetHandler(const string&,
+                                                 ConstElementPtr /*args*/) {
+    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+    // Assume that config is never null.
+    string config_txt = config->str();
+    OutputBuffer hash_data(0);
+    isc::cryptolink::digest(config_txt.c_str(),
+                            config_txt.size(),
+                            isc::cryptolink::HashAlgorithm::SHA256,
+                            hash_data);
+    vector<uint8_t> hash;
+    hash.resize(hash_data.getLength());
+    if (hash.size() > 0) {
+        memmove(&hash[0], hash_data.getData(), hash.size());
+    }
+    ElementPtr params = Element::createMap();
+    params->set("hash", Element::create(encode::encodeHex(hash)));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, params));
 }
 
 ConstElementPtr
@@ -839,6 +862,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "config-get") {
             return (srv->commandConfigGetHandler(command, args));
 
+        } else if (command == "config-hash-get") {
+            return (srv->commandConfigHashGetHandler(command, args));
+
         } else if (command == "config-test") {
             return (srv->commandConfigTestHandler(command, args));
 
@@ -1145,6 +1171,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("config-get",
         std::bind(&ControlledDhcpv4Srv::commandConfigGetHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("config-hash-get",
+        std::bind(&ControlledDhcpv4Srv::commandConfigHashGetHandler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("config-reload",
         std::bind(&ControlledDhcpv4Srv::commandConfigReloadHandler, this, ph::_1, ph::_2));
 
@@ -1241,6 +1270,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-backend-pull");
         CommandMgr::instance().deregisterCommand("config-get");
+        CommandMgr::instance().deregisterCommand("config-hash-get");
         CommandMgr::instance().deregisterCommand("config-reload");
         CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("config-test");

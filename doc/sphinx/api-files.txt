@@ -15,6 +15,7 @@ src/share/api/class-list.json
 src/share/api/class-update.json
 src/share/api/config-backend-pull.json
 src/share/api/config-get.json
+src/share/api/config-hash-get.json
 src/share/api/config-reload.json
 src/share/api/config-set.json
 src/share/api/config-test.json

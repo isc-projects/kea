@@ -59,6 +59,9 @@ CtrlAgentController::registerCommands() {
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
         std::bind(&DControllerBase::configGetHandler, this, ph::_1, ph::_2));
 
+    CtrlAgentCommandMgr::instance().registerCommand(CONFIG_HASH_GET_COMMAND,
+        std::bind(&DControllerBase::configHashGetHandler, this, ph::_1, ph::_2));
+
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_RELOAD_COMMAND,
         std::bind(&DControllerBase::configReloadHandler, this, ph::_1, ph::_2));
 
@@ -85,6 +88,7 @@ void
 CtrlAgentController::deregisterCommands() {
     CtrlAgentCommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_GET_COMMAND);
+    CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_HASH_GET_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_RELOAD_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_SET_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);

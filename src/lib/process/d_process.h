@@ -36,6 +36,9 @@ static const std::string BUILD_REPORT_COMMAND("build-report");
 /// @brief String value for the config-get command.
 static const std::string CONFIG_GET_COMMAND("config-get");
 
+/// @brief String value for the config-hash-get command.
+static const std::string CONFIG_HASH_GET_COMMAND("config-hash-get");
+
 /// @brief String value for the config-write command.
 static const std::string CONFIG_WRITE_COMMAND("config-write");
 

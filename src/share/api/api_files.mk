@@ -15,6 +15,7 @@ api_files += $(top_srcdir)/src/share/api/class-list.json
 api_files += $(top_srcdir)/src/share/api/class-update.json
 api_files += $(top_srcdir)/src/share/api/config-backend-pull.json
 api_files += $(top_srcdir)/src/share/api/config-get.json
+api_files += $(top_srcdir)/src/share/api/config-hash-get.json
 api_files += $(top_srcdir)/src/share/api/config-reload.json
 api_files += $(top_srcdir)/src/share/api/config-set.json
 api_files += $(top_srcdir)/src/share/api/config-test.json

@@ -304,6 +304,7 @@ The D2 server supports the following operational commands:
 
 - :isccmd:`build-report`
 - :isccmd:`config-get`
+- :isccmd:`config-hash-get`
 - :isccmd:`config-reload`
 - :isccmd:`config-set`
 - :isccmd:`config-test`

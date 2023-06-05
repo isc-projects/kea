@@ -7,10 +7,12 @@
 #include <config.h>
 #include <cc/command_interpreter.h>
 #include <process/cfgrpt/config_report.h>
+#include <cryptolink/crypto_hash.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
+#include <util/encode/hex.h>
 #include <process/daemon.h>
 #include <process/d_log.h>
 #include <process/d_controller.h>
@@ -22,9 +24,10 @@
 #include <signal.h>
 
 using namespace isc::asiolink;
-using namespace isc::data;
 using namespace isc::config;
+using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -448,8 +451,21 @@ ConstElementPtr
 DControllerBase::configGetHandler(const std::string&,
                                   ConstElementPtr /*args*/) {
     ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
-
-    return (createAnswer(CONTROL_RESULT_SUCCESS, config));
+    // Assume that config is never null.
+    std::string config_txt = config->str();
+    OutputBuffer hash_data(0);
+    isc::cryptolink::digest(config_txt.c_str(),
+                            config_txt.size(),
+                            isc::cryptolink::HashAlgorithm::SHA256,
+                            hash_data);
+    std::vector<uint8_t> hash;
+    hash.resize(hash_data.getLength());
+    if (hash.size() > 0) {
+        memmove(&hash[0], hash_data.getData(), hash.size());
+    }
+    ElementPtr params = Element::createMap();
+    params->set("hash", Element::create(encode::encodeHex(hash)));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, params));
 }
 
 ConstElementPtr

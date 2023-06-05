@@ -265,6 +265,18 @@ public:
     configGetHandler(const std::string& command,
                      isc::data::ConstElementPtr args);
 
+    /// @brief handler for config-hash-get command
+    ///
+    /// This method handles the config-hash-get command, which retrieves
+    /// the current configuration and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return hash of current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    configHashGetHandler(const std::string& command,
+                         isc::data::ConstElementPtr args);
+
     /// @brief handler for config-write command
     ///
     /// This handle processes write-config command, which writes the

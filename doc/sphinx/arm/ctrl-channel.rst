@@ -369,6 +369,35 @@ An example command invocation looks like this:
        "command": "config-get"
    }
 
+.. isccmd:: config-hash-get
+.. _command-config-hash-get:
+
+The ``config-hash-get`` Command
+-------------------------------
+
+The ``config-hash-get`` command retrieves the SHA-256 hash of the current
+configuration used by the server. This command does not take any parameters.
+The returned hash can be used to detect configuration changes.
+
+An example command invocation looks like this:
+
+::
+
+   {
+       "command": "config-hash-get"
+   }
+
+And the server's response:
+
+::
+
+   {
+       "result": 0,
+       "arguments": {
+           "hash": "5C3C90EF7035249E2FF74D003C19F34EE0B83A3D329E741B52B2EF95A2C9CC5C"
+        }
+    }
+
 .. isccmd:: config-reload
 .. _command-config-reload:
 
@@ -816,6 +845,8 @@ The D2 server supports only a subset of the DHCPv4/DHCPv6 server commands:
 
 -  :isccmd:`config-get`
 
+-  :isccmd:`config-hash-get`
+
 -  :isccmd:`config-reload`
 
 -  :isccmd:`config-set`
@@ -844,6 +875,8 @@ commands are handled by the CA and they relate to the CA process itself:
 -  :isccmd:`build-report`
 
 -  :isccmd:`config-get`
+
+-  :isccmd:`config-hash-get`
 
 -  :isccmd:`config-reload`
 
