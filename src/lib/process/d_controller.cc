@@ -451,6 +451,14 @@ ConstElementPtr
 DControllerBase::configGetHandler(const std::string&,
                                   ConstElementPtr /*args*/) {
     ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, config));
+}
+
+ConstElementPtr
+DControllerBase::configHashGetHandler(const std::string&,
+                                      ConstElementPtr /*args*/) {
+    ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
     // Assume that config is never null.
     std::string config_txt = config->str();
     OutputBuffer hash_data(0);
