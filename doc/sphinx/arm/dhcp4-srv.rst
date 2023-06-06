@@ -1054,7 +1054,7 @@ disabled by setting the ``re-detect`` value to ``false``, for instance:
    }
 
 
-Note that interfaces are not re-detected during ``config-test``.
+Note that interfaces are not re-detected during :isccmd:`config-test`.
 
 Usually loopback interfaces (e.g. the ``lo`` or ``lo0`` interface) are not
 configured, but if a loopback interface is explicitly configured and
@@ -3515,7 +3515,7 @@ conflict with existing entries owned by other DHCPv4 clients.
     Disabling conflict resolution should be done only after careful review of
     specific use cases. The best way to avoid unwanted DNS entries is to
     always ensure lease changes are processed through Kea, whether they are
-    released, expire, or are deleted via the ``lease-del4`` command, prior to
+    released, expire, or are deleted via the :isccmd:`lease4-del` command, prior to
     reassigning either FQDNs or IP addresses. Doing so causes :iscman:`kea-dhcp4`
     to generate DNS removal requests to D2.
 
@@ -5728,7 +5728,7 @@ having two different clients compete for the same address.
 When using the default settings, the server returns a configuration error
 when it finds two or more reservations for the same IP address within
 a subnet in the Kea configuration file. The :ref:`hooks-host-cmds` hook
-library returns an error in response to the ``reservation-add`` command
+returns an error in response to the :isccmd:`reservation-add` command
 when it detects that the reservation exists in the database for the IP
 address for which the new reservation is being added.
 
@@ -7240,33 +7240,33 @@ for more details.
 
 The DHCPv4 server supports the following operational commands:
 
--  build-report
--  config-get
--  config-reload
--  config-set
--  config-test
--  config-write
--  dhcp-disable
--  dhcp-enable
--  leases-reclaim
--  list-commands
--  shutdown
--  status-get
--  version-get
+- :isccmd:`build-report`
+- :isccmd:`config-get`
+- :isccmd:`config-reload`
+- :isccmd:`config-set`
+- :isccmd:`config-test`
+- :isccmd:`config-write`
+- :isccmd:`dhcp-disable`
+- :isccmd:`dhcp-enable`
+- :isccmd:`leases-reclaim`
+- :isccmd:`list-commands`
+- :isccmd:`shutdown`
+- :isccmd:`status-get`
+- :isccmd:`version-get`
 
 as described in :ref:`commands-common`. In addition, it supports the
 following statistics-related commands:
 
--  statistic-get
--  statistic-reset
--  statistic-remove
--  statistic-get-all
--  statistic-reset-all
--  statistic-remove-all
--  statistic-sample-age-set
--  statistic-sample-age-set-all
--  statistic-sample-count-set
--  statistic-sample-count-set-all
+- :isccmd:`statistic-get`
+- :isccmd:`statistic-reset`
+- :isccmd:`statistic-remove`
+- :isccmd:`statistic-get`-all
+- :isccmd:`statistic-reset`-all
+- :isccmd:`statistic-remove`-all
+- :isccmd:`statistic-sample-age-set`
+- :isccmd:`statistic-sample-age-set`-all
+- :isccmd:`statistic-sample-count-set`
+- :isccmd:`statistic-sample-count-set`-all
 
 as described in :ref:`command-stats`.
 
@@ -7491,15 +7491,15 @@ required.
 All supported parameters can be configured via the ``cb_cmds`` hook library
 described in the :ref:`hooks-cb-cmds` section. The general rule is that
 scalar global parameters are set using
-``remote-global-parameter4-set``; shared-network-specific parameters
-are set using ``remote-network4-set``; and subnet-level and pool-level
-parameters are set using ``remote-subnet4-set``. Whenever
+:isccmd:`remote-global-parameter4-set`; shared-network-specific parameters
+are set using :isccmd:`remote-network4-set`; and subnet-level and pool-level
+parameters are set using :isccmd:`remote-subnet4-set`. Whenever
 there is an exception to this general rule, it is highlighted in the
 table. Non-scalar global parameters have dedicated commands; for example,
 the global DHCPv4 options (``option-data``) are modified using
-``remote-option4-global-set``. Client classes, together with class-specific
+:isccmd:`remote-option4-global-set`. Client classes, together with class-specific
 option definitions and DHCPv4 options, are configured using the
-``remote-class4-set`` command.
+:isccmd:`remote-class4-set` command.
 
 The :ref:`cb-sharing` section explains the concept of shareable
 and non-shareable configuration elements and the limitations for
@@ -7649,7 +7649,7 @@ database:
      }
    }
 
-The ``config-control`` command contains two parameters. ``config-databases``
+The ``config-control`` map contains two parameters. ``config-databases``
 is a list that contains one element, which includes the database type, its location,
 and the credentials to be used to connect to this database. (Note that
 the parameters specified here correspond to the database specification
@@ -7722,7 +7722,7 @@ server's performance, because the server needs to make at least one query
 to the database to discover any pending configuration updates. The
 default value of ``config-fetch-wait-time`` is 30 seconds.
 
-The ``config-backend-pull`` command can be used to force the server to
+The :isccmd:`config-backend-pull` command can be used to force the server to
 immediately poll any configuration changes from the database and avoid
 waiting for the next fetch cycle.
 

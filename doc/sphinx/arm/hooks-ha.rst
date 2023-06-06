@@ -365,16 +365,16 @@ Server States
 ~~~~~~~~~~~~~
 
 A DHCP server operating within an HA setup runs a state machine, and the state
-of the server can be retrieved by its peers using the ``ha-heartbeat`` command
+of the server can be retrieved by its peers using the :isccmd:`ha-heartbeat` command
 sent over the RESTful API. If the partner server does not respond to the
-``ha-heartbeat`` command within the specified amount of time, the communication
+:isccmd:`ha-heartbeat` command within the specified amount of time, the communication
 is considered interrupted and the server may, depending on the configuration,
 use additional measures (described later in this document) to verify that the
 partner is still operating. If it finds that the partner is not operating, the
 server transitions to the ``partner-down`` state to handle all the DHCP traffic
 directed to the system.
 
-In this case, the surviving server continues to send the ``ha-heartbeat``
+In this case, the surviving server continues to send the :isccmd:`ha-heartbeat`
 command to detect when the partner wakes up. At that time, the partner
 synchronizes the lease database. When it is again ready to operate, the
 surviving server returns to normal operation, i.e. the ``load-balancing`` or
@@ -428,7 +428,7 @@ The following is the list of all possible server states:
 -  ``in-maintenance`` - an active server transitions to this state as a result
    of being notified by its partner that the administrator requested maintenance
    of the HA setup. The administrator requests the maintenance by sending the
-   ``ha-maintenance-start`` command to the server which is supposed to take over
+   :isccmd:`ha-maintenance-start` command to the server which is supposed to take over
    the responsibility for responding to the DHCP clients while the other server
    is taken offline for maintenance. If the server is in the ``in-maintenance``
    state it can be safely shut down. The partner transitions to the
@@ -443,9 +443,9 @@ The following is the list of all possible server states:
    unavailable.
 
 -  ``partner-in-maintenance`` - an active server transitions to this state
-   after receiving a ``ha-maintenance-start`` command from the administrator.
+   after receiving a :isccmd:`ha-maintenance-start` command from the administrator.
    The server in this state becomes responsible for responding to all DHCP
-   requests. The server sends a ``ha-maintenance-notify`` command to the partner,
+   requests. The server sends a :isccmd:`ha-maintenance-notify` command to the partner,
    which should enter the ``in-maintenance`` state. The server remaining in the
    ``partner-in-maintenance`` state keeps sending lease updates to the partner
    until it finds that the partner has stopped responding to those lease updates,
@@ -477,12 +477,12 @@ The following is the list of all possible server states:
 
 -  ``syncing`` - an active server transitions to this state to fetch leases from
    the active partner and update the local lease database. When in this state,
-   the server issues the ``dhcp-disable`` command to disable the DHCP service of
+   the server issues the :isccmd:`dhcp-disable` command to disable the DHCP service of
    the partner from which the leases are fetched. The DHCP service is disabled
    for a maximum time of 60 seconds, after which it is automatically re-enabled,
    in case the syncing partner was unable to re-enable the service. If the
    synchronization completes successfully, the synchronizing server issues the
-   ``ha-sync-complete-notify`` command to notify the partner. In most states,
+   :isccmd:`ha-sync-complete-notify` command to notify the partner. In most states,
    the partner re-enables its DHCP service to continue responding to the DHCP
    queries. In the ``partner-down`` state, the partner first ensures that
    communication between the servers is re-established before enabling the DHCP
@@ -1304,7 +1304,7 @@ Controlling Lease-Page Size Limit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An HA-enabled server initiates synchronization of the lease database after
-downtime or upon receiving the ``ha-sync`` command. The server uses commands
+downtime or upon receiving the :isccmd:`ha-sync` command. The server uses commands
 described in :ref:`command-lease4-get-page` and :ref:`command-lease6-get-page`
 to fetch leases from its partner server (lease queries). The size of the results
 page (the maximum number of leases to be returned in a single response to one of
@@ -1331,7 +1331,7 @@ operation. The synchronizing server must gather all leases from its partner,
 which yields a large response over the RESTful interface. The server receives
 leases using the paging mechanism described in :ref:`ha-syncing-page-limit`.
 Before the page of leases is fetched, the synchronizing server sends a
-``dhcp-disable`` command to disable the DHCP service on the partner server. If
+:isccmd:`dhcp-disable` command to disable the DHCP service on the partner server. If
 the service is already disabled, this command resets the timeout for the DHCP
 service being disabled, which by default is set to 60 seconds. If fetching a
 single page of leases takes longer than the specified time, the partner server
@@ -1472,7 +1472,7 @@ of the ``pause`` parameter are ``always`` and ``never``. The latter is the
 default value for each state, which instructs the server never to pause the
 state machine.
 
-In order to "unpause" the state machine, the ``ha-continue`` command must be
+In order to "unpause" the state machine, the :isccmd:`ha-continue` command must be
 sent to the paused server. This command does not take any arguments. See
 :ref:`ha-control-commands` for details about commands specific to the HA hook
 library.
@@ -1816,22 +1816,22 @@ to instantly start serving all DHCP clients, and the other server to instantly
 stop serving any DHCP clients, so it can be safely shut down.
 
 The maintenance feature of the High Availability hook library addresses this
-situation. The ``ha-maintenance-start`` command was introduced to allow the
+situation. The :isccmd:`ha-maintenance-start` command was introduced to allow the
 administrator to put the pair of the active servers in a state in which one of
 them is responding to all DHCP queries and the other one is awaiting shutdown.
 
 Suppose that the HA setup includes two active servers, ``server1`` and
 ``server2``, and the latter needs to be shut down for maintenance.
-The administrator can send the ``ha-maintenance-start`` command to ``server1``,
+The administrator can send the :isccmd:`ha-maintenance-start` command to ``server1``,
 as this is the server which is going to handle the DHCP traffic while the other
 one is offline. ``server1`` responds with an error if its state or the partner's
 state does not allow for a maintenance shutdown: for example, if maintenance is
 not supported for the backup server or if the server is in the ``terminated``
-state. Also, an error is returned if the ``ha-maintenance-start`` request was
+state. Also, an error is returned if the :isccmd:`ha-maintenance-start` request was
 already sent to the other server.
 
-Upon receiving the ``ha-maintenance-start`` command, ``server1`` sends the
-``ha-maintenance-notify`` command to ``server2`` to put it in the
+Upon receiving the :isccmd:`ha-maintenance-start` command, ``server1`` sends the
+:isccmd:`ha-maintenance-notify` command to ``server2`` to put it in the
 ``in-maintenance`` state. If ``server2`` confirms, ``server1`` transitions to
 the ``partner-in-maintenance`` state. This is similar to the ``partner-down``
 state, except that in the ``partner-in-maintenance`` state ``server1`` continues
@@ -1846,14 +1846,14 @@ continue to respond to all DHCP queries but will no longer send lease updates to
 ``server2``. Restarting ``server2`` after the maintenance will trigger normal
 state negotiation, lease-database synchronization, and, ultimately, a transition
 to the normal ``load-balancing`` or ``hot-standby`` state. Maintenance can then
-be performed on ``server1``, after sending the ``ha-maintenance-start`` command
+be performed on ``server1``, after sending the :isccmd:`ha-maintenance-start` command
 to ``server2``.
 
-If the ``ha-maintenance-start`` command was sent to the server and the server
+If the :isccmd:`ha-maintenance-start` command was sent to the server and the server
 has transitioned to the ``partner-in-maintenance`` state, it is possible to
 transition both it and its partner back to their previous states to resume the
 normal operation of the HA pair. This is achieved by sending the
-``ha-maintenance-cancel`` command to the server that is in the
+:isccmd:`ha-maintenance-cancel` command to the server that is in the
 ``partner-in-maintenance`` state. However, if the server has already
 transitioned to the ``partner-down`` state as a result of detecting that the
 partner is offline, canceling the maintenance is no longer possible. In that
@@ -1867,11 +1867,11 @@ To upgrade from an older HA hook library to the current version, the
 administrator must shut down one of the servers and rely on the failover
 mechanism to force the online server to transition to the ``partner-down`` state,
 where it starts serving all DHCP clients. Once the hook library on the first
-server is upgraded to a current version, the ``ha-maintenance-start`` command
+server is upgraded to a current version, the :isccmd:`ha-maintenance-start` command
 can be used to upgrade the second server.
 
 In such a case, shut down the server running the old version. Next, send the
-``ha-maintenance-start`` command to the server that has been upgraded. This
+:isccmd:`ha-maintenance-start` command to the server that has been upgraded. This
 server should immediately transition to the ``partner-down`` state as it cannot
 communicate with its offline partner. In the ``partner-down`` state the first
 (upgraded) server will respond to all DHCP requests, allowing the administrator
@@ -1879,7 +1879,7 @@ to perform the upgrade on the second server.
 
 .. note::
 
-   Do not send the ``ha-maintenance-start`` command while the server running the
+   Do not send the :isccmd:`ha-maintenance-start` command while the server running the
    old hook library is still online. The server receiving this command will
    return an error.
 
@@ -1910,17 +1910,17 @@ are available for the administrator.
 The ``ha-sync`` Command
 -----------------------
 
-The ``ha-sync`` command instructs the server to synchronize its local lease
+The :isccmd:`ha-sync` command instructs the server to synchronize its local lease
 database with the selected peer. The server fetches all leases from the peer and
 updates any locally stored leases which are older than those fetched. It also
 creates new leases when any of those fetched do not exist in the local database.
 All leases that are not returned by the peer but are in the local database are
 preserved. The database synchronization is unidirectional; only the database on
 the server to which the command has been sent is updated. To synchronize the
-peer's database, a separate ``ha-sync`` command must be issued to that peer.
+peer's database, a separate :isccmd:`ha-sync` command must be issued to that peer.
 
 Database synchronization may be triggered for both active and backup server
-types. The ``ha-sync`` command has the following structure (in a DHCPv4 example):
+types. The :isccmd:`ha-sync` command has the following structure (in a DHCPv4 example):
 
 ::
 
@@ -1934,13 +1934,13 @@ types. The ``ha-sync`` command has the following structure (in a DHCPv4 example)
    }
 
 When the server receives this command it first disables the DHCP service of the
-server from which it will be fetching leases, by sending the ``dhcp-disable``
+server from which it will be fetching leases, by sending the :isccmd:`dhcp-disable`
 command to that server. The ``max-period`` parameter specifies the maximum
 duration (in seconds) for which the DHCP service should be disabled. If the DHCP
 service is successfully disabled, the synchronizing server fetches leases from
-the remote server by issuing one or more ``lease4-get-page`` commands. When the
+the remote server by issuing one or more :isccmd:`lease4-get-page` commands. When the
 lease-database synchronization is complete, the synchronizing server sends the
-``dhcp-enable`` command to the peer to re-enable its DHCP service.
+:isccmd:`dhcp-enable` command to the peer to re-enable its DHCP service.
 
 The ``max-period`` value should be sufficiently long to guarantee that it does
 not elapse before the synchronization is completed. Otherwise, the DHCP server
@@ -1958,7 +1958,7 @@ The ``ha-scopes`` Command
 This command allows an administrator to modify the HA scopes being served.
 Consult :ref:`ha-load-balancing-config` and :ref:`ha-hot-standby-config` to
 learn which scopes are available for the different HA modes of operation. The
-``ha-scopes`` command has the following structure (in a DHCPv4 example):
+:isccmd:`ha-scopes` command has the following structure (in a DHCPv4 example):
 
 ::
 
@@ -2006,12 +2006,12 @@ command structure is simply:
 The ``ha-heartbeat`` Command
 ----------------------------
 
-The :ref:`ha-server-states` section describes how the ``ha-heartbeat`` command
+The :ref:`ha-server-states` section describes how the :isccmd:`ha-heartbeat` command
 is used by a pair of active HA servers to detect one partner's failure. This
 command, however, can also be sent by the system administrator to one or both
 servers to check their HA state. This allows a monitoring system to be deployed
 on the HA enabled servers to periodically check whether they are operational or
-whether any manual intervention is required. The ``ha-heartbeat`` command takes
+whether any manual intervention is required. The :isccmd:`ha-heartbeat` command takes
 no arguments:
 
 ::
@@ -2043,7 +2043,7 @@ The returned ``state`` value should be one of the values listed in
 returned, which indicates that the server which responded to the command
 believes that its partner is offline; thus, it is serving all DHCP requests sent
 to the servers. To ensure that the partner is indeed offline, the administrator
-should send the ``ha-heartbeat`` command to the second server. If sending the
+should send the :isccmd:`ha-heartbeat` command to the second server. If sending the
 command fails, e.g. due to an inability to establish a TCP connection to the
 Control Agent, or if the Control Agent reports issues with communication with
 the DHCP server, it is very likely that the server is not running.
@@ -2080,14 +2080,14 @@ operational is:
           }
    }
 
-In most cases, the ``ha-heartbeat`` command should be sent to both HA-enabled
+In most cases, the :isccmd:`ha-heartbeat` command should be sent to both HA-enabled
 servers to verify the state of the entire HA setup. In particular, if one of the
 servers indicates that it is in the ``load-balancing`` state, it means that this
 server is operating as if its partner is functional. When a partner goes down,
 it takes some time for the surviving server to realize it. The
 :ref:`ha-scope-transition` section describes the algorithm which the surviving
 server follows before it transitions to the ``partner-down`` state. If the
-``ha-heartbeat`` command is sent during the time window between the failure of
+:isccmd:`ha-heartbeat` command is sent during the time window between the failure of
 one of the servers and the transition of the surviving server to the
 ``partner-down`` state, the response from the surviving server does not reflect
 the failure. Resending the command detects the failure once the surviving server
@@ -2095,7 +2095,7 @@ has entered the ``partner-down`` state.
 
 .. note:
 
-   Always send the ``ha-heartbeat`` command to both active HA servers to check
+   Always send the :isccmd:`ha-heartbeat` command to both active HA servers to check
    the state of the entire HA setup. Sending it to only one of the servers may
    not reflect issues that just began with one of the servers.
 
@@ -2105,14 +2105,14 @@ has entered the ``partner-down`` state.
 The ``status-get`` Command
 --------------------------
 
-``status-get`` is a general-purpose command supported by several Kea daemons,
+:isccmd:`status-get` is a general-purpose command supported by several Kea daemons,
 not only the DHCP servers. However, when sent to a DHCP server with HA enabled,
 it can be used to get insight into the details of the HA-specific server status.
 Not only does the response contain the status information of the server
 receiving this command, but also the information about its partner if it is
 available.
 
-The following is an example response to the ``status-get`` command, including
+The following is an example response to the :isccmd:`status-get` command, including
 the HA status of two ``load-balancing`` servers:
 
 .. code-block:: json
@@ -2168,7 +2168,7 @@ the partner. The ``role`` of the partner server is gathered from the local
 configuration file, and thus should always be available. The remaining status
 information, such as ``last-scopes`` and ``last-state``, is not available until
 the local server communicates with the remote by successfully sending the
-``ha-heartbeat`` command. If at least one such communication has taken place,
+:isccmd:`ha-heartbeat` command. If at least one such communication has taken place,
 the returned value of the ``in-touch`` parameter is set to ``true``. By
 examining this value, the command's sender can determine whether the information
 about the remote server is reliable.
@@ -2177,12 +2177,12 @@ The ``last-scopes`` and ``last-state`` parameters contain information about the
 HA scopes served by the partner and its state. This information is gathered
 during the heartbeat command exchange, so it may not be accurate if a
 communication problem occurs between the partners and this status information is
-not refreshed. In such a case, it may be useful to send the ``status-get``
+not refreshed. In such a case, it may be useful to send the :isccmd:`status-get`
 command to the partner server directly to check its current state. The ``age``
 parameter specifies the age of the information from the partner, in seconds.
 
 The ``communication-interrupted`` boolean value indicates whether the server
-receiving the ``status-get`` command (the local server) has been unable to
+receiving the :isccmd:`status-get` command (the local server) has been unable to
 communicate with the partner longer than the duration specified as
 ``max-response-delay``. In such a situation, the active servers are considered
 to be in the ``communication-interrupted`` state. At this point, the local
@@ -2230,7 +2230,7 @@ The ``ha-mode`` parameter returns the HA mode of operation selected using the
 ``mode`` parameter in the configuration file. It can hold one of the following
 values: ``load-balancing``, ``hot-standby``, or ``passive-backup``.
 
-The ``status-get`` response has the format described above only in the
+The :isccmd:`status-get` response has the format described above only in the
 ``load-balancing`` and ``hot-standby`` modes. In the ``passive-backup`` mode the
 ``remote`` map is not included in the response because in this mode there is
 only one active server (local). The response includes no information about the
@@ -2261,8 +2261,8 @@ The ``ha-maintenance-cancel`` Command
 -------------------------------------
 
 This command is used to cancel the maintenance previously initiated using the
-``ha-maintenance-start`` command. The server receiving this command will first
-send ``ha-maintenance-notify``, with the ``cancel`` flag set to ``true``, to its
+:isccmd:`ha-maintenance-start` command. The server receiving this command will first
+send :isccmd:`ha-maintenance-notify`, with the ``cancel`` flag set to ``true``, to its
 partner. Next, the server reverts from the ``partner-in-maintenance`` state to
 its previous state. See the :ref:`ha-maintenance` section for details.
 
@@ -2279,8 +2279,8 @@ its previous state. See the :ref:`ha-maintenance` section for details.
 The ``ha-maintenance-notify`` Command
 -------------------------------------
 
-This command is sent by the server receiving the ``ha-maintenance-start`` or the
-``ha-maintenance-cancel`` command to its partner, to cause the partner to
+This command is sent by the server receiving the :isccmd:`ha-maintenance-start` or the
+:isccmd:`ha-maintenance-cancel` command to its partner, to cause the partner to
 transition to the ``in-maintenance`` state or to revert from this state to a
 previous state. See the :ref:`ha-maintenance` section for details.
 
@@ -2296,7 +2296,7 @@ previous state. See the :ref:`ha-maintenance` section for details.
 
 .. warning::
 
-   The ``ha-maintenance-notify`` command is not meant to be used by system
+   The :isccmd:`ha-maintenance-notify` command is not meant to be used by system
    administrators. It is used for internal communication between a pair of
    HA-enabled DHCP servers. Direct use of this command is not supported and may
    produce unintended consequences.
@@ -2374,7 +2374,7 @@ And elicits the response:
 
 .. warning::
 
-   The ``ha-sync-complete-notify`` command is not meant to be used by system
+   The :isccmd:`ha-sync-complete-notify` command is not meant to be used by system
    administrators. It is used for internal communication between a pair of
    HA-enabled DHCP servers. Direct use of this command is not supported and may
    produce unintended consequences.

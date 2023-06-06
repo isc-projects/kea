@@ -62,19 +62,21 @@ Statistics Lifecycle
 
 All of the statistics supported by Kea's servers are initialized upon the servers' startup
 and are returned in response to the commands such as
-``statistic-get-all``. The runtime statistics concerning DHCP packets
+:isccmd:`statistic-get-all`. The runtime statistics concerning DHCP packets
 processed are initially set to 0 and are reset upon the server
 restart.
 
 Per-subnet statistics are recalculated when reconfiguration takes place.
 
 In general, once a statistic is initialized it is held in the manager until
-explicitly removed, via ``statistic-remove`` or ``statistic-remove-all``,
+explicitly removed, via :isccmd:`statistic-remove` or
+:isccmd:`statistic-remove-all`,
 or when the server is shut down.
 
 Removing a statistic that is updated frequently makes little sense, as
 it will be re-added when the server code next records that statistic.
-The ``statistic-remove`` and ``statistic-remove-all`` commands are
+The :isccmd:`statistic-remove` and
+:isccmd:`statistic-remove-all` commands are
 intended to remove statistics that are not expected to be observed in
 the near future. For example, a misconfigured device in a network may
 cause clients to report duplicate addresses, so the server will report
@@ -118,7 +120,7 @@ to record it.
 The ``statistic-get`` Command
 -----------------------------
 
-The ``statistic-get`` command retrieves a single statistic. It takes a
+The :isccmd:`statistic-get` command retrieves a single statistic. It takes a
 single-string parameter called ``name``, which specifies the statistic
 name. An example command may look like this:
 
@@ -155,7 +157,7 @@ Here is an example response:
 The ``statistic-reset`` Command
 -------------------------------
 
-The ``statistic-reset`` command sets the specified statistic to its
+The :isccmd:`statistic-reset` command sets the specified statistic to its
 neutral value: 0 for integer, 0.0 for float, 0h0m0s0us for time
 duration, and "" for string type. It takes a single-string parameter
 called ``name``, which specifies the statistic name. An example command
@@ -182,7 +184,7 @@ and the text field contains the error description.
 The ``statistic-remove`` Command
 --------------------------------
 
-The ``statistic-remove`` command deletes a single statistic. It
+The :isccmd:`statistic-remove` command deletes a single statistic. It
 takes a single-string parameter called ``name``, which specifies the
 statistic name. An example command may look like this:
 
@@ -207,7 +209,7 @@ and the text field contains the error description.
 The ``statistic-get-all`` Command
 ---------------------------------
 
-The ``statistic-get-all`` command retrieves all statistics recorded. An
+The :isccmd:`statistic-get-all` command retrieves all statistics recorded. An
 example command may look like this:
 
 ::
@@ -448,7 +450,7 @@ Here is an example response returning all collected statistics:
 The ``statistic-reset-all`` Command
 -----------------------------------
 
-The ``statistic-reset`` command sets all statistics to their neutral
+The :isccmd:`statistic-reset` command sets all statistics to their neutral
 values: 0 for integer, 0.0 for float, 0h0m0s0us for time duration, and
 "" for string type. An example command may look like this:
 
@@ -470,7 +472,7 @@ field contains the error description.
 The ``statistic-remove-all`` Command
 ------------------------------------
 
-The ``statistic-remove-all`` command attempts to delete all statistics. An
+The :isccmd:`statistic-remove-all` command attempts to delete all statistics. An
 example command may look like this:
 
 ::
@@ -491,7 +493,7 @@ the text field contains the error description.
 The ``statistic-sample-age-set`` Command
 ----------------------------------------
 
-The ``statistic-sample-age-set`` command sets a time-based limit
+The :isccmd:`statistic-sample-age-set` command sets a time-based limit
 on samples for a given statistic. It takes two parameters: a string
 called ``name``, which specifies the statistic name, and an integer value called
 ``duration``, which specifies the time limit for the given statistic in seconds.
@@ -520,7 +522,7 @@ of 1 (error) and the text field contains the error description.
 The ``statistic-sample-age-set-all`` Command
 --------------------------------------------
 
-The ``statistic-sample-age-set-all`` command sets time-based limits
+The :isccmd:`statistic-sample-age-set-all` command sets time-based limits
 on samples for all statistics. It takes a single-integer parameter
 called ``duration``, which specifies the time limit for the statistic
 in seconds. An example command may look like this:
@@ -546,7 +548,7 @@ a status code of 1 (error) and the text field contains the error description.
 The ``statistic-sample-count-set`` Command
 ------------------------------------------
 
-The ``statistic-sample-count-set`` command sets a size-based limit
+The :isccmd:`statistic-sample-count-set` command sets a size-based limit
 on samples for a given statistic. An example command may look
 like this:
 
@@ -573,7 +575,7 @@ of 1 (error) and the text field contains the error description.
 The ``statistic-sample-count-set-all`` Command
 ----------------------------------------------
 
-The ``statistic-sample-count-set-all`` command sets size-based limits
+The :isccmd:`statistic-sample-count-set-all` command sets size-based limits
 on samples for all statistics. An example command may look
 like this:
 
@@ -608,10 +610,10 @@ Each Kea statistic holds 20 data points; setting such
 a limit prevents unlimited memory growth.
 There are two ways to define the limits: time-based (e.g. keep samples from
 the last 5 minutes) and size-based. The size-based
-limit can be changed using one of two commands: ``statistic-sample-count-set``,
-to set a size limit for a single statistic, and ``statistic-sample-count-set-all``,
+limit can be changed using one of two commands: :isccmd:`statistic-sample-count-set`,
+to set a size limit for a single statistic, and :isccmd:`statistic-sample-count-set-all`,
 to set size-based limits for all statistics. To set time-based
-limits for a single statistic, use ``statistic-sample-age-set``; use
-``statistic-sample-age-set-all`` to set time-based limits for all statistics.
+limits for a single statistic, use :isccmd:`statistic-sample-age-set`; use
+:isccmd:`statistic-sample-age-set-all` to set time-based limits for all statistics.
 For a given statistic only one type of limit can be active; storage
 is limited by either time or size, not both.

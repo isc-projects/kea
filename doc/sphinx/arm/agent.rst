@@ -115,7 +115,7 @@ described in :ref:`tls`.
 
 As mentioned in :ref:`agent-overview`, the CA can forward
 received commands to the Kea servers for processing. For example,
-``config-get`` is sent to retrieve the configuration of one of the Kea
+:isccmd:`config-get` is sent to retrieve the configuration of one of the Kea
 services. When the CA receives this command, including a ``service``
 parameter indicating that the client wishes to retrieve the
 configuration of the DHCPv4 server, the CA forwards the command to that

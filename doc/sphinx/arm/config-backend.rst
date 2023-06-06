@@ -210,8 +210,8 @@ by "server tags." The server tag is an arbitrary string holding the name
 of the Kea server instance. The tags of the DHCPv4 and DHCPv6 servers are
 independent in the database, i.e. the same server tag can be created for
 both the DHCPv4 and the DHCPv6 server. The value is configured
-using the ``server-tag`` parameter in the Dhcp4 or Dhcp6 scope. The current
-server tag can be checked with the ``server-tag-get`` command.
+using the ``server-tag`` parameter in the ``Dhcp4`` or ``Dhcp6`` scope. The current
+server tag can be checked with the :isccmd:`server-tag-get` command.
 
 The server definition, which consists of the server tag and the server
 description, must be stored in the configuration database prior to creating
@@ -223,7 +223,7 @@ servers in the database.
 Commands which contain the logical server `all` are applied to all servers
 connecting to the database. The `all` server cannot be
 deleted or modified, and it is not returned among other servers
-as a result of the ``remote-server[46]-get-all`` command.
+as a result of the :isccmd:`remote-server4-get-all`, :isccmd:`remote-server6-get-all` commands.
 
 In most cases, there are no server tags defined in the configuration
 database; all connecting servers get the same configuration

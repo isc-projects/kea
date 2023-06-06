@@ -60,7 +60,7 @@ where:
    to specify multiple targets.
 
 -  ``command`` specifies the command to be sent. If not specified, the
-   ``list-commands`` command is used.
+   :isccmd:`list-commands` command is used.
 
 Other switches are:
 
@@ -78,7 +78,7 @@ on standard output.
 
 For a list of available commands, see :ref:`ctrl-channel`;
 additional commands may be provided by hook libraries. For a list of
-all supported commands from the CA, use the ``list-commands`` command.
+all supported commands from the CA, use the :isccmd:`list-commands` command.
 
 The following shows a simple example of usage:
 
@@ -88,7 +88,7 @@ The following shows a simple example of usage:
    ^D
 
 After the command line is entered, the program waits for command
-parameters to be entered. Since ``list-commands`` does not take any
+parameters to be entered. Since :isccmd:`list-commands` does not take any
 arguments, Ctrl-D (represented in the above example by "^D")
 indicates end-of-file and terminates the parameter input. The shell
 then contacts the CA and prints out the list of available commands
@@ -96,7 +96,7 @@ returned for the service named ``dhcp4``.
 
 The Kea shell will likely be most frequently used in
 scripts; the next example shows a simple scripted execution. It sends
-the command ``config-write`` to the CA (the ``--service`` parameter has not
+the command :isccmd:`config-write` to the CA (the ``--service`` parameter has not
 been used), along with the parameters specified in param.json. The
 result will be stored in result.json.
 

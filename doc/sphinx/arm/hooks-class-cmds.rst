@@ -23,7 +23,7 @@ customers with a paid support contract.
 The ``class-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``class-add`` command adds a new client class to the DHCP server
+The :isccmd:`class-add` command adds a new client class to the DHCP server
 configuration. This class is appended at the end of the list of classes
 used by the server and may depend on any of the already-configured
 client classes.
@@ -51,7 +51,7 @@ DHCPv4 server configuration:
 Note that the ``client-classes`` parameter is a JSON list, but it allows
 only a single client class to be present.
 
-Here is the response to the ``class-add`` command in our example:
+Here is the response to the :isccmd:`class-add` command in our example:
 
 ::
 
@@ -66,15 +66,15 @@ Here is the response to the ``class-add`` command in our example:
 The ``class-update`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``class-update`` command updates an existing client class in the
+The :isccmd:`class-update` command updates an existing client class in the
 DHCP server configuration. If the client class with the given name
 does not exist, the server returns the result code of 3, which means that
 the server configuration is not modified and the client class does not
-exist. The ``class-add`` command must be used instead to create the new
+exist. The :isccmd:`class-add` command must be used instead to create the new
 client class.
 
-The ``class-update`` command has the same argument structure as the
-``class-add`` command:
+The :isccmd:`class-update` command has the same argument structure as the
+:isccmd:`class-add` command:
 
 ::
 
@@ -106,15 +106,15 @@ Any parameter of the client class can be modified with this command,
 except ``name``. There is currently no way to rename the class, because
 the class name is used as a key for searching the class to be updated.
 To achieve a similar effect to renaming the class, an existing class can
-be removed with the ``class-del`` command and then added again with a
-different name using ``class-add``. Note, however, that the class with
+be removed with the :isccmd:`class-del` command and then added again with a
+different name using :isccmd:`class-add`. Note, however, that the class with
 the new name will be added at the end of the list of configured classes.
 
 As with other update commands, this command overwrites all the contents of the
 entry. If the client class previously had a resource assigned to it, and the
-``class-update`` command is missing the resource, it is deleted from the server
+:isccmd:`class-update` command is missing the resource, it is deleted from the server
 configuration. If an incremental update of the class is desired, then this can
-be achieved by doing a `class-get <command-class-get_>`_ to get the current state
+be achieved by doing a :isccmd:`class-get` to get the current state
 of the client class, picking the client class out of the response, modifying it
 to the required outcome, and then issuing the ``client-update`` command with the
 resulting client class attached.
@@ -126,7 +126,7 @@ The ``class-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-The ``class-del`` command is used to remove a particular class from the server
+The :isccmd:`class-del` command is used to remove a particular class from the server
 configuration. The class to be removed is identified by name. The class
 is not removed if there are other classes depending on it; to remove
 such a class, the dependent classes must be removed first.
@@ -142,7 +142,7 @@ The following is a sample command removing the ``ipxe_efi_x64`` class:
        }
    }
 
-Here is the response to the ``class-del`` command in our example, when
+Here is the response to the :isccmd:`class-del` command in our example, when
 the specified client class has been found:
 
 ::
@@ -161,7 +161,7 @@ The ``class-list`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-``class-list`` is used to retrieve a list of all client classes. This
+:isccmd:`class-list` is used to retrieve a list of all client classes. This
 command includes no arguments:
 
 ::
@@ -192,7 +192,7 @@ client classes:
 
 Note that the returned list does not contain full class definitions, but
 merely class names. To retrieve full class information, the
-``class-get`` command should be used.
+:isccmd:`class-get` command should be used.
 
 .. isccmd:: class-get
 .. _command-class-get:
@@ -200,7 +200,7 @@ merely class names. To retrieve full class information, the
 The ``class-get`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``class-get`` is used to retrieve detailed information about a specified
+:isccmd:`class-get` is used to retrieve detailed information about a specified
 class. The command structure is very simple:
 
 ::

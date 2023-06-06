@@ -121,12 +121,12 @@ the configuration is kept statically using a local file. However, since comments
 are not part of JSON syntax, most JSON tools detect them as
 errors. Another problem with them is that once Kea loads its configuration, the
 shell, C, and C++ style comments are ignored. If commands such as
-``config-get`` or ``config-write`` are used, those comments are lost. An example of such
+:isccmd:`config-get` or :isccmd:`config-write` are used, those comments are lost. An example of such
 comments was presented in the previous section.
 
 Historically, to address the problem, Kea code allowed the use of `comment` strings
 as valid JSON entities. This had the benefit of being retained through various
-operations (such as ``config-get``), or allowing processing by JSON tools. An
+operations (such as :isccmd:`config-get`), or allowing processing by JSON tools. An
 example JSON comment looks like this:
 
 ::
@@ -177,9 +177,9 @@ the older mechanisms. To promote this way of storing comments, Kea compared
 converts JSON comments to user-context on the fly.
 
 However, if the configuration uses the old JSON
-comment, the ``config-get`` command returns a slightly modified
-configuration. It is not uncommon for a call for ``config-set`` followed by a
-``config-get`` to receive a slightly different structure.
+comment, the :isccmd:`config-get` command returns a slightly modified
+configuration. It is not uncommon for a call for :isccmd:`config-set` followed by a
+:isccmd:`config-get` to receive a slightly different structure.
 The best way to avoid this problem is simply to abandon JSON comments and
 use user-context.
 
@@ -195,7 +195,7 @@ User context can be added and edited in structures supported by commands.
 We encourage Kea users to utilize these functions to store information
 used by other systems and custom hooks.
 
-For example, the ``subnet4-update`` command can be used to add user context data
+For example, the :isccmd:`subnet4-update` command can be used to add user context data
 to an existing subnet.
 
 ::

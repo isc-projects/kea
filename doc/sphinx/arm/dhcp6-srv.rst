@@ -3095,7 +3095,7 @@ conflict with existing entries owned by other DHCPv6 clients.
     Disabling conflict resolution should be done only after careful review of
     specific use cases. The best way to avoid unwanted DNS entries is to
     always ensure lease changes are processed through Kea, whether they are
-    released, expire, or are deleted via the ``lease-del6`` command, prior to
+    released, expire, or are deleted via the :isccmd:`lease6-del` command, prior to
     reassigning either FQDNs or IP addresses. Doing so causes :iscman:`kea-dhcp6`
     to generate DNS removal requests to D2.
 
@@ -4944,7 +4944,7 @@ compete for the same lease. When using the default settings, the server
 returns a configuration error when it finds two or more reservations for
 the same lease within a subnet in the Kea configuration file. The
 :ref:`hooks-host-cmds` hook library returns an error in response to the
-``reservation-add`` command when it detects that the reservation exists
+:isccmd:`reservation-add` command when it detects that the reservation exists
 in the database for the lease for which the new reservation is being added.
 
 Similar to DHCPv4 (see :ref:`multiple-reservations-same-ip4`), the DHCPv6
@@ -6946,33 +6946,33 @@ for more details.
 
 The DHCPv6 server supports the following operational commands:
 
--  build-report
--  config-get
--  config-reload
--  config-set
--  config-test
--  config-write
--  dhcp-disable
--  dhcp-enable
--  leases-reclaim
--  list-commands
--  shutdown
--  status-get
--  version-get
+- :isccmd:`build-report`
+- :isccmd:`config-get`
+- :isccmd:`config-reload`
+- :isccmd:`config-set`
+- :isccmd:`config-test`
+- :isccmd:`config-write`
+- :isccmd:`dhcp-disable`
+- :isccmd:`dhcp-enable`
+- :isccmd:`leases-reclaim`
+- :isccmd:`list-commands`
+- :isccmd:`shutdown`
+- :isccmd:`status-get`
+- :isccmd:`version-get`
 
 as described in :ref:`commands-common`. In addition, it supports the
 following statistics-related commands:
 
--  statistic-get
--  statistic-reset
--  statistic-remove
--  statistic-get-all
--  statistic-reset-all
--  statistic-remove-all
--  statistic-sample-age-set
--  statistic-sample-age-set-all
--  statistic-sample-count-set
--  statistic-sample-count-set-all
+- :isccmd:`statistic-get`
+- :isccmd:`statistic-reset`
+- :isccmd:`statistic-remove`
+- :isccmd:`statistic-get`-all
+- :isccmd:`statistic-reset`-all
+- :isccmd:`statistic-remove`-all
+- :isccmd:`statistic-sample-age-set`
+- :isccmd:`statistic-sample-age-set`-all
+- :isccmd:`statistic-sample-count-set`
+- :isccmd:`statistic-sample-count-set`-all
 
 as described in :ref:`command-stats`.
 
@@ -7200,15 +7200,15 @@ required.
 All supported parameters can be configured via the ``cb_cmds`` hook library
 described in the :ref:`hooks-cb-cmds` section. The general rule is that
 scalar global parameters are set using
-``remote-global-parameter6-set``; shared-network-specific parameters
-are set using ``remote-network6-set``; and subnet-level and pool-level
-parameters are set using ``remote-subnet6-set``. Whenever
+:isccmd:`remote-global-parameter6-set`; shared-network-specific parameters
+are set using :isccmd:`remote-network6-set`; and subnet-level and pool-level
+parameters are set using :isccmd:`remote-subnet6-set`. Whenever
 there is an exception to this general rule, it is highlighted in the
 table. Non-scalar global parameters have dedicated commands; for example,
 the global DHCPv6 options (``option-data``) are modified using
-``remote-option6-global-set``. Client classes, together with class-specific
+:isccmd:`remote-option6-global-set`. Client classes, together with class-specific
 option definitions and DHCPv6 options, are configured using the
-``remote-class6-set`` command.
+:isccmd:`remote-class6-set` command.
 
 The :ref:`cb-sharing` section explains the concept of shareable
 and non-shareable configuration elements and the limitations for

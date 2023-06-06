@@ -175,7 +175,13 @@ simply assigning the class to the host reservation as shown below:
         }]
     }
 
+<<<<<<< HEAD
 The ``ddns-tuning`` library notes the presence of the "SKIP_DDNS" class in the
+||||||| parent of 0e20e5ed8c (isccmd)
+:ischooklib:`libdhcp_ddns_tuning.so` notes the presence of the ``"SKIP_DDNS"`` class in the
+=======
+The :ischooklib:`libdhcp_ddns_tuning.so` hook library notes the presence of the ``"SKIP_DDNS"`` class in the
+>>>>>>> 0e20e5ed8c (isccmd)
 client's class list each time the client requests, renews, or releases its lease,
 and instructs :iscman:`kea-dhcp4` to bypass sending DDNS updates. A similar workflow is
 supported for :iscman:`kea-dhcp6`:
@@ -207,5 +213,5 @@ clients:
 
 .. note::
 
-    The ``ddns-tuning`` hook library must be loaded for the "SKIP_DDNS" class
-    to have an effect.
+    The :ischooklib:`libdhcp_ddns_tuning.so` hook library must be
+    loaded for the ``"SKIP_DDNS"`` class to have an effect.

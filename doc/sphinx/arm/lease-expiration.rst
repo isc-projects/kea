@@ -323,6 +323,6 @@ should consider using host reservations or leases with very long lifetimes.
 Reclaiming Expired Leases via Command
 =====================================
 
-The ``leases-reclaim`` command can be used to trigger lease reclamation at
+The :isccmd:`leases-reclaim` command can be used to trigger lease reclamation at
 any time. Please consult the :ref:`command-leases-reclaim` section
 for details about using this command.

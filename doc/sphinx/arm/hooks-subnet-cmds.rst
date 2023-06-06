@@ -23,53 +23,53 @@ contract.
 
 The following commands are currently supported:
 
--  ``subnet4-list``/``subnet6-list`` - lists all configured subnets.
+-  :isccmd:`subnet4-list` / :isccmd:`subnet6-list` - lists all configured subnets.
 
--  ``subnet4-get``/``subnet6-get`` - retrieves detailed information about a
+-  :isccmd:`subnet4-get` / :isccmd:`subnet6-get` - retrieves detailed information about a
    specified subnet.
 
--  ``subnet4-add``/``subnet6-add`` - adds a new subnet into the server's
+-  :isccmd:`subnet4-add` / :isccmd:`subnet6-add` - adds a new subnet into the server's
    configuration.
 
--  ``subnet4-update``/``subnet6-update`` - updates (replaces) a single subnet in
+-  :isccmd:`subnet4-update` / :isccmd:`subnet6-update` - updates (replaces) a single subnet in
    the server's configuration.
 
--  ``subnet4-del``/``subnet6-del`` - removes a subnet from the server's
+-  :isccmd:`subnet4-del` / :isccmd:`subnet6-del` - removes a subnet from the server's
    configuration.
 
--  ``subnet4-delta-add``/``subnet6-delta-add`` - updates (replaces) parts of a
+-  :isccmd:`subnet4-delta-add` / :isccmd:`subnet6-delta-add` - updates (replaces) parts of a
    single subnet in the server's configuration.
 
--  ``subnet4-delta-del``/``subnet6-delta-del`` - removes parts of a single subnet in
+-  :isccmd:`subnet4-delta-del` / :isccmd:`subnet6-delta-del` - removes parts of a single subnet in
    the server's configuration.
 
--  ``network4-list``/``network6-list`` - lists all configured shared networks.
+-  :isccmd:`network4-list` / :isccmd:`network6-list` - lists all configured shared networks.
 
--  ``network4-get``/``network6-get`` - retrieves detailed information about a
+-  :isccmd:`network4-get` / :isccmd:`network6-get` - retrieves detailed information about a
    specified shared network.
 
--  ``network4-add``/``network6-add`` - adds a new shared network to the
+-  :isccmd:`network4-add` / :isccmd:`network6-add` - adds a new shared network to the
    server's configuration.
 
--  ``network4-del``/``network6-del`` - removes a shared network from the
+-  :isccmd:`network4-del` / :isccmd:`network6-del` - removes a shared network from the
    server's configuration.
 
--  ``network4-subnet-add``/``network6-subnet-add`` - adds an existing subnet to
+-  :isccmd:`network4-subnet-add` / :isccmd:`network6-subnet-add` - adds an existing subnet to
    an existing shared network.
 
--  ``network4-subnet-del``/``network6-subnet-del`` - removes a subnet from
+-  :isccmd:`network4-subnet-del` / :isccmd:`network6-subnet-del` - removes a subnet from
    an existing shared network and demotes it to a plain subnet.
 
 .. isccmd:: subnet4-list
 .. _command-subnet4-list:
 
-The ``subnet4-list`` Command
+The subnet4-list Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to list all currently configured subnets. Each
 subnet is returned with a subnet identifier and
 subnet prefix. To retrieve
-detailed information about the subnet, use the ``subnet4-get`` command.
+detailed information about the subnet, use the :isccmd:`subnet4-get` command.
 
 This command has a simple structure:
 
@@ -106,13 +106,13 @@ error description.
 .. isccmd:: subnet6-list
 .. _command-subnet6-list:
 
-The ``subnet6-list`` Command
+The subnet6-list Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to list all currently configured subnets. Each
 subnet is returned with a subnet identifier and
 subnet prefix. To retrieve
-detailed information about the subnet, use the ``subnet6-get`` command.
+detailed information about the subnet, use the :isccmd:`subnet6-get` command.
 
 This command has a simple structure:
 
@@ -149,14 +149,14 @@ error description.
 .. isccmd:: subnet4-get
 .. _command-subnet4-get:
 
-The ``subnet4-get`` Command
+The subnet4-get Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to retrieve detailed information about the
-specified subnet. This command usually follows ``subnet4-list``,
+specified subnet. This command usually follows :isccmd:`subnet4-list`,
 which is used to discover available subnets with their respective subnet
 identifiers and prefixes. Any of those parameters can then be used in
-``subnet4-get`` to fetch subnet information:
+:isccmd:`subnet4-get` to fetch subnet information:
 
 ::
 
@@ -205,14 +205,14 @@ If the subnet exists, the response will be similar to this:
 .. isccmd:: subnet6-get
 .. _command-subnet6-get:
 
-The ``subnet6-get`` Command
+The subnet6-get Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to retrieve detailed information about the
-specified subnet. This command usually follows ``subnet6-list``,
+specified subnet. This command usually follows :isccmd:`subnet6-list`,
 which is used to discover available subnets with their respective subnet
 identifiers and prefixes. Any of those parameters can be then used in
-``subnet6-get`` to fetch subnet information:
+:isccmd:`subnet6-get` to fetch subnet information:
 
 ::
 
@@ -261,7 +261,7 @@ If the subnet exists, the response will be similar to this:
 .. isccmd:: subnet4-add
 .. _command-subnet4-add:
 
-The ``subnet4-add`` Command
+The subnet4-add Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create and add a new subnet to the existing server
@@ -273,7 +273,7 @@ the subnet is not added.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet4-add``. The commands described in :ref:`hooks-host-cmds` should be used to
+:isccmd:`subnet4-add`. The commands described in :ref:`hooks-host-cmds` should be used to
 add, remove, and modify static reservations.
 
 ::
@@ -309,7 +309,7 @@ The response to this command has the following structure:
 .. isccmd:: subnet6-add
 .. _command-subnet6-add:
 
-The ``subnet6-add`` Command
+The subnet6-add Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create and add a new subnet to the existing server
@@ -321,7 +321,7 @@ the subnet is not added.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet6-add``. The commands described in :ref:`hooks-host-cmds` should be used
+:isccmd:`subnet6-add`. The commands described in :ref:`hooks-host-cmds` should be used
 to add, remove, and modify static reservations.
 
 ::
@@ -359,9 +359,9 @@ specified, Kea will try to assign the next ``subnet-id`` value. This
 automatic ID value generator is simple; it returns the previous
 automatically assigned value, increased by 1. This works well, unless
 a subnet is manually created with a larger value than one previously used. For
-example, if ``subnet4-add`` is called five times, each without an ID, Kea will
+example, if :isccmd:`subnet4-add` is called five times, each without an ID, Kea will
 assign IDs 1, 2, 3, 4, and 5 and it will work just fine. However, if
-``subnet4-add`` is called five times, with the first subnet having the
+:isccmd:`subnet4-add` is called five times, with the first subnet having the
 ``subnet-id`` of value 3 and the remaining ones having no ``subnet-id``, the operation will
 fail. The first command (with the explicit value) will use ``subnet-id`` 3; the
 second command will create a subnet with and ID of 1; the third will use a
@@ -382,7 +382,7 @@ automatic ``subnet-id`` generation works in Kea.
 .. isccmd:: subnet4-update
 .. _command-subnet4-update:
 
-The ``subnet4-update`` Command
+The subnet4-update Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update (overwrite) a single subnet in the existing
@@ -394,7 +394,7 @@ not be updated.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet4-update``. The commands described in :ref:`hooks-host-cmds` should be
+:isccmd:`subnet4-update`. The commands described in :ref:`hooks-host-cmds` should be
 used to update, remove, and modify static reservations.
 
 ::
@@ -429,14 +429,14 @@ The response to this command has the following structure:
 
 As with other update commands, this command overwrites all the contents of the
 entry. If the IPv4 subnet previously had a resource assigned to it, and the
-``subnet4-update`` command is missing the resource, it is deleted from the
+:isccmd:`subnet4-update` command is missing the resource, it is deleted from the
 server configuration. If an incremental update of the subnet is desired, then
-this can be achieved with `subnet4-delta-add <command-subnet4-delta-add_>`_.
+this can be achieved with :isccmd:`subnet4-delta-add`.
 
 .. isccmd:: subnet6-update
 .. _command-subnet6-update:
 
-The ``subnet6-update`` Command
+The subnet6-update Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update (overwrite) a single subnet in the existing
@@ -448,7 +448,7 @@ not be updated.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet6-update``. The commands described in :ref:`hooks-host-cmds` should be
+:isccmd:`subnet6-update`. The commands described in :ref:`hooks-host-cmds` should be
 used to update, remove, and modify static reservations.
 
 ::
@@ -483,14 +483,14 @@ The response to this command has the following structure:
 
 As with other update commands, this command overwrites all the contents of the
 entry. If the IPv6 subnet previously had a resource assigned to it, and the
-``subnet6-update`` command is missing the resource, it is deleted from the
+:isccmd:`subnet6-update` command is missing the resource, it is deleted from the
 server configuration. If an incremental update of the subnet is desired, then
-this can be achieved with `subnet6-delta-add <command-subnet6-delta-add_>`_.
+this can be achieved with :isccmd:`subnet6-delta-add`.
 
 .. isccmd:: subnet4-del
 .. _command-subnet4-del:
 
-The ``subnet4-del`` Command
+The subnet4-del Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to remove a subnet from the server's configuration.
@@ -500,7 +500,7 @@ subnet does have certain implications.
 In most cases the server has assigned some leases to the clients
 belonging to the subnet. The server may also be configured with static
 host reservations which are associated with this subnet. The current
-implementation of the ``subnet4-del`` command removes neither the leases nor
+implementation of the :isccmd:`subnet4-del` command removes neither the leases nor
 the host reservations associated with a subnet. This is the safest approach
 because the server does not lose track of leases assigned to clients
 from this subnet. However, removal of the subnet may still cause
@@ -513,7 +513,7 @@ Thus, we recommend that this command be used with extreme caution.
 This command can also be used to completely delete an IPv4 subnet that
 is part of a shared network. To simply remove the subnet
 from a shared network and keep the subnet configuration, use the
-``network4-subnet-del`` command instead.
+:isccmd:`network4-subnet-del` command instead.
 
 The command has the following structure:
 
@@ -546,7 +546,7 @@ A successful response may look like this:
 .. isccmd:: subnet6-del
 .. _command-subnet6-del:
 
-The ``subnet6-del`` Command
+The subnet6-del Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to remove a subnet from the server's configuration.
@@ -556,7 +556,7 @@ subnet does have certain implications.
 In most cases the server has assigned some leases to the clients
 belonging to the subnet. The server may also be configured with static
 host reservations which are associated with this subnet. The current
-implementation of the ``subnet6-del`` command removes neither the leases nor
+implementation of the :isccmd:`subnet6-del` command removes neither the leases nor
 the host reservations associated with a subnet. This is the safest approach
 because the server does not lose track of leases assigned to clients
 from this subnet. However, removal of the subnet may still cause
@@ -569,7 +569,7 @@ we recommend that this command be used with extreme caution.
 This command can also be used to completely delete an IPv6 subnet that
 is part of a shared network. To simply remove the subnet
 from a shared network and keep the subnet configuration, use the
-``network6-subnet-del`` command instead.
+:isccmd:`network6-subnet-del` command instead.
 
 The command has the following structure:
 
@@ -600,7 +600,7 @@ A successful response may look like this:
 .. isccmd:: subnet4-delta-add
 .. _command-subnet4-delta-add:
 
-The ``subnet4-delta-add`` Command
+The subnet4-delta-add Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet by adding or overwriting its parts in
@@ -612,7 +612,7 @@ be updated.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet4-delta-add``. The commands described in :ref:`hooks-host-cmds` should
+:isccmd:`subnet4-delta-add`. The commands described in :ref:`hooks-host-cmds` should
 be used to update, remove, and modify static reservations.
 
 ::
@@ -678,7 +678,7 @@ level option 4 ("time-servers").
 .. isccmd:: subnet6-delta-add
 .. _command-subnet6-delta-add:
 
-The ``subnet6-delta-add`` Command
+The subnet6-delta-add Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet by adding or overwriting its parts in
@@ -690,7 +690,7 @@ be updated.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet6-delta-add``. The commands described in :ref:`hooks-host-cmds` should
+:isccmd:`subnet6-delta-add`. The commands described in :ref:`hooks-host-cmds` should
 be used to update, remove, and modify static reservations.
 
 ::
@@ -775,7 +775,7 @@ level option 22 ("sip-server-addr").
 .. isccmd:: subnet4-delta-del
 .. _command-subnet4-delta-del:
 
-The ``subnet4-delta-del`` Command
+The subnet4-delta-del Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet by removing its parts in the existing
@@ -787,7 +787,7 @@ updated.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet4-delta-del``. The commands described in :ref:`hooks-host-cmds` should
+:isccmd:`subnet4-delta-del`. The commands described in :ref:`hooks-host-cmds` should
 be used to update, remove, and modify static reservations.
 
 The command is flexible and can delete the part of the subnet by either
@@ -852,7 +852,7 @@ be parsed.
 .. isccmd:: subnet6-delta-del
 .. _command-subnet6-delta-del:
 
-The ``subnet6-delta-del`` Command
+The subnet6-delta-del Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet by removing its parts in the existing
@@ -864,7 +864,7 @@ updated.
 The subnet information within this command has the same structure as the
 subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
-``subnet6-delta-del``. The commands described in :ref:`hooks-host-cmds` should
+:isccmd:`subnet6-delta-del`. The commands described in :ref:`hooks-host-cmds` should
 be used to update, remove, and modify static reservations.
 
 The command is flexible and can delete the part of the subnet by either
@@ -956,7 +956,7 @@ The ``network4-list``, ``network6-list`` Commands
 These commands are used to retrieve the full list of currently configured
 shared networks. The list contains only very basic information about
 each shared network. If more details are needed, please use
-``network4-get`` or ``network6-get`` to retrieve all information
+:isccmd:`network4-get` or :isccmd:`network6-get` to retrieve all information
 available. This command does not require any parameters and its
 invocation is very simple:
 
@@ -966,7 +966,7 @@ invocation is very simple:
        "command": "network4-list"
    }
 
-An example response for ``network4-list`` looks as follows:
+An example response for :isccmd:`network4-list` looks as follows:
 
 ::
 
@@ -981,7 +981,7 @@ An example response for ``network4-list`` looks as follows:
        "text": "2 IPv4 network(s) found"
    }
 
-The ``network6-list`` command uses exactly the same syntax for both the
+The :isccmd:`network6-list` command uses exactly the same syntax for both the
 command and the response.
 
 .. isccmd:: network4-get
@@ -1059,7 +1059,7 @@ An example response could look as follows:
 
 The actual response contains many additional fields that are
 omitted here for clarity. The response format is exactly the same as
-used in ``config-get``, just limited to returning the shared network's
+used in :isccmd:`config-get`, just limited to returning the shared network's
 information.
 
 .. isccmd:: network4-add
@@ -1140,7 +1140,7 @@ successful and will return the following response:
        "text": "A new IPv4 shared network 'floor13' added"
    }
 
-The ``network6-add`` command uses the same syntax for both the query and the
+The :isccmd:`network6-add` command uses the same syntax for both the query and the
 response. However, there are some parameters that are IPv4-only (e.g.
 ``match-client-id``) and some that are IPv6-only (e.g. ``interface-id``). The same
 applies to subnets within the network.
@@ -1156,7 +1156,7 @@ The ``network4-del``, ``network6-del`` Commands
 
 These commands are used to delete existing shared networks. Both
 commands take exactly one parameter, ``name``, that specifies the name of
-the network to be removed. An example invocation of the ``network4-del``
+the network to be removed. An example invocation of the :isccmd:`network4-del`
 command looks as follows:
 
 ::
@@ -1185,7 +1185,7 @@ similar to the following:
        "text": "IPv4 shared network 'floor13' deleted"
    }
 
-The ``network6-del`` command uses exactly the same syntax for both the
+The :isccmd:`network6-del` command uses exactly the same syntax for both the
 command and the response.
 
 If there are any subnets belonging to the shared network being deleted,
@@ -1193,7 +1193,7 @@ they will be demoted to a plain subnet. There is an optional parameter
 called ``subnets-action`` that, if specified, takes one of two possible
 values: ``keep`` (which is the default) and ``delete``. It controls
 whether the subnets are demoted to plain subnets or removed. An example
-usage in the ``network6-del`` command that deletes the shared network and all
+usage in the :isccmd:`network6-del` command that deletes the shared network and all
 subnets in it could look as follows:
 
 ::
@@ -1207,7 +1207,7 @@ subnets in it could look as follows:
    }
 
 Alternatively, to completely remove the subnets, it is possible to use the
-``subnet4-del`` or ``subnet6-del`` commands.
+:isccmd:`subnet4-del` or :isccmd:`subnet6-del` commands.
 
 .. isccmd:: network4-subnet-add
 .. _command-network4-subnet-add:
@@ -1221,25 +1221,27 @@ The ``network4-subnet-add``, ``network6-subnet-add`` Commands
 These commands are used to add existing subnets to existing shared
 networks. There are several ways to add a new shared network. The system
 administrator can add the whole shared network at once, either by
-editing a configuration file or by calling the ``network4-add`` or
-``network6-add`` command with the desired subnets in it. This approach
+editing a configuration file or by calling the :isccmd:`network4-add` or
+:isccmd:`network6-add` command with the desired subnets in it. This approach
 works well for completely new shared subnets. However, there may be
 cases when an existing subnet is running out of addresses and needs to
 be extended with additional address space; in other words, another subnet
 needs to be added on top of it. For this scenario, a system administrator
-can use ``network4-add`` or ``network6-add``, and then add an existing
+can use :isccmd:`network4-add` or :isccmd:`network6-add`, and then add an existing
 subnet to this newly created shared network using
-``network4-subnet-add`` or ``network6-subnet-add``.
+:isccmd:`network4-subnet-add` or :isccmd:`network6-subnet-add`.
 
-The ``network4-subnet-add`` and ``network6-subnet-add`` commands take
+The :isccmd:`network4-subnet-add` and
+:isccmd:`network6-subnet-add` commands take
 two parameters: ``id``, which is an integer and specifies the ID of
 an existing subnet to be added to a shared network; and ``name``, which
 specifies the name of the shared network to which the subnet will be added. The
 subnet must not belong to any existing network; to
 reassign a subnet from one shared network to another, use the
-``network4-subnet-del`` or ``network6-subnet-del`` commands first.
+:isccmd:`network4-subnet-del` or
+:isccmd:`network6-subnet-del` command commands first.
 
-An example invocation of the ``network4-subnet-add`` command looks as
+An example invocation of the :isccmd:`network4-subnet-add` command looks as
 follows:
 
 ::
@@ -1263,7 +1265,7 @@ return a response similar to the following:
        "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now part of shared network 'floor13'"
    }
 
-The ``network6-subnet-add`` command uses exactly the same syntax for both the
+The :isccmd:`network6-subnet-add` command uses exactly the same syntax for both the
 command and the response.
 
 .. note::
@@ -1285,14 +1287,14 @@ The ``network4-subnet-del``, ``network6-subnet-del`` Commands
 
 These commands are used to remove a subnet that is part of an existing
 shared network and demote it to a plain, stand-alone subnet.
-To remove a subnet completely, use the ``subnet4-del`` or ``subnet6-del``
-commands instead. The ``network4-subnet-del`` and
-``network6-subnet-del`` commands take two parameters: ``id``, which is
+To remove a subnet completely, use the :isccmd:`subnet4-del` or :isccmd:`subnet6-del`
+commands instead. The :isccmd:`network4-subnet-del` and
+:isccmd:`network6-subnet-del` commands take two parameters: ``id``, which is
 an integer and specifies the ID of an existing subnet to be removed from
 a shared network; and ``name``, which specifies the name of the shared
 network from which the subnet will be removed.
 
-An example invocation of the ``network4-subnet-del`` command looks as
+An example invocation of the :isccmd:`network4-subnet-del` command looks as
 follows:
 
 ::
@@ -1316,5 +1318,5 @@ following:
        "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now removed from shared network 'floor13'"
    }
 
-The ``network6-subnet-del`` command uses exactly the same syntax for both the
+The :isccmd:`network6-subnet-del` command uses exactly the same syntax for both the
 command and the response.

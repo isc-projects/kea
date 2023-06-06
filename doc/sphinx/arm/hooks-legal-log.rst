@@ -366,7 +366,7 @@ or for a release:
 
 In addition to logging lease activity driven by DHCPv4 client traffic,
 the hook library also logs entries for the following lease management control
-channel commands: ``lease4-add``, ``lease4-update``, and ``lease4-del``. These cannot have
+channel commands: :isccmd:`lease4-add`, :isccmd:`lease4-update`, and :isccmd:`lease4-del`. These cannot have
 custom formatting. Each entry is a single string with no embedded end-of-line
 markers, and it will typically have the following form:
 
@@ -691,7 +691,7 @@ or for a release:
 
 In addition to logging lease activity driven by DHCPv6 client traffic,
 the hook library also logs entries for the following lease management control channel
-commands: ``lease6-add``, ``lease6-update``, and ``lease6-del``. Each entry is a
+commands: :isccmd:`lease6-add`, :isccmd:`lease6-update`, and :isccmd:`lease6-del`. Each entry is a
 single string with no embedded end-of-line markers, and it will
 typically have the following form:
 

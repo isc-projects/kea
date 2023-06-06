@@ -24,9 +24,9 @@ for retrieving these statistics.
 
 The commands provided by this library are:
 
--  ``stat-lease4-get`` - fetches DHCPv4 lease statistics.
+-  :isccmd:`stat-lease4-get` - fetches DHCPv4 lease statistics.
 
--  ``stat-lease6-get`` - fetches DHCPv6 lease statistics.
+-  :isccmd:`stat-lease6-get` - fetches DHCPv6 lease statistics.
 
 The Statistics Commands library is part of the open source code and is
 available to every Kea user.
@@ -52,7 +52,7 @@ parameters:
 
 In a deployment with multiple Kea DHCP servers sharing a common lease
 storage, this hook library may be loaded by any or all of the servers. However,
-a server's response to a
+a server's response to a :isccmd:`stat-lease4-get` / :isccmd:`stat-lease6-get`
 ``stat-lease[46]-get`` command will only contain data for subnets known to
 that server. In other words, if a subnet does not appear in a server's
 configuration, Kea will not retrieve statistics for it.
@@ -66,7 +66,8 @@ configuration, Kea will not retrieve statistics for it.
 The ``stat-lease4-get``, ``stat-lease6-get`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``stat-lease4-get`` and ``stat-lease6-get`` commands fetch lease
+The :isccmd:`stat-lease4-get` and
+:isccmd:`stat-lease6-get` commands fetch lease
 statistics for a range of known subnets. The range of subnets is
 determined through the use of optional command input parameters:
 

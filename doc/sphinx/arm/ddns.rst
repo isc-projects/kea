@@ -302,26 +302,26 @@ for more details.
 
 The D2 server supports the following operational commands:
 
--  build-report
--  config-get
--  config-reload
--  config-set
--  config-test
--  config-write
--  list-commands
--  shutdown
--  status-get
--  version-get
+- :isccmd:`build-report`
+- :isccmd:`config-get`
+- :isccmd:`config-reload`
+- :isccmd:`config-set`
+- :isccmd:`config-test`
+- :isccmd:`config-write`
+- :isccmd:`list-commands`
+- :isccmd:`shutdown`
+- :isccmd:`status-get`
+- :isccmd:`version-get`
 
 Since Kea version 2.0.0, the D2 server also supports the following
 operational commands for statistics:
 
--  statistic-get
--  statistic-get-all
--  statistic-reset
--  statistic-reset-all
+- :isccmd:`statistic-get`
+- :isccmd:`statistic-get`-all
+- :isccmd:`statistic-reset`
+- :isccmd:`statistic-reset`-all
 
-The ``shutdown`` command supports the extra ``type`` argument, which controls the
+The :isccmd:`shutdown` command supports the extra ``type`` argument, which controls the
 way the D2 server cleans up on exit.
 The supported shutdown types are:
 

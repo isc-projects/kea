@@ -121,8 +121,8 @@ by the receiving server. This parameter is only meaningful to the CA.
 
 If the command received by the CA does not include a ``service``
 parameter or this list is empty, the CA simply processes this message on
-its own. For example, a ``config-get`` command which includes no service
-parameter returns the Control Agent's own configuration. The ``config-get``
+its own. For example, a :isccmd:`config-get` command which includes no service
+parameter returns the Control Agent's own configuration. The :isccmd:`config-get`
 command with a service value "dhcp4" is forwarded to the DHCPv4 server and
 returns the DHCPv4 server's configuration.
 
@@ -329,7 +329,7 @@ Commands Supported by Both the DHCPv4 and DHCPv6 Servers
 The ``build-report`` Command
 ----------------------------
 
-The ``build-report`` command returns on the control channel what the
+The :isccmd:`build-report` command returns on the control channel what the
 command line ``-W`` argument displays, i.e. the embedded content of the
 ``config.report`` file. This command does not take any parameters.
 
@@ -345,11 +345,11 @@ command line ``-W`` argument displays, i.e. the embedded content of the
 The ``config-get`` Command
 --------------------------
 
-The ``config-get`` command retrieves the current configuration used by the
+The :isccmd:`config-get` command retrieves the current configuration used by the
 server. This command does not take any parameters. The configuration
 returned is roughly equal to the configuration that was loaded using the
 ``-c`` command-line option during server start-up, or was later set using the
-``config-set`` command. However, there may be certain differences, as
+:isccmd:`config-set` command. However, there may be certain differences, as
 comments are not retained. If the original configuration used file
 inclusion, the returned configuration includes all parameters from
 all included files.
@@ -375,20 +375,20 @@ An example command invocation looks like this:
 The ``config-reload`` Command
 -----------------------------
 
-The ``config-reload`` command instructs Kea to load again the
+The :isccmd:`config-reload` command instructs Kea to load again the
 configuration file that was used previously. This operation is useful if
 the configuration file has been changed by some external source; for
 example, a system administrator can tweak the configuration file and use this
 command to force Kea pick up the changes.
 
-Caution should be taken when mixing this with ``config-set`` commands. Kea
+Caution should be taken when mixing this with the :isccmd:`config-set` command. Kea
 remembers the location of the configuration file it was started with,
-and this configuration can be significantly changed using the ``config-set``
-command. When ``config-reload`` is issued after ``config-set``, Kea attempts
+and this configuration can be significantly changed using the :isccmd:`config-set`
+command. When :isccmd:`config-reload` is issued after :isccmd:`config-set`, Kea attempts
 to reload its original configuration from the file, possibly losing all
-changes introduced using ``config-set`` or other commands.
+changes introduced using :isccmd:`config-set` or other commands.
 
-The ``config-reload`` command does not take any parameters. An example command
+The :isccmd:`config-reload` command does not take any parameters. An example command
 invocation looks like this:
 
 ::
@@ -407,13 +407,13 @@ to learn how to recover from a non-working server.
 The ``config-test`` Command
 ---------------------------
 
-The ``config-test`` command instructs the server to check whether the new
+The :isccmd:`config-test` command instructs the server to check whether the new
 configuration supplied in the command's arguments can be loaded. The
 supplied configuration is expected to be the full configuration for the
 target server, along with an optional logger configuration. The configuration
 is sanity-checked to the extent possible without the server actually
 attempting to load it; it is possible for a configuration which successfully
-passes this command to still fail in the ``config-set`` command or at launch
+passes this command to still fail in the :isccmd:`config-set` command or at launch
 time. The structure of the command is as follows:
 
 ::
@@ -458,7 +458,7 @@ outcome:
 The ``config-write`` Command
 ----------------------------
 
-The ``config-write`` command instructs the Kea server to write its current
+The :isccmd:`config-write` command instructs the Kea server to write its current
 configuration to a file on disk. It takes one optional argument, called
 "filename", that specifies the name of the file to write the
 configuration to. If not specified, the name used when starting Kea
@@ -482,7 +482,7 @@ An example command invocation looks like this:
 The ``leases-reclaim`` Command
 ------------------------------
 
-The ``leases-reclaim`` command instructs the server to reclaim all expired
+The :isccmd:`leases-reclaim` command instructs the server to reclaim all expired
 leases immediately. The command has the following JSON syntax:
 
 ::
@@ -510,7 +510,7 @@ The ``libreload`` Command
 
 This command is now deprecated and will be removed in future Kea versions.
 
-The ``libreload`` command first unloads and then loads all currently
+The :isccmd:`libreload` command first unloads and then loads all currently
 loaded hook libraries. This is primarily intended to allow one or more
 hook libraries to be replaced with newer versions, without requiring Kea
 servers to be reconfigured or restarted. The hook libraries
@@ -533,7 +533,7 @@ or 1, indicating failure.
 The ``list-commands`` Command
 -----------------------------
 
-The ``list-commands`` command retrieves a list of all commands supported
+The :isccmd:`list-commands` command retrieves a list of all commands supported
 by the server. It does not take any arguments. An example command may
 look like this:
 
@@ -554,7 +554,7 @@ command.
 The ``config-set`` Command
 --------------------------
 
-The ``config-set`` command instructs the server to replace its current
+The :isccmd:`config-set` command instructs the server to replace its current
 configuration with the new configuration supplied in the command's
 arguments. The supplied configuration is expected to be the full
 configuration for the target server, along with an optional logger
@@ -614,7 +614,7 @@ string, ``text``, describing the outcome:
 The ``shutdown`` Command
 ------------------------
 
-The ``shutdown`` command instructs the server to initiate its shutdown
+The :isccmd:`shutdown` command instructs the server to initiate its shutdown
 procedure. It is the equivalent of sending a ``SIGTERM`` signal to the
 process. This command does not take any arguments. An example command
 may look like this:
@@ -662,7 +662,7 @@ An example command may look like this:
 The ``dhcp-disable`` Command
 ----------------------------
 
-The ``dhcp-disable`` command globally disables the DHCP service. The
+The :isccmd:`dhcp-disable` command globally disables the DHCP service. The
 server continues to operate, but it drops all received DHCP messages.
 This command is useful when the server's maintenance requires that the
 server temporarily stop allocating new leases and renew existing leases.
@@ -670,7 +670,7 @@ It is also useful in failover-like configurations during a
 synchronization of the lease databases at startup, or recovery after a
 failure. The optional parameter ``max-period`` specifies the time in
 seconds after which the DHCP service should be automatically re-enabled,
-if the ``dhcp-enable`` command is not sent before this time elapses.
+if the :isccmd:`dhcp-enable` command is not sent before this time elapses.
 
 Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
@@ -698,7 +698,7 @@ HA operation. The administrator should either omit this parameter or set it to
 The ``dhcp-enable`` Command
 ---------------------------
 
-The ``dhcp-enable`` command globally enables the DHCP service.
+The :isccmd:`dhcp-enable` command globally enables the DHCP service.
 
 Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
@@ -725,7 +725,7 @@ HA operation. The administrator should either omit this parameter or set it to
 The ``status-get`` Command
 --------------------------
 
-The ``status-get`` command returns the server's runtime information:
+The :isccmd:`status-get` command returns the server's runtime information:
 
  - ``pid``: the process ID.
 
@@ -758,17 +758,17 @@ The ``status-get`` command returns the server's runtime information:
 
 The ``high-availability`` information is returned only when the command is
 sent to the DHCP servers in an HA setup. This parameter is
-never returned when the ``status-get`` command is sent to the
+never returned when the :isccmd:`status-get` command is sent to the
 Control Agent or DDNS daemon.
 
 The ``thread-pool-size``, ``packet-queue-size`` and
 ``packet-queue-statistics`` parameters are returned only when the
 command is sent to DHCP servers with multi-threading enabled. These
 three parameters and ``multi-threading-enabled`` are never returned when
-the ``status-get`` command is sent to the Control Agent or DDNS daemon.
+the :isccmd:`status-get` command is sent to the Control Agent or DDNS daemon.
 
 To learn more about the HA status information returned by the
-``status-get`` command, please refer to the :ref:`command-ha-status-get`
+:isccmd:`status-get` command, please refer to the :ref:`command-ha-status-get`
 section.
 
 
@@ -778,7 +778,7 @@ section.
 The ``server-tag-get`` Command:
 -------------------------------
 
-The ``server-tag-get`` command returns the configured server tag of
+The :isccmd:`server-tag-get` command returns the configured server tag of
 the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept).
 
 .. isccmd:: config-backend-pull
@@ -787,7 +787,7 @@ the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept).
 The ``config-backend-pull`` Command:
 ------------------------------------
 
-The ``config-backend-pull`` command triggers the polling of configuration backends
+The :isccmd:`config-backend-pull` command triggers the polling of configuration backends
 (which must be configured for this command to have an effect),
 explained in :ref:`dhcp4-cb-json`.
 
@@ -797,7 +797,7 @@ explained in :ref:`dhcp4-cb-json`.
 The ``version-get`` Command
 ---------------------------
 
-The ``version-get`` command returns extended information about the Kea
+The :isccmd:`version-get` command returns extended information about the Kea
 version. It is the same information available via the ``-V``
 command-line argument. This command does not take any parameters.
 
@@ -812,25 +812,25 @@ Commands Supported by the D2 Server
 
 The D2 server supports only a subset of the DHCPv4/DHCPv6 server commands:
 
--  ``build-report``
+-  :isccmd:`build-report`
 
--  ``config-get``
+-  :isccmd:`config-get`
 
--  ``config-reload``
+-  :isccmd:`config-reload`
 
--  ``config-set``
+-  :isccmd:`config-set`
 
--  ``config-test``
+-  :isccmd:`config-test`
 
--  ``config-write``
+-  :isccmd:`config-write`
 
--  ``list-commands``
+-  :isccmd:`list-commands`
 
--  ``shutdown``
+-  :isccmd:`shutdown`
 
--  ``status-get``
+-  :isccmd:`status-get`
 
-- ``version-get``
+- :isccmd:`version-get`
 
 .. _agent-commands:
 
@@ -841,22 +841,22 @@ The following commands, listed in :ref:`commands-common`, are also supported by 
 Control Agent; when the ``service`` parameter is blank, the
 commands are handled by the CA and they relate to the CA process itself:
 
--  ``build-report``
+-  :isccmd:`build-report`
 
--  ``config-get``
+-  :isccmd:`config-get`
 
--  ``config-reload``
+-  :isccmd:`config-reload`
 
--  ``config-set``
+-  :isccmd:`config-set`
 
--  ``config-test``
+-  :isccmd:`config-test`
 
--  ``config-write``
+-  :isccmd:`config-write`
 
--  ``list-commands``
+-  :isccmd:`list-commands`
 
--  ``shutdown``
+-  :isccmd:`shutdown`
 
--  ``status-get``
+-  :isccmd:`status-get`
 
--  ``version-get``
+-  :isccmd:`version-get`

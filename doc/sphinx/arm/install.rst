@@ -640,10 +640,10 @@ Kea 2.3.2 introduced support for Sysrepo 2.x. Unfortunately,
 Sysrepo continues to undergo major changes that are backward-incompatible,
 and Kea versions 2.3.2 do not support Sysrepo earlier than versions 2.x.
 
-``libreload`` command
----------------------
+:isccmd:`libreload` command
+----------------------------------------
 
-The ``libreload`` command was deprecated in Kea 2.3.4. The code to handle this command is
+The :isccmd:`libreload` command was deprecated in Kea 2.3.4. The code to handle this command is
 still there, but there are reports of it being buggy and not really usable.
 Kea 2.3 and 2.4 versions will produce a warning when this command
 is used, and it will be removed entirely sometime in the 2.5 branch.

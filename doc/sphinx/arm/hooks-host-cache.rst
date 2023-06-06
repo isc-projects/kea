@@ -70,7 +70,7 @@ removed. An example usage looks as follows:
    }
 
 This command removes 1000 hosts; to delete *all* cached
-hosts, use ``cache-clear`` instead. The hosts are stored in FIFO
+hosts, use :isccmd:`cache-clear` instead. The hosts are stored in FIFO
 (first-in, first-out) order, so the oldest entries are always removed.
 
 .. isccmd:: cache-clear
@@ -89,7 +89,7 @@ looks as follows:
    }
 
 This command removes all hosts. To delete only a certain
-number of cached hosts, please use ``cache-flush`` instead.
+number of cached hosts, please use :isccmd:`cache-flush` instead.
 
 .. isccmd:: cache-size
 .. _command-cache-size:
@@ -134,7 +134,7 @@ example usage looks as follows:
    }
 
 This causes the contents to be stored in the ``/tmp/kea-host-cache.json``
-file. That file can then be loaded with the ``cache-load`` command or
+file. That file can then be loaded with the :isccmd:`cache-load` command or
 processed by any other tool that is able to understand JSON format.
 
 .. isccmd:: cache-load
@@ -158,7 +158,7 @@ example usage looks as follows:
    }
 
 This command stores the contents to the ``/tmp/kea-host-cache.json``
-file. That file can then be loaded with the ``cache-load`` command or
+file. That file can then be loaded with the :isccmd:`cache-load` command or
 processed by any other tool that is able to understand JSON format.
 
 .. isccmd:: cache-get
@@ -167,7 +167,7 @@ processed by any other tool that is able to understand JSON format.
 The ``cache-get`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is similar to ``cache-write``, but instead of writing the cache
+This command is similar to :isccmd:`cache-write`, but instead of writing the cache
 contents to disk, it returns the contents to whoever sent the command.
 
 This command allows the contents of a file on disk to be loaded into an
@@ -189,7 +189,7 @@ may be large.
 The ``cache-get-by-id`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is similar to ``cache-get``, but instead of returning the whole
+This command is similar to :isccmd:`cache-get`, but instead of returning the whole
 content it returns only the entries matching the given identifier.
 
 It takes one parameter, which defines the identifier of wanted cached
@@ -282,10 +282,10 @@ administrative action (e.g. the customer hasn't paid their bills or has
 been upgraded to better service), the information in the backend database
 (e.g. MySQL or RADIUS) is being updated. However, since the cache is in use,
 Kea does not notice the change as the cached values are used. The
-``cache-remove`` command can solve this problem by removing a cached entry
+:isccmd:`cache-remove` command can solve this problem by removing a cached entry
 after administrative changes.
 
-The ``cache-remove`` command works similarly to the ``reservation-get`` command.
+The :isccmd:`cache-remove` command works similarly to the :isccmd:`reservation-get` command.
 It allows querying by two parameters: either ``subnet-id4`` or ``subnet-id6``;
 or ``ip-address`` (may be an IPv4 or IPv6 address), ``hw-address`` (specifies
 a hardware/MAC address), ``duid``, ``circuit-id``, ``client-id``, or ``flex-id``.

@@ -415,7 +415,7 @@ Extensive Example
 ~~~~~~~~~~~~~~~~~
 
 Here is an extensive example for a role accepting all read commands, with
-the exception of ``config-get``, e.g. for hiding passwords. For any remote
+the exception of :isccmd:`config-get`, e.g. for hiding passwords. For any remote
 user who is not recognized as "user1", all commands should be rejected.
 
 The first option is to put the allowed commands in the "accept-commands"

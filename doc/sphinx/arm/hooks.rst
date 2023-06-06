@@ -287,7 +287,7 @@ its own; it simply stores it and makes it available for the hook libraries.
 Another use case for user contexts may be storing comments and other
 information that will be retained by Kea. Regular comments are discarded
 when the configuration is loaded, but user contexts are retained. This is
-useful if administrators want their comments to survive ``config-set`` or ``config-get``
+useful if administrators want their comments to survive :isccmd:`config-set` or :isccmd:`config-get`
 operations, for example.
 
 If user context is supported in a given context, the parser translates
