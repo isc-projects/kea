@@ -1,27 +1,28 @@
+.. ischooklib:: libdhcp_cb_cmds.so
 .. _hooks-cb-cmds:
 
-``cb_cmds``: Configuration Backend Commands
-===========================================
+``libdhcp_cb_cmds.so``: Configuration Backend Commands
+======================================================
 
 This hook library is used to manage Kea
 servers' configurations in a configuration backend database. This library must
 be used in conjunction with the available CB hook libraries implementing
 the common APIs to create, read, update, and delete (CRUD) the
 configuration information in the respective databases. For example:
-the ``mysql_cb`` hook library implements this API for MySQL while the
-``pgsql_cb`` hook library implements this API for PostgreSQL.
-To manage the configuration information in a MySQL database, both the
-``mysql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
-configuration management.
-To manage the configuration information in a PostgreSQL database, both the
-``pgsql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
-configuration management.
+:ischooklib:`libdhcp_mysql_cb.so` implements this API for MySQL while
+:ischooklib:`libdhcp_pgsql_cb.so` implements this API for PostgreSQL.
+To manage the configuration information in a MySQL database, both
+:ischooklib:`libdhcp_mysql_cb.so` and :ischooklib:`libdhcp_cb_cmds.so`
+must be loaded by the server used for the configuration management.
+To manage the configuration information in a PostgreSQL database, both
+:ischooklib:`libdhcp_pgsql_cb.so` and :ischooklib:`libdhcp_cb_cmds.so`
+must be loaded by the server used for the configuration management.
 
 More information on how to configure the Configuration Backend hook library for
 use with a MySQL or PostgreSQL database can be found in the :ref:`dhcp4-cb`
 and :ref:`dhcp6-cb` sections.
 
-The ``cb_cmds`` library is only available to ISC customers with a paid
+:ischooklib:`libdhcp_cb_cmds.so` is only available to ISC customers with a paid
 support contract.
 
 .. note::
@@ -79,7 +80,7 @@ be specified, the parameter should be omitted. In this case, the server
 will use the first backend listed in the ``config-control`` map within
 the configuration of the server receiving the command.
 
-The ``cb_cmds`` library is only available to ISC customers with a paid
+:ischooklib:`libdhcp_cb_cmds.so` is only available to ISC customers with a paid
 support contract.
 
 .. note::
@@ -98,7 +99,7 @@ support contract.
    to use a single configuration backend. Strictly speaking, it is
    possible to point the Kea server to at most one database (either MySQL or
    PostgreSQL) using the ``config-control`` parameter. Therefore, the ``remote``
-   parameter may be omitted in the commands and the ``cb_cmds`` hook library
+   parameter may be omitted in the commands and :ischooklib:`libdhcp_cb_cmds.so`
    uses the sole backend by default.  The example commands below most often show a
    value of "mysql" for the ``type`` parameter; it should be assumed that the
    value is "postgresql" for installations using a PostgreSQL database.
@@ -109,7 +110,7 @@ Control Commands for DHCP Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This section describes and gives some examples of the control commands
-implemented by the ``cb_cmds`` hook library, to manage the
+implemented by :ischooklib:`libdhcp_cb_cmds.so`, to manage the
 configuration information of the DHCPv4 and DHCPv6 servers. Many of the
 commands are almost identical between DHCPv4 and DHCPv6; they only
 differ by the command name. Other commands differ slightly by the

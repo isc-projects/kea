@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_user_chk.so
 .. _hooks-user-chk:
 
-``user_chk``: User Check
-========================
+``libdhcp_user_chk.so``: User Check
+===================================
 
 This library serves several purposes:
 

@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_ddns_tuning.so
 .. _hooks-ddns-tuning:
 
-``ddns_tuning``: DDNS Tuning
-============================
+``libdhcp_ddns_tuning.so``: DDNS Tuning
+=======================================
 
 This hook library adds support for fine-tuning various DNS update aspects.
 It currently supports procedural host-name generation and the ability to skip
@@ -157,7 +158,7 @@ response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
 Skipping DDNS Updates
 ~~~~~~~~~~~~~~~~~~~~~
 
-The ``ddns-tuning`` library also provides the ability to skip DDNS updates on a
+:ischooklib:`libdhcp_ddns_tuning.so` also provides the ability to skip DDNS updates on a
 per-client basis. The library recognizes a special client class, "SKIP_DDNS"; when a
 client is matched to this class, the Kea servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`) do not
 send DDNS update requests (NCRs) to :iscman:`kea-dhcp-ddns`. A common use case would be
@@ -175,13 +176,8 @@ simply assigning the class to the host reservation as shown below:
         }]
     }
 
-<<<<<<< HEAD
-The ``ddns-tuning`` library notes the presence of the "SKIP_DDNS" class in the
-||||||| parent of 0e20e5ed8c (isccmd)
-:ischooklib:`libdhcp_ddns_tuning.so` notes the presence of the ``"SKIP_DDNS"`` class in the
-=======
-The :ischooklib:`libdhcp_ddns_tuning.so` hook library notes the presence of the ``"SKIP_DDNS"`` class in the
->>>>>>> 0e20e5ed8c (isccmd)
+The :ischooklib:`libdhcp_ddns_tuning.so` hook library notes the
+presence of the ``"SKIP_DDNS"`` class in the
 client's class list each time the client requests, renews, or releases its lease,
 and instructs :iscman:`kea-dhcp4` to bypass sending DDNS updates. A similar workflow is
 supported for :iscman:`kea-dhcp6`:

@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_host_cmds.so
 .. _hooks-host-cmds:
 
-``host_cmds``: Host Commands
-============================
+``libdhcp_host_cmds.so``: Host Commands
+=======================================
 
 Kea can store host reservations in a database; in many larger deployments,
 it is useful to be able to manage that information while the server is
@@ -51,7 +52,7 @@ modify data stored in the host database, the hosts database must be specified
 and it must not operate in read-only mode (for details, see the
 ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4` and
 :ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not
-specified or are running in read-only mode, the ``host_cmds`` library will
+specified or are running in read-only mode, :ischooklib:`libhost_cmds.so` will
 load, but any attempts to use :isccmd:`reservation-add`, :isccmd:`reservation-del`, and
 :isccmd:`reservation-update` to modify data in that database will fail.
 

@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_run_script.so
 .. _hooks-run-script:
 
-``run_script``: Run Script Support for External Hook Scripts
-============================================================
+``libdhcp_run_script.so``: Run Script Support for External Hook Scripts
+=======================================================================
 
 The Run Script hook library adds support for calling an external script for specific
 packet-processing hook points.

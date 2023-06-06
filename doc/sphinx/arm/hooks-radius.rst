@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_radius.so
 .. _hooks-radius:
 
-``radius``: RADIUS Server Support
-=================================
+``libdhcp_radius.so``: RADIUS Server Support
+============================================
 
 This hook library allows Kea to interact with two types of RADIUS
 servers: access and accounting. Although the most common DHCP and RADIUS
@@ -377,13 +378,13 @@ flags, which correspond to FreeRADIUS client library options:
 
 -  ``identifier-type4`` (default ``client-id``) - specifies the identifier
    type to build the User-Name attribute. It should be the same as the
-   host identifier, and when the ``flex-id`` hook library is used the
+   host identifier, and when :ischooklib:`libdhcp_flex_id.so` is used the
    ``replace-client-id`` must be set to ``true``; ``client-id`` is used with
    ``client-id-pop0``.
 
 -  ``identifier-type6`` (default ``duid``) - specifies the identifier type to
    build the User-Name attribute. It should be the same as the host
-   identifier, and when the ``flex-id`` hook library is used the
+   identifier, and when :ischooklib:`libdhcp_flex_id.so` is used the
    ``replace-client-id`` must be set to ``true``; ``duid`` is used with
    ``client-id-pop0``.
 

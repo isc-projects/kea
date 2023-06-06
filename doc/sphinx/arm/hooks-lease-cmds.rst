@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_lease_cmds.so
 .. _hooks-lease-cmds:
 
-``lease_cmds``: Lease Commands for Easier Lease Management
-==========================================================
+``libdhcp_lease_cmds.so``: Lease Commands for Easier Lease Management
+=====================================================================
 
 Kea allows users to store lease information in several
 backends (memfile, MySQL, and PostgreSQL), and the Lease Commands library provides an

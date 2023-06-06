@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_class_cmds.so
 .. _hooks-class-cmds:
 
-``class_cmds``: Class Commands
-==============================
+``libdhcp_class_cmds.so``: Class Commands
+=========================================
 
 This hook library exposes
 several control commands for manipulating client classes (part of the

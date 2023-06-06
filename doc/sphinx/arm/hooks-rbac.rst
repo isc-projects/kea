@@ -1,14 +1,15 @@
+.. ischooklib:: libca_rbac.so
 .. _hooks-RBAC:
 
-``rbac``: Role-Based Access Control
-===================================
+``libca_rbac.so``: Role-Based Access Control
+============================================
 
 .. _hooks-RBAC-overview:
 
 Role-Based Access Control (RBAC) Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before the processing of commands in received HTTP requests, the ``rbac`` hook
+Before the processing of commands in received HTTP requests, :ischooklib:`libca_rbac.so`
 takes specific parameters, e.g. the common-name part of the client
 certificate subject name, to assign a role to the request.
 The configuration associated with this role is used to accept or reject
@@ -99,7 +100,7 @@ API Commands
 
 All commands of the REST API are described in files in the source directory
 ``src/share/api``, or in installed Kea
-in ``.../share/kea/api``. The ``rbac`` hook reads these files to take the name,
+in ``.../share/kea/api``. :ischooklib:`libca_rbac.so` reads these files to take the name,
 the access right (i.e. ``read`` or ``write``), and the hook name. The access right
 can be modified in the file but changes are only applied after the Control Agent
 restarts. Removing command definitions from ``.../share/kea/api`` has

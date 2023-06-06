@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_flex_option.so
 .. _hooks-flex-option:
 
-``flex_option``: Flexible Option Actions for Option Value Settings
-==================================================================
+``libdhcp_flex_option.so``: Flexible Option Actions for Option Value Settings
+=============================================================================
 
 This library allows administrators to define an action to take, for a given
 option, based upon on the result of an expression. These actions are carried
@@ -33,7 +34,7 @@ numeric code or its name; either the code or the name must be
 specified. The option space is DHCPv4 or DHCPv6, depending
 on the server where the hook library is loaded.
 
-Similar to other hook libraries, the ``flex_option`` library can be loaded
+Similar to other hook libraries, :ischooklib:`libdhcp_flex_option.so` can be loaded
 by either the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
 process. It takes a mandatory ``options`` parameter with a list of
 per-option parameter maps, with ``code``, ``name``, ``add``, ``supersede``, and

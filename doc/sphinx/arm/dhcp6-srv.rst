@@ -4942,8 +4942,8 @@ reservations for the same IP address or delegated prefix within a
 particular subnet, to avoid having two different clients
 compete for the same lease. When using the default settings, the server
 returns a configuration error when it finds two or more reservations for
-the same lease within a subnet in the Kea configuration file. The
-:ref:`hooks-host-cmds` hook library returns an error in response to the
+the same lease within a subnet in the Kea configuration file.
+:ischooklib:`libdhcp_host_cmds.so` returns an error in response to the
 :isccmd:`reservation-add` command when it detects that the reservation exists
 in the database for the lease for which the new reservation is being added.
 
@@ -4957,7 +4957,7 @@ The ``ip-reservations-unique`` is a boolean parameter that defaults to
 ``true``, which forbids the specification of more than one reservation
 for the same lease in a given subnet. Setting this parameter to ``false``
 allows such reservations to be created both in the Kea configuration
-file and in the host database backend, via the ``host-cmds`` hook library.
+file and in the host database backend, via :ischooklib:`libdhcp_host_cmds.so`.
 
 This setting is currently supported by the most popular host database
 backends, i.e. MySQL and PostgreSQL.
@@ -6309,7 +6309,7 @@ The parameter is expressed in seconds, so the example above
 instructs the server to recycle declined leases after one hour.
 
 There are several statistics and hook points associated with the decline
-handling procedure. The ``lease6_decline`` hook is triggered after the
+handling procedure. The ``lease6_decline`` hook point is triggered after the
 incoming DHCPDECLINE message has been sanitized and the server is about
 to decline the lease. The ``declined-addresses`` statistic is increased
 after the hook returns (both the global and subnet-specific variants). (See
@@ -7197,7 +7197,7 @@ the DHCPv6 server parameters can be configured in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
-All supported parameters can be configured via the ``cb_cmds`` hook library
+All supported parameters can be configured via :ischooklib:`libdhcp_cb_cmds.so`
 described in the :ref:`hooks-cb-cmds` section. The general rule is that
 scalar global parameters are set using
 :isccmd:`remote-global-parameter6-set`; shared-network-specific parameters
@@ -7567,7 +7567,7 @@ before using this allocator for prefix delegation. The FLQ allocator can heavily
 impact the server's startup and reconfiguration time, because the allocator
 has to populate the list of free leases for each subnet where it is used.
 These delays can be observed both during the configuration reload and when
-the subnets are created using the ``subnet_cmds`` hook. The allocator
+the subnets are created using :ischooklib:`libdhcp_subnet_cmds.so`. The allocator
 increases the memory consumption to hold the list of free leases,
 proportional to the total size of the pools for which this allocator is used.
 Finally, lease reclamation must be enabled with a low value of the

@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_host_cache.so
 .. _hooks-host-cache:
 
-``host_cache``: Host Cache Reservations for Improved Performance
-================================================================
+``libdhcp_host_cache.so``: Host Cache Reservations for Improved Performance
+===========================================================================
 
 Some database backends, such as RADIUS, are slow and may take
 a long time to respond. Since Kea in general is synchronous, backend

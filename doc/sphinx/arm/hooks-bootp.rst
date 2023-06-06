@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_bootp.so
 .. _hooks-bootp:
 
-``bootp``: Support for BOOTP Clients
-====================================
+``libdhcp_bootp.so``: Support for BOOTP Clients
+===============================================
 
 This hook library adds support for BOOTP with vendor-information extensions
 (`RFC 1497 <https://tools.ietf.org/html/rfc1497>`__). Received BOOTP

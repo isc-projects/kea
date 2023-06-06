@@ -2179,7 +2179,7 @@ to be configured with those options.
    +--------------------+------+----------------------------------------------------------------------+
 
 All other RAI sub-options can be used in client classification to classify incoming packets to specific classes
-and/or by ``flex-id`` to construct a unique device identifier.
+and/or by :ischooklib:`libdhcp_flex_id.so` to construct a unique device identifier.
 
 .. _dhcp4-custom-options:
 
@@ -5727,7 +5727,7 @@ reservations for the same IP address within a particular subnet, to avoid
 having two different clients compete for the same address.
 When using the default settings, the server returns a configuration error
 when it finds two or more reservations for the same IP address within
-a subnet in the Kea configuration file. The :ref:`hooks-host-cmds` hook
+a subnet in the Kea configuration file. :ischooklib:`libdhcp_host_cmds.so`
 returns an error in response to the :isccmd:`reservation-add` command
 when it detects that the reservation exists in the database for the IP
 address for which the new reservation is being added.
@@ -5752,7 +5752,7 @@ The ``ip-reservations-unique`` is a boolean parameter that defaults to
 ``true``, which forbids the specification of more than one reservation
 for the same IP address within a given subnet. Setting this parameter to
 ``false`` allows such reservations to be created both in the Kea configuration
-file and in the host database backend, via the ``host-cmds`` hook library.
+file and in the host database backend, via :ischooklib:`libdhcp_host_cmds.so`.
 
 This setting is currently supported by the most popular host database
 backends, i.e. MySQL and PostgreSQL.
@@ -6672,7 +6672,7 @@ The parameter is expressed in seconds, so the example above
 instructs the server to recycle declined leases after one hour.
 
 There are several statistics and hook points associated with the decline
-handling procedure. The ``lease4_decline`` hook is triggered after the
+handling procedure. The ``lease4_decline`` hook point is triggered after the
 incoming DHCPDECLINE message has been sanitized and the server is about
 to decline the lease. The ``declined-addresses`` statistic is increased
 after the hook returns (both the global and subnet-specific variants). (See
@@ -7488,7 +7488,7 @@ the DHCPv4 server parameters can be configured in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
-All supported parameters can be configured via the ``cb_cmds`` hook library
+All supported parameters can be configured via :ischooklib:`libdhcp_cb_cmds.so`
 described in the :ref:`hooks-cb-cmds` section. The general rule is that
 scalar global parameters are set using
 :isccmd:`remote-global-parameter4-set`; shared-network-specific parameters
@@ -7728,13 +7728,13 @@ waiting for the next fetch cycle.
 
 In the configuration examples above, two hook libraries are loaded. The first
 is a library which implements the Configuration Backend for a specific database
-type: ``libdhcp_mysql_cb.so`` provides support for MySQL and ``libdhcp_pgsql_cb.so``
+type: :ischooklib:`libdhcp_mysql_cb.so` provides support for MySQL and :ischooklib:`libdhcp_pgsql_cb.so`
 provides support for PostgreSQL.  The library loaded must match the database
 ``type`` specified within the ``config-control`` parameter or an will error be
 logged when the server attempts to load its configuration and the load will
 fail.
 
-The second hook library, ``libdhcp_cb_cmds.so``, is optional. It should
+The second hook library, :ischooklib:`libdhcp_cb_cmds.so`, is optional. It should
 be loaded when the Kea server instance is to be used to manage the
 configuration in the database. See the :ref:`hooks-cb-cmds` section for
 details. This hook library is only available to ISC
@@ -7983,7 +7983,7 @@ before using this allocator. The FLQ allocator can heavily impact the server's
 startup and reconfiguration time, because the allocator has to populate the
 list of free leases for each subnet where it is used. These delays can be
 observed both during the configuration reload and when the subnets are
-created using the ``subnet_cmds`` hook. The allocator increases the
+created using :ischooklib:`libdhcp_subnet_cmds.so`. The allocator increases the
 memory consumption to hold the list of free leases, proportional
 to the total size of the address pools for which this allocator is used.
 Finally, lease reclamation must be enabled with a low value of the

@@ -15,7 +15,7 @@ Windows servers, have chosen to adopt a more complex GSS-TSIG approach that offe
 additional capabilities, such as using negotiated dynamic keys.
 
 Kea supports GSS-TSIG to protect DNS updates sent by
-the Kea DHCP-DDNS (D2) server in a premium hook, called ``gss_tsig``.
+the Kea DHCP-DDNS (D2) server in a premium hook, called :ischooklib:`libddns_gss_tsig.so`.
 
 GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
 The GSS-TSIG protocol itself is an implementation of generic GSS-API v2
@@ -116,11 +116,11 @@ detection, similar to this:
 6.  Compile ``make -jX``, where X is the number of CPU cores
     available.
 
-7.  After compilation, the ``gss_tsig`` hook is available in the
+7.  After compilation, :ischooklib:`libddns_gss_tsig.so` is available in the
     ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by
     the Kea DHCP-DDNS (D2) daemon.
 
-The ``gss_tsig`` hook library was developed using the MIT Kerberos 5 implementation, but
+:ischooklib:`libddns_gss_tsig.so` was developed using the MIT Kerberos 5 implementation, but
 Heimdal is also supported. Note that Heimdal is picky about
 security-sensitive file permissions and is known to emit an unclear error message.
 It is a good idea to keep these files plain, with one link and no
@@ -464,7 +464,7 @@ Using GSS-TSIG
 
 There are a number of steps required to enable the GSS-TSIG mechanism:
 
-1. The ``gss_tsig`` hook library must be loaded by the D2 server.
+1. :ischooklib:`libddns_gss_tsig.so` must be loaded by the D2 server.
 2. The GSS-TSIG-capable DNS servers must be specified with their parameters.
 
 An excerpt from a D2 server configuration is provided below; more examples are available in the
@@ -606,7 +606,7 @@ specified, the default of 53 is assumed. This is similar to basic mode, with no
 authentication done using TSIG keys, with the
 exception that static TSIG keys are not referenced by name.
 
-Second, the ``libddns_gss_tsig.so`` library must be specified on the
+Second, :ischooklib:`libddns_gss_tsig.so` must be specified on the
 ``hooks-libraries`` list. This hook takes many parameters. The most important
 one is ``servers``, which is a list of GSS-TSIG-capable servers. If there are
 several servers and they share some characteristics, the values can be specified

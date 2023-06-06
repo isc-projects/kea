@@ -13,11 +13,11 @@ to manage and fetch their configuration from one or more databases. In
 this documentation, the term "Configuration Backend" may also refer to
 the particular Kea module providing support to manage and fetch the
 configuration information from the particular database type.  For
-example, the MySQL Configuration Backend is the logic implemented within the
-``mysql_cb`` hook library, which provides a complete set of functions to
+example, the MySQL Configuration Backend is the logic implemented within
+:ischooklib:`libdhcp_mysql_cb.so`, which provides a complete set of functions to
 manage and fetch the configuration information from the MySQL database.
-The PostgreSQL Configuration Backend is the logic implemented within the
-``pgsql_cb`` hook library, which provides a complete set of functions to
+The PostgreSQL Configuration Backend is the logic implemented within
+:ischooklib:`libdhcp_pgsql_cb.so`, which provides a complete set of functions to
 manage and fetch the configuration information from the PostgreSQL database.
 From herein, the term "database" is used to refer to either a MySQL or
 PostgreSQL database.
@@ -85,7 +85,7 @@ Currently, the Kea CB has the following limitations:
 Kea CB stores data in a schema that is public. It is possible to
 insert configuration data into the tables manually or automatically
 using SQL scripts, but this requires SQL and schema knowledge.
-The supported method for managing the data is through the ``cb-cmds`` hook library,
+The supported method for managing the data is through :ischooklib:`libdhcp_cb_cmds.so`,
 which provides management commands for config backends. It simplifies many
 typical operations, such as listing, adding, retrieving, and deleting global
 parameters, shared networks, subnets, pools, options, option definitions, and
@@ -95,7 +95,7 @@ Appendix A of this manual for a complete list.
 
 .. note::
 
-   The ``cb_cmds`` hook library is available only to ISC support subscribers.
+   :ischooklib:`libdhcp_cb_cmds.so` is available only to ISC support subscribers.
    For more information on subscription options, please complete the form
    at https://www.isc.org/contact.
 
@@ -132,11 +132,11 @@ in two independent configuration sources.
 
 .. note::
 
-   It is recommended that the ``subnet_cmds`` hook library not be used to
+   It is recommended that :ischooklib:`libsubnet_cmds.so` not be used to
    manage subnets when the configuration backend is used as a source
-   of information about the subnets. The ``subnet_cmds`` hook library
+   of information about the subnets. :ischooklib:`libsubnet_cmds.so`
    modifies the local subnets configuration in the server's memory,
-   not in the database. Use the ``cb_cmds`` hook library to manage the
+   not in the database. Use :ischooklib:`libcb_cmds.so` to manage the
    subnets information in the database instead.
 
 .. note::
@@ -162,13 +162,13 @@ in two independent configuration sources.
 CB Components
 -------------
 
-To use a MySQL configuration backend you must compile the ``mysql_cb`` open
-source hook library and configure the DHCP servers to load it.  It is compiled when
-the ``--with-mysql`` configuration switch is used during the Kea build. The MySQL
-C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
+To use a MySQL configuration backend you must compile
+:ischooklib:`libdhcp_mysql_cb.so` and configure the DHCP servers to load it.
+It is compiled when the ``--with-mysql`` configuration switch is used during the Kea build.
+The MySQL C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
-To use a PostgreSQL configuration backend you must compile the ``pgsql_cb`` open
-source hook library and configure the DHCP servers to load it.  It is compiled when
+To use a PostgreSQL configuration backend you must compile :ischooklib:`libdhcp_pgsql_cb.so`
+and configure the DHCP servers to load it.  It is compiled when
 the ``--with-pgsql`` configuration switch is used during the Kea build. The PostgreSQL
 C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
@@ -178,17 +178,14 @@ C client libraries must be installed, as explained in :ref:`dhcp-install-configu
    required by the particular Kea version using the :iscman:`kea-admin` tool,
    as described in :ref:`kea-admin`.
 
-The ``cb_cmds`` premium hook library, which is available to ISC's paid support
+:ischooklib:`libdhcp_cb_cmds.so`, which is available to ISC's paid support
 customers, provides a complete set of commands to manage the
 servers' configuration information within the database. This library can
 be attached to both DHCPv4 and DHCPv6 server instances. While it is
-possible to manage the configuration information without the ``cb_cmds``
-hook library with commonly available tools, such as MySQL Workbench or
+possible to manage the configuration information without :ischooklib:`libdhcp_cb_cmds.so`
+with commonly available tools, such as MySQL Workbench or
 the command-line MySQL client, or by directly working with the database;
 these avenues are neither recommended nor supported.
-
-Refer to :ref:`hooks-cb-cmds` for the details regarding the
-``cb_cmds`` hook library.
 
 The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as
 the list of supported configuration parameters, can be found in
@@ -266,8 +263,8 @@ that any particular subnet may have only one definition within this
 network. Each subnet has two unique identifiers: the subnet identifier and the
 subnet prefix. The subnet identifier is used in Kea to uniquely
 identify the subnet within the network and to connect it with other configuration elements,
-e.g. in host reservations. Some commands provided by the
-``cb_cmds`` hook library allow the subnet
+e.g. in host reservations. Some commands provided by
+:ischooklib:`libdhcp_cb_cmds.so` allow the subnet
 information to be accessed by either subnet identifier or prefix, and explicitly prohibit
 using the server tag to access the subnet. This is because, in
 general, the subnet definition is associated with multiple servers

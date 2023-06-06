@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_subnet_cmds.so
 .. _hooks-subnet-cmds:
 
-``subnet_cmds``: Subnet Commands to Manage Subnets and Shared Networks
-======================================================================
+``libdhcp_subnet_cmds.so``: Subnet Commands to Manage Subnets and Shared Networks
+=================================================================================
 
 This library offers commands used to query and manipulate subnet and shared network
 configurations in Kea. These can be very useful in deployments

@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_limits.so
 .. _hooks-limits:
 
-``limits``: Limits to Manage Lease Allocation and Packet Processing
-===================================================================
+``libdhcp_limits.so``: Limits to Manage Lease Allocation and Packet Processing
+==============================================================================
 
 This hook library enables two types of limits:
 

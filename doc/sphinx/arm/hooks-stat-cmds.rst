@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_stat_cmds.so
 .. _hooks-stat-cmds:
 
-``stat_cmds``: Statistics Commands for Supplemental Lease Statistics
-====================================================================
+``libdhcp_stat_cmds.so``: Statistics Commands for Supplemental Lease Statistics
+===============================================================================
 
 This library provides additional commands for retrieving lease
 statistics from Kea DHCP servers. These commands were added to address

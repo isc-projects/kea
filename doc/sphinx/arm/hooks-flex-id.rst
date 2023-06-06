@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_flex_id.so
 .. _hooks-flex-id:
 
-``flex_id``: Flexible Identifier for Host Reservations
-======================================================
+``libdhcp_flex_id.so``: Flexible Identifier for Host Reservations
+=================================================================
 
 The Kea software provides a way to handle
 host reservations that include addresses, prefixes, options, client
@@ -21,7 +22,7 @@ contract.
    This library can only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
    process.
 
-The ``flex_id`` library allows the definition of an expression, using notation initially
+:ischooklib:`libdhcp_flex_id.so` allows the definition of an expression, using notation initially
 used only for client classification. (See
 :ref:`classification-using-expressions` for a detailed description of
 the syntax available.) One notable difference is that for client
@@ -155,7 +156,7 @@ The ``replace-client-id`` Flag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When ``replace-client-id`` is set to ``false`` (which is the default setting),
-the ``flex-id`` hook library uses the evaluated flexible identifier solely for
+:ischooklib:`libdhcp_flex_id.so` uses the evaluated flexible identifier solely for
 identifying host reservations, i.e. searching for reservations within a
 database. This is the functional equivalent of other identifiers, similar
 to hardware address or circuit-id. However, this mode of operation
@@ -172,7 +173,7 @@ and other parameters are used that identify where the device is connected
 (e.g. circuit-id), rather than the device identification itself (e.g.
 MAC address).
 
-The ``flex-id`` library offers a way to overcome the problem with lease
+:ischooklib:`libdhcp_flex_id.so` offers a way to overcome the problem with lease
 conflicts by dynamically replacing the client identifier (or DUID in DHCPv6)
 with a value derived from the flexible identifier. The server
 processes the client's query as if the flexible identifier were sent in the
@@ -215,7 +216,7 @@ client-id option) is ignored.
 
 The :ref:`hooks-lease-cmds` section describes commands used to retrieve,
 update, and delete leases using various identifiers, such as ``hw-address`` and
-``client-id``. The ``lease_cmds`` library does not natively support querying
+``client-id``. :ischooklib:`libdhcp_lease_cmds.so` does not natively support querying
 for leases by flexible identifier. However, when ``replace-client-id`` is
 set to ``true``, it makes it possible to query for leases using a value
 derived from the flexible identifier. In DHCPv4, the query
@@ -251,8 +252,8 @@ In DHCPv6, the corresponding query looks something like this:
 The ``ignore-iaid`` Flag
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-When ``ignore-iaid`` is set to ``true`` (the default value is ``false``), the
-``flex-id`` hook library causes the Kea DHCPv6 server to ignore the IAID value
+When ``ignore-iaid`` is set to ``true`` (the default value is ``false``),
+:ischooklib:`libdhcp_flex_id.so` causes the Kea DHCPv6 server to ignore the IAID value
 from incoming IPv6 packets. This parameter is ignored by the Kea DHCPv4 server.
 
 If the packet contains only one IA_NA, the IAID value will be changed to ``0``

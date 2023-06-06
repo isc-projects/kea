@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_ha.so
 .. _hooks-high-availability:
 
-``ha``: High Availability Outage Resilience for Kea Servers
-===========================================================
+``libdhcp_ha.so``: High Availability Outage Resilience for Kea Servers
+======================================================================
 
 This hook library can be loaded on a pair of DHCPv4 or DHCPv6 servers, to
 increase the reliability of the DHCP service in the event of an outage on one
@@ -714,14 +715,14 @@ only difference that ``this-server-name`` should be set to "server2" and
        }]
    }
 
-Two hook libraries must be loaded to enable HA: ``libdhcp_lease_cmds.so`` and
-``libdhcp_ha.so``. The latter implements the HA feature, while the former
+Two hook libraries must be loaded to enable HA: :ischooklib:`libdhcp_lease_cmds.so` and
+:ischooklib:`libdhcp_ha.so`. The latter implements the HA feature, while the former
 enables control commands required by HA to fetch and manipulate leases on the
 remote servers. In the example provided above, it is assumed that Kea libraries
 are installed in the ``/usr/lib`` directory. If Kea is not installed in the
 ``/usr`` directory, the hook libraries' locations must be updated accordingly.
 
-The HA configuration is specified within the scope of ``libdhcp_ha.so``.
+The HA configuration is specified within the scope of :ischooklib:`libdhcp_ha.so`.
 Note that while the top-level parameter ``high-availability`` is a list, only a
 single entry is currently supported.
 
@@ -1474,8 +1475,7 @@ state machine.
 
 In order to "unpause" the state machine, the :isccmd:`ha-continue` command must be
 sent to the paused server. This command does not take any arguments. See
-:ref:`ha-control-commands` for details about commands specific to the HA hook
-library.
+:ref:`ha-control-commands` for details about commands specific to :ischooklib:`libdhcp_ha.so`.
 
 It is possible to configure the state machine to pause in more than one state.
 Consider the following configuration:

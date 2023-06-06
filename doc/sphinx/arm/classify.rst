@@ -188,7 +188,7 @@ and the result is interpreted as a class. For example, modern cable
 modems send this option with value ``docsis3.0``, so the packet belongs to
 class ``VENDOR_CLASS_docsis3.0``.
 
-The ``HA_`` prefix is used by the High Availability hook library to
+The ``HA_`` prefix is used by :ischooklib:`libdhcp_ha.so` to
 designate certain servers to process DHCP packets as a result of load
 balancing. The class name is constructed by prepending the ``HA_`` prefix
 to the name of the server which should process the DHCP packet. This
@@ -202,7 +202,7 @@ names at runtime. The spawned class name is constructed by prepending the
 ``SPAWN_<template-class-name>_<evaluated-value>``.
 More details can be found in :ref:`classification-configuring`.
 
-The ``BOOTP`` class is used by the BOOTP hook library to classify and
+The ``BOOTP`` class is used by :ischooklib:`libdhcp_bootp.so` to classify and
 respond to inbound BOOTP queries.
 
 The ``SKIP_DDNS`` class is used by the DDNS-tuning hook library to suppress
