@@ -284,6 +284,7 @@ def run_generate_docs(_):
 # custom setup hook
 def setup(app):
     app.add_crossref_type('isccmd', 'isccmd')
+    app.add_crossref_type('ischooklib', 'ischooklib')
     app.add_crossref_type('iscman', 'iscman')
     if hasattr(app, 'add_css_file'):
         app.add_css_file('kea.css')
