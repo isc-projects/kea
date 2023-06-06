@@ -1495,7 +1495,11 @@ SET @disable_audit = 0"
     # Check upgrade from 17.0 to 18.0.
     mysql_upgrade_17_to_18_test
 
+<<<<<<< HEAD
     # Check upgrade from 18.0 to 19.0.
+=======
+    # Check upgrade from 17.0 to 19.0.
+>>>>>>> [#2276] Upgrade DB schemas
     mysql_upgrade_18_to_19_test
 
     # Let's wipe the whole database
@@ -2812,14 +2816,23 @@ mysql_update_empty_duid_test() {
     test_finish 0
 }
 
+<<<<<<< HEAD
 # Verifies that converting from lease6.address to binary column works
 # while preserving data.
 mysql_update_v6_addresses_to_binary() {
     test_start "mysql.update_lease6_address_to_binary"
+=======
+# Verifies that you can upgrade from an earlier version and
+# that CB global parameter entries for 'ddns-use-conflict-resolution'
+# will get translated to 'ddns-conflict-resolution-mode'.
+mysql_ddns_conflict_resolution_mode_update_test() {
+    test_start "mysql.ddns_conflict_resolution_mode_update_test"
+>>>>>>> [#2276] Upgrade DB schemas
 
     # Let's wipe the whole database
     mysql_wipe
 
+<<<<<<< HEAD
     # We need to create an older database with lease data so we can
     # verify the upgrade mechanisms which convert empty duid values
     #
@@ -2858,6 +2871,55 @@ insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
     # verify the reservation is intact
     qry="select inet6_ntoa(address) from ipv6_reservations where host_id = 18219;"
     run_statement "ipv6_reservations_insert" "$qry" "2601:19e:8100:1e10:b1b:51a8:f616:cf16"
+=======
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 18.0.
+    mysql_upgrade_schema_to_version 18.0
+
+    # Now insert global parameter instances of ddns-use-conflict-resolution.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution', 'false', current_time(),2);
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution', 'true', current_time(),2);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution', 'false', current_time(),2);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution', 'true', current_time(),2);"
+
+    run_statement "insert ddns_conflict_resolution_mode" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-use-conflict-resolution';"
+    run_statement "#get 4_global parameter count before update" "$qry" 2
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-use-conflict-resolution';"
+    run_statement "#get 6_global parameter count before update" "$qry" 2
+
+    # Upgrade to schema 19.0
+    mysql_upgrade_schema_to_version 19.0
+
+    # Verify we converted parameters correctly.
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='check-with-dhcid'"
+    run_statement "#get 4_check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='no-check-with-dhcid'"
+    run_statement "#get 4_no-check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='check-with-dhcid'"
+    run_statement "#get 6_check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='no-check-with-dhcid'"
+    run_statement "#get 6_no-check-with-dhcid after update" "$qry" 1
+>>>>>>> [#2276] Upgrade DB schemas
 
     # Let's wipe the whole database
     mysql_wipe
@@ -2889,4 +2951,8 @@ mysql_client_class_test dhcp4
 mysql_client_class_test dhcp6
 mysql_shrink_server_tag_test
 mysql_update_empty_duid_test
+<<<<<<< HEAD
 mysql_update_v6_addresses_to_binary
+=======
+mysql_ddns_conflict_resolution_mode_update_test
+>>>>>>> [#2276] Upgrade DB schemas
