@@ -1,3 +1,9 @@
+2145.	[bug]		piotrek
+	Fixed a bug in kea-admin script where lack of lease type argument
+	was	not caught correctly and kea-lfc was called without -4 or -6
+	DHCP version.
+	(Gitlab #2855)
+
 Kea 2.3.8 (development) released on May 31, 2023
 
 2144.	[build]		razvan
