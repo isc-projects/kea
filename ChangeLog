@@ -1,6 +1,6 @@
 2145.	[bug]		piotrek
 	Fixed a bug in kea-admin script where lack of lease type argument
-	was	not caught correctly and kea-lfc was called without -4 or -6
+	was not caught correctly and kea-lfc was called without -4 or -6
 	DHCP version.
 	(Gitlab #2855)
 
