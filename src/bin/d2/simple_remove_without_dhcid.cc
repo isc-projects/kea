@@ -235,11 +235,19 @@ SimpleRemoveWithoutDHCIDTransaction::removingFwdRRsHandler() {
         }
 
         case DNSClient::TIMEOUT:
+            // No response from the server, log it and set up
+            // to select the next server for a retry.
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT)
+                      .arg(getRequestId())
+                      .arg(getNcr()->getFqdn())
+                      .arg(getCurrentServer()->toText());
+
+            retryTransition(SELECTING_FWD_SERVER_ST);
+            break;
+
         case DNSClient::OTHER:
             // We couldn't send to the current server, log it and set up
             // to select the next server for a retry.
-            // @note For now we treat OTHER as an IO error like TIMEOUT. It
-            // is not entirely clear if this is accurate.
             LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR)
                       .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
@@ -373,11 +381,21 @@ SimpleRemoveWithoutDHCIDTransaction::removingRevPtrsHandler() {
         }
 
         case DNSClient::TIMEOUT:
+            // No response from the server, log it and set up
+            // to select the next server for a retry.
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_TIMEOUT)
+                      .arg(getRequestId())
+                      .arg(getNcr()->getFqdn())
+                      .arg(getCurrentServer()->toText());
+
+            // If we are out of retries on this server, we go back and start
+            // all over on a new server.
+            retryTransition(SELECTING_REV_SERVER_ST);
+            break;
+
         case DNSClient::OTHER:
             // We couldn't send to the current server, log it and set up
             // to select the next server for a retry.
-            // @note For now we treat OTHER as an IO error like TIMEOUT. It
-            // is not entirely clear if this is accurate.
             LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_IO_ERROR)
                       .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
