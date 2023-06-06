@@ -993,6 +993,12 @@ This identifier will not change for this subnet unless the ``id``
 parameter is removed or set to 0. The value of 0 forces auto-generation
 of the subnet identifier.
 
+.. note::
+
+   The auto-generation of subnet identifier will be removed in a future
+   release. From 2.4.0 a subnet without an ``id`` entry or with the zero
+   value raises a warning at configuration time.
+
 .. _ipv6-subnet-prefix:
 
 IPv6 Subnet Prefix
