@@ -157,6 +157,7 @@ public:
                             }
                         ],
                         "subnet": "2001:db8:1::/48",
+                        "id": 1,
                         "interface-id": ""
                     }
                 ]
@@ -413,6 +414,7 @@ public:
                             }
                         ],
                         "subnet": "2001:db8:1::/48",
+                        "id": 1,
                         "interface-id": ""
                     }
                 ]
@@ -644,6 +646,7 @@ public:
                             }
                         ],
                         "subnet": "2001:db8:1::/48",
+                        "id": 1,
                         "interface-id": ""
                     }
                 ]
@@ -851,7 +854,8 @@ private:
               "pool": "2001:db8::/64"
             }
           ],
-          "subnet": "2001:db8::/64"
+          "subnet": "2001:db8::/64",
+          "id": 1
         }
       ]
     }
@@ -1344,6 +1348,7 @@ TEST_F(VendorOptsTest, vendorNeverSend) {
         "          \"data\": \"ISC\""
         "        }],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"renew-timer\": 1000, "
@@ -1444,6 +1449,7 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
         "          \"csv-format\": true"
         "        }],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"renew-timer\": 1000, "
@@ -1551,6 +1557,7 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
         "        } ]"
         "    } ],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "    \"subnet\": \"2001:db8::/64\", "
         "    \"interface\": \"eth0\" "
@@ -1666,6 +1673,7 @@ TEST_F(VendorOptsTest, twoVendors) {
         "        }"
         "    ],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "    \"subnet\": \"2001:db8::/64\", "
         "    \"interface\": \"eth0\" "
@@ -1819,6 +1827,7 @@ TEST_F(VendorOptsTest, threeVendors) {
         "        }"
         "    ],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "    \"subnet\": \"2001:db8::/64\", "
         "    \"interface\": \"eth0\" "

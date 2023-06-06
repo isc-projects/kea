@@ -140,6 +140,7 @@ TEST(ParserTest, keywordDhcp6) {
                   "\"rebind-timer\": 2000, \n"
                   "\"renew-timer\": 1000, \n"
                   "\"subnet6\": [ { "
+                  "    \"id\": 1, "
                   "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                   "    \"subnet\": \"2001:db8:1::/48\", "
                   "    \"interface\": \"test\" } ],\n"
@@ -160,6 +161,7 @@ TEST(ParserTest, bashComments) {
                 "# and here\n"
                 "\"renew-timer\": 1000, \n"
                 "\"subnet6\": [ { "
+                "    \"id\": 1, "
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
                 "    \"interface\": \"eth0\""
@@ -177,6 +179,7 @@ TEST(ParserTest, cppComments) {
                 "\"rebind-timer\": 2000, // everything after // is ignored\n"
                 "\"renew-timer\": 1000, // this will be ignored, too\n"
                 "\"subnet6\": [ { "
+                "    \"id\": 1, "
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
                 "    \"interface\": \"eth0\""
@@ -194,6 +197,7 @@ TEST(ParserTest, bashCommentsInline) {
                 "\"rebind-timer\": 2000, # everything after # is ignored\n"
                 "\"renew-timer\": 1000, # this will be ignored, too\n"
                 "\"subnet6\": [ { "
+                "    \"id\": 1, "
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
                 "    \"interface\": \"eth0\""
@@ -212,6 +216,7 @@ TEST(ParserTest, multilineComments) {
                 "\"rebind-timer\": 2000,\n"
                 "\"renew-timer\": 1000, \n"
                 "\"subnet6\": [ { "
+                "    \"id\": 1, "
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
                 "    \"interface\": \"eth0\""
@@ -230,6 +235,7 @@ TEST(ParserTest, embbededComments) {
                 "\"rebind-timer\": 2000,\n"
                 "\"renew-timer\": 1000, \n"
                 "\"subnet6\": [ { "
+                "    \"id\": 1, "
                 "    \"user-context\": { \"comment\": \"indirect\" },"
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
@@ -939,6 +945,7 @@ TEST_F(TrailingCommasTest, tests) {
           },
         ],
         "subnet": "2001:db8:1::/64",
+        "id": 1,
       },
     ],
   },
@@ -957,10 +964,10 @@ TEST_F(TrailingCommasTest, tests) {
     addLog("<string>:32.8");
     addLog("<string>:43.38");
     addLog("<string>:44.12");
-    addLog("<string>:46.36");
-    addLog("<string>:47.8");
-    addLog("<string>:48.6");
-    addLog("<string>:49.4");
+    addLog("<string>:47.16");
+    addLog("<string>:48.8");
+    addLog("<string>:49.6");
+    addLog("<string>:50.4");
     EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.

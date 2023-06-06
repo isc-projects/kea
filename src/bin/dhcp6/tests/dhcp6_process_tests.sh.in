@@ -51,6 +51,7 @@ CONFIG="{
         \"subnet6\": [
         {
             \"subnet\": \"2001:db8:1::/64\",
+            \"id\": 1,
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
         \"dhcp-ddns\": {
@@ -91,6 +92,7 @@ CONFIG_BAD_SYNTAX="{
         \"subnet6\": [
         {
             \"subnet\": \"2001:db8:1::/64\",
+            \"id\": 1,
             \"pool\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
         \"loggers\": [
@@ -127,6 +129,7 @@ CONFIG_INVALID="{
         \"subnet6\": [
         {
             \"subnet\": \"2001:db8:1::/64\",
+            \"id\": 1,
             \"pool\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
         \"loggers\": [
@@ -169,6 +172,7 @@ CONFIG_BAD_VALUES="{
         \"subnet6\": [
         {
             \"subnet\": \"2001:db8::/64\",
+            \"id\": 1,
             \"pools\": [ { \"pool\": \"3000::-3000::ffff\" } ]
         } ],
         \"dhcp-ddns\": {
@@ -207,6 +211,7 @@ INVALID_CONFIG_HOOKS_LOAD="{
         \"subnet6\": [
         {
             \"subnet\": \"2001:db8:1::/64\",
+            \"id\": 1,
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
         \"dhcp-ddns\": {
@@ -263,6 +268,7 @@ INVALID_CONFIG_HOOKS_CALLOUT_FAIL="{
         \"subnet6\": [
         {
             \"subnet\": \"2001:db8:1::/64\",
+            \"id\": 1,
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
         \"dhcp-ddns\": {

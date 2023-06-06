@@ -165,7 +165,8 @@ public:
                                 "pool": "192.0.2.0/25"
                             }
                         ],
-                        "subnet": "192.0.2.0/24"
+                        "subnet": "192.0.2.0/24",
+                        "id": 10
                     }
                 ]
             }
@@ -433,7 +434,8 @@ public:
                                 "pool": "192.0.2.0/25"
                             }
                         ],
-                        "subnet": "192.0.2.0/24"
+                        "subnet": "192.0.2.0/24",
+                        "id": 10
                     }
                 ]
             }
@@ -691,7 +693,8 @@ public:
                                 "pool": "192.0.2.0/25"
                             }
                         ],
-                        "subnet": "192.0.2.0/24"
+                        "subnet": "192.0.2.0/24",
+                        "id": 10
                     }
                 ]
             }
@@ -852,7 +855,8 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
         "    \"subnet\": \"10.254.226.0/24\", "
-        "    \"interface\": \"eth0\" "
+        "    \"interface\": \"eth0\", "
+        "    \"id\": 10"
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1357,6 +1361,7 @@ TEST_F(VendorOptsTest, vendorCancelledOptions) {
         "          \"data\": \"bar\""
         "        } ],"
         "\"subnet4\": [ { "
+        "    \"id\": 10,"
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"interface\": \"eth0\", "
@@ -1457,6 +1462,7 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
         "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
+        "    \"id\": 10,"
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.50\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"interface\": \"\""
@@ -1564,6 +1570,7 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
         "        } ]"
         "    } ],"
         "\"subnet4\": [ { "
+        "    \"id\": 10,"
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"interface\": \"eth0\" "
@@ -1625,6 +1632,7 @@ TEST_F(VendorOptsTest, option43LastResort) {
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"option-def\": [ "
         "{   \"code\": 1, "
@@ -1703,6 +1711,7 @@ TEST_F(VendorOptsTest, option43BadRaw) {
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"option-data\": [ "
         "{   \"name\": \"vendor-class-identifier\", "
@@ -1786,6 +1795,7 @@ TEST_F(VendorOptsTest, option43FailRaw) {
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"option-def\": [ "
         "{   \"code\": 1, "
@@ -1855,6 +1865,7 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"option-def\": [ "
         "{   \"code\": 43, "
@@ -1942,6 +1953,7 @@ TEST_F(VendorOptsTest, option43RawClass) {
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"vendor\", "
@@ -2037,6 +2049,7 @@ TEST_F(VendorOptsTest, option43Class) {
         "    \"type\": \"uint32\" } ],"
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"alpha\", "
@@ -2166,6 +2179,7 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
         "    \"data\": \"33\" } ],"
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"alpha\", "
@@ -2287,6 +2301,7 @@ TEST_F(VendorOptsTest, option43Classes) {
         "    \"type\": \"uint8\" } ],"
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"alpha\", "
@@ -2414,6 +2429,7 @@ TEST_F(VendorOptsTest, clientOption43FailRaw) {
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"10.0.0.0/24\" } ],"
         "\"option-def\": [ "
         "{   \"code\": 1, "
@@ -2449,6 +2465,7 @@ TEST_F(VendorOptsTest, clientOption43RawGlobal) {
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"10.0.0.0/24\" } ],"
         "\"option-def\": [ "
         "{   \"code\": 1, "
@@ -2492,6 +2509,7 @@ TEST_F(VendorOptsTest, clientOption43RawClass) {
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"id\": 10,"
         "    \"subnet\": \"10.0.0.0/24\" } ],"
         "\"option-def\": [ "
         "{   \"code\": 1, "
@@ -2539,6 +2557,7 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
         "},"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"10.206.80.0/25\" } ],"
+        "    \"id\": 10,"
         "    \"subnet\": \"10.206.80.0/24\", "
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
@@ -2645,6 +2664,7 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
         "        }"
         "    ],"
         "\"subnet4\": [ { "
+        "    \"id\": 10,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\""
         " } ]"
@@ -2731,6 +2751,7 @@ TEST_F(VendorOptsTest, twoVivcos) {
         "        }"
         "    ],"
         "\"subnet4\": [ { "
+        "    \"id\": 10,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ],"
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"interface\": \"eth0\" "

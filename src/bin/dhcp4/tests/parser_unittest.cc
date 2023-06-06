@@ -140,6 +140,7 @@ TEST(ParserTest, keywordDhcp4) {
                   "\"renew-timer\": 1000, \n"
                   "\"subnet4\": [ { "
                   "  \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                  "  \"id\": 1, "
                   "  \"subnet\": \"192.0.2.0/24\", "
                   "  \"interface\": \"test\" } ],\n"
                    "\"valid-lifetime\": 4000 } }";
@@ -159,6 +160,7 @@ TEST(ParserTest, bashComments) {
                 "\"renew-timer\": 1000, \n"
                 "\"subnet4\": [ { "
                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"id\": 1, "
                 "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
@@ -175,6 +177,7 @@ TEST(ParserTest, cppComments) {
                 "\"renew-timer\": 1000, // this will be ignored, too\n"
                 "\"subnet4\": [ { "
                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"id\": 1, "
                 "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
@@ -191,6 +194,7 @@ TEST(ParserTest, bashCommentsInline) {
                 "\"renew-timer\": 1000, # this will be ignored, too\n"
                 "\"subnet4\": [ { "
                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"id\": 1, "
                 "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
@@ -209,6 +213,7 @@ TEST(ParserTest, multilineComments) {
                 "\"renew-timer\": 1000, \n"
                 "\"subnet4\": [ { "
                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"id\": 1, "
                 "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
@@ -227,6 +232,7 @@ TEST(ParserTest, embbededComments) {
                 "\"subnet4\": [ { "
                 "    \"user-context\": { \"comment\": \"indirect\" },"
                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"id\": 1, "
                 "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
@@ -948,6 +954,7 @@ TEST_F(TrailingCommasTest, tests) {
             "pool": "192.168.0.0/24",
           },
         ],
+        "id": 1,
         "subnet": "192.168.0.0/24",
       },
     ],
@@ -967,10 +974,10 @@ TEST_F(TrailingCommasTest, tests) {
     addLog("<string>:32.8");
     addLog("<string>:43.37");
     addLog("<string>:44.12");
-    addLog("<string>:46.35");
-    addLog("<string>:47.8");
-    addLog("<string>:48.6");
-    addLog("<string>:49.4");
+    addLog("<string>:47.35");
+    addLog("<string>:48.8");
+    addLog("<string>:49.6");
+    addLog("<string>:50.4");
     EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.

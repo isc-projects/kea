@@ -748,13 +748,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         "        },"
         "        \"subnet4\": [ \n";
     string subnet1 =
-        "               {\"subnet\": \"192.2.0.0/24\", \n"
+        "               {\"subnet\": \"192.2.0.0/24\", \"id\": 1, \n"
         "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
     string subnet2 =
-        "               {\"subnet\": \"192.2.1.0/24\", \n"
+        "               {\"subnet\": \"192.2.1.0/24\", \"id\": 2, \n"
         "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
     string bad_subnet =
-        "               {\"comment\": \"192.2.2.0/24\", \n"
+        "               {\"comment\": \"192.2.2.0/24\", \"id\": 10, \n"
         "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -985,13 +985,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         "        },"
         "        \"subnet4\": [ \n";
     string subnet1 =
-        "               {\"subnet\": \"192.2.0.0/24\", \n"
+        "               {\"subnet\": \"192.2.0.0/24\", \"id\": 1, \n"
         "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
     string subnet2 =
-        "               {\"subnet\": \"192.2.1.0/24\", \n"
+        "               {\"subnet\": \"192.2.1.0/24\", \"id\": 2, \n"
         "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
     string bad_subnet =
-        "               {\"comment\": \"192.2.2.0/24\", \n"
+        "               {\"comment\": \"192.2.2.0/24\", \"id\": 10, \n"
         "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -1578,8 +1578,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadValid) {
         "        \"interfaces\": [ \"*\" ]"
         "    },"
         "    \"subnet4\": ["
-        "        { \"subnet\": \"192.0.2.0/24\" },"
-        "        { \"subnet\": \"192.0.3.0/24\" }"
+        "        { \"id\": 1, \"subnet\": \"192.0.2.0/24\" },"
+        "        { \"id\": 2, \"subnet\": \"192.0.3.0/24\" }"
         "     ],"
         "    \"valid-lifetime\": 4000,"
         "    \"lease-database\": {"

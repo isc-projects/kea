@@ -661,13 +661,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         "        },"
         "        \"subnet6\": [ \n";
     string subnet1 =
-        "               {\"subnet\": \"3002::/64\", \n"
+        "               {\"subnet\": \"3002::/64\", \"id\": 1, \n"
         "                \"pools\": [{ \"pool\": \"3002::100-3002::200\" }]}\n";
     string subnet2 =
-        "               {\"subnet\": \"3003::/64\", \n"
+        "               {\"subnet\": \"3003::/64\", \"id\": 2, \n"
         "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
     string bad_subnet =
-        "               {\"comment\": \"3005::/64\", \n"
+        "               {\"comment\": \"3005::/64\", \"id\": 10, \n"
         "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -899,13 +899,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         "        },"
         "        \"subnet6\": [ \n";
     string subnet1 =
-        "               {\"subnet\": \"3002::/64\", \n"
+        "               {\"subnet\": \"3002::/64\", \"id\": 1, \n"
         "                \"pools\": [{ \"pool\": \"3002::100-3002::200\" }]}\n";
     string subnet2 =
-        "               {\"subnet\": \"3003::/64\", \n"
+        "               {\"subnet\": \"3003::/64\", \"id\": 2, \n"
         "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
     string bad_subnet =
-        "               {\"comment\": \"3005::/64\", \n"
+        "               {\"comment\": \"3005::/64\", \"id\": 10, \n"
         "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -1607,8 +1607,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadValid) {
         "        \"interfaces\": [ \"*\" ]"
         "    },"
         "    \"subnet6\": ["
-        "        { \"subnet\": \"2001:db8:1::/64\" },"
-        "        { \"subnet\": \"2001:db8:2::/64\" }"
+        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1 },"
+        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
         "     ],"
         "    \"lease-database\": {"
         "       \"type\": \"memfile\", \"persist\": false }"
