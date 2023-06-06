@@ -125,6 +125,7 @@ The operation target accepts the following values:
 - ``all`` - query both sources - JSON configuration and host database(s).
 - ``default`` - query the default source - it's command specific.
 
+.. isccmd:: reservation-add
 .. _command-reservation-add:
 
 The ``reservation-add`` Command
@@ -260,6 +261,7 @@ As ``reservation-add`` is expected to store the host, the ``hosts-databases``
 parameter must be specified in the configuration, and databases must not
 run in read-only mode.
 
+.. isccmd:: reservation-get
 .. _command-reservation-get:
 
 The ``reservation-get`` Command
@@ -360,6 +362,7 @@ An example result returned when the query was malformed might look like this:
 
    { "result": 1, "text": "No 'ip-address' provided and 'identifier-type' is either missing or not a string." }
 
+.. isccmd:: reservation-get-all
 .. _command-reservation-get-all:
 
 The ``reservation-get-all`` Command
@@ -439,6 +442,7 @@ reservation from both JSON configuration and the hosts database.
 
 For more information, see :ref:`command-reservation-get-all`.
 
+.. isccmd:: reservation-get-page
 .. _command-reservation-get-page:
 
 The ``reservation-get-page`` command
@@ -569,6 +573,7 @@ users retrieve larger host reservations lists in smaller chunks. For
 small deployments with few reservations, it is easier to use
 ``reservation-get-all`` (see :ref:`command-reservation-get-all`).
 
+.. isccmd:: reservation-get-by-hostname
 .. _command-reservation-get-by-hostname:
 
 The ``reservation-get-by-hostname`` Command
@@ -653,6 +658,7 @@ For more information, see :ref:`command-reservation-get-by-hostname`.
    collation, as explained in the :ref:`mysql-database` section of
    :ref:`admin`.
 
+.. isccmd:: reservation-get-by-id
 .. _command-reservation-get-by-id:
 
 The ``reservation-get-by-id`` Command
@@ -733,6 +739,7 @@ reservation from both JSON configuration and the hosts database.
 
 For more information, see :ref:`command-reservation-get-by-id`.
 
+.. isccmd:: reservation-del
 .. _command-reservation-del:
 
 The ``reservation-del`` Command
@@ -823,6 +830,7 @@ the reservation from the hosts database only.
        }
    }
 
+.. isccmd:: reservation-update
 .. _command-reservation-update:
 
 The ``reservation-update`` Command

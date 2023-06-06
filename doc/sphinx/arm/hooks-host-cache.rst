@@ -52,6 +52,7 @@ commands which can be used either over the control channel (see
 :ref:`shell-overview`. The following sections describe the commands
 available.
 
+.. isccmd:: cache-flush
 .. _command-cache-flush:
 
 The ``cache-flush`` Command
@@ -72,6 +73,7 @@ This command removes 1000 hosts; to delete *all* cached
 hosts, use ``cache-clear`` instead. The hosts are stored in FIFO
 (first-in, first-out) order, so the oldest entries are always removed.
 
+.. isccmd:: cache-clear
 .. _command-cache-clear:
 
 The ``cache-clear`` Command
@@ -89,6 +91,7 @@ looks as follows:
 This command removes all hosts. To delete only a certain
 number of cached hosts, please use ``cache-flush`` instead.
 
+.. isccmd:: cache-size
 .. _command-cache-size:
 
 The ``cache-size`` Command
@@ -103,6 +106,7 @@ as follows:
        "command": "cache-size"
    }
 
+.. isccmd:: cache-write
 .. _command-cache-write:
 
 The ``cache-write`` Command
@@ -133,6 +137,7 @@ This causes the contents to be stored in the ``/tmp/kea-host-cache.json``
 file. That file can then be loaded with the ``cache-load`` command or
 processed by any other tool that is able to understand JSON format.
 
+.. isccmd:: cache-load
 .. _command-cache-load:
 
 The ``cache-load`` Command
@@ -156,6 +161,7 @@ This command stores the contents to the ``/tmp/kea-host-cache.json``
 file. That file can then be loaded with the ``cache-load`` command or
 processed by any other tool that is able to understand JSON format.
 
+.. isccmd:: cache-get
 .. _command-cache-get:
 
 The ``cache-get`` Command
@@ -177,6 +183,7 @@ example usage looks as follows:
 This command returns all the cached hosts; the response
 may be large.
 
+.. isccmd:: cache-get-by-id
 .. _command-cache-get-by-id:
 
 The ``cache-get-by-id`` Command
@@ -200,6 +207,7 @@ host reservations. An example usage looks as follows:
 This command returns all the cached hosts with the given hardware
 address.
 
+.. isccmd:: cache-insert
 .. _command-cache-insert:
 
 The ``cache-insert`` Command
@@ -261,6 +269,7 @@ looks as follows:
        }
    }
 
+.. isccmd:: cache-remove
 .. _command-cache-remove:
 
 The ``cache-remove`` Command

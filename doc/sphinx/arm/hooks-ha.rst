@@ -1904,6 +1904,7 @@ queries, the server administrator must enable this function manually.
 The following sections describe commands supported by the HA hook library which
 are available for the administrator.
 
+.. isccmd:: ha-sync
 .. _command-ha-sync:
 
 The ``ha-sync`` Command
@@ -1948,6 +1949,7 @@ in progress. If the DHCP server subsequently allocates any leases during the
 synchronization, those new (or updated) leases will not be fetched by the
 synchronizing server, leading to database inconsistencies.
 
+.. isccmd:: ha-scopes
 .. _command-ha-scopes:
 
 The ``ha-scopes`` Command
@@ -1981,6 +1983,7 @@ and "HA_server2" scopes. To disable all scopes specify an empty list:
        }
    }
 
+.. isccmd:: ha-continue
 .. _command-ha-continue:
 
 The ``ha-continue`` Command
@@ -1997,6 +2000,7 @@ command structure is simply:
        "service": [ "dhcp4" ]
    }
 
+.. isccmd:: ha-heartbeat
 .. _command-ha-heartbeat:
 
 The ``ha-heartbeat`` Command
@@ -2095,6 +2099,7 @@ has entered the ``partner-down`` state.
    the state of the entire HA setup. Sending it to only one of the servers may
    not reflect issues that just began with one of the servers.
 
+.. isccmd:: ha-status-get
 .. _command-ha-status-get:
 
 The ``status-get`` Command
@@ -2231,6 +2236,7 @@ The ``status-get`` response has the format described above only in the
 only one active server (local). The response includes no information about the
 status of the backup servers.
 
+.. isccmd:: ha-maintenance-start
 .. _command-ha-maintenance-start:
 
 The ``ha-maintenance-start`` Command
@@ -2248,6 +2254,7 @@ for details.
        "service": [ "dhcp4" ]
    }
 
+.. isccmd:: ha-maintenance-cancel
 .. _command-ha-maintenance-cancel:
 
 The ``ha-maintenance-cancel`` Command
@@ -2266,6 +2273,7 @@ its previous state. See the :ref:`ha-maintenance` section for details.
        "service": [ "dhcp4" ]
    }
 
+.. isccmd:: ha-maintenance-notify
 .. _command-ha-maintenance-notify:
 
 The ``ha-maintenance-notify`` Command
@@ -2293,6 +2301,7 @@ previous state. See the :ref:`ha-maintenance` section for details.
    HA-enabled DHCP servers. Direct use of this command is not supported and may
    produce unintended consequences.
 
+.. isccmd:: ha-reset
 .. _command-ha-reset:
 
 The ``ha-reset`` Command
@@ -2331,6 +2340,7 @@ And elicits the response:
 If the server receiving this command is already in the ``waiting`` state, the
 command has no effect.
 
+.. isccmd:: ha-sync-complete-notify
 .. _command-ha-sync-complete-notify:
 
 The ``ha-sync-complete-notify`` Command

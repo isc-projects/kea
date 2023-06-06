@@ -118,8 +118,10 @@ servers.
        ]
    }
 
+.. isccmd:: lease4-add
 .. _command-lease4-add:
 
+.. isccmd:: lease6-add
 .. _command-lease6-add:
 
 The ``lease4-add``, ``lease6-add`` Commands
@@ -277,6 +279,7 @@ Example failure:
    { "result": 1, "text": "missing parameter 'ip-address' (<string>:3:19)" }
 
 
+.. isccmd:: lease6-bulk-apply
 .. _command-lease6-bulk-apply:
 
 The ``lease6-bulk-apply`` Command
@@ -388,8 +391,10 @@ lease, e.g. a communication error with the database. The result of 3
 indicates that an attempt to delete the lease was unsuccessful because
 such a lease doesn't exist (an empty result).
 
+.. isccmd:: lease4-get
 .. _command-lease4-get:
 
+.. isccmd:: lease6-get
 .. _command-lease6-get:
 
 The ``lease4-get``, ``lease6-get`` Commands
@@ -521,8 +526,10 @@ An example result returned when the host was found:
    :math:`cltt = expire` when :math:`valid\_lft = 4294967295` and the
    lease backend is MySQL or PostgreSQL.
 
+.. isccmd:: lease4-get-all
 .. _command-lease4-get-all:
 
+.. isccmd:: lease6-get-all
 .. _command-lease6-get-all:
 
 The ``lease4-get-all``, ``lease6-get-all`` Commands
@@ -606,8 +613,10 @@ following format:
    restriction on the number of leases returned as a result of this
    command.
 
+.. isccmd:: lease4-get-page
 .. _command-lease4-get-page:
 
+.. isccmd:: lease6-get-page
 .. _command-lease6-get-page:
 
 The ``lease4-get-page``, ``lease6-get-page`` Commands
@@ -729,14 +738,19 @@ The client may assume that it has reached the last page when the
 includes the case when the ``count`` is equal to 0, meaning that no
 leases were found.
 
+.. isccmd:: lease4-get-by-hw-address
 .. _command-lease4-get-by-hw-address:
 
+.. isccmd:: lease4-get-by-client-id
 .. _command-lease4-get-by-client-id:
 
+.. isccmd:: lease6-get-by-duid
 .. _command-lease6-get-by-duid:
 
+.. isccmd:: lease4-get-by-hostname
 .. _command-lease4-get-by-hostname:
 
+.. isccmd:: lease6-get-by-hostname
 .. _command-lease6-get-by-hostname:
 
 The ``lease4-get-by-*``, ``lease6-get-by-*`` Commands
@@ -774,8 +788,10 @@ The ``by`` key is the only parameter. The returned response contains a detailed
 list of leases in the same format as ``lease4-get-all`` or ``lease6-get-all``. This list can be
 empty and is usually not large.
 
+.. isccmd:: lease4-del
 .. _command-lease4-del:
 
+.. isccmd:: lease6-del
 .. _command-lease6-del:
 
 The ``lease4-del``, ``lease6-del`` Commands
@@ -845,8 +861,10 @@ of the operation. It has one of the following values: 0 (success), 1 (error),
 or 3 (empty). The empty result means that a query has been completed properly,
 but the object (a lease, in this case) has not been found.
 
+.. isccmd:: lease4-update
 .. _command-lease4-update:
 
+.. isccmd:: lease6-update
 .. _command-lease6-update:
 
 The ``lease4-update``, ``lease6-update`` Commands
@@ -912,8 +930,10 @@ command to get the current state of the lease, picking the lease out of the
 response, modifying it to the required outcome, and then issuing the
 ``lease4-update``/``lease6-update`` command with the resulting lease attached.
 
+.. isccmd:: lease4-wipe
 .. _command-lease4-wipe:
 
+.. isccmd:: lease6-wipe
 .. _command-lease6-wipe:
 
 The ``lease4-wipe``, ``lease6-wipe`` Commands
@@ -959,8 +979,10 @@ not specified, leases from all subnets are wiped.
 
 Note: currently only memfile lease storage supports this command.
 
+.. isccmd:: lease4-resend-ddns
 .. _command-lease4-resend-ddns:
 
+.. isccmd:: lease6-resend-ddns
 .. _command-lease6-resend-ddns:
 
 The ``lease4-resend-ddns``, ``lease6-resend-ddns`` Commands
@@ -1018,8 +1040,10 @@ Here's an example of a result returned when the lease was found:
      "text": "NCR generated for: 2001:db8:1::1, hostname: example.com."
    }
 
+.. isccmd:: lease4-write
 .. _command-lease4-write:
 
+.. isccmd:: lease6-write
 .. _command-lease6-write:
 
 The ``lease4-write``, ``lease6-write`` Commands

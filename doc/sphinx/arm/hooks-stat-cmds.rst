@@ -57,8 +57,10 @@ a server's response to a
 that server. In other words, if a subnet does not appear in a server's
 configuration, Kea will not retrieve statistics for it.
 
+.. isccmd:: stat-lease4-get
 .. _command-stat-lease4-get:
 
+.. isccmd:: stat-lease6-get
 .. _command-stat-lease6-get:
 
 The ``stat-lease4-get``, ``stat-lease6-get`` Commands

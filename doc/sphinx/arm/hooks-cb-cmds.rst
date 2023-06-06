@@ -172,7 +172,9 @@ the ``server-tags`` parameter. In future releases, it is expected that this
 map will be extended with additional information, e.g. object modification
 time, log message created during the last modification, etc.
 
+.. isccmd:: remote-server4-del
 .. _command-remote-server4-del:
+.. isccmd:: remote-server6-del
 .. _command-remote-server6-del:
 
 The ``remote-server4-del``, ``remote-server6-del`` Commands
@@ -238,7 +240,9 @@ The following is the successful response to the ``remote-server4-del`` command:
    does not revert the lost configuration for that server and such configuration
    must be re-created manually by the user.
 
+.. isccmd:: remote-server4-get
 .. _command-remote-server4-get:
+.. isccmd:: remote-server6-get
 .. _command-remote-server6-get:
 
 The ``remote-server4-get``, ``remote-server6-get`` Commands
@@ -285,7 +289,9 @@ description of the server:
         }
     }
 
+.. isccmd:: remote-server4-get-all
 .. _command-remote-server4-get-all:
+.. isccmd:: remote-server6-get-all
 .. _command-remote-server6-get-all:
 
 The ``remote-server4-get-all``, ``remote-server6-get-all`` Commands
@@ -328,7 +334,9 @@ tag and description:
         }
     }
 
+.. isccmd:: remote-server4-set
 .. _command-remote-server4-set:
+.. isccmd:: remote-server6-set
 .. _command-remote-server6-set:
 
 The ``remote-server4-set``, ``remote-server6-set`` Commands
@@ -387,8 +395,10 @@ The following is the example response to the above command:
     }
 
 
+.. isccmd:: remote-global-parameter4-del
 .. _command-remote-global-parameter4-del:
 
+.. isccmd:: remote-global-parameter6-del
 .. _command-remote-global-parameter6-del:
 
 The ``remote-global-parameter4-del``, ``remote-global-parameter6-del`` Commands
@@ -420,8 +430,10 @@ If a server-specific parameter is to be deleted, the
 ``server-tags`` list must contain the tag of the appropriate
 server. There must be exactly one server tag specified in this list.
 
+.. isccmd:: remote-global-parameter4-get
 .. _command-remote-global-parameter4-get:
 
+.. isccmd:: remote-global-parameter6-get
 .. _command-remote-global-parameter6-get:
 
 The ``remote-global-parameter4-get``, ``remote-global-parameter6-get`` Commands
@@ -533,8 +545,10 @@ Finally, the boolean value:
    }
 
 
+.. isccmd:: remote-global-parameter4-get-all
 .. _command-remote-global-parameter4-get-all:
 
+.. isccmd:: remote-global-parameter6-get-all
 .. _command-remote-global-parameter6-get-all:
 
 The ``remote-global-parameter4-get-all``, ``remote-global-parameter6-get-all`` Commands
@@ -599,8 +613,10 @@ global parameters are non-shareable configuration elements.
    example above), the returned list combines parameters associated with
    this server and all servers, but the former take precedence.
 
+.. isccmd:: remote-global-parameter4-set
 .. _command-remote-global-parameter4-set:
 
+.. isccmd:: remote-global-parameter6-set
 .. _command-remote-global-parameter6-set:
 
 The ``remote-global-parameter4-set``, ``remote-global-parameter6-set`` Commands
@@ -642,8 +658,10 @@ The ``server-tags`` list is mandatory and must contain a single server tag or
 the keyword "all". In the example above, all specified parameters are associated
 with the "server1" server.
 
+.. isccmd:: remote-network4-del
 .. _command-remote-network4-del:
 
+.. isccmd:: remote-network6-del
 .. _command-remote-network6-del:
 
 The ``remote-network4-del``, ``remote-network6-del`` Commands
@@ -683,8 +701,10 @@ global. This behavior corresponds to the behavior of the
 
 Note that the ``server-tags`` parameter cannot be used for this command.
 
+.. isccmd:: remote-network4-get
 .. _command-remote-network4-get:
 
+.. isccmd:: remote-network6-get
 .. _command-remote-network6-get:
 
 The ``remote-network4-get``, ``remote-network6-get`` Commands
@@ -719,8 +739,10 @@ with the full information about the subnets belonging to it:
 
 Note that the ``server-tags`` parameter cannot be used for this command.
 
+.. isccmd:: remote-network4-list
 .. _command-remote-network4-list:
 
+.. isccmd:: remote-network6-list
 .. _command-remote-network6-list:
 
 The ``remote-network4-list``, ``remote-network6-list`` Commands
@@ -829,8 +851,10 @@ to this:
 The ``null`` value in the metadata indicates that the
 returned shared network is unassigned.
 
+.. isccmd:: remote-network4-set
 .. _command-remote-network4-set:
 
+.. isccmd:: remote-network6-set
 .. _command-remote-network6-set:
 
 The ``remote-network4-set``, ``remote-network6-set`` Commands
@@ -897,8 +921,10 @@ database when the keyword "all" is included.
    be marked unspecified in the database, even if its value was present
    prior to sending the command.
 
+.. isccmd:: remote-option-def4-del
 .. _command-remote-option-def4-del:
 
+.. isccmd:: remote-option-def6-del
 .. _command-remote-option-def6-del:
 
 The ``remote-option-def4-del``, ``remote-option-def6-del`` Commands
@@ -935,8 +961,10 @@ deleted. To delete an option belonging to "all" servers, the keyword
 "all" must be used as the server tag. The ``server-tags`` list must contain exactly
 one tag and cannot include the ``null`` value.
 
+.. isccmd:: remote-option-def4-get
 .. _command-remote-option-def4-get:
 
+.. isccmd:: remote-option-def6-get
 .. _command-remote-option-def6-get:
 
 The ``remote-option-def4-get``, ``remote-option-def6-get`` Commands
@@ -971,8 +999,10 @@ servers, having the code of 1 and belonging to the option space "isc":
 The ``server-tags`` list must include exactly one server tag or the keyword
 "all", and cannot contain the `null` value.
 
+.. isccmd:: remote-option-def4-get-all
 .. _command-remote-option-def4-get-all:
 
+.. isccmd:: remote-option-def6-get-all
 .. _command-remote-option-def6-get-all:
 
 The ``remote-option-def4-get-all``, ``remote-option-def6-get-all`` Commands
@@ -1027,8 +1057,10 @@ The following is the example response to this command:
 The response contains an option definition associated with all servers, as
 indicated by the metadata.
 
+.. isccmd:: remote-option-def4-set
 .. _command-remote-option-def4-set:
 
+.. isccmd:: remote-option-def6-set
 .. _command-remote-option-def6-set:
 
 The ``remote-option-def4-set``, ``remote-option-def6-set`` Commands
@@ -1068,8 +1100,10 @@ The ``server-tags`` list must include exactly one
 server tag or the keyword "all", and cannot contain the
 ``null`` value.
 
+.. isccmd:: remote-option4-global-del
 .. _command-remote-option4-global-del:
 
+.. isccmd:: remote-option6-global-del
 .. _command-remote-option6-global-del:
 
 The ``remote-option4-global-del``, ``remote-option6-global-del`` Commands
@@ -1105,8 +1139,10 @@ server. If there is no such option associated with the given server, no option
 is deleted. To delete an option associated with all servers, the
 keyword "all" must be specified.
 
+.. isccmd:: remote-option4-global-get
 .. _command-remote-option4-global-get:
 
+.. isccmd:: remote-option6-global-get
 .. _command-remote-option6-global-get:
 
 The ``remote-option4-global-get``, ``remote-option6-global-get`` Commands
@@ -1142,8 +1178,10 @@ The ``server-tags`` parameter is mandatory and must include exactly one
 server tag or the keyword "all". It cannot contain the ``null``
 value.
 
+.. isccmd:: remote-option4-global-get-all
 .. _command-remote-option4-global-get-all:
 
+.. isccmd:: remote-option6-global-get-all
 .. _command-remote-option6-global-get-all:
 
 The ``remote-option4-global-get-all``, ``remote-option6-global-get-all`` Commands
@@ -1194,8 +1232,10 @@ command with a single option being associated with "server1" returned:
         }
     }
 
+.. isccmd:: remote-option4-global-set
 .. _command-remote-option4-global-set:
 
+.. isccmd:: remote-option6-global-set
 .. _command-remote-option6-global-set:
 
 The ``remote-option4-global-set``, ``remote-option6-global-set`` Commands
@@ -1250,8 +1290,10 @@ instead of the name. For example:
        }
    }
 
+.. isccmd:: remote-option4-network-del
 .. _command-remote-option4-network-del:
 
+.. isccmd:: remote-option6-network-del
 .. _command-remote-option6-network-del:
 
 The ``remote-option4-network-del``, ``remote-option6-network-del`` Commands
@@ -1299,8 +1341,10 @@ network "fancy".
 The "dhcp4" value represents the top-level option space where the standard DHCPv4
 options belong. The ``server-tags`` parameter cannot be specified for this command.
 
+.. isccmd:: remote-option4-network-set
 .. _command-remote-option4-network-set:
 
+.. isccmd:: remote-option6-network-set
 .. _command-remote-option6-network-set:
 
 The ``remote-option4-network-set``, ``remote-option6-network-set`` Commands
@@ -1342,6 +1386,7 @@ Specifying an option name instead of the option code only works reliably
 for standard DHCP options. When specifying a value for a user-defined
 DHCP option, the option code should be indicated instead of the name.
 
+.. isccmd:: remote-option6-pd-pool-del
 .. _command-remote-option6-pd-pool-del:
 
 The ``remote-option6-pd-pool-del`` Command
@@ -1385,6 +1430,7 @@ option. To delete a subnet level option, the
 The "dhcp6" value represents the top-level option space where the standard DHCPv6
 options belong. The ``server-tags`` parameter cannot be specified for this command.
 
+.. isccmd:: remote-option6-pd-pool-set
 .. _command-remote-option6-pd-pool-set:
 
 The ``remote-option6-pd-pool-set`` Command
@@ -1430,8 +1476,10 @@ Specifying an option name instead of the option code only works reliably
 for standard DHCP options. When specifying a value for a user-defined
 DHCP option, the option code should be indicated instead of the name.
 
+.. isccmd:: remote-option4-pool-del
 .. _command-remote-option4-pool-del:
 
+.. isccmd:: remote-option6-pool-del
 .. _command-remote-option6-pool-del:
 
 The ``remote-option4-pool-del``, ``remote-option6-pool-del`` Commands
@@ -1478,8 +1526,10 @@ pool:
 The "dhcp4" value represents the top-level option space where the standard DHCPv4
 options belong. The ``server-tags`` parameter cannot be specified for this command.
 
+.. isccmd:: remote-option4-pool-set
 .. _command-remote-option4-pool-set:
 
+.. isccmd:: remote-option6-pool-set
 .. _command-remote-option6-pool-set:
 
 The ``remote-option4-pool-set``, ``remote-option6-pool-set`` Commands
@@ -1523,8 +1573,10 @@ Specifying an option name instead of the option code only works reliably
 for standard DHCP options. When specifying a value for a user-defined
 DHCP option, the option code should be indicated instead of the name.
 
+.. isccmd:: remote-option4-subnet-del
 .. _command-remote-option4-subnet-del:
 
+.. isccmd:: remote-option6-subnet-del
 .. _command-remote-option6-subnet-del:
 
 The ``remote-option4-subnet-del``, ``remote-option6-subnet-del`` Commands
@@ -1567,8 +1619,10 @@ having an identifier of 123.
 The "dhcp4" value represents the top-level option space where the standard DHCPv4
 options belong. The ``server-tags`` parameter cannot be specified for this command.
 
+.. isccmd:: remote-option4-subnet-set
 .. _command-remote-option4-subnet-set:
 
+.. isccmd:: remote-option6-subnet-set
 .. _command-remote-option6-subnet-set:
 
 The ``remote-option4-subnet-set``, ``remote-option6-subnet-set`` Commands
@@ -1610,8 +1664,10 @@ Specifying an option name instead of the option code only works reliably
 for the standard DHCP options. When specifying a value for the user-defined
 DHCP option, the option code should be indicated instead of the name.
 
+.. isccmd:: remote-subnet4-del-by-id
 .. _command-remote-subnet4-del-by-id:
 
+.. isccmd:: remote-subnet6-del-by-id
 .. _command-remote-subnet6-del-by-id:
 
 The ``remote-subnet4-del-by-id``, ``remote-subnet6-del-by-id`` Commands
@@ -1639,8 +1695,10 @@ example, to delete the IPv4 subnet with an ID of 5:
 
 The ``server-tags`` parameter cannot be used with this command.
 
+.. isccmd:: remote-subnet4-del-by-prefix
 .. _command-remote-subnet4-del-by-prefix:
 
+.. isccmd:: remote-subnet6-del-by-prefix
 .. _command-remote-subnet6-del-by-prefix:
 
 The ``remote-subnet4-del-by-prefix``, ``remote-subnet6-del-by-prefix`` Commands
@@ -1668,8 +1726,10 @@ subnet. For example:
 
 The ``server-tags`` parameter cannot be used with this command.
 
+.. isccmd:: remote-subnet4-get-by-id
 .. _command-remote-subnet4-get-by-id:
 
+.. isccmd:: remote-subnet6-get-by-id
 .. _command-remote-subnet6-get-by-id:
 
 The ``remote-subnet4-get-by-id``, ``remote-subnet6-get-by-id`` Commands
@@ -1697,8 +1757,10 @@ For example:
 
 The ``server-tags`` parameter cannot be used with this command.
 
+.. isccmd:: remote-subnet4-get-by-prefix
 .. _command-remote-subnet4-get-by-prefix:
 
+.. isccmd:: remote-subnet6-get-by-prefix
 .. _command-remote-subnet6-get-by-prefix:
 
 The ``remote-subnet4-get-by-prefix``, ``remote-subnet6-get-by-prefix`` Commands
@@ -1726,8 +1788,10 @@ subnet. For example:
 
 The ``server-tags`` parameter cannot be used with this command.
 
+.. isccmd:: remote-subnet4-list
 .. _command-remote-subnet4-list:
 
+.. isccmd:: remote-subnet6-list
 .. _command-remote-subnet6-list:
 
 The ``remote-subnet4-list``, ``remote-subnet6-list`` Commands
@@ -1835,8 +1899,10 @@ When listing unassigned subnets, the response will look similar to this:
 The ``null`` value in the metadata indicates that the
 returned subnet is unassigned.
 
+.. isccmd:: remote-subnet4-set
 .. _command-remote-subnet4-set:
 
+.. isccmd:: remote-subnet6-set
 .. _command-remote-subnet6-set:
 
 The ``remote-subnet4-set``, ``remote-subnet6-set`` Commands
@@ -1927,8 +1993,10 @@ to the database when the keyword "all" is used as the server tag.
    will be marked as unspecified in the database, even if its value was
    present prior to sending the command.
 
+.. isccmd:: remote-class4-del
 .. _command-remote-class4-del:
 
+.. isccmd:: remote-class6-del
 .. _command-remote-class6-del:
 
 The ``remote-class4-del``, ``remote-class6-del`` Commands
@@ -1960,8 +2028,10 @@ the dependent ones.
 The ``server-tags`` parameter cannot be used for this command because client
 classes are uniquely identified by name.
 
+.. isccmd:: remote-class4-get
 .. _command-remote-class4-get:
 
+.. isccmd:: remote-class6-get
 .. _command-remote-class6-get:
 
 The ``remote-class4-get``, ``remote-class6-get`` Commands
@@ -2009,8 +2079,10 @@ A response to the command looks similar to this:
         }
     }
 
+.. isccmd:: remote-class4-get-all
 .. _command-remote-class4-get-all:
 
+.. isccmd:: remote-class6-get-all
 .. _command-remote-class6-get-all:
 
 The ``remote-class4-get-all``, ``remote-class6-get-all`` Commands
@@ -2070,8 +2142,10 @@ A response to the command looks similar to this:
         }
     }
 
+.. isccmd:: remote-class4-set
 .. _command-remote-class4-set:
 
+.. isccmd:: remote-class6-set
 .. _command-remote-class6-set:
 
 The ``remote-class4-set``, ``remote-class6-set`` Commands

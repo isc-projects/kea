@@ -957,6 +957,7 @@ GSS-TSIG Commands
 
 The GSS-TSIG hook library supports some commands, which are described below.
 
+.. isccmd:: gss-tsig-get-all
 .. _command-gss-tsig-get-all:
 
 The ``gss-tsig-get-all`` Command
@@ -1014,6 +1015,7 @@ Here is an example of a response returning one GSS-TSIG server and one key:
         }
     }
 
+.. isccmd:: gss-tsig-get
 .. _command-gss-tsig-get:
 
 The ``gss-tsig-get`` Command
@@ -1060,6 +1062,7 @@ Here is an example of a response returning information about the server "foo":
         }
     }
 
+.. isccmd:: gss-tsig-list
 .. _command-gss-tsig-list:
 
 The ``gss-tsig-list`` Command
@@ -1095,6 +1098,7 @@ Here is an example of a response returning two GSS-TSIG servers and three keys:
         }
     }
 
+.. isccmd:: gss-tsig-key-get
 .. _command-gss-tsig-key-get:
 
 The ``gss-tsig-key-get`` Command
@@ -1130,6 +1134,7 @@ Here is an example of a response returning information about GSS-TSIG key "1234.
         }
     }
 
+.. isccmd:: gss-tsig-key-expire
 .. _command-gss-tsig-key-expire:
 
 The ``gss-tsig-key-expire`` Command
@@ -1157,6 +1162,7 @@ Here is an example of a response indicating that GSS-TSIG key "1234.sig-foo.com.
         "text": "GSS-TSIG key '1234.sig-foo.com.' expired"
     }
 
+.. isccmd:: gss-tsig-key-del
 .. _command-gss-tsig-key-del:
 
 The ``gss-tsig-key-del`` Command
@@ -1184,6 +1190,7 @@ Here is an example of a response indicating that GSS-TSIG key "1234.sig-foo.com.
         "text": "GSS-TSIG key '1234.sig-foo.com.' deleted"
     }
 
+.. isccmd:: gss-tsig-purge-all
 .. _command-gss-tsig-purge-all:
 
 The ``gss-tsig-purge-all`` Command
@@ -1208,6 +1215,7 @@ Here is an example of a response indicating that two GSS-TSIG keys have been pur
         "text": "2 purged GSS-TSIG keys"
     }
 
+.. isccmd:: gss-tsig-purge
 .. _command-gss-tsig-purge:
 
 The ``gss-tsig-purge`` Command
@@ -1235,6 +1243,7 @@ Here is an example of a response indicating that two GSS-TSIG keys for server "f
         "text": "2 purged keys for GSS-TSIG server[foo]"
     }
 
+.. isccmd:: gss-tsig-rekey-all
 .. _command-gss-tsig-rekey-all:
 
 The ``gss-tsig-rekey-all`` Command
@@ -1263,6 +1272,7 @@ Here is an example of a response indicating that a rekey was performed:
 This command is useful when, for instance, the DHCP-DDNS server is
 reconnected to the network.
 
+.. isccmd:: gss-tsig-rekey
 .. _command-gss-tsig-rekey:
 
 The ``gss-tsig-rekey`` Command

@@ -83,6 +83,7 @@ and the device is removed, the system administrator may want to remove
 the ``pkt4-decline-received`` statistic so that it is no longer reported, until
 and unless a duplicate address is again detected.
 
+.. isccmd:: stats
 .. _command-stats:
 
 Commands for Manipulating Statistics
@@ -111,6 +112,7 @@ to record it.
    more information on sending commands to Kea, see
    :ref:`ctrl-channel`.
 
+.. isccmd:: statistic-get
 .. _command-statistic-get:
 
 The ``statistic-get`` Command
@@ -147,6 +149,7 @@ Here is an example response:
        "result": 0
    }
 
+.. isccmd:: statistic-reset
 .. _command-statistic-reset:
 
 The ``statistic-reset`` Command
@@ -173,6 +176,7 @@ parameters field. If an error is encountered (e.g. the requested
 statistic was not found), the server returns a status code of 1 (error)
 and the text field contains the error description.
 
+.. isccmd:: statistic-remove
 .. _command-statistic-remove:
 
 The ``statistic-remove`` Command
@@ -197,6 +201,7 @@ parameters field. If an error is encountered (e.g. the requested
 statistic was not found), the server returns a status code of 1 (error)
 and the text field contains the error description.
 
+.. isccmd:: statistic-get-all
 .. _command-statistic-get-all:
 
 The ``statistic-get-all`` Command
@@ -437,6 +442,7 @@ Here is an example response returning all collected statistics:
        "result": 0
    }
 
+.. isccmd:: statistic-reset-all
 .. _command-statistic-reset-all:
 
 The ``statistic-reset-all`` Command
@@ -458,6 +464,7 @@ indicating success, and an empty parameters field. If an error is
 encountered, the server returns a status code of 1 (error) and the text
 field contains the error description.
 
+.. isccmd:: statistic-remove-all
 .. _command-statistic-remove-all:
 
 The ``statistic-remove-all`` Command
@@ -478,6 +485,7 @@ a status of 0, indicating success, and an empty parameters field. If an
 error is encountered, the server returns a status code of 1 (error) and
 the text field contains the error description.
 
+.. isccmd:: statistic-sample-age-set
 .. _command-statistic-sample-age-set:
 
 The ``statistic-sample-age-set`` Command
@@ -506,6 +514,7 @@ and an empty parameters field. If an error is encountered (e.g. the
 requested statistic was not found), the server returns a status code
 of 1 (error) and the text field contains the error description.
 
+.. isccmd:: statistic-sample-age-set-all
 .. _command-statistic-sample-age-set-all:
 
 The ``statistic-sample-age-set-all`` Command
@@ -531,6 +540,7 @@ If the command is successful, the server responds with a status of
 and an empty parameters field. If an error is encountered, the server returns
 a status code of 1 (error) and the text field contains the error description.
 
+.. isccmd:: statistic-sample-count-set
 .. _command-statistic-sample-count-set:
 
 The ``statistic-sample-count-set`` Command
@@ -557,6 +567,7 @@ and an empty parameters field. If an error is encountered (e.g. the
 requested statistic was not found), the server returns a status code
 of 1 (error) and the text field contains the error description.
 
+.. isccmd:: statistic-sample-count-set-all
 .. _command-statistic-sample-count-set-all:
 
 The ``statistic-sample-count-set-all`` Command

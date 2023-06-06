@@ -609,6 +609,7 @@ backends, leases created prior to the server being configured for Bulk Lease
 Query will not contain the new data required. In order to populate this data
 it is necessary to run API commands:
 
+.. isccmd:: extended-info4-upgrade
 .. _command-extended-info4-upgrade:
 
 For DHCPv4 lease data, the command is:
@@ -619,6 +620,7 @@ For DHCPv4 lease data, the command is:
         "command": "extended-info4-upgrade"
     }
 
+.. isccmd:: binary-address6-upgrade
 .. _command-binary-address6-upgrade:
 
 For DHCPv6 lease data, there are two commands, for upgrading the binary
@@ -630,6 +632,7 @@ address used for by link address query the command is:
         "command": "binary-address6-upgrade"
     }
 
+.. isccmd:: extended-info6-upgrade
 .. _command-extended-info6-upgrade:
 
 for extended info used for by relay id and by remote id the command is

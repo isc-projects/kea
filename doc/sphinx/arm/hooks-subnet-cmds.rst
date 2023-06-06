@@ -60,6 +60,7 @@ The following commands are currently supported:
 -  ``network4-subnet-del``/``network6-subnet-del`` - removes a subnet from
    an existing shared network and demotes it to a plain subnet.
 
+.. isccmd:: subnet4-list
 .. _command-subnet4-list:
 
 The ``subnet4-list`` Command
@@ -102,6 +103,7 @@ The list of subnets is returned in the following format:
 If no IPv4 subnets are found, an error code is returned along with the
 error description.
 
+.. isccmd:: subnet6-list
 .. _command-subnet6-list:
 
 The ``subnet6-list`` Command
@@ -144,6 +146,7 @@ The list of subnets is returned in the following format:
 If no IPv6 subnets are found, an error code is returned along with the
 error description.
 
+.. isccmd:: subnet4-get
 .. _command-subnet4-get:
 
 The ``subnet4-get`` Command
@@ -199,6 +202,7 @@ If the subnet exists, the response will be similar to this:
        }
    }
 
+.. isccmd:: subnet6-get
 .. _command-subnet6-get:
 
 The ``subnet6-get`` Command
@@ -254,6 +258,7 @@ If the subnet exists, the response will be similar to this:
        }
    }
 
+.. isccmd:: subnet4-add
 .. _command-subnet4-add:
 
 The ``subnet4-add`` Command
@@ -301,6 +306,7 @@ The response to this command has the following structure:
        }
    }
 
+.. isccmd:: subnet6-add
 .. _command-subnet6-add:
 
 The ``subnet6-add`` Command
@@ -373,6 +379,7 @@ automatic ``subnet-id`` generation works in Kea.
 
    Subnet IDs must be greater than zero and less than 4294967295.
 
+.. isccmd:: subnet4-update
 .. _command-subnet4-update:
 
 The ``subnet4-update`` Command
@@ -426,6 +433,7 @@ entry. If the IPv4 subnet previously had a resource assigned to it, and the
 server configuration. If an incremental update of the subnet is desired, then
 this can be achieved with `subnet4-delta-add <command-subnet4-delta-add_>`_.
 
+.. isccmd:: subnet6-update
 .. _command-subnet6-update:
 
 The ``subnet6-update`` Command
@@ -479,6 +487,7 @@ entry. If the IPv6 subnet previously had a resource assigned to it, and the
 server configuration. If an incremental update of the subnet is desired, then
 this can be achieved with `subnet6-delta-add <command-subnet6-delta-add_>`_.
 
+.. isccmd:: subnet4-del
 .. _command-subnet4-del:
 
 The ``subnet4-del`` Command
@@ -534,6 +543,7 @@ A successful response may look like this:
        }
    }
 
+.. isccmd:: subnet6-del
 .. _command-subnet6-del:
 
 The ``subnet6-del`` Command
@@ -587,6 +597,7 @@ A successful response may look like this:
        ]
    }
 
+.. isccmd:: subnet4-delta-add
 .. _command-subnet4-delta-add:
 
 The ``subnet4-delta-add`` Command
@@ -664,6 +675,7 @@ lifetime, adding or changing the subnet level option 3 ("routers"), by adding
 or changing the pool "10.20.30.1-10.20.30.10" and by adding or changing the pool
 level option 4 ("time-servers").
 
+.. isccmd:: subnet6-delta-add
 .. _command-subnet6-delta-add:
 
 The ``subnet6-delta-add`` Command
@@ -760,6 +772,7 @@ changing the pool level option 31 ("sntp-servers"), by adding or changing the
 pd-pool "2001:db8:2::" with prefix-len 48 and by adding or changing the pd-pool
 level option 22 ("sip-server-addr").
 
+.. isccmd:: subnet4-delta-del
 .. _command-subnet4-delta-del:
 
 The ``subnet4-delta-del`` Command
@@ -836,6 +849,7 @@ The scalar values don't need to match what is configured, but still need to be
 present to maintain a valid json structure and to be a valid value to be able to
 be parsed.
 
+.. isccmd:: subnet6-delta-del
 .. _command-subnet6-delta-del:
 
 The ``subnet6-delta-del`` Command
@@ -930,8 +944,10 @@ The scalar values don't need to match what is configured, but still need to be
 present to maintain a valid json structure and to be a valid value to be able to
 be parsed.
 
+.. isccmd:: network4-list
 .. _command-network4-list:
 
+.. isccmd:: network6-list
 .. _command-network6-list:
 
 The ``network4-list``, ``network6-list`` Commands
@@ -968,8 +984,10 @@ An example response for ``network4-list`` looks as follows:
 The ``network6-list`` command uses exactly the same syntax for both the
 command and the response.
 
+.. isccmd:: network4-get
 .. _command-network4-get:
 
+.. isccmd:: network6-get
 .. _command-network6-get:
 
 The ``network4-get``, ``network6-get`` Commands
@@ -1044,8 +1062,10 @@ omitted here for clarity. The response format is exactly the same as
 used in ``config-get``, just limited to returning the shared network's
 information.
 
+.. isccmd:: network4-add
 .. _command-network4-add:
 
+.. isccmd:: network6-add
 .. _command-network6-add:
 
 The ``network4-add``, ``network6-add`` Commands
@@ -1125,8 +1145,10 @@ response. However, there are some parameters that are IPv4-only (e.g.
 ``match-client-id``) and some that are IPv6-only (e.g. ``interface-id``). The same
 applies to subnets within the network.
 
+.. isccmd:: network4-del
 .. _command-network4-del:
 
+.. isccmd:: network6-del
 .. _command-network6-del:
 
 The ``network4-del``, ``network6-del`` Commands
@@ -1187,8 +1209,10 @@ subnets in it could look as follows:
 Alternatively, to completely remove the subnets, it is possible to use the
 ``subnet4-del`` or ``subnet6-del`` commands.
 
+.. isccmd:: network4-subnet-add
 .. _command-network4-subnet-add:
 
+.. isccmd:: network6-subnet-add
 .. _command-network6-subnet-add:
 
 The ``network4-subnet-add``, ``network6-subnet-add`` Commands
@@ -1250,8 +1274,10 @@ command and the response.
    Any missing parameters will be filled with default values, rather
    than inherited from the global scope or from the shared network.
 
+.. isccmd:: network4-subnet-del
 .. _command-network4-subnet-del:
 
+.. isccmd:: network6-subnet-del
 .. _command-network6-subnet-del:
 
 The ``network4-subnet-del``, ``network6-subnet-del`` Commands

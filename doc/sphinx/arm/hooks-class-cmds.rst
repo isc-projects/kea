@@ -17,6 +17,7 @@ list the client classes configured for a given server.
 The Class Commands hook library is currently available only to ISC
 customers with a paid support contract.
 
+.. isccmd:: class-add
 .. _command-class-add:
 
 The ``class-add`` Command
@@ -59,6 +60,7 @@ Here is the response to the ``class-add`` command in our example:
        "text": "Class 'ipxe_efi_x64' added."
    }
 
+.. isccmd:: class-update
 .. _command-class-update:
 
 The ``class-update`` Command
@@ -117,6 +119,7 @@ of the client class, picking the client class out of the response, modifying it
 to the required outcome, and then issuing the ``client-update`` command with the
 resulting client class attached.
 
+.. isccmd:: class-del
 .. _command-class-del:
 
 The ``class-del`` Command
@@ -151,6 +154,7 @@ the specified client class has been found:
 
 If the class does not exist, the result of 3 is returned.
 
+.. isccmd:: class-list
 .. _command-class-list:
 
 The ``class-list`` Command
@@ -190,6 +194,7 @@ Note that the returned list does not contain full class definitions, but
 merely class names. To retrieve full class information, the
 ``class-get`` command should be used.
 
+.. isccmd:: class-get
 .. _command-class-get:
 
 The ``class-get`` Command

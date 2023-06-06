@@ -323,6 +323,7 @@ This assumes that the Control Agent is running on host
 Commands Supported by Both the DHCPv4 and DHCPv6 Servers
 ========================================================
 
+.. isccmd:: build-report
 .. _command-build-report:
 
 The ``build-report`` Command
@@ -338,6 +339,7 @@ command line ``-W`` argument displays, i.e. the embedded content of the
        "command": "build-report"
    }
 
+.. isccmd:: config-get
 .. _command-config-get:
 
 The ``config-get`` Command
@@ -367,6 +369,7 @@ An example command invocation looks like this:
        "command": "config-get"
    }
 
+.. isccmd:: config-reload
 .. _command-config-reload:
 
 The ``config-reload`` Command
@@ -398,6 +401,7 @@ If the configuration file is incorrect, reloading it can raise an error
 which leaves the server in an unusable state. See :ref:`command-config-set`
 to learn how to recover from a non-working server.
 
+.. isccmd:: config-test
 .. _command-config-test:
 
 The ``config-test`` Command
@@ -448,6 +452,7 @@ outcome:
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
+.. isccmd:: config-write
 .. _command-config-write:
 
 The ``config-write`` Command
@@ -471,6 +476,7 @@ An example command invocation looks like this:
        }
    }
 
+.. isccmd:: leases-reclaim
 .. _command-leases-reclaim:
 
 The ``leases-reclaim`` Command
@@ -496,6 +502,7 @@ returning client that previously used that lease. See :ref:`lease-affinity`
 for details. Also, see :ref:`lease-reclamation` for general
 information about the processing of expired leases (lease reclamation).
 
+.. isccmd:: libreload
 .. _command-libreload:
 
 The ``libreload`` Command
@@ -520,6 +527,7 @@ originally loaded.
 The server responds with a result of either 0, indicating success,
 or 1, indicating failure.
 
+.. isccmd:: list-commands
 .. _command-list-commands:
 
 The ``list-commands`` Command
@@ -540,6 +548,7 @@ The server responds with a list of all supported commands. The arguments
 element is a list of strings, each of which conveys one supported
 command.
 
+.. isccmd:: config-set
 .. _command-config-set:
 
 The ``config-set`` Command
@@ -599,6 +608,7 @@ string, ``text``, describing the outcome:
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
+.. isccmd:: shutdown
 .. _command-shutdown:
 
 The ``shutdown`` Command
@@ -646,6 +656,7 @@ An example command may look like this:
        }
    }
 
+.. isccmd:: dhcp-disable
 .. _command-dhcp-disable:
 
 The ``dhcp-disable`` Command
@@ -681,6 +692,7 @@ HA operation. The administrator should either omit this parameter or set it to
        }
    }
 
+.. isccmd:: dhcp-enable
 .. _command-dhcp-enable:
 
 The ``dhcp-enable`` Command
@@ -707,6 +719,7 @@ HA operation. The administrator should either omit this parameter or set it to
        }
    }
 
+.. isccmd:: status-get
 .. _command-status-get:
 
 The ``status-get`` Command
@@ -759,6 +772,7 @@ To learn more about the HA status information returned by the
 section.
 
 
+.. isccmd:: server-tag-get
 .. _command-server-tag-get:
 
 The ``server-tag-get`` Command:
@@ -767,6 +781,7 @@ The ``server-tag-get`` Command:
 The ``server-tag-get`` command returns the configured server tag of
 the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept).
 
+.. isccmd:: config-backend-pull
 .. _command-config-backend-pull:
 
 The ``config-backend-pull`` Command:
@@ -776,6 +791,7 @@ The ``config-backend-pull`` command triggers the polling of configuration backen
 (which must be configured for this command to have an effect),
 explained in :ref:`dhcp4-cb-json`.
 
+.. isccmd:: version-get
 .. _command-version-get:
 
 The ``version-get`` Command
