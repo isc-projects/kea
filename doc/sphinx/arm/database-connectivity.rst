@@ -3,7 +3,7 @@
 *********************
 Database Connectivity
 *********************
-The Kea servers (``kea-dhcp4`` and ``kea-dhcp6``) can be configured to use a variety of
+The Kea servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`) can be configured to use a variety of
 database backends for leases, hosts, and configuration. They can be
 configured to support automatic recovery when connectivity is lost, via
 the ``on-fail`` parameter. (The ``reconnect-wait-time`` and

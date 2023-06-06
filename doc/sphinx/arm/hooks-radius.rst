@@ -16,8 +16,8 @@ DHCP server to talk to RADIUS directly. That is the goal of this library.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or the
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or the
+   :iscman:`kea-dhcp6` process.
 
 The major feature of this hook library is the ability to use RADIUS
 authorization. When a DHCP packet is received, the Kea server sends an

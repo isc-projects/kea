@@ -43,7 +43,7 @@ configurable layer has been introduced which can make decisions on which
 packets to process, how to store them, and the order in which they are
 processed by the server.
 
-The default packet queue implementation for both ``kea-dhcp4`` and ``kea-dhcp6``
+The default packet queue implementation for both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`
 is a simple ring buffer. Once it reaches capacity, new packets get added
 to the back of the queue by discarding packets from the front of the
 queue. Rather than always discarding the newest packets, Kea now always
@@ -62,7 +62,7 @@ for interested parties to experiment with their own solutions.
 ``isc::dhcp::PacketQueueMgr``, described in the
 `Kea Developer's Guide <https://reports.kea.isc.org/dev_guide/index.html>`__.)
 
-Packet queue behavior is configured in both ``kea-dhcp4`` and ``kea-dhcp6``
+Packet queue behavior is configured in both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`
 servers through an optional, top-level, configuration element,
 ``dhcp-queue-control``. Omitting this element disables packet queueing:
 
@@ -86,14 +86,14 @@ where:
    exists so that custom implementations can be registered (via a hook
    library) and then selected. There is a default packet queue
    implementation that is pre-registered during server start up:
-   "kea-ring4" for ``kea-dhcp4`` and "kea-ring6" for ``kea-dhcp6``.
+   "kea-ring4" for :iscman:`kea-dhcp4` and "kea-ring6" for :iscman:`kea-dhcp6`.
 
 -  ``capacity`` - this is the maximum number of packets the
    queue can hold before packets are discarded. The optimal value for
    this is extremely site-dependent. The default value is 64 for both
    "kea-ring4" and "kea-ring6".
 
-The following example enables the default packet queue for ``kea-dhcp4``,
+The following example enables the default packet queue for :iscman:`kea-dhcp4`,
 with a queue capacity of 250 packets:
 
 ::
@@ -108,7 +108,7 @@ with a queue capacity of 250 packets:
        ...
    }
 
-The following example enables the default packet queue for ``kea-dhcp6``,
+The following example enables the default packet queue for :iscman:`kea-dhcp6`,
 with a queue capacity of 300 packets:
 
 ::

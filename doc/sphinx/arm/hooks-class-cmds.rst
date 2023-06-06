@@ -11,8 +11,8 @@ list the client classes configured for a given server.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or
+   :iscman:`kea-dhcp6` process.
 
 The Class Commands hook library is currently available only to ISC
 customers with a paid support contract.

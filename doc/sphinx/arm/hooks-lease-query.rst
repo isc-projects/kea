@@ -9,8 +9,8 @@ Leasequery as described in (`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__).
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or
+   :iscman:`kea-dhcp6` process.
 
 Kea version 2.3.4 added support for DHCPv6 Bulk Leasequery
 (`RFC 5460  <https://tools.ietf.org/html/rfc5460>`__);

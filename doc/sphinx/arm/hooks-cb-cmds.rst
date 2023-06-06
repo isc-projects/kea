@@ -26,8 +26,8 @@ support contract.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
+   This library may only be loaded by the :iscman:`kea-dhcp4` or
+   :iscman:`kea-dhcp6` process.
 
 .. note::
 
@@ -84,8 +84,8 @@ support contract.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or
+   :iscman:`kea-dhcp6` process.
 
 .. note::
 

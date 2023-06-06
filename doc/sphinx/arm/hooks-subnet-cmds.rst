@@ -18,7 +18,7 @@ contract.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
+   This library can only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
    process.
 
 The following commands are currently supported:

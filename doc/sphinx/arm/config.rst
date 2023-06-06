@@ -19,7 +19,7 @@ commands over the Management API (see :ref:`ctrl-channel`) and for
 communicating between DHCP servers and the DDNS update daemon.
 
 Typical usage assumes that the servers are started from the command
-line, either directly or using a script, e.g. ``keactrl``. The
+line, either directly or using a script, e.g. :iscman:`keactrl`. The
 configuration file is specified upon startup using the ``-c`` parameter.
 
 .. _json-format:

@@ -34,7 +34,7 @@ specified. The option space is DHCPv4 or DHCPv6, depending
 on the server where the hook library is loaded.
 
 Similar to other hook libraries, the ``flex_option`` library can be loaded
-by either the ``kea-dhcp4`` or `kea-dhcp6``
+by either the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
 process. It takes a mandatory ``options`` parameter with a list of
 per-option parameter maps, with ``code``, ``name``, ``add``, ``supersede``, and
 ``remove`` actions. Action entries take a string value representing an

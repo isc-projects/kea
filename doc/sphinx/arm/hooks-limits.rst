@@ -15,12 +15,12 @@ The Limits hook library is only available to ISC customers with a paid support c
 Configuration
 ~~~~~~~~~~~~~
 
-The following examples are for ``kea-dhcp6``, but they apply equally to
-``kea-dhcp4``. The wildcards ``"<limit-type>"`` and ``"<limit-value>"`` need to be replaced
+The following examples are for :iscman:`kea-dhcp6`, but they apply equally to
+:iscman:`kea-dhcp4`. The wildcards ``"<limit-type>"`` and ``"<limit-value>"`` need to be replaced
 with the respective keys and values for each limit type described in the sections following this
 one.
 
-The library can be loaded by both ``kea-dhcp4`` and ``kea-dhcp6`` servers by adding its path in the
+The library can be loaded by both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` servers by adding its path in the
 ``"hooks-libraries"`` element of the server's configuration.
 
 .. code-block:: json

@@ -221,8 +221,8 @@ file cleanup; MySQL and or PostgreSQL databases, run either locally on the appli
 servers or accessed over the internal network; and a Stork monitoring system.
 This modular architecture allows the administrator to minimize the attack surface
 by minimizing the code that is loaded and running.
-For example, ``kea-dhcp-ddns`` should not be run unless DNS updates are required.
-Similarly, ``kea-lfc`` is never triggered (and can be safely removed or never installed) if memfile is not used.
+For example, :iscman:`kea-dhcp-ddns` should not be run unless DNS updates are required.
+Similarly, :iscman:`kea-lfc` is never triggered (and can be safely removed or never installed) if memfile is not used.
 Potential Kea security issues can be minimized by running only those processes required in the local environment.
 
 Limiting Application Permissions
@@ -239,7 +239,7 @@ does not require privileged access.
 Securing Kea Administrative Access
 ----------------------------------
 
-The three primary Kea daemons (``kea-dhcp4``, ``kea-dhcp6`` and ``kea-dhcp-ddns``) all support a control
+The three primary Kea daemons (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6` and :iscman:`kea-dhcp-ddns`) all support a control
 channel, which is implemented as a UNIX socket. The control channel, which opens a UNIX socket, is disabled by default;
 however, many configuration examples have it enabled, as it is a very popular feature. To
 read from or write to this socket, root access is generally required, although if Kea is configured

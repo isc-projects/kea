@@ -12,7 +12,7 @@ The Network Configuration Protocol, or NETCONF, is a network management protocol
 in `RFC 4741 <https://tools.ietf.org/html/rfc4741>`__. It uses the YANG modeling language,
 defined in `RFC 6020 <https://tools.ietf.org/html/rfc6020>`__, to provide a uniform way
 of handling the configuration syntax of various networking devices. Kea provides optional
-support for a YANG/NETCONF interface with the ``kea-netconf`` agent.
+support for a YANG/NETCONF interface with the :iscman:`kea-netconf` agent.
 
 .. _netconf-install:
 
@@ -40,7 +40,7 @@ Sysrepo. The specific versions that have been thoroughly tested with Kea are:
 
 .. note::
 
-    ``kea-netconf`` may be compatible with later versions of libyang and
+    :iscman:`kea-netconf` may be compatible with later versions of libyang and
     Sysrepo, but only the versions listed above have been thoroughly
     tested by ISC.
 
@@ -354,7 +354,7 @@ Supported YANG Models
 The currently supported models are ``kea-dhcp4-server`` and
 ``kea-dhcp6-server``. There is partial support for
 ``ietf-dhcpv6-server``, but the primary focus of testing has been on Kea DHCP
-servers. Other models (``kea-dhcp-ddns`` and ``kea-ctrl-agent``)
+servers. Other models (:iscman:`kea-dhcp-ddns` and :iscman:`kea-ctrl-agent`)
 are currently not supported.
 
 .. _using-netconf:
@@ -437,7 +437,7 @@ making them manageable. For instance, for the DHCPv4 server:
         }
     }
 
-With module change subscriptions enabled, the ``kea-netconf`` daemon
+With module change subscriptions enabled, the :iscman:`kea-netconf` daemon
 monitors any configuration changes as they appear in the Sysrepo. Such
 changes can be done using the ``sysrepocfg`` tool or remotely using any
 NETCONF client. For details, please see the Sysrepo documentation or
@@ -475,7 +475,7 @@ be incorrect:
    credentials but the database refuses the connection.
 
 The first case is handled by Sysrepo. The second and third cases are
-handled by ``kea-netconf`` in the validation phase (if not disabled by
+handled by :iscman:`kea-netconf` in the validation phase (if not disabled by
 setting ``validate-changes`` to ``true``). The last case causes the
 application phase to fail without a sensible report to Sysrepo.
 
@@ -500,7 +500,7 @@ A control socket is specified by:
 
 -  ``socket-type`` - the socket type is either ``stdout``, ``unix``, or ``http``.
    ``stdout`` is the default;
-   it is not really a socket, but it allows ``kea-netconf`` to run in
+   it is not really a socket, but it allows :iscman:`kea-netconf` to run in
    debugging mode where everything is printed on stdout, and it can also be
    used to redirect commands easily. ``unix`` is the standard direct
    server control channel, which uses UNIX sockets; ``http`` uses
@@ -521,17 +521,17 @@ entry scopes.
 Hook libraries can be loaded by the NETCONF agent just as with other
 servers or agents; however, currently no hook points are defined. The
 ``hooks-libraries`` list contains the list of hook libraries that
-should be loaded by ``kea-netconf``, along with their configuration
+should be loaded by :iscman:`kea-netconf`, along with their configuration
 information specified with ``parameters``.
 
 Please consult :ref:`logging` for details on how to configure
-logging. The name of the NETCONF agent's main logger is ``kea-netconf``, as
+logging. The name of the NETCONF agent's main logger is :iscman:`kea-netconf`, as
 given in the example above.
 
 .. _netconf-example:
 
-A ``kea-netconf`` Configuration Example
----------------------------------------
+A :iscman:`kea-netconf` Configuration Example
+---------------------------------------------
 
 The following example demonstrates the basic NETCONF configuration. More
 examples are available in the ``doc/examples/netconf`` directory in the
@@ -659,7 +659,7 @@ Kea sources.
 Starting and Stopping the NETCONF Agent
 ---------------------------------------
 
-``kea-netconf`` accepts the following command-line switches:
+:iscman:`kea-netconf` accepts the following command-line switches:
 
 -  ``-c file`` - specifies the configuration file.
 
@@ -671,15 +671,15 @@ Starting and Stopping the NETCONF Agent
    verbosity, e.g. when debugging.
 
 -  ``-t file`` - specifies the configuration file to be tested.
-   ``kea-netconf`` attempts to load it and conducts sanity checks;
+   :iscman:`kea-netconf` attempts to load it and conducts sanity checks;
    certain checks are possible only while running the actual server. The
    actual status is reported with exit code (0 = configuration appears valid,
    1 = error encountered). Kea prints out log messages to standard
    output and error to standard error when testing the configuration.
 
--  ``-v`` - displays the version of ``kea-netconf`` and exits.
+-  ``-v`` - displays the version of :iscman:`kea-netconf` and exits.
 
--  ``-V`` - displays the extended version information for ``kea-netconf``
+-  ``-V`` - displays the extended version information for :iscman:`kea-netconf`
    and exits. The listing includes the versions of the libraries
    dynamically linked to Kea.
 
@@ -737,7 +737,7 @@ The interface must have an address in the test prefix:
     # ip -6 addr add 2001:db8::1/64 dev eth1
 
 The Kea DHCPv6 server must be launched with the configuration specifying
-a control socket used to receive control commands. The ``kea-netconf``
+a control socket used to receive control commands. The :iscman:`kea-netconf`
 process uses this socket to communicate with the DHCPv6 server, i.e. it
 pushes translated configurations to that server using control commands.
 The following is an example control socket specification for the Kea
@@ -769,7 +769,7 @@ socket by running:
     # echo '{ "command": "config-get" }' | socat UNIX:/tmp/kea-dhcp6-ctrl.sock '-,ignoreeof'
 
 The following is the example ``netconf.json`` configuration for
-``kea-netconf``, to manage the Kea DHCPv6 server:
+:iscman:`kea-netconf`, to manage the Kea DHCPv6 server:
 
 .. code-block:: json
 
@@ -806,7 +806,7 @@ The Kea NETCONF agent is launched by:
 
     # kea-netconf -d -c netconf.json
 
-Now that both ``kea-netconf`` and ``kea-dhcp6`` are running, it is
+Now that both :iscman:`kea-netconf` and :iscman:`kea-dhcp6` are running, it is
 possible to populate updates to the configuration to the DHCPv6 server.
 The following is the configuration extracted from ``startup.xml``:
 
@@ -837,7 +837,7 @@ To populate this new configuration:
 
     $ sysrepocfg -d startup -f xml -m kea-dhcp6-server --edit=startup.xml
 
-``kea-netconf`` pushes the configuration found in the Sysrepo startup
+:iscman:`kea-netconf` pushes the configuration found in the Sysrepo startup
 datastore to all Kea servers during its initialization phase, after it
 subscribes to module changes in the Sysrepo running datastore. This
 action copies the configuration from the startup datastore to the
@@ -850,10 +850,10 @@ datastore, i.e. changes are not permanent.
 
 .. note::
 
-    ``kea-netconf`` fetches the entire configuration from any Sysrepo datastore in a
+    :iscman:`kea-netconf` fetches the entire configuration from any Sysrepo datastore in a
     single ``get-config`` NETCONF operation. Prior to Kea 2.3.2, a ``get-config`` operation
     was done for each leaf and leaf-list node. Because of the significant changes,
-    ``kea-netconf`` is considered experimental.
+    :iscman:`kea-netconf` is considered experimental.
 
 .. _operation-example-errors:
 
@@ -902,7 +902,7 @@ It is directly rejected by ``sysrepocfg``:
 
     $ sysrepocfg -d running -f xml -m kea-dhcp6-server --edit=BAD-schema.xml
 
-In the second case, the configuration is rejected by ``kea-netconf``.
+In the second case, the configuration is rejected by :iscman:`kea-netconf`.
 For example, consider this ``BAD-translator.xml`` file:
 
 .. code-block:: xml
@@ -1129,7 +1129,7 @@ or by using a NETCONF client like ``netopeer2-cli`` from the
 Migrating YANG Data From a Prior Sysrepo Version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Shut down ``kea-netconf``. This ensures that backups for both datastores
+1. Shut down :iscman:`kea-netconf`. This ensures that backups for both datastores
 are done at the same configuration state and that no change happens between exporting them.
 
 2. Make data backups for all YANG modules, with one XML for each datastore.

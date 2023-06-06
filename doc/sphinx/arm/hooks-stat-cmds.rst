@@ -9,7 +9,7 @@ an issue with obtaining accurate lease statistics in deployments running
 multiple Kea servers that use a shared lease backend. The in-memory
 statistics kept by individual servers only track lease changes made by
 that server; thus, in a deployment with multiple servers (e.g. two
-``kea-dhcp6`` servers using the same PostgreSQL database for lease storage),
+:iscman:`kea-dhcp6` servers using the same PostgreSQL database for lease storage),
 these statistics are incomplete. The MySQL and PostgreSQL backends in
 Kea track lease allocation changes as they occur via database triggers.
 Additionally, all the lease backends were extended to support
@@ -19,8 +19,8 @@ for retrieving these statistics.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or
+   :iscman:`kea-dhcp6` process.
 
 The commands provided by this library are:
 
@@ -35,7 +35,7 @@ All commands use JSON syntax and can be issued directly to the servers
 via either the control channel (see :ref:`ctrl-channel`) or the
 Control Agent (see :ref:`kea-ctrl-agent`).
 
-This library may be loaded by both the ``kea-dhcp4`` and ``kea-dhcp6`` servers. It
+This library may be loaded by both the :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` servers. It
 is loaded in the same way as other libraries and currently has no
 parameters:
 
@@ -92,7 +92,7 @@ subnets. Note that in configurations with many subnets, this
 can result in a large response.
 
 The following command fetches lease statistics for all known subnets
-from a ``kea-dhcp4`` server:
+from a :iscman:`kea-dhcp4` server:
 
 ::
 
@@ -101,7 +101,7 @@ from a ``kea-dhcp4`` server:
    }
 
 The following command fetches lease statistics for subnet ID 10 from a
-``kea-dhcp6`` server:
+:iscman:`kea-dhcp6` server:
 
 ::
 
@@ -113,7 +113,7 @@ The following command fetches lease statistics for subnet ID 10 from a
    }
 
 The following command fetches lease statistics for all subnets with IDs
-in the range 10 through 50 from a ``kea-dhcp4`` server:
+in the range 10 through 50 from a :iscman:`kea-dhcp4` server:
 
 .. code-block:: json
 

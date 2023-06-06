@@ -21,8 +21,8 @@ available to every Kea user.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or the
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or the
+   :iscman:`kea-dhcp6` process.
 
 There are many situations where an administrative command may be useful;
 for example, during migration between servers or different vendors, when
@@ -836,7 +836,7 @@ An example IPv4 lease deletion by ``"hw-address"`` is:
 
 
 Another parameter called ``update-ddns``, when ``true``, instructs the server to
-queue a request to ``kea-dhcp-ddns`` to remove DNS entries after the lease is
+queue a request to :iscman:`kea-dhcp-ddns` to remove DNS entries after the lease is
 successfully deleted if:
 
 - DDNS updating is enabled (i.e. ``"dhcp-ddns":{ "enable-updates": true }``).
@@ -989,7 +989,7 @@ The ``lease4-resend-ddns``, ``lease6-resend-ddns`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``lease4-resend-ddns`` and ``lease6-resend-ddns`` can be used to generate
-a request to ``kea-dhcp-ddns`` to update the DNS entries for an existing
+a request to :iscman:`kea-dhcp-ddns` to update the DNS entries for an existing
 lease.  The desired lease is selected by a single parameter, ``"ip-address"``.
 For an update request to be generated, DDNS updating must be enabled
 and DNS entries must have already been made (or attempted) for the lease.
@@ -1029,7 +1029,7 @@ object (a lease in this case) has not been found.
 
 A successful result does not mean that DNS has been successfully updated; it
 indicates that a request to update DNS has been successfully created and
-queued for transmission to ``kea-dhcp-ddns``.
+queued for transmission to :iscman:`kea-dhcp-ddns`.
 
 Here's an example of a result returned when the lease was found:
 

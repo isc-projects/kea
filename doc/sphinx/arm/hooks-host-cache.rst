@@ -13,8 +13,8 @@ information in the database.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or
+   :iscman:`kea-dhcp6` process.
 
 In principle, this hook library can be used with any backend that may
 introduce performance degradation (MySQL, PostgreSQL or RADIUS). Host Cache

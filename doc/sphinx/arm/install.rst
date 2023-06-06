@@ -46,8 +46,8 @@ For ISC customers with access to the premium hooks, those packages have the
 ``isc-kea-premium-`` prefix.
 
 Once installed, the services can be managed through the distribution's
-service manager. The services are named: ``kea-dhcp4``, ``kea-dhcp6``,
-``kea-dhcp-ddns``, and ``kea-ctrl-agent``.
+service manager. The services are named: :iscman:`kea-dhcp4`, :iscman:`kea-dhcp6`,
+:iscman:`kea-dhcp-ddns`, and :iscman:`kea-ctrl-agent`.
 
 .. note::
    The real service names on Debian and Ubuntu follow the names of the older
@@ -300,11 +300,11 @@ options. Some commonly used options are:
    found, Kea searches for OpenSSL. Normally this is not necessary.
 
  - ``--enable-shell``
-   Build the optional ``kea-shell`` tool (more in :ref:`kea-shell`).
+   Build the optional :iscman:`kea-shell` tool (more in :ref:`kea-shell`).
    The default is to not build it.
 
  - ``--with-site-packages``
-   Only useful when ``kea-shell`` is enabled, this switch causes the kea-shell
+   Only useful when :iscman:`kea-shell` is enabled, this switch causes the kea-shell
    Python packages to be installed in the specified directory. This is
    mostly useful for Debian-related distributions. While most systems store
    Python packages in ``${prefix}/usr/lib/pythonX/site-packages``, Debian
@@ -313,7 +313,7 @@ options. Some commonly used options are:
    ``/usr/lib/python3/dist-packages``.
 
  - ``--enable-perfdhcp``
-   Build the optional ``perfdhcp`` DHCP benchmarking tool. The default
+   Build the optional :iscman:`perfdhcp` DHCP benchmarking tool. The default
    is to not build it.
 
  - ``--with-freeradius``
@@ -395,7 +395,7 @@ If ``configure`` fails, it may be due to missing or old dependencies.
 
 When ``configure`` succeeds, it displays a report with the parameters used
 to build the code. This report is saved into the file ``config.report``
-and is also embedded into the executable binaries, e.g., ``kea-dhcp4``.
+and is also embedded into the executable binaries, e.g., :iscman:`kea-dhcp4`.
 
 Build
 -----

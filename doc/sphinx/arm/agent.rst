@@ -198,7 +198,7 @@ should be loaded by the CA, along with their configuration information
 specified with ``parameters``.
 
 Please consult :ref:`logging` for the details on how to configure
-logging. The CA's root logger's name is ``kea-ctrl-agent``, as given in
+logging. The CA's root logger's name is :iscman:`kea-ctrl-agent`, as given in
 the example above.
 
 .. _agent-secure-connection:
@@ -244,14 +244,14 @@ Configuring only one or two string parameters results in an error.
    mutually authenticated, but there is no proof they are the same as
    for the HTTP authentication.
 
-The ``kea-shell`` tool also supports TLS.
+The :iscman:`kea-shell` tool also supports TLS.
 
 .. _agent-launch:
 
 Starting and Stopping the Control Agent
 =======================================
 
-``kea-ctrl-agent`` accepts the following command-line switches:
+:iscman:`kea-ctrl-agent` accepts the following command-line switches:
 
 -  ``-c file`` - specifies the configuration file.
 
@@ -263,15 +263,15 @@ Starting and Stopping the Control Agent
    verbosity, e.g. when debugging.
 
 -  ``-t file`` - specifies the configuration file to be tested.
-   ``kea-netconf`` attempts to load it and conducts sanity checks;
+   :iscman:`kea-netconf` attempts to load it and conducts sanity checks;
    certain checks are possible only while running the actual server. The
    actual status is reported with exit code (0 = configuration appears valid,
    1 = error encountered). Kea prints out log messages to standard
    output and error to standard error when testing the configuration.
 
--  ``-v`` - displays the version of ``kea-ctrl-agent`` and exits.
+-  ``-v`` - displays the version of :iscman:`kea-ctrl-agent` and exits.
 
--  ``-V`` - displays the extended version information for ``kea-ctrl-agent``
+-  ``-V`` - displays the extended version information for :iscman:`kea-ctrl-agent`
    and exits. The listing includes the versions of the libraries
    dynamically linked to Kea.
 
@@ -303,7 +303,7 @@ file it should use. For example:
 
    $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 
-It can be started by ``keactrl`` as well (see :ref:`keactrl`).
+It can be started by :iscman:`keactrl` as well (see :ref:`keactrl`).
 
 .. _agent-clients:
 

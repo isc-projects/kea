@@ -10,8 +10,8 @@ performing DDNS updates for select clients.
 The DDNS Tuning hook library is only available to ISC customers with a paid
 support contract.
 
-The library, which was added in Kea 2.1.5, can be loaded by the ``kea-dhcp4``
-and ``kea-dhcp6`` daemons by adding it to the ``hooks-libraries`` element of the
+The library, which was added in Kea 2.1.5, can be loaded by the :iscman:`kea-dhcp4`
+and :iscman:`kea-dhcp6` daemons by adding it to the ``hooks-libraries`` element of the
 server's configuration:
 
 .. code-block:: javascript
@@ -102,7 +102,7 @@ global expression for that subnet. An example subnet expression is shown below:
 DHCPv4 Host-Name Generation
 ---------------------------
 
-With this library installed, the behavior for ``kea-dhcp4`` when forming host names in
+With this library installed, the behavior for :iscman:`kea-dhcp4` when forming host names in
 response to a client query (e.g. DISCOVER, REQUEST) is as follows:
 
   1. If a host name is supplied via a host reservation, use it with the DDNS
@@ -126,7 +126,7 @@ response to a client query (e.g. DISCOVER, REQUEST) is as follows:
 DHCPv6 Host-Name Generation
 ---------------------------
 
-With this library installed, the behavior for ``kea-dhcp6`` when forming host names in
+With this library installed, the behavior for :iscman:`kea-dhcp6` when forming host names in
 response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
 
   1. If the client supplied an FQDN option (option 39), use the domain name value
@@ -159,8 +159,8 @@ Skipping DDNS Updates
 
 The ``ddns-tuning`` library also provides the ability to skip DDNS updates on a
 per-client basis. The library recognizes a special client class, "SKIP_DDNS"; when a
-client is matched to this class, the Kea servers (``kea-dhcp4`` and ``kea-dhcp6``) do not
-send DDNS update requests (NCRs) to ``kea-dhcp-ddns``. A common use case would be
+client is matched to this class, the Kea servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`) do not
+send DDNS update requests (NCRs) to :iscman:`kea-dhcp-ddns`. A common use case would be
 to skip DDNS updates for fixed-address host reservations. This is done easily by
 simply assigning the class to the host reservation as shown below:
 
@@ -177,8 +177,8 @@ simply assigning the class to the host reservation as shown below:
 
 The ``ddns-tuning`` library notes the presence of the "SKIP_DDNS" class in the
 client's class list each time the client requests, renews, or releases its lease,
-and instructs ``kea-dhcp4`` to bypass sending DDNS updates. A similar workflow is
-supported for ``kea-dhcp6``:
+and instructs :iscman:`kea-dhcp4` to bypass sending DDNS updates. A similar workflow is
+supported for :iscman:`kea-dhcp6`:
 
 .. code-block:: javascript
 

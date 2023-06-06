@@ -249,7 +249,7 @@ Notes:
       instead of removing the ``hooks-libraries`` item, change it to an
       empty list.
 
-At the moment, only the ``kea-dhcp4`` and ``kea-dhcp6`` processes support
+At the moment, only the :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` processes support
 hook libraries.
 
 .. _order-of-configuration-hooks:
@@ -389,8 +389,8 @@ libraries, discussed in the following sections.
 The following table provides a list of hook libraries currently available
 from ISC. It is important to pay attention to which libraries may be
 loaded by which Kea processes. It is a common mistake to configure the
-``kea-ctrl-agent`` process to load libraries that should, in fact, be
-loaded by the ``kea-dhcp4`` or ``kea-dhcp6`` processes. If a library
+:iscman:`kea-ctrl-agent` process to load libraries that should, in fact, be
+loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6` processes. If a library
 from ISC does not work as expected, please make sure that it has been
 loaded by the correct process per the table below.
 
@@ -519,10 +519,10 @@ loaded by the correct process per the table below.
    |                                                           | customers    | Leasequery as described in RFC 4388; and for DHCPv6          |
    |                                                           |              | Leasequery as described in RFC 5007.                         |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Limits <hooks-limits>`                              | ISC support  | With this hook library, ``kea-dhcp4`` and ``kea-dhcp6``      |
-   |                                                           | customers    | servers can apply a limit to the rate at which packets       |
-   |                                                           |              | receive a response. The limit can be applied per-client      |
-   |                                                           |              | class or per-subnet.                                         |
+   | :ref:`Limits <hooks-limits>`                              | ISC support  | With this hook library, :iscman:`kea-dhcp4` and              |
+   |                                                           | customers    | :iscman:`kea-dhcp6` servers can apply a limit to the rate at |
+   |                                                           |              | which packets receive a response. The limit can be applied   |
+   |                                                           |              | per-client class or per-subnet.                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`MySQL Configuration Backend <hooks-cb-mysql>`       | Kea open     | This hook library is an implementation of the Kea            |
    |                                                           | source       | Configuration Backend for MySQL. It uses a MySQL database as |

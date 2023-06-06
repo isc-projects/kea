@@ -27,7 +27,7 @@ Kea 1.9.0 introduced basic HTTP authentication support.
 Shell Usage
 ===========
 
-``kea-shell`` is run as follows:
+:iscman:`kea-shell` is run as follows:
 
 .. code-block:: console
 
@@ -140,7 +140,7 @@ tool.
 TLS Support
 ===========
 
-Since Kea 1.9.6, ``kea-shell`` supports HTTPS connections. The TLS/HTTPS
+Since Kea 1.9.6, :iscman:`kea-shell` supports HTTPS connections. The TLS/HTTPS
 support requires Python 3. The additional command-line arguments are:
 
 -  ``--ca`` specifies the file or directory name of the Certification

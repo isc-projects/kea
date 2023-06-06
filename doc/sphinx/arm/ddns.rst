@@ -9,10 +9,10 @@ The DHCP-DDNS Server
 Overview
 ========
 
-The DHCP-DDNS Server (``kea-dhcp-ddns``, known informally as D2) conducts
+The DHCP-DDNS Server (:iscman:`kea-dhcp-ddns`, known informally as D2) conducts
 the client side of the Dynamic DNS protocol (DDNS, defined in `RFC
 2136 <https://tools.ietf.org/html/rfc2136>`__) on behalf of the DHCPv4
-and DHCPv6 servers (``kea-dhcp4`` and ``kea-dhcp6`` respectively). The DHCP
+and DHCPv6 servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` respectively). The DHCP
 servers construct DDNS update requests, known as NameChangeRequests
 (NCRs), based on DHCP lease change events and then post them to D2. D2
 attempts to match each request to the appropriate DNS server(s) and
@@ -76,7 +76,7 @@ or at the behest of that client.
 
 Conflict resolution can be indirectly enabled or disabled via
 the configuration parameter ``ddns-use-conflict-resolution``, supported
-by both ``kea-dhcp4`` and ``kea-dhcp6``. These servers use this parameter to
+by both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`. These servers use this parameter to
 set a flag within each NameChangeRequest they send that tells D2
 whether conflict resolution should be employed for that request.
 By default, conflict resolution is enabled. For more details, please refer
@@ -106,11 +106,11 @@ is supported by Kea beginning with release 2.1.2.
 Starting and Stopping the DHCP-DDNS Server
 ==========================================
 
-``kea-dhcp-ddns`` is the Kea DHCP-DDNS server and, due to the nature of
+:iscman:`kea-dhcp-ddns` is the Kea DHCP-DDNS server and, due to the nature of
 DDNS, it runs alongside either the DHCPv4 or DHCPv6 component (or both).
 Like other parts of Kea, it is a separate binary that can be run on its
-own or through ``keactrl`` (see :ref:`keactrl`). In normal
-operation, controlling ``kea-dhcp-ddns`` with ``keactrl`` is
+own or through :iscman:`keactrl` (see :ref:`keactrl`). In normal
+operation, controlling :iscman:`kea-dhcp-ddns` with :iscman:`keactrl` is
 recommended; however, it is also possible to run the DHCP-DDNS server
 directly. It accepts the following command-line switches:
 
@@ -131,7 +131,7 @@ directly. It accepts the following command-line switches:
    it is embedded in the executable binary.
 
 -  ``-t file`` - specifies the configuration file to be tested.
-   ``kea-dhcp-ddns`` attempts to load it and conducts sanity checks.
+   :iscman:`kea-dhcp-ddns` attempts to load it and conducts sanity checks.
    Certain checks are possible only while running the actual
    server. The actual status is reported with an exit code (0 =
    configuration looks okay, 1 = error encountered). Kea prints out log
@@ -182,7 +182,7 @@ such a case it is necessary to manually delete the PID file.
 Configuring the DHCP-DDNS Server
 ================================
 
-Before starting the ``kea-dhcp-ddns`` module for the first time, a
+Before starting the :iscman:`kea-dhcp-ddns` module for the first time, a
 configuration file must be created. The following default configuration
 is a template that can be customized to individual requirements.
 

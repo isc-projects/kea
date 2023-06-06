@@ -10,8 +10,8 @@ Starting and Stopping the DHCPv6 Server
 =======================================
 
 It is recommended that the Kea DHCPv6 server be started and stopped
-using ``keactrl`` (described in :ref:`keactrl`); however, it is also
-possible to run the server directly via the ``kea-dhcp6`` command, which accepts
+using :iscman:`keactrl` (described in :ref:`keactrl`); however, it is also
+possible to run the server directly via the :iscman:`kea-dhcp6` command, which accepts
 the following command-line switches:
 
 -  ``-c file`` - specifies the configuration file. This is the only
@@ -34,7 +34,7 @@ the following command-line switches:
    as a DHCPv6 server sending responses to ports other than the standard
    ones is not able to handle regular DHCPv6 queries.
 
--  ``-t file`` - specifies a configuration file to be tested. ``kea-dhcp6``
+-  ``-t file`` - specifies a configuration file to be tested. :iscman:`kea-dhcp6`
    loads it, checks it, and exits. During the test, log messages are
    printed to standard output and error messages to standard error. The
    result of the test is reported through the exit code (0 =
@@ -42,7 +42,7 @@ the following command-line switches:
    comprehensive; certain checks are possible only when running the
    server.
 
--  ``-T file`` - specifies a configuration file to be tested. ``kea-dhcp6``
+-  ``-T file`` - specifies a configuration file to be tested. :iscman:`kea-dhcp6`
    loads it, checks it, and exits. It performs extra checks beyond what ``-t``
    offers, such as establishing database connections (for the lease backend,
    host reservations backend, configuration backend, and forensic logging
@@ -2926,8 +2926,8 @@ way in which ``option-data`` is processed.
 DDNS for DHCPv6
 ---------------
 
-As mentioned earlier, ``kea-dhcp6`` can be configured to generate requests
-to the DHCP-DDNS server, ``kea-dhcp-ddns``, (referred to herein as "D2") to
+As mentioned earlier, :iscman:`kea-dhcp6` can be configured to generate requests
+to the DHCP-DDNS server, :iscman:`kea-dhcp-ddns`, (referred to herein as "D2") to
 update DNS entries. These requests are known as NameChangeRequests or
 NCRs. Each NCR contains the following information:
 
@@ -2943,9 +2943,9 @@ DDNS-related parameters are split into two groups:
 
 1. Connectivity Parameters
 
-    These are parameters which specify where and how ``kea-dhcp6`` connects to
+    These are parameters which specify where and how :iscman:`kea-dhcp6` connects to
     and communicates with D2. These parameters can only be specified
-    within the top-level ``dhcp-ddns`` section in the ``kea-dhcp6``
+    within the top-level ``dhcp-ddns`` section in the :iscman:`kea-dhcp6`
     configuration. The connectivity parameters are listed below:
 
     -  ``enable-updates``
@@ -3020,9 +3020,9 @@ The default configuration and values would appear as follows:
         ...
    }
 
-There are two parameters which determine if ``kea-dhcp6``
+There are two parameters which determine if :iscman:`kea-dhcp6`
 can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
-parameter, which now only controls whether ``kea-dhcp6`` connects to D2;
+parameter, which now only controls whether :iscman:`kea-dhcp6` connects to D2;
 and the new behavioral parameter, ``ddns-send-updates``, which determines
 whether DDNS updates are enabled at a given level (i.e. global, shared-network,
 or subnet). The following table shows how the two parameters function
@@ -3061,7 +3061,7 @@ to add DNS entries or they were somehow lost by the DNS server.
     for servers with numerous clients that renew often.
 
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
-The value of this parameter is passed by ``kea-dhcp6`` to D2 with each DNS update
+The value of this parameter is passed by :iscman:`kea-dhcp6` to D2 with each DNS update
 request.  When ``true`` (the default value), D2 employs conflict resolution,
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
 attempting to fulfill the update request. When ``false``, D2 simply attempts
@@ -3096,11 +3096,11 @@ conflict with existing entries owned by other DHCPv6 clients.
     specific use cases. The best way to avoid unwanted DNS entries is to
     always ensure lease changes are processed through Kea, whether they are
     released, expire, or are deleted via the ``lease-del6`` command, prior to
-    reassigning either FQDNs or IP addresses. Doing so causes ``kea-dhcp6``
+    reassigning either FQDNs or IP addresses. Doing so causes :iscman:`kea-dhcp6`
     to generate DNS removal requests to D2.
 
 The DNS entries Kea creates contain a value for TTL (time to live).
-``kea-dhcp6`` calculates that value based on
+:iscman:`kea-dhcp6` calculates that value based on
 `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
 which suggests that the TTL value be 1/3 of the lease's lifetime, with
 a minimum value of 10 minutes.
@@ -3116,11 +3116,11 @@ global, shared-network, and subnet levels. By default it is unspecified.
 DHCP-DDNS Server Connectivity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For NCRs to reach the D2 server, ``kea-dhcp6`` must be able to communicate
-with it. ``kea-dhcp6`` uses the following configuration parameters to
+For NCRs to reach the D2 server, :iscman:`kea-dhcp6` must be able to communicate
+with it. :iscman:`kea-dhcp6` uses the following configuration parameters to
 control this communication:
 
--  ``enable-updates`` - Enables connectivity to ``kea-dhcp-ddns`` such that DDNS
+-  ``enable-updates`` - Enables connectivity to :iscman:`kea-dhcp-ddns` such that DDNS
    updates can be constructed and sent.
    It must be ``true`` for NCRs to be generated and sent to D2.
    It defaults to ``false``.
@@ -3132,12 +3132,12 @@ control this communication:
 -  ``server-port`` - This is the port on which D2 listens for requests. The default
    value is ``53001``.
 
--  ``sender-ip`` - This is the IP address which ``kea-dhcp6`` uses to send requests to
-   D2. The default value is blank, which instructs ``kea-dhcp6`` to select a
+-  ``sender-ip`` - This is the IP address which :iscman:`kea-dhcp6` uses to send requests to
+   D2. The default value is blank, which instructs :iscman:`kea-dhcp6` to select a
    suitable address.
 
--  ``sender-port`` - This is the port which ``kea-dhcp6`` uses to send requests to D2.
-   The default value of ``0`` instructs ``kea-dhcp6`` to select a suitable port.
+-  ``sender-port`` - This is the port which :iscman:`kea-dhcp6` uses to send requests to D2.
+   The default value of ``0`` instructs :iscman:`kea-dhcp6` to select a suitable port.
 
 -  ``max-queue-size`` - This is the maximum number of requests allowed to queue
    while waiting to be sent to D2. This value guards against requests
@@ -3145,7 +3145,7 @@ control this communication:
    they can be delivered. If the number of requests queued for
    transmission reaches this value, DDNS updating is turned off
    until the queue backlog has been sufficiently reduced. The intent is
-   to allow the ``kea-dhcp4`` server to continue lease operations without
+   to allow the :iscman:`kea-dhcp4` server to continue lease operations without
    running the risk that its memory usage grows without limit. The
    default value is ``1024``.
 
@@ -3155,8 +3155,8 @@ control this communication:
 -  ``ncr-format`` - This specifies the packet format to use when sending requests to D2.
    Currently only JSON format is supported.
 
-By default, ``kea-dhcp-ddns`` is assumed to be running on the same machine
-as ``kea-dhcp6``, and all of the default values mentioned above should be
+By default, :iscman:`kea-dhcp-ddns` is assumed to be running on the same machine
+as :iscman:`kea-dhcp6`, and all of the default values mentioned above should be
 sufficient. If, however, D2 has been configured to listen on a different
 address or port, these values must be altered accordingly. For example, if
 D2 has been configured to listen on 2001:db8::5 port 900, the following
@@ -3175,28 +3175,28 @@ configuration is required:
 
 .. _dhcpv6-d2-rules-config:
 
-When Does the ``kea-dhcp6`` Server Generate a DDNS Request?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When Does the :iscman:`kea-dhcp6` Server Generate a DDNS Request?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``kea-dhcp6`` server follows the behavior prescribed for DHCP servers in
+The :iscman:`kea-dhcp6` server follows the behavior prescribed for DHCP servers in
 `RFC 4704 <https://tools.ietf.org/html/rfc4704>`__. It is important to keep
-in mind that ``kea-dhcp6`` makes the initial decision of when and what to
+in mind that :iscman:`kea-dhcp6` makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
 out the actual DNS updates and dealing with such things as conflict
 resolution are within the purview of D2 itself
-(see :ref:`dhcp-ddns-server`). This section describes when ``kea-dhcp6``
+(see :ref:`dhcp-ddns-server`). This section describes when :iscman:`kea-dhcp6`
 generates NCRs and the configuration parameters that can be used to
 influence this decision. It assumes that the ``enable-updates``
 parameter is ``true``.
 
 .. note::
 
-   Currently the interface between ``kea-dhcp6`` and D2 only supports
+   Currently the interface between :iscman:`kea-dhcp6` and D2 only supports
    requests which update DNS entries for a single IP address. If a lease
-   grants more than one address, ``kea-dhcp6`` creates the DDNS update
+   grants more than one address, :iscman:`kea-dhcp6` creates the DDNS update
    request for only the first of these addresses.
 
-In general, ``kea-dhcp6`` generates DDNS update requests when:
+In general, :iscman:`kea-dhcp6` generates DDNS update requests when:
 
 1. A new lease is granted in response to a DHCPREQUEST;
 
@@ -3211,9 +3211,9 @@ add entries for the new FQDN. In the third case, a lease release - a
 single DDNS request - to remove its entries will be made.
 
 As for the first case, the decisions involved when granting a new lease are
-more complex. When a new lease is granted, ``kea-dhcp6`` generates a
+more complex. When a new lease is granted, :iscman:`kea-dhcp6` generates a
 DDNS update request only if the DHCPREQUEST contains the FQDN option
-(code 39). By default, ``kea-dhcp6`` respects the FQDN N and S flags
+(code 39). By default, :iscman:`kea-dhcp6` respects the FQDN N and S flags
 specified by the client as shown in the following table:
 
 .. table:: Default FQDN flag behavior
@@ -3241,18 +3241,18 @@ specified by the client as shown in the following table:
 
 The first row in the table above represents "client delegation." Here
 the DHCP client states that it intends to do the forward DNS updates and
-the server should do the reverse updates. By default, ``kea-dhcp6``
+the server should do the reverse updates. By default, :iscman:`kea-dhcp6`
 honors the client's wishes and generates a DDNS request to D2 to update
 only reverse DNS data. The parameter ``ddns-override-client-update`` can be
 used to instruct the server to override client delegation requests. When
-this parameter is ``true``, ``kea-dhcp6`` disregards requests for client
+this parameter is ``true``, :iscman:`kea-dhcp6` disregards requests for client
 delegation and generates a DDNS request to update both forward and
 reverse DNS data. In this case, the N-S-O flags in the server's response
 to the client will be 0-1-1 respectively.
 
 (Note that the flag combination N=1, S=1 is prohibited according to `RFC
 4702 <https://tools.ietf.org/html/rfc4702>`__. If such a combination is
-received from the client, the packet will be dropped by ``kea-dhcp6``.)
+received from the client, the packet will be dropped by :iscman:`kea-dhcp6`.)
 
 To override client delegation, set the following values in the
 configuration file:
@@ -3267,8 +3267,8 @@ configuration file:
 The third row in the table above describes the case in which the client
 requests that no DNS updates be done. The parameter
 ``ddns-override-no-update`` can be used to instruct the server to disregard
-the client's wishes. When this parameter is ``true``, ``kea-dhcp6``
-generates DDNS update requests to ``kea-dhcp-ddns`` even if the client
+the client's wishes. When this parameter is ``true``, :iscman:`kea-dhcp6`
+generates DDNS update requests to :iscman:`kea-dhcp-ddns` even if the client
 requests that no updates be done. The N-S-O flags in the server's response to
 the client will be 0-1-1.
 
@@ -3281,7 +3281,7 @@ To override client delegation, issue the following commands:
         ...
     }
 
-The ``kea-dhcp6`` server always generates DDNS update requests if the
+The :iscman:`kea-dhcp6` server always generates DDNS update requests if the
 client request only contains the Host Name option. In addition, it includes
 an FQDN option in the response to the client with the FQDN N-S-O flags
 set to 0-1-0, respectively. The domain name portion of the FQDN option
@@ -3289,11 +3289,11 @@ is the name submitted to D2 in the DDNS update request.
 
 .. _dhcpv6-fqdn-name-generation:
 
-``kea-dhcp6`` Name Generation for DDNS Update Requests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:iscman:`kea-dhcp6` Name Generation for DDNS Update Requests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each NameChangeRequest must of course include the fully qualified
-domain name whose DNS entries are to be affected. ``kea-dhcp6`` can be
+domain name whose DNS entries are to be affected. :iscman:`kea-dhcp6` can be
 configured to supply a portion or all of that name, based upon what it
 receives from the client in the DHCPREQUEST.
 
@@ -3335,7 +3335,7 @@ parameter, which provides the following modes of behavior:
    desired mode name. A value of ``true`` maps to ``when-present``, while
    ``false`` maps to ``never``.
 
-For example, to instruct ``kea-dhcp6`` to always generate the FQDN for a
+For example, to instruct :iscman:`kea-dhcp6` to always generate the FQDN for a
 client, set the parameter ``ddns-replace-client-name`` to ``always`` as
 follows:
 
@@ -3369,7 +3369,7 @@ are enabled. To set its value simply set it to the desired string:
         ...
     }
 
-When qualifying a partial name, ``kea-dhcp6`` constructs the name in the
+When qualifying a partial name, :iscman:`kea-dhcp6` constructs the name in the
 format:
 
 ``[candidate-name].[ddns-qualifying-suffix].``
@@ -3380,7 +3380,7 @@ For example, if the FQDN domain name value is "some-computer" and the
 
 ``some-computer.example.com.``
 
-When generating the entire name, ``kea-dhcp6`` constructs the name in
+When generating the entire name, :iscman:`kea-dhcp6` constructs the name in
 the format:
 
 ``[ddns-generated-prefix]-[address-text].[ddns-qualifying-suffix].``
@@ -3399,7 +3399,7 @@ Sanitizing Client FQDN Names
 
 Some DHCP clients may provide values in the name
 component of the FQDN option (option code 39) that contain undesirable
-characters. It is possible to configure ``kea-dhcp6`` to sanitize these
+characters. It is possible to configure :iscman:`kea-dhcp6` to sanitize these
 values. The most typical use case is ensuring that only characters that
 are permitted by RFC 1035 be included: A-Z, a-z, 0-9, and "-". This may be
 accomplished with the following two parameters:
@@ -3765,7 +3765,7 @@ current results.
 
 After enabling multi-threading, the number of threads is set by the ``thread-pool-size``
 parameter. Results from our experiments show that the best settings for
-``kea-dhcp6`` are:
+:iscman:`kea-dhcp6` are:
 
 -  ``thread-pool-size``: 4 when using ``memfile`` for storing leases.
 

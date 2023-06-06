@@ -10,8 +10,8 @@ Starting and Stopping the DHCPv4 Server
 =======================================
 
 It is recommended that the Kea DHCPv4 server be started and stopped
-using ``keactrl`` (described in :ref:`keactrl`); however, it is also
-possible to run the server directly via the ``kea-dhcp4`` command, which accepts
+using :iscman:`keactrl` (described in :ref:`keactrl`); however, it is also
+possible to run the server directly via the :iscman:`kea-dhcp4` command, which accepts
 the following command-line switches:
 
 -  ``-c file`` - specifies the configuration file. This is the only
@@ -34,7 +34,7 @@ the following command-line switches:
    as a DHCPv4 server sending responses to ports other than the standard
    ones is not able to handle regular DHCPv4 queries.
 
--  ``-t file`` - specifies a configuration file to be tested. ``kea-dhcp4``
+-  ``-t file`` - specifies a configuration file to be tested. :iscman:`kea-dhcp4`
    loads it, checks it, and exits. During the test, log messages are
    printed to standard output and error messages to standard error. The
    result of the test is reported through the exit code (0 =
@@ -42,7 +42,7 @@ the following command-line switches:
    comprehensive; certain checks are possible only when running the
    server.
 
--  ``-T file`` - specifies a configuration file to be tested. ``kea-dhcp4``
+-  ``-T file`` - specifies a configuration file to be tested. :iscman:`kea-dhcp4`
    loads it, checks it, and exits. It performs extra checks beyond what ``-t``
    offers, such as establishing database connections (for the lease backend,
    host reservations backend, configuration backend, and forensic logging
@@ -1379,7 +1379,7 @@ Sending T1 (Option 58) and T2 (Option 59)
 
 According to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__,
 servers should send values for T1 and T2 that are 50% and 87.5% of the
-lease lifetime, respectively. By default, ``kea-dhcp4`` does not send
+lease lifetime, respectively. By default, :iscman:`kea-dhcp4` does not send
 either value; it can be configured to send values that are either specified
 explicitly or that are calculated as percentages of the lease time. The
 server's behavior is governed by a combination of configuration
@@ -2921,7 +2921,7 @@ specified:
 Support for Long Options
 ------------------------
 
-The ``kea-dhcp4`` server partially supports long options (RFC3396).
+The :iscman:`kea-dhcp4` server partially supports long options (RFC3396).
 Since Kea 2.1.6, the server accepts configuring long options and sub-options
 (longer than 255 bytes). The options and sub-options are stored internally
 in their unwrapped form and they can be processed as usual using the parser
@@ -3346,8 +3346,8 @@ two instances of the ``vivco-suboptions`` option, each for a different vendor.
 DDNS for DHCPv4
 ---------------
 
-As mentioned earlier, ``kea-dhcp4`` can be configured to generate requests
-to the DHCP-DDNS server, ``kea-dhcp-ddns``, (referred to herein as "D2") to
+As mentioned earlier, :iscman:`kea-dhcp4` can be configured to generate requests
+to the DHCP-DDNS server, :iscman:`kea-dhcp-ddns`, (referred to herein as "D2") to
 update DNS entries. These requests are known as NameChangeRequests or
 NCRs. Each NCR contains the following information:
 
@@ -3363,9 +3363,9 @@ DDNS-related parameters are split into two groups:
 
 1. Connectivity Parameters
 
-    These are parameters which specify where and how ``kea-dhcp4`` connects to
+    These are parameters which specify where and how :iscman:`kea-dhcp4` connects to
     and communicates with D2. These parameters can only be specified
-    within the top-level ``dhcp-ddns`` section in the ``kea-dhcp4``
+    within the top-level ``dhcp-ddns`` section in the :iscman:`kea-dhcp4`
     configuration. The connectivity parameters are listed below:
 
     -  ``enable-updates``
@@ -3440,9 +3440,9 @@ The default configuration and values would appear as follows:
         ...
    }
 
-There are two parameters which determine if ``kea-dhcp4``
+There are two parameters which determine if :iscman:`kea-dhcp4`
 can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
-parameter, which now only controls whether ``kea-dhcp4`` connects to D2;
+parameter, which now only controls whether :iscman:`kea-dhcp4` connects to D2;
 and the new behavioral parameter, ``ddns-send-updates``, which determines
 whether DDNS updates are enabled at a given level (i.e. global, shared-network,
 or subnet). The following table shows how the two parameters function
@@ -3481,7 +3481,7 @@ to add DNS entries or they were somehow lost by the DNS server.
     for servers with numerous clients that renew often.
 
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.
-The value of this parameter is passed by ``kea-dhcp4`` to D2 with each DNS update
+The value of this parameter is passed by :iscman:`kea-dhcp4` to D2 with each DNS update
 request. When ``true`` (the default value), D2 employs conflict resolution,
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__, when
 attempting to fulfill the update request. When ``false``, D2 simply attempts
@@ -3516,11 +3516,11 @@ conflict with existing entries owned by other DHCPv4 clients.
     specific use cases. The best way to avoid unwanted DNS entries is to
     always ensure lease changes are processed through Kea, whether they are
     released, expire, or are deleted via the ``lease-del4`` command, prior to
-    reassigning either FQDNs or IP addresses. Doing so causes ``kea-dhcp4``
+    reassigning either FQDNs or IP addresses. Doing so causes :iscman:`kea-dhcp4`
     to generate DNS removal requests to D2.
 
 The DNS entries Kea creates contain a value for TTL (time to live).
-The ``kea-dhcp4`` server calculates that value based on
+The :iscman:`kea-dhcp4` server calculates that value based on
 `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
 which suggests that the TTL value be 1/3 of the lease's lifetime, with
 a minimum value of 10 minutes.
@@ -3536,11 +3536,11 @@ global, shared-network, and subnet levels. By default it is unspecified.
 DHCP-DDNS Server Connectivity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For NCRs to reach the D2 server, ``kea-dhcp4`` must be able to communicate
-with it. ``kea-dhcp4`` uses the following configuration parameters to
+For NCRs to reach the D2 server, :iscman:`kea-dhcp4` must be able to communicate
+with it. :iscman:`kea-dhcp4` uses the following configuration parameters to
 control this communication:
 
--  ``enable-updates`` - Enables connectivity to ``kea-dhcp-ddns`` such that DDNS
+-  ``enable-updates`` - Enables connectivity to :iscman:`kea-dhcp-ddns` such that DDNS
    updates can be constructed and sent.
    It must be ``true`` for NCRs to be generated and sent to D2.
    It defaults to ``false``.
@@ -3552,12 +3552,12 @@ control this communication:
 -  ``server-port`` - This is the port on which D2 listens for requests. The default
    value is ``53001``.
 
--  ``sender-ip`` - This is the IP address which ``kea-dhcp4`` uses to send requests to
-   D2. The default value is blank, which instructs ``kea-dhcp4`` to select a
+-  ``sender-ip`` - This is the IP address which :iscman:`kea-dhcp4` uses to send requests to
+   D2. The default value is blank, which instructs :iscman:`kea-dhcp4` to select a
    suitable address.
 
--  ``sender-port`` - This is the port which ``kea-dhcp4`` uses to send requests to D2.
-   The default value of ``0`` instructs ``kea-dhcp4`` to select a suitable port.
+-  ``sender-port`` - This is the port which :iscman:`kea-dhcp4` uses to send requests to D2.
+   The default value of ``0`` instructs :iscman:`kea-dhcp4` to select a suitable port.
 
 -  ``max-queue-size`` - This is the maximum number of requests allowed to queue
    while waiting to be sent to D2. This value guards against requests
@@ -3565,7 +3565,7 @@ control this communication:
    they can be delivered. If the number of requests queued for
    transmission reaches this value, DDNS updating is turned off
    until the queue backlog has been sufficiently reduced. The intent is
-   to allow the ``kea-dhcp4`` server to continue lease operations without
+   to allow the :iscman:`kea-dhcp4` server to continue lease operations without
    running the risk that its memory usage grows without limit. The
    default value is ``1024``.
 
@@ -3575,8 +3575,8 @@ control this communication:
 -  ``ncr-format`` - This specifies the packet format to use when sending requests to D2.
    Currently only JSON format is supported.
 
-By default, ``kea-dhcp-ddns`` is assumed to be running on the same machine
-as ``kea-dhcp4``, and all of the default values mentioned above should be
+By default, :iscman:`kea-dhcp-ddns` is assumed to be running on the same machine
+as :iscman:`kea-dhcp4`, and all of the default values mentioned above should be
 sufficient. If, however, D2 has been configured to listen on a different
 address or port, these values must be altered accordingly. For example,
 if D2 has been configured to listen on 192.168.1.10 port 900, the
@@ -3595,22 +3595,22 @@ following configuration is required:
 
 .. _dhcpv4-d2-rules-config:
 
-When Does the ``kea-dhcp4`` Server Generate a DDNS Request?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When Does the :iscman:`kea-dhcp4` Server Generate a DDNS Request?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``kea-dhcp4`` server follows the behavior prescribed for DHCP servers in
+The :iscman:`kea-dhcp4` server follows the behavior prescribed for DHCP servers in
 `RFC 4702 <https://tools.ietf.org/html/rfc4702>`__. It is important to keep
-in mind that ``kea-dhcp4`` makes the initial decision of when and what to
+in mind that :iscman:`kea-dhcp4` makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
 out the actual DNS updates and dealing with such things as conflict
 resolution are within the purview of D2 itself
-(see :ref:`dhcp-ddns-server`). This section describes when ``kea-dhcp4``
+(see :ref:`dhcp-ddns-server`). This section describes when :iscman:`kea-dhcp4`
 generates NCRs and the configuration parameters that can be used to
 influence this decision. It assumes that both the connectivity parameter
 ``enable-updates`` and the behavioral parameter ``ddns-send-updates``,
 are ``true``.
 
-In general, ``kea-dhcp4`` generates DDNS update requests when:
+In general, :iscman:`kea-dhcp4` generates DDNS update requests when:
 
 1. A new lease is granted in response to a DHCPREQUEST;
 
@@ -3625,10 +3625,10 @@ add entries for the new FQDN. In the third case, a lease release - a
 single DDNS request - to remove its entries will be made.
 
 As for the first case, the decisions involved when granting a new lease are
-more complex. When a new lease is granted, ``kea-dhcp4`` generates a
+more complex. When a new lease is granted, :iscman:`kea-dhcp4` generates a
 DDNS update request if the DHCPREQUEST contains either the FQDN option
 (code 81) or the Host Name option (code 12). If both are present, the
-server uses the FQDN option. By default, ``kea-dhcp4`` respects the
+server uses the FQDN option. By default, :iscman:`kea-dhcp4` respects the
 FQDN N and S flags specified by the client as shown in the following
 table:
 
@@ -3657,19 +3657,19 @@ table:
 
 The first row in the table above represents "client delegation." Here
 the DHCP client states that it intends to do the forward DNS updates and
-the server should do the reverse updates. By default, ``kea-dhcp4``
+the server should do the reverse updates. By default, :iscman:`kea-dhcp4`
 honors the client's wishes and generates a DDNS request to the D2 server
 to update only reverse DNS data. The parameter
 ``ddns-override-client-update`` can be used to instruct the server to
 override client delegation requests. When this parameter is ``true``,
-``kea-dhcp4`` disregards requests for client delegation and generates a
+:iscman:`kea-dhcp4` disregards requests for client delegation and generates a
 DDNS request to update both forward and reverse DNS data. In this case,
 the N-S-O flags in the server's response to the client will be 0-1-1
 respectively.
 
 (Note that the flag combination N=1, S=1 is prohibited according to `RFC
 4702 <https://tools.ietf.org/html/rfc4702>`__. If such a combination is
-received from the client, the packet will be dropped by ``kea-dhcp4``.)
+received from the client, the packet will be dropped by :iscman:`kea-dhcp4`.)
 
 To override client delegation, set the following values in the
 configuration file:
@@ -3684,8 +3684,8 @@ configuration file:
 The third row in the table above describes the case in which the client
 requests that no DNS updates be done. The parameter
 ``ddns-override-no-update`` can be used to instruct the server to disregard
-the client's wishes. When this parameter is ``true``, ``kea-dhcp4``
-generates DDNS update requests to ``kea-dhcp-ddns`` even if the client
+the client's wishes. When this parameter is ``true``, :iscman:`kea-dhcp4`
+generates DDNS update requests to :iscman:`kea-dhcp-ddns` even if the client
 requests that no updates be done. The N-S-O flags in the server's
 response to the client will be 0-1-1.
 
@@ -3698,7 +3698,7 @@ To override client delegation, issue the following commands:
         ...
     }
 
-The ``kea-dhcp4`` server always generates DDNS update requests if the
+The :iscman:`kea-dhcp4` server always generates DDNS update requests if the
 client request only contains the Host Name option. In addition, it includes
 an FQDN option in the response to the client with the FQDN N-S-O flags
 set to 0-1-0, respectively. The domain name portion of the FQDN option
@@ -3706,11 +3706,11 @@ is the name submitted to D2 in the DDNS update request.
 
 .. _dhcpv4-fqdn-name-generation:
 
-``kea-dhcp4`` Name Generation for DDNS Update Requests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:iscman:`kea-dhcp4` Name Generation for DDNS Update Requests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each NameChangeRequest must of course include the fully qualified domain
-name whose DNS entries are to be affected. ``kea-dhcp4`` can be configured
+name whose DNS entries are to be affected. :iscman:`kea-dhcp4` can be configured
 to supply a portion or all of that name, based on what it receives
 from the client in the DHCPREQUEST.
 
@@ -3752,7 +3752,7 @@ parameter, which provides the following modes of behavior:
    must replace them with the desired mode name. A value of ``true``
    maps to ``when-present``, while ``false`` maps to ``never``.
 
-For example, to instruct ``kea-dhcp4`` to always generate the FQDN for a
+For example, to instruct :iscman:`kea-dhcp4` to always generate the FQDN for a
 client, set the parameter ``ddns-replace-client-name`` to ``always`` as
 follows:
 
@@ -3787,7 +3787,7 @@ meaningful default.
         ...
     }
 
-When generating a name, ``kea-dhcp4`` constructs the name in the format:
+When generating a name, :iscman:`kea-dhcp4` constructs the name in the format:
 
 ``[ddns-generated-prefix]-[address-text].[ddns-qualifying-suffix].``
 
@@ -3805,7 +3805,7 @@ Sanitizing Client Host Name and FQDN Names
 
 Some DHCP clients may provide values in the Host Name
 option (option code 12) or FQDN option (option code 81) that contain
-undesirable characters. It is possible to configure ``kea-dhcp4`` to
+undesirable characters. It is possible to configure :iscman:`kea-dhcp4` to
 sanitize these values. The most typical use case is ensuring that only
 characters that are permitted by RFC 1035 be included: A-Z, a-z, 0-9,
 and "-". This may be accomplished with the following two parameters:
@@ -4404,7 +4404,7 @@ current results.
 
 After enabling multi-threading, the number of threads is set by the ``thread-pool-size``
 parameter. Results from our experiments show that the best settings for
-``kea-dhcp4`` are:
+:iscman:`kea-dhcp4` are:
 
 -  ``thread-pool-size``: 4 when using ``memfile`` for storing leases.
 
@@ -4533,10 +4533,10 @@ also depend on the reusable lifetime.
 Temporary Allocation on DHCPDISCOVER
 ------------------------------------
 
-By default, ``kea-dhcp4`` does not allocate or store a lease when offering an address
-to a client in response to a DHCPDISCOVER.  In general, ``kea-dhcp4`` can fulfill client
+By default, :iscman:`kea-dhcp4` does not allocate or store a lease when offering an address
+to a client in response to a DHCPDISCOVER.  In general, :iscman:`kea-dhcp4` can fulfill client
 demands faster by deferring lease allocation and storage until it receives DHCPREQUESTs
-for them. Release 2.3.6 added a new parameter to ``kea-dhcp4``, ``offer-lifetime``, which
+for them. Release 2.3.6 added a new parameter to :iscman:`kea-dhcp4`, ``offer-lifetime``, which
 (when not zero) instructs the server to allocate and persist a lease when generating a
 DHCPOFFER. In addition:
 
@@ -4557,7 +4557,7 @@ DHCPOFFER. In addition:
 
 - Lease caching, if enabled, is honored.
 
-- In sites running multiple instances of ``kea-dhcp4`` against a single, shared lease store, races
+- In sites running multiple instances of :iscman:`kea-dhcp4` against a single, shared lease store, races
   for given address values are lost during DHCPDISCOVER processing rather than during DHCPREQUEST
   processing. Servers that lose the race for the address simply do not respond to the client,
   rather than NAK them. The client in turn simply retries its DHCPDISCOVER. This should reduce
@@ -4583,7 +4583,7 @@ An example subnet configuration is shown below:
     }
 
 Here ``offer-lifetime`` has been configured to be 60 seconds, with a ``valid-lifetime``
-of 2000 seconds. This instructs ``kea-dhcp4`` to persist leases for 60 seconds when
+of 2000 seconds. This instructs :iscman:`kea-dhcp4` to persist leases for 60 seconds when
 sending them back in DHCPOFFERs, and then extend them to 2000 seconds when clients
 DHCPREQUEST them.
 
@@ -7380,7 +7380,7 @@ The following standards are currently supported in Kea:
 -  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
    Qualified Domain Name (FQDN) Option*, `RFC 4702
    <https://tools.ietf.org/html/rfc4702>`__: The Kea server is able to handle
-   the Client FQDN option. Also, it is able to use the ``kea-dhcp-ddns``
+   the Client FQDN option. Also, it is able to use the :iscman:`kea-dhcp-ddns`
    component to initiate appropriate DNS Update operations.
 
 -  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic

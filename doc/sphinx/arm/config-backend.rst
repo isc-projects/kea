@@ -175,7 +175,7 @@ C client libraries must be installed, as explained in :ref:`dhcp-install-configu
 .. note::
 
    An existing database schema must be upgraded to the latest schema
-   required by the particular Kea version using the ``kea-admin`` tool,
+   required by the particular Kea version using the :iscman:`kea-admin` tool,
    as described in :ref:`kea-admin`.
 
 The ``cb_cmds`` premium hook library, which is available to ISC's paid support

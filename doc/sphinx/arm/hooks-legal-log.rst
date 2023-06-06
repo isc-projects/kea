@@ -12,7 +12,7 @@ contract.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
+   This library may only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
    process.
 
 In many legal jurisdictions, companies - especially ISPs - must record
@@ -78,11 +78,11 @@ Configuring the Forensic Logging Hooks
 To use this functionality, the hook library must be included in the
 configuration of the desired DHCP server modules. The ``legal_log`` library
 can save logs to a text file or to a database (created using
-``kea-admin``; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
+:iscman:`kea-admin`; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
 The library is installed alongside the Kea libraries in
 ``[kea-install-dir]/var/lib/kea``, where ``kea-install-dir`` is determined
 by the ``--prefix`` option of the configure script; it defaults to
-``/usr/local``. Assuming the default value, ``kea-dhcp4`` can be configured to load
+``/usr/local``. Assuming the default value, :iscman:`kea-dhcp4` can be configured to load
 the ``legal_log`` library like this:
 
 .. code-block:: json
@@ -101,7 +101,7 @@ the ``legal_log`` library like this:
         }
     }
 
-For ``kea-dhcp6``, the configuration is:
+For :iscman:`kea-dhcp6`, the configuration is:
 
 .. code-block:: json
 

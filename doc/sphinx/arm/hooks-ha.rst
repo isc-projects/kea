@@ -10,7 +10,7 @@ but is now part of the open source Kea, available to all users.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6` process.
 
 High Availability (HA) of the DHCP service is provided by running multiple
 cooperating server instances. If any of these instances becomes unavailable for
@@ -1602,7 +1602,7 @@ Multi-Threaded Configuration (HA+MT)
 
 HA peer communication consists of specialized API commands sent between HA peers.
 Prior to Kea 1.9.7, each peer had to be paired with a local instance of
-``kea-ctrl-agent`` in order to exchange commands. The agent received HA commands
+:iscman:`kea-ctrl-agent` in order to exchange commands. The agent received HA commands
 via HTTP, communicated via Linux socket with the local peer to carry out the
 command, and then sent the response back to the requesting peer via HTTP. To
 send HA commands, each peer opened its own HTTP client connection to the URL of
@@ -1623,16 +1623,16 @@ HA+MT operation:
 
 -  ``enable-multi-threading`` - enables or disables multi-threading HA peer
    communication (HA+MT). Kea core multi-threading must be enabled for HA+MT to
-   operate. When ``false``, the server relies on ``kea-ctrl-agent`` for
+   operate. When ``false``, the server relies on :iscman:`kea-ctrl-agent` for
    communication with its peer, and uses single-threaded HTTP client processing.
    The default is ``true``.
 
 -  ``http-dedicated-listener`` - enables or disables the creation of a dedicated,
    internal HTTP listener through which the server receives HA messages from its
-   peers. The internal listener replaces the role of ``kea-ctrl-agent`` traffic,
+   peers. The internal listener replaces the role of :iscman:`kea-ctrl-agent` traffic,
    allowing peers to send their HA commands directly to each other. The listener
    listens on the peer's ``url``. When ``false``, the server
-   relies on ``kea-ctrl-agent``. This parameter has been provided largely for
+   relies on :iscman:`kea-ctrl-agent`. This parameter has been provided largely for
    flexibility and testing; running HA+MT without dedicated listeners enabled
    will substantially limit HA throughput. The default is ``true``.
 

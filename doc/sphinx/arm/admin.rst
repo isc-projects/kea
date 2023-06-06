@@ -37,14 +37,14 @@ version, it will fail; administrative action is required to upgrade the schema.
 
 .. _kea-admin:
 
-The ``kea-admin`` Tool
-======================
+The :iscman:`kea-admin` Tool
+============================
 
-To manage the databases, Kea provides the ``kea-admin`` tool. It can
+To manage the databases, Kea provides the :iscman:`kea-admin` tool. It can
 initialize a new backend, check its version number, perform a backend
 upgrade, and dump lease data to a text file.
 
-``kea-admin`` takes two mandatory parameters: ``command`` and
+:iscman:`kea-admin` takes two mandatory parameters: ``command`` and
 ``backend``. Additional, non-mandatory options may be specified. The
 currently supported commands are:
 
@@ -135,7 +135,7 @@ configuration file. (There are no plans to add a host reservations
 storage capability to this backend.)
 
 No special initialization steps are necessary for the memfile backend.
-During the first run, both ``kea-dhcp4`` and ``kea-dhcp6`` create
+During the first run, both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` create
 an empty lease file if one is not present. Necessary disk-write
 permission is required.
 
@@ -220,7 +220,7 @@ Usually the setting is configured in the [mysqld] section in ``/etc/mysql/my.cnf
 When setting up the MySQL database for the first time, the
 database area must be created within MySQL, and the MySQL user ID under
 which Kea will access the database must be set up. This needs to be done manually,
-rather than via ``kea-admin``.
+rather than via :iscman:`kea-admin`.
 
 To create the database:
 
@@ -261,14 +261,14 @@ To create the database:
       mysql> quit
       Bye
 
-    Then use the  ``kea-admin`` tool to create the database.
+    Then use the  :iscman:`kea-admin` tool to create the database.
 
     .. code-block:: console
 
         $ kea-admin db-init mysql -u database-user -p database-password -n database-name
 
     While it is possible to create the database from within the MySQL client, we recommend
-    using the ``kea-admin`` tool as it performs some necessary validations to ensure Kea can
+    using the :iscman:`kea-admin` tool as it performs some necessary validations to ensure Kea can
     access the database at runtime. Among those checks is verification that the schema does not contain
     any pre-existing tables; any pre-existing tables must be removed
     manually. An additional check examines the user's ability to create functions and
@@ -322,18 +322,18 @@ To create the database:
       mysql> quit
       Bye
 
-If the tables were not created in Step 4, run the ``kea-admin`` tool
+If the tables were not created in Step 4, run the :iscman:`kea-admin` tool
 to create them now:
 
 .. code-block:: console
 
    $ kea-admin db-init mysql -u database-user -p database-password -n database-name
 
-Do not do this if the tables were created in Step 4. ``kea-admin``
+Do not do this if the tables were created in Step 4. :iscman:`kea-admin`
 implements rudimentary checks; it will refuse to initialize a database
 that contains any existing tables. To start from scratch,
 all data must be removed manually. (This process is a manual operation
-on purpose, to avoid accidentally irretrievable mistakes by ``kea-admin``.)
+on purpose, to avoid accidentally irretrievable mistakes by :iscman:`kea-admin`.)
 
 .. _mysql-upgrade:
 
@@ -499,7 +499,7 @@ which the servers will access it. A number of steps are required:
       $
 
 5. At this point, create the database tables either
-   using the ``kea-admin`` tool, as explained in the next section
+   using the :iscman:`kea-admin` tool, as explained in the next section
    (recommended), or manually. To create the tables manually, enter the
    following command. PostgreSQL will prompt the administrator to enter the
    new user's password that was specified in Step 3. When the command
@@ -561,21 +561,21 @@ which the servers will access it. A number of steps are required:
    may be necessary to restart PostgreSQL for the changes to
    take effect.
 
-Initialize the PostgreSQL Database Using ``kea-admin``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Initialize the PostgreSQL Database Using :iscman:`kea-admin`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the tables were not created manually, do so now by
-running the ``kea-admin`` tool:
+running the :iscman:`kea-admin` tool:
 
 .. code-block:: console
 
    $ kea-admin db-init pgsql -u database-user -p database-password -n database-name
 
-Do not do this if the tables were already created manually. ``kea-admin``
+Do not do this if the tables were already created manually. :iscman:`kea-admin`
 implements rudimentary checks; it will refuse to initialize a database
 that contains any existing tables. To start from scratch,
 all data must be removed manually. (This process is a manual operation
-on purpose, to avoid accidentally irretrievable mistakes by ``kea-admin``.)
+on purpose, to avoid accidentally irretrievable mistakes by :iscman:`kea-admin`.)
 
 .. _pgsql-upgrade:
 

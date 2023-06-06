@@ -7,8 +7,8 @@ The Run Script hook library adds support for calling an external script for spec
 packet-processing hook points.
 
 The library, which was added in Kea 1.9.5, can be loaded in a
-similar way to other hook libraries by the ``kea-dhcp4`` and
-``kea-dhcp6`` processes.
+similar way to other hook libraries by the :iscman:`kea-dhcp4` and
+:iscman:`kea-dhcp6` processes.
 
 .. code-block:: json
 

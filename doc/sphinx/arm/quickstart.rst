@@ -158,7 +158,7 @@ easier to install Kea using native packages.
         # service kea-dhcp6 restart
 
 .. note::
-  ``keactrl`` is not available in packages, as similar functionality is provided
+  :iscman:`keactrl` is not available in packages, as similar functionality is provided
   by the native systemctl scripts.
 
 7. On CentOS, Fedora, and Alpine, the service must be enabled at boot
@@ -235,7 +235,7 @@ For system-specific instructions, please read the
 available in the Kea section of `ISC's
 Knowledgebase <https://kb.isc.org/docs>`__.
 
-The details of ``keactrl`` script usage can be found in :ref:`keactrl`.
+The details of :iscman:`keactrl` script usage can be found in :ref:`keactrl`.
 
 Once Kea services are up and running, consider deploying a dashboard solution
 to monitor running services. For more details, see :ref:`stork`.
@@ -246,7 +246,7 @@ Running the Kea Servers Directly
 ================================
 
 The Kea servers can be started directly, without the need to use
-``keactrl`` or ``systemctl``. To start the DHCPv4 server run the following command:
+:iscman:`keactrl` or ``systemctl``. To start the DHCPv4 server run the following command:
 
 .. code-block:: console
 

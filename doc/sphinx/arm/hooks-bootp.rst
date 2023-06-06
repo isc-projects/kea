@@ -15,7 +15,7 @@ the server's responses; responses shorter than the BOOTP minimum
 size of 300 octets are padded to this size.
 
 This open source library is loaded
-similarly to other hook libraries by the ``kea-dhcp4`` process, and
+similarly to other hook libraries by the :iscman:`kea-dhcp4` process, and
 it takes no parameters.
 
 ::
@@ -30,7 +30,7 @@ it takes no parameters.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` process,
+   This library can only be loaded by the :iscman:`kea-dhcp4` process,
    as there is no BOOTP protocol for IPv6.
 
 .. note::

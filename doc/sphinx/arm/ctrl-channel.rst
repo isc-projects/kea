@@ -130,11 +130,11 @@ The following list shows the mapping of the values carried within the
 ``service`` parameter to the servers to which the commands are
 forwarded:
 
--  ``dhcp4`` - the command is forwarded to the ``kea-dhcp4`` server.
+-  ``dhcp4`` - the command is forwarded to the :iscman:`kea-dhcp4` server.
 
--  ``dhcp6`` - the command is forwarded to the ``kea-dhcp6`` server.
+-  ``dhcp6`` - the command is forwarded to the :iscman:`kea-dhcp6` server.
 
--  ``d2`` - the command is forwarded to the ``kea-dhcp-ddns`` server.
+-  ``d2`` - the command is forwarded to the :iscman:`kea-dhcp-ddns` server.
 
 The server processing the incoming command sends a response of the
 form:
