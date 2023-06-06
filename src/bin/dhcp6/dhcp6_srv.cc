@@ -478,6 +478,7 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
             if (query->inClass("DROP")) {
                 LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING,
                           DHCP6_PACKET_DROP_DROP_CLASS_EARLY)
+                    .arg(query->makeLabel(query->getClientId(), nullptr))
                     .arg(query->toText());
                 StatsMgr::instance().addValue("pkt6-receive-drop",
                                               static_cast<int64_t>(1));
@@ -581,6 +582,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     // Check the DROP special class.
     if (pkt->inClass("DROP")) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS2)
+            .arg(pkt->makeLabel(pkt->getClientId(), nullptr))
             .arg(pkt->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
@@ -896,6 +898,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     // Check the DROP special class.
     if (query->inClass("DROP")) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS)
+            .arg(query->makeLabel(query->getClientId(), nullptr))
             .arg(query->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
