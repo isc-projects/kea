@@ -1,3 +1,14 @@
+2167.   [func]      tmark
+	The kea-dhcp<4/6> parameter, ddns-use-conflict-resolution,
+	has been deprecated and replaced with
+	ddns-conflict-resolution-mode.  The new parameter supports
+	four modes of behavior pertaining to DDNS update conflict
+	resolution: check-with-dhcid, no-check-with-dhcid,
+	check-exists-with-dhcid, and no-check-without-dhcid.
+	Thanks to Shawn Routhier from Infoblox for contributing
+	the patch to implement this feature.
+	(Gitlab #2276)
+
 Kea 2.4.0 (stable) released on July 05, 2023
 
 2166.	[build]		mgodzina
