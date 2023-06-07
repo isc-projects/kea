@@ -61,7 +61,7 @@ public:
             // 0, 1, 2 etc.
             Subnet4Ptr subnet(new Subnet4(IOAddress(0xC0000000 | (i << 2)),
                                           24, def_triplet, def_triplet,
-                                          4000));
+                                          4000, SubnetID(100 + i)));
             test_subnets4_.insert(subnet);
         }
         // Create IPv6 subnets.
@@ -74,7 +74,8 @@ public:
             // 2001:db8:2::0 etc.
             ++prefix_bytes[5];
             prefix = IOAddress::fromBytes(prefix.getFamily(), &prefix_bytes[0]);
-            Subnet6Ptr subnet(new Subnet6(prefix, 64, 1000, 2000, 3000, 4000));
+            Subnet6Ptr subnet(new Subnet6(prefix, 64, 1000, 2000, 3000, 4000,
+                                          SubnetID(200 + i)));
             test_subnets6_.insert(subnet);
         }
 

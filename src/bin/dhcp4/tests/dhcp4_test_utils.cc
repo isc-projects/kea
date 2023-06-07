@@ -62,7 +62,8 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     // Wipe any existing statistics
     isc::stats::StatsMgr::instance().removeAll();
 
-    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1000, 2000, 3000);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"),
+                              24, 1000, 2000, 3000, SubnetID(1));
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
 

@@ -514,13 +514,12 @@ public:
     /// @param t1 renewal timer (in seconds)
     /// @param t2 rebind timer (in seconds)
     /// @param valid_lifetime preferred lifetime of leases (in seconds)
-    /// @param id arbitrary subnet id, default value of 0 triggers
-    /// autogeneration of subnet id
+    /// @param id arbitrary subnet id, no default value
     Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
             const util::Triplet<uint32_t>& t1,
             const util::Triplet<uint32_t>& t2,
             const util::Triplet<uint32_t>& valid_lifetime,
-            const SubnetID id = 0);
+            const SubnetID id);
 
     /// @brief Factory function creating an instance of the @c Subnet4.
     ///
@@ -538,8 +537,7 @@ public:
     /// @param t1 renewal timer (in seconds)
     /// @param t2 rebind timer (in seconds)
     /// @param valid_lifetime preferred lifetime of leases (in seconds)
-    /// @param id arbitrary subnet id, default value of 0 triggers
-    /// autogeneration of subnet id
+    /// @param id arbitrary subnet id, no default value
     ///
     /// @return Pointer to the @c Subnet4 instance.
     static Subnet4Ptr
@@ -547,7 +545,7 @@ public:
            const util::Triplet<uint32_t>& t1,
            const util::Triplet<uint32_t>& t2,
            const util::Triplet<uint32_t>& valid_lifetime,
-           const SubnetID id = 0);
+           const SubnetID id);
 
     /// @brief Returns next subnet within shared network.
     ///
@@ -682,14 +680,14 @@ public:
     /// @param t2 rebind timer (in seconds)
     /// @param preferred_lifetime preferred lifetime of leases (in seconds)
     /// @param valid_lifetime preferred lifetime of leases (in seconds)
-    /// @param id arbitrary subnet id, default value of 0 triggers
+    /// @param id arbitrary subnet id, no default value
     /// autogeneration of subnet id
     Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
             const util::Triplet<uint32_t>& t1,
             const util::Triplet<uint32_t>& t2,
             const util::Triplet<uint32_t>& preferred_lifetime,
             const util::Triplet<uint32_t>& valid_lifetime,
-            const SubnetID id = 0);
+            const SubnetID id);
 
     /// @brief Factory function creating an instance of the @c Subnet4.
     ///
@@ -708,8 +706,7 @@ public:
     /// @param t2 rebind timer (in seconds)
     /// @param preferred_lifetime preferred lifetime of leases (in seconds)
     /// @param valid_lifetime preferred lifetime of leases (in seconds)
-    /// @param id arbitrary subnet id, default value of 0 triggers
-    /// autogeneration of subnet id
+    /// @param id arbitrary subnet id, no default value
     ///
     /// @return Pointer to the @c Subnet6 instance.
     static Subnet6Ptr
@@ -718,7 +715,7 @@ public:
            const util::Triplet<uint32_t>& t2,
            const util::Triplet<uint32_t>& preferred_lifetime,
            const util::Triplet<uint32_t>& valid_lifetime,
-           const SubnetID id = 0);
+           const SubnetID id);
 
     /// @brief Returns next subnet within shared network.
     ///

@@ -263,11 +263,11 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet_->getID()));
 
     // Allocations without DUID are not allowed either
     AllocEngine::ClientContext6 ctx2(subnet_, DuidPtr(), false, false, "", false,
@@ -282,11 +282,11 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet_->getID()));
 }
 
 // This test checks if really small pools are working
@@ -343,7 +343,7 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     cfg_mgr.clear(); // Get rid of the default test configuration
 
     // Create configuration similar to other tests, but with a single address pool
-    subnet_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+    subnet_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4, SubnetID(10));
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
@@ -374,11 +374,11 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
-    EXPECT_EQ(1, getStatistics("v6-allocation-fail", 2));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 2));
-    EXPECT_EQ(1, getStatistics("v6-allocation-fail-subnet", 2));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 2));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 2));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", subnet_->getID()));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail-subnet", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet_->getID()));
 }
 
 // This test checks if an expired lease can be reused in SOLICIT (fake allocation)
@@ -707,7 +707,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     cfg_mgr.clear(); // Get rid of the default test configuration
 
     // Create configuration similar to other tests, but with a single address pool
-    subnet_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+    subnet_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4, SubnetID(10));
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
@@ -1743,11 +1743,11 @@ TEST_F(AllocEngine6Test, reservedAddress) {
             EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
             EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
-            EXPECT_EQ(failure, getStatistics("v6-allocation-fail", 1));
-            EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
-            EXPECT_EQ(failure, getStatistics("v6-allocation-fail-subnet", 1));
-            EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
-            EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
+            EXPECT_EQ(failure, getStatistics("v6-allocation-fail", subnet_->getID()));
+            EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", subnet_->getID()));
+            EXPECT_EQ(failure, getStatistics("v6-allocation-fail-subnet", subnet_->getID()));
+            EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", subnet_->getID()));
+            EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet_->getID()));
         } else {
             success++;
             std::cout << "Alloc for client " << (int)i << " succeeded:"
@@ -1798,11 +1798,11 @@ TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet_->getID()));
 
     // Let's fix this and break it in a different way.
     ctx.subnet_ = subnet_;
@@ -1818,11 +1818,11 @@ TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet_->getID()));
 }
 
 // Checks whether an address can be renewed (simple case, no reservation tricks)
@@ -2395,7 +2395,7 @@ TEST_F(AllocEngine6Test, largePoolOver32bits) {
     AllocEngine engine(0);
 
     // Configure 2001:db8::/32 subnet
-    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4, SubnetID(10));
 
     // Configure the NA pool of /48. So there are 2^80 addresses there. Make
     // sure that we still can handle cases where number of available addresses
@@ -2454,11 +2454,11 @@ TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
-    EXPECT_EQ(1, getStatistics("v6-allocation-fail", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", 1));
-    EXPECT_EQ(1, getStatistics("v6-allocation-fail-subnet", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network", subnet_->getID()));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail-subnet", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", subnet_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet_->getID()));
 
     // This time, lets allow more attempts, and expect that the allocation will
     // be successful.
@@ -2645,7 +2645,7 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
     cfg_mgr.clear(); // Get rid of the default test configuration
 
     // Create configuration similar to other tests, but with a single address pool
-    subnet_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+    subnet_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4, SubnetID(10));
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
@@ -2720,8 +2720,8 @@ public:
     SharedNetworkAlloc6Test()
         :engine_(0) {
 
-        subnet1_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
-        subnet2_ = Subnet6::create(IOAddress("2001:db8:2::"), 56, 1, 2, 3, 4);
+        subnet1_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4, SubnetID(10));
+        subnet2_ = Subnet6::create(IOAddress("2001:db8:2::"), 56, 1, 2, 3, 4, SubnetID(20));
         pool1_.reset(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                                IOAddress("2001:db8:1::1")));
         pool2_.reset(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"),
@@ -3194,11 +3194,11 @@ TEST_F(SharedNetworkAlloc6Test, requestRunningOut) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools"));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes"));
 
-    EXPECT_EQ(1, getStatistics("v6-allocation-fail", 3));
-    EXPECT_EQ(1, getStatistics("v6-allocation-fail-shared-network", 3));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 3));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 3));
-    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 3));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail", subnet2_->getID()));
+    EXPECT_EQ(1, getStatistics("v6-allocation-fail-shared-network", subnet2_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", subnet2_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", subnet2_->getID()));
+    EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet2_->getID()));
 }
 
 // Verifies that client with a hostname reservation can

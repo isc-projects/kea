@@ -271,7 +271,7 @@ public:
 
     /// @brief Implementation of the method creating DHCPv6 lease instance.
     virtual void initLease() {
-        Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 100, 200, 300, 400));
+        Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 100, 200, 300, 400, SubnetID(1)));
         // Normally, this would be set via defaults
         subnet->setDdnsUseConflictResolution(true);
 
@@ -481,7 +481,7 @@ public:
     /// @brief Implementation of the method creating DHCPv4 lease instance.
     virtual void initLease() {
 
-        Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+        Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(1)));
         // Normally, this would be set via defaults
         subnet->setDdnsUseConflictResolution(true);
 
@@ -733,6 +733,5 @@ TEST_F(NCRGenerator4Test, withTtlPercent) {
                 "B03AB370BFF46BFA309AE7BFD", true, ttl_percent);
     }
 }
-
 
 } // end of anonymous namespace

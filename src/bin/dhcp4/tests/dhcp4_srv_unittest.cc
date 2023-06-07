@@ -1272,7 +1272,8 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
     subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft);
+                              valid_lft,
+                              subnet_->getID());
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1352,7 +1353,8 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft);
+                              valid_lft,
+                              subnet_->getID());
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1503,7 +1505,8 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
     subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft);
+                              valid_lft,
+                              subnet_->getID());
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1884,7 +1887,8 @@ TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               Triplet<uint32_t>(),
                               Triplet<uint32_t>(),
-                              3000);
+                              3000,
+                              subnet_->getID());
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);

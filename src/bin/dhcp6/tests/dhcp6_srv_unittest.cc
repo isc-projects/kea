@@ -2423,9 +2423,12 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
 TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     NakedDhcpv6Srv srv(0);
 
-    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4);
-    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4);
-    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4);
+    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(10));
+    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(20));
+    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(30));
 
     // CASE 1: We have only one subnet defined and we received local traffic.
     // The only available subnet used to be picked, but not anymore
@@ -2495,9 +2498,12 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
 TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
     NakedDhcpv6Srv srv(0);
 
-    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4);
-    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4);
-    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4);
+    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(10));
+    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(20));
+    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(30));
 
     subnet1->setIface("eth0");
     subnet3->setIface("wifi1");
@@ -2560,9 +2566,12 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
 TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     NakedDhcpv6Srv srv(0);
 
-    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4);
-    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4);
-    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4);
+    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(10));
+    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(20));
+    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(30));
 
     Pkt6::RelayInfo relay;
     relay.linkaddr_ = IOAddress("2001:db8:2::1234");
@@ -2683,9 +2692,12 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
 TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
     NakedDhcpv6Srv srv(0);
 
-    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4);
-    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4);
-    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4);
+    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(10));
+    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(20));
+    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(30));
 
     subnet1->setInterfaceId(generateInterfaceId("relay1"));
     subnet2->setInterfaceId(generateInterfaceId("relay2"));

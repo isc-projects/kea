@@ -171,7 +171,9 @@ AllocEngine4Test::generateDeclinedLease(const std::string& addr,
 }
 
 AllocEngine6Test::AllocEngine6Test() {
-    Subnet::resetSubnetID();
+    // No longer used but this means too that tests relied far too much on it.
+    //Subnet::resetSubnetID();
+
     CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.
@@ -208,7 +210,8 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
                              const uint8_t pd_delegated_length) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
-    subnet_ = Subnet6::create(subnet, 56, 100, 200, 300, 400);
+    static SubnetID id(1);
+    subnet_ = Subnet6::create(subnet, 56, 100, 200, 300, 400, id++);
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, pool_start, pool_end));
 
     subnet_->addPool(pool_);
@@ -637,7 +640,8 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
                              const asiolink::IOAddress& pool_end) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
-    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3);
+    static SubnetID id(1);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3, id++);
     pool_ = Pool4Ptr(new Pool4(pool_start, pool_end));
     subnet_->addPool(pool_);
 
@@ -645,7 +649,9 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
 }
 
 AllocEngine4Test::AllocEngine4Test() {
-    Subnet::resetSubnetID();
+    // No longer used but this means too that tests relied far too much on it.
+    //Subnet::resetSubnetID();
+
     CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.

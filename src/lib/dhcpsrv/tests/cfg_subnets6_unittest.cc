@@ -164,9 +164,12 @@ TEST(CfgSubnets6Test, deleteSubnet) {
     CfgSubnets6 cfg;
 
     // Create 3 subnets.
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
 
     ASSERT_NO_THROW(cfg.add(subnet1));
     ASSERT_NO_THROW(cfg.add(subnet2));
@@ -257,9 +260,12 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddress) {
     CfgSubnets6 cfg;
 
     // Let's configure 3 subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
     cfg.add(subnet1);
     cfg.add(subnet2);
     cfg.add(subnet3);
@@ -297,9 +303,12 @@ TEST(CfgSubnets6Test, selectSubnetByNetworkRelayAddress) {
     SharedNetwork6Ptr network3(new SharedNetwork6("net3"));
 
     // Let's configure 3 subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
 
     // Allow subnet class of clients to use the subnets.
     subnet1->allowClientClass("subnet");
@@ -364,9 +373,12 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceName) {
     CfgSubnets6 cfg;
 
     // Let's create 3 subnets.
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
     subnet1->setIface("foo");
     subnet2->setIface("bar");
     subnet3->setIface("foobar");
@@ -411,9 +423,12 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceId) {
     CfgSubnets6 cfg;
 
     // Create 3 subnets.
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
 
     // Create Interface-id options used in subnets 1,2, and 3
     OptionPtr ifaceid1 = generateInterfaceId("relay1.eth0");
@@ -469,9 +484,12 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddressAndClassify) {
     CfgSubnets6 cfg;
 
     // Let's configure 3 subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
     cfg.add(subnet1);
     cfg.add(subnet2);
     cfg.add(subnet3);
@@ -536,9 +554,12 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddressAndClassify) {
 TEST(CfgSubnets6Test, selectSubnetByInterfaceNameAndClassify) {
     CfgSubnets6 cfg;
 
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
     subnet1->setIface("foo");
     subnet2->setIface("bar");
     subnet3->setIface("foobar");
@@ -574,9 +595,12 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceNameAndClassify) {
 TEST(CfgSubnets6Test, selectSubnetByInterfaceIdAndClassify) {
     CfgSubnets6 cfg;
 
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
 
     // interface-id options used in subnets 1,2, and 3
     OptionPtr ifaceid1 = generateInterfaceId("relay1.eth0");

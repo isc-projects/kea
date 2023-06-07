@@ -421,9 +421,12 @@ TEST(CfgSubnets4Test, selectSubnetByCiaddr) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
 
     // Make sure that initially the subnets don't exist.
     SubnetSelector selector;
@@ -466,9 +469,12 @@ TEST(CfgSubnets4Test, selectSubnetByIface) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
     // No interface defined for subnet1
     subnet2->setIface("lo");
     subnet3->setIface("eth1");
@@ -571,9 +577,12 @@ TEST(CfgSubnets4Test, selectSubnetByClasses) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
 
     // Add them to the configuration.
     cfg.add(subnet1);
@@ -647,9 +656,12 @@ TEST(CfgSubnets4Test, selectSharedNetworkByClasses) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
 
     // Add them to the configuration.
     cfg.add(subnet1);
@@ -702,9 +714,12 @@ TEST(CfgSubnets4Test, selectSubnetByOptionSelect) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
 
     // Add them to the configuration.
     cfg.add(subnet1);
@@ -739,9 +754,12 @@ TEST(CfgSubnets4Test, selectSubnetByRelayAddress) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
 
     // Add them to the configuration.
     cfg.add(subnet1);
@@ -778,9 +796,12 @@ TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddressNetworkLevel) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
 
     // Add them to the configuration.
     cfg.add(subnet1);
@@ -814,9 +835,12 @@ TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddressSubnetLevel) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
 
     // Add them to the configuration.
     cfg.add(subnet1);
@@ -852,9 +876,12 @@ TEST(CfgSubnets4Test, selectSubnetNoCiaddr) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(3)));
 
     // Make sure that initially the subnets don't exist.
     SubnetSelector selector;
@@ -906,7 +933,8 @@ TEST(CfgSubnets4Test, selectSubnetInterface) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 
     // Configure first subnet which address on eth0 corresponds to.
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.1"), 24, 1, 2, 3));
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.1"),
+                                   24, 1, 2, 3, SubnetID(1)));
     cfg.add(subnet1);
 
     // The address on eth0 should match the existing subnet.
@@ -919,7 +947,8 @@ TEST(CfgSubnets4Test, selectSubnetInterface) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 
     // Configure a second subnet.
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.1"), 24, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.1"),
+                                   24, 1, 2, 3, SubnetID(2)));
     cfg.add(subnet2);
 
     // There should be match between eth0 and subnet1 and between eth1 and
