@@ -23,14 +23,16 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
+#include <testutils/log_utils.h>
 
 #include <boost/pointer_cast.hpp>
 
 #include <gtest/gtest.h>
 
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::util;
 
 namespace {
@@ -1955,6 +1957,89 @@ TEST(SubnetFetcherTest, getSubnet6ById) {
     ASSERT_TRUE(subnet);
     EXPECT_EQ(2048, subnet->getID());
     EXPECT_EQ("2001:db8:2::/64", subnet->toText());
+}
+
+// Test fixture for subnet identifier auto-generation.
+class SubnetIdTest : public LogContentTest {
+public:
+
+    /// @brief virtual destructor.
+    virtual ~SubnetIdTest() {
+        Subnet::resetSubnetID();
+    }
+};
+
+// Test class for subnets with id = 0.
+class TestSubnet : public Subnet {
+public:
+    // @brief Constructor.
+    //
+    // @param prefix subnet prefix.
+    // @param len prefix length for the subnet.
+    TestSubnet(const IOAddress& prefix, uint8_t len)
+        : Subnet(prefix, len, 0) {
+    }
+
+    // @brief Returns the default address that will be used for pool selection.
+    virtual IOAddress default_pool() const {
+        isc_throw(NotImplemented, "default_pool");
+    }
+
+    /// @brief Instantiates the allocators and their states.
+    virtual void createAllocators() {
+        isc_throw(NotImplemented, "createAllocators");
+    }
+
+    /// @brief Checks if used pool type is valid.
+    virtual void checkType(Lease::Type type) const {
+        isc_throw(NotImplemented, "checkType " << type);
+    }
+};
+
+// Type of pointers to test subnets.
+typedef boost::shared_ptr<TestSubnet> TestSubnetPtr;
+
+// Test subnet identifier auto-generation.
+TEST_F(SubnetIdTest, unnumbered) {
+    // Reset subnet identifier counter.
+    Subnet::resetSubnetID();
+
+    // First subnet.
+    IOAddress addr1("192.0.2.0");
+    uint8_t len1(25);
+    TestSubnetPtr subnet1;
+    ASSERT_NO_THROW(subnet1.reset(new TestSubnet(addr1, len1)));
+    ASSERT_TRUE(subnet1);
+    EXPECT_EQ(1, subnet1->getID());
+    EXPECT_EQ("192.0.2.0/25", subnet1->toText());
+
+    // Second subnet.
+    IOAddress addr2("192.0.2.128");
+    uint8_t len2(25);
+    TestSubnetPtr subnet2;
+    ASSERT_NO_THROW(subnet2.reset(new TestSubnet(addr2, len2)));
+    ASSERT_TRUE(subnet2);
+    EXPECT_EQ(2, subnet2->getID());
+    EXPECT_EQ("192.0.2.128/25", subnet2->toText());
+
+    // Reset subnet identifier counter again to get another log.
+    Subnet::resetSubnetID();
+
+    // Third subnet.
+    IOAddress addr3("2001:db8:1::");
+    uint8_t len3(64);
+    TestSubnetPtr subnet3;
+    ASSERT_NO_THROW(subnet3.reset(new TestSubnet(addr3, len3)));
+    ASSERT_TRUE(subnet3);
+    EXPECT_EQ(1, subnet3->getID());
+    EXPECT_EQ("2001:db8:1::/64", subnet3->toText());
+
+    // Subnet 1 and 3 are logged.
+    std::string msg = "DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET ";
+    msg += "a subnet was configured unnumbered: ";
+    addString(msg + subnet1->toText());
+    addString(msg + subnet3->toText());
+    EXPECT_TRUE(checkFile());
 }
 
 }

@@ -1153,7 +1153,6 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
     EXPECT_EQ(1, subnet->getID());
 }
 
-#if deprecated_unnumbered
 // Goal of this test is to verify that multiple subnets get unique
 // subnet-ids. Also, test checks that it's possible to do reconfiguration
 // multiple times.
@@ -1185,7 +1184,6 @@ TEST_F(Dhcp4ParserTest, multipleSubnets) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
-    extractConfig(config);
 
     int cnt = 0; // Number of reconfigurations
 
@@ -1213,7 +1211,6 @@ TEST_F(Dhcp4ParserTest, multipleSubnets) {
         // a bit.
     } while (++cnt < 10);
 }
-#endif
 
 // This test checks that it is possible to assign arbitrary ids for subnets.
 TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {

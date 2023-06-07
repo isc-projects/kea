@@ -1426,22 +1426,19 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
-        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" "
         " },"
         " {"
-        "    \"id\": 2,"
         "    \"pools\": [ { \"pool\": \"2001:db8:2::/80\" } ],"
         "    \"subnet\": \"2001:db8:2::/64\", "
+        "    \"id\": 0"
         " },"
         " {"
-        "    \"id\": 3,"
         "    \"pools\": [ { \"pool\": \"2001:db8:3::/80\" } ],"
         "    \"subnet\": \"2001:db8:3::/64\" "
         " },"
         " {"
-        "    \"id\": 4,"
         "    \"pools\": [ { \"pool\": \"2001:db8:4::/80\" } ],"
         "    \"subnet\": \"2001:db8:4::/64\" "
         " } ],"
@@ -1451,7 +1448,6 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(config));
-    extractConfig(config);
 
     do {
         EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
