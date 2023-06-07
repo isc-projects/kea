@@ -2139,6 +2139,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.128/28\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,6 +89,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"rebind-timer\": 2000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -108,6 +109,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -130,6 +132,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -141,51 +144,6 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
     // CONFIGURATION 4
-"{\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"subnet4\": [\n"
-"            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.2.0/24\"\n"
-"            },\n"
-"            {\n"
-"                \"id\": 0,\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.3.101 - 192.0.3.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.3.0/24\"\n"
-"            },\n"
-"            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.4.101 - 192.0.4.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.4.0/24\"\n"
-"            },\n"
-"            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.5.101 - 192.0.5.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.5.0/24\"\n"
-"            }\n"
-"        ],\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 5
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -233,7 +191,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 6
+    // CONFIGURATION 5
 "{\n"
 "        \"boot-file-name\": \"bar\",\n"
 "        \"interfaces-config\": {\n"
@@ -246,6 +204,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"server-hostname\": \"foo\",\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -256,7 +215,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 7
+    // CONFIGURATION 6
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -267,6 +226,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet4\": [\n"
 "            {\n"
 "                \"boot-file-name\": \"bar\",\n"
+"                \"id\": 1,\n"
 "                \"next-server\": \"1.2.3.4\",\n"
 "                \"pools\": [\n"
 "                    {\n"
@@ -279,7 +239,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 8
+    // CONFIGURATION 7
 "{\n"
 "        \"boot-file-name\": \"nofile\",\n"
 "        \"interfaces-config\": {\n"
@@ -293,6 +253,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet4\": [\n"
 "            {\n"
 "                \"boot-file-name\": \"bootfile.efi\",\n"
+"                \"id\": 1,\n"
 "                \"next-server\": \"1.2.3.4\",\n"
 "                \"pools\": [\n"
 "                    {\n"
@@ -305,7 +266,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 9
+    // CONFIGURATION 8
 "{\n"
 "        \"echo-client-id\": false,\n"
 "        \"interfaces-config\": {\n"
@@ -316,6 +277,29 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.2.0/24\"\n"
+"            }\n"
+"        ],\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 9
+"{\n"
+"        \"echo-client-id\": true,\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -327,27 +311,6 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
     // CONFIGURATION 10
-"{\n"
-"        \"echo-client-id\": true,\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"subnet4\": [\n"
-"            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.2.0/24\"\n"
-"            }\n"
-"        ],\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 11
 "{\n"
 "        \"compatibility\": {\n"
 "            \"exclude-first-last-24\": true,\n"
@@ -363,6 +326,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -373,7 +337,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 12
+    // CONFIGURATION 11
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -383,6 +347,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"match-client-id\": true,\n"
 "                \"pools\": [\n"
 "                    {\n"
@@ -392,7 +357,40 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 2,\n"
 "                \"match-client-id\": false,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.3.1 - 192.0.3.100\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.3.0/24\"\n"
+"            }\n"
+"        ],\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 12
+"{\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"match-client-id\": true,\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"id\": 1,\n"
+"                \"match-client-id\": false,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.2.0/24\"\n"
+"            },\n"
+"            {\n"
+"                \"id\": 2,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.3.1 - 192.0.3.100\"\n"
@@ -409,12 +407,12 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"interfaces\": [ \"*\" ],\n"
 "            \"re-detect\": false\n"
 "        },\n"
-"        \"match-client-id\": true,\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
-"                \"match-client-id\": false,\n"
+"                \"authoritative\": true,\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -423,6 +421,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"authoritative\": false,\n"
+"                \"id\": 2,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.3.1 - 192.0.3.100\"\n"
@@ -435,6 +435,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 14
 "{\n"
+"        \"authoritative\": true,\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
 "            \"re-detect\": false\n"
@@ -443,7 +444,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
-"                \"authoritative\": true,\n"
+"                \"authoritative\": false,\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -452,7 +454,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            },\n"
 "            {\n"
-"                \"authoritative\": false,\n"
+"                \"id\": 2,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.3.1 - 192.0.3.100\"\n"
@@ -465,36 +467,6 @@ const char* EXTRACTED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 15
 "{\n"
-"        \"authoritative\": true,\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"subnet4\": [\n"
-"            {\n"
-"                \"authoritative\": false,\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.2.0/24\"\n"
-"            },\n"
-"            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.3.1 - 192.0.3.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.3.0/24\"\n"
-"            }\n"
-"        ],\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 16
-"{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
 "            \"re-detect\": false\n"
@@ -505,6 +477,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"max-valid-lifetime\": 5,\n"
 "                \"min-valid-lifetime\": 3,\n"
 "                \"pools\": [\n"
@@ -520,7 +493,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 17
+    // CONFIGURATION 16
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -530,6 +503,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.0/28\"\n"
@@ -541,6 +515,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 2,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.3.0/25\"\n"
@@ -554,7 +529,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 18
+    // CONFIGURATION 17
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -564,6 +539,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.128/28\"\n"
@@ -574,7 +550,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 19
+    // CONFIGURATION 18
 "{\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -585,7 +561,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 20
+    // CONFIGURATION 19
 "{\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -597,7 +573,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 21
+    // CONFIGURATION 20
 "{\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -614,7 +590,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 22
+    // CONFIGURATION 21
 "{\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -626,7 +602,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 23
+    // CONFIGURATION 22
 "{\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -638,7 +614,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 24
+    // CONFIGURATION 23
 "{\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -649,7 +625,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 25
+    // CONFIGURATION 24
 "{\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -660,7 +636,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 26
+    // CONFIGURATION 25
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -682,6 +658,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -692,7 +669,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 27
+    // CONFIGURATION 26
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -702,6 +679,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"option-data\": [\n"
 "                    {\n"
 "                        \"csv-format\": false,\n"
@@ -724,7 +702,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 28
+    // CONFIGURATION 27
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -754,6 +732,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -764,7 +743,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 29
+    // CONFIGURATION 28
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -800,7 +779,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 30
+    // CONFIGURATION 29
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -847,6 +826,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -857,7 +837,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 3000\n"
 "    }\n",
-    // CONFIGURATION 31
+    // CONFIGURATION 30
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -874,6 +854,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"option-data\": [\n"
 "                    {\n"
 "                        \"csv-format\": false,\n"
@@ -896,7 +877,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 32
+    // CONFIGURATION 31
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -906,6 +887,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"option-data\": [\n"
 "                    {\n"
 "                        \"csv-format\": false,\n"
@@ -921,6 +903,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 2,\n"
 "                \"option-data\": [\n"
 "                    {\n"
 "                        \"csv-format\": false,\n"
@@ -938,7 +921,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 33
+    // CONFIGURATION 32
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -948,6 +931,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"option-data\": [\n"
@@ -970,7 +954,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 34
+    // CONFIGURATION 33
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -980,6 +964,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"option-data\": [\n"
@@ -1007,7 +992,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 35
+    // CONFIGURATION 34
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1027,6 +1012,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1037,7 +1023,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 36
+    // CONFIGURATION 35
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1073,7 +1059,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 37
+    // CONFIGURATION 36
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1115,6 +1101,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1125,7 +1112,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 3000\n"
 "    }\n",
-    // CONFIGURATION 38
+    // CONFIGURATION 37
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1151,6 +1138,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1-192.0.2.10\"\n"
@@ -1161,7 +1149,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 39
+    // CONFIGURATION 38
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1187,6 +1175,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1197,7 +1186,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 40
+    // CONFIGURATION 39
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"eth0\", \"eth1\" ],\n"
@@ -1207,7 +1196,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 41
+    // CONFIGURATION 40
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"eth0\", \"*\", \"eth1\" ],\n"
@@ -1217,7 +1206,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 42
+    // CONFIGURATION 41
 "{\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": true,\n"
@@ -1237,6 +1226,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1247,7 +1237,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 43
+    // CONFIGURATION 42
 "{\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": true,\n"
@@ -1274,6 +1264,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1284,7 +1275,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 44
+    // CONFIGURATION 43
 "{\n"
 "        \"ddns-generated-prefix\": \"global.prefix\",\n"
 "        \"ddns-override-client-update\": true,\n"
@@ -1319,12 +1310,40 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
 "                    }\n"
 "                ],\n"
 "                \"subnet\": \"192.0.2.0/24\"\n"
+"            }\n"
+"        ],\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 44
+"{\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"id\": 1,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
+"                    }\n"
+"                ],\n"
+"                \"rebind-timer\": 2,\n"
+"                \"relay\": {\n"
+"                    \"ip-address\": \"192.0.2.123\"\n"
+"                },\n"
+"                \"renew-timer\": 1,\n"
+"                \"subnet\": \"192.0.2.0/24\",\n"
+"                \"valid-lifetime\": 4\n"
 "            }\n"
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
@@ -1339,6 +1358,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1346,7 +1366,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                ],\n"
 "                \"rebind-timer\": 2,\n"
 "                \"relay\": {\n"
-"                    \"ip-address\": \"192.0.2.123\"\n"
+"                    \"ip-addresses\": [ \"192.0.3.123\", \"192.0.3.124\" ]\n"
 "                },\n"
 "                \"renew-timer\": 1,\n"
 "                \"subnet\": \"192.0.2.0/24\",\n"
@@ -1365,18 +1385,43 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"client-class\": \"alpha\",\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
 "                    }\n"
 "                ],\n"
-"                \"rebind-timer\": 2,\n"
-"                \"relay\": {\n"
-"                    \"ip-addresses\": [ \"192.0.3.123\", \"192.0.3.124\" ]\n"
-"                },\n"
-"                \"renew-timer\": 1,\n"
-"                \"subnet\": \"192.0.2.0/24\",\n"
-"                \"valid-lifetime\": 4\n"
+"                \"subnet\": \"192.0.2.0/24\"\n"
+"            },\n"
+"            {\n"
+"                \"client-class\": \"beta\",\n"
+"                \"id\": 2,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.3.101 - 192.0.3.150\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.3.0/24\"\n"
+"            },\n"
+"            {\n"
+"                \"client-class\": \"gamma\",\n"
+"                \"id\": 3,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.4.101 - 192.0.4.150\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.4.0/24\"\n"
+"            },\n"
+"            {\n"
+"                \"id\": 4,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.5.101 - 192.0.5.150\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.5.0/24\"\n"
 "            }\n"
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
@@ -1391,53 +1436,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
-"                \"client-class\": \"alpha\",\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.2.0/24\"\n"
-"            },\n"
-"            {\n"
-"                \"client-class\": \"beta\",\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.3.101 - 192.0.3.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.3.0/24\"\n"
-"            },\n"
-"            {\n"
-"                \"client-class\": \"gamma\",\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.4.101 - 192.0.4.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.4.0/24\"\n"
-"            },\n"
-"            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.5.101 - 192.0.5.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.5.0/24\"\n"
-"            }\n"
-"        ],\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 48
-"{\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"subnet4\": [\n"
-"            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"client-class\": \"alpha\",\n"
@@ -1460,7 +1459,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 49
+    // CONFIGURATION 48
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1559,7 +1558,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 50
+    // CONFIGURATION 49
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1601,12 +1600,13 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 51
+    // CONFIGURATION 50
 "{\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.1.0/24\"\n"
@@ -1618,6 +1618,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.1.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 2,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.0/24\"\n"
@@ -1629,6 +1630,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 3,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.3.0/24\"\n"
@@ -1639,6 +1641,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.3.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 4,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.4.0/24\"\n"
@@ -1649,6 +1652,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.4.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 5,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.5.0/24\"\n"
@@ -1657,6 +1661,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.5.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 6,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.6.0/24\"\n"
@@ -1668,6 +1673,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.6.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 7,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.7.0/24\"\n"
@@ -1681,7 +1687,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 52
+    // CONFIGURATION 51
 "{\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1690,6 +1696,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"reservations-out-of-pool\": true,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.0/24\"\n"
@@ -1701,6 +1708,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 2,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.3.0/24\"\n"
@@ -1710,6 +1718,14 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 52
+"{\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"subnet4\": [ ]\n"
 "    }\n",
     // CONFIGURATION 53
 "{\n"
@@ -1721,14 +1737,6 @@ const char* EXTRACTED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 54
 "{\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"subnet4\": [ ]\n"
-"    }\n",
-    // CONFIGURATION 55
-"{\n"
 "        \"decline-probation-period\": 12345,\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1736,7 +1744,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet4\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 56
+    // CONFIGURATION 55
 "{\n"
 "        \"expired-leases-processing\": {\n"
 "            \"flush-reclaimed-timer-wait-time\": 35,\n"
@@ -1752,6 +1760,27 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet4\": [ ]\n"
 "    }\n",
+    // CONFIGURATION 56
+"{\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"id\": 1,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.2.0/24\"\n"
+"            }\n"
+"        ],\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
     // CONFIGURATION 57
 "{\n"
 "        \"interfaces-config\": {\n"
@@ -1762,6 +1791,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"4o6-subnet\": \"2001:db8::123/45\",\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1782,7 +1813,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
-"                \"4o6-subnet\": \"2001:db8::123/45\",\n"
+"                \"4o6-interface\": \"ethX\",\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1804,6 +1836,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet4\": [\n"
 "            {\n"
 "                \"4o6-interface\": \"ethX\",\n"
+"                \"4o6-subnet\": \"2001:db8::543/21\",\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1824,8 +1858,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
-"                \"4o6-interface\": \"ethX\",\n"
-"                \"4o6-subnet\": \"2001:db8::543/21\",\n"
+"                \"4o6-interface-id\": \"vlan123\",\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1837,27 +1871,6 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
     // CONFIGURATION 61
-"{\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"subnet4\": [\n"
-"            {\n"
-"                \"4o6-interface-id\": \"vlan123\",\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.2.0/24\"\n"
-"            }\n"
-"        ],\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 62
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -1878,6 +1891,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1888,7 +1902,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 63
+    // CONFIGURATION 62
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -1907,6 +1921,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1916,7 +1931,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 64
+    // CONFIGURATION 63
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -1937,6 +1952,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -1945,6 +1961,27 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            }\n"
 "        ]\n"
+"    }\n",
+    // CONFIGURATION 64
+"{\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"id\": 1,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.2.0/28\"\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"192.0.2.0/24\"\n"
+"            }\n"
+"        ],\n"
+"        \"valid-lifetime\": 4000\n"
 "    }\n",
     // CONFIGURATION 65
 "{\n"
@@ -1956,9 +1993,11 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
-"                        \"pool\": \"192.0.2.0/28\"\n"
+"                        \"pool\": \"192.0.2.0/28\",\n"
+"                        \"user-context\": { }\n"
 "                    }\n"
 "                ],\n"
 "                \"subnet\": \"192.0.2.0/24\"\n"
@@ -1976,10 +2015,15 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.0/28\",\n"
-"                        \"user-context\": { }\n"
+"                        \"user-context\": {\n"
+"                            \"bool-param\": true,\n"
+"                            \"integer-param\": 42,\n"
+"                            \"string-param\": \"Sagittarius\"\n"
+"                        }\n"
 "                    }\n"
 "                ],\n"
 "                \"subnet\": \"192.0.2.0/24\"\n"
@@ -1997,31 +2041,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.2.0/28\",\n"
-"                        \"user-context\": {\n"
-"                            \"bool-param\": true,\n"
-"                            \"integer-param\": 42,\n"
-"                            \"string-param\": \"Sagittarius\"\n"
-"                        }\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.2.0/24\"\n"
-"            }\n"
-"        ],\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 68
-"{\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"subnet4\": [\n"
-"            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.0 - 192.0.2.15\",\n"
@@ -2037,7 +2057,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 69
+    // CONFIGURATION 68
 "{\n"
 "        \"hosts-databases\": [\n"
 "            {\n"
@@ -2061,7 +2081,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 70
+    // CONFIGURATION 69
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -2170,7 +2190,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"comment\": \"A DHCPv4 server\"\n"
 "        }\n"
 "    }\n",
-    // CONFIGURATION 71
+    // CONFIGURATION 70
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2232,7 +2252,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 72
+    // CONFIGURATION 71
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2282,7 +2302,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 73
+    // CONFIGURATION 72
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2292,6 +2312,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
 "            {\n"
+"                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
@@ -2301,12 +2322,45 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet\": \"192.0.2.0/24\"\n"
 "            },\n"
 "            {\n"
+"                \"id\": 2,\n"
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"192.0.3.1 - 192.0.3.100\"\n"
 "                    }\n"
 "                ],\n"
 "                \"store-extended-info\": false,\n"
+"                \"subnet\": \"192.0.3.0/24\"\n"
+"            }\n"
+"        ],\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 73
+"{\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"store-extended-info\": true,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"id\": 1,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
+"                    }\n"
+"                ],\n"
+"                \"store-extended-info\": false,\n"
+"                \"subnet\": \"192.0.2.0/24\"\n"
+"            },\n"
+"            {\n"
+"                \"id\": 2,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"192.0.3.1 - 192.0.3.100\"\n"
+"                    }\n"
+"                ],\n"
 "                \"subnet\": \"192.0.3.0/24\"\n"
 "            }\n"
 "        ],\n"
@@ -2320,26 +2374,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
-"        \"store-extended-info\": true,\n"
-"        \"subnet4\": [\n"
-"            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.2.1 - 192.0.2.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"store-extended-info\": false,\n"
-"                \"subnet\": \"192.0.2.0/24\"\n"
-"            },\n"
-"            {\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"192.0.3.1 - 192.0.3.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"192.0.3.0/24\"\n"
-"            }\n"
-"        ],\n"
+"        \"statistic-default-sample-age\": 5,\n"
+"        \"statistic-default-sample-count\": 10,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
     // CONFIGURATION 75
@@ -2348,21 +2384,9 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"interfaces\": [ \"*\" ],\n"
 "            \"re-detect\": false\n"
 "        },\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"statistic-default-sample-age\": 5,\n"
-"        \"statistic-default-sample-count\": 10,\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 76
-"{\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
 "        \"subnet4\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 77
+    // CONFIGURATION 76
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2893,203 +2917,6 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"option-data\": [ ],\n"
-"                        \"pool\": \"192.0.2.1-192.0.2.100\"\n"
-"                    }\n"
-"                ],\n"
-"                \"rebind-timer\": 2000,\n"
-"                \"relay\": {\n"
-"                    \"ip-addresses\": [ ]\n"
-"                },\n"
-"                \"renew-timer\": 1000,\n"
-"                \"reservations\": [ ],\n"
-"                \"store-extended-info\": false,\n"
-"                \"subnet\": \"192.0.2.0/24\",\n"
-"                \"t1-percent\": 0.5,\n"
-"                \"t2-percent\": 0.875,\n"
-"                \"valid-lifetime\": 4000\n"
-"            },\n"
-"            {\n"
-"                \"4o6-interface\": \"\",\n"
-"                \"4o6-interface-id\": \"\",\n"
-"                \"4o6-subnet\": \"\",\n"
-"                \"allocator\": \"iterative\",\n"
-"                \"calculate-tee-times\": false,\n"
-"                \"id\": 2,\n"
-"                \"max-valid-lifetime\": 4000,\n"
-"                \"min-valid-lifetime\": 4000,\n"
-"                \"option-data\": [ ],\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"option-data\": [ ],\n"
-"                        \"pool\": \"192.0.3.101-192.0.3.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"rebind-timer\": 2000,\n"
-"                \"relay\": {\n"
-"                    \"ip-addresses\": [ ]\n"
-"                },\n"
-"                \"renew-timer\": 1000,\n"
-"                \"reservations\": [ ],\n"
-"                \"store-extended-info\": false,\n"
-"                \"subnet\": \"192.0.3.0/24\",\n"
-"                \"t1-percent\": 0.5,\n"
-"                \"t2-percent\": 0.875,\n"
-"                \"valid-lifetime\": 4000\n"
-"            },\n"
-"            {\n"
-"                \"4o6-interface\": \"\",\n"
-"                \"4o6-interface-id\": \"\",\n"
-"                \"4o6-subnet\": \"\",\n"
-"                \"allocator\": \"iterative\",\n"
-"                \"calculate-tee-times\": false,\n"
-"                \"id\": 3,\n"
-"                \"max-valid-lifetime\": 4000,\n"
-"                \"min-valid-lifetime\": 4000,\n"
-"                \"option-data\": [ ],\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"option-data\": [ ],\n"
-"                        \"pool\": \"192.0.4.101-192.0.4.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"rebind-timer\": 2000,\n"
-"                \"relay\": {\n"
-"                    \"ip-addresses\": [ ]\n"
-"                },\n"
-"                \"renew-timer\": 1000,\n"
-"                \"reservations\": [ ],\n"
-"                \"store-extended-info\": false,\n"
-"                \"subnet\": \"192.0.4.0/24\",\n"
-"                \"t1-percent\": 0.5,\n"
-"                \"t2-percent\": 0.875,\n"
-"                \"valid-lifetime\": 4000\n"
-"            },\n"
-"            {\n"
-"                \"4o6-interface\": \"\",\n"
-"                \"4o6-interface-id\": \"\",\n"
-"                \"4o6-subnet\": \"\",\n"
-"                \"allocator\": \"iterative\",\n"
-"                \"calculate-tee-times\": false,\n"
-"                \"id\": 4,\n"
-"                \"max-valid-lifetime\": 4000,\n"
-"                \"min-valid-lifetime\": 4000,\n"
-"                \"option-data\": [ ],\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"option-data\": [ ],\n"
-"                        \"pool\": \"192.0.5.101-192.0.5.150\"\n"
-"                    }\n"
-"                ],\n"
-"                \"rebind-timer\": 2000,\n"
-"                \"relay\": {\n"
-"                    \"ip-addresses\": [ ]\n"
-"                },\n"
-"                \"renew-timer\": 1000,\n"
-"                \"reservations\": [ ],\n"
-"                \"store-extended-info\": false,\n"
-"                \"subnet\": \"192.0.5.0/24\",\n"
-"                \"t1-percent\": 0.5,\n"
-"                \"t2-percent\": 0.875,\n"
-"                \"valid-lifetime\": 4000\n"
-"            }\n"
-"        ],\n"
-"        \"t1-percent\": 0.5,\n"
-"        \"t2-percent\": 0.875,\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 5
-"{\n"
-"        \"allocator\": \"iterative\",\n"
-"        \"authoritative\": false,\n"
-"        \"boot-file-name\": \"\",\n"
-"        \"calculate-tee-times\": false,\n"
-"        \"ddns-generated-prefix\": \"myhost\",\n"
-"        \"ddns-override-client-update\": false,\n"
-"        \"ddns-override-no-update\": false,\n"
-"        \"ddns-qualifying-suffix\": \"\",\n"
-"        \"ddns-replace-client-name\": \"never\",\n"
-"        \"ddns-send-updates\": true,\n"
-"        \"ddns-update-on-renew\": false,\n"
-"        \"ddns-use-conflict-resolution\": true,\n"
-"        \"decline-probation-period\": 86400,\n"
-"        \"dhcp-ddns\": {\n"
-"            \"enable-updates\": false,\n"
-"            \"max-queue-size\": 1024,\n"
-"            \"ncr-format\": \"JSON\",\n"
-"            \"ncr-protocol\": \"UDP\",\n"
-"            \"sender-ip\": \"0.0.0.0\",\n"
-"            \"sender-port\": 0,\n"
-"            \"server-ip\": \"127.0.0.1\",\n"
-"            \"server-port\": 53001\n"
-"        },\n"
-"        \"dhcp-queue-control\": {\n"
-"            \"capacity\": 64,\n"
-"            \"enable-queue\": false,\n"
-"            \"queue-type\": \"kea-ring4\"\n"
-"        },\n"
-"        \"dhcp4o6-port\": 0,\n"
-"        \"early-global-reservations-lookup\": false,\n"
-"        \"echo-client-id\": true,\n"
-"        \"expired-leases-processing\": {\n"
-"            \"flush-reclaimed-timer-wait-time\": 25,\n"
-"            \"hold-reclaimed-time\": 3600,\n"
-"            \"max-reclaim-leases\": 100,\n"
-"            \"max-reclaim-time\": 250,\n"
-"            \"reclaim-timer-wait-time\": 10,\n"
-"            \"unwarned-reclaim-cycles\": 5\n"
-"        },\n"
-"        \"hooks-libraries\": [ ],\n"
-"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
-"        \"hostname-char-replacement\": \"\",\n"
-"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"ip-reservations-unique\": true,\n"
-"        \"lease-database\": {\n"
-"            \"type\": \"memfile\"\n"
-"        },\n"
-"        \"match-client-id\": true,\n"
-"        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": true,\n"
-"            \"packet-queue-size\": 64,\n"
-"            \"thread-pool-size\": 0\n"
-"        },\n"
-"        \"next-server\": \"0.0.0.0\",\n"
-"        \"option-data\": [ ],\n"
-"        \"option-def\": [ ],\n"
-"        \"parked-packet-limit\": 256,\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"reservations-global\": false,\n"
-"        \"reservations-in-subnet\": true,\n"
-"        \"reservations-lookup-first\": false,\n"
-"        \"reservations-out-of-pool\": false,\n"
-"        \"sanity-checks\": {\n"
-"            \"extended-info-checks\": \"fix\",\n"
-"            \"lease-checks\": \"warn\"\n"
-"        },\n"
-"        \"server-hostname\": \"\",\n"
-"        \"server-tag\": \"\",\n"
-"        \"shared-networks\": [ ],\n"
-"        \"statistic-default-sample-age\": 0,\n"
-"        \"statistic-default-sample-count\": 20,\n"
-"        \"store-extended-info\": false,\n"
-"        \"subnet4\": [\n"
-"            {\n"
-"                \"4o6-interface\": \"\",\n"
-"                \"4o6-interface-id\": \"\",\n"
-"                \"4o6-subnet\": \"\",\n"
-"                \"allocator\": \"iterative\",\n"
-"                \"calculate-tee-times\": false,\n"
-"                \"id\": 1,\n"
-"                \"max-valid-lifetime\": 4000,\n"
-"                \"min-valid-lifetime\": 4000,\n"
-"                \"option-data\": [ ],\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"option-data\": [ ],\n"
 "                        \"pool\": \"192.0.4.101-192.0.4.150\"\n"
 "                    }\n"
 "                ],\n"
@@ -3194,7 +3021,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 6
+    // CONFIGURATION 5
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -3307,7 +3134,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 7
+    // CONFIGURATION 6
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -3423,7 +3250,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 8
+    // CONFIGURATION 7
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -3539,7 +3366,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 9
+    // CONFIGURATION 8
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -3652,7 +3479,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 10
+    // CONFIGURATION 9
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -3765,7 +3592,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 11
+    // CONFIGURATION 10
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -3884,7 +3711,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 12
+    // CONFIGURATION 11
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -4027,7 +3854,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 13
+    // CONFIGURATION 12
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -4169,7 +3996,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 14
+    // CONFIGURATION 13
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -4312,7 +4139,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 15
+    // CONFIGURATION 14
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": true,\n"
@@ -4454,7 +4281,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 16
+    // CONFIGURATION 15
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -4569,7 +4396,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 17
+    // CONFIGURATION 16
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -4718,7 +4545,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 18
+    // CONFIGURATION 17
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -4831,7 +4658,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 19
+    // CONFIGURATION 18
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -4923,7 +4750,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 20
+    // CONFIGURATION 19
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5015,7 +4842,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 21
+    // CONFIGURATION 20
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5116,7 +4943,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 22
+    // CONFIGURATION 21
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5208,7 +5035,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 23
+    // CONFIGURATION 22
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5300,7 +5127,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 24
+    // CONFIGURATION 23
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5392,7 +5219,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 25
+    // CONFIGURATION 24
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5484,7 +5311,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 26
+    // CONFIGURATION 25
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5616,7 +5443,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 27
+    // CONFIGURATION 26
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5748,7 +5575,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 28
+    // CONFIGURATION 27
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -5890,7 +5717,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 29
+    // CONFIGURATION 28
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -6012,7 +5839,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 30
+    // CONFIGURATION 29
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -6181,7 +6008,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 3000\n"
 "    }\n",
-    // CONFIGURATION 31
+    // CONFIGURATION 30
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -6323,7 +6150,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 32
+    // CONFIGURATION 31
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -6484,7 +6311,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 33
+    // CONFIGURATION 32
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -6616,7 +6443,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 34
+    // CONFIGURATION 33
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -6753,7 +6580,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 35
+    // CONFIGURATION 34
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -6885,7 +6712,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 36
+    // CONFIGURATION 35
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7007,7 +6834,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 37
+    // CONFIGURATION 36
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7167,7 +6994,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 3000\n"
 "    }\n",
-    // CONFIGURATION 38
+    // CONFIGURATION 37
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7297,7 +7124,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 39
+    // CONFIGURATION 38
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7430,7 +7257,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 40
+    // CONFIGURATION 39
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7514,7 +7341,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 41
+    // CONFIGURATION 40
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7598,7 +7425,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 42
+    // CONFIGURATION 41
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7711,7 +7538,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 43
+    // CONFIGURATION 42
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7824,7 +7651,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 44
+    // CONFIGURATION 43
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -7937,7 +7764,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 45
+    // CONFIGURATION 44
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -8050,7 +7877,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 46
+    // CONFIGURATION 45
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -8163,7 +7990,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 47
+    // CONFIGURATION 46
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -8363,7 +8190,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 48
+    // CONFIGURATION 47
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -8491,7 +8318,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 49
+    // CONFIGURATION 48
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -8769,7 +8596,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 50
+    // CONFIGURATION 49
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -8913,7 +8740,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 51
+    // CONFIGURATION 50
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -9210,7 +9037,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 52
+    // CONFIGURATION 51
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -9354,6 +9181,88 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
+    // CONFIGURATION 52
+"{\n"
+"        \"allocator\": \"iterative\",\n"
+"        \"authoritative\": false,\n"
+"        \"boot-file-name\": \"\",\n"
+"        \"calculate-tee-times\": false,\n"
+"        \"ddns-generated-prefix\": \"myhost\",\n"
+"        \"ddns-override-client-update\": false,\n"
+"        \"ddns-override-no-update\": false,\n"
+"        \"ddns-qualifying-suffix\": \"\",\n"
+"        \"ddns-replace-client-name\": \"never\",\n"
+"        \"ddns-send-updates\": true,\n"
+"        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
+"        \"decline-probation-period\": 86400,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"enable-updates\": false,\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp-queue-control\": {\n"
+"            \"capacity\": 64,\n"
+"            \"enable-queue\": false,\n"
+"            \"queue-type\": \"kea-ring4\"\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"early-global-reservations-lookup\": false,\n"
+"        \"echo-client-id\": true,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
+"        \"hostname-char-replacement\": \"\",\n"
+"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"ip-reservations-unique\": true,\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"match-client-id\": true,\n"
+"        \"multi-threading\": {\n"
+"            \"enable-multi-threading\": true,\n"
+"            \"packet-queue-size\": 64,\n"
+"            \"thread-pool-size\": 0\n"
+"        },\n"
+"        \"next-server\": \"0.0.0.0\",\n"
+"        \"option-data\": [ ],\n"
+"        \"option-def\": [ ],\n"
+"        \"parked-packet-limit\": 256,\n"
+"        \"reservations-global\": false,\n"
+"        \"reservations-in-subnet\": true,\n"
+"        \"reservations-lookup-first\": false,\n"
+"        \"reservations-out-of-pool\": false,\n"
+"        \"sanity-checks\": {\n"
+"            \"extended-info-checks\": \"fix\",\n"
+"            \"lease-checks\": \"warn\"\n"
+"        },\n"
+"        \"server-hostname\": \"\",\n"
+"        \"server-tag\": \"\",\n"
+"        \"shared-networks\": [ ],\n"
+"        \"statistic-default-sample-age\": 0,\n"
+"        \"statistic-default-sample-count\": 20,\n"
+"        \"store-extended-info\": false,\n"
+"        \"subnet4\": [ ],\n"
+"        \"t1-percent\": 0.5,\n"
+"        \"t2-percent\": 0.875,\n"
+"        \"valid-lifetime\": 7200\n"
+"    }\n",
     // CONFIGURATION 53
 "{\n"
 "        \"allocator\": \"iterative\",\n"
@@ -9450,7 +9359,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
 "        \"ddns-use-conflict-resolution\": true,\n"
-"        \"decline-probation-period\": 86400,\n"
+"        \"decline-probation-period\": 12345,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
 "            \"max-queue-size\": 1024,\n"
@@ -9532,88 +9441,6 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
 "        \"ddns-use-conflict-resolution\": true,\n"
-"        \"decline-probation-period\": 12345,\n"
-"        \"dhcp-ddns\": {\n"
-"            \"enable-updates\": false,\n"
-"            \"max-queue-size\": 1024,\n"
-"            \"ncr-format\": \"JSON\",\n"
-"            \"ncr-protocol\": \"UDP\",\n"
-"            \"sender-ip\": \"0.0.0.0\",\n"
-"            \"sender-port\": 0,\n"
-"            \"server-ip\": \"127.0.0.1\",\n"
-"            \"server-port\": 53001\n"
-"        },\n"
-"        \"dhcp-queue-control\": {\n"
-"            \"capacity\": 64,\n"
-"            \"enable-queue\": false,\n"
-"            \"queue-type\": \"kea-ring4\"\n"
-"        },\n"
-"        \"dhcp4o6-port\": 0,\n"
-"        \"early-global-reservations-lookup\": false,\n"
-"        \"echo-client-id\": true,\n"
-"        \"expired-leases-processing\": {\n"
-"            \"flush-reclaimed-timer-wait-time\": 25,\n"
-"            \"hold-reclaimed-time\": 3600,\n"
-"            \"max-reclaim-leases\": 100,\n"
-"            \"max-reclaim-time\": 250,\n"
-"            \"reclaim-timer-wait-time\": 10,\n"
-"            \"unwarned-reclaim-cycles\": 5\n"
-"        },\n"
-"        \"hooks-libraries\": [ ],\n"
-"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
-"        \"hostname-char-replacement\": \"\",\n"
-"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"ip-reservations-unique\": true,\n"
-"        \"lease-database\": {\n"
-"            \"type\": \"memfile\"\n"
-"        },\n"
-"        \"match-client-id\": true,\n"
-"        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": true,\n"
-"            \"packet-queue-size\": 64,\n"
-"            \"thread-pool-size\": 0\n"
-"        },\n"
-"        \"next-server\": \"0.0.0.0\",\n"
-"        \"option-data\": [ ],\n"
-"        \"option-def\": [ ],\n"
-"        \"parked-packet-limit\": 256,\n"
-"        \"reservations-global\": false,\n"
-"        \"reservations-in-subnet\": true,\n"
-"        \"reservations-lookup-first\": false,\n"
-"        \"reservations-out-of-pool\": false,\n"
-"        \"sanity-checks\": {\n"
-"            \"extended-info-checks\": \"fix\",\n"
-"            \"lease-checks\": \"warn\"\n"
-"        },\n"
-"        \"server-hostname\": \"\",\n"
-"        \"server-tag\": \"\",\n"
-"        \"shared-networks\": [ ],\n"
-"        \"statistic-default-sample-age\": 0,\n"
-"        \"statistic-default-sample-count\": 20,\n"
-"        \"store-extended-info\": false,\n"
-"        \"subnet4\": [ ],\n"
-"        \"t1-percent\": 0.5,\n"
-"        \"t2-percent\": 0.875,\n"
-"        \"valid-lifetime\": 7200\n"
-"    }\n",
-    // CONFIGURATION 56
-"{\n"
-"        \"allocator\": \"iterative\",\n"
-"        \"authoritative\": false,\n"
-"        \"boot-file-name\": \"\",\n"
-"        \"calculate-tee-times\": false,\n"
-"        \"ddns-generated-prefix\": \"myhost\",\n"
-"        \"ddns-override-client-update\": false,\n"
-"        \"ddns-override-no-update\": false,\n"
-"        \"ddns-qualifying-suffix\": \"\",\n"
-"        \"ddns-replace-client-name\": \"never\",\n"
-"        \"ddns-send-updates\": true,\n"
-"        \"ddns-update-on-renew\": false,\n"
-"        \"ddns-use-conflict-resolution\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -9682,7 +9509,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 57
+    // CONFIGURATION 56
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -9795,7 +9622,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 58
+    // CONFIGURATION 57
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -9908,7 +9735,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 59
+    // CONFIGURATION 58
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -10021,7 +9848,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 60
+    // CONFIGURATION 59
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -10134,7 +9961,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 61
+    // CONFIGURATION 60
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -10247,7 +10074,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 62
+    // CONFIGURATION 61
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -10386,7 +10213,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 63
+    // CONFIGURATION 62
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -10516,7 +10343,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 64
+    // CONFIGURATION 63
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -10648,7 +10475,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 65
+    // CONFIGURATION 64
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -10742,6 +10569,120 @@ const char* UNPARSED_CONFIGS[] = {
 "                    {\n"
 "                        \"option-data\": [ ],\n"
 "                        \"pool\": \"192.0.2.0/28\"\n"
+"                    }\n"
+"                ],\n"
+"                \"rebind-timer\": 2000,\n"
+"                \"relay\": {\n"
+"                    \"ip-addresses\": [ ]\n"
+"                },\n"
+"                \"renew-timer\": 1000,\n"
+"                \"reservations\": [ ],\n"
+"                \"store-extended-info\": false,\n"
+"                \"subnet\": \"192.0.2.0/24\",\n"
+"                \"t1-percent\": 0.5,\n"
+"                \"t2-percent\": 0.875,\n"
+"                \"valid-lifetime\": 4000\n"
+"            }\n"
+"        ],\n"
+"        \"t1-percent\": 0.5,\n"
+"        \"t2-percent\": 0.875,\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 65
+"{\n"
+"        \"allocator\": \"iterative\",\n"
+"        \"authoritative\": false,\n"
+"        \"boot-file-name\": \"\",\n"
+"        \"calculate-tee-times\": false,\n"
+"        \"ddns-generated-prefix\": \"myhost\",\n"
+"        \"ddns-override-client-update\": false,\n"
+"        \"ddns-override-no-update\": false,\n"
+"        \"ddns-qualifying-suffix\": \"\",\n"
+"        \"ddns-replace-client-name\": \"never\",\n"
+"        \"ddns-send-updates\": true,\n"
+"        \"ddns-update-on-renew\": false,\n"
+"        \"ddns-use-conflict-resolution\": true,\n"
+"        \"decline-probation-period\": 86400,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"enable-updates\": false,\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp-queue-control\": {\n"
+"            \"capacity\": 64,\n"
+"            \"enable-queue\": false,\n"
+"            \"queue-type\": \"kea-ring4\"\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"early-global-reservations-lookup\": false,\n"
+"        \"echo-client-id\": true,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
+"        \"hostname-char-replacement\": \"\",\n"
+"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"ip-reservations-unique\": true,\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"match-client-id\": true,\n"
+"        \"multi-threading\": {\n"
+"            \"enable-multi-threading\": true,\n"
+"            \"packet-queue-size\": 64,\n"
+"            \"thread-pool-size\": 0\n"
+"        },\n"
+"        \"next-server\": \"0.0.0.0\",\n"
+"        \"option-data\": [ ],\n"
+"        \"option-def\": [ ],\n"
+"        \"parked-packet-limit\": 256,\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"reservations-global\": false,\n"
+"        \"reservations-in-subnet\": true,\n"
+"        \"reservations-lookup-first\": false,\n"
+"        \"reservations-out-of-pool\": false,\n"
+"        \"sanity-checks\": {\n"
+"            \"extended-info-checks\": \"fix\",\n"
+"            \"lease-checks\": \"warn\"\n"
+"        },\n"
+"        \"server-hostname\": \"\",\n"
+"        \"server-tag\": \"\",\n"
+"        \"shared-networks\": [ ],\n"
+"        \"statistic-default-sample-age\": 0,\n"
+"        \"statistic-default-sample-count\": 20,\n"
+"        \"store-extended-info\": false,\n"
+"        \"subnet4\": [\n"
+"            {\n"
+"                \"4o6-interface\": \"\",\n"
+"                \"4o6-interface-id\": \"\",\n"
+"                \"4o6-subnet\": \"\",\n"
+"                \"allocator\": \"iterative\",\n"
+"                \"calculate-tee-times\": false,\n"
+"                \"id\": 1,\n"
+"                \"max-valid-lifetime\": 4000,\n"
+"                \"min-valid-lifetime\": 4000,\n"
+"                \"option-data\": [ ],\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"option-data\": [ ],\n"
+"                        \"pool\": \"192.0.2.0/28\",\n"
+"                        \"user-context\": { }\n"
 "                    }\n"
 "                ],\n"
 "                \"rebind-timer\": 2000,\n"
@@ -10855,7 +10796,11 @@ const char* UNPARSED_CONFIGS[] = {
 "                    {\n"
 "                        \"option-data\": [ ],\n"
 "                        \"pool\": \"192.0.2.0/28\",\n"
-"                        \"user-context\": { }\n"
+"                        \"user-context\": {\n"
+"                            \"bool-param\": true,\n"
+"                            \"integer-param\": 42,\n"
+"                            \"string-param\": \"Sagittarius\"\n"
+"                        }\n"
 "                    }\n"
 "                ],\n"
 "                \"rebind-timer\": 2000,\n"
@@ -11038,124 +10983,6 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
 "        \"hostname-char-replacement\": \"\",\n"
 "        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"ip-reservations-unique\": true,\n"
-"        \"lease-database\": {\n"
-"            \"type\": \"memfile\"\n"
-"        },\n"
-"        \"match-client-id\": true,\n"
-"        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": true,\n"
-"            \"packet-queue-size\": 64,\n"
-"            \"thread-pool-size\": 0\n"
-"        },\n"
-"        \"next-server\": \"0.0.0.0\",\n"
-"        \"option-data\": [ ],\n"
-"        \"option-def\": [ ],\n"
-"        \"parked-packet-limit\": 256,\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"reservations-global\": false,\n"
-"        \"reservations-in-subnet\": true,\n"
-"        \"reservations-lookup-first\": false,\n"
-"        \"reservations-out-of-pool\": false,\n"
-"        \"sanity-checks\": {\n"
-"            \"extended-info-checks\": \"fix\",\n"
-"            \"lease-checks\": \"warn\"\n"
-"        },\n"
-"        \"server-hostname\": \"\",\n"
-"        \"server-tag\": \"\",\n"
-"        \"shared-networks\": [ ],\n"
-"        \"statistic-default-sample-age\": 0,\n"
-"        \"statistic-default-sample-count\": 20,\n"
-"        \"store-extended-info\": false,\n"
-"        \"subnet4\": [\n"
-"            {\n"
-"                \"4o6-interface\": \"\",\n"
-"                \"4o6-interface-id\": \"\",\n"
-"                \"4o6-subnet\": \"\",\n"
-"                \"allocator\": \"iterative\",\n"
-"                \"calculate-tee-times\": false,\n"
-"                \"id\": 1,\n"
-"                \"max-valid-lifetime\": 4000,\n"
-"                \"min-valid-lifetime\": 4000,\n"
-"                \"option-data\": [ ],\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"option-data\": [ ],\n"
-"                        \"pool\": \"192.0.2.0/28\",\n"
-"                        \"user-context\": {\n"
-"                            \"bool-param\": true,\n"
-"                            \"integer-param\": 42,\n"
-"                            \"string-param\": \"Sagittarius\"\n"
-"                        }\n"
-"                    }\n"
-"                ],\n"
-"                \"rebind-timer\": 2000,\n"
-"                \"relay\": {\n"
-"                    \"ip-addresses\": [ ]\n"
-"                },\n"
-"                \"renew-timer\": 1000,\n"
-"                \"reservations\": [ ],\n"
-"                \"store-extended-info\": false,\n"
-"                \"subnet\": \"192.0.2.0/24\",\n"
-"                \"t1-percent\": 0.5,\n"
-"                \"t2-percent\": 0.875,\n"
-"                \"valid-lifetime\": 4000\n"
-"            }\n"
-"        ],\n"
-"        \"t1-percent\": 0.5,\n"
-"        \"t2-percent\": 0.875,\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
-    // CONFIGURATION 69
-"{\n"
-"        \"allocator\": \"iterative\",\n"
-"        \"authoritative\": false,\n"
-"        \"boot-file-name\": \"\",\n"
-"        \"calculate-tee-times\": false,\n"
-"        \"ddns-generated-prefix\": \"myhost\",\n"
-"        \"ddns-override-client-update\": false,\n"
-"        \"ddns-override-no-update\": false,\n"
-"        \"ddns-qualifying-suffix\": \"\",\n"
-"        \"ddns-replace-client-name\": \"never\",\n"
-"        \"ddns-send-updates\": true,\n"
-"        \"ddns-update-on-renew\": false,\n"
-"        \"ddns-use-conflict-resolution\": true,\n"
-"        \"decline-probation-period\": 86400,\n"
-"        \"dhcp-ddns\": {\n"
-"            \"enable-updates\": false,\n"
-"            \"max-queue-size\": 1024,\n"
-"            \"ncr-format\": \"JSON\",\n"
-"            \"ncr-protocol\": \"UDP\",\n"
-"            \"sender-ip\": \"0.0.0.0\",\n"
-"            \"sender-port\": 0,\n"
-"            \"server-ip\": \"127.0.0.1\",\n"
-"            \"server-port\": 53001\n"
-"        },\n"
-"        \"dhcp-queue-control\": {\n"
-"            \"capacity\": 64,\n"
-"            \"enable-queue\": false,\n"
-"            \"queue-type\": \"kea-ring4\"\n"
-"        },\n"
-"        \"dhcp4o6-port\": 0,\n"
-"        \"early-global-reservations-lookup\": false,\n"
-"        \"echo-client-id\": true,\n"
-"        \"expired-leases-processing\": {\n"
-"            \"flush-reclaimed-timer-wait-time\": 25,\n"
-"            \"hold-reclaimed-time\": 3600,\n"
-"            \"max-reclaim-leases\": 100,\n"
-"            \"max-reclaim-time\": 250,\n"
-"            \"reclaim-timer-wait-time\": 10,\n"
-"            \"unwarned-reclaim-cycles\": 5\n"
-"        },\n"
-"        \"hooks-libraries\": [ ],\n"
-"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
-"        \"hostname-char-replacement\": \"\",\n"
-"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
 "        \"hosts-databases\": [\n"
 "            {\n"
 "                \"name\": \"keatest1\",\n"
@@ -11209,7 +11036,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 70
+    // CONFIGURATION 69
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -11446,7 +11273,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        },\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 71
+    // CONFIGURATION 70
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -11646,7 +11473,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 72
+    // CONFIGURATION 71
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -11825,7 +11652,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 73
+    // CONFIGURATION 72
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -11966,7 +11793,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 74
+    // CONFIGURATION 73
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -12107,7 +11934,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 75
+    // CONFIGURATION 74
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -12191,7 +12018,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 76
+    // CONFIGURATION 75
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
@@ -12273,7 +12100,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.875,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 77
+    // CONFIGURATION 76
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"authoritative\": false,\n"
