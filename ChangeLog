@@ -1,3 +1,10 @@
+2157.	[func]*		fdupont
+	As the first step to remove the unnumbered / auto-generate
+	subnet identifier feature added a warning issued when a
+	subnet is configured with a zero or without an identifer
+	("id" entry).
+	(Gitlab 2866)
+
 2156.	[func]		razvan
 	Added an optional 'pool-id' parameter that can be used to enable
 	per-pool statistics. Supported by kea-dhcp4 and kea-dhcp6 for all
