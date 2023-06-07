@@ -602,5 +602,13 @@ Pkt4::isRelayed() const {
     return (!giaddr_.isV4Zero() && !giaddr_.isV4Bcast());
 }
 
+std::string
+Pkt4::getHWAddrLabel() const {
+    std::ostringstream label;
+    label << "hwaddr=";
+    hwaddr_ ? label << hwaddr_->toText(false) : label << "(undefined)";
+    return (label.str());
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

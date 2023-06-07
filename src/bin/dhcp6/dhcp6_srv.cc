@@ -806,7 +806,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface())
-                .arg(e.what());
+                .arg(e.what())
+                .arg(query->makeLabel(query->getClientId(), nullptr));
 
             // Increase the statistics of parse failures and dropped packets.
             StatsMgr::instance().addValue("pkt6-parse-failed",

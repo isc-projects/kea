@@ -238,8 +238,10 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
                 LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0011)
+                    .arg(next_query_id->getHWAddrLabel())
                     .arg(next_query_id->toText())
                     .arg(this_thread::get_id())
+                    .arg(holder_id->query_->getHWAddrLabel())
                     .arg(holder_id->query_->toText())
                     .arg(holder_id->thread_);
                 stats::StatsMgr::instance().addValue("pkt4-receive-drop",
@@ -249,8 +251,10 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
             LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0011)
+                .arg(query->getHWAddrLabel())
                 .arg(query->toText())
                 .arg(this_thread::get_id())
+                .arg(holder_id->query_->getHWAddrLabel())
                 .arg(holder_id->query_->toText())
                 .arg(holder_id->thread_);
             stats::StatsMgr::instance().addValue("pkt4-receive-drop",
@@ -263,8 +267,10 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
                 LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0012)
+                    .arg(next_query_hw->getHWAddrLabel())
                     .arg(next_query_hw->toText())
                     .arg(this_thread::get_id())
+                    .arg(holder_hw->query_->getHWAddrLabel())
                     .arg(holder_hw->query_->toText())
                     .arg(holder_hw->thread_);
                 stats::StatsMgr::instance().addValue("pkt4-receive-drop",
@@ -274,8 +280,10 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
             LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0012)
+                .arg(query->getHWAddrLabel())
                 .arg(query->toText())
                 .arg(this_thread::get_id())
+                .arg(holder_hw->query_->getHWAddrLabel())
                 .arg(holder_hw->query_->toText())
                 .arg(holder_hw->thread_);
             stats::StatsMgr::instance().addValue("pkt4-receive-drop",

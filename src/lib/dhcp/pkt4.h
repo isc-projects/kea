@@ -323,6 +323,14 @@ public:
     /// @return hardware address structure
     HWAddrPtr getHWAddr() const { return (hwaddr_); }
 
+    /// @brief Returns text representation of the hardware address
+    ///
+    /// Returns text representation of the hardware address (e.g. hwaddr=00:01:02:03:04:05).
+    /// If there is no defined hardware address, it returns @c hwaddr=(undefined).
+    ///
+    /// @return string with text representation
+    std::string getHWAddrLabel() const;
+
     /// @brief Add an option.
     ///
     /// @note: to avoid throwing when adding multiple options

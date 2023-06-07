@@ -128,8 +128,10 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
             LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DUPLICATE)
+                .arg(next_query->makeLabel(next_query->getClientId(), nullptr))
                 .arg(next_query->toText())
                 .arg(this_thread::get_id())
+                .arg(holder->query_->makeLabel(holder->query_->getClientId(), nullptr))
                 .arg(holder->query_->toText())
                 .arg(holder->thread_);
             stats::StatsMgr::instance().addValue("pkt6-receive-drop",
@@ -139,8 +141,10 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
         // Logging a warning as it is supposed to be a rare event
         // with well behaving clients...
         LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DUPLICATE)
+            .arg(query->makeLabel(query->getClientId(), nullptr))
             .arg(query->toText())
             .arg(this_thread::get_id())
+            .arg(holder->query_->makeLabel(holder->query_->getClientId(), nullptr))
             .arg(holder->query_->toText())
             .arg(holder->thread_);
         stats::StatsMgr::instance().addValue("pkt6-receive-drop",

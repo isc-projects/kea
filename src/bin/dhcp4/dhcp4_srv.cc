@@ -262,7 +262,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // Check the DROP special class.
     if (query_->inClass("DROP")) {
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0013)
-            .arg(query_->getHWAddr() ? query_->getHWAddr()->toText(false) : "(undefined)")
+            .arg(query_->getHWAddrLabel())
             .arg(query_->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
@@ -984,7 +984,7 @@ Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
             if (query->inClass("DROP")) {
                 LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING,
                           DHCP4_PACKET_DROP_0014)
-                    .arg(query->getHWAddr() ? query->getHWAddr()->toText(false) : "(undefined)")
+                    .arg(query->getHWAddrLabel())
                     .arg(query->toText());
                 isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                           static_cast<int64_t>(1));
@@ -1219,7 +1219,8 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface())
-                .arg(e.what());
+                .arg(e.what())
+                .arg(query->getHWAddrLabel());
 
             // Increase the statistics of parse failures and dropped packets.
             isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
@@ -1301,7 +1302,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     // Check the DROP special class.
     if (query->inClass("DROP")) {
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0010)
-            .arg(query->getHWAddr() ? query->getHWAddr()->toText(false) : "(undefined)")
+            .arg(query->getHWAddrLabel())
             .arg(query->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));

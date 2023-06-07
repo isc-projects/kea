@@ -1506,4 +1506,24 @@ TEST_F(Pkt4Test, testSkipThisOptionError) {
     EXPECT_EQ("def", opstr->getValue());
 }
 
+// Tests that getHWAddrLabel method produces the expected strings based on
+// packet content.
+TEST_F(Pkt4Test, getHWAddrLabel) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Verify getHWAddrLabel() handles empty values
+    EXPECT_EQ ("hwaddr=", pkt.getHWAddrLabel());
+
+    // Testing undefined hwaddr case is not possible
+    EXPECT_THROW(pkt.setHWAddr(nullptr), BadValue);
+
+    // Set that packet hardware address, then verify getLabel
+    const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
+    const uint8_t hw_type = 123; // hardware type
+    HWAddrPtr dummy_hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
+    pkt.setHWAddr(dummy_hwaddr);
+
+    EXPECT_EQ ("hwaddr=02:04:06:08:0a:0c", pkt.getHWAddrLabel());
+}
+
 } // end of anonymous namespace
