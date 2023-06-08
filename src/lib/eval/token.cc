@@ -191,9 +191,9 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
-    std::string data = EvalContext::fromUint16(value);
-    tmp << *(reinterpret_cast<int16_t*>(const_cast<char*>(data.data())));
+    int16_t value = 0;
+    memcpy(&value, op.data(), size);
+    tmp << value;
     op = tmp.str();
     values.push(op);
 
@@ -222,9 +222,9 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
-    std::string data = EvalContext::fromUint32(value);
-    tmp << *(reinterpret_cast<int32_t*>(const_cast<char*>(data.data())));
+    int32_t value = 0;
+    memcpy(&value, op.data(), size);
+    tmp << value;
     op = tmp.str();
     values.push(op);
 
@@ -282,9 +282,9 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
-    std::string data = EvalContext::fromUint16(value);
-    tmp << *(reinterpret_cast<uint16_t*>(const_cast<char*>(data.data())));
+    uint16_t value = 0;
+    memcpy(&value, op.data(), size);
+    tmp << value;
     op = tmp.str();
     values.push(op);
 
@@ -313,9 +313,9 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
-    std::string data = EvalContext::fromUint32(value);
-    tmp << *(reinterpret_cast<uint32_t*>(const_cast<char*>(data.data())));
+    uint32_t value = 0;
+    memcpy(&value, op.data(), size);
+    tmp << value;
     op = tmp.str();
     values.push(op);
 

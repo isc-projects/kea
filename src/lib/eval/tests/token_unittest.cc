@@ -896,14 +896,18 @@ TEST_F(TokenTest, integerToText) {
     // Check that the evaluation put its value on the values stack.
     ASSERT_EQ(1, values_.size());
 
-    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(int16_t)));
+    int16_t i16 = 0;
+    memcpy(&i16, &data, sizeof(int16_t));
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&i16)), sizeof(int16_t)));
 
     EXPECT_NO_THROW(int16token->evaluate(*pkt4_, values_));
 
     // Check that the evaluation put its value on the values stack.
     ASSERT_EQ(2, values_.size());
 
-    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(int32_t)));
+    int32_t i32 = 0;
+    memcpy(&i32, &data, sizeof(int32_t));
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&i32)), sizeof(int32_t)));
 
     EXPECT_NO_THROW(int32token->evaluate(*pkt4_, values_));
 
@@ -917,14 +921,18 @@ TEST_F(TokenTest, integerToText) {
     // Check that the evaluation put its value on the values stack.
     ASSERT_EQ(4, values_.size());
 
-    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(uint16_t)));
+    uint16_t ui16 = 0;
+    memcpy(&ui16, &data, sizeof(uint16_t));
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&ui16)), sizeof(uint16_t)));
 
     EXPECT_NO_THROW(uint16token->evaluate(*pkt4_, values_));
 
     // Check that the evaluation put its value on the values stack.
     ASSERT_EQ(5, values_.size());
 
-    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&data)), sizeof(uint32_t)));
+    uint32_t ui32 = 0;
+    memcpy(&ui32, &data, sizeof(uint32_t));
+    values_.push(std::string(const_cast<const char *>(reinterpret_cast<char*>(&ui32)), sizeof(uint32_t)));
 
     EXPECT_NO_THROW(uint32token->evaluate(*pkt4_, values_));
 
