@@ -170,13 +170,6 @@ public:
     /// @return A pointer to unparsed pool configuration.
     virtual data::ElementPtr toElement() const;
 
-    /// @brief Returns pointer to the permutation associated with the pool.
-    ///
-    /// @return Pointer to the address range permutation.
-    IPRangePermutationPtr getPermutation() const {
-        return (permutation_);
-    }
-
 protected:
 
     /// @brief protected constructor
@@ -233,12 +226,6 @@ protected:
 
     /// @brief Holds pool-specific allocation state.
     AllocationStatePtr allocation_state_;
-
-    /// @brief Pointer to the permutation object.
-    ///
-    /// It may be initialized for some pools to provide address
-    /// or delegated prefix randomization capabilities.
-    IPRangePermutationPtr permutation_;
 };
 
 class Pool4;

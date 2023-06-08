@@ -365,7 +365,7 @@ uint128_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
     return (uint128_t(1) << count);
 }
 
-IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
+IOAddress offsetAddress(const IOAddress& addr, isc::util::uint128_t offset) {
     // There is nothing to do if the offset is 0.
     if (offset == 0) {
         return (addr);
@@ -384,9 +384,9 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
 
     // This is IPv6 address. Let's first convert the offset value to network
     // byte order and store within the vector.
-    std::vector<uint8_t> offset_bytes(8);
+    std::vector<uint8_t> offset_bytes(16);
     for (int offset_idx = offset_bytes.size() - 1; offset_idx >= 0; --offset_idx) {
-        offset_bytes[offset_idx] = static_cast<uint8_t>(offset & 0x00000000000000ff);
+        offset_bytes[offset_idx] = static_cast<uint8_t>(offset & 0xff);
         offset = offset >> 8;
     }
 
@@ -394,20 +394,17 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
     auto addr_bytes = addr.toBytes();
 
     // Sum up the bytes.
-
     uint16_t carry = 0;
-    for (int i = offset_bytes.size() - 1; (i >= 0) || (carry > 0); --i) {
+    for (int i = offset_bytes.size() - 1; (i >= 0); --i) {
         // Sum the bytes of the address, offset and the carry.
-        uint16_t sum = static_cast<uint16_t>(addr_bytes[i+8]) + carry;
+        uint16_t sum = static_cast<uint16_t>(addr_bytes[i]) + carry;
 
         // Protect against the case when we went beyond the offset vector and
         // we have only carry to add.
-        if (i >= 0 ) {
-            sum += static_cast<uint16_t>(offset_bytes[i]);
-        }
+        sum += static_cast<uint16_t>(offset_bytes[i]);
 
         // Update the address byte.
-        addr_bytes[i+8] = sum % 256;
+        addr_bytes[i] = sum % 256;
 
         // Calculate the carry value.
         carry = sum / 256;
@@ -417,6 +414,5 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
     return (IOAddress::fromBytes(AF_INET6, &addr_bytes[0]));
 }
 
-
-};
-};
+}
+}

@@ -385,4 +385,4 @@ TEST(AddrUtilitiesTest, offsetIPv6Address) {
     EXPECT_EQ("3000::1c", offsetAddress(IOAddress("3000::15"), 7).toText());
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace

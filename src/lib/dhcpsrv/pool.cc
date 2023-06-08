@@ -21,7 +21,7 @@ namespace dhcp {
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     : id_(0), first_(first), last_(last), type_(type), capacity_(0),
-      cfg_option_(new CfgOption()), client_class_(""), permutation_() {
+      cfg_option_(new CfgOption()), client_class_("") {
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {

@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/ip_range.h>
+#include <util/bigints.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -114,27 +115,27 @@ private:
     /// Distance between two neighboring addresses or delegated prefixes,
     /// i.e. 1 for address range and delegated prefix size for delegated
     /// prefixes.
-    uint64_t step_;
+    isc::util::uint128_t step_;
 
     /// Keeps the position of the next address or prefix to be swapped with
     /// a randomly picked address or prefix from the range of 0..cursor-1. The
     /// cursor value is decreased every time a new IP address or prefix
     /// is returned.
-    uint64_t cursor_;
+    isc::util::uint128_t cursor_;
 
     /// Keeps the initial cursor position for @c reset function.
-    uint64_t initial_cursor_;
+    isc::util::uint128_t initial_cursor_;
 
     /// Keeps the current permutation state. The state associates the
     /// swapped IP addresses or delegated prefixes with their positions in
     /// the permutation.
-    std::unordered_map<uint64_t, asiolink::IOAddress> state_;
+    std::unordered_map<isc::util::uint128_t, asiolink::IOAddress> state_;
 
     /// Indicates if the addresses or delegated prefixes are exhausted.
     bool done_;
 
     /// Random generator.
-    std::mt19937 generator_;
+    std::mt19937_64 generator_;
 };
 
 /// @brief Pointer to the @c IPRangePermutation.

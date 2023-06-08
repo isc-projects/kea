@@ -23,7 +23,7 @@ IPRangePermutation::IPRangePermutation(const AddressRange& range)
 }
 
 IPRangePermutation::IPRangePermutation(const PrefixRange& range)
-    : range_start_(range.start_), step_(static_cast<uint64_t>(1) << (128 - range.delegated_length_)),
+    : range_start_(range.start_), step_(isc::util::uint128_t(1) << (128 - range.delegated_length_)),
       cursor_(prefixesInRange(range.prefix_length_, range.delegated_length_) - 1),
       initial_cursor_(cursor_), state_(), done_(false), generator_() {
     std::random_device rd;
@@ -52,7 +52,7 @@ IPRangePermutation::next(bool& done) {
     // addresses between the cursor and the end of the range have been already
     // returned by this function. Therefore we focus on the remaining cursor-1
     // addresses. Let's get random address from this sub-range.
-    std::uniform_int_distribution<uint64_t> dist(0, cursor_ - 1);
+    std::uniform_int_distribution<uint64_t> dist(0, static_cast<uint64_t>(cursor_ - 1));
     auto next_loc = dist(generator_);
 
     IOAddress next_loc_address = IOAddress::IPV4_ZERO_ADDRESS();

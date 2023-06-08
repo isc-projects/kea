@@ -91,7 +91,7 @@ isc::util::uint128_t prefixesInRange(const uint8_t pool_len, const uint8_t deleg
 /// @param addr input address
 /// @param offset distance of the returned address from the input address.
 /// @return address being offset greater than the input address
-IOAddress offsetAddress(const IOAddress& addr, uint64_t offset);
+IOAddress offsetAddress(const IOAddress& addr, isc::util::uint128_t offset);
 
 }  // namespace asiolink
 }  // namespace isc

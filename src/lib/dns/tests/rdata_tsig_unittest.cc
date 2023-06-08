@@ -30,6 +30,7 @@ using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using namespace isc::dns::rdata::any;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
 
@@ -57,39 +58,39 @@ protected:
     {}
 
     void checkFromText_None(const string& rdata_str) {
-        checkFromText<any::TSIG, isc::Exception, isc::Exception>(
+        checkFromText<TSIG, isc::Exception, isc::Exception>(
             rdata_str, rdata_tsig, false, false);
     }
 
     void checkFromText_InvalidText(const string& rdata_str) {
-        checkFromText<any::TSIG, InvalidRdataText, InvalidRdataText>(
+        checkFromText<TSIG, InvalidRdataText, InvalidRdataText>(
             rdata_str, rdata_tsig, true, true);
     }
 
     void checkFromText_BadValue(const string& rdata_str) {
-        checkFromText<any::TSIG, BadValue, BadValue>(
+        checkFromText<TSIG, BadValue, BadValue>(
             rdata_str, rdata_tsig, true, true);
     }
 
     void checkFromText_LexerError(const string& rdata_str) {
         checkFromText
-            <any::TSIG, InvalidRdataText, MasterLexer::LexerError>(
+            <TSIG, InvalidRdataText, MasterLexer::LexerError>(
                 rdata_str, rdata_tsig, true, true);
     }
 
     void checkFromText_TooLongLabel(const string& rdata_str) {
-        checkFromText<any::TSIG, TooLongLabel, TooLongLabel>(
+        checkFromText<TSIG, TooLongLabel, TooLongLabel>(
             rdata_str, rdata_tsig, true, true);
     }
 
     void checkFromText_EmptyLabel(const string& rdata_str) {
-        checkFromText<any::TSIG, EmptyLabel, EmptyLabel>(
+        checkFromText<TSIG, EmptyLabel, EmptyLabel>(
             rdata_str, rdata_tsig, true, true);
     }
 
     void checkFromText_BadString(const string& rdata_str) {
         checkFromText
-            <any::TSIG, InvalidRdataText, isc::Exception>(
+            <TSIG, InvalidRdataText, isc::Exception>(
                 rdata_str, rdata_tsig, true, false);
     }
 
@@ -102,7 +103,7 @@ protected:
     const string valid_text4;
     const string valid_text5;
     vector<uint8_t> expect_data;
-    const any::TSIG rdata_tsig; // commonly used test RDATA
+    const TSIG rdata_tsig; // commonly used test RDATA
 };
 
 TEST_F(Rdata_TSIG_Test, fromText) {
@@ -117,23 +118,22 @@ TEST_F(Rdata_TSIG_Test, fromText) {
     EXPECT_EQ(0, rdata_tsig.getOtherLen());
     EXPECT_EQ(static_cast<void*>(NULL), rdata_tsig.getOtherData());
 
-    any::TSIG tsig2(valid_text2);
+    TSIG tsig2(valid_text2);
     EXPECT_EQ(12, tsig2.getMACSize());
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig2.getError());
 
-    any::TSIG tsig3(valid_text3);
+    TSIG tsig3(valid_text3);
     EXPECT_EQ(6, tsig3.getOtherLen());
 
     // The other data is unusual, but we don't reject it.
-    EXPECT_NO_THROW(any::TSIG tsig4(valid_text4));
+    EXPECT_NO_THROW(TSIG tsig4(valid_text4));
 
     // numeric representation of TSIG error
-    any::TSIG tsig5(valid_text5);
+    TSIG tsig5(valid_text5);
     EXPECT_EQ(2845, tsig5.getError());
 
     // not fully qualified algorithm name
-    any::TSIG tsig1("hmac-md5.sig-alg.reg.int 1286779327 300 "
-                    "0 16020 BADKEY 0");
+    TSIG tsig1("hmac-md5.sig-alg.reg.int 1286779327 300 0 16020 BADKEY 0");
     EXPECT_EQ(0, tsig1.compare(rdata_tsig));
 
     // multi-line rdata
@@ -141,7 +141,7 @@ TEST_F(Rdata_TSIG_Test, fromText) {
                        "0 16020 BADKEY 0 )");
 
     // short-form HMAC-MD5 name
-    const any::TSIG tsig6("hmac-md5. 1286779327 300 0 16020 BADKEY 0");
+    const TSIG tsig6("hmac-md5. 1286779327 300 0 16020 BADKEY 0");
     EXPECT_EQ(0, tsig6.compare(rdata_tsig));
 };
 
@@ -194,7 +194,7 @@ TEST_F(Rdata_TSIG_Test, badText) {
 }
 
 void
-fromWireCommonChecks(const any::TSIG& tsig) {
+fromWireCommonChecks(const TSIG& tsig) {
     EXPECT_EQ(Name("hmac-sha256"), tsig.getAlgorithm());
     EXPECT_EQ(1286978795, tsig.getTimeSigned());
     EXPECT_EQ(300, tsig.getFudge());
@@ -212,13 +212,13 @@ fromWireCommonChecks(const any::TSIG& tsig) {
 TEST_F(Rdata_TSIG_Test, createFromWire) {
     RdataPtr rdata(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
                                         "rdata_tsig_fromWire1.wire"));
-    fromWireCommonChecks(dynamic_cast<any::TSIG&>(*rdata));
+    fromWireCommonChecks(dynamic_cast<TSIG&>(*rdata));
 }
 
 TEST_F(Rdata_TSIG_Test, createFromWireWithOtherData) {
     RdataPtr rdata(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
                                         "rdata_tsig_fromWire2.wire"));
-    const any::TSIG& tsig(dynamic_cast<any::TSIG&>(*rdata));
+    const TSIG& tsig(dynamic_cast<TSIG&>(*rdata));
 
     EXPECT_EQ(18, tsig.getError());
     const uint64_t otherdata = 1286978795 + 300 + 1; // time-signed + fudge + 1
@@ -236,7 +236,7 @@ TEST_F(Rdata_TSIG_Test, createFromWireWithOtherData) {
 TEST_F(Rdata_TSIG_Test, createFromWireWithoutMAC) {
     RdataPtr rdata(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
                                         "rdata_tsig_fromWire3.wire"));
-    const any::TSIG& tsig(dynamic_cast<any::TSIG&>(*rdata));
+    const TSIG& tsig(dynamic_cast<TSIG&>(*rdata));
     EXPECT_EQ(16, tsig.getError());
     EXPECT_EQ(0, tsig.getMACSize());
     EXPECT_EQ(static_cast<const void*>(NULL), tsig.getMAC());
@@ -247,7 +247,7 @@ TEST_F(Rdata_TSIG_Test, createFromWireWithCompression) {
                                         "rdata_tsig_fromWire4.wire",
                                         // we need to skip the dummy name:
                                         Name("hmac-sha256").getLength()));
-    fromWireCommonChecks(dynamic_cast<any::TSIG&>(*rdata));
+    fromWireCommonChecks(dynamic_cast<TSIG&>(*rdata));
 }
 
 TEST_F(Rdata_TSIG_Test, badFromWire) {
@@ -274,57 +274,49 @@ TEST_F(Rdata_TSIG_Test, badFromWire) {
 }
 
 TEST_F(Rdata_TSIG_Test, copyConstruct) {
-    const any::TSIG copy(rdata_tsig);
+    const TSIG copy(rdata_tsig);
     EXPECT_EQ(0, copy.compare(rdata_tsig));
 
     // Check the copied data is valid even after the original is deleted
-    any::TSIG* copy2 = new any::TSIG(rdata_tsig);
-    any::TSIG copy3(*copy2);
+    TSIG* copy2 = new TSIG(rdata_tsig);
+    TSIG copy3(*copy2);
     delete copy2;
     EXPECT_EQ(0, copy3.compare(rdata_tsig));
 }
 
 TEST_F(Rdata_TSIG_Test, createFromParams) {
-    EXPECT_EQ(0, rdata_tsig.compare(any::TSIG(Name("hmac-md5.sig-alg.reg.int"),
-                                              1286779327, 300, 0, NULL, 16020,
-                                              17, 0, NULL)));
+    EXPECT_EQ(0, rdata_tsig.compare(TSIG(Name("hmac-md5.sig-alg.reg.int"),
+                                         1286779327, 300, 0, NULL, 16020, 17, 0, NULL)));
 
     const uint8_t fake_data[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84,
                                   0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
-    EXPECT_EQ(0, any::TSIG(valid_text2).compare(
-                  any::TSIG(Name("hmac-sha256"), 1286779327, 300, 12,
-                            fake_data, 16020, 16, 0, NULL)));
+    EXPECT_EQ(0, TSIG(valid_text2).compare(TSIG(Name("hmac-sha256"), 1286779327, 300, 12,
+                                                fake_data, 16020, 16, 0, NULL)));
 
     const uint8_t fake_data2[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
-    EXPECT_EQ(0, any::TSIG(valid_text3).compare(
-                  any::TSIG(Name("hmac-sha1"), 1286779327, 300, 12,
-                            fake_data, 16020, 18, 6, fake_data2)));
+    EXPECT_EQ(0, TSIG(valid_text3).compare(TSIG(Name("hmac-sha1"), 1286779327, 300, 12,
+                                                fake_data, 16020, 18, 6, fake_data2)));
 
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 1ULL << 48, 300, 12,
-                           fake_data, 16020, 18, 6, fake_data2),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 1ULL << 48, 300, 12, fake_data, 16020, 18, 6, fake_data2),
                  isc::OutOfRange);
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 0, fake_data, 16020,
-                           18, 0, NULL),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, fake_data, 16020, 18, 0, NULL),
                  isc::InvalidParameter);
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 12, NULL, 16020,
-                           18, 0, NULL),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 12, NULL, 16020, 18, 0, NULL),
                  isc::InvalidParameter);
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020,
-                           18, 0, fake_data),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020, 18, 0, fake_data),
                  isc::InvalidParameter);
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020,
-                           18, 6, NULL),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020, 18, 6, NULL),
                  isc::InvalidParameter);
 }
 
 TEST_F(Rdata_TSIG_Test, assignment) {
-    any::TSIG copy(valid_text2);
+    TSIG copy(valid_text2);
     copy = rdata_tsig;
     EXPECT_EQ(0, copy.compare(rdata_tsig));
 
     // Check if the copied data is valid even after the original is deleted
-    any::TSIG* copy2 = new any::TSIG(rdata_tsig);
-    any::TSIG copy3(valid_text2);
+    TSIG* copy2 = new TSIG(rdata_tsig);
+    TSIG copy3(valid_text2);
     copy3 = *copy2;
     delete copy2;
     EXPECT_EQ(0, copy3.compare(rdata_tsig));
@@ -350,7 +342,7 @@ Rdata_TSIG_Test::toWireCommonChecks(Output& output) const {
 
     expect_data.clear();
     output.clear();
-    any::TSIG(valid_text2).toWire(output);
+    TSIG(valid_text2).toWire(output);
     UnitTestUtil::readWireData("rdata_tsig_toWire2.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
     matchWireData(&expect_data[0], expect_data.size(),
@@ -358,7 +350,7 @@ Rdata_TSIG_Test::toWireCommonChecks(Output& output) const {
 
     expect_data.clear();
     output.clear();
-    any::TSIG(valid_text3).toWire(output);
+    TSIG(valid_text3).toWire(output);
     UnitTestUtil::readWireData("rdata_tsig_toWire3.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
     matchWireData(&expect_data[0], expect_data.size(),
@@ -395,32 +387,31 @@ TEST_F(Rdata_TSIG_Test, toWireRenderer) {
 
 TEST_F(Rdata_TSIG_Test, toText) {
     EXPECT_EQ(valid_text1, rdata_tsig.toText());
-    EXPECT_EQ(valid_text2, any::TSIG(valid_text2).toText());
-    EXPECT_EQ(valid_text3, any::TSIG(valid_text3).toText());
-    EXPECT_EQ(valid_text5, any::TSIG(valid_text5).toText());
+    EXPECT_EQ(valid_text2, TSIG(valid_text2).toText());
+    EXPECT_EQ(valid_text3, TSIG(valid_text3).toText());
+    EXPECT_EQ(valid_text5, TSIG(valid_text5).toText());
 }
 
 TEST_F(Rdata_TSIG_Test, compare) {
     // test RDATAs, sorted in the ascending order.
     // "AAAA" encoded in BASE64 corresponds to 0x000000, so it should be the
     // smallest data of the same length.
-    vector<any::TSIG> compare_set;
-    compare_set.push_back(any::TSIG("a.example 0 300 0 16020 0 0"));
-    compare_set.push_back(any::TSIG("example 0 300 0 16020 0 0"));
-    compare_set.push_back(any::TSIG("example 1 300 0 16020 0 0"));
-    compare_set.push_back(any::TSIG("example 1 600 0 16020 0 0"));
-    compare_set.push_back(any::TSIG("example 1 600 3 AAAA 16020 0 0"));
-    compare_set.push_back(any::TSIG("example 1 600 3 FAKE 16020 0 0"));
-    compare_set.push_back(any::TSIG("example 1 600 3 FAKE 16021 0 0"));
-    compare_set.push_back(any::TSIG("example 1 600 3 FAKE 16021 1 0"));
-    compare_set.push_back(any::TSIG("example 1 600 3 FAKE 16021 1 3 AAAA"));
-    compare_set.push_back(any::TSIG("example 1 600 3 FAKE 16021 1 3 FAKE"));
+    vector<TSIG> compare_set;
+    compare_set.push_back(TSIG("a.example 0 300 0 16020 0 0"));
+    compare_set.push_back(TSIG("example 0 300 0 16020 0 0"));
+    compare_set.push_back(TSIG("example 1 300 0 16020 0 0"));
+    compare_set.push_back(TSIG("example 1 600 0 16020 0 0"));
+    compare_set.push_back(TSIG("example 1 600 3 AAAA 16020 0 0"));
+    compare_set.push_back(TSIG("example 1 600 3 FAKE 16020 0 0"));
+    compare_set.push_back(TSIG("example 1 600 3 FAKE 16021 0 0"));
+    compare_set.push_back(TSIG("example 1 600 3 FAKE 16021 1 0"));
+    compare_set.push_back(TSIG("example 1 600 3 FAKE 16021 1 3 AAAA"));
+    compare_set.push_back(TSIG("example 1 600 3 FAKE 16021 1 3 FAKE"));
 
-    EXPECT_EQ(0, compare_set[0].compare(
-                  any::TSIG("A.EXAMPLE 0 300 0 16020 0 0")));
+    EXPECT_EQ(0, compare_set[0].compare(TSIG("A.EXAMPLE 0 300 0 16020 0 0")));
 
-    vector<any::TSIG>::const_iterator it;
-    vector<any::TSIG>::const_iterator it_end = compare_set.end();
+    vector<TSIG>::const_iterator it;
+    vector<TSIG>::const_iterator it_end = compare_set.end();
     for (it = compare_set.begin(); it != it_end - 1; ++it) {
         EXPECT_GT(0, (*it).compare(*(it + 1)));
         EXPECT_LT(0, (*(it + 1)).compare(*it));

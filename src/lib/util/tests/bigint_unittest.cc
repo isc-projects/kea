@@ -37,7 +37,7 @@ TEST(BigintTest, int128) {
     EXPECT_EQ(16, int128_t(65) / int128_t(4));
 
     // Check that dividing by zero throws.
-    EXPECT_THROW_MSG(int128_t(1) / 0, std::overflow_error, "Division by zero.");
+    EXPECT_THROW_MSG(int128_t(1) / 0, std::overflow_error, "Integer Division by zero.");
 
     // Check that underflowing results in a negative number for int128_t.
     EXPECT_EQ(-1, int128_t(0) - 1);
@@ -73,7 +73,7 @@ TEST(BigintTest, uint128) {
     EXPECT_EQ(16, uint128_t(65) / uint128_t(4));
 
     // Check that dividing by zero throws.
-    EXPECT_THROW_MSG(uint128_t(1) / 0, std::overflow_error, "Division by zero.");
+    EXPECT_THROW_MSG(uint128_t(1) / 0, std::overflow_error, "Integer Division by zero.");
 
     // Check that underflowing results in a positive number for uint128_t.
     EXPECT_LT(0, uint128_t(0) - 1);
