@@ -412,7 +412,7 @@ Message::setHeaderFlag(const HeaderFlag flag, const bool on) {
     if (flag == 0 || (flag & ~HEADERFLAG_MASK) != 0) {
         isc_throw(InvalidParameter,
                   "Message::getHeaderFlag:: Invalid flag is specified: " <<
-                  "0x" << std::hex << flag);
+                  "0x" << std::hex << static_cast<int>(flag));
     }
     if (on) {
         impl_->flags_ |= flag;
@@ -997,7 +997,7 @@ Message::clear(Mode mode) {
 void
 Message::appendSection(const Section section, const Message& source) {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
     if (section == SECTION_QUESTION) {
@@ -1145,7 +1145,7 @@ Message::endQuestion() const {
 const SectionIterator<RRsetPtr>
 Message::beginSection(const Section section) const {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == SECTION_QUESTION) {
         isc_throw(InvalidMessageSection,

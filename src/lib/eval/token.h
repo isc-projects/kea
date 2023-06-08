@@ -117,7 +117,7 @@ public:
     ///
     /// @param str constant string to be represented.
     TokenString(const std::string& str)
-        :value_(str){
+        : value_(str){
     }
 
     /// @brief Token evaluation (puts value of the constant string on the stack)
@@ -474,7 +474,7 @@ public:
     /// @param rep_type Token representation type.
     TokenRelay6Option(const int8_t nest_level, const uint16_t option_code,
                       const RepresentationType& rep_type)
-        :TokenOption(option_code, rep_type), nest_level_(nest_level) {}
+        : TokenOption(option_code, rep_type), nest_level_(nest_level) {}
 
     /// @brief Returns nest-level
     ///
@@ -676,7 +676,7 @@ public:
     /// @param nest_level the nesting level for which relay to examine.
     /// @param type which field to extract.
     TokenRelay6Field(const int8_t nest_level, const FieldType type)
-      : nest_level_(nest_level), type_(type) {}
+        : nest_level_(nest_level), type_(type) {}
 
     /// @brief Extracts the specified field from the requested relay
     ///
@@ -1017,7 +1017,7 @@ public:
     ///
     /// @param client_class client class name
     TokenMember(const std::string& client_class)
-        :client_class_(client_class){
+        : client_class_(client_class){
     }
 
     /// @brief Token evaluation (check if client_class_ was added to

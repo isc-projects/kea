@@ -52,7 +52,11 @@ IPRangePermutation::next(bool& done) {
     // addresses between the cursor and the end of the range have been already
     // returned by this function. Therefore we focus on the remaining cursor-1
     // addresses. Let's get random address from this sub-range.
-    std::uniform_int_distribution<uint64_t> dist(0, static_cast<uint64_t>(cursor_ - 1));
+    uint64_t max_limit = std::numeric_limits<uint64_t>::max();
+    if ((cursor_ - 1) < isc::util::int128_t(max_limit)) {
+        max_limit = static_cast<uint64_t>(cursor_ - 1);
+    }
+    std::uniform_int_distribution<uint64_t> dist(0, max_limit);
     auto next_loc = dist(generator_);
 
     IOAddress next_loc_address = IOAddress::IPV4_ZERO_ADDRESS();

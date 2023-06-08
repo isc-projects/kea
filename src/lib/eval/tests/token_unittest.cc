@@ -1694,7 +1694,7 @@ TEST_F(TokenTest, pkt4Fields) {
 
     // Unknown field fails
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::FieldType(100))));
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(static_cast<TokenPkt4::FieldType>(100))));
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
 
     // Check that the debug output was correct.  Add the strings
@@ -1739,7 +1739,7 @@ TEST_F(TokenTest, pkt6Fields) {
 
     // Unknown field fails
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::FieldType(100))));
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(static_cast<TokenPkt6::FieldType>(100))));
     EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
 
     // Check that the debug output was correct.  Add the strings

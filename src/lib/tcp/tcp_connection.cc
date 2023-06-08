@@ -65,6 +65,7 @@ TcpConnection::TcpConnection(asiolink::IOService& io_service,
       connection_pool_(connection_pool),
       acceptor_callback_(acceptor_callback),
       connection_filter_(connection_filter),
+      read_max_(read_max),
       input_buf_(read_max) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));

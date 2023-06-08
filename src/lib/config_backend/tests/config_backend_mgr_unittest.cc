@@ -215,7 +215,7 @@ public:
                             BackendSelector::UNSPEC(),
                             const ServerSelector& server_selector =
                             ServerSelector::ALL()) const {
-        int property;
+        int property = 0;
 
         // If the selector is specified, this method will pick the appropriate
         // backend and will call getProperty method on this backend. If the
@@ -247,7 +247,8 @@ public:
                             BackendSelector::UNSPEC(),
                             const ServerSelector& server_selector =
                             ServerSelector::ALL()) const {
-        int property;
+        int property = 0;
+
         getPropertyPtrConst<int, const std::string&, int>
             (&TestConfigBackend::getProperty, backend_selector, server_selector,
              property, property_name, property_value);

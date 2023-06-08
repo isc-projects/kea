@@ -162,7 +162,7 @@ TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << static_cast<int32_t>(*(reinterpret_cast<int8_t*>(const_cast<char*>(op.data()))));
+    tmp << static_cast<int32_t>(*(reinterpret_cast<int8_t*>(op.data())));
     op = tmp.str();
     values.push(op);
 
@@ -191,8 +191,7 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    int16_t value = 0;
-    memcpy(&value, op.data(), size);
+    int16_t value = static_cast<int16_t>(readUint16(const_cast<const char*>(op.data()), size));
     tmp << value;
     op = tmp.str();
     values.push(op);
@@ -222,8 +221,7 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    int32_t value = 0;
-    memcpy(&value, op.data(), size);
+    int32_t value = static_cast<int32_t>(readUint32(const_cast<const char*>(op.data()), size));
     tmp << value;
     op = tmp.str();
     values.push(op);
@@ -253,7 +251,7 @@ TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << static_cast<uint32_t>(*(reinterpret_cast<uint8_t*>(const_cast<char*>(op.data()))));
+    tmp << static_cast<uint32_t>(*(reinterpret_cast<uint8_t*>(op.data())));
     op = tmp.str();
     values.push(op);
 
@@ -282,8 +280,7 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint16_t value = 0;
-    memcpy(&value, op.data(), size);
+    uint16_t value = readUint16(const_cast<const char*>(op.data()), size);
     tmp << value;
     op = tmp.str();
     values.push(op);
@@ -313,8 +310,7 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint32_t value = 0;
-    memcpy(&value, op.data(), size);
+    uint32_t value = readUint32(const_cast<const char*>(op.data()), size);
     tmp << value;
     op = tmp.str();
     values.push(op);
@@ -379,7 +375,7 @@ TokenOption::pushFailure(ValueStack& values) {
 
 TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
                                      const RepresentationType& rep_type)
-    :TokenOption(option_code, rep_type) {
+    : TokenOption(option_code, rep_type) {
 }
 
 OptionPtr TokenRelay4Option::getOption(Pkt& pkt) {
@@ -461,8 +457,7 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
         break;
 
     default:
-        isc_throw(EvalTypeError, "Bad meta data specified: "
-                  << static_cast<int>(type_) );
+        isc_throw(EvalTypeError, "Bad meta data specified: " << static_cast<int>(type_));
     }
 
     if (is_binary) {
@@ -538,8 +533,7 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
             type_str = "transid";
             break;
         default:
-            isc_throw(EvalTypeError, "Bad field specified: "
-                      << static_cast<int>(type_) );
+            isc_throw(EvalTypeError, "Bad field specified: " << static_cast<int>(type_));
         }
 
     } catch (const std::bad_cast&) {
@@ -582,8 +576,7 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
           break;
       }
       default:
-          isc_throw(EvalTypeError, "Bad field specified: "
-                    << static_cast<int>(type_) );
+          isc_throw(EvalTypeError, "Bad field specified: " << static_cast<int>(type_));
       }
 
     } catch (const std::bad_cast&) {
@@ -1043,13 +1036,13 @@ TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
                          uint16_t option_code)
-    :TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
-     field_(option_code ? SUBOPTION : EXISTS) {
+    : TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
+      field_(option_code ? SUBOPTION : EXISTS) {
 }
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field)
-    :TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
-     field_(field) {
+    : TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
+      field_(field) {
     if (field_ == EXISTS) {
         representation_type_ = TokenOption::EXISTS;
     }
@@ -1155,12 +1148,12 @@ OptionPtr TokenVendor::getOption(Pkt& pkt) {
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
                                    RepresentationType repr)
-    :TokenVendor(u, vendor_id, repr, 0), index_(0) {
+    : TokenVendor(u, vendor_id, repr, 0), index_(0) {
 }
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
                                    FieldType field, uint16_t index)
-    :TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, 0), index_(index) {
+    : TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, 0), index_(index) {
     field_ = field;
 }
 
@@ -1261,7 +1254,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
 }
 
 TokenInteger::TokenInteger(const uint32_t value)
-    :TokenString(EvalContext::fromUint32(value)), int_value_(value) {
+    : TokenString(EvalContext::fromUint32(value)), int_value_(value) {
 }
 
 OptionPtr

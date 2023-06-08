@@ -1641,15 +1641,14 @@ TestControl::sendRequest6(const std::vector<uint8_t>& template_buf,
         }
     }
     // Set IA_NA
-    boost::shared_ptr<Option6IA> opt_ia_na_advertise =
-        boost::static_pointer_cast<Option6IA>(advertise_pkt6->getOption(D6O_IA_NA));
+    OptionPtr opt_ia_na_advertise = advertise_pkt6->getOption(D6O_IA_NA);
     if (!opt_ia_na_advertise) {
         isc_throw(Unexpected, "DHCPv6 IA_NA option not found in received "
                   "packet");
     }
     size_t addr_offset = getRequestedIpOffset();
     boost::shared_ptr<LocalizedOption>
-        opt_ia_na(new LocalizedOption(opt_ia_na_advertise, addr_offset));
+        opt_ia_na(new LocalizedOption(Option::V6, D6O_IA_NA, opt_ia_na_advertise->getData(), addr_offset));
     if (!opt_ia_na->valid()) {
         isc_throw(BadValue, "Option IA_NA in advertise packet is invalid");
     }

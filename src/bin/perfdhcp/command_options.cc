@@ -375,7 +375,11 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             } else if (optarg_text == "multi") {
                 single_thread_mode_ = false;
             } else {
-                isc_throw(InvalidParameter, "value of thread mode (-g) '" << optarg << "' is wrong - should be '-g single' or '-g multi'");
+                if (optarg) {
+                    isc_throw(InvalidParameter, "value of thread mode (-g) '" << optarg << "' is wrong - should be '-g single' or '-g multi'");
+                } else {
+                    isc_throw(InvalidParameter, "value of thread mode (-g) is wrong - should be '-g single' or '-g multi'");
+                }
             }
             break;
         }

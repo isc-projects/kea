@@ -74,7 +74,7 @@ TEST(Element, TypeNameConversion) {
     EXPECT_EQ("map", Element::typeToName(Element::map));
     EXPECT_EQ("null", Element::typeToName(Element::null));
     EXPECT_EQ("any", Element::typeToName(Element::any));
-    EXPECT_EQ("unknown", Element::typeToName((Element::types)123));
+    EXPECT_EQ("unknown", Element::typeToName(static_cast<Element::types>(123)));
 }
 
 TEST(Element, from_and_to_json) {

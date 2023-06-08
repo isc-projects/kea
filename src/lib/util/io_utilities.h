@@ -76,7 +76,7 @@ writeUint16(uint16_t value, void* buffer, size_t length) {
 ///
 /// \return Value of 32-bit unsigned integer
 inline uint32_t
-readUint32(const uint8_t* buffer, size_t length) {
+readUint32(const void* buffer, size_t length) {
     if (length < sizeof(uint32_t)) {
         isc_throw(isc::OutOfRange,
                   "Length (" << length << ") of buffer is insufficient " <<
@@ -93,6 +93,32 @@ readUint32(const uint8_t* buffer, size_t length) {
     return (result);
 }
 
+/// \brief Write Unsigned 32-Bit Integer to Buffer
+///
+/// \param value 32-bit value to convert
+/// \param buffer Data buffer at least four bytes long into which the 32-bit
+///        value is written in network-byte order.
+/// \param length Length of the data buffer.
+///
+/// \return pointer to the next byte after stored value
+inline uint8_t*
+writeUint32(uint32_t value, void* buffer, size_t length) {
+    if (length < sizeof(uint32_t)) {
+        isc_throw(isc::OutOfRange,
+                  "Length (" << length << ") of buffer is insufficient " <<
+                  "to write a uint32_t");
+    }
+
+    uint8_t* byte_buffer = static_cast<uint8_t*>(buffer);
+
+    byte_buffer[0] = static_cast<uint8_t>((value & 0xff000000U) >> 24);
+    byte_buffer[1] = static_cast<uint8_t>((value & 0x00ff0000U) >> 16);
+    byte_buffer[2] = static_cast<uint8_t>((value & 0x0000ff00U) >> 8);
+    byte_buffer[3] = static_cast<uint8_t>((value & 0x000000ffU));
+
+    return (byte_buffer + sizeof(uint32_t));
+}
+
 /// \brief Read Unsigned 64-Bit Integer from Buffer
 ///
 /// \param buffer Data buffer at least four bytes long of which the first four
@@ -102,7 +128,7 @@ readUint32(const uint8_t* buffer, size_t length) {
 ///
 /// \return Value of 64-bit unsigned integer
 inline uint64_t
-readUint64(const uint8_t* buffer, size_t length) {
+readUint64(const void* buffer, size_t length) {
     if (length < sizeof(uint64_t)) {
         isc_throw(isc::OutOfRange,
                   "Length (" << length << ") of buffer is insufficient " <<
@@ -120,34 +146,37 @@ readUint64(const uint8_t* buffer, size_t length) {
     result |= (static_cast<uint64_t>(byte_buffer[6])) << 8;
     result |= (static_cast<uint64_t>(byte_buffer[7]));
 
-
     return (result);
 }
 
-/// \brief Write Unsigned 32-Bit Integer to Buffer
+/// \brief Write Unsigned 64-Bit Integer to Buffer
 ///
-/// \param value 32-bit value to convert
-/// \param buffer Data buffer at least four bytes long into which the 32-bit
+/// \param value 64-bit value to convert
+/// \param buffer Data buffer at least four bytes long into which the 64-bit
 ///        value is written in network-byte order.
 /// \param length Length of the data buffer.
 ///
 /// \return pointer to the next byte after stored value
 inline uint8_t*
-writeUint32(uint32_t value, uint8_t* buffer, size_t length) {
-    if (length < sizeof(uint32_t)) {
+writeUint64(uint64_t value, void* buffer, size_t length) {
+    if (length < sizeof(uint64_t)) {
         isc_throw(isc::OutOfRange,
                   "Length (" << length << ") of buffer is insufficient " <<
-                  "to write a uint32_t");
+                  "to write a uint64_t");
     }
 
     uint8_t* byte_buffer = static_cast<uint8_t*>(buffer);
 
-    byte_buffer[0] = static_cast<uint8_t>((value & 0xff000000U) >> 24);
-    byte_buffer[1] = static_cast<uint8_t>((value & 0x00ff0000U) >> 16);
-    byte_buffer[2] = static_cast<uint8_t>((value & 0x0000ff00U) >>  8);
-    byte_buffer[3] = static_cast<uint8_t>((value & 0x000000ffU));
+    byte_buffer[0] = static_cast<uint8_t>((value & 0xff00000000000000UL) >> 56);
+    byte_buffer[1] = static_cast<uint8_t>((value & 0x00ff000000000000UL) >> 48);
+    byte_buffer[2] = static_cast<uint8_t>((value & 0x0000ff0000000000UL) >> 40);
+    byte_buffer[3] = static_cast<uint8_t>((value & 0x000000ff00000000UL) >> 32);
+    byte_buffer[4] = static_cast<uint8_t>((value & 0x00000000ff000000UL) >> 24);
+    byte_buffer[5] = static_cast<uint8_t>((value & 0x0000000000ff0000UL) >> 16);
+    byte_buffer[6] = static_cast<uint8_t>((value & 0x000000000000ff00UL) >> 8);
+    byte_buffer[7] = static_cast<uint8_t>((value & 0x00000000000000ffUL));
 
-    return (byte_buffer + sizeof(uint32_t));
+    return (byte_buffer + sizeof(uint64_t));
 }
 
 } // namespace util
