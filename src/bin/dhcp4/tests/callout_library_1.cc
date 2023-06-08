@@ -22,7 +22,7 @@ extern "C" {
 
 int (*do_load)(isc::hooks::LibraryHandle& handle);
 
-int (*do_unload)(isc::hooks::LibraryHandle& handle);
+int (*do_unload)();
 
 /// @brief This function is called to retrieve the multi-threading compatibility.
 ///

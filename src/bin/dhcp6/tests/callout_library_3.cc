@@ -39,7 +39,7 @@ do_load_impl(LibraryHandle& handle) {
 
 int (*do_load)(isc::hooks::LibraryHandle& handle) = do_load_impl;
 
-int (*do_unload)(isc::hooks::LibraryHandle& handle);
+int (*do_unload)();
 
 /// @brief Callout which appends library number and provided arguments to
 /// the marker file for dhcp6_srv_configured callout.

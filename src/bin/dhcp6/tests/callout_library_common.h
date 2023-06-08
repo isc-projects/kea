@@ -35,7 +35,7 @@ extern "C" {
 
 extern int (*do_load)(isc::hooks::LibraryHandle& handle);
 
-extern int (*do_unload)(isc::hooks::LibraryHandle& handle);
+extern int (*do_unload)();
 
 /// @brief Append digit to marker file
 ///
@@ -98,11 +98,11 @@ load(isc::hooks::LibraryHandle& handle) {
 }
 
 int
-unload(isc::hooks::LibraryHandle& handle) {
+unload() {
     int result = 0;
     result = appendDigit(UNLOAD_MARKER_FILE);
     if (result == 0 && do_unload) {
-        result = do_unload(handle);
+        result = do_unload();
     }
     return (result);
 }
