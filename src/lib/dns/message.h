@@ -115,6 +115,10 @@ private:
 typedef SectionIterator<QuestionPtr> QuestionIterator;
 typedef SectionIterator<RRsetPtr> RRsetIterator;
 
+class MessageImpl;
+/// @brief Pointer to the @ref MessageImpl object.
+typedef boost::shared_ptr<MessageImpl> MessageImplPtr;
+
 /// \brief The \c Message class encapsulates a standard DNS message.
 ///
 /// Details of the design and interfaces of this class are still in flux.
@@ -258,7 +262,7 @@ public:
     /// The mode of the message is specified by the \c mode parameter.
     Message(Mode mode);
     /// \brief The destructor.
-    ~Message();
+    ~Message() = default;
 private:
     Message(const Message& source);
     Message& operator=(const Message& source);
@@ -657,7 +661,7 @@ public:
     //@}
 
 private:
-    MessageImpl* impl_;
+    MessageImplPtr impl_;
 };
 
 /// \brief Pointer-like type pointing to a \c Message

@@ -139,11 +139,13 @@ public:
     void toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx);
 };
 
+/// @brief Pointer to the @ref MessageImpl object.
+typedef boost::shared_ptr<MessageImpl> MessageImplPtr;
+
 MessageImpl::MessageImpl(Message::Mode mode) :
     mode_(mode),
-    rcode_placeholder_(Rcode(0)), // as a placeholder the value doesn't matter
-    opcode_placeholder_(Opcode(0)) // ditto
-{
+    rcode_placeholder_(Rcode(0)), // for placeholders the value doesn't matter
+    opcode_placeholder_(Opcode(0)) {
     init();
 }
 
@@ -200,8 +202,9 @@ template <typename T>
 struct RenderSection {
     RenderSection(AbstractMessageRenderer& renderer, const bool partial_ok) :
         counter_(0), renderer_(renderer), partial_ok_(partial_ok),
-        truncated_(false)
-    {}
+        truncated_(false) {
+    }
+
     void operator()(const T& entry) {
         // If it's already truncated, ignore the rest of the section.
         if (truncated_) {
@@ -217,10 +220,17 @@ struct RenderSection {
             }
         }
     }
-    unsigned int getTotalCount() { return (counter_); }
+
+    unsigned int getTotalCount() {
+        return (counter_);
+    }
+
     unsigned int counter_;
+
     AbstractMessageRenderer& renderer_;
+
     const bool partial_ok_;
+
     bool truncated_;
 };
 }
@@ -380,11 +390,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
 }
 
 Message::Message(Mode mode) :
-    impl_(new MessageImpl(mode))
-{}
-
-Message::~Message() {
-    delete impl_;
+    impl_(new MessageImpl(mode)) {
 }
 
 bool
@@ -490,7 +496,7 @@ Message::getTSIGRecord() const {
 unsigned int
 Message::getRRCount(const Section section) const {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     return (impl_->counts_[section]);
 }
@@ -506,7 +512,7 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
                   "addRRset performed in non-render mode");
     }
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
     impl_->rrsets_[section].push_back(rrset);
@@ -516,10 +522,9 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
 
 bool
 Message::hasRRset(const Section section, const Name& name,
-                  const RRClass& rrclass, const RRType& rrtype) const
-{
+                  const RRClass& rrclass, const RRType& rrtype) const {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
     BOOST_FOREACH(ConstRRsetPtr r, impl_->rrsets_[section]) {
@@ -542,7 +547,7 @@ Message::hasRRset(const Section section, const RRsetPtr& rrset) const {
 bool
 Message::removeRRset(const Section section, RRsetIterator& iterator) {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
     bool removed = false;
@@ -571,7 +576,7 @@ Message::clearSection(const Section section) {
                   "clearSection performed in non-render mode");
     }
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == Message::SECTION_QUESTION) {
         impl_->questions_.clear();
@@ -684,14 +689,19 @@ MessageImpl::parseQuestion(InputBuffer& buffer) {
 namespace {
 struct MatchRR {
     MatchRR(const Name& name, const RRType& rrtype, const RRClass& rrclass) :
-        name_(name), rrtype_(rrtype), rrclass_(rrclass) {}
+        name_(name), rrtype_(rrtype), rrclass_(rrclass) {
+    }
+
     bool operator()(const RRsetPtr& rrset) const {
         return (rrset->getType() == rrtype_ &&
                 rrset->getClass() == rrclass_ &&
                 rrset->getName() == name_);
     }
+
     const Name& name_;
+
     const RRType& rrtype_;
+
     const RRClass& rrclass_;
 };
 }
@@ -726,9 +736,10 @@ struct MatchRR {
 // is hardcoded here.
 int
 MessageImpl::parseSection(const Message::Section section,
-                          InputBuffer& buffer, Message::ParseOptions options)
-{
-    assert(static_cast<int>(section) < MessageImpl::NUM_SECTIONS);
+                          InputBuffer& buffer, Message::ParseOptions options) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
+    }
 
     unsigned int added = 0;
 
@@ -781,8 +792,7 @@ void
 MessageImpl::addRR(Message::Section section, const Name& name,
                    const RRClass& rrclass, const RRType& rrtype,
                    const RRTTL& ttl, ConstRdataPtr rdata,
-                   Message::ParseOptions options)
-{
+                   Message::ParseOptions options) {
     if ((options & Message::PRESERVE_ORDER) == 0) {
         vector<RRsetPtr>::iterator it =
             find_if(rrsets_[section].begin(), rrsets_[section].end(),
@@ -801,8 +811,7 @@ MessageImpl::addRR(Message::Section section, const Name& name,
 void
 MessageImpl::addRR(Message::Section section, const Name& name,
                    const RRClass& rrclass, const RRType& rrtype,
-                   const RRTTL& ttl, Message::ParseOptions options)
-{
+                   const RRTTL& ttl, Message::ParseOptions options) {
     if ((options & Message::PRESERVE_ORDER) == 0) {
         vector<RRsetPtr>::iterator it =
             find_if(rrsets_[section].begin(), rrsets_[section].end(),
@@ -819,8 +828,7 @@ MessageImpl::addRR(Message::Section section, const Name& name,
 void
 MessageImpl::addEDNS(Message::Section section,  const Name& name,
                      const RRClass& rrclass, const RRType& rrtype,
-                     const RRTTL& ttl, const Rdata& rdata)
-{
+                     const RRTTL& ttl, const Rdata& rdata) {
     if (section != Message::SECTION_ADDITIONAL) {
         isc_throw(DNSMessageFORMERR,
                   "EDNS OPT RR found in an invalid section");
@@ -839,8 +847,7 @@ void
 MessageImpl::addTSIG(Message::Section section, unsigned int count,
                      const InputBuffer& buffer, size_t start_position,
                      const Name& name, const RRClass& rrclass,
-                     const RRTTL& ttl, const Rdata& rdata)
-{
+                     const RRTTL& ttl, const Rdata& rdata) {
     if (section != Message::SECTION_ADDITIONAL) {
         isc_throw(DNSMessageFORMERR,
                   "TSIG RR found in an invalid section");
@@ -863,7 +870,9 @@ namespace {
 template <typename T>
 struct SectionFormatter {
     SectionFormatter(const Message::Section section, string& output) :
-        section_(section), output_(output) {}
+        section_(section), output_(output) {
+    }
+
     void operator()(const T& entry) {
         if (section_ == Message::SECTION_QUESTION) {
             output_ += ";";
@@ -873,7 +882,9 @@ struct SectionFormatter {
             output_ += entry->toText();
         }
     }
+
     const Message::Section section_;
+
     string& output_;
 };
 }
@@ -1031,7 +1042,9 @@ Message::makeResponse() {
 template <typename T>
 struct SectionIteratorImpl {
     SectionIteratorImpl(const typename vector<T>::const_iterator& it) :
-        it_(it) {}
+        it_(it) {
+    }
+
     typename vector<T>::const_iterator it_;
 };
 
@@ -1047,8 +1060,8 @@ SectionIterator<T>::~SectionIterator() {
 
 template <typename T>
 SectionIterator<T>::SectionIterator(const SectionIterator<T>& source) :
-    impl_(new SectionIteratorImpl<T>(source.impl_->it_))
-{}
+    impl_(new SectionIteratorImpl<T>(source.impl_->it_)) {
+}
 
 template <typename T>
 void
@@ -1145,7 +1158,7 @@ Message::beginSection(const Section section) const {
 const SectionIterator<RRsetPtr>
 Message::endSection(const Section section) const {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == SECTION_QUESTION) {
         isc_throw(InvalidMessageSection,
