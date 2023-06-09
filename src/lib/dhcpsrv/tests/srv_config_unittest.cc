@@ -2335,41 +2335,4 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
     }
 }
 
-#if 0
-// Verifies the conflict resolution mode if the older configuration item
-// is specified
-TEST_F(SrvConfigTest, getDdnsConflictResolutionMode) {
-    DdnsParamsPtr params;
-
-    CfgMgr::instance().setFamily(AF_INET);
-    SrvConfig conf(32);
-
-    // Enable conflict resolution globally.
-    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(true));
-
-    // Add a plain subnet
-    Triplet<uint32_t> def_triplet;
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"), 24,
-                                    def_triplet, def_triplet, 4000, SubnetID(1)));
-    /// TKM - does this make sense?
-    subnet1->setDdnsUseConflictResolution(false);
-
-    // In order to take advantage of the dynamic inheritance of global
-    // parameters to a subnet we need to set a callback function for each
-    // subnet to allow for fetching global parameters.
-    subnet1->setFetchGlobalsFn([conf]() -> ConstCfgGlobalsPtr {
-        return (conf.getConfiguredGlobals());
-    });
-
-    conf.getCfgSubnets4()->add(subnet1);
-
-    // Get DDNS params for subnet1.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
-
-    // Verify subnet1 values are right.
-    EXPECT_FALSE(params->getUseConflictResolution());
-    EXPECT_EQ("no-check-with-dhcid", params->getConflictResolutionMode());
-}
-#endif
-
 } // end of anonymous namespace

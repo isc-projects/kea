@@ -508,7 +508,7 @@ SimpleAddWithoutDHCIDTransaction::buildReplaceRevPtrsRequest() {
 
     // There are no prerequisites.
 
-    // Create the FQDN/IP PTR 'delete' RR for this IP and add it to 
+    // Create the FQDN/IP PTR 'delete' RR for this IP and add it to
     // the update section.
     dns::RRsetPtr update(new dns::RRset(rev_ip, dns::RRClass::ANY(),
                          dns::RRType::PTR(), dns::RRTTL(0)));

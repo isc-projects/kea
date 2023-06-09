@@ -2055,7 +2055,7 @@ insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
     # tables.
     #
     # Initialize database to schema 1.0.
-    pgsql_execute_script "/home/tmark/labs/build/keadev/sandbox/git.2276/kea/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
 
     # Now upgrade to schema 17.0

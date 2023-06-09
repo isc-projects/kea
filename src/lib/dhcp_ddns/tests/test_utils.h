@@ -20,10 +20,10 @@ namespace dhcp_ddns {
 /// @param fd_to_check The file descriptor to test
 ///
 /// @return Returns less than one on an error, 0 if the fd is not ready to
-/// read, > 0 if it is ready to read. 
+/// read, > 0 if it is ready to read.
 int selectCheck(int fd_to_check);
 
 }; // namespace isc::dhcp_ddns;
 }; // namespace isc;
 
-#endif 
+#endif

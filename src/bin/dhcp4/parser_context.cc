@@ -221,6 +221,8 @@ Parser4Context::contextName() {
         return ("config-database");
     case COMPATIBILITY:
         return ("compatibility");
+    case DDNS_CONFLICT_RESOLUTION_MODE:
+        return ("ddns-conflict-resolution-mode");
     default:
         return ("__unknown__");
     }
