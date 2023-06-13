@@ -10,6 +10,11 @@ out during the final stages of constructing a query response packet, just
 before it is sent to the client. The three actions currently supported are
 ``add``, ``supersede``, and ``remove``.
 
+.. note::
+
+    :ischooklib:`libdhcp_flex_option.so` is part of the open source code and is
+    available to every Kea user.
+
 The syntax used for the action expressions is the same syntax used
 for client classification and the Flexible Identifier hook library;
 see either :ref:`classification-using-expressions` or :ref:`hooks-flex-id`

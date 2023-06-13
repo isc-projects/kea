@@ -15,8 +15,17 @@ The DHCP-specific options, such as ``dhcp-message-type``, are removed from
 the server's responses; responses shorter than the BOOTP minimum
 size of 300 octets are padded to this size.
 
-This open source library is loaded
-similarly to other hook libraries by the :iscman:`kea-dhcp4` process, and
+.. note::
+
+    :ischooklib:`libdhcp_bootp.so` is part of the open source code and is
+    available to every Kea user.
+
+.. note::
+
+   This library can only be loaded by the :iscman:`kea-dhcp4` process,
+   as there is no BOOTP protocol for IPv6.
+
+This library is loaded similarly to other hook libraries, and
 it takes no parameters.
 
 ::
@@ -27,12 +36,6 @@ it takes no parameters.
             ...
         ]
     }
-
-
-.. note::
-
-   This library can only be loaded by the :iscman:`kea-dhcp4` process,
-   as there is no BOOTP protocol for IPv6.
 
 .. note::
 

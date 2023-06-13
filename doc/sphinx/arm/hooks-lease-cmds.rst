@@ -17,8 +17,10 @@ of the subnet to which it is supposed to belong. The library also
 provides a non-programmatic way to manage user contexts associated with
 leases.
 
-The Lease Commands library is part of the open source code and is
-available to every Kea user.
+.. note::
+
+    :ischooklib:`libdhcp_lease_cmds.so` is part of the open source code and is
+    available to every Kea user.
 
 .. note::
 

@@ -9,7 +9,11 @@ This hook library enables two types of limits:
 1. Lease limiting: allow a maximum of ``n`` leases assigned at any one time.
 2. Rate limiting: allow a maximum of ``n`` packets per ``time_unit`` to receive a response.
 
-The Limits hook library is only available to ISC customers with a paid support contract.
+.. note::
+
+    :ischooklib:`libdhcp_limits.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
 
 .. _hooks-limits-configuration:
 

@@ -20,6 +20,11 @@ for retrieving these statistics.
 
 .. note::
 
+    :ischooklib:`libdhcp_stat_cmds.so` is part of the open source code and is
+    available to every Kea user.
+
+.. note::
+
    This library can only be loaded by the :iscman:`kea-dhcp4` or
    :iscman:`kea-dhcp6` process.
 
@@ -36,8 +41,7 @@ All commands use JSON syntax and can be issued directly to the servers
 via either the control channel (see :ref:`ctrl-channel`) or the
 Control Agent (see :ref:`kea-ctrl-agent`).
 
-This library may be loaded by both the :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` servers. It
-is loaded in the same way as other libraries and currently has no
+This library is loaded in the same way as other libraries and currently has no
 parameters:
 
 ::
@@ -52,7 +56,7 @@ parameters:
    }
 
 In a deployment with multiple Kea DHCP servers sharing a common lease
-storage, this hook library may be loaded by any or all of the servers. However,
+storage, this hook library can be loaded by any or all of the servers. However,
 a server's response to a :isccmd:`stat-lease4-get` / :isccmd:`stat-lease6-get`
 command will only contain data for subnets known to
 that server. In other words, if a subnet does not appear in a server's

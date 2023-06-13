@@ -14,8 +14,12 @@ above, use parts of specific options, or perhaps even use a combination of
 several options and fields to uniquely identify a client. Those
 scenarios are addressed by the Flexible Identifiers hook application.
 
-The Flexible Identifier library is only available to ISC customers with a paid support
-contract.
+.. note::
+
+    :ischooklib:`libdhcp_flex_id.so` is available as a premium
+    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
+    the premium hook libraries, or contact us at https://www.isc.org/contact for
+    more information.
 
 .. note::
 

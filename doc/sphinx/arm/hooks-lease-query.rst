@@ -10,6 +10,12 @@ Leasequery as described in (`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__).
 
 .. note::
 
+    :ischooklib:`libdhcp_lease_query.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
+
+.. note::
+
    This library can only be loaded by the :iscman:`kea-dhcp4` or
    :iscman:`kea-dhcp6` process.
 
@@ -18,8 +24,6 @@ Kea version 2.3.4 added support for DHCPv6 Bulk Leasequery
 Kea version 2.3.5 added support for DHCPv4 Bulk Leasequery
 (`RFC 6926  <https://tools.ietf.org/html/rfc6926>`__) using
 the memfile lease backend.
-
-The Leasequery library is only available to ISC customers with a paid support contract.
 
 .. _lease-query-dhcpv4:
 

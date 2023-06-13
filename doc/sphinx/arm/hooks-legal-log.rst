@@ -8,12 +8,16 @@ The Forensic Logging hook library provides
 hooks that record a detailed log of assignments, renewals, releases, and other
 lease events into a set of log files.
 
-Currently this library is only available to ISC customers with a paid support
-contract.
+.. note::
+
+    :ischooklib:`libdhcp_legal_log.so` is available as a premium
+    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
+    the premium hook libraries, or contact us at https://www.isc.org/contact for
+    more information.
 
 .. note::
 
-   This library may only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
+   This library can only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
    process.
 
 In many legal jurisdictions, companies - especially ISPs - must record

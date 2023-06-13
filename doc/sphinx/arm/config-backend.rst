@@ -95,10 +95,9 @@ Appendix A of this manual for a complete list.
 
 .. note::
 
-   :ischooklib:`libdhcp_cb_cmds.so` is available only to ISC support subscribers.
-   For more information on subscription options, please complete the form
-   at https://www.isc.org/contact.
-
+   :ischooklib:`libdhcp_cb_cmds.so` is available only to ISC customers with
+   a paid support contract. For more information on subscription options, please
+   complete the form at https://www.isc.org/contact.
 
 The schema creation scripts can be found at `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__ and
 ;
@@ -178,8 +177,7 @@ C client libraries must be installed, as explained in :ref:`dhcp-install-configu
    required by the particular Kea version using the :iscman:`kea-admin` tool,
    as described in :ref:`kea-admin`.
 
-:ischooklib:`libdhcp_cb_cmds.so`, which is available to ISC's paid support
-customers, provides a complete set of commands to manage the
+:ischooklib:`libdhcp_cb_cmds.so` provides a complete set of commands to manage the
 servers' configuration information within the database. This library can
 be attached to both DHCPv4 and DHCPv6 server instances. While it is
 possible to manage the configuration information without :ischooklib:`libdhcp_cb_cmds.so`

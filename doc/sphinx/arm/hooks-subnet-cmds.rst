@@ -14,8 +14,11 @@ ability to manage shared networks (listing, retrieving details, adding
 new ones, removing existing ones, and adding subnets to and removing them from
 shared networks) is also provided.
 
-This library is only available to ISC customers with a paid support
-contract.
+.. note::
+
+    :ischooklib:`libdhcp_subnet_cmds.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
 
 .. note::
 

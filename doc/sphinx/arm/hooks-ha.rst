@@ -6,8 +6,13 @@
 
 This hook library can be loaded on a pair of DHCPv4 or DHCPv6 servers, to
 increase the reliability of the DHCP service in the event of an outage on one
-server. This library was previously only available to ISC's paid subscribers,
-but is now part of the open source Kea, available to all users.
+server.
+
+.. note::
+
+    :ischooklib:`libdhcp_ha.so` is part of the open source code and is
+    available to every Kea user. It was previously available only to ISC
+    customers with a paid support contract.
 
 .. note::
 

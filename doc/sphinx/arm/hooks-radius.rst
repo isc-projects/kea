@@ -17,6 +17,12 @@ DHCP server to talk to RADIUS directly. That is the goal of this library.
 
 .. note::
 
+    :ischooklib:`libdhcp_radius.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
+
+.. note::
+
    This library can only be loaded by the :iscman:`kea-dhcp4` or the
    :iscman:`kea-dhcp6` process.
 

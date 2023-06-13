@@ -8,8 +8,12 @@ This hook library adds support for fine-tuning various DNS update aspects.
 It currently supports procedural host-name generation and the ability to skip
 performing DDNS updates for select clients.
 
-The DDNS Tuning hook library is only available to ISC customers with a paid
-support contract.
+.. note::
+
+    :ischooklib:`libdhcp_ddns_tuning.so` is available as a premium
+    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
+    the premium hook libraries, or contact us at https://www.isc.org/contact for
+    more information.
 
 The library, which was added in Kea 2.1.5, can be loaded by the :iscman:`kea-dhcp4`
 and :iscman:`kea-dhcp6` daemons by adding it to the ``hooks-libraries`` element of the

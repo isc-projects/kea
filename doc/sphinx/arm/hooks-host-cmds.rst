@@ -14,8 +14,12 @@ same subnet - is rejected. Those commands are exposed via the command
 channel (JSON over UNIX sockets) and the Control Agent (JSON over a RESTful
 interface).
 
-This library is only available to ISC customers with a paid support
-contract.
+.. note::
+
+    :ischooklib:`libdhcp_host_cmds.so` is available as a premium
+    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
+    the premium hook libraries, or contact us at https://www.isc.org/contact for
+    more information.
 
 .. note::
 

@@ -12,11 +12,14 @@ list the client classes configured for a given server.
 
 .. note::
 
+    :ischooklib:`libdhcp_class_cmds.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
+
+.. note::
+
    This library can only be loaded by the :iscman:`kea-dhcp4` or
    :iscman:`kea-dhcp6` process.
-
-:ischooklib:`libdhcp_class_cmds.so` is only available to ISC customers with a
-paid support contract.
 
 .. isccmd:: class-add
 .. _command-class-add:

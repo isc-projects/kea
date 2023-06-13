@@ -31,6 +31,12 @@ Here is a summary of the steps in processing a response:
    request processing (when the request was accepted).
  - Request filters are applied to the response.
 
+.. note::
+
+    :ischooklib:`libca_rbac.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
+
 .. _hooks-RBAC-config:
 
 Role-Based Access Control Configuration

@@ -22,12 +22,15 @@ More information on how to configure the Configuration Backend hook library for
 use with a MySQL or PostgreSQL database can be found in the :ref:`dhcp4-cb`
 and :ref:`dhcp6-cb` sections.
 
-:ischooklib:`libdhcp_cb_cmds.so` is only available to ISC customers with a paid
-support contract.
+.. note::
+
+    :ischooklib:`libdhcp_cb_cmds.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
 
 .. note::
 
-   This library may only be loaded by the :iscman:`kea-dhcp4` or
+   This library can only be loaded by the :iscman:`kea-dhcp4` or
    :iscman:`kea-dhcp6` process.
 
 .. note::
@@ -79,19 +82,6 @@ with the ``host``. If no options in the ``remote`` parameter are to
 be specified, the parameter should be omitted. In this case, the server
 will use the first backend listed in the ``config-control`` map within
 the configuration of the server receiving the command.
-
-:ischooklib:`libdhcp_cb_cmds.so` is only available to ISC customers with a paid
-support contract.
-
-.. note::
-
-   This library can only be loaded by the :iscman:`kea-dhcp4` or
-   :iscman:`kea-dhcp6` process.
-
-.. note::
-
-   Please read about :ref:`cb-limitations` before using the commands
-   described in this section.
 
 .. note::
 
