@@ -189,12 +189,12 @@ password, these values can be read from files. The syntax is extended by:
 When files are used, they are read when the configuration is loaded,
 to detect configuration errors as soon as possible.
 
-Hook libraries can be loaded by the Control Agent in the same way as
-they are loaded by the DHCPv4 and DHCPv6 servers. The CA currently
+Hook libraries can be loaded by :iscman:`kea-ctrl-agent` in the same way as
+they are loaded by :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`. The CA currently
 supports one hook point - ``control_command_receive`` - which makes it
 possible to delegate the processing of some commands to the hook library.
 The ``hooks-libraries`` list contains the list of hook libraries that
-should be loaded by the CA, along with their configuration information
+should be loaded by :iscman:`kea-ctrl-agent`, along with their configuration information
 specified with ``parameters``.
 
 Please consult :ref:`logging` for the details on how to configure

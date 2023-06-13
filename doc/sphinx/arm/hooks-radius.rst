@@ -309,8 +309,8 @@ option is recommended to speed up the build.
 RADIUS Hook Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The RADIUS hook is a library that must be loaded by either DHCPv4 or
-DHCPv6 Kea servers. Unlike some other available hook libraries, this one
+The RADIUS hook is a library that must be loaded by either :iscman:`kea-dhcp4` or
+:iscman:`kea-dhcp6` servers. Unlike some other available hook libraries, this one
 takes many parameters. For example, this configuration could be used:
 
 ::

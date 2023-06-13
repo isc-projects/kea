@@ -117,8 +117,7 @@ detection, similar to this:
     available.
 
 7.  After compilation, :ischooklib:`libddns_gss_tsig.so` is available in the
-    ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by
-    the Kea DHCP-DDNS (D2) daemon.
+    ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by :iscman:`kea-dhcp-ddns`.
 
 :ischooklib:`libddns_gss_tsig.so` was developed using the MIT Kerberos 5 implementation, but
 Heimdal is also supported. Note that Heimdal is picky about
@@ -464,7 +463,7 @@ Using GSS-TSIG
 
 There are a number of steps required to enable the GSS-TSIG mechanism:
 
-1. :ischooklib:`libddns_gss_tsig.so` must be loaded by the D2 server.
+1. :ischooklib:`libddns_gss_tsig.so` must be loaded by :iscman:`kea-dhcp-ddns`.
 2. The GSS-TSIG-capable DNS servers must be specified with their parameters.
 
 An excerpt from a D2 server configuration is provided below; more examples are available in the
