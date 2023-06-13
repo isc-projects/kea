@@ -1,3 +1,9 @@
+2146.	[func]		piotrek
+	Making DHCP4_PACKET_DROP_* and DHCP6_PACKET_DROP_* debug prints
+	more verbose. The prints are including now hwaddr for DHCP4 and
+	duid for DHCP6.
+	(Gitlab #2865)
+
 2145.	[bug]		piotrek
 	Fixed a bug in kea-admin script where lack of lease type argument
 	was not caught correctly and kea-lfc was called without -4 or -6
