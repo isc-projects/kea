@@ -174,7 +174,7 @@ A DHCPv4 response might look like this:
            "rows\": [
                [ 30, 256, 300, 100, 2 ],
                [ 40,  16, 5, 0, 0 ],
-               [ 50, 256, 100, 35, 0 ],
+               [ 50, 256, 100, 35, 0 ]
            ],
            timestamp\": \"2018-05-04 15:03:37.000000\" }
         }
@@ -186,7 +186,7 @@ and DHCPv6 response might look like this:
         {
         "result-set": {
            "columns": [
-                "subnet-id", "total-nas", "cumulative-assigned-nas"
+                "subnet-id", "total-nas", "cumulative-assigned-nas",
                 "assigned-nas", "declined-nas", "total-pds",
                 "cumulative-assigned-pds", "assigned-pds"
            ],

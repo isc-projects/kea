@@ -758,7 +758,6 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAnswer) {
     ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     EXPECT_THROW(srv_->createNameChangeRequests(answer, ctx),
                  isc::Unexpected);
-
 }
 
 // Test that exception is thrown if supplied answer from the server
@@ -774,7 +773,6 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoDUID) {
     ctx.subnet_ = subnet_;
     ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     EXPECT_THROW(srv_->createNameChangeRequests(answer, ctx), isc::Unexpected);
-
 }
 
 // Test no NameChangeRequests if Client FQDN is not added to the server's
@@ -962,7 +960,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             lease_->cltt_, lease_->valid_lft_);
-
 }
 
 // Test that NameChangeRequest to remove DNS records is not generated when
@@ -974,7 +971,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoUpdate) {
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
 }
 
 // Test that NameChangeRequest is not generated if the hostname hasn't been
@@ -988,7 +984,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoHostname) {
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
 }
 
 // Test that NameChangeRequest is not generated if the invalid hostname has
@@ -1002,7 +997,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestWrongHostname) {
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
 }
 
 // Test that Advertise message generated in a response to the Solicit will
@@ -1059,7 +1053,6 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
                             0, lease_->valid_lft_);
-
 }
 
 // Test that client may send two requests, each carrying FQDN option with
@@ -1119,7 +1112,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
     testProcessMessage(DHCPV6_SOLICIT, "otherhost.example.com",
                        "otherhost.example.com.");
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
 }
 
 // Test that client may send Request followed by the Renew, both holding
@@ -1167,7 +1159,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewDiffFqdn) {
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
                             0, lease_->valid_lft_);
-
 }
 
 // Test that client may send Request followed by the Renew, both holding
@@ -1367,7 +1358,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestEmptyFqdn) {
                             "000201C905E54BE12DE6AF92ADE72752B9F362"
                             "13B5A8BC9D217548CD739B4CF31AFB1B",
                             0, 4000);
-
 }
 
 // Checks that when the server reuses expired lease, the NameChangeRequest
@@ -1444,7 +1434,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52", 0, 4);
-
 }
 
 TEST_F(FqdnDhcpv6SrvTest, processClientDelegation) {
@@ -1561,7 +1550,6 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationNoSuffix) {
                             "000201E2EB74FB53A5778E74AFD43870ECA5"
                             "4150B1F52B0CFED434802DA1259D6D3CA4",
                             0, 4000, "alice.example.com.");
-
 }
 
 TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
@@ -1664,7 +1652,6 @@ TEST_F(FqdnDhcpv6SrvTest, sanitizeFqdn) {
              std::string("m\000yhost.exa\000mple.com", 20),
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
              "mxyhost.exaxmple.com.", false);
-
 }
 
 // Verifies that scoped ddns-parameter handling.
@@ -1751,7 +1738,6 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:2::1",
                             "", 0, 4000);
-
 }
 
 // Verifies that the DDNS parameters used for a lease in subnet in

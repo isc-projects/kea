@@ -19,11 +19,11 @@
     "description": "See <xref linkend=\"command-config-set\"/>",
     "name": "config-set",
     "resp-syntax": [
-        "{\"result\": 0, \"text\": \"Configuration successful.\" }",
+        "{ \"result\": 0, \"text\": \"Configuration successful.\" }",
         "",
         "or",
         "",
-        "{\"result\": 1, \"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }"
+        "{ \"result\": 1, \"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }"
     ],
     "support": [
         "kea-dhcp4",

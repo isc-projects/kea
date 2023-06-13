@@ -569,7 +569,6 @@ public:
 
         pkt->addOption(generateClientId());
 
-
         // Create Client FQDN Option with the specified flags and
         // domain-name.
         pkt->addOption(createHostname(hostname));
@@ -736,7 +735,6 @@ public:
         EXPECT_EQ(flag_e, fqdn->getFlag(Option4ClientFqdn::FLAG_E));
     }
 
-
     /// @brief  Invokes Dhcpv4Srv::processHostname on the given packet
     ///
     /// Processes the Hostname option in the client's message and returns
@@ -842,7 +840,6 @@ public:
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
     }
 
-
     /// @brief Tests processing a request with the given client flags
     ///
     /// This method creates a request with its FQDN flags set to the given
@@ -903,8 +900,12 @@ public:
     /// @return Number of assigned addresses for a subnet.
     void checkSubnetStat(const SubnetID& subnet_id, const std::string& name, int64_t exp_value) const {
         // Retrieve statistics name, e.g. subnet[1234].assigned-addresses.
-        const std::string stats_name = StatsMgr::generateName("subnet", subnet_id, name);
+        std::string stats_name = StatsMgr::generateName("subnet", subnet_id, name);
         ObservationPtr obs =  StatsMgr::instance().getObservation(stats_name);
+        ASSERT_TRUE(obs) << "cannot find: " << stats_name;
+        EXPECT_EQ(exp_value, obs->getInteger().first);
+        stats_name = StatsMgr::generateName("subnet", subnet_id, StatsMgr::generateName("pool", 0, name));
+        obs =  StatsMgr::instance().getObservation(stats_name);
         ASSERT_TRUE(obs) << "cannot find: " << stats_name;
         EXPECT_EQ(exp_value, obs->getInteger().first);
     }
@@ -1018,7 +1019,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateHostname) {
 
     ASSERT_TRUE(hostname);
     EXPECT_EQ("myhost.example.com.", hostname->getValue());
-
 }
 
 // Test that the server skips processing of a mal-formed Hostname options.
@@ -1089,7 +1089,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardPartialNameFqdn) {
     testProcessFqdn(query,
                     Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
                     "myhost.example.com.");
-
 }
 
 // Test that server generates the fully qualified domain name for the client
@@ -1102,7 +1101,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateUnqualifiedHostname) {
 
     ASSERT_TRUE(hostname);
     EXPECT_EQ("myhost.example.com", hostname->getValue());
-
 }
 
 // Test that server sets empty domain-name in the FQDN option when client
@@ -1120,7 +1118,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardNoNameFqdn) {
     testProcessFqdn(query,
                     Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
                     "", Option4ClientFqdn::PARTIAL);
-
 }
 
 // Test that exactly one NameChangeRequest is generated when the new lease
@@ -2092,7 +2089,6 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     lease = LeaseMgrFactory::instance().getLease4(IOAddress(expected_address));
     ASSERT_TRUE(lease);
     EXPECT_EQ(expected_fqdn, lease->hostname_);
-
 }
 
 // Verifies that the replace-client-name behavior is correct for each of
@@ -2832,7 +2828,6 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
                             "0000011E5D6FA61FCBAC969FF4EF0EBCA3FDE554E"
                             "B020A13F44859F30A108793564A97",
                             time(NULL), subnet->getValid(), true);
-
 
     // And that this FQDN has been stored in the lease database.
     lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
