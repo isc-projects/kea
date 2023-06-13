@@ -64,7 +64,7 @@ The following commands are currently supported:
 .. isccmd:: subnet4-list
 .. _command-subnet4-list:
 
-The subnet4-list Command
+The ``subnet4-list`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to list all currently configured subnets. Each
@@ -107,7 +107,7 @@ error description.
 .. isccmd:: subnet6-list
 .. _command-subnet6-list:
 
-The subnet6-list Command
+The ``subnet6-list`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to list all currently configured subnets. Each
@@ -150,7 +150,7 @@ error description.
 .. isccmd:: subnet4-get
 .. _command-subnet4-get:
 
-The subnet4-get Command
+The ``subnet4-get`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to retrieve detailed information about the
@@ -206,7 +206,7 @@ If the subnet exists, the response will be similar to this:
 .. isccmd:: subnet6-get
 .. _command-subnet6-get:
 
-The subnet6-get Command
+The ``subnet6-get`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to retrieve detailed information about the
@@ -262,7 +262,7 @@ If the subnet exists, the response will be similar to this:
 .. isccmd:: subnet4-add
 .. _command-subnet4-add:
 
-The subnet4-add Command
+The ``subnet4-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create and add a new subnet to the existing server
@@ -310,7 +310,7 @@ The response to this command has the following structure:
 .. isccmd:: subnet6-add
 .. _command-subnet6-add:
 
-The subnet6-add Command
+The ``subnet6-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create and add a new subnet to the existing server
@@ -383,7 +383,7 @@ automatic ``subnet-id`` generation works in Kea.
 .. isccmd:: subnet4-update
 .. _command-subnet4-update:
 
-The subnet4-update Command
+The ``subnet4-update`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update (overwrite) a single subnet in the existing
@@ -437,7 +437,7 @@ this can be achieved with :isccmd:`subnet4-delta-add`.
 .. isccmd:: subnet6-update
 .. _command-subnet6-update:
 
-The subnet6-update Command
+The ``subnet6-update`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update (overwrite) a single subnet in the existing
@@ -491,7 +491,7 @@ this can be achieved with :isccmd:`subnet6-delta-add`.
 .. isccmd:: subnet4-del
 .. _command-subnet4-del:
 
-The subnet4-del Command
+The ``subnet4-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to remove a subnet from the server's configuration.
@@ -547,7 +547,7 @@ A successful response may look like this:
 .. isccmd:: subnet6-del
 .. _command-subnet6-del:
 
-The subnet6-del Command
+The ``subnet6-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to remove a subnet from the server's configuration.
@@ -601,7 +601,7 @@ A successful response may look like this:
 .. isccmd:: subnet4-delta-add
 .. _command-subnet4-delta-add:
 
-The subnet4-delta-add Command
+The ``subnet4-delta-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet by adding or overwriting its parts in
@@ -679,7 +679,7 @@ level option 4 ("time-servers").
 .. isccmd:: subnet6-delta-add
 .. _command-subnet6-delta-add:
 
-The subnet6-delta-add Command
+The ``subnet6-delta-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet by adding or overwriting its parts in
@@ -776,7 +776,7 @@ level option 22 ("sip-server-addr").
 .. isccmd:: subnet4-delta-del
 .. _command-subnet4-delta-del:
 
-The subnet4-delta-del Command
+The ``subnet4-delta-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet by removing its parts in the existing
@@ -853,7 +853,7 @@ be parsed.
 .. isccmd:: subnet6-delta-del
 .. _command-subnet6-delta-del:
 
-The subnet6-delta-del Command
+The ``subnet6-delta-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to update a subnet by removing its parts in the existing

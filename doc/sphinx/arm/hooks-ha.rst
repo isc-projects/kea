@@ -149,10 +149,10 @@ remove a name associated with this lease from the DNS, causing problems when the
 client later attempts to renew the lease.
 
 Each active server monitors the clock skew by comparing its current time with
-the time returned by its partner in response to the heartbeat command. This
+the time returned by its partner in response to the :isccmd:`ha-heartbeat` command. This
 gives a good approximation of the clock skew, although it does not take into
 account the time between the partner sending the response and the receipt of
-this response by the server which sent the heartbeat command. If the clock skew
+this response by the server which sent the :isccmd:`ha-heartbeat` command. If the clock skew
 exceeds 30 seconds, a warning log message is issued. The administrator may
 correct this problem by synchronizing the clocks (e.g. using NTP); the servers
 should notice the clock skew correction and stop issuing the warning.
@@ -1306,7 +1306,7 @@ Controlling Lease-Page Size Limit
 
 An HA-enabled server initiates synchronization of the lease database after
 downtime or upon receiving the :isccmd:`ha-sync` command. The server uses commands
-described in :ref:`command-lease4-get-page` and :ref:`command-lease6-get-page`
+:isccmd:`lease4-get-page` and :isccmd:`lease6-get-page`
 to fetch leases from its partner server (lease queries). The size of the results
 page (the maximum number of leases to be returned in a single response to one of
 these commands) can be controlled via configuration of the HA hook library.
@@ -2175,7 +2175,7 @@ about the remote server is reliable.
 
 The ``last-scopes`` and ``last-state`` parameters contain information about the
 HA scopes served by the partner and its state. This information is gathered
-during the heartbeat command exchange, so it may not be accurate if a
+during the :isccmd:`ha-heartbeat` command exchange, so it may not be accurate if a
 communication problem occurs between the partners and this status information is
 not refreshed. In such a case, it may be useful to send the :isccmd:`status-get`
 command to the partner server directly to check its current state. The ``age``
@@ -2349,7 +2349,7 @@ The ``ha-sync-complete-notify`` Command
 A server sends this command to its partner to signal that it has completed
 lease-database synchronization. The partner may enable its DHCP service if it
 can allocate new leases in its current state. The partner does not enable the
-DHCP service in the ``partner-down`` state until it sends a successful heartbeat
+DHCP service in the ``partner-down`` state until it sends a successful :isccmd:`ha-heartbeat`
 test to its partner server. If the connection is still unavailable, the server
 in the ``partner-down`` state enables its own DHCP service to continue
 responding to clients.

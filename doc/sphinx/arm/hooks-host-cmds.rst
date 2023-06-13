@@ -58,7 +58,7 @@ load, but any attempts to use :isccmd:`reservation-add`, :isccmd:`reservation-de
 
 These commands can also modify hosts from the JSON configuration independently
 from the hosts database. The changes provided in the JSON configuration are
-volatile and can be made permanent by sending the config-write command.
+volatile and can be made permanent by sending the :isccmd:`config-write` command.
 
 For a description of proposed future commands, see the `Control API
 Requirements <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands>`__
@@ -90,7 +90,7 @@ Before examining the individual commands, it is worth discussing the
 parameter ``subnet-id``. Currently this parameter is mandatory for all of the
 commands supplied by this library, with the exception of
 :isccmd:`reservation-get-by-hostname`, where it is optional. Since Kea 1.9.0,
-:isccmd:``subnet-id`` is also optional in `reservation-get-page`, and
+``subnet-id`` is also optional in :isccmd:`reservation-get-page`, and
 it is forbidden in :isccmd:`reservation-get-by-id`.
 
 Reservations can be specified globally, and are not necessarily specific to any
@@ -425,8 +425,7 @@ The response returned by :isccmd:`reservation-get-all` can be very long. The
 DHCP server does not handle DHCP traffic while preparing a response to
 :isccmd:`reservation-get-all`, so if there are many reservations in a subnet, this
 may be disruptive; use with caution. For larger deployments, please
-consider using :isccmd:`reservation-get-page` instead (see
-:ref:`command-reservation-get-page`).
+consider using :isccmd:`reservation-get-page` instead.
 
 The command accepts the ``operation-target`` argument. By default, it gets the
 reservation from both JSON configuration and the hosts database.
@@ -572,7 +571,7 @@ The command doesn't accept the ``operation-target`` argument.
 This command is more complex than :isccmd:`reservation-get-all`, but lets
 users retrieve larger host reservations lists in smaller chunks. For
 small deployments with few reservations, it is easier to use
-:isccmd:`reservation-get-all` (see :ref:`command-reservation-get-all`).
+:isccmd:`reservation-get-all`.
 
 .. isccmd:: reservation-get-by-hostname
 .. _command-reservation-get-by-hostname:
@@ -668,7 +667,7 @@ The ``reservation-get-by-id`` Command
 :isccmd:`reservation-get-by-id` can be used to query the host database and
 retrieve all reservations with a specified identifier (``identifier-type``
 and ``identifier`` parameters), independently of subnets. The syntax for
-parameters is the same as for ref:`command-reservation-get`.
+parameters is the same as for :isccmd:`reservation-get`.
 The ``subnet-id`` parameter cannot be used, to avoid confusion.
 This command is available since Kea version 1.9.0.
 
@@ -838,7 +837,7 @@ The ``reservation-update`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :isccmd:`reservation-update` allows for the update of an existing host. It takes the
-same set of arguments as :ref:``command-reservation-add``, and just as well,
+same set of arguments as :isccmd:`reservation-add`, and just as well,
 requires a host identifier and a subnet ID to identify the host that is being
 updated. The command can be as simple as having only the two mandatory entries:
 

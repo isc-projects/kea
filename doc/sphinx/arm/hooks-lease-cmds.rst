@@ -284,7 +284,7 @@ Example failure:
 .. isccmd:: lease6-bulk-apply
 .. _command-lease6-bulk-apply:
 
-The lease6-bulk-apply Command
+The ``lease6-bulk-apply`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :isccmd:`lease6-bulk-apply` was implemented to address
@@ -803,7 +803,7 @@ The ``lease4-del``, ``lease6-del`` Commands
 
 :isccmd:`lease4-del` and :isccmd:`lease6-del` can be used to delete a lease from the lease database.
 There are two types of parameters these commands support, similar to the
-:isccmd::isccmd:`lease4-get` and `lease6-get` commands: (``address``) for both v4 and v6, (``subnet-id``,
+:isccmd:`lease4-get` and :isccmd:`lease6-get` commands: (``address``) for both v4 and v6, (``subnet-id``,
 ``identifier-type``, ``identifier``) for v4, and (``subnet-id``, ``identifier-type``,
 ``identifier``, ``type``, ``IAID``) for v6. The first type of query is used when the
 address (either IPv4 or IPv6) is known, but the details of the lease are
@@ -892,7 +892,7 @@ to ``false``, which indicates that the lease is not created if it does not
 exist. In such a case, an error is returned when trying to
 update a non-existing lease. If the ``"force-create"`` parameter is set to
 ``true`` and the updated lease does not exist, the new lease is created as a
-result of receiving the :isccmd::isccmd:`lease4-update`/`lease6-update` command.
+result of receiving the :isccmd:`lease4-update` / :isccmd:`lease6-update` command.
 
 An example of a command to update an IPv4 lease is:
 
@@ -927,12 +927,12 @@ An example of a command to update an IPv6 lease is:
 
 As with other update commands, this command overwrites all the contents of the
 entry. If the lease previously had a resource assigned to it, and the
-:isccmd::isccmd:`lease4-update`/`lease6-update` command is missing the resource, it is
+:isccmd:`lease4-update` / :isccmd:`lease6-update` command is missing the resource, it is
 deleted from the lease database. If an incremental update of the lease is
 desired, then this can be achieved by doing a :isccmd:`lease4-get` / :isccmd:`lease6-get`
 command to get the current state of the lease, picking the lease out of the
 response, modifying it to the required outcome, and then issuing the
-:isccmd::isccmd:`lease4-update`/`lease6-update` command with the resulting lease attached.
+:isccmd:`lease4-update` / :isccmd:`lease6-update` command with the resulting lease attached.
 
 .. isccmd:: lease4-wipe
 .. _command-lease4-wipe:

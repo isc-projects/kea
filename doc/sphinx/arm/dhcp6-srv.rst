@@ -1511,7 +1511,7 @@ on subnet ``2001:db8:1::/64``. ``never-send`` has precedence over
 
 .. note::
 
-   The ``never-send`` flag is less powerful than :ref:`hooks-flex-option`;
+   The ``never-send`` flag is less powerful than :ischooklib:`libdhcp_flex_option.so`;
    for instance, it has no effect on options managed by the server itself.
    Both ``always-send`` and ``never-send`` have no effect on options
    which cannot be requested, for instance from a custom space.
@@ -7197,8 +7197,8 @@ the DHCPv6 server parameters can be configured in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
-All supported parameters can be configured via :ischooklib:`libdhcp_cb_cmds.so`
-described in the :ref:`hooks-cb-cmds` section. The general rule is that
+All supported parameters can be configured via :ischooklib:`libdhcp_cb_cmds.so`.
+The general rule is that
 scalar global parameters are set using
 :isccmd:`remote-global-parameter6-set`; shared-network-specific parameters
 are set using :isccmd:`remote-network6-set`; and subnet-level and pool-level

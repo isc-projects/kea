@@ -863,8 +863,7 @@ GSS-TSIG Automatic Key Removal
 The server periodically deletes keys after they have been expired more than three times the
 length of the maximum key lifetime (the ``tkey-lifetime`` parameter).
 The user has the option to purge keys on demand by using the :isccmd:`gss-tsig-purge-all`
-command (see :ref:`command-gss-tsig-purge-all`) or the :isccmd:`gss-tsig-purge` command
-(see :ref:`command-gss-tsig-purge`).
+command or the :isccmd:`gss-tsig-purge` command.
 
 
 GSS-TSIG Configuration for Deployment

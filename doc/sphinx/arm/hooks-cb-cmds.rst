@@ -44,7 +44,7 @@ There are 5 types of commands supported by this library:
    :isccmd:`remote-global-parameter4-del`.
 
 -  ``get`` - fetch the selected object from the database, e.g.
-   ``remote-subnet4-get``.
+   :isccmd:`remote-subnet4-get`.
 
 -  ``get-all`` - fetch all objects of the particular type from the
    database, e.g. :isccmd:`remote-option-def4-get-all`.
@@ -1391,7 +1391,7 @@ DHCP option, the option code should be indicated instead of the name.
 .. isccmd:: remote-option6-pd-pool-del
 .. _command-remote-option6-pd-pool-del:
 
-The remote-option6-pd-pool-del Command
+The ``remote-option6-pd-pool-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to delete a prefix delegation pool-specific DHCPv6
@@ -1435,7 +1435,7 @@ options belong. The ``server-tags`` parameter cannot be specified for this comma
 .. isccmd:: remote-option6-pd-pool-set
 .. _command-remote-option6-pd-pool-set:
 
-The remote-option6-pd-pool-set Command
+The ``remote-option6-pd-pool-set`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command creates a new prefix delegation pool-specific DHCPv6 option or

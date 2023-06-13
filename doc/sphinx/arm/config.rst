@@ -211,7 +211,7 @@ to an existing subnet.
     } ]
     }
 
-The same can be done with many other commands like lease6-add etc.
+The same can be done with many other commands, like :isccmd:`lease6-add`, etc.
 
 Kea also uses user context to store non-standard data.
 Currently, only :ref:`dhcp4-store-extended-info` uses this feature.

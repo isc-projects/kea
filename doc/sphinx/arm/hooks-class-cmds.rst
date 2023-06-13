@@ -15,8 +15,8 @@ list the client classes configured for a given server.
    This library can only be loaded by the :iscman:`kea-dhcp4` or
    :iscman:`kea-dhcp6` process.
 
-The Class Commands hook library is currently available only to ISC
-customers with a paid support contract.
+:ischooklib:`libdhcp_class_cmds.so` is only available to ISC customers with a
+paid support contract.
 
 .. isccmd:: class-add
 .. _command-class-add:

@@ -54,7 +54,7 @@ parameters:
 In a deployment with multiple Kea DHCP servers sharing a common lease
 storage, this hook library may be loaded by any or all of the servers. However,
 a server's response to a :isccmd:`stat-lease4-get` / :isccmd:`stat-lease6-get`
-``stat-lease[46]-get`` command will only contain data for subnets known to
+command will only contain data for subnets known to
 that server. In other words, if a subnet does not appear in a server's
 configuration, Kea will not retrieve statistics for it.
 

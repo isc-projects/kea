@@ -243,8 +243,8 @@ servers.
 To differentiate between different Kea server configurations, a
 list of the server tags used by the servers must be stored in the
 database. For the DHCPv4 and DHCPv6 servers, it can be done using the
-commands described in :ref:`command-remote-server4-set` and
-:ref:`command-remote-server6-set`. The
+:isccmd:`command-remote-server4-set` and
+:isccmd:`command-remote-server6-set` commands. The
 server tags can then be used to associate the configuration information with
 the servers. However, it is important to note that some DHCP
 configuration elements may be associated with multiple server tags (known
@@ -290,8 +290,9 @@ set to the same or different values. The renew timer
 parameter has no unique identifier by which it could be
 accessed, modified, or otherwise used. Global parameters like
 the renew timer can be accessed by the parameter name and the
-tag of the server for which they are configured. For example:
-the commands described in :ref:`command-remote-global-parameter4-get` allow
+tag of the server for which they are configured. For example, the
+:isccmd:`remote-global-parameter4-get` and
+:isccmd:`remote-global-parameter6-get` commands allow
 the value of the global parameter to be fetched by the parameter name and
 the server name. Getting the global parameter only by its name (without
 specifying the server tag) is not possible, because there may be many
