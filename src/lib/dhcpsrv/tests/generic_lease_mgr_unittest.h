@@ -22,8 +22,18 @@ namespace dhcp {
 namespace test {
 
 /// @brief typedefs to simplify lease statistic testing
-typedef std::map<std::string, int64_t> StatValMap;
-typedef std::pair<std::string, int64_t> StatValPair;
+struct SubnetPoolVal {
+    int64_t value_;
+    bool check_pool_;
+    SubnetPoolVal() : value_(0), check_pool_(true) {
+    };
+    SubnetPoolVal(int64_t value) : value_(value), check_pool_(true) {
+    };
+    SubnetPoolVal(int64_t value, bool check) : value_(value), check_pool_(check) {
+    };
+};
+typedef std::map<std::string, SubnetPoolVal> StatValMap;
+typedef std::pair<std::string, SubnetPoolVal> StatValPair;
 typedef std::vector<StatValMap> StatValMapList;
 typedef std::set<LeaseStatsRow> RowSet;
 

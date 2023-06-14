@@ -808,7 +808,6 @@ GenericLeaseMgrTest::testBasicLease4() {
     detailCompareLease(leases[3], l_returned);
 }
 
-
 void
 GenericLeaseMgrTest::testBasicLease6() {
     // Get the leases to be used for the test.
@@ -2878,15 +2877,42 @@ GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
     for (int subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
         BOOST_FOREACH(StatValPair expectedStat, expectedStats[subnet_idx]) {
             // Verify the per subnet value.
-            checkStat(stats::StatsMgr::generateName("subnet", subnet_idx+1,
+            checkStat(stats::StatsMgr::generateName("subnet", subnet_idx + 1,
                                                     expectedStat.first),
-                      expectedStat.second);
+                      expectedStat.second.value_);
+
+            if (expectedStat.second.check_pool_) {
+                if (expectedStat.first.find("pd") != string::npos) {
+                    checkStat(stats::StatsMgr::generateName("subnet", subnet_idx + 1,
+                                                            stats::StatsMgr::generateName("pd-pool", 0,
+                                                                                          expectedStat.first)),
+                              expectedStat.second.value_);
+                } else {
+                    checkStat(stats::StatsMgr::generateName("subnet", subnet_idx + 1,
+                                                            stats::StatsMgr::generateName("pool", 0,
+                                                                                          expectedStat.first)),
+                              expectedStat.second.value_);
+                }
+            } else {
+                string name;
+                if (expectedStat.first.find("pd") != string::npos) {
+                    name = stats::StatsMgr::generateName("subnet", subnet_idx + 1,
+                                                         stats::StatsMgr::generateName("pd-pool", 0,
+                                                         expectedStat.first));
+                } else {
+                    name = stats::StatsMgr::generateName("subnet", subnet_idx + 1,
+                                                         stats::StatsMgr::generateName("pool", 0,
+                                                         expectedStat.first));
+                }
+                ObservationPtr const obs(stats::StatsMgr::instance().getObservation(name));
+                ASSERT_FALSE(obs) << "stat " << name << " should not be present";
+            }
 
             // Add the value to globals as needed.
             if (expectedStat.first == "declined-addresses") {
-                declined_addresses += expectedStat.second;
+                declined_addresses += expectedStat.second.value_;
             } else if (expectedStat.first == "reclaimed-declined-addresses") {
-                reclaimed_declined_addresses += expectedStat.second;
+                reclaimed_declined_addresses += expectedStat.second.value_;
             }
         }
     }
@@ -2990,7 +3016,6 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     subnet->addPool(pool);
     cfg->add(subnet);
 
-
     ASSERT_NO_THROW(CfgMgr::instance().commit());
 
     // Create the expected stats list.  At this point, the only stat
@@ -2999,6 +3024,7 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     for (int i = 0; i < num_subnets; ++i) {
         expectedStats[i]["total-addresses"] = 256;
         expectedStats[i]["assigned-addresses"] = 0;
+        expectedStats[i]["cumulative-assigned-addresses"] = 0;
         expectedStats[i]["declined-addresses"] = 0;
         expectedStats[i]["reclaimed-declined-addresses"] = 0;
         expectedStats[i]["reclaimed-leases"] = 0;
@@ -3101,21 +3127,25 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     cfg->add(subnet);
 
     ASSERT_NO_THROW(CfgMgr::instance().commit());
-
-
     // Create the expected stats list.  At this point, the only stat
     // that should be non-zero is total-nas/total-pds.
     for (int i = 0; i < num_subnets; ++i) {
         expectedStats[i]["assigned-nas"] = 0;
+        expectedStats[i]["cumulative-assigned-nas"] = 0;
         expectedStats[i]["declined-addresses"] = 0;
         expectedStats[i]["reclaimed-declined-addresses"] = 0;
-        expectedStats[i]["assigned-pds"] = 0;
         expectedStats[i]["reclaimed-leases"] = 0;
+        expectedStats[i]["assigned-pds"] = 0;
+        expectedStats[i]["cumulative-assigned-pds"] = 0;
     }
+
+    // Stats should not be present because the subnet has no PD pool.
+    expectedStats[subnet_id - 1]["total-pds"].check_pool_ = false;
+    expectedStats[subnet_id - 1]["assigned-pds"].check_pool_ = false;
+    expectedStats[subnet_id - 1]["cumulative-assigned-pds"].check_pool_ = false;
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
-
 
     // Recount stats.  We should have the same results.
     ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
@@ -3743,7 +3773,6 @@ GenericLeaseMgrTest::testLeaseStatsQuery6() {
         ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery6());
         checkQueryAgainstRowSet(query, expected_rows);
     }
-
 
     // Now let's insert some leases into subnet 1.
     // Three assigned NAs.

@@ -41,7 +41,7 @@ namespace dhcp {
 namespace test {
 
 bool testStatistics(const std::string& stat_name, const int64_t exp_value,
-                    const SubnetID subnet_id) {
+                    const SubnetID subnet_id, bool fail_missing) {
     try {
         std::string name = (subnet_id == SUBNET_ID_UNUSED ? stat_name :
                             StatsMgr::generateName("subnet", subnet_id, stat_name));
@@ -56,10 +56,38 @@ bool testStatistics(const std::string& stat_name, const int64_t exp_value,
             }
             return (observation->getInteger().first == exp_value);
         } else {
-            ADD_FAILURE() << "Expected statistic " << name
-                          << " not found.";
+            if (fail_missing) {
+                ADD_FAILURE() << "Expected statistic " << name
+                              << " not found.";
+            } else {
+                if (exp_value) {
+                    ADD_FAILURE() << "Checking non existent statistic and expected value is not 0. Broken test?";
+                }
+            }
         }
-
+        if (subnet_id != SUBNET_ID_UNUSED) {
+            name = StatsMgr::generateName("subnet", subnet_id, StatsMgr::generateName("pool", 0, stat_name));
+            observation = StatsMgr::instance().getObservation(name);
+            if (observation) {
+                if (observation->getInteger().first != exp_value) {
+                    ADD_FAILURE()
+                        << "value of the observed statistics '"
+                        << name << "' ("
+                        << observation->getInteger().first << ") "
+                        << "doesn't match expected value (" << exp_value << ")";
+                }
+                return (observation->getInteger().first == exp_value);
+            } else {
+                if (fail_missing) {
+                    ADD_FAILURE() << "Expected statistic " << name
+                                  << " not found.";
+                } else {
+                    if (exp_value) {
+                        ADD_FAILURE() << "Checking non existent statistic and expected value is not 0. Broken test?";
+                    }
+                }
+            }
+        }
     } catch (...) {
         ;
     }

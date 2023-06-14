@@ -41,12 +41,15 @@ namespace test {
 /// @param stat_name Statistic name.
 /// @param exp_value Expected value.
 /// @param subnet_id subnet_id of the desired subnet, if not zero
+/// @param fail_missing flag which indicate if test should fail if the statistic
+/// does not exist, or simply ignore it.
 ///
 /// @return true if the statistic manager holds a particular value,
 /// false otherwise.
 bool testStatistics(const std::string& stat_name,
                     const int64_t exp_value,
-                    const SubnetID subnet_id = SUBNET_ID_UNUSED);
+                    const SubnetID subnet_id = SUBNET_ID_UNUSED,
+                    bool fail_missing = true);
 
 /// @brief Get a value held by statistic manager.
 ///

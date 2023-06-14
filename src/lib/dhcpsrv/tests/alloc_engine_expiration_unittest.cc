@@ -1084,15 +1084,15 @@ public:
         // Addresses (DHCPDECLINE support) (v4) or Duplicate Addresses (DECLINE
         // support) sections in the User's Guide or a comment in
         // Dhcpv4Srv::declineLease or Dhcpv6Srv::declineLease.
-        testStatistics("subnet[1]." + stat_name, 1000 - subnet1_cnt);
-        testStatistics("subnet[2]." + stat_name, 2000 - subnet2_cnt);
+        testStatistics(stat_name, 1000 - subnet1_cnt, 1);
+        testStatistics(stat_name, 2000 - subnet2_cnt, 2);
 
-        testStatistics("subnet[1].declined-addresses", 100 - subnet1_cnt);
-        testStatistics("subnet[2].declined-addresses", 200 - subnet2_cnt);
+        testStatistics("declined-addresses", 100 - subnet1_cnt, 1);
+        testStatistics("declined-addresses", 200 - subnet2_cnt, 2);
 
         // subnet[X].reclaimed-declined-addresses should go up in each subnet
-        testStatistics("subnet[1].reclaimed-declined-addresses", 10000 + subnet1_cnt);
-        testStatistics("subnet[2].reclaimed-declined-addresses", 20000 + subnet1_cnt);
+        testStatistics("reclaimed-declined-addresses", 10000 + subnet1_cnt, 1);
+        testStatistics("reclaimed-declined-addresses", 20000 + subnet1_cnt, 2);
     }
 
     /// @brief Collection of leases created at construction time.
@@ -1382,13 +1382,13 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
         EXPECT_TRUE(testStatistics("reclaimed-leases", i));
         // Make sure that the number of reclaimed leases is also distributed
         // across two subnets.
-        EXPECT_TRUE(testStatistics("subnet[1].reclaimed-leases", i / 2));
-        EXPECT_TRUE(testStatistics("subnet[2].reclaimed-leases", i / 2));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 1));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 2));
         // Number of assigned leases should decrease as we reclaim them.
-        EXPECT_TRUE(testStatistics("subnet[1].assigned-nas",
-                                   (TEST_LEASES_NUM - i) / 2));
-        EXPECT_TRUE(testStatistics("subnet[2].assigned-pds",
-                                   (TEST_LEASES_NUM - i) / 2));
+        EXPECT_TRUE(testStatistics("assigned-nas",
+                                   (TEST_LEASES_NUM - i) / 2, 1));
+        EXPECT_TRUE(testStatistics("assigned-pds",
+                                   (TEST_LEASES_NUM - i) / 2, 2));
     }
 }
 
@@ -2037,13 +2037,13 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
         EXPECT_TRUE(testStatistics("reclaimed-leases", i));
         // Make sure that the number of reclaimed leases is also distributed
         // across two subnets.
-        EXPECT_TRUE(testStatistics("subnet[1].reclaimed-leases", i / 2));
-        EXPECT_TRUE(testStatistics("subnet[2].reclaimed-leases", i / 2));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 1));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 2));
         // Number of assigned leases should decrease as we reclaim them.
-        EXPECT_TRUE(testStatistics("subnet[1].assigned-addresses",
-                                   (TEST_LEASES_NUM - i) / 2));
-        EXPECT_TRUE(testStatistics("subnet[2].assigned-addresses",
-                                   (TEST_LEASES_NUM - i) / 2));
+        EXPECT_TRUE(testStatistics("assigned-addresses",
+                                   (TEST_LEASES_NUM - i) / 2, 1));
+        EXPECT_TRUE(testStatistics("assigned-addresses",
+                                   (TEST_LEASES_NUM - i) / 2, 2));
     }
 }
 

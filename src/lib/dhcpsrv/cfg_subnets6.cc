@@ -545,12 +545,12 @@ CfgSubnets6::updateStatistics() {
                                                                              "total-pds")),
                                pool->getCapacity());
 
-            const std::string& name_nas =
+            const std::string& name_pds =
                 StatsMgr::generateName("subnet", subnet_id,
                                        StatsMgr::generateName("pd-pool", pool->getID(),
                                        "cumulative-assigned-pds"));
-            if (!stats_mgr.getObservation(name_nas)) {
-                stats_mgr.setValue(name_nas, static_cast<int64_t>(0));
+            if (!stats_mgr.getObservation(name_pds)) {
+                stats_mgr.setValue(name_pds, static_cast<int64_t>(0));
             }
         }
     }

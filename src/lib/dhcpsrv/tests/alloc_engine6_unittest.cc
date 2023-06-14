@@ -173,9 +173,9 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
 
     // We should not have bumped the assigned counter.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // This test checks if the fake PD allocation (for SOLICIT) can succeed
@@ -193,9 +193,9 @@ TEST_F(AllocEngine6Test, pdFakeAlloc6) {
 
     // We should not have bumped the assigned counter
     EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-pds", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-pds"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-pds",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-pds", glbl_cumulative));
 }
 
 // This test checks if the allocation with a hint that is valid (in range,
@@ -446,9 +446,9 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // Verify the none of relevant stats were altered.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 }
@@ -777,8 +777,8 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     glbl_cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
     EXPECT_TRUE(testStatistics("assigned-nas", -1, other_subnetid));
-    EXPECT_EQ(other_cumulative,
-              getStatistics("cumulative-assigned-nas", other_subnetid));
+    EXPECT_FALSE(testStatistics("cumulative-assigned-nas",
+                                other_cumulative, other_subnetid, false));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1, other_subnetid));
@@ -1182,9 +1182,9 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitValidHint) {
 
     // Assigned count should not have been incremented.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -1262,9 +1262,9 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitMatchingHint) {
 
     // Assigned count should not have been incremented.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -1339,9 +1339,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitNoHint) {
 
     // Assigned count should not have been incremented.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1375,9 +1375,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestNoHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -1414,9 +1414,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitValidHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1453,9 +1453,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestValidHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1492,9 +1492,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitMatchingHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1531,9 +1531,9 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
 
     // We should not have bumped the address counter
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
 }
 
 // In the following situation:
@@ -2570,9 +2570,9 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
 
     // Check that the stats were not modified
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-nas", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-nas"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
     EXPECT_TRUE(testStatistics("declined-addresses", 0));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
     EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));

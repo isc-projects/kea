@@ -522,12 +522,6 @@ Subnet::addPool(const PoolPtr& pool) {
     // Sort pools by first address.
     std::sort(pools_writable.begin(), pools_writable.end(),
               comparePoolFirstAddress);
-
-    uint64_t index = 0;
-    for (const auto& pool : pools_writable) {
-        pool->setID(index);
-        index++;
-    }
 }
 
 void

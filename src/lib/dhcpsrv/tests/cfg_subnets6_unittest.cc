@@ -1618,6 +1618,12 @@ TEST(CfgSubnets6Test, updateStatistics) {
     // Create subnet.
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 100));
 
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), IOAddress("2001:db8:1::FF")));
+    subnet->addPool(pool);
+
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"), 96, 112));
+    subnet->addPool(pool);
+
     // Add subnet.
     cfg->add(subnet);
 
@@ -1648,7 +1654,17 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1658,7 +1674,17 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "assigned-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1668,7 +1694,17 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1678,12 +1714,32 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-declined-addresses"));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")));
     ASSERT_FALSE(observation);
 
     cfg->updateStatistics();
@@ -1717,17 +1773,35 @@ TEST(CfgSubnets6Test, updateStatistics) {
         StatsMgr::generateName("subnet", subnet_id,
                                "total-nas"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getBigInteger().first);
+    ASSERT_EQ(256, observation->getBigInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(256, observation->getBigInteger().first);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getBigInteger().first);
+    ASSERT_EQ(65536, observation->getBigInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(65536, observation->getBigInteger().first);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "assigned-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1739,7 +1813,19 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1751,7 +1837,19 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "declined-addresses"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1763,7 +1861,25 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 }
@@ -1779,6 +1895,12 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     // Create subnet.
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 100));
+
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), IOAddress("2001:db8:1::FF")));
+    subnet->addPool(pool);
+
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"), 96, 112));
+    subnet->addPool(pool);
 
     // Add subnet.
     cfg.add(subnet);
@@ -1796,12 +1918,34 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")),
+        int128_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getBigInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"),
         int128_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getBigInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")),
+        int128_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getBigInteger().first);
 
@@ -1818,12 +1962,34 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                "assigned-pds"),
         int64_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "assigned-pds"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1840,12 +2006,34 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-pds"),
         int64_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-pds"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1862,12 +2050,34 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-declined-addresses"),
         int64_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-declined-addresses"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1882,6 +2092,28 @@ TEST(CfgSubnets6Test, removeStatistics) {
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
     // remove all statistics
     cfg.removeStatistics();
 
@@ -1892,7 +2124,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1902,7 +2144,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "assigned-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1912,7 +2164,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1922,12 +2184,32 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-declined-addresses"));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")));
     ASSERT_FALSE(observation);
 }
 

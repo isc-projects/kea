@@ -366,9 +366,9 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
 
     // Assigned addresses should still be zero.
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-addresses", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-addresses"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 }
 
 // This test checks if the allocation with a hint that is valid (in range,
@@ -1860,9 +1860,9 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 
     // Check that the stats declined stats were not modified
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-addresses", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-addresses"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
     EXPECT_TRUE(testStatistics("declined-addresses", 0));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
     EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
@@ -3139,9 +3139,9 @@ TEST_F(AllocEngine4Test, fakeAlloc4Stat) {
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(100, stat->getInteger().first);
-    EXPECT_EQ(cumulative,
-              getStatistics("cumulative-assigned-addresses", subnet_->getID()));
-    EXPECT_EQ(glbl_cumulative, getStatistics("cumulative-assigned-addresses"));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
 }
 
 // This test checks that the allocated-addresses statistic is decreased when
