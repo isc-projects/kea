@@ -3990,7 +3990,7 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     // We do not want to decrease the assigned-nas at this time. While
     // technically a declined address is no longer allocated, the
     // primary usage of the assigned-nas statistic is to monitor pool
-    // utilization. Most people would forget to include declined-nas
+    // utilization. Most people would forget to include declined-addresses
     // in the calculation, and simply do assigned-nas/total-nas. This
     // would have a bias towards under-representing pool utilization,
     // if we decreased allocated immediately after receiving DHCPDECLINE,

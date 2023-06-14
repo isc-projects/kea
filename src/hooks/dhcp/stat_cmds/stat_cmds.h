@@ -99,7 +99,7 @@ public:
     ///             "timestamp": "2018-03-22 09:43:30.815371",
     ///             "columns": ["subnet_id", "total-nas",
     ///                         "cumulative-assigned-nas",
-    ///                         "assigned-nas", "declined-nas",
+    ///                         "assigned-nas", "declined-addresses",
     ///                         "total-pds", "cumulative-assigned-pds",
     ///                         "assigned-pds"],
     ///             "rows": [

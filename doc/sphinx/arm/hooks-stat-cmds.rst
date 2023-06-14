@@ -188,7 +188,7 @@ The response to either command will contain three elements:
       -  ``assigned-nas`` - the number of NA addresses in the subnet that
          are currently assigned to a client.
 
-      -  ``declined-nas`` - the number of NA addresses that are currently
+      -  ``declined-addresses`` - the number of NA addresses that are currently
          declined and are thus unavailable for assignment.
 
       -  ``total-pds`` - the total number of PD prefixes available of DHCPv6
@@ -239,7 +239,7 @@ PD pools:
        "text": "stat-lease6-get: 2 rows found",
        "arguments": {
          "result-set": {
-           "columns": [ "subnet-id", "total-nas", "cumulative-assigned-nas", "assigned-nas", "declined-nas", "total-pds", "cumulative-assigned-pds", "assigned-pds" ],
+           "columns": [ "subnet-id", "total-nas", "cumulative-assigned-nas", "assigned-nas", "declined-addresses", "total-pds", "cumulative-assigned-pds", "assigned-pds" ],
            "rows": [
              [ 10, 4096, 5000, 2400, 3, 0, 0, 0],
              [ 20, 0, 0, 0, 0, 1048, 300, 233 ],

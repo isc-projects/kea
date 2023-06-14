@@ -592,7 +592,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
     std::vector<std::string>column_labels = { "subnet-id", "total-nas",
                                               "cumulative-assigned-nas",
                                               "assigned-nas",
-                                              "declined-nas", "total-pds",
+                                              "declined-addresses", "total-pds",
                                               "cumulative-assigned-pds",
                                               "assigned-pds" };
     ElementPtr value_rows = createResultSet(result_wrapper, column_labels);
