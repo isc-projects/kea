@@ -367,6 +367,14 @@ An example result returned when the query was malformed might look like this:
 
    { "result": 1, "text": "No 'ip-address' provided and 'identifier-type' is either missing or not a string." }
 
+.. _command-reservations-get:
+
+The ``reservations-get`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``reservations-get`` can be used to query the host database and
+retrieve all reservations in a specified subnet for given ip address.
+
 .. isccmd:: reservation-get-all
 .. _command-reservation-get-all:
 
