@@ -377,9 +377,9 @@ libraries, discussed in the following sections.
 
 .. note::
 
-   Some of these libraries are available with the base code, while
-   others are only shared with organizations who contribute to Kea's development
-   through paid ISC support contracts. Paid support
+   Some of these libraries are available with the base code, while others are
+   premium libraries available for purchase, or only shared with organizations
+   who contribute to Kea's development through paid ISC support contracts. Paid support
    includes professional engineering assistance, advance security notifications, input
    into ISC's roadmap planning, and many other benefits, while helping
    keep Kea sustainable in the long term. ISC encourages companies and organizations
@@ -418,13 +418,13 @@ loaded by the correct process per the table below.
    |                                                           |              | database. This library may only be used in conjunction with  |
    |                                                           |              | one of the supported Configuration Backend implementations.  |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`DDNS Tuning <hooks-ddns-tuning>`                    | ISC support  | This hook library adds custom behaviors related to Dynamic   |
-   |                                                           | customers    | DNS updates on a per-client basis. Its primary feature is to |
+   | :ref:`DDNS Tuning <hooks-ddns-tuning>`                    | ISC premium  | This hook library adds custom behaviors related to Dynamic   |
+   |                                                           | library      | DNS updates on a per-client basis. Its primary feature is to |
    |                                                           |              | allow the host name used for DNS to be                       |
    |                                                           |              | calculated using an expression.                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Flexible Identifier <hooks-flex-id>`                | ISC support  | Kea software provides a way to handle host reservations that |
-   |                                                           | customers    | include addresses, prefixes, options, client classes and     |
+   | :ref:`Flexible Identifier <hooks-flex-id>`                | ISC premium  | Kea software provides a way to handle host reservations that |
+   |                                                           | library      | include addresses, prefixes, options, client classes and     |
    |                                                           |              | other features. The reservation can be based on hardware     |
    |                                                           |              | address, DUID, circuit-id, or client-id in DHCPv4 and on     |
    |                                                           |              | hardware address or DUID in DHCPv6. However, there are       |
@@ -445,8 +445,8 @@ loaded by the correct process per the table below.
    |                                                           |              | remove actions are applied on the response packet before     |
    |                                                           |              | it is sent using the evaluation result.                      |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Forensic Logging <hooks-legal-log>`                 | ISC support  | This library provides hooks that record a detailed log of    |
-   |                                                           | customers    | lease assignments and renewals in a set of log files. In     |
+   | :ref:`Forensic Logging <hooks-legal-log>`                 | ISC premium  | This library provides hooks that record a detailed log of    |
+   |                                                           | library      | lease assignments and renewals in a set of log files. In     |
    |                                                           |              | many legal jurisdictions, companies - especially ISPs - must |
    |                                                           |              | record information about the addresses they have leased to   |
    |                                                           |              | DHCP clients. This library is designed to help with that     |
@@ -489,8 +489,8 @@ loaded by the correct process per the table below.
    |                                                           |              | includes negative caching, i.e. the ability to remember that |
    |                                                           |              | there is no client information in the database.              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Host Commands <hooks-host-cmds>`                    | ISC support  | Kea provides a way to store host reservations in a           |
-   |                                                           | customers    | database. In many larger deployments it is useful to be able |
+   | :ref:`Host Commands <hooks-host-cmds>`                    | ISC premium  | Kea provides a way to store host reservations in a           |
+   |                                                           | library      | database. In many larger deployments it is useful to be able |
    |                                                           |              | to manage that information while the server is running. This |
    |                                                           |              | library provides management commands for adding, querying,   |
    |                                                           |              | and deleting host reservations in a safe way without         |
