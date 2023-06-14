@@ -1463,9 +1463,8 @@ public:
                       << ". Only 0 or 2 are allowed.");
         }
 
-        ipv6_address_buffer_[ipv6_address_buffer_len_] = '\0';
-        std::string address = ipv6_address_buffer_;
-        IPv6Resrv r(type, IOAddress(address), prefix_len_);
+        IOAddress addr6 = IOAddress::fromBytes(AF_INET6, ipv6_address_buffer_);
+        IPv6Resrv r(type, addr6, prefix_len_);
         return (r);
     };
 
@@ -1535,10 +1534,10 @@ public:
         bind_[reservation_id_index_].buffer = reinterpret_cast<char*>(&reservation_id_);
         bind_[reservation_id_index_].is_unsigned = MLM_TRUE;
 
-        // IPv6 address/prefix VARCHAR(39)
-        ipv6_address_buffer_len_ = sizeof(ipv6_address_buffer_) - 1;
-        bind_[address_index_].buffer_type = MYSQL_TYPE_STRING;
-        bind_[address_index_].buffer = ipv6_address_buffer_;
+        // IPv6 address/prefix BINARY(16)
+        ipv6_address_buffer_len_ = 16;
+        bind_[address_index_].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[address_index_].buffer = reinterpret_cast<char*>(ipv6_address_buffer_);
         bind_[address_index_].buffer_length = ipv6_address_buffer_len_;
         bind_[address_index_].length = &ipv6_address_buffer_len_;
 
@@ -1580,7 +1579,7 @@ private:
     my_bool reserv_type_null_;
 
     /// @brief Buffer holding IPv6 address/prefix in textual format.
-    char ipv6_address_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];
+    uint8_t ipv6_address_buffer_[16];
 
     /// @brief Length of the textual address representation.
     unsigned long ipv6_address_buffer_len_;
@@ -1684,14 +1683,16 @@ public:
         // Set up the structures for the various components of the host structure.
 
         try {
-            // address VARCHAR(39)
-            address_ = resv.getPrefix().toText();
-            address_len_ = address_.length();
+            addr6_ = resv.getPrefix().toBytes();
+            if (addr6_.size() != 16) {
+                isc_throw(DbOperationError, "createBindForSend() - prefix is not 16 bytes long");
+            }
+
+            addr6_length_ = 16;
             bind_[0].buffer_type = MYSQL_TYPE_BLOB;
-            bind_[0].buffer = reinterpret_cast<char*>
-                (const_cast<char*>(address_.c_str()));
-            bind_[0].buffer_length = address_len_;
-            bind_[0].length = &address_len_;
+            bind_[0].buffer = reinterpret_cast<char*>(&addr6_[0]);
+            bind_[0].buffer_length = 16;
+            bind_[0].length = &addr6_length_;
 
             // prefix_len tinyint
             prefix_len_ = resv.getPrefixLen();
@@ -1772,6 +1773,15 @@ private:
     /// @brief Array of boolean values indicating if error occurred
     /// for respective columns.
     my_bool error_[RESRV_COLUMNS];
+
+    /// @brief Binary address data.
+    std::vector<uint8_t> addr6_;
+
+    /// @brief Binary address buffer.
+    uint8_t addr6_buffer_[16];
+
+    /// @brief Binary address length.
+    unsigned long addr6_length_;
 };
 
 /// @brief This class is used for inserting options into a database.
@@ -3312,13 +3322,16 @@ MySqlHostDataSource::del(const SubnetID& subnet_id,
     }
 
     // v6
-    std::string addr_str = addr.toText();
-    unsigned long addr_len = addr_str.size();
+    std::vector<uint8_t>addr6 = addr.toBytes();
+    if (addr6.size() != 16) {
+        isc_throw(DbOperationError, "del() - address is not 16 bytes long");
+    }
+
+    unsigned long addr6_length = 16;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[1].buffer = reinterpret_cast<char*>
-                        (const_cast<char*>(addr_str.c_str()));
-    inbind[1].length = &addr_len;
-    inbind[1].buffer_length = addr_len;
+    inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
+    inbind[1].buffer_length = 16;
+    inbind[1].length = &addr6_length;
 
     return (impl_->delStatement(ctx, MySqlHostDataSourceImpl::DEL_HOST_ADDR6, inbind));
 }
@@ -3846,14 +3859,16 @@ MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
-    std::string addr6 = prefix.toText();
-    unsigned long addr6_length = addr6.size();
+    std::vector<uint8_t>addr6 = prefix.toBytes();
+    if (addr6.size() != 16) {
+        isc_throw(DbOperationError, "get6() - prefix is not 16 bytes long");
+    }
 
+    unsigned long addr6_length = 16;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>
-                        (const_cast<char*>(addr6.c_str()));
+    inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
+    inbind[0].buffer_length = 16;
     inbind[0].length = &addr6_length;
-    inbind[0].buffer_length = addr6_length;
 
     uint8_t tmp = prefix_len;
     inbind[1].buffer_type = MYSQL_TYPE_TINY;
@@ -3894,14 +3909,16 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
     inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
     inbind[0].is_unsigned = MLM_TRUE;
 
-    std::string addr6 = address.toText();
-    unsigned long addr6_length = addr6.size();
+    std::vector<uint8_t>addr6 = address.toBytes();
+    if (addr6.size() != 16) {
+        isc_throw(DbOperationError, "get6() - address is not 16 bytes long");
+    }
 
+    unsigned long addr6_length = 16;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[1].buffer = reinterpret_cast<char*>
-                        (const_cast<char*>(addr6.c_str()));
+    inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
+    inbind[1].buffer_length = 16;
     inbind[1].length = &addr6_length;
-    inbind[1].buffer_length = addr6_length;
 
     ConstHostCollection collection;
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR, inbind,
@@ -3937,14 +3954,16 @@ MySqlHostDataSource::getAll6(const SubnetID& subnet_id,
     inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
     inbind[0].is_unsigned = MLM_TRUE;
 
-    std::string addr6 = address.toText();
-    unsigned long addr6_length = addr6.size();
+    std::vector<uint8_t>addr6 = address.toBytes();
+    if (addr6.size() != 16) {
+        isc_throw(DbOperationError, "getAll6() - address is not 16 bytes long");
+    }
 
+    unsigned long addr6_length = 16;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[1].buffer = reinterpret_cast<char*>
-                        (const_cast<char*>(addr6.c_str()));
+    inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
+    inbind[1].buffer_length = 16;
     inbind[1].length = &addr6_length;
-    inbind[1].buffer_length = addr6_length;
 
     ConstHostCollection collection;
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR, inbind,

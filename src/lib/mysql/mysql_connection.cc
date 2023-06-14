@@ -331,7 +331,6 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
 
         // Discard the statement and its resources
         mysql_stmt_close(stmt);
-
         return (std::make_pair(version, minor));
 
     } catch (const std::exception&) {

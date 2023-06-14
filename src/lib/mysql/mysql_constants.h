@@ -52,7 +52,7 @@ const int MLM_MYSQL_FETCH_FAILURE = 0;
 
 /// @name Current database schema version values.
 //@{
-const uint32_t MYSQL_SCHEMA_VERSION_MAJOR = 18;
+const uint32_t MYSQL_SCHEMA_VERSION_MAJOR = 19;
 const uint32_t MYSQL_SCHEMA_VERSION_MINOR = 0;
 
 //@}

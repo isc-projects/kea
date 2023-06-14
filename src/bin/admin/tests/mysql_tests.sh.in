@@ -359,7 +359,7 @@ mysql_upgrade_12_to_13_test() {
 
     # Check lease6Dump*().
     run_command \
-        mysql_execute "INSERT INTO lease6 VALUES('::10',20,30,(SELECT FROM_UNIXTIME(1678900000)),40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }',0, NULL)"
+        mysql_execute "INSERT INTO lease6 VALUES(inet6_aton('::10'),20,30,(SELECT FROM_UNIXTIME(1678900000)),40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }',0)"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -767,7 +767,7 @@ mysql_upgrade_17_to_18_test() {
     run_statement "hosts_255_long_dhcp_identifier" "$qry"
 
     #lease6 duid should support 130 long strings.
-    qry="insert into lease6 values('::10',12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,0,NULL)"
+    qry="insert into lease6 values(inet6_aton('::10'),12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,0)"
     run_statement "lease6_130_long_duid" "$qry"
 
     #lease4_pool_stat new table.
@@ -782,17 +782,6 @@ mysql_upgrade_17_to_18_test() {
         'SELECT subnet_id, pool_id, lease_type, state, leases FROM lease6_pool_stat'
     assert_eq 0 "${EXIT_CODE}" "lease6_pool_stat table is missing or broken. (expected status code %d, returned %d)"
 
-    #lease6 new binaddr column.
-    qry="select binaddr from lease6"
-    run_statement "lease6" "$qry"
-
-    qry="show indexes from lease6 where key_name = 'lease6_by_binaddr'"
-    run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "show indexes from lease6 failed. (expected status code %d, returned %d)"
-    count=$(echo "${OUTPUT}" | grep -Fci lease6_by_binaddr)
-    assert_eq 1 "${count}" "lease6_by_binaddr wrong or missing. (expected count %d, actual %d)"
-
     #lease6_relay_id new table.
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
@@ -804,6 +793,25 @@ mysql_upgrade_17_to_18_test() {
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
         'SELECT extended_info_id, remote_id, lease_addr FROM lease6_remote_id'
     assert_eq 0 "${EXIT_CODE}" "lease6_remote_id table is missing or broken. (expected status code %d, returned %d)"
+}
+
+mysql_upgrade_18_to_19_test() {
+    # Verify that lease6 address is binary.  This is sort of overkill as many of
+    # the prior upgrade tests manipulate lease6 records.
+    qry="insert into lease6 values(inet6_aton('3001::99'),'18219',30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,0)"
+    run_statement "lease6_insert" "$qry"
+
+    qry="select inet6_ntoa(address) from lease6 where duid = '18219';"
+    run_statement "lease6_insert" "$qry" "3001::99"
+
+    # Verify that ipv6_reservations address is binary.
+    qry="\
+    insert into hosts(host_id, dhcp_identifier, dhcp_identifier_type) values (18219, '18219', 1); \
+    insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
+        values (inet6_aton('3001::99'), 128, 1, 123, 18219); \
+    select inet6_ntoa(address) from ipv6_reservations where host_id = 18219;"
+
+    run_statement "ipv6_reservations_insert" "$qry" "3001::99"
 }
 
 mysql_upgrade_test() {
@@ -827,7 +835,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "18.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "19.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1487,6 +1495,9 @@ SET @disable_audit = 0"
     # Check upgrade from 17.0 to 18.0.
     mysql_upgrade_17_to_18_test
 
+    # Check upgrade from 18.0 to 19.0.
+    mysql_upgrade_18_to_19_test
+
     # Let's wipe the whole database
     mysql_wipe
 
@@ -1591,9 +1602,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values('::10',203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,0,NULL);\
-insert into lease6 values('::11',213,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }',0,NULL);\
-insert into lease6 values('::12',223,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }',0,NULL)"
+insert into lease6 values(inet6_aton('::10'),203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,0);\
+insert into lease6 values(inet6_aton('::11'),213,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }',0);\
+insert into lease6 values(inet6_aton('::12'),223,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }',0)"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -1873,7 +1884,7 @@ mysql_lease6_stat_per_type() {
     ltype=$1
 
     # insert a lease6 for addr and ltype, state assigned
-    qry="insert into lease6 (address, lease_type, subnet_id, state) values ($addr,$ltype,1,0)"
+    qry="insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('$addr'),$ltype,1,0)"
     run_statement "#2" "$qry"
 
     # assigned stat should be 1
@@ -1885,7 +1896,7 @@ mysql_lease6_stat_per_type() {
     run_statement "#4" "$qry" 1
 
     # update the lease, changing state to declined
-    qry="update lease6 set state = 1 where address = $addr"
+    qry="update lease6 set state = 1 where address = inet6_aton('$addr')"
     run_statement "#5" "$qry"
 
     # leases stat for assigned state should be 0
@@ -1905,7 +1916,7 @@ mysql_lease6_stat_per_type() {
     run_statement "#9" "$qry" 1
 
     # delete the lease
-    qry="delete from lease6 where address = $addr"
+    qry="delete from lease6 where address = inet6_aton('$addr')"
     run_statement "#10" "$qry"
 
     # leases count for declined state should be 0
@@ -1917,7 +1928,7 @@ mysql_lease6_stat_per_type() {
     run_statement "#12" "$qry" 0
 
     # insert a lease6 for addr and ltype, state assigned
-    qry="insert into lease6 (address, lease_type, subnet_id, pool_id, state) values ($addr1,$ltype,1,1,0)"
+    qry="insert into lease6 (address, lease_type, subnet_id, pool_id, state) values (inet6_aton('$addr1'),$ltype,1,1,0)"
     run_statement "#13" "$qry"
 
     # assigned stat should be 1
@@ -1929,7 +1940,7 @@ mysql_lease6_stat_per_type() {
     run_statement "#15" "$qry" 1
 
     # insert a lease6 for addr and ltype, state assigned
-    qry="insert into lease6 (address, lease_type, subnet_id, pool_id, state) values ($addr2,$ltype,1,2,0)"
+    qry="insert into lease6 (address, lease_type, subnet_id, pool_id, state) values (inet6_aton('$addr2'),$ltype,1,2,0)"
     run_statement "#16" "$qry"
 
     # assigned stat should be 2
@@ -1963,11 +1974,11 @@ mysql_lease6_stat_test() {
     qry="select count(subnet_id) from lease6_stat"
     run_statement "#1" "$qry"
 
-    # Test for address 111, NA lease type
-    mysql_lease6_stat_per_type "111" "112" "113" "0"
+    # Test for address ::11, NA lease type
+    mysql_lease6_stat_per_type "::11" "::12" "::13" "0"
 
-    # Test for address 222, PD lease type
-    mysql_lease6_stat_per_type "222" "223" "224" "1"
+    # Test for address ::22, PD lease type
+    mysql_lease6_stat_per_type "::22" "::23" "::24" "1"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -2004,12 +2015,12 @@ mysql_lease_stat_upgrade_test() {
     run_statement "insert v4 leases" "$qry"
 
     qry=\
-"insert into lease6 (address, lease_type, subnet_id, state) values (111,0,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (222,0,40,1);\
- insert into lease6 (address, lease_type, subnet_id, state) values (333,1,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (444,1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (555,1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2)"
+"insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::11'),0,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::22'),0,40,1);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::33'),1,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::44'),1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::55'),1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::66'),1,40,2)"
     run_statement "insert v6 leases" "$qry"
 
     # Let's upgrade it to the latest version.
@@ -2149,7 +2160,7 @@ mysql_lease_stat_upgrade_test() {
     #
 
     # Insert a new lease subnet 50
-    qry="insert into lease6 (address, subnet_id, pool_id, lease_type, state) values (777,50,1,1,0)"
+    qry="insert into lease6 (address, subnet_id, pool_id, lease_type, state) values (inet6_aton('::77'),50,1,1,0)"
     run_statement "#6.11" "$qry"
 
     # Assigned count for subnet 50 should be 3
@@ -2165,7 +2176,7 @@ mysql_lease_stat_upgrade_test() {
     run_statement "#6.14" "$qry" 1
 
     # Update the state of the new lease to expired
-    qry="update lease6 set state = 2 where address = 777"
+    qry="update lease6 set state = 2 where address = inet6_aton('::77')"
     run_statement "#6.15" "$qry"
 
     # Assigned count for subnet 50 should be 2 again
@@ -2177,7 +2188,7 @@ mysql_lease_stat_upgrade_test() {
     run_statement "#6.17" "$qry" 0
 
     # Delete another PD lease.
-    qry="delete from lease6 where address = 555"
+    qry="delete from lease6 where address = inet6_aton('::55')"
     run_statement "#6.18" "$qry"
 
     # Assigned leases for subnet 50 should be 1
@@ -2778,8 +2789,8 @@ mysql_update_empty_duid_test() {
     mysql_upgrade_schema_to_version 16.0
 
     sql=\
-"insert into lease6 values('::10',203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
- insert into lease6 values('::11',UNHEX('00'),30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }')"
+"insert into lease6 values(inet6_aton('::10'),203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+ insert into lease6 values(inet6_aton('::11'),UNHEX('00'),30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }')"
 
     run_statement "insert v6 leases" "$sql"
 
@@ -2788,11 +2799,11 @@ mysql_update_empty_duid_test() {
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
     # leases count for declined state should be 1 with DUID updated (0x000000)
-    qry="select count(*) from lease6 where address = '::11' and duid = 0x000000 and state = 1"
+    qry="select count(*) from lease6 where address = inet6_aton('::11') and duid = 0x000000 and state = 1"
     run_statement "#2" "$qry" 1
 
     # leases count for non declined state should be 1 with DUID unchanged (0x323033)
-    qry="select count(*) from lease6 where address = '::10' and duid = 0x323033 and state = 0"
+    qry="select count(*) from lease6 where address = inet6_aton('::10') and duid = 0x323033 and state = 0"
     run_statement "#3" "$qry" 1
 
     # Let's wipe the whole database

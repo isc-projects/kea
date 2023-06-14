@@ -350,17 +350,6 @@ tagged_statements = { {
                             "WHERE address > ? AND user_context IS NOT NULL "
                             "ORDER BY address "
                             "LIMIT ?"},
-    {MySqlLeaseMgr::GET_LEASE6_BINADDR_PAGE,
-                    "SELECT address, duid, valid_lifetime, "
-                        "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len, "
-                        "fqdn_fwd, fqdn_rev, hostname, "
-                        "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context, pool_id "
-                            "FROM lease6 "
-                            "WHERE address > ? AND binaddr IS NULL "
-                            "ORDER BY address "
-                            "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -409,9 +398,8 @@ tagged_statements = { {
                         "hwaddr, hwtype, hwaddr_source, "
                         "state, user_context, pool_id "
                             "FROM lease6 "
-                            "WHERE binaddr IS NOT NULL "
-                            "AND binaddr BETWEEN ? AND ? "
-                            "ORDER BY binaddr "
+                            "WHERE address BETWEEN ? AND ? "
+                            "ORDER BY address "
                             "LIMIT ?"},
     {MySqlLeaseMgr::INSERT_LEASE4,
                     "INSERT INTO lease4(address, hwaddr, client_id, "
@@ -425,8 +413,8 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context, pool_id, binaddr) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+                        "state, user_context, pool_id) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::UPDATE_LEASE4,
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
                         "client_id = ?, valid_lifetime = ?, expire = ?, "
@@ -441,7 +429,7 @@ tagged_statements = { {
                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
                         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ?, "
-                        "state = ?, user_context = ?, pool_id = ?, binaddr = ? "
+                        "state = ?, user_context = ?, pool_id = ? "
                             "WHERE address = ? AND expire = ?"},
     {MySqlLeaseMgr::ALL_LEASE4_STATS,
                     "SELECT subnet_id, state, leases as state_count "
@@ -1182,10 +1170,9 @@ class MySqlLease6Exchange : public MySqlLeaseExchange {
     static const size_t STATE_COL = 15;
     static const size_t USER_CONTEXT_COL = 16;
     static const size_t POOL_ID_COL = 17;
-    static const size_t BINADDR_COL = 18;
     //@}
     /// @brief Number of columns in the table holding DHCPv6 leases.
-    static const size_t LEASE_COLUMNS = 19;
+    static const size_t LEASE_COLUMNS = 18;
 
 public:
 
@@ -1193,14 +1180,14 @@ public:
     ///
     /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
-    MySqlLease6Exchange() : addr6_length_(0), hwaddr_length_(0),
+    MySqlLease6Exchange() : addr6_length_(16), hwaddr_length_(0),
                             hwaddr_null_(MLM_FALSE), duid_length_(0),
                             iaid_(0), lease_type_(0), prefix_len_(0),
                             pref_lifetime_(0), subnet_id_(0), pool_id_(0),
                             valid_lifetime_(0), fqdn_fwd_(false), fqdn_rev_(false),
                             hostname_length_(0), hwtype_(0), hwaddr_source_(0),
                             state_(0), user_context_length_(0),
-                            user_context_null_(MLM_FALSE), binaddr_length_(16) {
+                            user_context_null_(MLM_FALSE) {
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
         memset(hostname_buffer_, 0, sizeof(hostname_buffer_));
@@ -1227,8 +1214,7 @@ public:
         columns_[STATE_COL] = "state";
         columns_[USER_CONTEXT_COL] = "user_context";
         columns_[POOL_ID_COL] = "pool_id";
-        columns_[BINADDR_COL] = "binaddr";
-        BOOST_STATIC_ASSERT(18 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
@@ -1252,34 +1238,23 @@ public:
         memset(bind_, 0, sizeof(bind_));
 
         try {
-            // address: varchar(39)
-            addr6_ = lease_->addr_.toText();
-            addr6_length_ = addr6_.size();
+            // address: binary(16)
+            addr6_ = lease->addr_.toBytes();
+            if (addr6_.size() != 16) {
+                isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
+            }
 
-            // In the following statement, the string is being read.  However, the
-            // MySQL C interface does not use "const", so the "buffer" element
-            // is declared as "char*" instead of "const char*".  To resolve this,
-            // the "const" is discarded.  (Note that the address of addr6_.c_str()
-            // is guaranteed to be valid until the next non-const operation on
-            // addr6_.)
-            //
-            // The const_cast could be avoided by copying the string to a writable
-            // buffer and storing the address of that in the "buffer" element.
-            // However, this introduces a copy operation (with additional overhead)
-            // purely to get round the structures introduced by design of the
-            // MySQL interface (which uses the area pointed to by "buffer" as input
-            // when specifying query parameters and as output when retrieving data).
-            // For that reason, "const_cast" has been used.
-            bind_[0].buffer_type = MYSQL_TYPE_STRING;
-            bind_[0].buffer = const_cast<char*>(addr6_.c_str());
-            bind_[0].buffer_length = addr6_length_;
+            addr6_length_ = 16;
+            bind_[0].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[0].buffer = reinterpret_cast<char*>(&addr6_[0]);
+            bind_[0].buffer_length = 16;
             bind_[0].length = &addr6_length_;
             // bind_[0].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
 
             // duid: varchar(130)
             if (!lease_->duid_) {
-                isc_throw(DbOperationError, "lease6 for address " << addr6_
+                isc_throw(DbOperationError, "lease6 for address " << lease->addr_.toText()
                           << " is missing mandatory client-id.");
             }
             duid_ = lease_->duid_->getDuid();
@@ -1479,25 +1454,11 @@ public:
             // bind_[17].is_null = &MLM_FALSE; // commented out for performance
                                                // reasons, see memset() above
 
-            // binaddr: binary(16)
-            binaddr_ = lease->addr_.toBytes();
-            if (binaddr_.size() != 16) {
-                isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
-            }
-
-            binaddr_length_ = 16;
-            bind_[18].buffer_type = MYSQL_TYPE_BLOB;
-            bind_[18].buffer = reinterpret_cast<char*>(&binaddr_[0]);
-            bind_[18].buffer_length = 16;
-            bind_[18].length = &binaddr_length_;
-            // bind_[18].is_null = &MLM_FALSE; // commented out for performance
-                                               // reasons, see memset() above
-
             // Add the error flags
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(18 < LEASE_COLUMNS);
+            BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1527,13 +1488,10 @@ public:
         // code that explicitly sets is_null is there, but is commented out.
         memset(bind_, 0, sizeof(bind_));
 
-        // address: varchar(39)
-        // A Lease6_ address has a maximum of 39 characters.  The array is
-        // one byte longer than this to guarantee that we can always null
-        // terminate it whatever is returned.
-        addr6_length_ = sizeof(addr6_buffer_) - 1;
-        bind_[0].buffer_type = MYSQL_TYPE_STRING;
-        bind_[0].buffer = addr6_buffer_;
+        // address: binary(16)
+        addr6_length_ = 16;
+        bind_[0].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[0].buffer = reinterpret_cast<char*>(addr6_buffer_);
         bind_[0].buffer_length = addr6_length_;
         bind_[0].length = &addr6_length_;
         // bind_[0].is_null = &MLM_FALSE; // commented out for performance
@@ -1666,7 +1624,7 @@ public:
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(18 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -1684,12 +1642,9 @@ public:
     ///
     /// @throw isc::BadValue Unable to convert Lease Type value in database
     Lease6Ptr getLeaseData() {
-        // The address buffer is declared larger than the buffer size passed
-        // to the access function so that we can always append a null byte.
-        // Create the IOAddress object corresponding to the received data.
-        addr6_buffer_[addr6_length_] = '\0';
-        std::string address = addr6_buffer_;
-        IOAddress addr(address);
+        // Convert lease from network-order bytes to IOAddress.
+        IOAddress addr = IOAddress::fromBytes(AF_INET6, addr6_buffer_);
+        std::string address = addr.toText();
 
         // Set the lease type in a variable of the appropriate data type, which
         // has been initialized with an arbitrary (but valid) value.
@@ -1797,9 +1752,9 @@ private:
     // Note: All array lengths are equal to the corresponding variable in the
     // schema.
     // Note: arrays are declared fixed length for speed of creation
-    std::string          addr6_;                                   ///< Address
-    char                 addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1]; ///< Address buffer
-    unsigned long        addr6_length_;                            ///< Length of address
+    std::vector<uint8_t> addr6_;                                   ///< Binary address
+    uint8_t              addr6_buffer_[16];                        ///< Binary address buffer
+    unsigned long        addr6_length_;                            ///< Binary address length
     MYSQL_BIND           bind_[LEASE_COLUMNS];                     ///< Bind array
     std::string          columns_[LEASE_COLUMNS];                  ///< Column names
     my_bool              error_[LEASE_COLUMNS];                    ///< Error array
@@ -1829,8 +1784,6 @@ private:
     char                 user_context_[USER_CONTEXT_MAX_LEN];      ///< User context
     unsigned long        user_context_length_;                     ///< Length of user context
     my_bool              user_context_null_;                       ///< Used when user context is null
-    std::vector<uint8_t> binaddr_;                                 ///< Binary address
-    unsigned long        binaddr_length_;                          ///< Length of binary data
 };
 
 /// @brief MySql derivation of the statistical lease data query
@@ -2306,6 +2259,7 @@ MySqlLeaseMgr::createContext() const {
                 .arg(cipher);
         }
     }
+
 
     // Prepare all statements likely to be used.
     ctx->conn_.prepareStatements(tagged_statements.begin(),
@@ -2858,14 +2812,16 @@ MySqlLeaseMgr::getLease6(Lease::Type lease_type,
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
-    std::string addr6 = addr.toText();
-    unsigned long addr6_length = addr6.size();
+    // address: binary(16)
+    std::vector<uint8_t>addr6 = addr.toBytes();
+    if (addr6.size() != 16) {
+        isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
+    }
 
-    // See the earlier description of the use of "const_cast" when accessing
-    // the address for an explanation of the reason.
-    inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = const_cast<char*>(addr6.c_str());
-    inbind[0].buffer_length = addr6_length;
+    unsigned long addr6_length = 16;
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
+    inbind[0].buffer_length = 16;
     inbind[0].length = &addr6_length;
 
     // LEASE_TYPE
@@ -3111,20 +3067,17 @@ MySqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
-    // In IPv6 we compare addresses represented as strings. The IPv6 zero address
-    // is ::, so it is greater than any other address. In this special case, we
-    // just use 0 for comparison which should be lower than any real IPv6 address.
-    std::string lb_address_data = "0";
-    if (!lower_bound_address.isV6Zero()) {
-        lb_address_data = lower_bound_address.toText();
+    // Bind lower bound address
+    std::vector<uint8_t>lb_addr = lower_bound_address.toBytes();
+    if (lb_addr.size() != 16) {
+        isc_throw(DbOperationError, "getLeases6() - lower bound address is not 16 bytes long");
     }
 
-    // Bind lower bound address
-    unsigned long lb_address_data_size = lb_address_data.size();
-    inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = const_cast<char*>(lb_address_data.c_str());
-    inbind[0].buffer_length = lb_address_data_size;
-    inbind[0].length = &lb_address_data_size;
+    unsigned long lb_addr_length = 16;
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(&lb_addr[0]);
+    inbind[0].buffer_length = 16;
+    inbind[0].length = &lb_addr_length;
 
     // Bind page size value
     uint32_t ps = static_cast<uint32_t>(page_size.page_size_);
@@ -3309,14 +3262,16 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
-    std::string addr6 = lease->addr_.toText();
-    unsigned long addr6_length = addr6.size();
+    // Bind the where clause address parameter.
+    std::vector<uint8_t>addr6 = lease->addr_.toBytes();
+    if (addr6.size() != 16) {
+        isc_throw(DbOperationError, "updateLease6() - address is not 16 bytes long");
+    }
 
-    // See the earlier description of the use of "const_cast" when accessing
-    // the address for an explanation of the reason.
-    inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = const_cast<char*>(addr6.c_str());
-    inbind[0].buffer_length = addr6_length;
+    unsigned long addr6_length = 16;
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
+    inbind[0].buffer_length = 16;
     inbind[0].length = &addr6_length;
 
     bind.push_back(inbind[0]);
@@ -3435,14 +3390,16 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
-    std::string addr6 = addr.toText();
-    unsigned long addr6_length = addr6.size();
+    // Bind the where clause address parameter.
+    std::vector<uint8_t>addr6 = addr.toBytes();
+    if (addr6.size() != 16) {
+        isc_throw(DbOperationError, "deleteLease6() - address is not 16 bytes long");
+    }
 
-    // See the earlier description of the use of "const_cast" when accessing
-    // the address for an explanation of the reason.
-    inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = const_cast<char*>(addr6.c_str());
-    inbind[0].buffer_length = addr6_length;
+    unsigned long addr6_length = 16;
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
+    inbind[0].buffer_length = 16;
     inbind[0].length = &addr6_length;
 
     // See the expire code of createBindForSend for the
@@ -4264,86 +4221,6 @@ MySqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
     getLeaseCollection(ctx, GET_LEASE6_LINK, inbind, result);
 
     return (result);
-}
-
-size_t
-MySqlLeaseMgr::upgradeBinaryAddress6(const LeasePageSize& page_size) {
-    auto check = CfgMgr::instance().getCurrentCfg()->
-        getConsistency()->getExtendedInfoSanityCheck();
-
-    size_t pages = 0;
-    size_t updated = 0;
-    IOAddress start_addr = IOAddress::IPV6_ZERO_ADDRESS();
-    for (;;) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-                  DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_PAGE)
-            .arg(pages)
-            .arg(start_addr.toText())
-            .arg(updated);
-
-        // Prepare WHERE clause.
-        MYSQL_BIND inbind[2];
-        memset(inbind, 0, sizeof(inbind));
-
-        // Bind start address.
-        std::string start_addr_str = "0";
-        if (!start_addr.isV6Zero()) {
-            start_addr_str = start_addr.toText();
-        }
-        unsigned long start_addr_size = start_addr_str.size();
-        inbind[0].buffer_type = MYSQL_TYPE_STRING;
-        inbind[0].buffer = const_cast<char*>(start_addr_str.c_str());
-        inbind[0].buffer_length = start_addr_size;
-        inbind[0].length = &start_addr_size;
-
-        // Bind page size value.
-        uint32_t ps = static_cast<uint32_t>(page_size.page_size_);
-        inbind[1].buffer_type = MYSQL_TYPE_LONG;
-        inbind[1].buffer = reinterpret_cast<char*>(&ps);
-        inbind[1].is_unsigned = MLM_TRUE;
-
-        Lease6Collection leases;
-
-        // Get a context.
-        {
-            MySqlLeaseContextAlloc get_context(*this);
-            MySqlLeaseContextPtr ctx = get_context.ctx_;
-
-            getLeaseCollection(ctx, GET_LEASE6_BINADDR_PAGE, inbind, leases);
-        }
-
-        if (leases.empty()) {
-            // Done.
-            break;
-        }
-
-        ++pages;
-        start_addr = leases.back()->addr_;
-        for (auto lease : leases) {
-            try {
-                // Update to the same lease will fill the new column i.e.
-                // refresh does the job...
-                updateLease6(lease);
-                ++updated;
-            } catch (const NoSuchLease&) {
-                // The lease was modified in parallel:
-                // as its extended info was processed just ignore.
-                continue;
-            } catch (const std::exception& ex) {
-                // Something when wrong, for instance extract failed.
-                LOG_ERROR(dhcpsrv_logger,
-                          DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_ERROR)
-                    .arg(lease->addr_.toText())
-                    .arg(ex.what());
-            }
-        }
-    }
-
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6)
-        .arg(pages)
-        .arg(updated);
-
-    return (updated);
 }
 
 size_t

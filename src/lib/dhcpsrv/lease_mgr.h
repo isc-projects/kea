@@ -1041,7 +1041,11 @@ public:
     ///
     /// @param page_size The page size used for retrieval.
     /// @return The number of updates in the database.
-    virtual size_t upgradeBinaryAddress6(const LeasePageSize& page_size) = 0;
+    /// @todo This will be obsolete once #2909 is completed for all backends
+    /// and lease-query hook lib
+    virtual size_t upgradeBinaryAddress6(const LeasePageSize& /* page_size */) {
+        return (0);
+    }
 
     /// @brief Build extended info v6 tables.
     ///

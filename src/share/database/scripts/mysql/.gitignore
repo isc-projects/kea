@@ -26,4 +26,5 @@
 /upgrade_015_to_016.sh
 /upgrade_016_to_017.sh
 /upgrade_017_to_018.sh
+/upgrade_018_to_019.sh
 /wipe_data.sh

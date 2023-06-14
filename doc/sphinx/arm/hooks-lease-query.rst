@@ -625,17 +625,7 @@ For DHCPv4 lease data, the command is:
         "command": "extended-info4-upgrade"
     }
 
-.. isccmd:: binary-address6-upgrade
-.. _command-binary-address6-upgrade:
-
-For DHCPv6 lease data, there are two commands, for upgrading the binary
-address used for by link address query the command is:
-
-::
-
-    {
-        "command": "binary-address6-upgrade"
-    }
+For DHCPv6 lease data, the command is:
 
 .. isccmd:: extended-info6-upgrade
 .. _command-extended-info6-upgrade:
