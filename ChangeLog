@@ -1,3 +1,9 @@
+2147.	[doc]		andrei
+	There are now more cross-references in the ARM. Commands and hook
+	libraries link to their own section. Programs link to their
+	manual pages.
+	(Gitlab #2554)
+
 2146.	[func]		piotrek
 	Making DHCP4_PACKET_DROP_* and DHCP6_PACKET_DROP_* debug prints
 	more verbose. The prints are including now hwaddr for DHCP4 and
