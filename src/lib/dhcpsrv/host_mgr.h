@@ -641,6 +641,24 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    /// @brief Returns a collection of hosts using the specified IPv6 address.
+    ///
+    /// This method may return multiple @c Host objects if they are connected to
+    /// different subnets or if there are multiple hosts with the same IPv6 address.
+    ///
+    /// If matching reservations are both in the primary and the alternate
+    /// data source, all of them are returned. The reservations from the
+    /// primary data source are placed before the reservations from the
+    /// alternate source.
+    ///
+    /// @param address IPv6 address for which the @c Host object is searched.
+    /// @param target The host data source being a target of the operation.
+    ///
+    /// @return Collection of const @c Host objects.
+    ConstHostCollection
+    getAll6(const asiolink::IOAddress& address,
+            const HostMgrOperationTarget target) const;
+
     /// @brief Adds a new host to the alternate data source.
     ///
     /// This method will throw an exception if no alternate data source is

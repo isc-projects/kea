@@ -740,6 +740,23 @@ HostMgr::getAll6(const SubnetID& subnet_id,
         return getAll6(subnet_id, address, HostMgrOperationTarget::ALL_SOURCES);
 }
 
+ConstHostCollection
+HostMgr::getAll6(const IOAddress& address, const HostMgrOperationTarget target) const {
+    ConstHostCollection hosts;
+    if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
+        hosts = getCfgHosts()->getAll6(address);
+    }
+
+    if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
+        for (auto source : alternate_sources_) {
+            ConstHostCollection hosts_plus = source->getAll4(address);
+            hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+        }
+    }
+
+    return (hosts);
+}
+
 void
 HostMgr::add(const HostPtr& host, const HostMgrOperationTarget target) {
     if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
@@ -958,7 +975,6 @@ HostMgr::setIPReservationsUnique(const bool unique) {
     ip_reservations_unique_ = unique;
     return (true);
 }
-
 
 } // end of isc::dhcp namespace
 } // end of isc namespace
