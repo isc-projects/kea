@@ -275,6 +275,11 @@ const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
 ///
 /// This is mostly the same as @ref SUBNET6_DEFAULTS, except the parameters
 /// that can be derived from shared-network, but cannot from global scope.
+const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
+    { "id",               Element::integer, "0" } // 0 means autogenerate
+};
+
+/// @brief This table defines default values for each IPv6 shared network.
 const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
     { "client-class",     Element::string,  "" },
     { "interface",        Element::string,  "" },
@@ -318,6 +323,7 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
 /// Order follows pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser6::POOL6_PARAMETERS = {
     { "pool",                   Element::string },
+    { "pool-id",                Element::integer },
     { "option-data",            Element::list },
     { "client-class",           Element::string },
     { "require-client-classes", Element::list },
@@ -335,6 +341,7 @@ const SimpleKeywords SimpleParser6::PD_POOL6_PARAMETERS = {
     { "prefix",                 Element::string },
     { "prefix-len",             Element::integer },
     { "delegated-len",          Element::integer },
+    { "pool-id",                Element::integer },
     { "option-data",            Element::list },
     { "client-class",           Element::string },
     { "require-client-classes", Element::list },
@@ -394,11 +401,6 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "allocator",                      Element::string },
     { "pd-allocator",                   Element::string },
     { "ddns-ttl-percent",               Element::real },
-};
-
-/// @brief This table defines default values for each IPv6 subnet.
-const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
-    { "id",               Element::integer, "0" } // 0 means autogenerate
 };
 
 /// @brief This table defines default values for interfaces for DHCPv6.

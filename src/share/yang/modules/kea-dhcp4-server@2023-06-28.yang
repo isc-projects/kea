@@ -12,13 +12,17 @@ module kea-dhcp4-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2023-05-31;
+    revision-date 2023-06-28;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
+
+  revision 2023-06-28 {
+    description "Added pool ID.";
+  }
 
   revision 2023-05-31 {
     description "Added allocator, ddns-ttl-percent, exclude-first-last-24,
@@ -217,6 +221,7 @@ module kea-dhcp4-server {
         uses option-data-list;
         uses dhcp:pool-client-class;
         uses dhcp:pool-require-client-classes;
+        uses dhcp:pool-id;
         uses dhcp:pool-user-context;
       }
       leaf subnet {

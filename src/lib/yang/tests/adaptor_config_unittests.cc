@@ -79,7 +79,7 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
         "hooks-radius.json",
         "leases-expiration.json",
         "multiple-options.json",
-        //"mysql-reservations.json", commented for new TLS parameters
+        "mysql-reservations.json",
         "pgsql-reservations.json",
         "reservations.json",
         "several-subnets.json",
@@ -87,7 +87,7 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
         "single-subnet.json",
         "vendor-specific.json",
         "vivso.json",
-        // "with-ddns.json",  commented out for ddns-ttl-percent
+        "with-ddns.json",
     };
 
     ElementPtr x;
@@ -119,7 +119,7 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
         "iPXE.json",
         "leases-expiration.json",
         "multiple-options.json",
-        //"mysql-reservations.json", commented for new TLS parameters
+        "mysql-reservations.json",
         "pgsql-reservations.json",
         "reservations.json",
         "several-subnets.json",
@@ -128,7 +128,7 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
         "softwire46.json",
         "stateless.json",
         "tee-times.json",
-        // "with-ddns.json", commented out for ddns-ttl-percent
+        "with-ddns.json",
     };
     ElementPtr x;
 

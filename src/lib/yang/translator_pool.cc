@@ -107,6 +107,8 @@ TranslatorPool::getPoolKea(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "client-class");
     checkAndGetLeaf(result, data_node, "require-client-classes");
 
+    checkAndGetLeaf(result, data_node, "pool-id");
+
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
 
     return (result->empty() ? ElementPtr() : result);
@@ -187,6 +189,8 @@ TranslatorPool::setPoolKea(string const& xpath, ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
 
     checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
+
+    checkAndSetLeaf(elem, xpath, "pool-id", LeafBaseType::Dec64);
 
     checkAndSetUserContext(elem, xpath);
 

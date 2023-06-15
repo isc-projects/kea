@@ -124,12 +124,16 @@ Pool::toElement() const {
     // Set require-client-classes
     const ClientClasses& classes = getRequiredClasses();
     if (!classes.empty()) {
-        ElementPtr class_list =Element::createList();
+        ElementPtr class_list = Element::createList();
         for (ClientClasses::const_iterator it = classes.cbegin();
              it != classes.cend(); ++it) {
             class_list->add(Element::create(*it));
         }
         map->set("require-client-classes", class_list);
+    }
+
+    if (id_) {
+        map->set("pool-id", Element::create(static_cast<long long>(id_)));
     }
 
     return (map);

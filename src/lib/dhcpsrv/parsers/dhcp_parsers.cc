@@ -453,6 +453,20 @@ PoolParser::parse(PoolStoragePtr pools,
                   << text_pool->getPosition() << ")");
     }
 
+    // If there is a pool-id, store it.
+    ConstElementPtr pool_id = pool_structure->get("pool-id");
+    if (pool_id) {
+        if (pool_id->intValue() <= 0) {
+            isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
+                      << " a positive integer greater than 0");
+        } else if (pool_id->intValue() > numeric_limits<uint32_t>::max()) {
+            isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
+                      << " a 32 bit unsigned integer");
+        }
+
+        pool->setID(pool_id->intValue());
+    }
+
     // If there's user-context specified, store it.
     ConstElementPtr user_context = pool_structure->get("user-context");
     if (user_context) {

@@ -16,6 +16,10 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2023-06-28 {
+    description "Added pool ID.";
+  }
+
   revision 2023-05-31 {
     description "Added allocator, ddns-ttl-percent, exclude-first-last-24,
                  ignore-dhcp-server-identifier, offer-lifetime, pd-allocator,
@@ -658,6 +662,16 @@ module kea-dhcp-types {
       mandatory true;
       description "Subnet ID, a unique identifier used to locate or reference
                    a subnet.";
+    }
+  }
+
+  grouping pool-id {
+    description "Pool ID grouping.";
+    leaf pool-id {
+      type uint32 {
+        range 1..max;
+      }
+      description "Pool ID, an identifier used to locate or reference a pool.";
     }
   }
 

@@ -290,6 +290,12 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
     { "4o6-subnet",       Element::string,  "" },
 };
 
+/// @brief This table defines default values for each IPv4 shared network.
+const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
+    { "client-class",     Element::string, "" },
+    { "interface",        Element::string, "" }
+};
+
 /// @brief List of parameters that can be inherited to subnet4 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp4) and
@@ -323,6 +329,7 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
 /// Order follows pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser4::POOL4_PARAMETERS = {
     { "pool",                   Element::string },
+    { "pool-id",                Element::integer },
     { "option-data",            Element::list },
     { "client-class",           Element::string },
     { "require-client-classes", Element::list },
@@ -380,12 +387,6 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "allocator",                      Element::string },
     { "offer-lifetime",                 Element::integer },
     { "ddns-ttl-percent",               Element::real },
-};
-
-/// @brief This table defines default values for each IPv4 shared network.
-const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
-    { "client-class",     Element::string, "" },
-    { "interface",        Element::string, "" }
 };
 
 /// @brief This table defines default values for interfaces for DHCPv4.

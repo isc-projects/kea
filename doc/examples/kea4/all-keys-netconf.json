@@ -989,7 +989,10 @@
 
                                 // List of client classes which must be evaluated when this pool
                                 // is selected for client assignments.
-                                "require-client-classes": []
+                                "require-client-classes": [],
+
+                                // Pool identifier used to enable statistics for this pool.
+                                "pool-id": 1
                             }
                         ],
 

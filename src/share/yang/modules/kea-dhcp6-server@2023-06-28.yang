@@ -12,13 +12,18 @@ module kea-dhcp6-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2023-05-31;
+    revision-date 2023-06-28;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
+
+  revision 2023-06-28 {
+    description "Added pool ID. Renamed statistic declined-nas to
+                 declined-addresses";
+  }
 
   revision 2023-05-31 {
     description "Added allocator, ddns-ttl-percent, pd-allocator,
@@ -221,6 +226,7 @@ module kea-dhcp6-server {
         uses option-data-list;
         uses dhcp:pool-client-class;
         uses dhcp:pool-require-client-classes;
+        uses dhcp:pool-id;
         uses dhcp:pool-user-context;
       }
       list pd-pool {
@@ -253,6 +259,7 @@ module kea-dhcp6-server {
           type inet:ipv6-prefix;
           description "Prefix pool excluded prefix.";
         }
+        uses dhcp:pool-id;
         uses kea:user-context {
           refine user-context {
             description "Prefix pool user context. Arbitrary JSON data
@@ -707,7 +714,7 @@ module kea-dhcp6-server {
           mandatory true;
           description "Assigned non-temporary counter.";
         }
-        leaf declined-nas {
+        leaf declined-addresses {
           type uint32;
           mandatory true;
           description "Declined non-temporary addresses counter.";

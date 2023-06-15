@@ -120,9 +120,11 @@ TEST(Pool4Test, toElement) {
     isc::test::runToElementTest<Pool4>(expected2, pool2);
 
     Pool4 pool3(IOAddress("192.0.2.0"), IOAddress("192.0.2.127"));
+    pool3.setID(5);
     std::string expected3 = "{"
         " \"pool\": \"192.0.2.0/25\", "
-        " \"option-data\": [ ] "
+        " \"option-data\": [ ], "
+        " \"pool-id\": 5 "
         "}";
     isc::test::runToElementTest<Pool4>(expected3, pool3);
 }
@@ -515,9 +517,11 @@ TEST(Pool6Test, toElement) {
 
     Pool6 pool4(Lease::TYPE_NA, IOAddress("2001:db8::"),
                 IOAddress("2001:db8::ffff"));
+    pool4.setID(5);
     std::string expected4 = "{"
         " \"pool\": \"2001:db8::/112\", "
-        " \"option-data\": [ ] "
+        " \"option-data\": [ ], "
+        " \"pool-id\": 5 "
         "}";
     isc::test::runToElementTest<Pool6>(expected4, pool4);
 }
