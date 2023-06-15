@@ -984,6 +984,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"pool-id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::POOLS:
+        return isc::dhcp::Dhcp4Parser::make_POOL_ID(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("pool-id", driver.loc_);
+    }
+}
+
 \"user-context\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

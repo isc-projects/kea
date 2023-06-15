@@ -183,6 +183,7 @@ using namespace std;
   TEMPLATE_TEST "template-test"
   ONLY_IF_REQUIRED "only-if-required"
   CLIENT_CLASS "client-class"
+  POOL_ID "pool-id"
 
   RESERVATIONS "reservations"
   IP_ADDRESSES "ip-addresses"
@@ -2098,6 +2099,7 @@ pool_params: pool_param
            ;
 
 pool_param: pool_entry
+          | pool_id
           | option_data_list
           | client_class
           | require_client_classes
@@ -2113,6 +2115,12 @@ pool_entry: POOL {
     ElementPtr pool(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("pool", pool);
     ctx.leave();
+};
+
+pool_id: POOL_ID COLON INTEGER {
+    ctx.unique("pool-id", ctx.loc2pos(@1));
+    ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("pool-id", id);
 };
 
 user_context: USER_CONTEXT {
