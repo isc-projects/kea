@@ -2789,8 +2789,8 @@ mysql_update_empty_duid_test() {
     mysql_upgrade_schema_to_version 16.0
 
     sql=\
-"insert into lease6 values(inet6_aton('::10'),203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
- insert into lease6 values(inet6_aton('::11'),UNHEX('00'),30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }')"
+"insert into lease6 values(10,203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+ insert into lease6 values(11,UNHEX('00'),30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }')"
 
     run_statement "insert v6 leases" "$sql"
 
@@ -2799,11 +2799,11 @@ mysql_update_empty_duid_test() {
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
     # leases count for declined state should be 1 with DUID updated (0x000000)
-    qry="select count(*) from lease6 where address = inet6_aton('::11') and duid = 0x000000 and state = 1"
+    qry="select count(*) from lease6 where address = 11 and duid = 0x000000 and state = 1"
     run_statement "#2" "$qry" 1
 
     # leases count for non declined state should be 1 with DUID unchanged (0x323033)
-    qry="select count(*) from lease6 where address = inet6_aton('::10') and duid = 0x323033 and state = 0"
+    qry="select count(*) from lease6 where address = 10 and duid = 0x323033 and state = 0"
     run_statement "#3" "$qry" 1
 
     # Let's wipe the whole database
