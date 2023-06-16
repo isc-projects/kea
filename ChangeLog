@@ -1,4 +1,4 @@
-2148	[build]		tmark
+2148.	[build]		tmark
 	The include file, cfg_globals.h, has been added to the
 	to dhcpsrv/Makefile.am such that it now gets installed.
 	Prior to this it was omitted from installation.
