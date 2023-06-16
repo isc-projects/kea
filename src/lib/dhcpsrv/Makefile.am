@@ -314,6 +314,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	cfg_duid.h \
 	cfg_expiration.h \
 	cfg_host_operations.h \
+	cfg_globals.h \
 	cfg_hosts.h \
 	cfg_hosts_util.h \
 	cfg_iface.h \

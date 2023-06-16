@@ -1,3 +1,9 @@
+2148	[build]		tmark
+	The include file, cfg_globals.h, has been added to the
+	to dhcpsrv/Makefile.am such that it now gets installed.
+	Prior to this it was omitted from installation.
+	(GitLab #2608)
+
 2147.	[doc]		andrei
 	There are now more cross-references in the ARM. Commands and hook
 	libraries link to their own section. Programs link to their
