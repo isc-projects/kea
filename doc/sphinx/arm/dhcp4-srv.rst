@@ -2510,7 +2510,7 @@ The definition used to decode a VSI option is:
 DHCPv4 Vendor-Specific Options
 ------------------------------
 
-Currently there are two option spaces defined for the DHCPv4 daemon:
+Currently there are two option spaces defined for :iscman:`kea-dhcp4`:
 ``dhcp4`` (for the top-level DHCPv4 options) and
 ``"vendor-encapsulated-options-space"``, which is empty by default but in
 which options can be defined. Those options are carried in the
@@ -2646,7 +2646,9 @@ following:
                // Unfortunately, Genexis is a bit unusual in this aspect, because it
                // doesn't send vivso. In this case we need to look into the vendor class
                // (option code 60) and see if there's a specific string that identifies
-               // the device.
+               // the device. Alternatively, one can make use of the automated `VENDOR_CLASS_`
+               // client class and replace "name" and "test" with `"name": "VENDOR_CLASS_HMC1000"`
+               // and no test expression.
                "name": "cpe_genexis",
                "test": "substring(option[60].hex,0,7) == 'HMC1000'",
 
@@ -2692,24 +2694,29 @@ be achieved by adding ``"always-send": true`` to the option data entry. Note
 that in this particular case an option is defined in vendor space 25167. With
 ``always-send`` enabled, the option is sent every time there is a need to deal
 with vendor space 25167.
-This is also how the Kea server can be configured to send multiple vendor
-enterprise numbers and multiple options, specific for each vendor.
+
+This is also how :iscman:`kea-dhcp4` can be configured to send multiple vendor options
+from different vendors, along with each of their specific vendor ID.
 If these options need to be sent by the server regardless of whether the client
 specified any enterprise number, ``"always-send": true`` must be configured
-for the option with code 125 (``vivso-suboptions``) for each enterprise number.
+for the suboptions that will be included in the ``vivso-suboptions`` option (code 125).
 
 ::
 
    "Dhcp4": {
        "option-data": [
+           # Typically DHCPv4 clients will send a Parameter Request List option (code 55) for
+           # vivso-suboptions (code 125), and that is enough for Kea to understand that it needs to
+           # send the option. These options still need to be defined in the configuration, one per
+           # each vendor, but they don't need "always-send" enabled in that case. For misbehaving
+           # clients that to do not explicitly request it, one may alternatively set "always-send"
+           # to true for them as well. This is referring to the following two entries in option-data.
            {
-               "always-send": true,
                "name": "vivso-suboptions",
                "space": "dhcp4",
                "data": "2234"
            },
            {
-               "always-send": true,
                "name": "vivso-suboptions",
                "space": "dhcp4",
                "data": "3561"
@@ -2722,9 +2729,9 @@ for the option with code 125 (``vivso-suboptions``) for each enterprise number.
            },
            {
                "always-send": true,
+               "data": "https://example.com:1234/path",
                "name": "url",
-               "space": "vendor-3561",
-               "data": "https://example.com:1234/path"
+               "space": "vendor-3561"
            }
        ],
        "option-def": [
@@ -2751,10 +2758,11 @@ and ``doc/examples/kea4/vivso.json`` in the Kea sources.
 
 .. note::
 
-   Multiple vendor enterprise numbers are supported by the ``vivso-suboptions``
-   (code 125) option. The option can contain multiple options for each vendor.
+   :iscman:`kea-dhcp4` is able to recognize multiple Vendor Class Identifier
+   options (code 60) with different vendor IDs in the client requests and to
+   send multiple vivso options (code 125) in the responses, one for each vendor.
 
-   Kea honors DOCSIS sub-option 1 (ORO) and adds only requested options
+   :iscman:`kea-dhcp4` honors DOCSIS sub-option 1 (ORO) and adds only requested options
    if this sub-option is present in the client request.
 
    Currently only one vendor is supported for the ``vivco-suboptions``

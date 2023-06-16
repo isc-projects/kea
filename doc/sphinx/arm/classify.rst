@@ -174,18 +174,24 @@ value is obtained is determined as explained in the previous paragraph.
    clients that do not meet any class criteria to be denied service
    altogether.
 
-.. _classification-using-vendor:
+.. _built-in-client-classes:
 
 Built-in Client Classes
 =======================
 
-Some classes are built-in, so they do not need to be defined.
+Some classes are built-in, so they do not need to be explicitly defined. They
+can be defined if there is a need to associate lease lifetimes, option data,
+etc. with them.
+
 Vendor class information is the primary example: the server checks whether an
 incoming DHCPv4 packet includes the vendor class identifier option (60)
 or an incoming DHCPv6 packet includes the vendor class option (16). If
 it does, the content of that option is prepended with ``VENDOR_CLASS_``
-and the result is interpreted as a class. For example, modern cable
-modems send this option with value ``docsis3.0``, so the packet belongs to
+and the result is interpreted as a class for that packet. The content that is
+considered is the whole class identifier for DHCPv4, and the first vendor class
+data field for DHCPv6. The enterprise number and subsequent vendor class data
+fields are not used for the purpose of classification. For example, modern cable
+modems send such options with value ``docsis3.0``, so the packet belongs to
 class ``VENDOR_CLASS_docsis3.0``.
 
 The ``HA_`` prefix is used by :ischooklib:`libdhcp_ha.so` to

@@ -1040,7 +1040,7 @@ The configuration provided above splits the address range into four pools: two
 pools dedicated to "HA_server1" and two to "HA_server2". Each server can assign
 leases to both phones and laptops. Both groups of devices are assigned addresses
 from different pools. The "HA_server1" and "HA_server2" classes are built-in
-(see :ref:`classification-using-vendor`) and do not need to be declared.
+(see :ref:`built-in-client-classes`) and do not need to be declared.
 They are assigned dynamically by the HA hook library as a result of the
 ``load-balancing`` algorithm. "phones_*" and "laptop_*" evaluate to ``true``
 when the query belongs to a given combination of other classes, e.g. "HA_server1"

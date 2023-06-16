@@ -2282,12 +2282,53 @@ Alternatively, the option can be specified using its code.
 A common configuration is to set the ``always-send`` flag to ``true``, so the
 vendor option is sent even when the client did not specify it in the query.
 
+This is also how :iscman:`kea-dhcp6` can be configured to send multiple vendor options
+from different vendors, along with each of their specific enterprise number.
+If these options need to be sent by the server regardless of whether the client
+specified any enterprise number, ``"always-send": true`` must be configured
+for the suboptions that will be included in the Vendor-Specific Information option (code 17).
+
+.. code-block:: json
+
+    {
+      "Dhcp6": {
+        "option-data": [
+          {
+            "always-send": true,
+            "data": "tagged",
+            "name": "tag",
+            "space": "vendor-2234"
+          },
+          {
+            "always-send": true,
+            "data": "https://example.com:1234/path",
+            "name": "url",
+            "space": "vendor-3561"
+          }
+        ],
+        "option-def": [
+          {
+            "code": 22,
+            "name": "tag",
+            "space": "vendor-2234",
+            "type": "string"
+          },
+          {
+            "code": 11,
+            "name": "url",
+            "space": "vendor-3561",
+            "type": "string"
+          }
+        ]
+      }
+    }
+
 .. note::
 
-   Multiple instances of the ``vendor-class`` (code 16) and
-   ``vendor-opts`` (code 17) options can be
-   specified. Specifying multiple options with different enterprise
-   numbers is supported by Kea.
+   The :iscman:`kea-dhcp6` server is able to recognize multiple Vendor Class
+   options (code 16) with different enterprise numbers in the client requests
+   and to send multiple Vendor-Specific Information options (code 17) in the
+   responses, one for each vendor.
 
 .. _dhcp6-option-spaces:
 
