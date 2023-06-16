@@ -293,12 +293,13 @@ PgSqlTaggedStatement tagged_statements[] = {
     // GET_LEASE6
     { 0, { OID_NONE },
       "get_lease6",
-      "SELECT address, duid, valid_lifetime, "
+      "SELECT host(address), duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
-      "FROM lease6" },
+      "FROM lease6 "
+      "ORDER BY address "},
 
     // GET_LEASE6_ADDR
     { 2, { OID_VARCHAR, OID_INT2 },
@@ -314,7 +315,7 @@ PgSqlTaggedStatement tagged_statements[] = {
     // GET_LEASE6_DUID_IAID
     { 3, { OID_BYTEA, OID_INT8, OID_INT2 },
       "get_lease6_duid_iaid",
-      "SELECT address, duid, valid_lifetime, "
+      "SELECT host(address), duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
@@ -325,7 +326,7 @@ PgSqlTaggedStatement tagged_statements[] = {
     // GET_LEASE6_DUID_IAID_SUBID
     { 4, { OID_INT2, OID_BYTEA, OID_INT8, OID_INT8 },
       "get_lease6_duid_iaid_subid",
-      "SELECT address, duid, valid_lifetime, "
+      "SELECT host(address), duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
