@@ -17,6 +17,11 @@ if test ${#} -gt 0; then
 else
 	# By default, check only modified files.
 	files=$(git diff --name-only $(git merge-base origin/master HEAD))
+
+	# If there is nothing to check, exit early. Otherwise, it checks everything.
+	if test -z "${files}"; then
+		exit 0
+	fi
 fi
 
 exit_code=0
