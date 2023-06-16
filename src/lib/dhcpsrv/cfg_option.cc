@@ -148,6 +148,12 @@ CfgOption::merge(CfgOptionDefPtr cfg_def,  CfgOption& other) {
 
     // Next we copy "other" on top of ourself.
     other.copyTo(*this);
+
+    // If we copied new options we may need to populate the
+    // sub-options into the upper level options. The server
+    // expects that the top-level options have suitable
+    // suboptions appended.
+    encapsulate();
 }
 
 void
@@ -193,6 +199,11 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
     // definition in the given set of configured definitions
     if (!def) {
         def = cfg_def->get(space, code);
+    }
+
+    // Finish with a last resort option definition.
+    if (!def) {
+        def = LibDHCP::getLastResortOptionDef(space, code);
     }
 
     std::string& formatted_value = opt_desc.formatted_value_;

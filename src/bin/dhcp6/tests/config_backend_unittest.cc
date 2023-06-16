@@ -22,8 +22,8 @@
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
 
-#include "dhcp6_test_utils.h"
-#include "get_config_unittest.h"
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/get_config_unittest.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -359,6 +359,68 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
     OptionUint32Ptr opint = boost::dynamic_pointer_cast<OptionUint32>(found_opt.option_);
     ASSERT_TRUE(opint);
     EXPECT_EQ(500, opint->getValue());
+}
+
+// This test verifies that DHCP options fetched from the config backend
+// encapsulate their suboptions.
+TEST_F(Dhcp6CBTest, mergeOptionsWithSuboptions) {
+    string base_config =
+        "{ \n"
+        "    \"option-def\": [ { \n"
+        "        \"name\": \"option-1024\", \n"
+        "        \"code\": 1024, \n"
+        "        \"type\": \"empty\", \n"
+        "        \"space\": \"dhcp6\", \n"
+        "        \"encapsulate\": \"option-1024-space\" \n"
+        "    }, \n"
+        "    { \n"
+        "        \"name\": \"option-1025\", \n"
+        "        \"code\": 1025, \n"
+        "        \"type\": \"string\", \n"
+        "        \"space\": \"option-1024-space\" \n"
+        "    } ], \n"
+        "    \"config-control\": { \n"
+        "       \"config-databases\": [ { \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db1\" \n"
+        "           },{ \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db2\" \n"
+        "           } \n"
+        "       ] \n"
+        "   } \n"
+        "} \n";
+
+    extractConfig(base_config);
+
+    // Create option 1024 instance and store it in the database.
+    OptionDescriptorPtr opt;
+    opt.reset(new OptionDescriptor(
+              createEmptyOption(Option::V6, 1024, true, false)));
+    opt->space_name_ = DHCP6_OPTION_SPACE;
+    db1_->createUpdateOption6(ServerSelector::ALL(), opt);
+
+    // Create option 1024 suboption and store it in the database.
+    opt.reset(new OptionDescriptor(
+              createOption<OptionString>(Option::V6, 1025, true, false, false,
+                                         "http://server:8080")
+          )
+    );
+    opt->space_name_ = "option-1024-space";
+    db1_->createUpdateOption6(ServerSelector::ALL(), opt);
+
+    // Fetch the configuration from the config backend.
+    ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
+
+    auto staging_cfg = CfgMgr::instance().getStagingCfg();
+
+    // Make sure that option 1024 has been fetched.
+    auto found_opt_desc = staging_cfg->getCfgOption()->get(DHCP6_OPTION_SPACE, 1024);
+    ASSERT_TRUE(found_opt_desc.option_);
+
+    // Make sure that the option 1024 contains its suboption.
+    auto found_subopt = found_opt_desc.option_->getOption(1025);
+    EXPECT_TRUE(found_subopt);
 }
 
 // This test verifies that externally configured shared-networks are

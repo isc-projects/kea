@@ -20,8 +20,8 @@
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 
-#include "dhcp4_test_utils.h"
-#include "get_config_unittest.h"
+#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/get_config_unittest.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -383,6 +383,63 @@ TEST_F(Dhcp4CBTest, mergeOptions) {
     found_opt = options->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(found_opt.option_);
     EXPECT_EQ("my-boot-file", found_opt.option_->toString());
+}
+
+// This test verifies that DHCP options fetched from the config backend
+// encapsulate their suboptions.
+TEST_F(Dhcp4CBTest, mergeOptionsWithSuboptions) {
+    string base_config =
+        "{ \n"
+        "    \"option-def\": [ { \n"
+        "        \"name\": \"vendor-suboption-1\", \n"
+        "        \"code\": 1, \n"
+        "        \"type\": \"string\", \n"
+        "        \"space\": \"vendor-encapsulated-options-space\" \n"
+        "    }], \n"
+        "    \"config-control\": { \n"
+        "       \"config-databases\": [ { \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db1\" \n"
+        "           },{ \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db2\" \n"
+        "           } \n"
+        "       ] \n"
+        "   } \n"
+        "} \n";
+
+    extractConfig(base_config);
+
+    // Create option 43 instance and store it in the database.
+    OptionDescriptorPtr opt;
+    opt.reset(new OptionDescriptor(
+              createEmptyOption(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS,
+                                true, false)));
+    opt->space_name_ = DHCP4_OPTION_SPACE;
+    db1_->createUpdateOption4(ServerSelector::ALL(), opt);
+
+    // Create option 43 suboption and store it in the database.
+    opt.reset(new OptionDescriptor(
+              createOption<OptionString>(Option::V4, 1, true, false, false,
+                                         "http://server:8080")
+          )
+    );
+    opt->space_name_ = VENDOR_ENCAPSULATED_OPTION_SPACE;
+    db1_->createUpdateOption4(ServerSelector::ALL(), opt);
+
+    // Fetch the configuration from the config backend.
+    ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
+
+    auto staging_cfg = CfgMgr::instance().getStagingCfg();
+
+    // Make sure that option 43 has been fetched.
+    auto found_opt_desc = staging_cfg->getCfgOption()->
+        get(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(found_opt_desc.option_);
+
+    // Make sure that the option 43 contains its suboption.
+    auto found_subopt = found_opt_desc.option_->getOption(1);
+    EXPECT_TRUE(found_subopt);
 }
 
 // This test verifies that externally configured shared-networks are
