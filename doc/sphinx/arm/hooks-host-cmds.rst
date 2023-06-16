@@ -38,6 +38,9 @@ Currently, the following commands are supported:
 - :isccmd:`reservation-get-page`, a variant of :isccmd:`reservation-get-all` that returns
   reservations by pages, either all or in a specified subnet.
 
+- :isccmd:`reservation-get-by-address`, which returns all reservations with a
+  specified IP address and optionally in a subnet.
+
 - :isccmd:`reservation-get-by-hostname`, which returns all reservations with a
   specified hostname and optionally in a subnet.
 
@@ -93,7 +96,8 @@ The ``subnet-id`` Parameter
 Before examining the individual commands, it is worth discussing the
 parameter ``subnet-id``. Currently this parameter is mandatory for all of the
 commands supplied by this library, with the exception of
-:isccmd:`reservation-get-by-hostname`, where it is optional. Since Kea 1.9.0,
+:isccmd:`reservation-get-by-hostname` and :isccmd:`reservation-get-by-address`,
+where it is optional. Since Kea 1.9.0,
 ``subnet-id`` is also optional in :isccmd:`reservation-get-page`, and
 it is forbidden in :isccmd:`reservation-get-by-id`.
 
@@ -367,14 +371,6 @@ An example result returned when the query was malformed might look like this:
 
    { "result": 1, "text": "No 'ip-address' provided and 'identifier-type' is either missing or not a string." }
 
-.. _command-reservation-get-by-address:
-
-The ``reservation-get-by-address`` Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``reservation-get-by-address`` can be used to query the host database and
-retrieve all reservations in a specified subnet for given ip address.
-
 .. isccmd:: reservation-get-all
 .. _command-reservation-get-all:
 
@@ -584,6 +580,169 @@ This command is more complex than :isccmd:`reservation-get-all`, but lets
 users retrieve larger host reservations lists in smaller chunks. For
 small deployments with few reservations, it is easier to use
 :isccmd:`reservation-get-all`.
+
+.. isccmd:: reservation-get-by-address
+.. _command-reservation-get-by-address:
+
+The ``reservation-get-by-address`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:isccmd:`reservation-get-by-address` can be used to query the host database and
+retrieve all reservations for given IP address in a specified subnet or in all
+subnets. This command uses parameters providing the mandatory
+``ip-address`` and the optional ``subnet-id`` and ``operation-target``.
+
+For instance, retrieving host reservations for IPv4 "192.0.200.181" in the subnet 1:
+
+::
+
+   {
+       "command": "reservation-get-by-address",
+       "arguments": {
+           "ip-address": "192.0.200.181",
+           "subnet-id": 1
+       },
+       "service": [
+           "dhcp4"
+       ]
+   }
+
+returns some IPv4 hosts:
+
+::
+
+   {
+       "arguments": {
+           "hosts": [
+               {
+                   "boot-file-name": "",
+                   "client-classes": [],
+                   "hostname": "",
+                   "hw-address": "99:99:99:99:99:01",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 1
+               },
+               {
+                   "boot-file-name": "",
+                   "circuit-id": "1234",
+                   "client-classes": [],
+                   "hostname": "",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 1
+               }
+           ]
+       },
+       "result": 0,
+       "text": "2 IPv4 host(s) found."
+   }
+
+To search for all reservations in all subnets simply skip the ``subnet-id`` parameter:
+
+::
+
+   {
+       "command": "reservation-get-by-address",
+       "arguments": {
+           "ip-address": "192.0.200.181"
+       },
+       "service": [
+           "dhcp4"
+       ]
+   }
+
+Response:
+
+::
+
+   {
+       "arguments": {
+           "hosts": [
+               {
+                   "boot-file-name": "",
+                   "client-classes": [],
+                   "hostname": "",
+                   "hw-address": "99:99:99:99:99:01",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 1
+               },
+               {
+                   "boot-file-name": "",
+                   "circuit-id": "1234",
+                   "client-classes": [],
+                   "hostname": "",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 1
+               },
+               {
+                   "boot-file-name": "",
+                   "client-classes": [],
+                   "hostname": "",
+                   "hw-address": "99:99:99:99:99:02",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 0
+               },
+               {
+                   "boot-file-name": "",
+                   "client-classes": [],
+                   "hostname": "",
+                   "hw-address": "99:99:99:99:99:03",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 2
+               }
+           ]
+       },
+       "result": 0,
+       "text": "4 IPv4 host(s) found."
+   }
+
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get-by-address",
+       "arguments": {
+           "ip-address": "192.0.200.181",
+           "subnet-id": 1,
+           "operation-target": "alternate"
+       },
+       "service": [
+           "dhcp4"
+       ]
+   }
+
+.. note::
+
+   This command is useful in specific cases. By default, having more than
+   one host reservation for the same IP address in a given subnet is not allowed,
+   as explained in the
+   :ref:`Multiple Reservations for the Same IPv4 <multiple-reservations-same-ip4>`
+   or in the
+   :ref:`Multiple Reservations for the Same IPv6 <multiple-reservations-same-ip6>`.
+   That's why this command comes in handy
+   when the ``ip-reservations-unique`` boolean parameter is set to ``false``.
+   Other use case of this command is having overlapping subnets and having
+   the same IP address reservation (but with different identifier) in different
+   subnets.
 
 .. isccmd:: reservation-get-by-hostname
 .. _command-reservation-get-by-hostname:
