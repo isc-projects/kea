@@ -1032,21 +1032,6 @@ public:
         return (extended_info_tables_enabled_);
     }
 
-    /// @brief Upgrade binary address (v6).
-    ///
-    /// On SQL backends for all leases with null binary address set this
-    /// new column. Memfile uses IOAddress objects so does not need it.
-    /// This function implements the new BLQ hook command named
-    /// "binary-address6-upgrade".
-    ///
-    /// @param page_size The page size used for retrieval.
-    /// @return The number of updates in the database.
-    /// @todo This will be obsolete once #2909 is completed for all backends
-    /// and lease-query hook lib
-    virtual size_t upgradeBinaryAddress6(const LeasePageSize& /* page_size */) {
-        return (0);
-    }
-
     /// @brief Build extended info v6 tables.
     ///
     /// @param update Update extended info in database.

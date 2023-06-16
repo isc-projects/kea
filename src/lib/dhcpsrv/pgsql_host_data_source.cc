@@ -1660,7 +1660,7 @@ TaggedStatementArray tagged_statements = { {
      "  o4.persistent, o4.cancelled, o4.user_context, "
      "  o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
      "  o6.persistent, o6.cancelled, o6.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o4 ON h.host_id = o4.host_id "
      "LEFT JOIN dhcp6_options AS o6 ON h.host_id = o6.host_id "
@@ -1725,7 +1725,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -1773,14 +1773,14 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
      "WHERE h.host_id = "
      "  (SELECT host_id FROM ipv6_reservations "
-     "   WHERE address = $1 AND prefix_len = $2) "
+     "   WHERE address = cast($1 as inet) AND prefix_len = $2) "
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
@@ -1802,14 +1802,14 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
      "WHERE h.dhcp6_subnet_id = $1 AND h.host_id IN "
      "  (SELECT host_id FROM ipv6_reservations "
-     "   WHERE address = $2) "
+     "   WHERE address = cast($2 as inet)) "
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
@@ -1856,7 +1856,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -1883,7 +1883,7 @@ TaggedStatementArray tagged_statements = { {
      "  o4.persistent, o4.cancelled, o4.user_context, "
      "  o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
      "  o6.persistent, o6.cancelled, o6.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o4 ON h.host_id = o4.host_id "
      "LEFT JOIN dhcp6_options AS o6 ON h.host_id = o6.host_id "
@@ -1931,7 +1931,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -1980,7 +1980,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
      "FROM ( SELECT * FROM hosts AS h "
      "       WHERE h.dhcp6_subnet_id = $1 AND h.host_id > $2 "
      "       ORDER BY h.host_id "
@@ -2031,7 +2031,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
      "FROM ( SELECT * FROM hosts AS h "
      "       WHERE h.host_id > $1 "
      "       ORDER BY h.host_id "
@@ -2096,7 +2096,7 @@ TaggedStatementArray tagged_statements = { {
      "insert_v6_resrv_non_unique",
      "INSERT INTO ipv6_reservations(address, prefix_len, type, "
      "  dhcp6_iaid, host_id) "
-     "VALUES ($1, $2, $3, $4, $5)"
+     "VALUES (cast($1 as inet), $2, $3, $4, $5)"
     },
 
     // PgSqlHostDataSourceImpl::INSERT_V6_RESRV_UNIQUE
@@ -2107,10 +2107,10 @@ TaggedStatementArray tagged_statements = { {
      "insert_v6_resrv_unique",
      "INSERT INTO ipv6_reservations(address, prefix_len, type, "
      "  dhcp6_iaid, host_id) "
-     "SELECT $1, $2, $3, $4, $5 "
+     "SELECT cast($1 as inet), $2, $3, $4, $5 "
      "  WHERE NOT EXISTS ("
      "      SELECT 1 FROM ipv6_reservations"
-     "          WHERE address = $6 AND prefix_len = $7"
+     "          WHERE address = cast($6 as inet) AND prefix_len = $7"
      "      LIMIT 1"
      "  )"
     },
@@ -2153,7 +2153,7 @@ TaggedStatementArray tagged_statements = { {
      { OID_INT8, OID_VARCHAR },
      "del_host_addr6",
      "DELETE FROM hosts USING ipv6_reservations "
-     "  WHERE dhcp6_subnet_id = $1 AND ipv6_reservations.address = $2"
+     "  WHERE dhcp6_subnet_id = $1 AND ipv6_reservations.address = cast($2 as inet)"
     },
 
     // PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID

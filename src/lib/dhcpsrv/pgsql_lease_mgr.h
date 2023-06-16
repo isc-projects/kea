@@ -722,7 +722,6 @@ public:
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
         GET_LEASE6_PAGE,             // Get page of leases beginning with an address
         GET_LEASE6_UCTX_PAGE,        // Get page of leases with user context
-        GET_LEASE6_BINADDR_PAGE,     // Get page of leases with null binary address
         GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_DUID,             // Get IPv6 leases by DUID
         GET_LEASE6_HOSTNAME,         // Get IPv6 leases by hostname
@@ -1117,17 +1116,6 @@ private:
     /// @param page_size The page size used for retrieval.
     /// @return The number of updates in the database.
     virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) override;
-
-    /// @brief Upgrade binary address (v6).
-    ///
-    /// On SQL backends for all leases with null binary address set this
-    /// new column. Memfile uses IOAddress objects so does not need it.
-    /// This function implements the new BLQ hook command named
-    /// "binary-address6-upgrade".
-    ///
-    /// @param page_size The page size used for retrieval.
-    /// @return The number of updates in the database.
-    virtual size_t upgradeBinaryAddress6(const LeasePageSize& page_size) override;
 
     /// @brief Build extended info v6 tables.
     ///

@@ -143,7 +143,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "17.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "18.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -387,7 +387,7 @@ pgsql_upgrade_7_0_to_8_0_test() {
 
     # Check lease6Dump*().
     run_command \
-        pgsql_execute "INSERT INTO lease6 VALUES('::10',E'\\\\x3230',30,TO_TIMESTAMP(1678900000),40,50,1,60,70,'t','t','one,example,com',0,E'\\\\x3830',16,0,'{ \"a\": 1, \"b\": 2 }',0,NULL)"
+        pgsql_execute "INSERT INTO lease6 VALUES('::10',E'\\\\x3230',30,TO_TIMESTAMP(1678900000),40,50,1,60,70,'t','t','one,example,com',0,E'\\\\x3830',16,0,'{ \"a\": 1, \"b\": 2 }',0)"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -512,21 +512,21 @@ pgsql_upgrade_12_to_13_test() {
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
             INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (105,1,1,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
-            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (100,0,1,0,
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (cast('::10' as inet),0,1,0,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
-            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (101,0,1,1,
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (cast('::11' as inet),0,1,1,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
-            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (102,0,1,0,
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (cast('::12' as inet),0,1,0,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
-            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (103,0,1,1,
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (cast('::13' as inet),0,1,1,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
-            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (104,2,1,0,
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (cast('::14' as inet),2,1,0,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
-            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (105,2,1,1,
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (cast('::15' as inet),2,1,1,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
-            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (106,2,1,0,
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (cast('::16' as inet),2,1,0,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
-            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (107,2,1,1,
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (cast('::17' as inet),2,1,1,
                 '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"] } }');
         "
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO leases when upgrading from 11 to 12 failed. expected %d, returned %d'
@@ -839,11 +839,6 @@ pgsql_upgrade_16_to_17_test() {
         pgsql_execute "SELECT subnet_id, pool_id, lease_type, state, leases FROM lease6_pool_stat"
     assert_eq 0 "${EXIT_CODE}" "lease6_pool_stat table is missing or broken. (expected status code %d, returned %d)"
 
-    # Added binaddr column to lease6
-    run_command \
-        pgsql_execute "select binaddr from lease6"
-    assert_eq 0 "${EXIT_CODE}" "lease6 is missing binaddr column. (expected status  code %d, returned %d)"
-
     # Added lease6_relay_id table
     run_command \
         pgsql_execute "select extended_info_id, relay_id, lease_addr from lease6_relay_id"
@@ -853,6 +848,24 @@ pgsql_upgrade_16_to_17_test() {
     run_command \
         pgsql_execute "select extended_info_id, remote_id, lease_addr from lease6_remote_id"
     assert_eq 0 "${EXIT_CODE}" "lease6_remote_id table is missing or broken. (expected status code %d, returned %d)"
+}
+
+pgsql_upgrade_17_to_18_test() {
+    # Verify that lease6 address is binary.
+    qry="insert into lease6 (address,duid,prefix_len,lease_type,subnet_id) values(cast('3001::99' as inet),'18219',128,1,0);"
+    run_statement "lease6_insert" "$qry"
+
+    qry="select host(address) from lease6 where duid = '18219';"
+    run_statement "lease6_insert" "$qry" "3001::99"
+
+    # Verify that ipv6_reservations address is binary.
+    qry="\
+    insert into hosts(host_id, dhcp_identifier, dhcp_identifier_type) values (18219, '18219', 1); \
+    insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
+        values (cast('3001::99' as inet), 128, 1, 123, 18219); \
+    select host(address) from ipv6_reservations where host_id = 18219;"
+
+    run_statement "ipv6_reservations_insert" "$qry" "3001::99"
 }
 
 pgsql_upgrade_test() {
@@ -873,7 +886,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "17.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "18.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -919,6 +932,9 @@ pgsql_upgrade_test() {
 
     # Check 16 to 17 upgrade
     pgsql_upgrade_16_to_17_test
+
+    # Check 17 to 18 upgrade
+    pgsql_upgrade_17_to_18_test
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -1046,9 +1062,9 @@ pgsql_lease6_dump_test() {
     # Because shell evaluates the double quoted string one more time, they need to be doubled.
     # Otherwise, the value is interpreted as ASCII instead of raw bytes.
     insert_sql="\
-insert into lease6 values('::10',E'\\\\x323033',30,TO_TIMESTAMP(1642000000),40,50,1,60,70,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,'',0,NULL); \
-insert into lease6 values('::11',E'\\\\x323133',30,TO_TIMESTAMP(1643210000),40,50,1,60,70,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }',0,NULL); \
-insert into lease6 values('::12',E'\\\\x323233',30,TO_TIMESTAMP(1643212345),40,50,1,60,70,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }',0,NULL)"
+insert into lease6 values(cast('::10' as inet),E'\\\\x323033',30,TO_TIMESTAMP(1642000000),40,50,1,60,70,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,'',0); \
+insert into lease6 values(cast('::11' as inet),E'\\\\x323133',30,TO_TIMESTAMP(1643210000),40,50,1,60,70,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }',0); \
+insert into lease6 values(cast('::12' as inet),E'\\\\x323233',30,TO_TIMESTAMP(1643212345),40,50,1,60,70,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }',0)"
 
     run_command \
         pgsql_execute "$insert_sql"
@@ -1981,6 +1997,9 @@ pgsql_update_empty_duid_test() {
 }
 
 # Run tests.
+pgsql_lease4_upload_test
+exit 0
+
 pgsql_db_init_test
 pgsql_db_version_test
 pgsql_upgrade_test

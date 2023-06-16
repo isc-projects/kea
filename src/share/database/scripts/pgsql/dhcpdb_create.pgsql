@@ -6136,6 +6136,134 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 17.0.
 
+-- This line starts the schema upgrade to version 18.0.
+
+-- Drop binaddr index and column from lease6.
+DROP INDEX lease6_by_binaddr;
+ALTER TABLE lease6
+    DROP COLUMN binaddr;
+
+-- Change lease6:address to INET.
+ALTER TABLE lease6 ALTER COLUMN address TYPE INET USING address::INET;
+
+-- Change ipv6_reservations:address to INET.
+ALTER TABLE ipv6_reservations ALTER COLUMN address TYPE INET USING address::INET;
+
+-- Invoke HOST() on address now that address type is inet
+CREATE OR REPLACE FUNCTION lease6DumpData()
+RETURNS TABLE (
+    address VARCHAR,
+    duid VARCHAR,
+    valid_lifetime BIGINT,
+    expire BIGINT,
+    subnet_id BIGINT,
+    pref_lifetime BIGINT,
+    lease_type SMALLINT,
+    iaid INT,
+    prefix_len SMALLINT,
+    fqdn_fwd INT,
+    fqdn_rev INT,
+    hostname VARCHAR,
+    hwaddr VARCHAR,
+    state INT8,
+    user_context VARCHAR,
+    hwtype SMALLINT,
+    hwaddr_source SMALLINT,
+    pool_id BIGINT
+) AS $$
+    SELECT
+        HOST(address),
+        colonSeparatedHex(encode(duid, 'hex')),
+        valid_lifetime,
+        extract(epoch from expire)::bigint,
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd::int,
+        fqdn_rev::int,
+        replace(hostname, ',', '&#x2c'),
+        colonSeparatedHex(encode(hwaddr, 'hex')),
+        state,
+        replace(user_context, ',', '&#x2c'),
+        hwtype,
+        hwaddr_source,
+        pool_id
+    FROM lease6
+    ORDER BY address;
+$$ LANGUAGE SQL;
+
+-- Invoke HOST() on address now that address type is inet
+CREATE OR REPLACE FUNCTION lease6Upload(
+    IN address VARCHAR,
+    IN duid VARCHAR,
+    IN valid_lifetime BIGINT,
+    IN expire BIGINT,
+    IN subnet_id BIGINT,
+    IN pref_lifetime BIGINT,
+    IN lease_type INT,
+    IN iaid INT,
+    IN prefix_len INT,
+    IN fqdn_fwd INT,
+    IN fqdn_rev INT,
+    IN hostname VARCHAR,
+    IN hwaddr VARCHAR,
+    IN state INT8,
+    IN user_context VARCHAR,
+    IN hwtype INT,
+    IN hwaddr_source INT,
+    IN pool_id BIGINT
+) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO lease6 (
+        address,
+        duid,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        hwaddr,
+        state,
+        user_context,
+        hwtype,
+        hwaddr_source,
+        pool_id
+    ) VALUES (
+        cast(address as inet),
+        decode(replace(duid, ':', ''), 'hex'),
+        valid_lifetime,
+        to_timestamp(expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd::int::boolean,
+        fqdn_rev::int::boolean,
+        replace(hostname, '&#x2c', ','),
+        decode(replace(hwaddr, ':', ''), 'hex'),
+        state,
+        replace(user_context, '&#x2c', ','),
+        hwtype,
+        hwaddr_source,
+        pool_id
+    );
+END
+$$ LANGUAGE plpgsql;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '18', minor = '0';
+
+-- This line concludes the schema upgrade to version 18.0.
+
 -- Commit the script transaction.
 COMMIT;
 
