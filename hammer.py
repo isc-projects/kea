@@ -1826,13 +1826,13 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.append('googletest')
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'libpcre2-dev', 'libyang2-dev', 'pkg-config', 'doxygen'])
+            packages.extend(['cmake', 'libpcre2-dev', 'libyang2-dev', 'pkg-config', ])
 
         if 'docs' in features:
             if revision == '8':
                 packages.extend(['virtualenv'])
             else:
-                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
+                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra', 'tex-gyre', 'doxygen', 'graphviz'])
                 if revision == '9':
                     packages.extend(['texlive-generic-extra'])
 
