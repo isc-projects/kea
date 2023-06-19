@@ -142,6 +142,12 @@ public:
                         isc::data::ConstElementPtr user_context =
                         isc::data::ConstElementPtr()) const;
 
+    /// @brief Adds an IPv6 address to the host.
+    ///
+    /// @param host pointer to the host instance.
+    /// @param address an IPv6 address to be added as a string.
+    void addIPv6Address(const HostPtr& host, const std::string& address) const;
+
     /// @brief Pointer to the host data source
     HostDataSourcePtr hdsptr_;
 

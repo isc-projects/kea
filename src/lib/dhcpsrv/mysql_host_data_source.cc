@@ -2477,7 +2477,9 @@ TaggedStatementArray tagged_statements = { {
                 "ON h.host_id = o.host_id "
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
-            "WHERE h.dhcp6_subnet_id = ? AND r.address = ? "
+            "WHERE h.dhcp6_subnet_id = ? AND h.host_id = "
+                "( SELECT host_id FROM ipv6_reservations "
+                    "WHERE address = ? ) "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
     // Retrieves host information along with the DHCPv4 options associated with

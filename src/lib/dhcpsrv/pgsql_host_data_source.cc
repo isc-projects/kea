@@ -1807,7 +1807,9 @@ TaggedStatementArray tagged_statements = { {
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
-     "WHERE h.dhcp6_subnet_id = $1 AND r.address = $2 "
+     "WHERE h.dhcp6_subnet_id = $1 AND h.host_id = "
+     "  (SELECT host_id FROM ipv6_reservations "
+     "   WHERE address = $2) "
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 

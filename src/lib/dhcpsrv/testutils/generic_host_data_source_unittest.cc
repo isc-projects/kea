@@ -184,6 +184,11 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
 }
 
 void
+GenericHostDataSourceTest::addIPv6Address(const HostPtr& host, const std::string& address) const {
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress(address)));
+}
+
+void
 GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     ASSERT_TRUE(hdsptr_);
 
@@ -1721,9 +1726,13 @@ GenericHostDataSourceTest::testGetBySubnetIPv6() {
 
     // Let's create a couple of hosts...
     HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_DUID, true);
+    addIPv6Address(host1, "2001:db8:1::10");
     HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8:2::", Host::IDENT_DUID, true);
+    addIPv6Address(host2, "2001:db8:1::20");
     HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8:3::", Host::IDENT_DUID, true);
+    addIPv6Address(host3, "2001:db8:1::30");
     HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8:4::", Host::IDENT_DUID, true);
+    addIPv6Address(host4, "2001:db8:1::40");
 
     // ... and add them to the data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
