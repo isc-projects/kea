@@ -343,6 +343,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	db_type.h \
 	dhcp4o6_ipc.h \
 	dhcpsrv_log.h \
+	flq_allocation_state.h \
 	flq_allocator.h \
 	host.h \
 	host_container.h \
