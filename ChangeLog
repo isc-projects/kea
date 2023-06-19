@@ -1,3 +1,7 @@
+2149.	[doc]		andrei
+	The vendor options documentation has been improved.
+	(Gitlab #2793)
+
 2148.	[build]		tmark
 	The include file, cfg_globals.h, has been added to the
 	to dhcpsrv/Makefile.am such that it now gets installed.
