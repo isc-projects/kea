@@ -1793,7 +1793,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     }
 
     if (!ctx.fake_allocation_) {
-        // Add(update) the extended information on the lease.
+        // Add (update) the extended information on the lease.
         updateLease6ExtendedInfo(expired, ctx);
 
         const auto& pool = ctx.subnet_->getPool(ctx.currentIA().type_, expired->addr_, false);
@@ -1986,7 +1986,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     }
 
     if (!ctx.fake_allocation_) {
-        // Add(update) the extended information on the lease.
+        // Add (update) the extended information on the lease.
         updateLease6ExtendedInfo(lease, ctx);
 
         const auto& pool = ctx.subnet_->getPool(ctx.currentIA().type_, lease->addr_, false);
@@ -4237,7 +4237,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
 
-    // Add(update) the extended information on the lease.
+    // Add (update) the extended information on the lease.
     static_cast<void>(updateLease4ExtendedInfo(lease, ctx));
 
     // Let's execute all callouts registered for lease4_select
@@ -4910,7 +4910,7 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
         lease->hostname_ = ctx.hostname_;
     }
 
-    // Add(update) the extended information on the lease.
+    // Add (update) the extended information on the lease.
     if (updateLease4ExtendedInfo(lease, ctx)) {
         changed = true;
     }

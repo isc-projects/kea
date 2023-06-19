@@ -311,7 +311,7 @@ public:
                                       const isc::dhcp::SubnetID& subnet_id,
                                       const uint8_t hw_address_pattern,
                                       const uint8_t client_id_pattern,
-                                      bool declined = false) {
+                                      bool declined = false, uint32_t pool_id = 0) {
         isc::dhcp::Lease4Ptr lease(new isc::dhcp::Lease4());
 
         lease->addr_ = isc::asiolink::IOAddress(ip_address);
@@ -331,6 +331,7 @@ public:
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
+        lease->pool_id_ = pool_id;
 
         return (lease);
     }
@@ -351,7 +352,7 @@ public:
     isc::dhcp::Lease6Ptr createLease6(const std::string& ip_address,
                                       const isc::dhcp::SubnetID& subnet_id,
                                       const uint8_t duid_pattern,
-                                      bool declined = false) {
+                                      bool declined = false, uint32_t pool_id = 0) {
         isc::dhcp::Lease6Ptr lease(new isc::dhcp::Lease6());
 
         lease->addr_ = isc::asiolink::IOAddress(ip_address);
@@ -372,6 +373,7 @@ public:
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
+        lease->pool_id_ = pool_id;
 
         return (lease);
     }
@@ -393,7 +395,7 @@ public:
         if (v6) {
             s << "universe=6 extended-info-tables=true";
         } else {
-            s <<  "universe=4";
+            s << "universe=4";
         }
         isc::dhcp::LeaseMgrFactory::create(s.str());
 
@@ -420,7 +422,7 @@ public:
         if (insert_lease) {
             if (v6) {
                 lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42, declined));
-                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, declined));
+                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, declined, 5));
                 lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42, declined));
                 lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56, declined));
                 if (declined) {
@@ -446,7 +448,7 @@ public:
                     int64_t(2));
             } else {
                 lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42, declined));
-                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, declined));
+                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, declined, 5));
                 lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42, declined));
                 lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56, declined));
                 if (declined) {

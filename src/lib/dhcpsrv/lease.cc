@@ -186,7 +186,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
             isc_throw(BadValue, "pool-id is not an integer");
         }
 
-        if (pool_id->intValue() < 0) {
+        if (pool_id->intValue() <= 0) {
             isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
                       << " a positive integer");
         } else if (pool_id->intValue() > numeric_limits<uint32_t>::max()) {
@@ -386,7 +386,9 @@ Lease4::toElement() const {
     contextToElement(map);
     map->set("ip-address", Element::create(addr_.toText()));
     map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
-    map->set("pool-id", Element::create(static_cast<long int>(pool_id_)));
+    if (pool_id_) {
+        map->set("pool-id", Element::create(static_cast<long int>(pool_id_)));
+    }
     map->set("hw-address", Element::create(hwaddr_->toText(false)));
 
     if (client_id_) {
@@ -617,7 +619,9 @@ Lease6::toElement() const {
     map->set("iaid", Element::create(static_cast<long int>(iaid_)));
     map->set("duid", Element::create(duid_->toText()));
     map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
-    map->set("pool-id", Element::create(static_cast<long int>(pool_id_)));
+    if (pool_id_) {
+        map->set("pool-id", Element::create(static_cast<long int>(pool_id_)));
+    }
 
     map->set("cltt", Element::create(cltt_));
     map->set("preferred-lft", Element::create(static_cast<long int>(preferred_lft_)));

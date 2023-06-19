@@ -99,7 +99,7 @@ struct LeaseStatsRow {
     }
 
     /// @brief Less-than operator
-    bool operator< (const LeaseStatsRow &rhs) const {
+    bool operator<(const LeaseStatsRow &rhs) const {
         if (subnet_id_ < rhs.subnet_id_) {
             return (true);
         }

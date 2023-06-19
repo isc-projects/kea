@@ -55,6 +55,7 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
         pool_id = getUint32(lease_info, "pool-id");
     }
 
+    // Check if the subnet-id specified is sane.
     ConstSubnet4Ptr subnet;
     if (subnet_id) {
         // If subnet-id is specified, it has to match.
@@ -64,6 +65,7 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                       << subnet_id << " currently configured.");
         }
 
+        // Check if the address specified really belongs to the subnet.
         if (!subnet->inRange(addr)) {
             isc_throw(LeaseCmdsConflict, "The address " << addr.toText() << " does not belong "
                       "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
@@ -170,7 +172,6 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // Let's fabricate some data and we're ready to go.
-
     Lease4Ptr l(new Lease4(addr, hwaddr_ptr, client_id, valid_lft,
                            cltt, subnet_id,
                            fqdn_fwd, fqdn_rev, hostname));
@@ -265,6 +266,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
             isc_throw(BadValue, "Subnet-id is 0 or not specified. This is allowed for"
                       " address leases only, not prefix leases.");
         }
+        // Subnet-id was not specified. Let's try to figure it out on our own.
         subnet = cfg->getCfgSubnets6()->selectSubnet(addr);
         if (!subnet) {
             isc_throw(LeaseCmdsConflict, "subnet-id not specified and failed to find a "
@@ -382,7 +384,6 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // Let's fabricate some data and we're ready to go.
-
     Lease6Ptr l(new Lease6(type, addr, duid_ptr, iaid, pref_lft, valid_lft,
                            subnet_id, fqdn_fwd, fqdn_rev, hostname,
                            hwaddr_ptr, prefix_len));

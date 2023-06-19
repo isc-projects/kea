@@ -126,6 +126,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
         lease->hostname_ = "myhost.example.com.";
+        lease->pool_id_ = 7;
 
     } else if (address == straddress4_[2]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x2a), HTYPE_ETHER));
@@ -254,6 +255,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
+        lease->pool_id_ = 7;
 
     } else if (address == straddress6_[2]) {
         lease->type_ = leasetype6_[2];
@@ -3127,6 +3129,7 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     cfg->add(subnet);
 
     ASSERT_NO_THROW(CfgMgr::instance().commit());
+
     // Create the expected stats list.  At this point, the only stat
     // that should be non-zero is total-nas/total-pds.
     for (int i = 0; i < num_subnets; ++i) {

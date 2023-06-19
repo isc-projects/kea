@@ -422,7 +422,6 @@ TEST_F(Lease4Test, toElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
-        "\"pool-id\": 0,"
         "\"user-context\": { \"foobar\": 1234 },"
         "\"valid-lft\": 3600 "
         "}";
@@ -432,6 +431,7 @@ TEST_F(Lease4Test, toElement) {
     // Now let's try with a lease without client-id and user context.
     lease.client_id_.reset();
     lease.setContext(ConstElementPtr());
+    lease.pool_id_ = 5;
 
     expected = "{"
         "\"cltt\": 12345678,"
@@ -442,7 +442,7 @@ TEST_F(Lease4Test, toElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
-        "\"pool-id\": 0,"
+        "\"pool-id\": 5,"
         "\"valid-lft\": 3600 "
         "}";
 
@@ -461,7 +461,7 @@ TEST_F(Lease4Test, toElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
-        "\"pool-id\": 0,"
+        "\"pool-id\": 5,"
         "\"valid-lft\": 3600 "
         "}";
 
@@ -546,6 +546,7 @@ TEST_F(Lease4Test, fromElementInvalidValues) {
     testInvalidElement<Lease4>(json, "subnet-id", 0x100000000, false);
     testInvalidElement<Lease4>(json, "pool-id", std::string("xyz"), false);
     testInvalidElement<Lease4>(json, "pool-id", -5, false);
+    testInvalidElement<Lease4>(json, "pool-id", 0, false);
     testInvalidElement<Lease4>(json, "pool-id", 0x100000000, false);
     testInvalidElement<Lease4>(json, "valid-lft", std::string("xyz"));
     testInvalidElement<Lease4>(json, "valid-lft", -3, false);
@@ -1015,7 +1016,6 @@ TEST(Lease6Test, toElementAddress) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
-        "\"pool-id\": 0,"
         "\"type\": \"IA_NA\","
         "\"user-context\": { \"foobar\": 1234 },"
         "\"valid-lft\": 800"
@@ -1026,6 +1026,7 @@ TEST(Lease6Test, toElementAddress) {
     // Now let's try with a lease without hardware address and user context.
     lease.hwaddr_.reset();
     lease.setContext(ConstElementPtr());
+    lease.pool_id_ = 5;
 
     expected = "{"
         "\"cltt\": 12345678,"
@@ -1038,7 +1039,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
-        "\"pool-id\": 0,"
+        "\"pool-id\": 5,"
         "\"type\": \"IA_NA\","
         "\"valid-lft\": 800"
         "}";
@@ -1060,7 +1061,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
-        "\"pool-id\": 0,"
+        "\"pool-id\": 5,"
         "\"type\": \"IA_NA\","
         "\"valid-lft\": 800"
         "}";
@@ -1117,9 +1118,6 @@ TEST(Lease6Test, toElementPrefix) {
     ASSERT_TRUE(l->contains("subnet-id"));
     EXPECT_EQ(5678, l->get("subnet-id")->intValue());
 
-    ASSERT_TRUE(l->contains("pool-id"));
-    EXPECT_EQ(0, l->get("pool-id")->intValue());
-
     ASSERT_TRUE(l->contains("state"));
     EXPECT_EQ(static_cast<int>(Lease::STATE_DEFAULT),
               l->get("state")->intValue());
@@ -1136,15 +1134,23 @@ TEST(Lease6Test, toElementPrefix) {
     ASSERT_TRUE(l->contains("user-context"));
     EXPECT_EQ("{ \"foobar\": 1234 }", l->get("user-context")->str());
 
+    ASSERT_FALSE(l->contains("pool-id"));
+
     // Now let's try with a lease without hardware address or user context.
     lease.hwaddr_.reset();
     lease.setContext(ConstElementPtr());
+    lease.pool_id_ = 5;
+
     l = lease.toElement();
     EXPECT_FALSE(l->contains("hw-address"));
     EXPECT_FALSE(l->contains("user-context"));
 
+    ASSERT_TRUE(l->contains("pool-id"));
+    EXPECT_EQ(5, l->get("pool-id")->intValue());
+
     // And to finish try with a comment.
     lease.setContext(Element::fromJSON("{ \"comment\": \"a comment\" }"));
+
     l = lease.toElement();
     EXPECT_FALSE(l->contains("hw-address"));
     ConstElementPtr ctx = l->get("user-context");
@@ -1153,6 +1159,9 @@ TEST(Lease6Test, toElementPrefix) {
     EXPECT_EQ(1, ctx->size());
     ASSERT_TRUE(ctx->contains("comment"));
     EXPECT_EQ("a comment", ctx->get("comment")->stringValue());
+
+    ASSERT_TRUE(l->contains("pool-id"));
+    EXPECT_EQ(5, l->get("pool-id")->intValue());
 }
 
 // Verify that the IA_NA can be created from JSON.
@@ -1302,6 +1311,7 @@ TEST(Lease6Test, fromElementInvalidValues) {
     testInvalidElement<Lease6>(json, "subnet-id", 0x100000000, false);
     testInvalidElement<Lease6>(json, "pool-id", std::string("xyz"), false);
     testInvalidElement<Lease6>(json, "pool-id", -5, false);
+    testInvalidElement<Lease6>(json, "pool-id", 0, false);
     testInvalidElement<Lease6>(json, "pool-id", 0x100000000, false);
     testInvalidElement<Lease6>(json, "type", std::string("IA_XY"));
     testInvalidElement<Lease6>(json, "type", -3, false);

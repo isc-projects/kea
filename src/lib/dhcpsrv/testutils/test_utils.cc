@@ -53,6 +53,7 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     EXPECT_EQ(first->valid_lft_, second->valid_lft_);
     EXPECT_EQ(first->cltt_, second->cltt_);
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);
+    EXPECT_EQ(first->pool_id_, second->pool_id_);
     EXPECT_EQ(first->fqdn_fwd_, second->fqdn_fwd_);
     EXPECT_EQ(first->fqdn_rev_, second->fqdn_rev_);
     EXPECT_EQ(first->hostname_, second->hostname_);
@@ -86,6 +87,7 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->valid_lft_, second->valid_lft_);
     EXPECT_EQ(first->cltt_, second->cltt_);
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);
+    EXPECT_EQ(first->pool_id_, second->pool_id_);
     EXPECT_EQ(first->fqdn_fwd_, second->fqdn_fwd_);
     EXPECT_EQ(first->fqdn_rev_, second->fqdn_rev_);
     EXPECT_EQ(first->hostname_, second->hostname_);
