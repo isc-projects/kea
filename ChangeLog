@@ -1,3 +1,10 @@
+2151.	[bug]		marcin
+	Corrected a bug in the host manager that affected getting a host
+	by an IPv6 address or delegated prefix. This query returned only
+	partial host information. It lacked other IPv6 reservations and
+	some DHCP options.
+	(Gitlab #2931)
+
 2150.	[bug]		marcin
 	Fixed a bug in encapsulating DHCP options fetched from the config
 	backend. The suboptions are now included in the top-level options
