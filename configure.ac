@@ -249,7 +249,7 @@ AC_DEFUN([KEA_CXX_TRY_FLAG], [
 CXX_VERSION="unknown"
 
 # SunStudio compiler requires special compiler options for boost
-# (http://blogs.sun.com/sga/entry/boost_mini_howto)
+# (https://www.boost.org/doc/libs/1_32_0/tools/build/v1/sunpro-tools.html)
 if test "$SUNCXX" = "yes"; then
 CXX_VERSION=`$CXX -V 2> /dev/null | head -1`
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
