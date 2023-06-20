@@ -289,7 +289,9 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
 ConstElementPtr
 ControlledDhcpv6Srv::commandConfigGetHandler(const string&,
                                              ConstElementPtr /*args*/) {
-    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+    ElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+    string hash = BaseCommandMgr::getHash(config);
+    config->set("hash", Element::create(hash));
 
     return (createAnswer(CONTROL_RESULT_SUCCESS, config));
 }

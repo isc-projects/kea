@@ -9,6 +9,7 @@
 #include <process/cfgrpt/config_report.h>
 #include <cryptolink/crypto_hash.h>
 #include <exceptions/exceptions.h>
+#include <config/command_mgr.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
@@ -20,6 +21,7 @@
 #include <kea_version.h>
 #include <functional>
 #include <sstream>
+#include <string>
 #include <unistd.h>
 #include <signal.h>
 
@@ -450,7 +452,9 @@ DControllerBase::checkConfig(ConstElementPtr new_config) {
 ConstElementPtr
 DControllerBase::configGetHandler(const std::string&,
                                   ConstElementPtr /*args*/) {
-    ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+    ElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+    std::string hash = BaseCommandMgr::getHash(config);
+    config->set("hash", Element::create(hash));
 
     return (createAnswer(CONTROL_RESULT_SUCCESS, config));
 }

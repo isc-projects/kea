@@ -286,7 +286,9 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigGetHandler(const string&,
                                              ConstElementPtr /*args*/) {
-    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+    ElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+    string hash = BaseCommandMgr::getHash(config);
+    config->set("hash", Element::create(hash));
 
     return (createAnswer(CONTROL_RESULT_SUCCESS, config));
 }
@@ -294,21 +296,12 @@ ControlledDhcpv4Srv::commandConfigGetHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigHashGetHandler(const string&,
                                                  ConstElementPtr /*args*/) {
-    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
-    // Assume that config is never null.
-    string config_txt = config->str();
-    OutputBuffer hash_data(0);
-    isc::cryptolink::digest(config_txt.c_str(),
-                            config_txt.size(),
-                            isc::cryptolink::HashAlgorithm::SHA256,
-                            hash_data);
-    vector<uint8_t> hash;
-    hash.resize(hash_data.getLength());
-    if (hash.size() > 0) {
-        memmove(&hash[0], hash_data.getData(), hash.size());
-    }
+    ElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+
+    string hash = BaseCommandMgr::getHash(config);
+
     ElementPtr params = Element::createMap();
-    params->set("hash", Element::create(encode::encodeHex(hash)));
+    params->set("hash", Element::create(hash));
     return (createAnswer(CONTROL_RESULT_SUCCESS, params));
 }
 
