@@ -53,15 +53,24 @@ fi
 
 mysql "$@" <<EOF
 -- This line starts the schema upgrade to version 19.0.
--- Drop binaddr column and index.
+-- We have to play some games to make lease address
+-- binary, primary key and retain its place as first
+-- column.
+-- Move data and primary key to binaddr
 DROP INDEX lease6_by_binaddr ON lease6;
-ALTER TABLE lease6
-    DROP COLUMN binaddr;
-
--- Change data type of lease6.address column.
+UPDATE lease6 set binaddr = inet6_aton(address);
+ALTER TABLE lease6 DROP PRIMARY KEY, ADD PRIMARY KEY (binaddr);
+-- Copy binary data back to address column
+UPDATE lease6 set address = binaddr;
+-- Make address column binary and primary key again
 ALTER TABLE lease6 MODIFY COLUMN address BINARY(16);
+ALTER TABLE lease6 DROP PRIMARY KEY, ADD PRIMARY KEY (address);
+-- Drop binaddr column
+ALTER TABLE lease6 DROP COLUMN binaddr;
 
 -- Change data type of ipv6_reservations.address column.
+-- First we replace it's contents with network bytes value.
+UPDATE ipv6_reservations set address = inet6_aton(address);
 ALTER TABLE ipv6_reservations MODIFY COLUMN address BINARY(16);
 
 -- Convert binary lease6 address to text

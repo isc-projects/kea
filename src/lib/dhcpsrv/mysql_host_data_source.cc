@@ -1535,7 +1535,7 @@ public:
         bind_[reservation_id_index_].is_unsigned = MLM_TRUE;
 
         // IPv6 address/prefix BINARY(16)
-        ipv6_address_buffer_len_ = 16;
+        ipv6_address_buffer_len_ = isc::asiolink::V6ADDRESS_LEN;
         bind_[address_index_].buffer_type = MYSQL_TYPE_BLOB;
         bind_[address_index_].buffer = reinterpret_cast<char*>(ipv6_address_buffer_);
         bind_[address_index_].buffer_length = ipv6_address_buffer_len_;
@@ -1579,7 +1579,7 @@ private:
     my_bool reserv_type_null_;
 
     /// @brief Buffer holding IPv6 address/prefix in textual format.
-    uint8_t ipv6_address_buffer_[16];
+    uint8_t ipv6_address_buffer_[isc::asiolink::V6ADDRESS_LEN];
 
     /// @brief Length of the textual address representation.
     unsigned long ipv6_address_buffer_len_;
@@ -1635,7 +1635,7 @@ public:
     ///
     /// Initialize class members representing a single IPv6 reservation.
     MySqlIPv6ReservationExchange()
-        : host_id_(0), address_("::"), address_len_(0), prefix_len_(0), type_(0),
+        : host_id_(0), prefix_len_(0), type_(0),
           iaid_(0), resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128) {
 
         // Reset error table.
@@ -1684,14 +1684,15 @@ public:
 
         try {
             addr6_ = resv.getPrefix().toBytes();
-            if (addr6_.size() != 16) {
-                isc_throw(DbOperationError, "createBindForSend() - prefix is not 16 bytes long");
+            if (addr6_.size() != isc::asiolink::V6ADDRESS_LEN) {
+                isc_throw(DbOperationError, "createBindForSend() - prefix is not "
+                          << isc::asiolink::V6ADDRESS_LEN << " bytes long");
             }
 
-            addr6_length_ = 16;
+            addr6_length_ = isc::asiolink::V6ADDRESS_LEN;
             bind_[0].buffer_type = MYSQL_TYPE_BLOB;
             bind_[0].buffer = reinterpret_cast<char*>(&addr6_[0]);
-            bind_[0].buffer_length = 16;
+            bind_[0].buffer_length = isc::asiolink::V6ADDRESS_LEN;
             bind_[0].length = &addr6_length_;
 
             // prefix_len tinyint
@@ -1746,12 +1747,6 @@ private:
     /// @brief Host unique identifier.
     uint64_t host_id_;
 
-    /// @brief Address (or prefix).
-    std::string address_;
-
-    /// @brief Length of the textual address representation.
-    unsigned long address_len_;
-
     /// @brief Length of the prefix (128 for addresses).
     uint8_t prefix_len_;
 
@@ -1778,7 +1773,7 @@ private:
     std::vector<uint8_t> addr6_;
 
     /// @brief Binary address buffer.
-    uint8_t addr6_buffer_[16];
+    uint8_t addr6_buffer_[isc::asiolink::V6ADDRESS_LEN];
 
     /// @brief Binary address length.
     unsigned long addr6_length_;
@@ -3323,14 +3318,15 @@ MySqlHostDataSource::del(const SubnetID& subnet_id,
 
     // v6
     std::vector<uint8_t>addr6 = addr.toBytes();
-    if (addr6.size() != 16) {
-        isc_throw(DbOperationError, "del() - address is not 16 bytes long");
+    if (addr6.size() != isc::asiolink::V6ADDRESS_LEN) {
+        isc_throw(DbOperationError, "del() - address is not "
+                  << isc::asiolink::V6ADDRESS_LEN << " bytes long");
     }
 
-    unsigned long addr6_length = 16;
+    unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
     inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[1].buffer_length = 16;
+    inbind[1].buffer_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].length = &addr6_length;
 
     return (impl_->delStatement(ctx, MySqlHostDataSourceImpl::DEL_HOST_ADDR6, inbind));
@@ -3860,14 +3856,15 @@ MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
     memset(inbind, 0, sizeof(inbind));
 
     std::vector<uint8_t>addr6 = prefix.toBytes();
-    if (addr6.size() != 16) {
-        isc_throw(DbOperationError, "get6() - prefix is not 16 bytes long");
+    if (addr6.size() != isc::asiolink::V6ADDRESS_LEN) {
+        isc_throw(DbOperationError, "get6() - prefix is not "
+                  << isc::asiolink::V6ADDRESS_LEN << " bytes long");
     }
 
-    unsigned long addr6_length = 16;
+    unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[0].buffer_length = 16;
+    inbind[0].buffer_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].length = &addr6_length;
 
     uint8_t tmp = prefix_len;
@@ -3910,14 +3907,15 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
     inbind[0].is_unsigned = MLM_TRUE;
 
     std::vector<uint8_t>addr6 = address.toBytes();
-    if (addr6.size() != 16) {
-        isc_throw(DbOperationError, "get6() - address is not 16 bytes long");
+    if (addr6.size() != isc::asiolink::V6ADDRESS_LEN) {
+        isc_throw(DbOperationError, "get6() - address is not "
+                  << isc::asiolink::V6ADDRESS_LEN << " bytes long");
     }
 
-    unsigned long addr6_length = 16;
+    unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
     inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[1].buffer_length = 16;
+    inbind[1].buffer_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].length = &addr6_length;
 
     ConstHostCollection collection;
@@ -3955,14 +3953,15 @@ MySqlHostDataSource::getAll6(const SubnetID& subnet_id,
     inbind[0].is_unsigned = MLM_TRUE;
 
     std::vector<uint8_t>addr6 = address.toBytes();
-    if (addr6.size() != 16) {
-        isc_throw(DbOperationError, "getAll6() - address is not 16 bytes long");
+    if (addr6.size() != isc::asiolink::V6ADDRESS_LEN) {
+        isc_throw(DbOperationError, "getAll6() - address is not "
+                  << isc::asiolink::V6ADDRESS_LEN << " bytes long");
     }
 
-    unsigned long addr6_length = 16;
+    unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
     inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[1].buffer_length = 16;
+    inbind[1].buffer_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].length = &addr6_length;
 
     ConstHostCollection collection;

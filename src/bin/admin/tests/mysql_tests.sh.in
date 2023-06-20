@@ -2812,6 +2812,59 @@ mysql_update_empty_duid_test() {
     test_finish 0
 }
 
+# Verifies that converting from lease6.address to binary column works
+# while preserving data.
+mysql_update_v6_addresses_to_binary() {
+    test_start "mysql.update_lease6_address_to_binary"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert empty duid values
+    #
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "/home/tmark/labs/build/keadev/sandbox/git.mysql-2909/kea/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 18.0
+    mysql_upgrade_schema_to_version 18.0
+
+    sql=\
+"insert into lease6 (address, lease_type, subnet_id) values('2601:19e:8100:1e10:b1b:51a8:f616:cf14', 1, 1);
+insert into lease6 (address, lease_type, subnet_id) values('2601:19e:8100:1e10:b1b:51a8:f616:cf15', 1, 1);"
+
+    run_statement "insert v6 leases" "$sql"
+
+    # Insert ipv6_reservations address is binary.
+    sql=\
+"insert into hosts(host_id, dhcp_identifier, dhcp_identifier_type) values (18219, '18219', 1); \
+insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
+        values ('2601:19e:8100:1e10:b1b:51a8:f616:cf16', 128, 1, 123, 18219);"
+
+    run_statement "insert an ipv6 reservation" "$sql"
+
+    # Let's upgrade it to the latest version.
+    run_command \
+        "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+
+    # leases count for declined state should be 1 with DUID updated (0x000000)
+    qry="select count(*) from lease6 where address = inet6_aton('2601:19e:8100:1e10:b1b:51a8:f616:cf14');"
+    run_statement "#2" "$qry" 1
+
+    # leases count for non declined state should be 1 with DUID unchanged (0x323033)
+    qry="select count(*) from lease6 where address = inet6_aton('2601:19e:8100:1e10:b1b:51a8:f616:cf15');"
+    run_statement "#3" "$qry" 1
+
+    # verify the reservation is intact
+    qry="select inet6_ntoa(address) from ipv6_reservations where host_id = 18219;"
+    run_statement "ipv6_reservations_insert" "$qry" "2601:19e:8100:1e10:b1b:51a8:f616:cf16"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
 # Run tests.
 mysql_db_init_test
 mysql_host_reservation_init_test
@@ -2836,3 +2889,4 @@ mysql_client_class_test dhcp4
 mysql_client_class_test dhcp6
 mysql_shrink_server_tag_test
 mysql_update_empty_duid_test
+mysql_update_v6_addresses_to_binary

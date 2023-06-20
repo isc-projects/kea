@@ -2260,7 +2260,6 @@ MySqlLeaseMgr::createContext() const {
         }
     }
 
-
     // Prepare all statements likely to be used.
     ctx->conn_.prepareStatements(tagged_statements.begin(),
                                  tagged_statements.end());
