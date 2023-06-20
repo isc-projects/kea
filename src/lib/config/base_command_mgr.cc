@@ -9,9 +9,13 @@
 #include <cc/command_interpreter.h>
 #include <config/base_command_mgr.h>
 #include <config/config_log.h>
+#include <cryptolink/crypto_hash.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
+#include <util/encode/hex.h>
+#include <util/buffer.h>
 #include <functional>
+#include <vector>
 
 using namespace isc::data;
 using namespace isc::hooks;
@@ -184,6 +188,29 @@ BaseCommandMgr::listCommandsHandler(const std::string& /* name */,
         commands->add(Element::create(it->first));
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS, commands));
+}
+
+std::string
+BaseCommandMgr::getHash(isc::data::ElementPtr& config) {
+
+    // First, get the string representation.
+    std::string config_txt = config->str();
+    isc::util::OutputBuffer hash_data(0);
+    isc::cryptolink::digest(config_txt.c_str(),
+                            config_txt.size(),
+                            isc::cryptolink::HashAlgorithm::SHA256,
+                            hash_data);
+
+    // Now we need to convert this to output buffer to vector, which can be accepted
+    // by encodeHex().
+    std::vector<uint8_t> hash;
+    hash.resize(hash_data.getLength());
+    if (hash.size() > 0) {
+        memmove(&hash[0], hash_data.getData(), hash.size());
+    }
+
+    // Now encode the value as base64 and we're done here.
+    return (isc::util::encode::encodeHex(hash));
 }
 
 

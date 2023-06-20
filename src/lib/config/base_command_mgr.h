@@ -153,6 +153,14 @@ public:
     /// handled at all times.
     void deregisterAll();
 
+    /// @brief returns a hash of a given Element structure
+    ///
+    /// The hash is currently implemented as SHA256 on the string represenation of the structure.
+    ///
+    /// @param config typically full config, but hash can be calculated on any structure
+    /// @return string representation
+    static std::string getHash(isc::data::ElementPtr& config);
+
 protected:
 
     /// @brief Handles the command having a given name and arguments.
