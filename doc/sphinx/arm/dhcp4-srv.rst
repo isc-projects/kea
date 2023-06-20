@@ -2030,7 +2030,7 @@ manually.
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | host-name                      | 12    | string                                | sent by client, generally governed by the DNS configuration.      |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | dhcp-requested-address         | 50    | ipv6-address                          | may be sent by the client and the server should not set it.       |
+   | dhcp-requested-address         | 50    | ipv4-address                          | may be sent by the client and the server should not set it.       |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
    | dhcp-lease-time                | 51    | uint32                                | set automatically based on the ``valid-lifetime`` parameter.      |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
