@@ -1817,7 +1817,8 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::GET_HOST_ADDR6
     // Retrieves host information, IPv6 reservations and DHCPv6 options
     // associated with a host using IPv6 prefix. This query
-    // returns host information for a single host. However, multiple rows
+    // may return host information for one or more host reservations. Even
+    // if only one host is found, multiple rows
     // are returned due to left joining IPv6 reservations and DHCPv6 options.
     // The number of rows returned is multiplication of number of existing
     // IPv6 reservations and DHCPv6 options.
