@@ -53,7 +53,8 @@ SYSTEMS = {
         '33',   # EOLed
         '34',
         '35',
-        '36'
+        '36',
+        '37'
     ],
     'centos': [
         '7',
@@ -120,6 +121,7 @@ IMAGE_TEMPLATES = {
     'fedora-34-lxc':           {'bare': 'isc/lxc-fedora-34',           'kea': 'isc/kea-fedora-34'},
     'fedora-35-lxc':           {'bare': 'isc/lxc-fedora-35',           'kea': 'isc/kea-fedora-35'},
     'fedora-36-lxc':           {'bare': 'isc/lxc-fedora-36',           'kea': 'isc/kea-fedora-36'},
+    'fedora-37-lxc':           {'bare': 'isc/lxc-fedora-37',           'kea': 'isc/kea-fedora-37'},
 
     # centos
     'centos-7-lxc':            {'bare': 'isc/lxc-centos-7',            'kea': 'isc/kea-centos-7'},
@@ -1647,6 +1649,8 @@ def prepare_system_local(features, check_times, ignore_errors_for):
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
         if 'unittest' in features:
+            if int(revision) >= 37:
+                packages.extend(['flex', 'bison'])
             _install_gtest_sources()
 
         execute('sudo dnf clean packages', env=env, check_times=check_times)
@@ -2257,6 +2261,8 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20220516091026.fc35'
     elif system == 'fedora' and revision == '36':
         frc_version = 'isc20220516091651.fc36'
+    elif system == 'fedora' and revision == '37':
+        frc_version = 'isc20230620152003.fc37'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
     elif system in ['centos', 'rhel'] and revision == '8':
