@@ -1602,9 +1602,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values(inet6_aton('::10'),203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,0);\
-insert into lease6 values(inet6_aton('::11'),213,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }',0);\
-insert into lease6 values(inet6_aton('::12'),223,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }',0)"
+insert into lease6 values(inet6_aton('::10'),203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,128,1,1,'one.example.com',80,90,16,0,NULL,0);\
+insert into lease6 values(inet6_aton('::11'),213,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,128,1,1,'',80,90,1,1,'{  }',0);\
+insert into lease6 values(inet6_aton('::12'),223,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,128,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }',0)"
 
     run_command \
         mysql_execute "$insert_sql"

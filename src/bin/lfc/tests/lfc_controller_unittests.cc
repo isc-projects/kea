@@ -320,7 +320,6 @@ TEST_F(LFCControllerTest, fileRotate) {
     EXPECT_TRUE(noExistIOF());
     removeTestFile();
 
-
     // Test 3: Create a file for previous and finish but not copy.
     writeFile(xstr_, "4");
     writeFile(fstr_, "6");
@@ -332,7 +331,6 @@ TEST_F(LFCControllerTest, fileRotate) {
     EXPECT_TRUE(noExistIOF());
     removeTestFile();
 
-
     // Test 4: Create a file for copy and finish but not previous.
     writeFile(istr_, "8");
     writeFile(fstr_, "9");
@@ -343,7 +341,6 @@ TEST_F(LFCControllerTest, fileRotate) {
     EXPECT_EQ(readFile(xstr_), "9");
     EXPECT_TRUE(noExistIOF());
     removeTestFile();
-
 
     // Test 5: rerun test 2 but using launch instead of cleanup
     // as we already have a finish file we shouldn't do any extra
@@ -442,7 +439,6 @@ TEST_F(LFCControllerTest, launch4) {
     EXPECT_TRUE(noExistIOFP());
     removeTestFile();
 
-
     // Subtest 2: only previous available
     // Create the test previous file
     test_str = v4_hdr_ + a_1 + b_1 + c_1 + b_2 + a_2 + d_1;
@@ -460,7 +456,6 @@ TEST_F(LFCControllerTest, launch4) {
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
     removeTestFile();
-
 
     // Subtest 3: only copy available
     // No previous file
@@ -480,7 +475,6 @@ TEST_F(LFCControllerTest, launch4) {
     EXPECT_TRUE(noExistIOFP());
     removeTestFile();
 
-
     // Subtest 4: neither available
     // No previous file
 
@@ -495,7 +489,6 @@ TEST_F(LFCControllerTest, launch4) {
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
     removeTestFile();
-
 
     // Subtest 5: a file with a lot of errors
     // A previous file with a lot of errors
@@ -579,7 +572,20 @@ TEST_F(LFCControllerTest, launch6) {
     string d_1 = "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                  "200,600,8,100,0,7,0,1,1,host.example.com,,1,,,,0\n";
 
-    // Subtest 1: bot previous and copy available
+    // new files have 128 prefixlen for non PD type
+    string a_3_n = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                 "200,400,8,100,0,7,128,1,1,host.example.com,,1,,,,0\n";
+
+    string b_2_n = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                   "300,800,6,150,0,8,128,0,0,,,1,,,,0\n";
+
+    string b_3_n = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                   "300,1000,6,150,0,8,128,0,0,,,1,,,,0\n";
+
+    string d_1_n = "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                   "200,600,8,100,0,7,128,1,1,host.example.com,,1,,,,0\n";
+
+    // Subtest 1: both previous and copy available
     // Create the test previous file
     test_str = v6_hdr_ + a_1 + b_1 + a_2 + c_1 + a_3 + b_2;
     writeFile(xstr_, test_str);
@@ -594,11 +600,10 @@ TEST_F(LFCControllerTest, launch6) {
     // Compare the results, we expect the last lease for each ip
     // except for A which has expired.
     // We also verify none of the temp or pid files remain.
-    test_str = v6_hdr_ + d_1 + b_3 + c_2;
+    test_str = v6_hdr_ + d_1_n + b_3_n + c_2;
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
     removeTestFile();
-
 
     // Subtest 2: only previous available
     // Create the test previous file
@@ -612,11 +617,10 @@ TEST_F(LFCControllerTest, launch6) {
 
     // Compare the results, we expect the last lease for each ip.
     // We also verify none of the temp or pid files remain.
-    test_str = v6_hdr_ + a_3 + b_2 + c_1;
+    test_str = v6_hdr_ + a_3_n + b_2_n + c_1;
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
     removeTestFile();
-
 
     // Subtest 3: only copy available
     // No previous file
@@ -630,11 +634,10 @@ TEST_F(LFCControllerTest, launch6) {
 
     // Compare the results, we expect the last lease for each ip.
     // We also verify none of the temp or pid files remain.
-    test_str = v6_hdr_ + d_1 + b_3 + c_2;
+    test_str = v6_hdr_ + d_1_n + b_3_n + c_2;
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
     removeTestFile();
-
 
     // Subtest 4: neither available
     // No previous file
@@ -650,7 +653,6 @@ TEST_F(LFCControllerTest, launch6) {
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
     removeTestFile();
-
 
     // Subtest 5: a file with a lot of errors
     // A previous file with a lot of errors.

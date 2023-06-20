@@ -698,9 +698,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // entry each.
     std::string result_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,,0\n"
+        "8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,,,,0\n";
+        "8,100,0,7,128,1,1,,,1,,,,0\n";
 
     // The LFC should have created a file with the two leases and moved it
     // to leasefile6_0.csv.2
@@ -832,7 +832,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     // the same.
     std::string input_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,,0\n";
+        "8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n";
     LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"));
     input_file.writeFile(input_file_contents);
 
@@ -1999,9 +1999,9 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
     // Verify cleaned, converted contents
     std::string result_file_contents = header_5_0 +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,0,,,,0\n"
+        "8,100,0,7,128,1,1,,,0,,,,0\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,11:22:33:44:55,0,,1,0,0\n";
+        "8,100,0,7,128,1,1,,11:22:33:44:55,0,,1,0,0\n";
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
@@ -2508,7 +2508,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         lease->toText(),
         "Type:          IA_NA(0)\n"
         "Address:       2001:db8:1::1\n"
-        "Prefix length: 0\n"
+        "Prefix length: 128\n"
         "IAID:          7\n"
         "Pref life:     100\n"
         "Valid life:    400\n"
@@ -2528,7 +2528,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         lease->toText(),
         "Type:          IA_NA(0)\n"
         "Address:       2001:db8:1::2\n"
-        "Prefix length: 0\n"
+        "Prefix length: 128\n"
         "IAID:          7\n"
         "Pref life:     100\n"
         "Valid life:    200\n"
@@ -2548,7 +2548,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         lease->toText(),
         "Type:          IA_NA(0)\n"
         "Address:       2001:db8:1::4\n"
-        "Prefix length: 0\n"
+        "Prefix length: 128\n"
         "IAID:          7\n"
         "Pref life:     100\n"
         "Valid life:    200\n"
@@ -2569,7 +2569,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         lease->toText(),
         "Type:          IA_NA(0)\n"
         "Address:       2001:db8:1::8\n"
-        "Prefix length: 0\n"
+        "Prefix length: 128\n"
         "IAID:          7\n"
         "Pref life:     100\n"
         "Valid life:    200\n"
@@ -2819,9 +2819,9 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
 
     // List of lease recipes.
     std::list<Recipe> recipes{
-        { Lease::TYPE_NA, "3001::1", 0, Lease::STATE_DEFAULT, {"water", "slice"} },
-        { Lease::TYPE_NA, "3001::2", 0, Lease::STATE_DEFAULT, {"melon"} },
-        { Lease::TYPE_NA, "3001::3", 0, Lease::STATE_DEFAULT, {"melon", "slice"} },
+        { Lease::TYPE_NA, "3001::1", 128, Lease::STATE_DEFAULT, {"water", "slice"} },
+        { Lease::TYPE_NA, "3001::2", 128, Lease::STATE_DEFAULT, {"melon"} },
+        { Lease::TYPE_NA, "3001::3", 128, Lease::STATE_DEFAULT, {"melon", "slice"} },
 
         { Lease::TYPE_PD, "3001:1:2:0100::", 112, Lease::STATE_DEFAULT, {"grapes", "slice"} },
         { Lease::TYPE_PD, "3001:1:2:0200::", 112, Lease::STATE_DEFAULT, {"wrath"} },
@@ -4159,10 +4159,10 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6ExplicitSanitize) {
     // Check the lease file was updated.
     string new_content =
         "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-        "400,1000,8,100,0,7,0,1,1,,,1,,,,0\n"
+        "400,1000,8,100,0,7,128,1,1,,,1,,,,0\n"
 
         "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-        "200,200,8,100,0,7,0,1,1,,,1,"
+        "200,200,8,100,0,7,128,1,1,,,1,"
         "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
         " \"link\": \"2001:db8::4\"&#x2c"
         " \"options\": \"0x00250006010203040506003500086464646464646464\""

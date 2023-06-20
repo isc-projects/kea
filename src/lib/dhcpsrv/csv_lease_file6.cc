@@ -101,12 +101,18 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
             return (true);
         }
 
-        lease.reset(new Lease6(readType(row), readAddress(row), readDUID(row),
+        Lease::Type type = readType(row);
+        uint8_t prefixlen = 128;
+        if (type == Lease::TYPE_PD) {
+            prefixlen = readPrefixLen(row);
+        }
+
+        lease.reset(new Lease6(type, readAddress(row), readDUID(row),
                                readIAID(row), readPreferred(row),
                                readValid(row),
                                readSubnetID(row),
                                readHWAddr(row),
-                               readPrefixLen(row)));
+                               prefixlen));
 
         lease->cltt_ = readCltt(row);
         lease->fqdn_fwd_ = readFqdnFwd(row);

@@ -1669,6 +1669,10 @@ public:
                           << "allowed.");
         }
 
+        if (type != Lease::TYPE_PD) {
+            prefix_len_ = 128;
+        }
+
         // Set up DUID,
         DuidPtr duid_ptr(new DUID(duid_buffer_, duid_length_));
 

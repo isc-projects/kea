@@ -1062,9 +1062,9 @@ pgsql_lease6_dump_test() {
     # Because shell evaluates the double quoted string one more time, they need to be doubled.
     # Otherwise, the value is interpreted as ASCII instead of raw bytes.
     insert_sql="\
-insert into lease6 values(cast('::10' as inet),E'\\\\x323033',30,TO_TIMESTAMP(1642000000),40,50,1,60,70,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,'',0); \
-insert into lease6 values(cast('::11' as inet),E'\\\\x323133',30,TO_TIMESTAMP(1643210000),40,50,1,60,70,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }',0); \
-insert into lease6 values(cast('::12' as inet),E'\\\\x323233',30,TO_TIMESTAMP(1643212345),40,50,1,60,70,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }',0)"
+insert into lease6 values(cast('::10' as inet),E'\\\\x323033',30,TO_TIMESTAMP(1642000000),40,50,1,60,128,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,'',0); \
+insert into lease6 values(cast('::11' as inet),E'\\\\x323133',30,TO_TIMESTAMP(1643210000),40,50,1,60,128,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }',0); \
+insert into lease6 values(cast('::12' as inet),E'\\\\x323233',30,TO_TIMESTAMP(1643212345),40,50,1,60,128,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }',0)"
 
     run_command \
         pgsql_execute "$insert_sql"

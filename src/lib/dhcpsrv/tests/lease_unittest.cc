@@ -177,7 +177,6 @@ TEST_F(Lease4Test, leaseBelongsToClient) {
     EXPECT_FALSE(lease.belongsToClient(null_hw, diff_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, null_client_id));
 
-
     // Verify cases for lease that has only HW address.
     lease.client_id_ = null_client_id;
     EXPECT_TRUE(lease.belongsToClient(matching_hw, matching_client_id));
@@ -649,7 +648,31 @@ TEST(Lease6Test, constructorDefault) {
     Lease6Ptr lease2;
     EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
                                          DuidPtr(), iaid, 100, 200,
-                                         subnet_id)), InvalidOperation);
+                                         subnet_id)), BadValue);
+
+    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                         DuidPtr(), iaid, 100, 200,
+                                         subnet_id, true, true, "", HWAddrPtr())), BadValue);
+
+    // Lease6 must have a valid prefix and prefix length.
+    addr = IOAddress(ADDRESS[5]);
+    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
+                                         duid, iaid, 100, 200,
+                                         subnet_id, HWAddrPtr(), 16)), BadValue);
+
+    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
+                                         duid, iaid, 100, 200,
+                                         subnet_id, true, true, "", HWAddrPtr(), 16)), BadValue);
+
+    // Lease6 must have a prefixlen set to 128 for non prefix type.
+    addr = IOAddress(ADDRESS[4]);
+    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                         duid, iaid, 100, 200,
+                                         subnet_id, HWAddrPtr(), 96)), BadValue);
+
+    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                         duid, iaid, 100, 200,
+                                         subnet_id, true, true, "", HWAddrPtr(), 96)), BadValue);
 }
 
 // This test verifies that the Lease6 constructor which accepts FQDN data,
@@ -693,7 +716,11 @@ TEST(Lease6Test, constructorWithFQDN) {
     Lease6Ptr lease2;
     EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
                                          DuidPtr(), iaid, 100, 200,
-                                         subnet_id)), InvalidOperation);
+                                         subnet_id)), BadValue);
+
+    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                         DuidPtr(), iaid, 100, 200,
+                                         subnet_id, true, true, "", HWAddrPtr())), BadValue);
 }
 
 /// @brief Lease6 Equality Test

@@ -80,8 +80,7 @@ public:
         // generateClientId assigns DUID to duid_.
         generateClientId();
         lease_.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                                duid_, 1234, 501, 502,
-                                1, HWAddrPtr(), 0));
+                                duid_, 1234, 501, 502, 1, HWAddrPtr()));
         // Config DDNS to be enabled, all controls off
         enableD2();
     }
@@ -1823,7 +1822,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
 
     // Make sure the lease hostname and fqdn flags are correct.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                   IOAddress("2001:db8:1::1"));
+                                                            IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client1.one.example.com.", lease->hostname_);
     EXPECT_TRUE(lease->fqdn_fwd_);
@@ -1980,7 +1979,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
 
     // Make sure the lease hostname and fdqn flags are correct.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                   IOAddress("2001:db8:1::1"));
+                                                            IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client1.one.example.com.", lease->hostname_);
     EXPECT_TRUE(lease->fqdn_fwd_);
@@ -2076,7 +2075,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
         SCOPED_TRACE(scenario.description_); {
             // Make sure the lease does not exist.
             ASSERT_FALSE(LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                          IOAddress("2001:db8:1:1::dead:beef")));
+                                                               IOAddress("2001:db8:1:1::dead:beef")));
             // Set and verify DDNS params flags
             subnet_->setDdnsSendUpdates(scenario.send_updates_);
             subnet_->setDdnsUpdateOnRenew(scenario.update_on_renew_);
@@ -2089,7 +2088,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
 
             // The lease should have been recorded in the database.
             Lease6Ptr old_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                     IOAddress("2001:db8:1:1::dead:beef"));
+                                                                        IOAddress("2001:db8:1:1::dead:beef"));
             ASSERT_TRUE(old_lease);
 
             if (!scenario.send_updates_ || scenario.old_fqdn_.empty()) {
@@ -2109,7 +2108,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
 
             // The lease should have been recorded in the database.
             Lease6Ptr new_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                   IOAddress("2001:db8:1:1::dead:beef"));
+                                                                        IOAddress("2001:db8:1:1::dead:beef"));
             ASSERT_TRUE(new_lease);
 
             // Verify queue count is correct.

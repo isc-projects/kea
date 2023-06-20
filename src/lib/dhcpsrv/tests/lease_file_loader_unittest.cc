@@ -424,7 +424,6 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
                       "100,135,7,0,0,,1,,0\n";
 
-
     // Create lease file in which one of the entries for 192.0.2.1
     // has a valid_lifetime of 0 and results in the deletion of the
     // lease.
@@ -531,6 +530,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     std::string a_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                       "200,400,8,100,0,7,0,1,1,host.example.com,,1,"
                       "{ \"foobar\": true },,,0\n";
+
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
                       "300,300,6,150,0,8,0,0,0,,,1,,,,0\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
@@ -539,6 +539,13 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     std::string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                       "100,200,8,0,2,16,64,0,0,,,1,,,,0\n";
 
+    // new files have 128 prefixlen for non PD type
+    std::string a_3_n = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                        "200,400,8,100,0,7,128,1,1,host.example.com,,1,"
+                        "{ \"foobar\": true },,,0\n";
+
+    std::string b_2_n = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                        "300,800,6,150,0,8,128,0,0,,,1,,,,0\n";
 
     // Create a lease file with three valid leases: 2001:db8:1::1,
     // 3000:1:: and 2001:db8:2::10.
@@ -585,7 +592,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     EXPECT_EQ(500, lease->cltt_);
     EXPECT_FALSE(lease->getContext());
 
-    test_str = v6_hdr_ + a_3 + b_2 + c_1;
+    test_str = v6_hdr_ + a_3_n + b_2_n + c_1;
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>(*lf, storage, test_str);
 
     // We should have made 3 attempts to write, with 3 leases written and 0 errors
@@ -610,8 +617,13 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
 
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
                       "300,300,6,150,0,8,0,0,0,,,1,,,,0\n";
+
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
                       "300,800,6,150,0,8,0,0,0,,,1,,,,0\n";
+
+    // new files have 128 prefixlen for non PD type
+    std::string b_2_n = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
+                        "300,800,6,150,0,8,128,0,0,,,1,,,,0\n";
 
     // Create lease file in which one of the entries for the 2001:db8:1::1
     // has valid lifetime set to 0, in which case the lease should be
@@ -640,7 +652,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(500, lease->cltt_);
 
-    test_str = v6_hdr_ + b_2;
+    test_str = v6_hdr_ + b_2_n;
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>(*lf, storage, test_str);
 
     // We should have made 1 attempts to write, with 1 leases written and 0 errors

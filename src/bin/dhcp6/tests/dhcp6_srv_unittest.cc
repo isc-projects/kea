@@ -1822,7 +1822,7 @@ TEST_F(Dhcpv6SrvTest, RenewWrongIAID) {
 // leased by client B. The server should detect that the lease belong to
 // someone else and assign a different lease. This is the third out of three
 // scenarios tests by old RenewReject test.
-TEST_F(Dhcpv6SrvTest, RenewSomeoneElesesLease) {
+TEST_F(Dhcpv6SrvTest, RenewSomeoneElsesLease) {
     testRenewSomeoneElsesLease(Lease::TYPE_NA, IOAddress("2001:db8::1"));
 }
 

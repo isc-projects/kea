@@ -1173,6 +1173,10 @@ public:
 
             getColumnValue(r, row, POOL_ID_COL, pool_id_);
 
+            if (lease_type_ != Lease::TYPE_PD) {
+                prefix_len_ = 128;
+            }
+
             Lease6Ptr result(boost::make_shared<Lease6>(lease_type_, addr,
                                                         duid_ptr,
                                                         iaid_u_.uval_,

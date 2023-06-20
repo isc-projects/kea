@@ -154,7 +154,7 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
@@ -187,7 +187,7 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ(150, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(8, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
@@ -382,7 +382,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("one.example.com", lease->hostname_);
@@ -408,7 +408,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("two.example.com", lease->hostname_);
@@ -434,7 +434,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -459,7 +459,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -533,7 +533,7 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);

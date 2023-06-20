@@ -928,8 +928,7 @@ class SharedNetworkAlloc4Test : public AllocEngine4Test {
 public:
 
     /// @brief Initializes configuration (2 subnets, 1 shared network)
-    SharedNetworkAlloc4Test()
-        :engine_(0) {
+    SharedNetworkAlloc4Test() : engine_(0) {
         // Create two subnets, each with a single address pool. The first subnet
         // has only one address in its address pool to make it easier to simulate
         // address exhaustion.

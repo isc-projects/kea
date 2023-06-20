@@ -457,7 +457,7 @@ Dhcpv6SrvTest::testRenewWrongIAID(Lease::Type type, const IOAddress& addr) {
     const uint32_t valid_iaid = 234;
     const uint32_t bogus_iaid = 456;
 
-    uint8_t prefix_len = (type == Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
+    uint8_t prefix_len = (type != Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
 
     // Quick sanity check that the address we're about to use is ok
     ASSERT_TRUE(subnet_->inPool(type, addr));
@@ -514,7 +514,7 @@ Dhcpv6SrvTest::testRenewSomeoneElsesLease(Lease::Type type, const IOAddress& add
     const uint32_t valid_iaid = 234;
     const uint32_t transid = 1234;
 
-    uint8_t prefix_len = (type == Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
+    uint8_t prefix_len = (type != Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
 
     // GenerateClientId() also sets duid_
     OptionPtr clientid = generateClientId();

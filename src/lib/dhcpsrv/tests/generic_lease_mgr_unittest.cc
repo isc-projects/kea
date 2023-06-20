@@ -51,8 +51,8 @@ const char* ADDRESS4[] = {
     NULL
 };
 const char* ADDRESS6[] = {
-    "2001:db8::0", "2001:db8::1", "2001:db8::2", "2001:db8::3",
-    "2001:db8::4", "2001:db8::5", "2001:db8::6", "2001:db8::7",
+    "2001:db8::", "2001:db8:1::", "2001:db8:2::", "2001:db8:3::",
+    "2001:db8:4::", "2001:db8:5::", "2001:db8:6::", "2001:db8:7::",
     NULL
 };
 
@@ -230,7 +230,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     // Set other parameters.  For historical reasons, address 0 is not used.
     if (address == straddress6_[0]) {
         lease->type_ = leasetype6_[0];
-        lease->prefixlen_ = 4;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 142;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x77)));
         lease->preferred_lft_ = 900;
@@ -244,7 +244,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     } else if (address == straddress6_[1]) {
         lease->type_ = leasetype6_[1];
-        lease->prefixlen_ = 0;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         lease->preferred_lft_ = 3600;
@@ -259,7 +259,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     } else if (address == straddress6_[2]) {
         lease->type_ = leasetype6_[2];
-        lease->prefixlen_ = 7;
+        lease->prefixlen_ = 48;
         lease->iaid_ = 89;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x3a)));
         lease->preferred_lft_ = 1800;
@@ -273,7 +273,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     } else if (address == straddress6_[3]) {
         lease->type_ = leasetype6_[3];
-        lease->prefixlen_ = 28;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 0xfffffffe;
         vector<uint8_t> duid;
         for (uint8_t i = 31; i < 126; ++i) {
@@ -297,7 +297,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     } else if (address == straddress6_[4]) {
         // Same DUID and IAID as straddress6_1
         lease->type_ = leasetype6_[4];
-        lease->prefixlen_ = 15;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         lease->preferred_lft_ = 4800;
@@ -312,7 +312,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     } else if (address == straddress6_[5]) {
         // Same DUID and IAID as straddress6_1
         lease->type_ = leasetype6_[5];
-        lease->prefixlen_ = 24;
+        lease->prefixlen_ = 56;
         lease->iaid_ = 42;                          // Same as lease 4
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         // Same as lease 4
@@ -329,7 +329,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     } else if (address == straddress6_[6]) {
         // Same DUID as straddress6_1
         lease->type_ = leasetype6_[6];
-        lease->prefixlen_ = 24;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 93;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         // Same as lease 4
@@ -345,7 +345,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     } else if (address == straddress6_[7]) {
         // Same IAID as straddress6_1
         lease->type_ = leasetype6_[7];
-        lease->prefixlen_ = 24;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0xe5)));
         lease->preferred_lft_ = 5600;
@@ -1579,19 +1579,24 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     empty_lease->fqdn_fwd_ = true;
     empty_lease->fqdn_rev_ = true;
     empty_lease->hostname_ = "myhost.example.com.";
-    empty_lease->prefixlen_ = 4;
+    empty_lease->prefixlen_ = 128;
 
-    // Make Two leases per lease type, all with the same  DUID, IAID but
+    // Make Two leases per lease type, all with the same DUID, IAID but
     // alternate the subnet_ids.
     vector<Lease6Ptr> leases;
     for (int i = 0; i < 6; ++i) {
-          Lease6Ptr lease(new Lease6(*empty_lease));
-          lease->type_ = leasetype6_[i / 2];
-          lease->addr_ = IOAddress(straddress6_[i]);
-          lease->subnet_id_ += (i % 2);
-          leases.push_back(lease);
-          EXPECT_TRUE(lmptr_->addLease(lease));
-     }
+        if (i > 3) {
+            empty_lease->prefixlen_ = 48;
+        } else {
+            empty_lease->prefixlen_ = 128;
+        }
+        Lease6Ptr lease(new Lease6(*empty_lease));
+        lease->type_ = leasetype6_[i / 2];
+        lease->addr_ = IOAddress(straddress6_[(i / 2) + (i % 2) * 3]);
+        lease->subnet_id_ += (i % 2);
+        leases.push_back(lease);
+        EXPECT_TRUE(lmptr_->addLease(lease));
+    }
 
     // Verify getting a single lease by type and address.
     for (int i = 0; i < 6; ++i) {
@@ -1611,8 +1616,13 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     // Iterate over the lease types, asking for leases based on
     // lease type, DUID, and IAID.
     for (int i = 0; i < 3; ++i) {
-        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
-                                                       *duid, 142);
+        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i], *duid, 142);
+
+        auto compare = [](Lease6Ptr& left, Lease6Ptr& right) {
+            return (left->addr_ < right->addr_);
+        };
+        std::sort(returned.begin(), returned.end(), compare);
+
         // We should match two per lease type.
         ASSERT_EQ(2, returned.size());
 
@@ -1623,7 +1633,11 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
             it != returned.end(); ++it) {
             addresses.push_back((*it)->addr_.toText());
         }
-        sort(addresses.begin(), addresses.end());
+
+        auto compare_addr = [](const string& left, const string& right) {
+            return (IOAddress(left) < IOAddress(right));
+        };
+        sort(addresses.begin(), addresses.end(), compare_addr);
 
         // Now verify that the lease addresses match.
         EXPECT_EQ(addresses[0], leases[(i * 2)]->addr_.toText());
@@ -1634,8 +1648,7 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     // Iterate over the lease types, asking for leases based on
     // lease type, DUID, IAID, and subnet_id.
     for (int i = 0; i < 3; ++i) {
-        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
-                                                   *duid, 142, 23);
+        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i], *duid, 142, 23);
         // We should match one per lease type.
         ASSERT_EQ(1, returned.size());
         EXPECT_TRUE(*(returned[0]) == *leases[i * 2]);
@@ -1643,8 +1656,7 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
 
     // Verify getting a single lease by type, duid, iad, and subnet id.
     for (int i = 0; i < 6; ++i) {
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2],
-                                                *duid, 142, (23 + (i % 2)));
+        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2], *duid, 142, (23 + (i % 2)));
         // We should match one per lease type.
         ASSERT_TRUE(returned);
         EXPECT_TRUE(*returned == *leases[i]);
@@ -1722,9 +1734,9 @@ GenericLeaseMgrTest::testGetLease6DuidIaidSubnetId() {
 void
 GenericLeaseMgrTest::testGetLeases6Duid() {
     //add leases
-    IOAddress addr1(std::string("2001:db8:1::111"));
-    IOAddress addr2(std::string("2001:db8:1::222"));
-    IOAddress addr3(std::string("2001:db8:1::333"));
+    IOAddress addr1(std::string("2001:db8:1::"));
+    IOAddress addr2(std::string("2001:db8:2::"));
+    IOAddress addr3(std::string("2001:db8:3::"));
 
     DuidPtr duid1(new DUID({0, 1, 1, 1, 1, 1, 1, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf}));
     DuidPtr duid2(new DUID({0, 2, 2, 2, 2, 2, 2, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf}));
@@ -1914,6 +1926,7 @@ GenericLeaseMgrTest::testUpdateLease6() {
     // Modify some fields in lease 1 (not the address) and update it.
     ++leases[1]->iaid_;
     leases[1]->type_ = Lease::TYPE_PD;
+    leases[1]->prefixlen_ = 93;
     leases[1]->valid_lft_ *= 2;
     leases[1]->hostname_ = "modified.hostname.v6.";
     leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
@@ -1931,7 +1944,7 @@ GenericLeaseMgrTest::testUpdateLease6() {
     ++leases[1]->iaid_;
     leases[1]->type_ = Lease::TYPE_TA;
     leases[1]->cltt_ += 6;
-    leases[1]->prefixlen_ = 93;
+    leases[1]->prefixlen_ = 128;
     leases[1]->setContext(Element::fromJSON("{ \"foo\": \"bar\" }"));
     lmptr_->updateLease6(leases[1]);
 
@@ -3189,20 +3202,20 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     subnet_id = 1;
 
     // Insert three assigned NAs.
-    makeLease6(Lease::TYPE_NA, "3001:1::1", 0, subnet_id);
-    Lease6Ptr lease2 = makeLease6(Lease::TYPE_NA, "3001:1::2", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "3001:1::3", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::1", 128, subnet_id);
+    Lease6Ptr lease2 = makeLease6(Lease::TYPE_NA, "3001:1::2", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::3", 128, subnet_id);
     expectedStats[subnet_id - 1]["assigned-nas"] = 5; // 3 + 2 declined
 
     // Insert two declined NAs.
-    makeLease6(Lease::TYPE_NA, "3001:1::4", 0, subnet_id,
+    makeLease6(Lease::TYPE_NA, "3001:1::4", 128, subnet_id,
                Lease::STATE_DECLINED);
-    makeLease6(Lease::TYPE_NA, "3001:1::5", 0, subnet_id,
+    makeLease6(Lease::TYPE_NA, "3001:1::5", 128, subnet_id,
                Lease::STATE_DECLINED);
     expectedStats[subnet_id - 1]["declined-addresses"] = 2;
 
     // Insert one expired NA.
-    makeLease6(Lease::TYPE_NA, "3001:1::6", 0, subnet_id,
+    makeLease6(Lease::TYPE_NA, "3001:1::6", 128, subnet_id,
                Lease::STATE_EXPIRED_RECLAIMED);
 
     // Insert two assigned PDs.
@@ -3220,12 +3233,12 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     subnet_id = 2;
 
     // Insert two assigned NAs.
-    makeLease6(Lease::TYPE_NA, "2001:db81::1", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "2001:db81::2", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::1", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::2", 128, subnet_id);
     expectedStats[subnet_id - 1]["assigned-nas"] = 3; // 2 + 1 declined
 
     // Insert one declined NA.
-    Lease6Ptr lease3 = makeLease6(Lease::TYPE_NA, "2001:db81::3", 0, subnet_id,
+    Lease6Ptr lease3 = makeLease6(Lease::TYPE_NA, "2001:db81::3", 128, subnet_id,
                Lease::STATE_DECLINED);
     expectedStats[subnet_id - 1]["declined-addresses"] = 1;
 
@@ -3819,14 +3832,14 @@ GenericLeaseMgrTest::testLeaseStatsQuery6() {
     // Two assigned PDs.
     // Two expired PDs.
     subnet_id = 1;
-    makeLease6(Lease::TYPE_NA, "3001:1::1", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "3001:1::2", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "3001:1::3", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "3001:1::4", 0, subnet_id,
+    makeLease6(Lease::TYPE_NA, "3001:1::1", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::2", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::3", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::4", 128, subnet_id,
                Lease::STATE_DECLINED);
-    makeLease6(Lease::TYPE_NA, "3001:1::5", 0, subnet_id,
+    makeLease6(Lease::TYPE_NA, "3001:1::5", 128, subnet_id,
                Lease::STATE_DECLINED);
-    makeLease6(Lease::TYPE_NA, "3001:1::6", 0, subnet_id,
+    makeLease6(Lease::TYPE_NA, "3001:1::6", 128, subnet_id,
                Lease::STATE_EXPIRED_RECLAIMED);
     makeLease6(Lease::TYPE_PD, "3001:1:2:0100::", 112, subnet_id);
     makeLease6(Lease::TYPE_PD, "3001:1:2:0200::", 112, subnet_id);
@@ -3839,18 +3852,18 @@ GenericLeaseMgrTest::testLeaseStatsQuery6() {
     // Two assigned NAs
     // One declined NAs
     subnet_id = 2;
-    makeLease6(Lease::TYPE_NA, "2001:db81::1", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "2001:db81::2", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "2001:db81::3", 0, subnet_id,
+    makeLease6(Lease::TYPE_NA, "2001:db81::1", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::2", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::3", 128, subnet_id,
                Lease::STATE_DECLINED);
 
     // Now let's add leases to subnet 3.
     // Two assigned NAs
     // One declined NAs
     subnet_id = 3;
-    makeLease6(Lease::TYPE_NA, "2002:db81::1", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "2002:db81::2", 0, subnet_id);
-    makeLease6(Lease::TYPE_NA, "2002:db81::3", 0, subnet_id,
+    makeLease6(Lease::TYPE_NA, "2002:db81::1", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2002:db81::2", 128, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2002:db81::3", 128, subnet_id,
                Lease::STATE_DECLINED);
 
     // Test single subnet for non-matching subnet
@@ -3971,12 +3984,12 @@ GenericLeaseMgrTest::testLeaseStatsQueryAttribution6() {
 
     // Now let's insert two leases into subnet 1.
     subnet_id = 1;
-    makeLease6(Lease::TYPE_NA, "2001:db81::1", 0, subnet_id);
-    Lease6Ptr lease = makeLease6(Lease::TYPE_NA, "2001:db81::2", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::1", 128, subnet_id);
+    Lease6Ptr lease = makeLease6(Lease::TYPE_NA, "2001:db81::2", 128, subnet_id);
 
     // And one lease into subnet 2.
     subnet_id = 2;
-    makeLease6(Lease::TYPE_NA, "2001:db81::3", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::3", 128, subnet_id);
 
     // Move a lease to the second subnet.
     lease->subnet_id_ = subnet_id;
@@ -4072,7 +4085,7 @@ GenericLeaseMgrTest::testLeaseLimits6() {
     EXPECT_EQ(text, "");
 
     // -- A limit of 1 with 1 current lease should deny further leases. --
-    makeLease6(Lease::TYPE_NA, "2001:db8::", 0, 1, Lease::STATE_DEFAULT, Element::fromJSON(
+    makeLease6(Lease::TYPE_NA, "2001:db8::", 128, 1, Lease::STATE_DEFAULT, Element::fromJSON(
         R"({ "ISC": { "client-classes": [ "foo" ] } })"));
 
     makeLease6(Lease::TYPE_PD, "2001:db8:1::", 64, 1, Lease::STATE_DEFAULT, Element::fromJSON(
