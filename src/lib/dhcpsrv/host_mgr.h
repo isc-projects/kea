@@ -641,6 +641,11 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    /// @brief The @c HostMgr::getAll6 compatible with @c BaseHostDataSource
+    /// interfaces. Operates on all host sources.
+    virtual ConstHostCollection
+    getAll6(const asiolink::IOAddress& address) const;
+
     /// @brief Returns a collection of hosts using the specified IPv6 address.
     ///
     /// This method may return multiple @c Host objects if they are connected to

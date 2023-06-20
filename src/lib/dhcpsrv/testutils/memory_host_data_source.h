@@ -218,6 +218,16 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    // @brief Returns all hosts having a reservation for a specified
+    // address or delegated prefix (lease).
+    ///
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const asiolink::IOAddress& address) const;
+
+
     /// @brief Adds a new host to the collection.
     ///
     /// @param host Pointer to the new @c Host object being added.

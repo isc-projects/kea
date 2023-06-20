@@ -296,10 +296,34 @@ ConstHostCollection
 MemHostDataSource::getAll6(const SubnetID& subnet_id,
                            const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    auto host = get6(subnet_id, address);
-    if (host) {
-        hosts.push_back(host);
+    for (const auto & h : store_) {
+        if (h->getIPv6SubnetID() != subnet_id) {
+            continue;
+        }
+
+        auto resrvs = h->getIPv6Reservations();
+        for (auto r = resrvs.first; r != resrvs.second; ++r) {
+            if ((*r).second.getPrefix() == address) {
+                hosts.push_back(h);
+            }
+        }
     }
+
+    return (hosts);
+}
+
+ConstHostCollection
+MemHostDataSource::getAll6(const asiolink::IOAddress& address) const {
+    ConstHostCollection hosts;
+    for (const auto & h : store_) {
+        auto resrvs = h->getIPv6Reservations();
+        for (auto r = resrvs.first; r != resrvs.second; ++r) {
+            if ((*r).second.getPrefix() == address) {
+                hosts.push_back(h);
+            }
+        }
+    }
+
     return (hosts);
 }
 

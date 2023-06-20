@@ -741,6 +741,11 @@ HostMgr::getAll6(const SubnetID& subnet_id,
 }
 
 ConstHostCollection
+HostMgr::getAll6(const IOAddress& address) const {
+        return (getAll6(address, HostMgrOperationTarget::ALL_SOURCES));
+}
+
+ConstHostCollection
 HostMgr::getAll6(const IOAddress& address, const HostMgrOperationTarget target) const {
     ConstHostCollection hosts;
     if (target & HostMgrOperationTarget::PRIMARY_SOURCE) {
@@ -749,7 +754,7 @@ HostMgr::getAll6(const IOAddress& address, const HostMgrOperationTarget target) 
 
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
         for (auto source : alternate_sources_) {
-            ConstHostCollection hosts_plus = source->getAll4(address);
+            ConstHostCollection hosts_plus = source->getAll6(address);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }
     }

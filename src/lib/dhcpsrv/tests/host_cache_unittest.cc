@@ -611,6 +611,10 @@ public:
         return (getCollection());
     }
 
+    ConstHostCollection getAll6(const IOAddress&) const {
+        return (getCollection());
+    }
+
     ConstHostCollection getAllbyHostname(const std::string&) const {
         return (getCollection());
     }
