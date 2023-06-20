@@ -1650,7 +1650,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
 
         if 'unittest' in features:
             if int(revision) >= 37:
-                packages.extend(['flex', 'bison'])
+                install_pkgs(['flex', 'bison'], timeout=300, env=env, check_times=check_times)
             _install_gtest_sources()
 
         execute('sudo dnf clean packages', env=env, check_times=check_times)
