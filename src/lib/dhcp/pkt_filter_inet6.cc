@@ -319,8 +319,7 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     // may be set using CMSG_SPACE (which includes padding) or
     // using CMSG_LEN. Both forms appear to work fine on Linux, FreeBSD,
     // NetBSD, but OpenBSD appears to have a bug, discussed here:
-    // http://www.archivum.info/mailing.openbsd.bugs/2009-02/00017/
-    // kernel-6080-msg_controllen-of-IPV6_PKTINFO.html
+    // https://marc.info/?l=openbsd-bugs&m=123485913417684&w=2
     // which causes sendmsg to return EINVAL if the CMSG_LEN is
     // used to set the msg_controllen value.
     m.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
