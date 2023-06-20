@@ -5763,7 +5763,7 @@ for the same IP address within a given subnet. Setting this parameter to
 file and in the host database backend, via :ischooklib:`libdhcp_host_cmds.so`.
 
 Setting ``ip-reservations-unique`` to ``false`` when using memfile, MySQL or PostgreSQL is supported.
-This setting is NOT supported when using Host Cache (see :ref:`hooks-host-cache`), and the RADIUS backend
+This setting is not supported when using Host Cache (see :ref:`hooks-host-cache`), and the RADIUS backend
 (see :ref:`hooks-radius`).  These reservation backends simply do not support multiple reservations for the 
 same IP.  If either of these hooks are loaded and ``ip-reservations-unique`` is set to ``false``, then a
 configuration error will be emitted and the server will fail to start. 
