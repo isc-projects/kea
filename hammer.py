@@ -54,7 +54,8 @@ SYSTEMS = {
         '34',
         '35',
         '36',
-        '37'
+        '37',
+        '38'
     ],
     'centos': [
         '7',
@@ -2263,6 +2264,8 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20220516091651.fc36'
     elif system == 'fedora' and revision == '37':
         frc_version = 'isc20230620152003.fc37'
+    elif system == 'fedora' and revision == '38':
+        frc_version = 'isc20230621000612.fc38'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
     elif system in ['centos', 'rhel'] and revision == '8':
