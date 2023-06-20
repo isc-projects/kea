@@ -1036,7 +1036,6 @@ private:
                               << "' is invalid JSON: " << ex.what());
                 }
             }
-
             cfg->add(desc, space);
         }
 
@@ -2477,9 +2476,9 @@ TaggedStatementArray tagged_statements = { {
                 "ON h.host_id = o.host_id "
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
-            "WHERE h.dhcp6_subnet_id = ? AND h.host_id = "
-                "( SELECT host_id FROM ipv6_reservations "
-                    "WHERE address = ? ) "
+            "WHERE h.dhcp6_subnet_id = ? AND h.host_id IN "
+                "(SELECT host_id FROM ipv6_reservations "
+                    "WHERE address = ?) "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
     // Retrieves host information along with the DHCPv4 options associated with
@@ -3078,7 +3077,7 @@ MySqlHostDataSourceImpl::addOptions(MySqlHostContextPtr& ctx,
     // For each option space retrieve all options and insert them into the
     // database.
     for (auto space = option_spaces.begin(); space != option_spaces.end(); ++space) {
-        OptionContainerPtr options = options_cfg->getAll(*space);
+        OptionContainerPtr options = options_cfg->getAllCombined(*space);
         if (options && !options->empty()) {
             for (auto opt = options->begin(); opt != options->end(); ++opt) {
                 addOption(ctx, stindex, *opt, *space, Optional<SubnetID>(), host_id);

@@ -285,7 +285,8 @@ TEST_F(CfgOptionTest, add) {
         ++expected_code;
     }
 
-    options = cfg.getAll("isc");
+    // Try another function variant.
+    options = cfg.getAllCombined("isc");
     ASSERT_TRUE(options);
     ASSERT_EQ(7, options->size());
 
@@ -1174,6 +1175,11 @@ TEST_F(CfgOptionTest, addVendorOptions) {
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
+    // Make sure we can get vendor options by option space.
+    options = cfg.getAllCombined("vendor-12345678");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
+
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
@@ -1198,6 +1204,11 @@ TEST_F(CfgOptionTest, addVendorOptions) {
 
     // Try to get options from a non-existing option space.
     options = cfg.getAll(1111111);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    // Try another function variant.
+    options = cfg.getAll("vendor-1111111");
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
 }

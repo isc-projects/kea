@@ -1807,7 +1807,7 @@ TaggedStatementArray tagged_statements = { {
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
-     "WHERE h.dhcp6_subnet_id = $1 AND h.host_id = "
+     "WHERE h.dhcp6_subnet_id = $1 AND h.host_id IN "
      "  (SELECT host_id FROM ipv6_reservations "
      "   WHERE address = $2) "
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
@@ -2508,7 +2508,7 @@ PgSqlHostDataSourceImpl::addOptions(PgSqlHostContextPtr& ctx,
     // For each option space retrieve all options and insert them into the
     // database.
     for (auto space = option_spaces.begin(); space != option_spaces.end(); ++space) {
-        OptionContainerPtr options = options_cfg->getAll(*space);
+        OptionContainerPtr options = options_cfg->getAllCombined(*space);
         if (options && !options->empty()) {
             for (auto opt = options->begin(); opt != options->end(); ++opt) {
                 addOption(ctx, stindex, *opt, *space, Optional<SubnetID>(), host_id);

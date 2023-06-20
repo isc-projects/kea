@@ -325,8 +325,6 @@ HostDataSourceUtils::compareOptions(const ConstCfgOptionPtr& cfg1,
     // Combine option space names with vendor space names in a single list.
     std::list<std::string> option_spaces = cfg2->getOptionSpaceNames();
     std::list<std::string> vendor_spaces = cfg2->getVendorIdsSpaceNames();
-    option_spaces.insert(option_spaces.end(), vendor_spaces.begin(),
-                         vendor_spaces.end());
 
     // Make sure that the number of option spaces is equal in both
     // configurations.

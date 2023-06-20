@@ -345,6 +345,15 @@ CfgOption::getAll(const uint32_t vendor_id) const {
     return (vendor_options_.getItems(vendor_id));
 }
 
+OptionContainerPtr
+CfgOption::getAllCombined(const std::string& option_space) const {
+    auto vendor_id = LibDHCP::optionSpaceToVendorId(option_space);
+    if (vendor_id > 0) {
+        return (getAll(vendor_id));
+    }
+    return (getAll(option_space));
+}
+
 size_t
 CfgOption::del(const std::string& option_space, const uint16_t option_code) {
     // Check for presence of options.

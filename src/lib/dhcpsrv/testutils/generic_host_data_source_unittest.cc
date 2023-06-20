@@ -9,6 +9,7 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
@@ -168,6 +169,10 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
                                                       formatted, "3000::1",
                                                       "3000::2", "3000::3"),
                   "isc2");
+
+        desc = createOption<OptionString>(Option::V6, DOCSIS3_V6_TFTP_SERVERS,
+                                          true, false, true, "3000:1::234");
+        opts->add(desc, "vendor-4491");
 
         // Add definitions for DHCPv6 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
@@ -1727,6 +1732,8 @@ GenericHostDataSourceTest::testGetBySubnetIPv6() {
     // Let's create a couple of hosts...
     HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_DUID, true);
     addIPv6Address(host1, "2001:db8:1::10");
+    ASSERT_NO_THROW(addTestOptions(host1, true, DHCP6_ONLY));
+
     HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8:2::", Host::IDENT_DUID, true);
     addIPv6Address(host2, "2001:db8:1::20");
     HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8:3::", Host::IDENT_DUID, true);
@@ -1814,6 +1821,7 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
 
     // Create a host reservations.
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, true);
+    addIPv6Address(host, "2001:db8::2");
     auto host_id = host->getHostId();
     auto subnet_id = host->getIPv6SubnetID();
 
@@ -1823,6 +1831,7 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
     // Then try to add it again, it should throw an exception because the
     // HWADDR is the same.
     host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, false);
+    addIPv6Address(host, "2001:db8::2");
     host->setHostId(++host_id);
     host->setIPv6SubnetID(subnet_id);
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);

@@ -563,6 +563,19 @@ public:
     /// container is empty if no options have been found.
     OptionContainerPtr getAll(const uint32_t vendor_id) const;
 
+    /// @brief Returns all non-vendor or vendor options for the specified
+    /// option space.
+    ///
+    /// It combines the output of the @c getAll function variants. When
+    /// option space has the format of "vendor-X", it retrieves the vendor
+    /// options by vendor id, where X must be a 32-bit unsigned integer.
+    /// Otherwise, it fetches non-vendor options.
+    ///
+    /// @param option_space Name of the option space.
+    /// @return Pointer to the container holding returned options. This
+    /// container is empty if no options have been found.
+    OptionContainerPtr getAllCombined(const std::string& option_space) const;
+
     /// @brief Returns option for the specified key and option code.
     ///
     /// The key should be a string, in which case it specifies an option space
