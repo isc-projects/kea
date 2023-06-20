@@ -1,3 +1,9 @@
+2158.	[func]		piotrek
+	A new command named "reservation-get-by-address" is now available
+	in the host_cmds hook library. It returns all host reservations
+	for given IP address either in all subnets or in a given subnet.
+	(Gitlab #2795)
+
 2157.	[func]*		fdupont
 	Added a warning issued when the configuration contains subnets
 	without explicit subnet identifiers (without "id" entry). The
