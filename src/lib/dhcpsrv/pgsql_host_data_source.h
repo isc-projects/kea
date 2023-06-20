@@ -451,6 +451,8 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    virtual ConstHostCollection getAll6(const asiolink::IOAddress& address) const;
+
     /// @brief Implements @ref BaseHostDataSource::update() for PostgreSQL.
     ///
     /// Attempts to update an existing host entry.

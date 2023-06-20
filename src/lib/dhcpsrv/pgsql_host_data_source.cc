@@ -1401,6 +1401,7 @@ public:
         GET_HOST_SUBID_ADDR,       // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,           // Gets host by IPv6 prefix
         GET_HOST_SUBID6_ADDR,      // Gets host by IPv6 SubnetID and IPv6 prefix
+        GET_HOST_ADDR6,            // Gets host by IPv6 prefix
         GET_HOST_SUBID4,           // Gets hosts by IPv4 SubnetID
         GET_HOST_SUBID6,           // Gets hosts by IPv6 SubnetID
         GET_HOST_HOSTNAME,         // Gets hosts by hostname
@@ -1810,6 +1811,33 @@ TaggedStatementArray tagged_statements = { {
      "WHERE h.dhcp6_subnet_id = $1 AND h.host_id IN "
      "  (SELECT host_id FROM ipv6_reservations "
      "   WHERE address = cast($2 as inet)) "
+     "ORDER BY h.host_id, o.option_id, r.reservation_id"
+    },
+
+    // PgSqlHostDataSourceImpl::GET_HOST_ADDR6
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host using IPv6 prefix. This query
+    // returns host information for a single host. However, multiple rows
+    // are returned due to left joining IPv6 reservations and DHCPv6 options.
+    // The number of rows returned is multiplication of number of existing
+    // IPv6 reservations and DHCPv6 options.
+    {1,
+     { OID_VARCHAR },
+     "get_host_addr6",
+     "SELECT h.host_id, h.dhcp_identifier, "
+     "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+     "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, o.cancelled, o.user_context, "
+     "  r.reservation_id, r.address, r.prefix_len, r.type, "
+     "  r.dhcp6_iaid "
+     "FROM hosts AS h "
+     "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
+     "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
+     "WHERE r.address = $1 "
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
@@ -3185,6 +3213,29 @@ PgSqlHostDataSource::getAll6(const SubnetID& subnet_id,
 
     ConstHostCollection collection;
     impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR,
+                             bind_array, ctx->host_ipv6_exchange_, collection, false);
+    return (collection);
+}
+
+ConstHostCollection
+PgSqlHostDataSource::getAll6(const IOAddress& address) const {
+    if (!address.isV6()) {
+        isc_throw(BadValue, "PgSqlHostDataSource::get6(address): "
+                            "wrong address type, address supplied is an IPv4 address");
+    }
+
+    // Get a context
+    PgSqlHostContextAlloc get_context(*impl_);
+    PgSqlHostContextPtr ctx = get_context.ctx_;
+
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the prefix
+    bind_array->add(address);
+
+    ConstHostCollection collection;
+    impl_->getHostCollection(ctx, PgSqlHostDataSourceImpl::GET_HOST_ADDR6,
                              bind_array, ctx->host_ipv6_exchange_, collection, false);
     return (collection);
 }
