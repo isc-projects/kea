@@ -19,11 +19,22 @@
     "description": "See <xref linkend=\"command-config-set\"/>",
     "name": "config-set",
     "resp-syntax": [
-        "{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+        "{",
+        "    \"arguments\": {",
+        "        \"hash\": \"8B5F5822E93178B65CE658304C37EA511BDE7D29F792AA5E88012FC741F2BE32\"",
+        "    },",
+        "    \"result\": 0,",
+        "    \"text\": \"Configuration successful.\"",
+        "}",
         "",
         "or",
         "",
         "{ \"result\": 1, \"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }"
+    ],
+    "resp-comment": [
+        "Starting with Kea 2.4.0, the successful response contains an SHA256 digest of the configuration that was ",
+        "just set. It might be used to determine if a configuration has been modified or not, possibly with the ",
+        "use of config-hash-get."
     ],
     "support": [
         "kea-dhcp4",
