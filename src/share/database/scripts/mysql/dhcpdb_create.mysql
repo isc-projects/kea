@@ -5685,7 +5685,9 @@ DROP INDEX lease6_by_binaddr ON lease6;
 UPDATE lease6 set binaddr = inet6_aton(address);
 ALTER TABLE lease6 DROP PRIMARY KEY, ADD PRIMARY KEY (binaddr);
 -- Wipe existing address column contents so we can change data type
-UPDATE lease6 set address = '::';
+-- First remove the NULL constraint then set contents NULL
+ALTER TABLE lease6 MODIFY COLUMN address VARCHAR(39) DEFAULT NULL;
+UPDATE lease6 set address = NULL;
 -- Change address data type
 ALTER TABLE lease6 MODIFY COLUMN address BINARY(16);
 -- Copy the binary values back to address
@@ -5700,7 +5702,9 @@ ALTER TABLE lease6 DROP COLUMN binaddr;
 ALTER TABLE ipv6_reservations ADD COLUMN binaddr  BINARY(16);
 UPDATE ipv6_reservations set binaddr = inet6_aton(address);
 -- Wipe existing address column contents so we can change data type
-UPDATE ipv6_reservations set address = '::';
+-- First remove the NULL constraint then set contents NULL
+ALTER TABLE ipv6_reservations MODIFY COLUMN address VARCHAR(39) DEFAULT NULL;
+UPDATE ipv6_reservations set address = NULL;
 ALTER TABLE ipv6_reservations MODIFY COLUMN address BINARY(16);
 UPDATE ipv6_reservations set address = binaddr;
 ALTER TABLE ipv6_reservations DROP COLUMN binaddr;

@@ -2824,7 +2824,7 @@ mysql_update_v6_addresses_to_binary() {
     # verify the upgrade mechanisms which convert empty duid values
     #
     # Initialize database to schema 1.0.
-    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "/home/tmark/labs/build/keadev/sandbox/git.mysql-2909/kea/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
 
     # Now upgrade to schema 18.0
     mysql_upgrade_schema_to_version 18.0
