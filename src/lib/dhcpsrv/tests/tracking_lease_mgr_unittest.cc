@@ -381,7 +381,7 @@ TEST_F(TrackingLeaseMgrTest, unregisterCallbacksBySubnetID) {
     // Unregister the callbacks for subnet id 1.
     EXPECT_NO_THROW(mgr.unregisterCallbacks(SubnetID(1), Lease::TYPE_V4));
 
-    // Invoke the remaining callbacksm for the subnet id 1.
+    // Invoke the remaining callbacks for the subnet id 1.
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, "192.0.2.1"), false));
     EXPECT_NO_THROW(mgr.trackUpdateLease(initializeLease(1, "192.0.2.1"), false));
     EXPECT_NO_THROW(mgr.trackDeleteLease(initializeLease(1, "192.0.2.1"), false));
