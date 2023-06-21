@@ -854,7 +854,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configHashGet) {
     int status;
     ConstElementPtr args = parseAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
-    // the parseAnswer is trying to be smart with ignoring hash.
+    // The parseAnswer is trying to be smart with ignoring hash.
     // But this time we really want to see the hash, so we'll retrieve
     // the arguments manually.
     args = rsp->get(CONTROL_ARGUMENTS);
