@@ -1,3 +1,7 @@
+2152.	[doc]		razvan
+	Added documentation and unittests for counters by pool ID.
+	(Gitlab #145, #2883)
+
 2151.	[bug]		marcin
 	Corrected a bug in the host manager that affected getting a host
 	by an IPv6 address or delegated prefix. This query returned only
