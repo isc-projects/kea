@@ -60,9 +60,8 @@ src/bin/dhcp6/json_config_parser.cc.
 
 @section dhcpv6ConfigParserBison Configuration Parser for DHCPv6 (bison)
 
-During 1.2 milestone it has been decided to significantly refactor the
-parsers as their old implementation became unsustainable. For the brief overview
-of the problems, see ticket 5014 (http://oldkea.isc.org/ticket/5014). In
+During the 1.2 milestone it was decided to significantly refactor the
+parsers as their old implementation became unsustainable. In
 general, the following issues of the existing code were noted:
 
 -# parsers are overwhelmingly complex. Even though each parser is relatively
