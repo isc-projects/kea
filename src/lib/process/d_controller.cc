@@ -462,21 +462,10 @@ DControllerBase::configGetHandler(const std::string&,
 ConstElementPtr
 DControllerBase::configHashGetHandler(const std::string&,
                                       ConstElementPtr /*args*/) {
-    ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
-    // Assume that config is never null.
-    std::string config_txt = config->str();
-    OutputBuffer hash_data(0);
-    isc::cryptolink::digest(config_txt.c_str(),
-                            config_txt.size(),
-                            isc::cryptolink::HashAlgorithm::SHA256,
-                            hash_data);
-    std::vector<uint8_t> hash;
-    hash.resize(hash_data.getLength());
-    if (hash.size() > 0) {
-        memmove(&hash[0], hash_data.getData(), hash.size());
-    }
+    ElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+    std::string hash = BaseCommandMgr::getHash(config);
     ElementPtr params = Element::createMap();
-    params->set("hash", Element::create(encode::encodeHex(hash)));
+    params->set("hash", Element::create(hash));
     return (createAnswer(CONTROL_RESULT_SUCCESS, params));
 }
 

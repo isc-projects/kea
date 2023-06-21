@@ -91,7 +91,11 @@ parseAnswer(int &rcode, const ConstElementPtr& msg) {
     // If there are arguments, return them.
     ConstElementPtr args = msg->get(CONTROL_ARGUMENTS);
     if (args) {
-        return (args);
+        // If the arguments contain only a hash (used in config-set/config-get), we can ignore them.
+        // We don't want to return arguments with just a hash.
+        if ( (args->getType()!=isc::data::Element::map) || (args->size() > 1) || !args->get("hash") ) {
+            return (args);
+        }
     }
 
     // There are no arguments, let's try to return just the text status

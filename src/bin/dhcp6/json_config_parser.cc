@@ -1099,8 +1099,14 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         .arg(CfgMgr::instance().getStagingCfg()->
              getConfigSummary(SrvConfig::CFGSEL_ALL6));
 
+    // Also calculate SHA256 hash of the config that was just set and append it to the response.
+    ElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+    string hash = BaseCommandMgr::getHash(config);
+    ElementPtr hash_map = Element::createMap();
+    hash_map->set("hash", Element::create(hash));
+
     // Everything was fine. Configuration is successful.
-    answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful.");
+    answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful.", hash_map);
     return (answer);
 }
 
