@@ -604,7 +604,7 @@ TEST_F(HostTest, globalHardwareFixedAddressInRange) {
 }
 
 // Verifies that a client matched to a global out-of-range address reservation
-// gets the hostname and a dynmaic address when the subnet reservations
+// gets the hostname and a dynamic address when the subnet reservations
 // flags are global only.
 TEST_F(HostTest, globalHardwareFixedAddressOutOfRange) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
