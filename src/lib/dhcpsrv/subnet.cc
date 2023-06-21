@@ -813,7 +813,7 @@ Subnet4::toElement() const {
     const auto& pools = getPools(Lease::TYPE_V4);
     ElementPtr pool_list = Element::createList();
     for (const auto& pool : pools) {
-        // Add the formated pool to the list
+        // Add the formatted pool to the list
         pool_list->add(pool->toElement());
     }
     map->set("pools", pool_list);
@@ -921,7 +921,7 @@ Subnet6::toElement() const {
     const auto& pools = getPools(Lease::TYPE_NA);
     ElementPtr pool_list = Element::createList();
     for (const auto& pool : pools) {
-        // Add the formated pool to the list
+        // Add the formatted pool to the list
         pool_list->add(pool->toElement());
     }
     map->set("pools", pool_list);
@@ -930,7 +930,7 @@ Subnet6::toElement() const {
     const auto& pdpools = getPools(Lease::TYPE_PD);
     ElementPtr pdpool_list = Element::createList();
     for (const auto& pool : pdpools) {
-        // Add the formated pool to the list
+        // Add the formatted pool to the list
         pdpool_list->add(pool->toElement());
     }
     map->set("pd-pools", pdpool_list);
