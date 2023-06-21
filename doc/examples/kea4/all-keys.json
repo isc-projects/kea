@@ -994,7 +994,7 @@
                                 // Pool identifier used to enable statistics for this pool.
                                 // The pool ID does not need to be unique within the subnet
                                 // or across subnets.
-                                // If not unconfigured, it default to 0. The statistics
+                                // If not unconfigured, it defaults to 0. The statistics
                                 // regarding this pool will be merged with the other statistics
                                 // of all other pools with the same pool ID in this subnet.
                                 "pool-id": 1
