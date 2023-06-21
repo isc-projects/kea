@@ -171,7 +171,7 @@ private:
                             const std::string& number_name,
                             unsigned int* const storage);
 
-    /// @brief Handler for states in which pareser reads numeric values.
+    /// @brief Handler for states in which parser reads numeric values.
     ///
     /// This handler calculates version number using the following equation:
     /// @code
