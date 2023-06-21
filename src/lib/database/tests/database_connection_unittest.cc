@@ -559,7 +559,7 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
 }
 
 // Check that the toElementDbAccessString() handles Postgres backend
-// specific paramateres.
+// specific parameters.
 TEST(DatabaseConnection, toElementDbAccessStringValidPostgresql) {
     const char* configs[] = {
         "{\n"
@@ -583,7 +583,7 @@ TEST(DatabaseConnection, toElementDbAccessStringValidPostgresql) {
 }
 
 // Check that the toElementDbAccessString() handles MySQL backend
-// specific paramateres.
+// specific parameters.
 TEST(DatabaseConnection, toElementDbAccessStringValidMySql) {
     const char* configs[] = {
         "{\n"
