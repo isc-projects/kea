@@ -7262,7 +7262,7 @@ The DHCPv4 server supports the following statistics:
    The statistics related to pool ID 0 refer to all the statistics of all the pools
    that have unconfigured ``pool-id``.
    The pool ID does not need to be unique within the subnet or across subnets.
-   The statistics regarding a specific pool ID within a subnet will be merged with the
+   The statistics regarding a specific pool ID within a subnet will be combined with the
    other statistics of all other pools with the same pool ID in the respective subnet.
 
 .. note::
