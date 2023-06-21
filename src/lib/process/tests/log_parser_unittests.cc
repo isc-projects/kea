@@ -391,7 +391,7 @@ TEST_F(LoggingTest, logRotate) {
     wipeFiles();
 }
 
-// Verifies that a valid output option,'pattern' paress correctly.
+// Verifies that a valid output option,'pattern' parses correctly.
 TEST_F(LoggingTest, validPattern) {
 
     // Note the backslash must be doubled in the pattern definition.
