@@ -505,7 +505,7 @@ TEST(TcpStreamRequst, postBufferTest) {
     };
 
     // Extend the second case with 3 messages to all possible splits
-    // into one to four chuncks.
+    // into one to four chunks.
     std::string desc = "N. Three messages";
     std::vector<uint8_t> buffer = {
          0x00, 0x04, 0x31, 0x32, 0x33, 0x34,
