@@ -685,7 +685,7 @@ LibDHCP::fuseOptions4(OptionCollection& options) {
     return (result);
 }
 
-namespace { // Anynomous namespace.
+namespace { // Anonymous namespace.
 
 // VIVCO part of extendVendorOptions4.
 
