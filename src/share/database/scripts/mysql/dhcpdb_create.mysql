@@ -13,8 +13,7 @@
 # To create the schema, either type the command:
 #
 # mysql -u <user> -p <password> <database> < dhcpdb_create.mysql
-#
-# ... at the command prompt, or log in to the MySQL database and at the 'mysql>'
+# # ... at the command prompt, or log in to the MySQL database and at the 'mysql>'
 # prompt, issue the command:
 #
 # source dhcpdb_create.mysql
@@ -5681,22 +5680,30 @@ UPDATE schema_version
 -- We have to play some games to make lease address
 -- binary, primary key and retain its place as first
 -- column.
--- Move data and primary key to binaddr
+-- Store binary values for address in binaddr column
 DROP INDEX lease6_by_binaddr ON lease6;
 UPDATE lease6 set binaddr = inet6_aton(address);
 ALTER TABLE lease6 DROP PRIMARY KEY, ADD PRIMARY KEY (binaddr);
--- Copy binary data back to address column
-UPDATE lease6 set address = binaddr;
--- Make address column binary and primary key again
+-- Wipe existing address column contents so we can change data type
+UPDATE lease6 set address = '::';
+-- Change address data type
 ALTER TABLE lease6 MODIFY COLUMN address BINARY(16);
+-- Copy the binary values back to address
+UPDATE lease6 set address = binaddr;
+-- Restore address as primary key
 ALTER TABLE lease6 DROP PRIMARY KEY, ADD PRIMARY KEY (address);
 -- Drop binaddr column
 ALTER TABLE lease6 DROP COLUMN binaddr;
 
 -- Change data type of ipv6_reservations.address column.
--- First we replace it's contents with network bytes value.
-UPDATE ipv6_reservations set address = inet6_aton(address);
+-- Convert existing data via a temporary binary address column.
+ALTER TABLE ipv6_reservations ADD COLUMN binaddr  BINARY(16);
+UPDATE ipv6_reservations set binaddr = inet6_aton(address);
+-- Wipe existing address column contents so we can change data type
+UPDATE ipv6_reservations set address = '::';
 ALTER TABLE ipv6_reservations MODIFY COLUMN address BINARY(16);
+UPDATE ipv6_reservations set address = binaddr;
+ALTER TABLE ipv6_reservations DROP COLUMN binaddr;
 
 -- Convert binary lease6 address to text
 DROP PROCEDURE IF EXISTS lease6DumpData;
