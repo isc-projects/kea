@@ -38,7 +38,6 @@ const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 /// @brief mask used for IPv6 prefix calculation
 const uint8_t revMask6[]= { 0xff, 0x7f, 0x3f, 0x1f, 0xf, 0x7, 0x3, 0x1 };
 
-
 /// @brief calculates the first IPv6 address in a IPv6 prefix
 ///
 /// Note: This is a private function. Do not use it directly.
@@ -165,7 +164,7 @@ IOAddress lastAddrInPrefix6(const IOAddress& prefix, uint8_t len) {
     return (IOAddress::fromBytes(AF_INET6, packed));
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace
 
 namespace isc {
 namespace asiolink {
@@ -365,7 +364,7 @@ uint128_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
     return (uint128_t(1) << count);
 }
 
-IOAddress offsetAddress(const IOAddress& addr, isc::util::uint128_t offset) {
+IOAddress offsetAddress(const IOAddress& addr, uint128_t offset) {
     // There is nothing to do if the offset is 0.
     if (offset == 0) {
         return (addr);
@@ -398,9 +397,6 @@ IOAddress offsetAddress(const IOAddress& addr, isc::util::uint128_t offset) {
     for (int i = offset_bytes.size() - 1; (i >= 0); --i) {
         // Sum the bytes of the address, offset and the carry.
         uint16_t sum = static_cast<uint16_t>(addr_bytes[i]) + carry;
-
-        // Protect against the case when we went beyond the offset vector and
-        // we have only carry to add.
         sum += static_cast<uint16_t>(offset_bytes[i]);
 
         // Update the address byte.
