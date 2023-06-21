@@ -3009,7 +3009,9 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     Pool4Ptr pool;
 
     subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
-    pool.reset(new Pool4(IOAddress("192.0.1.0"), 24));
+    pool.reset(new Pool4(IOAddress("192.0.1.0"), IOAddress("192.0.1.127")));
+    subnet->addPool(pool);
+    pool.reset(new Pool4(IOAddress("192.0.1.128"), IOAddress("192.0.1.255")));
     subnet->addPool(pool);
     cfg->add(subnet);
 
@@ -3036,7 +3038,12 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
     // Recount stats.  We should have the same results.
-    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+    // The call to removeStatistics is needed to clear all statistics.
+    // The call to updateStatistics is needed to generate all counters,
+    // including total-addresses. The updateStatistics method calls
+    // recountLeaseStats4 internally.
+    ASSERT_NO_THROW(cfg->removeStatistics());
+    ASSERT_NO_THROW(cfg->updateStatistics());
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
@@ -3074,7 +3081,12 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     expectedStats[subnet_id - 1]["declined-addresses"] = 1;
 
     // Now Recount the stats.
-    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+    // The call to removeStatistics is needed to clear all statistics.
+    // The call to updateStatistics is needed to generate all counters,
+    // including total-addresses. The updateStatistics method calls
+    // recountLeaseStats4 internally.
+    ASSERT_NO_THROW(cfg->removeStatistics());
+    ASSERT_NO_THROW(cfg->updateStatistics());
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
@@ -3088,7 +3100,12 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     expectedStats[0]["declined-addresses"] = 0;
 
     // Recount the stats.
-    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+    // The call to removeStatistics is needed to clear all statistics.
+    // The call to updateStatistics is needed to generate all counters,
+    // including total-addresses. The updateStatistics method calls
+    // recountLeaseStats4 internally.
+    ASSERT_NO_THROW(cfg->removeStatistics());
+    ASSERT_NO_THROW(cfg->updateStatistics());
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
@@ -3110,6 +3127,9 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     int subnet_id = 1;
     subnet.reset(new Subnet6(IOAddress("3001:1::"), 64, 1, 2, 3, 4, subnet_id));
     pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("3001:1::"),
+                         IOAddress("3001:1::7F")));
+    subnet->addPool(pool);
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("3001:1::80"),
                          IOAddress("3001:1::FF")));
     subnet->addPool(pool);
     expectedStats[subnet_id - 1]["total-nas"] = 256;
@@ -3151,7 +3171,12 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
     // Recount stats.  We should have the same results.
-    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
+    // The call to removeStatistics is needed to clear all statistics.
+    // The call to updateStatistics is needed to generate all counters,
+    // including total-nas and total-pds. The updateStatistics method calls
+    // recountLeaseStats6 internally.
+    ASSERT_NO_THROW(cfg->removeStatistics());
+    ASSERT_NO_THROW(cfg->updateStatistics());
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
@@ -3205,7 +3230,12 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     expectedStats[subnet_id - 1]["declined-addresses"] = 1;
 
     // Now Recount the stats.
-    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
+    // The call to removeStatistics is needed to clear all statistics.
+    // The call to updateStatistics is needed to generate all counters,
+    // including total-nas and total-pds. The updateStatistics method calls
+    // recountLeaseStats6 internally.
+    ASSERT_NO_THROW(cfg->removeStatistics());
+    ASSERT_NO_THROW(cfg->updateStatistics());
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
@@ -3219,7 +3249,12 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     expectedStats[1]["declined-addresses"] = 0;
 
     // Recount the stats.
-    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
+    // The call to removeStatistics is needed to clear all statistics.
+    // The call to updateStatistics is needed to generate all counters,
+    // including total-nas and total-pds. The updateStatistics method calls
+    // recountLeaseStats6 internally.
+    ASSERT_NO_THROW(cfg->removeStatistics());
+    ASSERT_NO_THROW(cfg->updateStatistics());
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
