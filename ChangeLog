@@ -1,7 +1,8 @@
-2155.	[func]		fdupont
+2155.	[func]		fdupont, tomek
 	Added the config-hash-get command which returns the
 	SHA-256 hash of the current configuration, helping
-	in detecting changes.
+	in detecting changes. Updated config-get, config-set
+	commands to also return SHA-256 hash.
 	(Gitlab #2707)
 
 2154.	[doc]		darren
