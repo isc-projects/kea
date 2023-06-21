@@ -6589,7 +6589,7 @@ The DHCPv6 server supports the following statistics:
    | subnet[id].total-nas                              | big integer    | Total number of NA addresses       |
    |                                                   |                | available for DHCPv6 management    |
    |                                                   |                | for a given subnet; in other       |
-   |                                                   |                | words, this is the sum of all      |
+   |                                                   |                | words, this is the count of all    |
    |                                                   |                | addresses in all configured pools. |
    |                                                   |                | This statistic changes only during |
    |                                                   |                | configuration changes. It does not |
@@ -6604,7 +6604,7 @@ The DHCPv6 server supports the following statistics:
    | subnet[id].pool[pid].total-nas                    | big integer    | Total number of NA addresses       |
    |                                                   |                | available for DHCPv6 management    |
    |                                                   |                | for a given subnet pool; in other  |
-   |                                                   |                | words, this is the sum of all      |
+   |                                                   |                | words, this is the count of all    |
    |                                                   |                | addresses in configured subnet     |
    |                                                   |                | pool. This statistic changes only  |
    |                                                   |                | during configuration changes. It   |
@@ -6682,7 +6682,7 @@ The DHCPv6 server supports the following statistics:
    | subnet[id].total-pds                              | big integer    | Total number of PD prefixes        |
    |                                                   |                | available for DHCPv6 management    |
    |                                                   |                | for a given subnet; in other       |
-   |                                                   |                | words, this is the sum of all      |
+   |                                                   |                | words, this is the count of all    |
    |                                                   |                | prefixes in all configured pools.  |
    |                                                   |                | This statistic changes only during |
    |                                                   |                | configuration changes. Note it     |
@@ -6697,7 +6697,7 @@ The DHCPv6 server supports the following statistics:
    | subnet[id].pd-pool[pid].total-pds                 | big integer    | Total number of PD prefixes        |
    |                                                   |                | available for DHCPv6 management    |
    |                                                   |                | for a given subnet pool; in other  |
-   |                                                   |                | words, this is the sum of all      |
+   |                                                   |                | words, this is the count of all    |
    |                                                   |                | prefixes in configured subnet      |
    |                                                   |                | pd-pool. This statistic changes    |
    |                                                   |                | only during configuration changes. |

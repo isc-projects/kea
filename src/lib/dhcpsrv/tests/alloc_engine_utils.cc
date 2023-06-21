@@ -88,8 +88,10 @@ bool testStatistics(const std::string& stat_name, const int64_t exp_value,
                 }
             }
         }
+    } catch (const std::exception& e) {
+        ADD_FAILURE() << "Uncaught exception " << e.what();
     } catch (...) {
-        ;
+        ADD_FAILURE() << "Unknown exception";
     }
     return (false);
 }
@@ -102,8 +104,10 @@ int64_t getStatistics(const std::string& stat_name, const SubnetID subnet_id) {
         if (observation) {
             return (observation->getInteger().first);
         }
+    } catch (const std::exception& e) {
+        ADD_FAILURE() << "Uncaught exception " << e.what();
     } catch (...) {
-        ;
+        ADD_FAILURE() << "Unknown exception";
     }
     return (0);
 }

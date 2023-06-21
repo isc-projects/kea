@@ -153,18 +153,19 @@ The response to either command will contain three elements:
    the element "result-set", which is patterned after SQL statement
    responses:
 
-   -  ``columns`` - a list of text column labels. The columns returned
-      for DHCPv4 are:
+   -  ``columns`` - a list of text column labels.
+
+      The columns returned for DHCPv4 are:
 
       -  ``subnet-id`` - the ID of the subnet.
 
       -  ``total-addresses`` - the total number of addresses available for
          DHCPv4 management in the subnet. In other words, this is the
-         sum of all addresses in all the configured pools in the subnet.
+         count of all addresses in all the configured pools in the subnet.
 
-      - ``cumulative-assigned-addresses`` - the cumulative number of addresses
-        in the subnet that have been assigned to a client by the server
-        since it started.
+      -  ``cumulative-assigned-addresses`` - the cumulative number of addresses
+         in the subnet that have been assigned to a client by the server
+         since it started.
 
       -  ``assigned-addresses`` - the number of addresses in the subnet that
          are currently assigned to a client.
@@ -172,18 +173,18 @@ The response to either command will contain three elements:
       -  ``declined-addresses`` - the number of addresses in the subnet that
          are currently declined and are thus unavailable for assignment.
 
-   -  The columns returned for DHCPv6 are:
+      The columns returned for DHCPv6 are:
 
       -  ``subnet-id`` - the ID of the subnet.
 
       -  ``total-nas`` - the number of NA addresses available for DHCPv6
-         management in the subnet. In other words, this is the sum of
+         management in the subnet. In other words, this is the count of
          all the NA addresses in all the configured NA pools in the
          subnet.
 
-      - ``cumulative-assigned-nas`` - the cumulative number of NA addresses
-        in the subnet that have been assigned to a client by the server
-        since it started.
+      -  ``cumulative-assigned-nas`` - the cumulative number of NA addresses
+         in the subnet that have been assigned to a client by the server
+         since it started.
 
       -  ``assigned-nas`` - the number of NA addresses in the subnet that
          are currently assigned to a client.
@@ -192,12 +193,12 @@ The response to either command will contain three elements:
          declined and are thus unavailable for assignment.
 
       -  ``total-pds`` - the total number of PD prefixes available of DHCPv6
-         management in the subnet. In other words, this is the sum of
+         management in the subnet. In other words, this is the count of
          all prefixes in all the configured prefix pools in the subnet.
 
-      - ``cumulative-assigned-pds`` - the cumulative number of PD prefixes
-        in the subnet that have been assigned to a client by the server
-        since it started.
+      -  ``cumulative-assigned-pds`` - the cumulative number of PD prefixes
+         in the subnet that have been assigned to a client by the server
+         since it started.
 
       -  ``assigned-pds`` - the number of PD prefixes in the subnet that are
          currently assigned to a client.

@@ -38,6 +38,10 @@ namespace test {
 /// This function may be used in many allocation tests and there's no
 /// single base class for it. @todo consider moving it src/lib/util.
 ///
+/// It checks statistics by name, either the global version when the subnet ID
+/// is SUBNET_ID_UNUSED or the subnet statistic, including the pool 0 respective
+/// statistic.
+///
 /// @param stat_name Statistic name.
 /// @param exp_value Expected value.
 /// @param subnet_id subnet_id of the desired subnet, if not zero
@@ -58,13 +62,16 @@ bool testStatistics(const std::string& stat_name,
 ///
 /// @param stat_name Statistic name.
 /// @param subnet_id subnet_id of the desired subnet, if not zero.
+///
 /// @return the value held by the statistic manager or zero.
-int64_t getStatistics(const std::string& stat_name, const SubnetID subnet_id = SUBNET_ID_UNUSED);
+int64_t getStatistics(const std::string& stat_name,
+                      const SubnetID subnet_id = SUBNET_ID_UNUSED);
 
 /// @brief IterativeAllocator with internal methods exposed
 class NakedIterativeAllocator : public IterativeAllocator {
 public:
     /// @brief constructor
+    ///
     /// @param type pool types that will be iterated through
     NakedIterativeAllocator(Lease::Type type, const WeakSubnetPtr& subnet)
         : IterativeAllocator(type, subnet) {
@@ -78,6 +85,7 @@ public:
 class NakedAllocEngine : public AllocEngine {
 public:
     /// @brief the sole constructor
+    ///
     /// @param attempts number of lease selection attempts before giving up
     NakedAllocEngine(unsigned int attempts)
         : AllocEngine(attempts) {
@@ -87,8 +95,10 @@ public:
     using AllocEngine::updateLease4ExtendedInfo;
 
     /// @brief Wrapper method for invoking AllocEngine4::updateLease4ExtendedInfo().
+    ///
     /// @param lease lease to update
     /// @param ctx current packet processing context
+    ///
     /// @return true if extended information was changed
     bool callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       AllocEngine::ClientContext4& ctx) const {
@@ -96,13 +106,13 @@ public:
     }
 
     /// @brief Wrapper method for invoking AllocEngine6::updateLease6ExtendedInfo().
+    ///
     /// @param lease lease to update
     /// @param ctx current packet processing context
     void callUpdateLease6ExtendedInfo(const Lease6Ptr& lease,
                                       AllocEngine::ClientContext6& ctx) const {
-        return (updateLease6ExtendedInfo(lease, ctx));
+        updateLease6ExtendedInfo(lease, ctx);
     }
-
 };
 
 /// @brief Used in Allocation Engine tests for IPv6
@@ -175,6 +185,7 @@ public:
     ///
     /// @param col collection of leases (zero or one leases allowed)
     /// @throw MultipleRecords if there is more than one lease
+    ///
     /// @return Lease6 pointer (or NULL if collection was empty)
     Lease6Ptr expectOneLease(const Lease6Collection& col) {
         if (col.size() > 1) {
@@ -293,6 +304,7 @@ public:
     /// @param hint address to be used as a hint
     /// @param fake true - this is fake allocation (SOLICIT)
     /// @param in_pool specifies whether the lease is expected to be in pool
+    ///
     /// @return allocated lease (or NULL)
     Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint,
@@ -310,6 +322,7 @@ public:
     /// @param exp_preferred expected lease preferred lifetime
     /// @param exp_valid expected lease valid lifetime
     /// @param class_def class definition to add to the context
+    ///
     /// @return allocated lease (or NULL)
     Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint,
@@ -328,6 +341,7 @@ public:
     /// @param hint address to be used as a hint
     /// @param fake true - this is fake allocation (SOLICIT)
     /// @param in_pool specifies whether the lease is expected to be in pool
+    ///
     /// @return allocated lease (or NULL)
     Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
                                const DuidPtr& duid,
@@ -347,6 +361,7 @@ public:
     /// @param in_pool specifies whether the lease is expected to be in pool
     /// @param hint_prefix_length The hint prefix length that the client
     /// provided.
+    ///
     /// @return allocated lease(s) (may be empty)
     Lease6Collection allocateTest(AllocEngine& engine,
                                   const Pool6Ptr& pool,
@@ -365,6 +380,7 @@ public:
     /// @param hints address to be used as a hint
     /// @param in_subnet whether the lease is expected to be in subnet
     /// @param in_pool specifies whether the lease is expected to be in pool
+    ///
     /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine,
                                const Pool6Ptr& pool,
@@ -418,6 +434,8 @@ public:
     /// @param addr address of the lease
     /// @param probation_period expressed in seconds
     /// @param expired number of seconds when the lease will expire
+    ///
+    /// @return generated lease
     Lease6Ptr generateDeclinedLease(const std::string& addr,
                                     time_t probation_period,
                                     int32_t expired);
@@ -439,6 +457,7 @@ public:
     /// @param type specifies reservation type
     /// @param addr specifies reserved address or prefix
     /// @param prefix_len prefix length (should be 128 for addresses)
+    ///
     /// @return created Host object.
     HostPtr createHost6(bool add_to_host_mgr,
                         IPv6Resrv::Type type,
@@ -476,6 +495,7 @@ public:
     /// @param hwaddr hardware address to be reserved to
     /// @param addr specifies reserved address or prefix
     /// @param prefix_len prefix length (should be 128 for addresses)
+    ///
     /// @return created Host object.
     HostPtr createHost6HWAddr(bool add_to_host_mgr,
                               IPv6Resrv::Type type,
@@ -605,6 +625,8 @@ public:
     /// @param addr address of the lease
     /// @param probation_period expressed in seconds
     /// @param expired number of seconds when the lease will expire
+    ///
+    /// @return generated lease
     Lease4Ptr generateDeclinedLease(const std::string& addr,
                                     time_t probation_period,
                                     int32_t expired);
@@ -616,6 +638,7 @@ public:
     void initSubnet(const asiolink::IOAddress& pool_start,
                     const asiolink::IOAddress& pool_end);
 
+    /// @brief Default constructor
     virtual ~AllocEngine4Test() {
         factory_.destroy();
     }

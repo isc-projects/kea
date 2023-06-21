@@ -5764,9 +5764,9 @@ file and in the host database backend, via :ischooklib:`libdhcp_host_cmds.so`.
 
 Setting ``ip-reservations-unique`` to ``false`` when using memfile, MySQL or PostgreSQL is supported.
 This setting is not supported when using Host Cache (see :ref:`hooks-host-cache`), and the RADIUS backend
-(see :ref:`hooks-radius`).  These reservation backends simply do not support multiple reservations for the 
+(see :ref:`hooks-radius`).  These reservation backends simply do not support multiple reservations for the
 same IP.  If either of these hooks are loaded and ``ip-reservations-unique`` is set to ``false``, then a
-configuration error will be emitted and the server will fail to start. 
+configuration error will be emitted and the server will fail to start.
 
 .. note::
 
@@ -6881,7 +6881,7 @@ The DHCPv4 server supports the following statistics:
    | subnet[id].total-addresses                         | integer        | Total number of addresses          |
    |                                                    |                | available for DHCPv4 management    |
    |                                                    |                | for a given subnet; in other       |
-   |                                                    |                | words, this is the sum of all      |
+   |                                                    |                | words, this is the count of all    |
    |                                                    |                | addresses in all configured pools. |
    |                                                    |                | This statistic changes only during |
    |                                                    |                | configuration updates. It does not |
@@ -6896,7 +6896,7 @@ The DHCPv4 server supports the following statistics:
    | subnet[id].pool[pid].total-addresses               | integer        | Total number of addresses          |
    |                                                    |                | available for DHCPv4 management    |
    |                                                    |                | for a given subnet pool; in other  |
-   |                                                    |                | words, this is the sum of all      |
+   |                                                    |                | words, this is the count of all    |
    |                                                    |                | addresses in configured subnet     |
    |                                                    |                | pool. This statistic changes only  |
    |                                                    |                | during configuration updates. It   |
