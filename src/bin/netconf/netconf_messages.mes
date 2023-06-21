@@ -85,7 +85,7 @@ notifications for the configured module.
 The warning message indicates that kea-netconf got an error subscribing to
 notifications for a Kea server. The most probable cause is probably that the
 model that kea-netconf subscribed to does not have any notification nodes, but
-there may be other more unxpected causes as well.
+there may be other more unexpected causes as well.
 The server name, module name and the error are printed.
 
 % NETCONF_RUN_EXIT application is exiting the event loop
