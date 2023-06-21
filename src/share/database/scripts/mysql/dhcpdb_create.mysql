@@ -5707,6 +5707,7 @@ ALTER TABLE ipv6_reservations MODIFY COLUMN address VARCHAR(39) DEFAULT NULL;
 UPDATE ipv6_reservations set address = NULL;
 ALTER TABLE ipv6_reservations MODIFY COLUMN address BINARY(16);
 UPDATE ipv6_reservations set address = binaddr;
+ALTER TABLE ipv6_reservations MODIFY COLUMN address BINARY(16) NOT NULL;
 ALTER TABLE ipv6_reservations DROP COLUMN binaddr;
 
 -- Convert binary lease6 address to text
