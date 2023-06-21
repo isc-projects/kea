@@ -278,7 +278,7 @@ private:
 
     /// @brief Creates connection string from the specified parameters.
     ///
-    /// This is an internal implemenation of the @c getConnParameters that
+    /// This is an internal implementation of the @c getConnParameters that
     /// allows for controlling logging. In some cases, a caller can disable
     /// logging warnings to avoid duplication of the log messages emitted
     /// when the invocation is a result of calling  @c getVersion before
