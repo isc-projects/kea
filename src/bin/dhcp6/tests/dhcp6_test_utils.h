@@ -850,7 +850,7 @@ public:
                      const isc::asiolink::IOAddress& release_addr,
                      const LeaseAffinity lease_affinity);
 
-    /// @brief Checks that reassignement of a released-expired lease
+    /// @brief Checks that reassignment of a released-expired lease
     /// does not lead to zero lifetimes.
     ///
     /// This method does not throw, but uses gtest macros to signify failures.
