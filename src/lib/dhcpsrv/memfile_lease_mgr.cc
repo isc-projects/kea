@@ -3462,11 +3462,6 @@ Memfile_LeaseMgr::buildExtendedInfoTables6Internal(bool update, bool current) {
 }
 
 size_t
-Memfile_LeaseMgr::upgradeBinaryAddress6(const LeasePageSize& /* page_size */) {
-    return (0);
-}
-
-size_t
 Memfile_LeaseMgr::buildExtendedInfoTables6(bool update, bool current) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
