@@ -3267,7 +3267,9 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
         parseAnswer(status_code, answer);
         if (parameters.empty()) {
             EXPECT_EQ(0, status_code);
-            EXPECT_EQ(answer->str(), R"({ "result": 0, "text": "Configuration successful." })");
+            EXPECT_EQ(answer->str(), "{ \"arguments\": { \"hash\": \"FA868B7A5983A80A83A7E9EFD8E"
+            "3DA4CC78B57A44817AEB9EF9DD6E4B9B0B116\" }, \"result\": 0, \"text\": "
+            "\"Configuration successful.\" }");
         } else {
             EXPECT_EQ(1, status_code);
             if (parameters.find("fail-without-error") != string::npos) {

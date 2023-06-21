@@ -816,9 +816,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     std::string response;
     sendUnixCommand(os.str(), response);
 
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
@@ -880,9 +884,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     // Verify the control channel socket no longer exists.
     EXPECT_FALSE(fileExists(socket_path_));
 
-    // With no command channel, should still receive the response.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
+    // With no command channel, should still receive the response. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
@@ -1021,9 +1029,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
     std::string response;
     sendUnixCommand(os.str(), response);
 
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
@@ -1579,9 +1591,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadValid) {
 
     // This command should reload test8.json config.
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
