@@ -1864,7 +1864,7 @@ public:
     /// shared-network.
     ///
     /// @param subnet pointer to the source subnet
-    /// @return string contaning the generated label
+    /// @return string containing the generated label
     static std::string labelNetworkOrSubnet(SubnetPtr subnet);
 };
 
