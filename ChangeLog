@@ -1,3 +1,8 @@
+2154.	[doc]		darren
+	Corrected minor typo in table in section 8.2.10 of the ARM where
+	type was shown as ipv6-address and should have said ipv4-address.
+	(Gitlab #2913)
+
 2153.	[doc]		darren
 	Changed wording of documentation of ip-reservations-unique
 	flag to clarify which host reservation backends support false.
