@@ -10,6 +10,7 @@
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_simple_parser.h>
 #include <cc/command_interpreter.h>
+#include <config/base_command_mgr.h>
 #include <util/encode/hex.h>
 
 #include <boost/foreach.hpp>
@@ -306,8 +307,15 @@ D2CfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
         answer = createAnswer(CONTROL_RESULT_SUCCESS,
                               "Configuration check successful");
     } else {
+
+        // Calculate hash of the configuration that was just set.
+        ElementPtr config = getContext()->toElement();
+        std::string hash = BaseCommandMgr::getHash(config);
+        ElementPtr params = Element::createMap();
+        params->set("hash", Element::create(hash));
+
         answer = createAnswer(CONTROL_RESULT_SUCCESS,
-                              "Configuration applied successfully.");
+                              "Configuration applied successfully.", params);
     }
 
     return (answer);

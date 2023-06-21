@@ -794,8 +794,13 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
-              answer->str());
+    // The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(answer->str().find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(answer->str().find("\"text\": \"Configuration applied successfully.\""), std::string::npos);
     ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
@@ -927,8 +932,14 @@ TEST_F(CtrlChannelD2Test, configSet) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
-              answer->str());
+    // The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(answer->str().find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(answer->str().find("\"text\": \"Configuration applied successfully.\""),
+              std::string::npos);
     ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
@@ -993,7 +1004,8 @@ TEST_F(CtrlChannelD2Test, configSet) {
     EXPECT_FALSE(test::fileExists(socket_path_));
 
     // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+    EXPECT_EQ("{ \"arguments\": { \"hash\": \"5206A1BEC7E3C6ADD5E97C5983861F97739EA05CFEAD823CBBC4"
+              "524095AAA10A\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
               response);
 
     // Check that the config was applied.
@@ -1111,8 +1123,9 @@ TEST_F(CtrlChannelD2Test, configReloadFileValid) {
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was successful.
-    string expected = "{ \"result\": 0, \"text\": "
-        "\"Configuration applied successfully.\" }";
+    string expected = "{ \"arguments\": { \"hash\": \"DC1235F1948D68E06F1425FC28BE326EF01DC4856C3"
+                      "833673B9CC8732409B04D\" }, \"result\": 0, \"text\": "
+                      "\"Configuration applied successfully.\" }";
     EXPECT_EQ(expected, response);
 
     // Check that the config was indeed applied.
