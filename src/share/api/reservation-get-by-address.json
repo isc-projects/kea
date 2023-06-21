@@ -1,6 +1,6 @@
 {
     "access": "read",
-    "avail": "2.3.9",
+    "avail": "2.4.0",
     "brief": [
         "This command retrieves all host reservations for given ip-address and optionally a specified subnet."
     ],

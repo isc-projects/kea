@@ -746,6 +746,23 @@ protected:
                   const isc::asiolink::IOAddress& address,
                   const uint8_t prefix_len = 128);
 
+    /// @brief Inserts IPv6 reservation into the host data source.
+    ///
+    /// @param data_source Reference to the data source to which the reservation
+    /// should be inserted.
+    /// @param duid Pointer to the DUID to be associated with the reservation.
+    /// @param subnet_id IPv6 subnet id.
+    /// @param addresses IPv6 addresses/prefixes to be reserved.
+    /// @param prefix_len Prefix length. The default value is 128 which
+    /// indicates that the reservation is for an IPv6 address rather than a
+    /// prefix. Notice that this is common for all addresses in given vector
+    /// of addresses.
+    void addHost6(BaseHostDataSource& data_source,
+                  const DuidPtr& duid,
+                  const SubnetID& subnet_id,
+                  const std::vector<isc::asiolink::IOAddress>& addresses,
+                  const uint8_t prefix_len = 128);
+
     /// @brief This test verifies that HostMgr returns all reservations for the
     /// specified HW address.
     ///

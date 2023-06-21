@@ -3013,6 +3013,22 @@ HostMgrTest::addHost6(BaseHostDataSource& data_source,
     data_source.add(new_host);
 }
 
+void
+HostMgrTest::addHost6(BaseHostDataSource& data_source,
+                      const DuidPtr& duid,
+                      const SubnetID& subnet_id,
+                      const std::vector<IOAddress>& addresses,
+                      const uint8_t prefix_len) {
+    HostPtr new_host(new Host(duid->toText(), "duid", SubnetID(1),
+                              subnet_id, IOAddress::IPV4_ZERO_ADDRESS()));
+    for (const IOAddress& address : addresses) {
+        new_host->addReservation(IPv6Resrv(prefix_len == 128 ? IPv6Resrv::TYPE_NA :
+                                                               IPv6Resrv::TYPE_PD,
+                                           address, prefix_len));
+    }
+
+    data_source.add(new_host);
+}
 
 void
 HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
@@ -4394,8 +4410,7 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
 }
 
 void
-HostMgrTest::testGetAll6ByIP(BaseHostDataSource& data_source1,
-                             BaseHostDataSource& data_source2) {
+HostMgrTest::testGetAll6ByIP(BaseHostDataSource& data_source1, BaseHostDataSource& data_source2) {
     // Set the mode of operation with multiple reservations for the same
     // IP address.
     ASSERT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
@@ -4403,34 +4418,54 @@ HostMgrTest::testGetAll6ByIP(BaseHostDataSource& data_source1,
 
     // Initially, no reservations should be present.
     ConstHostCollection hosts = HostMgr::instance().getAll6(SubnetID(1),
-                                                            IOAddress("2001:db8:1::5"));
+                                                            IOAddress("2001:db8:1::10"));
     ASSERT_TRUE(hosts.empty());
 
-    // Add two reservations for the same subnet.
-    addHost6(data_source1, duids_[0], SubnetID(1), IOAddress("2001:db8:1::5"));
-    addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    // Prepare vectors of IPv6 address reservations for new hosts.
+    std::vector<IOAddress> addresses1;
+    std::vector<IOAddress> addresses2;
+    addresses1.push_back(IOAddress("2001:db8:1::5"));
+    addresses1.push_back(IOAddress("2001:db8:1::10"));
+    addresses2.push_back(IOAddress("2001:db8:1::6"));
+    addresses2.push_back(IOAddress("2001:db8:1::10"));
+
+    // Add two hosts for the same subnet with 2 IPv6 addresses reservations per host.
+    addHost6(data_source1, duids_[0], SubnetID(1), addresses1);
+    addHost6(data_source2, duids_[1], SubnetID(1), addresses2);
 
     CfgMgr::instance().commit();
 
-    // If there non-matching subnet is specified, nothing should be returned.
+    // If a non-matching subnet is specified, nothing should be returned.
     hosts = HostMgr::instance().getAll6(SubnetID(100), IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(hosts.empty());
 
-    // For given IP there should be two reservations.
+    // For given IP there should be one reservation.
     hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::5"));
+    ASSERT_EQ(1, hosts.size());
+
+    // For given IP there should be one reservation.
+    hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::6"));
+    ASSERT_EQ(1, hosts.size());
+
+    // For given IP there should be two reservations.
+    hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::10"));
     ASSERT_EQ(2, hosts.size());
 
     // Make sure that subnet is correct.
     EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
 
-    // Make sure that two hosts were returned with different identifiers
-    // but the same address.
+    // Make sure that all hosts were returned with different identifiers, and
+    // they have expected reservations.
     EXPECT_NE(hosts[0]->getIdentifierAsText(), hosts[1]->getIdentifierAsText());
-    EXPECT_TRUE(hosts[0]->hasReservation(
-        IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
-    EXPECT_TRUE(hosts[1]->hasReservation(
-        IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    EXPECT_TRUE(
+        hosts[0]->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::10"))));
+    EXPECT_TRUE(
+        hosts[0]->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    EXPECT_TRUE(
+        hosts[1]->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::10"))));
+    EXPECT_TRUE(
+        hosts[1]->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
 
     // Make sure that the operation target is supported.
     bool is_first_source_primary = isPrimaryDataSource(data_source1);
@@ -4438,31 +4473,42 @@ HostMgrTest::testGetAll6ByIP(BaseHostDataSource& data_source1,
     size_t hosts_in_primary_source = is_first_source_primary + is_second_source_primary;
 
     // Select hosts only from the primary source.
-    hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::5"), HostMgrOperationTarget::PRIMARY_SOURCE);
+    hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::10"),
+                                        HostMgrOperationTarget::PRIMARY_SOURCE);
     EXPECT_EQ(hosts_in_primary_source, hosts.size());
     if (is_first_source_primary) {
-        EXPECT_TRUE(hosts[0]->hasReservation(
-            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+        EXPECT_TRUE(
+            hosts[0]->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::10"))));
+        EXPECT_TRUE(
+            hosts[0]->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
     }
     if (is_second_source_primary) {
         EXPECT_TRUE(hosts[hosts_in_primary_source - 1]->hasReservation(
-            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::10"))));
+        EXPECT_TRUE(hosts[hosts_in_primary_source - 1]->hasReservation(
+            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
     }
 
     // Select hosts only from the alternate sources.
-    hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALTERNATE_SOURCES);
+    hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::10"),
+                                        HostMgrOperationTarget::ALTERNATE_SOURCES);
     EXPECT_EQ(2 - hosts_in_primary_source, hosts.size());
     if (!is_first_source_primary) {
-        EXPECT_TRUE(hosts[0]->hasReservation(
-            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+        EXPECT_TRUE(
+            hosts[0]->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::10"))));
+        EXPECT_TRUE(
+            hosts[0]->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
     }
     if (!is_second_source_primary) {
         EXPECT_TRUE(hosts[2 - hosts_in_primary_source - 1]->hasReservation(
-            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::10"))));
+        EXPECT_TRUE(hosts[2 - hosts_in_primary_source - 1]->hasReservation(
+            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
     }
 
     // Select hosts for an unspecified source.
-    hosts = HostMgr::instance().getAll4(IOAddress("2001:db8:1::5"), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    hosts = HostMgr::instance().getAll4(IOAddress("2001:db8:1::10"),
+                                        HostMgrOperationTarget::UNSPECIFIED_SOURCE);
     EXPECT_EQ(0, hosts.size());
 }
 

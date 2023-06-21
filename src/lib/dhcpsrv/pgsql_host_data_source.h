@@ -451,6 +451,27 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    /// @brief Returns all hosts having a reservation for a specified
+    /// address or delegated prefix (lease) in all subnets.
+    ///
+    /// In most cases it is desired that there is at most one reservation
+    /// for a given IPv6 lease within a subnet. In a default configuration,
+    /// the backend does not allow for inserting more than one host with
+    /// the same IPv6 address or prefix.
+    ///
+    /// If the backend is configured to allow multiple hosts with reservations
+    /// for the same IPv6 lease in the given subnet, this method can return
+    /// more than one host per subnet.
+    ///
+    /// The typical use case when a single IPv6 lease is reserved for multiple
+    /// hosts is when these hosts represent different interfaces of the same
+    /// machine and each interface comes with a different MAC address. In that
+    /// case, the same IPv6 lease is assigned regardless of which interface is
+    /// used by the DHCP client to communicate with the server.
+    ///
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return Collection of const @c Host objects.
     virtual ConstHostCollection getAll6(const asiolink::IOAddress& address) const;
 
     /// @brief Implements @ref BaseHostDataSource::update() for PostgreSQL.
