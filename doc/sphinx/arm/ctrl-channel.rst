@@ -352,7 +352,9 @@ returned is roughly equal to the configuration that was loaded using the
 :isccmd:`config-set` command. However, there may be certain differences, as
 comments are not retained. If the original configuration used file
 inclusion, the returned configuration includes all parameters from
-all included files.
+all included files. Starting with 2.4.0, the successful response also
+contains a SHA-256 digest that can be used to easily determine if a
+configuration has changed or not.
 
 .. warning::
 
@@ -397,6 +399,10 @@ And the server's response:
            "hash": "5C3C90EF7035249E2FF74D003C19F34EE0B83A3D329E741B52B2EF95A2C9CC5C"
         }
     }
+
+Starting with 2.4.0, also ``config-set`` and ``config-get`` return the SHA-256 hash
+of the new or current configuration. This may be used to later determine if a configuration
+has changed or not.
 
 .. isccmd:: config-reload
 .. _command-config-reload:
@@ -636,6 +642,9 @@ string, ``text``, describing the outcome:
        or
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
+
+Starting with 2.4.0, the successful response also contains a SHA-256 digest of the newly set configuration.
+The digest can be used to easily determine if a configuration has changed or not.
 
 .. isccmd:: shutdown
 .. _command-shutdown:
