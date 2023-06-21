@@ -119,55 +119,45 @@ LeaseMgr::recountLeaseStats4() {
                                                   "declined-addresses"),
                            zero);
 
-        if (!stats_mgr.getObservation(
-                StatsMgr::generateName("subnet", subnet_id,
-                                       "reclaimed-declined-addresses"))) {
-            stats_mgr.setValue(
-                StatsMgr::generateName("subnet", subnet_id,
-                                       "reclaimed-declined-addresses"),
-                zero);
+        const std::string name_rec_dec(StatsMgr::generateName("subnet", subnet_id,
+                                                              "reclaimed-declined-addresses"));
+        if (!stats_mgr.getObservation(name_rec_dec)) {
+            stats_mgr.setValue(name_rec_dec, zero);
         }
 
-        if (!stats_mgr.getObservation(
-                StatsMgr::generateName("subnet", subnet_id,
-                                       "reclaimed-leases"))) {
-            stats_mgr.setValue(
-                StatsMgr::generateName("subnet", subnet_id,
-                                       "reclaimed-leases"),
-                zero);
+        const std::string name_rec(StatsMgr::generateName("subnet", subnet_id,
+                                                          "reclaimed-leases"));
+        if (!stats_mgr.getObservation(name_rec)) {
+            stats_mgr.setValue(name_rec, zero);
         }
 
-        for (const auto & pool : (*subnet)->getPools(Lease::TYPE_V4)) {
-            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                      StatsMgr::generateName("pool", pool->getID(),
-                                                                             "assigned-addresses")),
-                               zero);
-
-            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                      StatsMgr::generateName("pool", pool->getID(),
-                                                                             "declined-addresses")),
-                               zero);
-
-            if (!stats_mgr.getObservation(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "reclaimed-declined-addresses")))) {
-                stats_mgr.setValue(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "reclaimed-declined-addresses")),
-                    zero);
+        for (const auto& pool : (*subnet)->getPools(Lease::TYPE_V4)) {
+            const std::string name_aa(StatsMgr::generateName("subnet", subnet_id,
+                                                             StatsMgr::generateName("pool", pool->getID(),
+                                                                                    "assigned-addresses")));
+            if (!stats_mgr.getObservation(name_aa)) {
+                stats_mgr.setValue(name_aa, zero);
             }
 
-            if (!stats_mgr.getObservation(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "reclaimed-leases")))) {
-                stats_mgr.setValue(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "reclaimed-leases")),
-                    zero);
+            const std::string& name_da(StatsMgr::generateName("subnet", subnet_id,
+                                                              StatsMgr::generateName("pool", pool->getID(),
+                                                                                     "declined-addresses")));
+            if (!stats_mgr.getObservation(name_da)) {
+                stats_mgr.setValue(name_da, zero);
+            }
+
+            const std::string& name_rec_dec(StatsMgr::generateName("subnet", subnet_id,
+                                                                   StatsMgr::generateName("pool", pool->getID(),
+                                                                                          "reclaimed-declined-addresses")));
+            if (!stats_mgr.getObservation(name_rec_dec)) {
+                stats_mgr.setValue(name_rec_dec, zero);
+            }
+
+            const std::string& name_rec(StatsMgr::generateName("subnet", subnet_id,
+                                                               StatsMgr::generateName("pool", pool->getID(),
+                                                                                      "reclaimed-leases")));
+            if (!stats_mgr.getObservation(name_rec)) {
+                stats_mgr.setValue(name_rec, zero);
             }
         }
     }
@@ -366,54 +356,48 @@ LeaseMgr::recountLeaseStats6() {
         }
 
         for (const auto& pool : (*subnet)->getPools(Lease::TYPE_NA)) {
-            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                      StatsMgr::generateName("pool", pool->getID(),
-                                                                             "assigned-nas")),
-                               zero);
-
-            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                      StatsMgr::generateName("pool", pool->getID(),
-                                                                             "declined-addresses")),
-                               zero);
-
-            if (!stats_mgr.getObservation(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "reclaimed-declined-addresses")))) {
-                stats_mgr.setValue(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "reclaimed-declined-addresses")),
-                    zero);
+            const std::string& name_anas(StatsMgr::generateName("subnet", subnet_id,
+                                                                StatsMgr::generateName("pool", pool->getID(),
+                                                                                       "assigned-nas")));
+            if (!stats_mgr.getObservation(name_anas)) {
+                stats_mgr.setValue(name_anas, zero);
             }
 
-            if (!stats_mgr.getObservation(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "reclaimed-leases")))) {
-                stats_mgr.setValue(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "reclaimed-leases")),
-                    zero);
+            const std::string& name_da(StatsMgr::generateName("subnet", subnet_id,
+                                                              StatsMgr::generateName("pool", pool->getID(),
+                                                                                     "declined-addresses")));
+            if (!stats_mgr.getObservation(name_da)) {
+                stats_mgr.setValue(name_da, zero);
+            }
+
+            const std::string name_rec_dec(StatsMgr::generateName("subnet", subnet_id,
+                                                                  StatsMgr::generateName("pool", pool->getID(),
+                                                                                         "reclaimed-declined-addresses")));
+            if (!stats_mgr.getObservation(name_rec_dec)) {
+                stats_mgr.setValue(name_rec_dec, zero);
+            }
+
+            const std::string& name_rec(StatsMgr::generateName("subnet", subnet_id,
+                                                               StatsMgr::generateName("pool", pool->getID(),
+                                                                                      "reclaimed-leases")));
+            if (!stats_mgr.getObservation(name_rec)) {
+                stats_mgr.setValue(name_rec, zero);
             }
         }
 
         for (const auto& pool : (*subnet)->getPools(Lease::TYPE_PD)) {
-            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                      StatsMgr::generateName("pd-pool", pool->getID(),
-                                                                             "assigned-pds")),
-                               zero);
+            const std::string& name_apds(StatsMgr::generateName("subnet", subnet_id,
+                                                                StatsMgr::generateName("pd-pool", pool->getID(),
+                                                                                       "assigned-pds")));
+            if (!stats_mgr.getObservation(name_apds)) {
+                stats_mgr.setValue(name_apds, zero);
+            }
 
-            if (!stats_mgr.getObservation(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pd-pool", pool->getID(),
-                                                                  "reclaimed-leases")))) {
-                stats_mgr.setValue(
-                    StatsMgr::generateName("subnet", subnet_id,
-                                           StatsMgr::generateName("pd-pool", pool->getID(),
-                                                                  "reclaimed-leases")),
-                    zero);
+            const std::string& name_rec(StatsMgr::generateName("subnet", subnet_id,
+                                                               StatsMgr::generateName("pd-pool", pool->getID(),
+                                                                                      "reclaimed-leases")));
+            if (!stats_mgr.getObservation(name_rec)) {
+                stats_mgr.setValue(name_rec, zero);
             }
         }
     }

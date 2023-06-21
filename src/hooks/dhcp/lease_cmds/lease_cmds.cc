@@ -2245,17 +2245,19 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
             auto const& sub = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(id);
             if (sub) {
                 for (const auto& pool : sub->getPools(Lease::TYPE_V4)) {
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "assigned-addresses")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_aa(StatsMgr::generateName("subnet", sub->getID(),
+                                                                      StatsMgr::generateName("pool", pool->getID(),
+                                                                                             "assigned-addresses")));
+                    if (!StatsMgr::instance().getObservation(name_aa)) {
+                        StatsMgr::instance().setValue(name_aa, static_cast<int64_t>(0));
+                    }
 
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "declined-addresses")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_da(StatsMgr::generateName("subnet", sub->getID(),
+                                                                      StatsMgr::generateName("pool", pool->getID(),
+                                                                                             "declined-addresses")));
+                    if (!StatsMgr::instance().getObservation(name_da)) {
+                        StatsMgr::instance().setValue(name_da, static_cast<int64_t>(0));
+                    }
                 }
             }
 
@@ -2279,17 +2281,19 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                     static_cast<int64_t>(0));
 
                 for (const auto& pool : sub->getPools(Lease::TYPE_V4)) {
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "assigned-addresses")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_aa(StatsMgr::generateName("subnet", sub->getID(),
+                                                                      StatsMgr::generateName("pool", pool->getID(),
+                                                                                             "assigned-addresses")));
+                    if (!StatsMgr::instance().getObservation(name_aa)) {
+                        StatsMgr::instance().setValue(name_aa, static_cast<int64_t>(0));
+                    }
 
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "declined-addresses")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_da(StatsMgr::generateName("subnet", sub->getID(),
+                                                                      StatsMgr::generateName("pool", pool->getID(),
+                                                                                             "declined-addresses")));
+                    if (!StatsMgr::instance().getObservation(name_da)) {
+                        StatsMgr::instance().setValue(name_da, static_cast<int64_t>(0));
+                    }
                 }
             }
 
@@ -2365,25 +2369,28 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             auto const& sub = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(id);
             if (sub) {
                 for (const auto& pool : sub->getPools(Lease::TYPE_NA)) {
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "assigned-nas")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_anas(StatsMgr::generateName("subnet", sub->getID(),
+                                                                        StatsMgr::generateName("pool", pool->getID(),
+                                                                                               "assigned-nas")));
+                    if (!StatsMgr::instance().getObservation(name_anas)) {
+                        StatsMgr::instance().setValue(name_anas, static_cast<int64_t>(0));
+                    }
 
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "declined-addresses")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_da(StatsMgr::generateName("subnet", sub->getID(),
+                                                                      StatsMgr::generateName("pool", pool->getID(),
+                                                                                             "declined-addresses")));
+                    if (!StatsMgr::instance().getObservation(name_da)) {
+                        StatsMgr::instance().setValue(name_da, static_cast<int64_t>(0));
+                    }
                 }
 
                 for (const auto& pool : sub->getPools(Lease::TYPE_PD)) {
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pd-pool", pool->getID(),
-                                                                      "assigned-pds")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_apds(StatsMgr::generateName("subnet", sub->getID(),
+                                                                        StatsMgr::generateName("pd-pool", pool->getID(),
+                                                                                               "assigned-pds")));
+                    if (!StatsMgr::instance().getObservation(name_apds)) {
+                        StatsMgr::instance().setValue(name_apds, static_cast<int64_t>(0));
+                    }
                 }
             }
 
@@ -2411,25 +2418,28 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                     static_cast<int64_t>(0));
 
                 for (const auto& pool : sub->getPools(Lease::TYPE_NA)) {
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "assigned-nas")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_anas(StatsMgr::generateName("subnet", sub->getID(),
+                                                                        StatsMgr::generateName("pool", pool->getID(),
+                                                                                               "assigned-nas")));
+                    if (!StatsMgr::instance().getObservation(name_anas)) {
+                        StatsMgr::instance().setValue(name_anas, static_cast<int64_t>(0));
+                    }
 
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "declined-addresses")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_da(StatsMgr::generateName("subnet", sub->getID(),
+                                                                      StatsMgr::generateName("pool", pool->getID(),
+                                                                                             "declined-addresses")));
+                    if (!StatsMgr::instance().getObservation(name_da)) {
+                        StatsMgr::instance().setValue(name_da, static_cast<int64_t>(0));
+                    }
                 }
 
                 for (const auto& pool : sub->getPools(Lease::TYPE_PD)) {
-                    StatsMgr::instance().setValue(
-                        StatsMgr::generateName("subnet", sub->getID(),
-                                               StatsMgr::generateName("pd-pool", pool->getID(),
-                                                                      "assigned-pds")),
-                        static_cast<int64_t>(0));
+                    const std::string& name_apds(StatsMgr::generateName("subnet", sub->getID(),
+                                                                        StatsMgr::generateName("pd-pool", pool->getID(),
+                                                                                               "assigned-pds")));
+                    if (!StatsMgr::instance().getObservation(name_apds)) {
+                        StatsMgr::instance().setValue(name_apds, static_cast<int64_t>(0));
+                    }
                 }
             }
 

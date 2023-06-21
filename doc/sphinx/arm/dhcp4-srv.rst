@@ -7257,6 +7257,16 @@ The DHCPv4 server supports the following statistics:
 
 .. note::
 
+   The pool ID can be configured on each pool by explicitly setting the ``pool-id``
+   parameter in the pool parameter map. If not configured, ``pool-id`` defaults to 0.
+   The statistics related to pool ID 0 refer to all the statistics of all the pools
+   that have unconfigured ``pool-id``.
+   The pool ID does not need to be unique within the subnet or across subnets.
+   The statistics regarding a specific pool ID within a subnet will be merged with the
+   other statistics of all other pools with the same pool ID in the respective subnet.
+
+.. note::
+
    This section describes DHCPv4-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.
 

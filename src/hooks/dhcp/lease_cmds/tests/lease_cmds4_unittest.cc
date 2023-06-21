@@ -57,6 +57,7 @@ public:
     /// @param subnet_id expected subnet-id
     /// @param hwaddr expected value of hardware address
     /// @param client_id_required true if client-id is expected
+    /// @param pool_id expected pool-id (if value is 0 the parameter pool-id should not be present)
     void checkLease4(isc::data::ConstElementPtr l, std::string ip,
                      uint32_t subnet_id, std::string hwaddr,
                      bool client_id_required, uint32_t pool_id = 0) {

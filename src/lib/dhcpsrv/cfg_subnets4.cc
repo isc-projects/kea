@@ -580,33 +580,39 @@ CfgSubnets4::updateStatistics() {
         stats_mgr.setValue(StatsMgr::
                            generateName("subnet", subnet_id, "total-addresses"),
                                         int64_t(subnet4->getPoolCapacity(Lease::TYPE_V4)));
-        std::string name =
-            StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-addresses");
+        const std::string& name(StatsMgr::generateName("subnet", subnet_id,
+                                                       "cumulative-assigned-addresses"));
         if (!stats_mgr.getObservation(name)) {
             stats_mgr.setValue(name, static_cast<int64_t>(0));
         }
 
-        name = StatsMgr::generateName("subnet", subnet_id, "v4-lease-reuses");
-        if (!stats_mgr.getObservation(name)) {
-            stats_mgr.setValue(name, int64_t(0));
+        const std::string& name_reuses(StatsMgr::generateName("subnet", subnet_id,
+                                                              "v4-lease-reuses"));
+        if (!stats_mgr.getObservation(name_reuses)) {
+            stats_mgr.setValue(name_reuses, int64_t(0));
         }
 
-        name = StatsMgr::generateName("subnet", subnet_id, "v4-reservation-conflicts");
-        if (!stats_mgr.getObservation(name)) {
-            stats_mgr.setValue(name, static_cast<int64_t>(0));
+        const std::string& name_conflicts(StatsMgr::generateName("subnet", subnet_id,
+                                                                 "v4-reservation-conflicts"));
+        if (!stats_mgr.getObservation(name_conflicts)) {
+            stats_mgr.setValue(name_conflicts, static_cast<int64_t>(0));
         }
 
         for (const auto& pool : subnet4->getPools(Lease::TYPE_V4)) {
-            stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                      StatsMgr::generateName("pool", pool->getID(),
-                                                                             "total-addresses")),
-                               static_cast<int64_t>(pool->getCapacity()));
+            const std::string& name_total(StatsMgr::generateName("subnet", subnet_id,
+                                                                 StatsMgr::generateName("pool", pool->getID(),
+                                                                                        "total-addresses")));
+            if (!stats_mgr.getObservation(name_total)) {
+                stats_mgr.setValue(name_total, static_cast<int64_t>(pool->getCapacity()));
+            } else {
+                stats_mgr.addValue(name_total, static_cast<int64_t>(pool->getCapacity()));
+            }
 
-            name = StatsMgr::generateName("subnet", subnet_id,
-                                          StatsMgr::generateName("pool", pool->getID(),
-                                                                 "cumulative-assigned-addresses"));
-            if (!stats_mgr.getObservation(name)) {
-                stats_mgr.setValue(name, static_cast<int64_t>(0));
+            const std::string& name_ca(StatsMgr::generateName("subnet", subnet_id,
+                                                              StatsMgr::generateName("pool", pool->getID(),
+                                                                                     "cumulative-assigned-addresses")));
+            if (!stats_mgr.getObservation(name_ca)) {
+                stats_mgr.setValue(name_ca, static_cast<int64_t>(0));
             }
         }
     }
