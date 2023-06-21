@@ -16,7 +16,7 @@ For new stable releases or maintenance releases, please don't use `kea-dev` buil
    1. [ ] Check Jenkins jobs for failures: [distcheck](https://jenkins.aws.isc.org/job/kea-dev/job/distcheck/), etc...
    1. [ ] Check [Jenkins Tests Report](https://jenkins.aws.isc.org/job/kea-dev/job/jenkins-tests-report/).
    1. [ ] Check [tarball check report](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/Kea_20Build_20Checks/)
-1. [ ] Check [Performance Test Results](https://jenkins.isc.org/job/kea-dev/job/performance/KeaPerformanceReport/) in Jenkins for drops in performance.
+1. [ ] Check [Performance Test Results](https://jenkins.aws.isc.org/job/kea-dev/job/performance/) in Jenkins for drops in performance.
 1. Check versioning, ask the development team if:
    - the library versions are being updated
    - `KEA_HOOKS_VERSION` is being updated
