@@ -1,3 +1,8 @@
+2153.	[doc]		darren
+	Changed wording of documentation of ip-reservations-unique
+	flag to clarify which host reservation backends support false.
+	(Gitlab #2900)
+
 2152.	[doc]		razvan
 	Added documentation and unittests for counters by pool ID.
 	(Gitlab #145, #2883)
