@@ -965,6 +965,18 @@ protected:
     void testGetAll6ByIP(BaseHostDataSource& data_source1,
                          BaseHostDataSource& data_source2);
 
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified IPv6 prefix/es.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll6ByIpPrefix(BaseHostDataSource& data_source1, BaseHostDataSource& data_source2);
+
     /// @brief This test verifies that HostMgr adds the reservations to any
     /// data source.
     ///

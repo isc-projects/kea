@@ -64,6 +64,13 @@ TEST_F(HostMgrTest, getAll6ByIP) {
 }
 
 // This test verifies that HostMgr returns all reservations for the
+// IPv6 reserved prefix. The reservations are specified in the
+// server's configuration.
+TEST_F(HostMgrTest, getAll6ByIpPrefix) {
+    testGetAll6ByIpPrefix(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the
 // specified DHCPv6 subnet. The reservations are defined in the server's
 // configuration.
 TEST_F(HostMgrTest, getAll6BySubnet) {

@@ -1551,6 +1551,12 @@ TEST_F(PgSQLHostMgrTest, getAll6ByIP) {
     testGetAll6ByIP(*getCfgHosts(), *getCfgHosts());
 }
 
+// This test verifies that HostMgr returns all reservations for the
+// IPv6 reserved prefix.
+TEST_F(PgSQLHostMgrTest, getAll6ByIpPrefix) {
+    testGetAll6ByIpPrefix(*getCfgHosts(), *getCfgHosts());
+}
+
 // This test verifies that reservations for a particular hostname can be
 // retrieved from the configuration file and a database simultaneously.
 TEST_F(PgSQLHostMgrTest, getAllbyHostname) {
