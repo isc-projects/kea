@@ -162,7 +162,7 @@ TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << static_cast<int32_t>(*(reinterpret_cast<int8_t*>(op.data())));
+    tmp << static_cast<int32_t>(*(reinterpret_cast<const int8_t*>(op.data())));
     op = tmp.str();
     values.push(op);
 
@@ -251,7 +251,7 @@ TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << static_cast<uint32_t>(*(reinterpret_cast<uint8_t*>(op.data())));
+    tmp << static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(op.data())));
     op = tmp.str();
     values.push(op);
 
