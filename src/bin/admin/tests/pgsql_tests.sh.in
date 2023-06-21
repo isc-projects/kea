@@ -2005,7 +2005,7 @@ pgsql_update_v6_addresses_to_binary() {
     pgsql_wipe
 
     # Initialize database to schema 1.0.
-    pgsql_execute_script "/home/tmark/labs/build/keadev/sandbox/git.pgsql-2909/kea/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
 
     # Now upgrade to schema 16.0
