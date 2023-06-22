@@ -1523,12 +1523,12 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "insert v4 leases" "$qry"
 
     qry=\
-"insert into lease6 (address, lease_type, subnet_id, state) values (111,0,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (222,0,40,1);\
- insert into lease6 (address, lease_type, subnet_id, state) values (333,1,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (444,1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (555,1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2)"
+"insert into lease6 (address, lease_type, subnet_id, state) values ('::11',0,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::22',0,40,1);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::33',1,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::44',1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::55',1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::66',1,40,2)"
     run_statement "insert v6 leases" "$qry"
 
     # Let's upgrade it to the latest version.
@@ -1668,7 +1668,7 @@ pgsql_lease_stat_upgrade_test() {
     #
 
     # Insert a new lease subnet 50
-    qry="insert into lease6 (address, subnet_id, pool_id, lease_type, state) values ('777',50,1,1,0)"
+    qry="insert into lease6 (address, subnet_id, pool_id, lease_type, state) values ('::77',50,1,1,0)"
     run_statement "#6.11" "$qry"
 
     # Assigned count for subnet 50 should be 3
@@ -1684,7 +1684,7 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "#6.14" "$qry" 1
 
     # Update the state of the new lease to expired
-    qry="update lease6 set state = 2 where address = '777'"
+    qry="update lease6 set state = 2 where address = '::77'"
     run_statement "#6.15" "$qry"
 
     # Assigned count for subnet 50 should be 2 again
@@ -1696,7 +1696,7 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "#6.17" "$qry" 0
 
     # Delete another PD lease.
-    qry="delete from lease6 where address = '555'"
+    qry="delete from lease6 where address = '::55'"
     run_statement "#6.18" "$qry"
 
     # Assigned leases for subnet 50 should be 1
