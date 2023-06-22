@@ -646,10 +646,10 @@ public:
     virtual ConstHostCollection
     getAll6(const asiolink::IOAddress& address) const;
 
-    /// @brief Returns a collection of hosts using the specified IPv6 address.
+    /// @brief Returns a collection of hosts using the specified IPv6 address/prefix.
     ///
     /// This method may return multiple @c Host objects if they are connected to
-    /// different subnets or if there are multiple hosts with the same IPv6 address.
+    /// different subnets or if there are multiple hosts with the same IPv6 address/prefix.
     ///
     /// If matching reservations are both in the primary and the alternate
     /// data source, all of them are returned. The reservations from the

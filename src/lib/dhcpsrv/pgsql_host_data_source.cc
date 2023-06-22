@@ -1401,7 +1401,7 @@ public:
         GET_HOST_SUBID_ADDR,       // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,           // Gets host by IPv6 prefix
         GET_HOST_SUBID6_ADDR,      // Gets host by IPv6 SubnetID and IPv6 prefix
-        GET_HOST_ADDR6,            // Gets host by IPv6 address
+        GET_HOST_ADDR6,            // Gets host by IPv6 address/prefix
         GET_HOST_SUBID4,           // Gets hosts by IPv4 SubnetID
         GET_HOST_SUBID6,           // Gets hosts by IPv6 SubnetID
         GET_HOST_HOSTNAME,         // Gets hosts by hostname
@@ -1816,7 +1816,7 @@ TaggedStatementArray tagged_statements = { {
 
     // PgSqlHostDataSourceImpl::GET_HOST_ADDR6
     // Retrieves host information, IPv6 reservations and DHCPv6 options
-    // associated with a host using IPv6 address. This query
+    // associated with a host using IPv6 address/prefix. This query
     // may return host information for one or more host reservations. Even
     // if only one host is found, multiple rows
     // are returned due to left joining IPv6 reservations and DHCPv6 options.
