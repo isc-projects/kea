@@ -713,6 +713,66 @@ Response:
        "text": "4 IPv4 host(s) found."
    }
 
+When using the command for retrieving DHCP6 host reservations, one can provide
+either IPv6 address or a IPv6 delegated prefix as a ``ip-address`` parameter.
+Please notice that in current implementation this command does not take prefix
+length as a parameter. That's why when searching for e.g. IPv6 PD ``2001:db8:2:cafe::``,
+the command will return host reservations having for instance PD ``2001:db8:2:cafe::/63``
+as well as PD ``2001:db8:2:cafe::/64``. Please consider below example:
+
+::
+
+   {
+       "command": "reservation-get-by-address",
+       "arguments": {
+           "ip-address": "2001:db8:2:cafa::"
+       },
+       "service": [
+           "dhcp6"
+       ]
+   }
+
+Response:
+
+::
+
+   {
+       "arguments": {
+           "hosts": [
+               {
+                   "client-classes": [],
+                   "duid": "01:02:03:04:05:06:07:88:98:fa",
+                   "hostname": "foo.example.com",
+                   "ip-addresses": [
+                       "2001:db8:1:cafe::2"
+                   ],
+                   "option-data": [],
+                   "prefixes": [
+                       "2001:db8:2:abcd::/64",
+                       "2001:db8:2:cafa::/63"
+                   ],
+                   "subnet-id": 8
+               },
+               {
+                   "client-classes": [],
+                   "duid": "01:02:03:04:05:06:07:88:98:fb",
+                   "hostname": "foo.example.com",
+                   "ip-addresses": [
+                       "2001:db8:1:cafe::2"
+                   ],
+                   "option-data": [],
+                   "prefixes": [
+                       "2001:db8:2:abcd::/64",
+                       "2001:db8:2:cafa::/64"
+                   ],
+                   "subnet-id": 8
+               }
+           ]
+       },
+       "result": 0,
+       "text": "2 IPv6 host(s) found."
+   }
+
 The command accepts the ``operation-target`` argument. By default, it gets the
 reservation from both JSON configuration and the hosts database.
 
