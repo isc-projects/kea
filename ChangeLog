@@ -1,3 +1,9 @@
+2156.	[func]		razvan
+	Added an optional 'pool-id' parameter that can be used to enable
+	per-pool statistics. Supported by kea-dhcp4 and kea-dhcp6 for all
+	pool types.
+	(Gitlab #2898)
+
 2155.	[func]		fdupont, tomek
 	Added the config-hash-get command which returns the
 	SHA-256 hash of the current configuration, helping
