@@ -643,8 +643,9 @@ string, ``text``, describing the outcome:
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
-Starting with 2.4.0, the successful response also contains a SHA-256 digest of the newly set configuration.
-The digest can be used to easily determine if a configuration has changed or not.
+Starting with 2.4.0, the successful response from a DHCPv4, DHCPv6, or DHCP-DDNS daemons
+also contain a SHA-256 digest of the newly set configuration. The digest can be used to easily
+determine if a configuration has changed or not.
 
 .. isccmd:: shutdown
 .. _command-shutdown:

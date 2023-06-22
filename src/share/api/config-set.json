@@ -32,9 +32,9 @@
         "{ \"result\": 1, \"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }"
     ],
     "resp-comment": [
-        "Starting with Kea 2.4.0, the successful response contains an SHA256 digest of the configuration that was ",
-        "just set. It might be used to determine if a configuration has been modified or not, possibly with the ",
-        "use of config-hash-get."
+        "Starting with Kea 2.4.0, the successful response from a DHCPv4, DHCPv6, or DHCP-DDNS daemons",
+        "also contain a SHA-256 digest of the newly set configuration. The digest can be used to easily",
+        "determine if a configuration has been modified or not, possibly with the use of config-hash-get."
     ],
     "support": [
         "kea-dhcp4",
