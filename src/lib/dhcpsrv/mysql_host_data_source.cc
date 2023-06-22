@@ -4014,14 +4014,17 @@ MySqlHostDataSource::getAll6(const IOAddress& address) const {
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
-    std::string addr6 = address.toText();
-    unsigned long addr6_length = addr6.size();
+    std::vector<uint8_t>addr6 = address.toBytes();
+    if (addr6.size() != isc::asiolink::V6ADDRESS_LEN) {
+        isc_throw(DbOperationError, "getAll6() - address is not "
+                                        << isc::asiolink::V6ADDRESS_LEN << " bytes long");
+    }
 
+    unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>
-        (const_cast<char*>(addr6.c_str()));
+    inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
+    inbind[0].buffer_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].length = &addr6_length;
-    inbind[0].buffer_length = addr6_length;
 
     ConstHostCollection collection;
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_ADDR6, inbind,

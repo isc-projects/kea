@@ -1840,7 +1840,7 @@ TaggedStatementArray tagged_statements = { {
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
      "WHERE h.host_id IN "
      "  (SELECT host_id FROM ipv6_reservations "
-     "   WHERE address = $1) "
+     "   WHERE address = cast($1 as inet)) "
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
