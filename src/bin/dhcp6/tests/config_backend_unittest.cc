@@ -134,7 +134,7 @@ public:
         ASSERT_TRUE(status);
 
         int rcode;
-        ConstElementPtr comment = parseAnswer(rcode, status);
+        ConstElementPtr comment = parseAnswerText(rcode, status);
         ASSERT_EQ(expected_code, rcode) << " comment: "
                     << comment->stringValue();
 

@@ -78,15 +78,24 @@ TEST(CommandInterpreterTest, parseAnswer) {
     EXPECT_EQ(0, rcode);
     EXPECT_TRUE(isNull(arg));
 
-    answer = el("{ \"result\": 1, \"text\": \"error\" }");
+    answer = el("{ \"result\": 3, \"text\": \"error\", \"arguments\": [ \"some\", \"data\" ] }");
     arg = parseAnswer(rcode, answer);
-    EXPECT_EQ(1, rcode);
-    EXPECT_EQ("error", arg->stringValue());
+    ASSERT_TRUE(arg);
+    EXPECT_EQ(3, rcode);
+    EXPECT_EQ("[ \"some\", \"data\" ]", arg->str());
+}
 
-    answer = el("{ \"result\": 0, \"arguments\": [ \"just\", \"some\", \"data\" ] }");
-    arg = parseAnswer(rcode, answer);
-    EXPECT_EQ(0, rcode);
-    EXPECT_EQ("[ \"just\", \"some\", \"data\" ]", arg->str());
+// Checks if parseAnswerText can return the text
+TEST(CommandInterpreterTest, parseAnswerText) {
+    ConstElementPtr answer;
+    ConstElementPtr arg;
+    int rcode;
+
+    answer = el("{ \"result\": 5, \"text\": \"error\", \"arguments\": [ \"some\", \"data\" ] }");
+    arg = parseAnswerText(rcode, answer);
+    ASSERT_TRUE(arg);
+    EXPECT_EQ(5, rcode);
+    EXPECT_EQ("error", arg->stringValue());
 }
 
 // This checks whether we can convert an answer to easily printable form.

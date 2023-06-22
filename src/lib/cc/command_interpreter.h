@@ -101,14 +101,29 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
                                         const std::string& status,
                                         const isc::data::ConstElementPtr& arg);
 
-/// @brief Parses a standard config/command level answer message.
+/// @brief Parses a standard config/command level answer and returns arguments
+/// or text status code.
+///
+/// If you need to get the text status, please use @ref parseAnswerText.
 ///
 /// @param status_code This value will be set to the return code contained in
 ///              the message
 /// @param msg The message to parse
-/// @return The optional argument in the message.
-isc::data::ConstElementPtr parseAnswer(int &status_code,
-                                       const isc::data::ConstElementPtr& msg);
+/// @return The optional argument in the message (or null)
+isc::data::ConstElementPtr
+parseAnswer(int &status_code, const isc::data::ConstElementPtr& msg);
+
+/// @brief Parses a standard config/command level answer and returns text status.
+///
+/// This method returns the text status. If you need to get the arguments provided,
+/// please use @ref parseAnswer.
+///
+/// @param status_code This value will be set to the return code contained in
+///              the message
+/// @param msg The message to parse
+/// @return The optional argument in the message (or null)
+isc::data::ConstElementPtr
+parseAnswerText(int &rcode, const isc::data::ConstElementPtr& msg);
 
 /// @brief Converts answer to printable text
 ///

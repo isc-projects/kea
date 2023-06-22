@@ -405,7 +405,7 @@ public:
     // Also stores result in rcode_ and comment_.
     void checkResult(ConstElementPtr status, int expected_code) {
         ASSERT_TRUE(status);
-        comment_ = parseAnswer(rcode_, status);
+        comment_ = parseAnswerText(rcode_, status);
         EXPECT_EQ(expected_code, rcode_);
         if (expected_code != rcode_) {
             cout << "The comment returned was: [" << comment_->stringValue() << "]" << endl;
@@ -418,7 +418,7 @@ public:
     void checkResult(ConstElementPtr status, int expected_code,
                      string expected_txt) {
         ASSERT_TRUE(status);
-        comment_ = parseAnswer(rcode_, status);
+        comment_ = parseAnswerText(rcode_, status);
         EXPECT_EQ(expected_code, rcode_) << "error text:" << comment_->stringValue();
         ASSERT_TRUE(comment_);
         ASSERT_EQ(Element::string, comment_->getType());
@@ -442,10 +442,11 @@ public:
         ASSERT_TRUE(status);
 
         int rcode;
-        ConstElementPtr comment = parseAnswer(rcode, status);
+        ConstElementPtr comment = parseAnswerText(rcode, status);
         EXPECT_EQ(expected_code, rcode);
 
         string text;
+        ASSERT_TRUE(comment);
         ASSERT_NO_THROW(text = comment->stringValue());
 
         if (expected_code != rcode) {
@@ -708,7 +709,7 @@ public:
         // Store the answer if we need it.
 
         // Returned value should be 0 (configuration success)
-        comment_ = parseAnswer(rcode_, status);
+        comment_ = parseAnswerText(rcode_, status);
         if (rcode_ != 0) {
             string reason = "";
             if (comment_) {
@@ -6169,7 +6170,7 @@ TEST_F(Dhcp6ParserTest, notExistDataDir) {
 
     // returned value should be 1 (error)
     int rcode;
-    ConstElementPtr comment = parseAnswer(rcode, status);
+    ConstElementPtr comment = parseAnswerText(rcode, status);
     EXPECT_EQ(1, rcode);
     string text;
     ASSERT_NO_THROW(text = comment->stringValue());
@@ -6191,7 +6192,7 @@ TEST_F(Dhcp6ParserTest, notDirDataDir) {
 
     // returned value should be 1 (error)
     int rcode;
-    ConstElementPtr comment = parseAnswer(rcode, status);
+    ConstElementPtr comment = parseAnswerText(rcode, status);
     EXPECT_EQ(1, rcode);
     string text;
     ASSERT_NO_THROW(text = comment->stringValue());
@@ -6646,7 +6647,7 @@ TEST_F(Dhcp6ParserTest, invalidPoolRange) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     int rcode;
-    ConstElementPtr comment = parseAnswer(rcode, status);
+    ConstElementPtr comment = parseAnswerText(rcode, status);
     string text;
     ASSERT_NO_THROW(text = comment->stringValue());
 
@@ -6677,7 +6678,7 @@ TEST_F(Dhcp6ParserTest, outsideSubnetPool) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     int rcode;
-    ConstElementPtr comment = parseAnswer(rcode, status);
+    ConstElementPtr comment = parseAnswerText(rcode, status);
     string text;
     ASSERT_NO_THROW(text = comment->stringValue());
 

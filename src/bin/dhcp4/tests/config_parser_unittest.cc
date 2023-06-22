@@ -294,7 +294,7 @@ public:
     // Also stores result in rcode_ and comment_.
     void checkResult(ConstElementPtr status, int expected_code) {
         ASSERT_TRUE(status);
-        comment_ = parseAnswer(rcode_, status);
+        comment_ = parseAnswerText(rcode_, status);
         EXPECT_EQ(expected_code, rcode_) << "error text:" << comment_->stringValue();
     }
 
@@ -332,10 +332,11 @@ public:
         ASSERT_TRUE(status);
 
         int rcode;
-        ConstElementPtr comment = parseAnswer(rcode, status);
+        ConstElementPtr comment = parseAnswerText(rcode, status);
         EXPECT_EQ(expected_code, rcode);
 
         string text;
+        ASSERT_TRUE(comment);
         ASSERT_NO_THROW(text = comment->stringValue());
 
         if (expected_code != rcode) {
@@ -665,7 +666,7 @@ public:
         // Store the answer if we need it.
 
         // Returned value should be 0 (configuration success)
-        comment_ = parseAnswer(rcode_, status);
+        comment_ = parseAnswerText(rcode_, status);
         if (rcode_ != 0) {
             string reason = "";
             if (comment_) {
@@ -2327,6 +2328,7 @@ TEST_F(Dhcp4ParserTest, badSubnetValues) {
             ConstElementPtr status;
             EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
             checkResult(status, 1);
+            ASSERT_TRUE(comment_);
             EXPECT_EQ(comment_->stringValue(), (*scenario).exp_error_msg_);
         }
     }

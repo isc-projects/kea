@@ -66,6 +66,33 @@ createAnswer(const int status_code, const ConstElementPtr& arg) {
 }
 
 ConstElementPtr
+parseAnswerText(int &rcode, const ConstElementPtr& msg) {
+    if (!msg) {
+        isc_throw(CtrlChannelError, "invalid answer: no answer specified");
+    }
+    if (msg->getType() != Element::map) {
+        isc_throw(CtrlChannelError, "invalid answer: expected toplevel entry to be a map, got "
+                  << Element::typeToName(msg->getType()) << " instead");
+    }
+    if (!msg->contains(CONTROL_RESULT)) {
+        isc_throw(CtrlChannelError,
+                  "invalid answer: does not contain mandatory '" << CONTROL_RESULT << "'");
+    }
+
+    ConstElementPtr result = msg->get(CONTROL_RESULT);
+    if (result->getType() != Element::integer) {
+        isc_throw(CtrlChannelError, "invalid answer: expected '" << CONTROL_RESULT
+                  << "' to be an integer, got "
+                  << Element::typeToName(result->getType()) << " instead");
+    }
+
+    rcode = result->intValue();
+
+    // If there are arguments, return them.
+    return (msg->get(CONTROL_TEXT));
+}
+
+ConstElementPtr
 parseAnswer(int &rcode, const ConstElementPtr& msg) {
     if (!msg) {
         isc_throw(CtrlChannelError, "invalid answer: no answer specified");
@@ -91,16 +118,13 @@ parseAnswer(int &rcode, const ConstElementPtr& msg) {
     // If there are arguments, return them.
     ConstElementPtr args = msg->get(CONTROL_ARGUMENTS);
     if (args) {
-        // If the arguments contain only a hash (used in config-set/config-get), we can ignore them.
-        // We don't want to return arguments with just a hash.
-        if ( (args->getType()!=isc::data::Element::map) || (args->size() > 1) || !args->get("hash") ) {
-            return (args);
-        }
+        return (args);
     }
 
     // There are no arguments, let's try to return just the text status
     return (msg->get(CONTROL_TEXT));
 }
+
 
 std::string
 answerToText(const ConstElementPtr& msg) {

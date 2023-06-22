@@ -854,7 +854,7 @@ Dhcpv4SrvTest::configure(const std::string& config,
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json, test));
     ASSERT_TRUE(status);
     int rcode;
-    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    ConstElementPtr comment = config::parseAnswerText(rcode, status);
     ASSERT_EQ(0, rcode) << "configuration failed, test is broken: "
         << comment->str();
 
@@ -927,7 +927,7 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
     }
 
     int rcode;
-    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    ConstElementPtr comment = config::parseAnswerText(rcode, status);
     EXPECT_EQ(exp_rcode, rcode) << comment->stringValue();
 
     // Use specified lease database backend.
