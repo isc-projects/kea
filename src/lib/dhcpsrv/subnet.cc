@@ -75,7 +75,7 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
       shared_network_name_() {
     if ((id == 0) && (id_ == 1)) {
         // Emit a warning on the first auto-numbered subnet.
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET)
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID)
             .arg(toText());
     }
     if ((prefix.isV6() && len > 128) ||

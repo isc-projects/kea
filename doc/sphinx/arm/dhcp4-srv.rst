@@ -1175,10 +1175,11 @@ IPv4 Subnet Identifier
 
 The subnet identifier (subnet ID) is a unique number associated with a particular
 subnet. In principle, it is used to associate clients' leases with their
-respective subnets. When a subnet identifier is not specified for a
-subnet being configured, it is automatically assigned by the
-configuration mechanism. The identifiers are assigned starting at 1 and are
-monotonically increased for each subsequent subnet: 1, 2, 3, ....
+respective subnets. The server configuration should contain unique and stable
+identifiers for all subnets. When a subnet identifier is not specified for a
+subnet, it is automatically assigned by the configuration mechanism. The identifiers
+are assigned starting at 1 and are monotonically increased for each subsequent
+subnet: 1, 2, 3, ....
 
 If there are multiple subnets configured with auto-generated identifiers
 and one of them is removed, the subnet identifiers may be renumbered.
@@ -1186,8 +1187,14 @@ For example: if there are four subnets and the third is removed, the
 last subnet will be assigned the identifier that the third subnet had
 before removal. As a result, the leases stored in the lease database for
 subnet 3 are now associated with subnet 4, something that may have
-unexpected consequences. The only remedy for this issue at present is to
-manually specify a unique identifier for each subnet.
+unexpected consequences. It is one of the reasons why auto-generated subnet
+identifiers are deprecated starting from Kea version 2.4.0.
+
+.. note::
+
+   The auto-generation of the subnet identifiers will be removed in a future
+   release. Starting from Kea 2.4.0, a subnet without an ``id`` entry
+   or with the zero value raises a warning at the configuration time.
 
 .. note::
 
@@ -1211,12 +1218,6 @@ to a newly configured subnet:
 This identifier will not change for this subnet unless the ``id``
 parameter is removed or set to 0. The value of 0 forces auto-generation
 of the subnet identifier.
-
-.. note::
-
-   The auto-generation of subnet identifier will be removed in a future
-   release. From 2.4.0 a subnet without an ``id`` entry or with the zero
-   value raises a warning at configuration time.
 
 .. _ipv4-subnet-prefix:
 

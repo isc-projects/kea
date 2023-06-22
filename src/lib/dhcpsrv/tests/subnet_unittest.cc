@@ -2035,8 +2035,8 @@ TEST_F(SubnetIdTest, unnumbered) {
     EXPECT_EQ("2001:db8:1::/64", subnet3->toText());
 
     // Subnet 1 and 3 are logged.
-    std::string msg = "DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET ";
-    msg += "a subnet was configured unnumbered: ";
+    std::string msg = "DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID ";
+    msg += "a subnet was configured without an id: ";
     addString(msg + subnet1->toText());
     addString(msg + subnet3->toText());
     EXPECT_TRUE(checkFile());

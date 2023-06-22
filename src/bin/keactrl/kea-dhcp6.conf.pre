@@ -234,8 +234,12 @@
         {
             // This defines the whole subnet. Kea will use this information to
             // determine where the clients are connected. This is the whole
-            // subnet in your network. This is mandatory parameter for each
-            // subnet.
+            // subnet in your network.
+
+            // Subnet identifier should be unique for each subnet.
+            "id": 1,
+
+            // This is mandatory parameter for each subnet.
             "subnet": "2001:db8:1::/64",
 
             // Pools define the actual part of your subnet that is governed

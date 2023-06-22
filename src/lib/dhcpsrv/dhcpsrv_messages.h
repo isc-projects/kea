@@ -55,6 +55,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ALLOCATOR;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST;
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB;
+extern const isc::log::MessageID DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID;
 extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL;
 extern const isc::log::MessageID DHCPSRV_DEPRECATED;
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET;
@@ -280,7 +281,6 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS;
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER;
 extern const isc::log::MessageID DHCPSRV_UNEXPECTED_NAME;
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB;
-extern const isc::log::MessageID DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET;
 
 } // namespace dhcp
 } // namespace isc

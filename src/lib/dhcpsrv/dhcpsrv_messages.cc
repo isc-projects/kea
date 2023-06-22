@@ -54,6 +54,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS = "DHCPSRV_CFGMGR_US
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ALLOCATOR = "DHCPSRV_CFGMGR_USE_ALLOCATOR";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST = "DHCPSRV_CFGMGR_USE_UNICAST";
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB = "DHCPSRV_CLOSE_DB";
+extern const isc::log::MessageID DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID = "DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID";
 extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL = "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL";
 extern const isc::log::MessageID DHCPSRV_DEPRECATED = "DHCPSRV_DEPRECATED";
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET = "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET";
@@ -279,7 +280,6 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS = "DHCPS
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER = "DHCPSRV_TIMERMGR_UNREGISTER_TIMER";
 extern const isc::log::MessageID DHCPSRV_UNEXPECTED_NAME = "DHCPSRV_UNEXPECTED_NAME";
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB = "DHCPSRV_UNKNOWN_DB";
-extern const isc::log::MessageID DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET = "DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET";
 
 } // namespace dhcp
 } // namespace isc
@@ -334,6 +334,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_USE_ALLOCATOR", "using the %1 allocator for %2 leases in subnet %3",
     "DHCPSRV_CFGMGR_USE_UNICAST", "listening on unicast address %1, on interface %2",
     "DHCPSRV_CLOSE_DB", "closing currently open %1 database",
+    "DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID", "a subnet was configured without an id: %1",
     "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL", "ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it",
     "DHCPSRV_DEPRECATED", "This configuration is using a deprecated feature: %1",
     "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET", "received bad DHCPv4o6 packet: %1",
@@ -559,7 +560,6 @@ const char* values[] = {
     "DHCPSRV_TIMERMGR_UNREGISTER_TIMER", "unregistering timer: %1",
     "DHCPSRV_UNEXPECTED_NAME", "database access parameters passed through '%1', expected 'lease-database'",
     "DHCPSRV_UNKNOWN_DB", "unknown database type: %1",
-    "DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET", "a subnet was configured unnumbered: %1",
     NULL
 };
 

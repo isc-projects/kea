@@ -280,6 +280,13 @@ the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
 
+% DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID a subnet was configured without an id: %1
+A warning message issued when a subnet was configured with a zero or without
+an id, causing the server to auto-generate it. Using auto-generated subnet
+ids is now deprecated. Each configured subnet should have an explicit subnet id
+specified with the "id" entry. The sole argument of this warning message contains
+a subnet prefix.
+
 % DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it
 A debug message issued when the DDNS TTL value calculated using the
 ddns-ttl-percent is zero.  Kea will ignore the value and calculate
@@ -1393,6 +1400,3 @@ indicate an error in the source code, please submit a bug report.
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
 
-% DHCPSRV_UNNUMBERED_CONFIGURED_SUBNET a subnet was configured unnumbered: %1
-A warning message issued when a subnet was configured with a zero or without
-an id. The prefix of the subnet is displayed.
