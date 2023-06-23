@@ -458,15 +458,17 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
         isc_throw(BadValue, "DUID is mandatory for an IPv6 lease");
     }
 
-    if (type != Lease::TYPE_PD && prefixlen != 128) {
-        isc_throw(BadValue, "prefixlen must be 128 for non prefix type");
-    }
-
-    IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
-    if (first_address != addr) {
-        isc_throw(BadValue, "Invalid Lease address boundaries: " << addr
-                  << " is not the first address in prefix: " << first_address
-                  << "/" << static_cast<uint32_t>(prefixlen));
+    if (prefixlen != 128) {
+        if (type != Lease::TYPE_PD) {
+            isc_throw(BadValue, "prefixlen must be 128 for non prefix type");
+        } else {
+            IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
+            if (first_address != addr) {
+                isc_throw(BadValue, "Invalid Lease address boundaries: " << addr
+                          << " is not the first address in prefix: " << first_address
+                          << "/" << static_cast<uint32_t>(prefixlen));
+            }
+        }
     }
 
     cltt_ = time(NULL);
@@ -488,15 +490,17 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
         isc_throw(BadValue, "DUID is mandatory for an IPv6 lease");
     }
 
-    if (type != Lease::TYPE_PD && prefixlen != 128) {
-        isc_throw(BadValue, "prefixlen must be 128 for non prefix type");
-    }
-
-    IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
-    if (first_address != addr) {
-        isc_throw(BadValue, "Invalid Lease address boundaries: " << addr
-                  << " is not the first address in prefix: " << first_address
-                  << "/" << static_cast<uint32_t>(prefixlen));
+    if (prefixlen != 128) {
+        if (type != Lease::TYPE_PD) {
+            isc_throw(BadValue, "prefixlen must be 128 for non prefix type");
+        } else {
+            IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
+            if (first_address != addr) {
+                isc_throw(BadValue, "Invalid Lease address boundaries: " << addr
+                          << " is not the first address in prefix: " << first_address
+                          << "/" << static_cast<uint32_t>(prefixlen));
+            }
+        }
     }
 
     cltt_ = time(NULL);

@@ -9,6 +9,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <cc/data.h>
 #include <gtest/gtest.h>
@@ -646,33 +647,50 @@ TEST(Lease6Test, constructorDefault) {
     // Lease6 must be instantiated with a DUID, not with null pointer
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         DuidPtr(), iaid, 100, 200,
-                                         subnet_id)), BadValue);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             DuidPtr(), iaid, 100, 200,
+                                             subnet_id)),
+                     BadValue, "DUID is mandatory for an IPv6 lease");
 
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         DuidPtr(), iaid, 100, 200,
-                                         subnet_id, true, true, "", HWAddrPtr())), BadValue);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             DuidPtr(), iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr())),
+                     BadValue, "DUID is mandatory for an IPv6 lease");
 
     // Lease6 must have a valid prefix and prefix length.
     addr = IOAddress(ADDRESS[5]);
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
-                                         duid, iaid, 100, 200,
-                                         subnet_id, HWAddrPtr(), 16)), BadValue);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, HWAddrPtr(), 16)),
+                     BadValue, "Invalid Lease address boundaries: 8000::1 is not the first address in prefix: 8000::/16");
 
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
-                                         duid, iaid, 100, 200,
-                                         subnet_id, true, true, "", HWAddrPtr(), 16)), BadValue);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr(), 16)),
+                     BadValue, "Invalid Lease address boundaries: 8000::1 is not the first address in prefix: 8000::/16");
 
     // Lease6 must have a prefixlen set to 128 for non prefix type.
     addr = IOAddress(ADDRESS[4]);
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         duid, iaid, 100, 200,
-                                         subnet_id, HWAddrPtr(), 96)), BadValue);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, HWAddrPtr(), 96)),
+                     BadValue, "prefixlen must be 128 for non prefix type");
 
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         duid, iaid, 100, 200,
-                                         subnet_id, true, true, "", HWAddrPtr(), 96)), BadValue);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr(), 96)),
+                     BadValue, "prefixlen must be 128 for non prefix type");
+
+    addr = IOAddress(ADDRESS[4]);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_TA, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, HWAddrPtr(), 96)),
+                     BadValue, "prefixlen must be 128 for non prefix type");
+
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_TA, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr(), 96)),
+                     BadValue, "prefixlen must be 128 for non prefix type");
 }
 
 // This test verifies that the Lease6 constructor which accepts FQDN data,
@@ -714,13 +732,15 @@ TEST(Lease6Test, constructorWithFQDN) {
     // Lease6 must be instantiated with a DUID, not with null pointer
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         DuidPtr(), iaid, 100, 200,
-                                         subnet_id)), BadValue);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             DuidPtr(), iaid, 100, 200,
+                                             subnet_id)),
+                     BadValue, "DUID is mandatory for an IPv6 lease");
 
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         DuidPtr(), iaid, 100, 200,
-                                         subnet_id, true, true, "", HWAddrPtr())), BadValue);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             DuidPtr(), iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr())),
+                     BadValue, "DUID is mandatory for an IPv6 lease");
 }
 
 /// @brief Lease6 Equality Test
