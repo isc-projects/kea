@@ -29,6 +29,7 @@
 #include <dhcp/option_vendor_class.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
+#include <util/thread_pool.h>
 
 #include <boost/pointer_cast.hpp>
 
@@ -223,6 +224,378 @@ public:
         }
     }
 
+    /// @brief Test which verifies that split options throws if there is no
+    /// space left in the packet buffer.
+    ///
+    /// @param option The packet option.
+    static void splitOptionNoBuffer(OptionPtr option) {
+        isc::util::OutputBuffer buf(0);
+        OptionCollection col;
+        col.insert(std::make_pair(231, option));
+        ManagedScopedOptionsCopyContainer scoped_options;
+        ASSERT_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_, 253), BadValue);
+    }
+
+    /// @brief Test which verifies that split options works if there is only one
+    /// byte available for data in the packet buffer.
+    ///
+    /// @param option The packet option.
+    static void splitOptionOneByteLeftBuffer(OptionPtr option) {
+        isc::util::OutputBuffer buf(0);
+        Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
+        OptionCollection& col = pkt->options_;
+        col.clear();
+        col.insert(std::make_pair(231, option));
+        std::string expected = pkt->toText();
+        {
+            ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
+            ManagedScopedOptionsCopyContainer scoped_options;
+            ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_, 252));
+            ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
+            ASSERT_NE(expected, pkt->toText());
+
+            ASSERT_EQ(64, col.size());
+            uint8_t index = 0;
+            for (auto const& option : col) {
+                ASSERT_EQ(option.first, 231);
+                ASSERT_EQ(1, option.second->getData().size());
+                ASSERT_EQ(index, option.second->getData()[0]);
+                index++;
+            }
+        }
+        ASSERT_EQ(expected, pkt->toText());
+    }
+
+    /// @brief Test which verifies that split options for v4 is working correctly.
+    ///
+    /// @param bottom_opt The packet option.
+    /// @param middle_opt The packet option.
+    /// @param top_opt The packet option.
+    static void splitOptionWithSuboptionAtLimit(OptionPtr bottom_opt,
+                                                OptionPtr middle_opt,
+                                                OptionPtr top_opt) {
+        uint32_t bottom_size = 128;
+        uint32_t middle_size = 1;
+        uint32_t top_size = 249;
+        isc::util::OutputBuffer buf(0);
+        Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
+        OptionCollection& col = pkt->options_;
+        col.clear();
+        col.insert(std::make_pair(170, bottom_opt));
+        uint32_t index = 0;
+        uint8_t opt_count = 0;
+        std::string expected = pkt->toText();
+        {
+            ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
+            ManagedScopedOptionsCopyContainer scoped_options;
+            ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_));
+            ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
+            ASSERT_NE(expected, pkt->toText());
+
+            for (auto const& opt : col) {
+                ASSERT_LE(opt.second->len(), 255);
+            }
+
+            ASSERT_EQ(3 * bottom_opt->getHeaderLen() + 2 * middle_opt->getHeaderLen() +
+                      top_opt->getHeaderLen() + bottom_size + middle_size + top_size,
+                      buf.getLength());
+
+            ASSERT_EQ(3, col.size());
+            for (auto const& top_subopt : col) {
+                ASSERT_EQ(top_subopt.second->getType(), 170);
+                if (opt_count == 0) {
+                    ASSERT_EQ(top_subopt.second->getData().size(), bottom_size);
+                    index = 0;
+                    for (auto const& value : top_subopt.second->getData()) {
+                        ASSERT_EQ(value, static_cast<uint8_t>(index));
+                        index++;
+                    }
+                    ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
+                } else {
+                    ASSERT_EQ(top_subopt.second->getOptions().size(), 1);
+                    for (auto const& middle_subopt : top_subopt.second->getOptions()) {
+                        ASSERT_EQ(middle_subopt.first, 171);
+                        if (opt_count == 1) {
+                            ASSERT_EQ(middle_subopt.second->getData().size(), middle_size);
+                            index = 0;
+                            for (auto const& value : middle_subopt.second->getData()) {
+                                ASSERT_EQ(value, static_cast<uint8_t>(index));
+                                index++;
+                            }
+                            ASSERT_EQ(middle_subopt.second->getOptions().size(), 0);
+                        } else {
+                            ASSERT_EQ(middle_subopt.second->getData().size(), 0);
+                            ASSERT_EQ(middle_subopt.second->getOptions().size(), 1);
+                            auto const& top_subopt = middle_subopt.second->getOptions().find(172);
+                            ASSERT_NE(top_subopt, middle_subopt.second->getOptions().end());
+                            ASSERT_EQ(top_subopt->second->getType(), 172);
+                            ASSERT_EQ(top_subopt->second->getData().size(), top_size);
+                            index = 0;
+                            for (auto const& value : top_subopt->second->getData()) {
+                                ASSERT_EQ(value, static_cast<uint8_t>(index));
+                                index++;
+                            }
+                            ASSERT_EQ(top_subopt->second->getOptions().size(), 0);
+                        }
+                    }
+                }
+                opt_count++;
+            }
+        }
+        ASSERT_EQ(expected, pkt->toText());
+
+        OptionCollection col_back;
+        std::list<uint16_t> deferred_options;
+
+        size_t opts_len = buf.getLength();
+        vector<uint8_t> opts_buffer;
+        InputBuffer buffer_in(buf.getData(), opts_len);
+
+        // Use readVector because a function which parses option requires
+        // a vector as an input.
+        buffer_in.readVector(opts_buffer, opts_len);
+        ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
+                        col_back, deferred_options));
+
+        ASSERT_EQ(3, col_back.size());
+        opt_count = 0;
+        for (auto const& top_subopt : col_back) {
+            ASSERT_EQ(top_subopt.second->getType(), 170);
+            if (opt_count == 0) {
+                ASSERT_EQ(top_subopt.second->getData().size(), bottom_size);
+                index = 0;
+                for (auto const& value : top_subopt.second->getData()) {
+                    ASSERT_EQ(value, static_cast<uint8_t>(index));
+                    index++;
+                }
+                ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
+            } else {
+                ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
+                index = 171;
+                for (auto const& value : top_subopt.second->getData()) {
+                    ASSERT_EQ(value, static_cast<uint8_t>(index));
+                    if (index == 171 && opt_count == 1) {
+                        index = middle_size;
+                    } else if (index == middle_size && opt_count == 1) {
+                        index = 0;
+                    } else if (index == 171 && opt_count == 2) {
+                        index = top_size + top_opt->getHeaderLen();
+                    } else if (index == top_size + top_opt->getHeaderLen() && opt_count == 2) {
+                        index = 172;
+                        opt_count++;
+                    } else if (index == 172 && opt_count == 3) {
+                        index = top_size;
+                    } else if (index == top_size && opt_count == 3) {
+                        index = 0;
+                        opt_count++;
+                    } else {
+                        index++;
+                    }
+                }
+            }
+            opt_count++;
+        }
+    }
+
+    /// @brief Test which verifies that split options for v4 is working correctly.
+    ///
+    /// @param option The packet option.
+    static void splitLongOption(OptionPtr option) {
+        isc::util::OutputBuffer buf(0);
+        Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
+        OptionCollection& col = pkt->options_;
+        col.clear();
+        col.insert(std::make_pair(231, option));
+        std::string expected = pkt->toText();
+        {
+            ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
+            ManagedScopedOptionsCopyContainer scoped_options;
+            ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_));
+            ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
+            ASSERT_NE(expected, pkt->toText());
+
+            ASSERT_EQ(11, col.size());
+            ASSERT_EQ(2560 + 11 * option->getHeaderLen(), buf.getLength());
+        }
+        ASSERT_EQ(expected, pkt->toText());
+
+        OptionCollection col_back;
+        std::list<uint16_t> deferred_options;
+
+        size_t opts_len = buf.getLength();
+        vector<uint8_t> opts_buffer;
+        InputBuffer buffer_in(buf.getData(), opts_len);
+
+        // Use readVector because a function which parses option requires
+        // a vector as an input.
+        buffer_in.readVector(opts_buffer, opts_len);
+        ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
+                        col_back, deferred_options));
+
+        uint32_t index = 0;
+        ASSERT_EQ(11, col_back.size());
+        for (auto const& option : col_back) {
+            ASSERT_EQ(option.first, 231);
+            for (auto const& value : option.second->getData()) {
+                ASSERT_EQ(value, static_cast<uint8_t>(index));
+                index++;
+            }
+        }
+        ASSERT_EQ(index, 2560);
+    }
+
+    /// @brief Test which verifies that split options for v4 is working correctly
+    /// even if every suboption is smaller than 255 bytes, but the parent option
+    /// still overflows.
+    ///
+    /// @param rai The packet option.
+    /// @param circuit_id_opt The packet option.
+    /// @param remote_id_opt The packet option.
+    /// @param subscriber_id_opt The packet option.
+    static void splitOptionWithSuboptionWhichOverflow(OptionPtr rai,
+                                                      OptionPtr circuit_id_opt,
+                                                      OptionPtr remote_id_opt,
+                                                      OptionPtr subscriber_id_opt) {
+        isc::util::OutputBuffer buf(0);
+        Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
+        OptionCollection& col = pkt->options_;
+        col.clear();
+        col.insert(std::make_pair(DHO_DHCP_AGENT_OPTIONS, rai));
+        std::string expected = pkt->toText();
+        {
+            ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
+            ManagedScopedOptionsCopyContainer scoped_options;
+            ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_));
+            ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
+            ASSERT_NE(expected, pkt->toText());
+
+            ASSERT_EQ(3, col.size());
+            ASSERT_EQ(3 * rai->getHeaderLen() + circuit_id_opt->getHeaderLen() +
+                      remote_id_opt->getHeaderLen() + subscriber_id_opt->getHeaderLen() +
+                      3 * 128, buf.getLength());
+        }
+        ASSERT_EQ(expected, pkt->toText());
+
+        OptionCollection col_back;
+        std::list<uint16_t> deferred_options;
+
+        size_t opts_len = buf.getLength();
+        vector<uint8_t> opts_buffer;
+        InputBuffer buffer_in(buf.getData(), opts_len);
+
+        // Use readVector because a function which parses option requires
+        // a vector as an input.
+        buffer_in.readVector(opts_buffer, opts_len);
+        ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
+                        col_back, deferred_options));
+
+        uint8_t index = 0;
+        uint8_t opt_number = 0;
+        uint32_t opt_type = RAI_OPTION_AGENT_CIRCUIT_ID;
+        ASSERT_EQ(3, col_back.size());
+        for (auto const& option : col_back) {
+            ASSERT_EQ(option.first, DHO_DHCP_AGENT_OPTIONS);
+            for (auto const& sub_option : option.second->getOptions()) {
+                if (sub_option.first != opt_type) {
+                    opt_type = sub_option.first;
+                    ASSERT_EQ(index, 128);
+                    index = 0;
+                    opt_number++;
+                }
+                if (opt_number == 0) {
+                    ASSERT_EQ(sub_option.first, RAI_OPTION_AGENT_CIRCUIT_ID);
+                } else if (opt_number == 1) {
+                    ASSERT_EQ(sub_option.first, RAI_OPTION_REMOTE_ID);
+                } else if (opt_number == 2){
+                    ASSERT_EQ(sub_option.first, RAI_OPTION_SUBSCRIBER_ID);
+                }
+                for (auto const& value : sub_option.second->getData()) {
+                    ASSERT_EQ(value, index);
+                    index++;
+                }
+            }
+        }
+        ASSERT_EQ(index, 128);
+    }
+
+    /// @brief Test which verifies that split options for v4 is working correctly.
+    ///
+    /// @param rai The packet option.
+    /// @param circuit_id_opt The packet option.
+    /// @param remote_id_opt The packet option.
+    /// @param subscriber_id_opt The packet option.
+    void splitLongOptionWithLongSuboption(OptionPtr rai,
+                                          OptionPtr circuit_id_opt,
+                                          OptionPtr remote_id_opt,
+                                          OptionPtr subscriber_id_opt) {
+        isc::util::OutputBuffer buf(0);
+        Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
+        OptionCollection& col = pkt->options_;
+        col.clear();
+        col.insert(std::make_pair(DHO_DHCP_AGENT_OPTIONS, rai));
+        std::string expected = pkt->toText();
+        {
+            ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
+            ManagedScopedOptionsCopyContainer scoped_options;
+            ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_));
+            ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
+            ASSERT_NE(expected, pkt->toText());
+
+            ASSERT_EQ(23, col.size());
+            ASSERT_EQ((11 + 1 + 11) * rai->getHeaderLen() + 11 * circuit_id_opt->getHeaderLen() +
+                      remote_id_opt->getHeaderLen() + 11 * subscriber_id_opt->getHeaderLen() +
+                      2560 + 64 + 2560, buf.getLength());
+        }
+        ASSERT_EQ(expected, pkt->toText());
+
+        OptionCollection col_back;
+        std::list<uint16_t> deferred_options;
+
+        size_t opts_len = buf.getLength();
+        vector<uint8_t> opts_buffer;
+        InputBuffer buffer_in(buf.getData(), opts_len);
+
+        // Use readVector because a function which parses option requires
+        // a vector as an input.
+        buffer_in.readVector(opts_buffer, opts_len);
+        ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
+                        col_back, deferred_options));
+
+        uint32_t index = 0;
+        uint8_t opt_number = 0;
+        uint32_t opt_type = RAI_OPTION_AGENT_CIRCUIT_ID;
+        ASSERT_EQ(23, col_back.size());
+        for (auto const& option : col_back) {
+            ASSERT_EQ(option.first, DHO_DHCP_AGENT_OPTIONS);
+            for (auto const& sub_option : option.second->getOptions()) {
+                if (sub_option.first != opt_type) {
+                    opt_type = sub_option.first;
+                    if (opt_number == 0) {
+                        ASSERT_EQ(index, 2560);
+                    } else if (opt_number == 1) {
+                        ASSERT_EQ(index, 64);
+                    } else if (opt_number == 2){
+                        ASSERT_EQ(index, 2560);
+                    }
+                    index = 0;
+                    opt_number++;
+                }
+                if (opt_number == 0) {
+                    ASSERT_EQ(sub_option.first, RAI_OPTION_AGENT_CIRCUIT_ID);
+                } else if (opt_number == 1) {
+                    ASSERT_EQ(sub_option.first, RAI_OPTION_REMOTE_ID);
+                } else if (opt_number == 2){
+                    ASSERT_EQ(sub_option.first, RAI_OPTION_SUBSCRIBER_ID);
+                }
+                for (auto const& value : sub_option.second->getData()) {
+                    ASSERT_EQ(value, static_cast<uint8_t>(index));
+                    index++;
+                }
+            }
+        }
+        ASSERT_EQ(index, 2560);
+    }
+
 private:
 
     /// @brief Test DHCPv4 or DHCPv6 option definition.
@@ -311,7 +684,6 @@ const uint8_t v6packed[] = {
     0x04, 0x02,  // CM MAC Address Suboption
     0x00, 0x06,  // Length
     0x74, 0x56, 0x12, 0x29, 0x97, 0xD0, // Actual MAC Address
-
 };
 
 TEST_F(LibDhcpTest, optionFactory) {
@@ -428,7 +800,6 @@ TEST_F(LibDhcpTest, packOptions6) {
 }
 
 TEST_F(LibDhcpTest, unpackOptions6) {
-
     // just couple of random options
     // Option is used as a simple option implementation
     // More advanced uses are validated in tests dedicated for
@@ -691,11 +1062,41 @@ TEST_F(LibDhcpTest, splitOptionNoBuffer) {
     boost::shared_ptr<OptionCustom> option;
     ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V4, buf_in)));
     ASSERT_TRUE(option);
-    isc::util::OutputBuffer buf(0);
-    OptionCollection col;
-    col.insert(std::make_pair(231, option));
-    ManagedScopedOptionsCopyContainer scoped_options;
-    ASSERT_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_, 253), BadValue);
+
+    splitOptionNoBuffer(option);
+}
+
+// This test verifies that split options throws if there is no space left in the
+// packet buffer.
+TEST_F(LibDhcpTest, splitOptionNoBufferMultiThreading) {
+    OptionDefinition opt_def("option-foo", 231, "my-space", "binary",
+                             "option-foo-space");
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    OptionBuffer buf_in(2560);
+    for (uint32_t i = 0; i < 2560; ++i) {
+        buf_in[i] = i;
+    }
+
+    boost::shared_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V4, buf_in)));
+    ASSERT_TRUE(option);
+
+    typedef function<void()> CallBack;
+    ThreadPool<CallBack> tp;
+    tp.start(256);
+
+    for (uint32_t count = 0; count < 1024; ++count) {
+        auto const& work = [&] {
+            splitOptionNoBuffer(option);
+        };
+
+        boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
+        tp.add(call_back);
+    }
+    ASSERT_TRUE(tp.wait(5));
 }
 
 // This test verifies that split options works if there is only one byte
@@ -715,29 +1116,154 @@ TEST_F(LibDhcpTest, splitOptionOneByteLeftBuffer) {
     boost::shared_ptr<OptionCustom> option;
     ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V4, buf_in)));
     ASSERT_TRUE(option);
-    isc::util::OutputBuffer buf(0);
-    Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
-    OptionCollection& col = pkt->options_;
-    col.clear();
-    col.insert(std::make_pair(231, option));
-    std::string expected = pkt->toText();
-    {
-        ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
-        ManagedScopedOptionsCopyContainer scoped_options;
-        ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_, 252));
-        ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
-        ASSERT_NE(expected, pkt->toText());
 
-        ASSERT_EQ(64, col.size());
-        uint8_t index = 0;
-        for (auto const& option : col) {
-            ASSERT_EQ(option.first, 231);
-            ASSERT_EQ(1, option.second->getData().size());
-            ASSERT_EQ(index, option.second->getData()[0]);
-            index++;
-        }
+    splitOptionOneByteLeftBuffer(option);
+}
+
+// This test verifies that split options works if there is only one byte
+// available for data in the packet buffer.
+TEST_F(LibDhcpTest, splitOptionOneByteLeftBufferMultiThreading) {
+    OptionDefinition opt_def("option-foo", 231, "my-space", "binary",
+                             "option-foo-space");
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    OptionBuffer buf_in(64);
+    for (uint32_t i = 0; i < 64; ++i) {
+        buf_in[i] = i;
     }
-    ASSERT_EQ(expected, pkt->toText());
+
+    boost::shared_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V4, buf_in)));
+    ASSERT_TRUE(option);
+
+    typedef function<void()> CallBack;
+    ThreadPool<CallBack> tp;
+    tp.start(256);
+
+    for (uint32_t count = 0; count < 1024; ++count) {
+        auto const& work = [&] {
+            splitOptionOneByteLeftBuffer(option);
+        };
+
+        boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
+        tp.add(call_back);
+    }
+    ASSERT_TRUE(tp.wait(5));
+}
+
+// This test verifies that split options for v4 is working correctly.
+TEST_F(LibDhcpTest, splitOptionWithSuboptionAtLimit) {
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    uint32_t bottom_size = 128;
+    OptionBuffer bottom_buf_in(bottom_size);
+    for (uint32_t i = 0; i < bottom_size; ++i) {
+        bottom_buf_in[i] = i;
+    }
+
+    OptionDefinitionPtr top_def(new OptionDefinition("top", 170, DHCP4_OPTION_SPACE, OPT_BINARY_TYPE, "miggle"));
+    OptionPtr bottom_opt(new OptionCustom(*top_def, Option::V4, bottom_buf_in));
+    ASSERT_TRUE(bottom_opt);
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    uint32_t middle_size = 1;
+    OptionBuffer middle_buf_in(middle_size);
+    for (uint32_t i = 0; i < middle_size; ++i) {
+        middle_buf_in[i] = i;
+    }
+
+    OptionDefinitionPtr middle_def(new OptionDefinition("top", 171, "middle", OPT_BINARY_TYPE, ""));
+    OptionPtr middle_opt(new OptionCustom(*middle_def, Option::V4, middle_buf_in));
+    ASSERT_TRUE(middle_opt);
+    bottom_opt->addOption(middle_opt);
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    uint32_t top_size = 249;
+    OptionBuffer top_buf_in(top_size);
+    for (uint32_t i = 0; i < top_size; ++i) {
+        top_buf_in[i] = i;
+    }
+
+    OptionPtr top_opt(new Option(Option::V4, 172, top_buf_in));
+    ASSERT_TRUE(top_opt);
+    middle_opt->addOption(top_opt);
+
+    OptionDefSpaceContainer defs;
+    defs.addItem(top_def);
+    defs.addItem(middle_def);
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    splitOptionWithSuboptionAtLimit(bottom_opt, middle_opt, top_opt);
+}
+
+// This test verifies that split options for v4 is working correctly.
+TEST_F(LibDhcpTest, splitOptionWithSuboptionAtLimitMultiThreading) {
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    uint32_t bottom_size = 128;
+    OptionBuffer bottom_buf_in(bottom_size);
+    for (uint32_t i = 0; i < bottom_size; ++i) {
+        bottom_buf_in[i] = i;
+    }
+
+    OptionDefinitionPtr top_def(new OptionDefinition("top", 170, DHCP4_OPTION_SPACE, OPT_BINARY_TYPE, "miggle"));
+    OptionPtr bottom_opt(new OptionCustom(*top_def, Option::V4, bottom_buf_in));
+    ASSERT_TRUE(bottom_opt);
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    uint32_t middle_size = 1;
+    OptionBuffer middle_buf_in(middle_size);
+    for (uint32_t i = 0; i < middle_size; ++i) {
+        middle_buf_in[i] = i;
+    }
+
+    OptionDefinitionPtr middle_def(new OptionDefinition("top", 171, "middle", OPT_BINARY_TYPE, ""));
+    OptionPtr middle_opt(new OptionCustom(*middle_def, Option::V4, middle_buf_in));
+    ASSERT_TRUE(middle_opt);
+    bottom_opt->addOption(middle_opt);
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    uint32_t top_size = 249;
+    OptionBuffer top_buf_in(top_size);
+    for (uint32_t i = 0; i < top_size; ++i) {
+        top_buf_in[i] = i;
+    }
+
+    OptionPtr top_opt(new Option(Option::V4, 172, top_buf_in));
+    ASSERT_TRUE(top_opt);
+    middle_opt->addOption(top_opt);
+
+    OptionDefSpaceContainer defs;
+    defs.addItem(top_def);
+    defs.addItem(middle_def);
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    typedef function<void()> CallBack;
+    ThreadPool<CallBack> tp;
+    tp.start(256);
+
+    for (uint32_t count = 0; count < 1024; ++count) {
+        auto const& work = [&] {
+            splitOptionWithSuboptionAtLimit(bottom_opt, middle_opt, top_opt);
+        };
+        boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
+        tp.add(call_back);
+    }
+    ASSERT_TRUE(tp.wait(5));
 }
 
 // This test verifies that split options for v4 is working correctly.
@@ -756,47 +1282,40 @@ TEST_F(LibDhcpTest, splitLongOption) {
     boost::shared_ptr<OptionCustom> option;
     ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V4, buf_in)));
     ASSERT_TRUE(option);
-    isc::util::OutputBuffer buf(0);
-    Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
-    OptionCollection& col = pkt->options_;
-    col.clear();
-    col.insert(std::make_pair(231, option));
-    std::string expected = pkt->toText();
-    {
-        ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
-        ManagedScopedOptionsCopyContainer scoped_options;
-        ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_));
-        ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
-        ASSERT_NE(expected, pkt->toText());
 
-        ASSERT_EQ(11, col.size());
-        ASSERT_EQ(2560 + 11 * option->getHeaderLen(), buf.getLength());
+    splitLongOption(option);
+}
+
+// This test verifies that split options for v4 is working correctly.
+TEST_F(LibDhcpTest, splitLongOptionMultiThreading) {
+    OptionDefinition opt_def("option-foo", 231, "my-space", "binary",
+                             "option-foo-space");
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    OptionBuffer buf_in(2560);
+    for (uint32_t i = 0; i < 2560; ++i) {
+        buf_in[i] = i;
     }
-    ASSERT_EQ(expected, pkt->toText());
 
-    OptionCollection col_back;
-    std::list<uint16_t> deferred_options;
+    boost::shared_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V4, buf_in)));
+    ASSERT_TRUE(option);
 
-    size_t opts_len = buf.getLength();
-    vector<uint8_t> opts_buffer;
-    InputBuffer buffer_in(buf.getData(), opts_len);
+    typedef function<void()> CallBack;
+    ThreadPool<CallBack> tp;
+    tp.start(256);
 
-    // Use readVector because a function which parses option requires
-    // a vector as an input.
-    buffer_in.readVector(opts_buffer, opts_len);
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
-                    col_back, deferred_options));
+    for (uint32_t count = 0; count < 1024; ++count) {
+        auto const& work = [&] {
+            splitLongOption(option);
+        };
 
-    uint32_t index = 0;
-    ASSERT_EQ(11, col_back.size());
-    for (auto const& option : col_back) {
-        ASSERT_EQ(option.first, 231);
-        for (auto const& value : option.second->getData()) {
-            ASSERT_EQ(value, static_cast<uint8_t>(index));
-            index++;
-        }
+        boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
+        tp.add(call_back);
     }
-    ASSERT_EQ(index, 2560);
+    ASSERT_TRUE(tp.wait(5));
 }
 
 // This test verifies that split options for v4 is working correctly even if
@@ -832,66 +1351,55 @@ TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflow) {
     ASSERT_TRUE(subscriber_id_opt);
     rai->addOption(subscriber_id_opt);
 
-    isc::util::OutputBuffer buf(0);
-    Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
-    OptionCollection& col = pkt->options_;
-    col.clear();
-    col.insert(std::make_pair(DHO_DHCP_AGENT_OPTIONS, rai));
-    std::string expected = pkt->toText();
-    {
-        ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
-        ManagedScopedOptionsCopyContainer scoped_options;
-        ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_));
-        ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
-        ASSERT_NE(expected, pkt->toText());
+    splitOptionWithSuboptionWhichOverflow(rai, circuit_id_opt, remote_id_opt, subscriber_id_opt);
+}
 
-        ASSERT_EQ(3, col.size());
-        ASSERT_EQ(3 * rai->getHeaderLen() + circuit_id_opt->getHeaderLen() +
-                  remote_id_opt->getHeaderLen() + subscriber_id_opt->getHeaderLen() +
-                  3 * 128, buf.getLength());
+// This test verifies that split options for v4 is working correctly even if
+// every suboption is smaller than 255 bytes, but the parent option still
+// overflows.
+TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflowMultiThreading) {
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_def);
+    // Create RAI options which should be fused by the server.
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    OptionBuffer buf_in(128);
+    for (uint32_t i = 0; i < 128; ++i) {
+        buf_in[i] = i;
     }
-    ASSERT_EQ(expected, pkt->toText());
 
-    OptionCollection col_back;
-    std::list<uint16_t> deferred_options;
+    OptionPtr circuit_id_opt(new Option(Option::V4,
+                                        RAI_OPTION_AGENT_CIRCUIT_ID, buf_in));
+    ASSERT_TRUE(circuit_id_opt);
+    rai->addOption(circuit_id_opt);
 
-    size_t opts_len = buf.getLength();
-    vector<uint8_t> opts_buffer;
-    InputBuffer buffer_in(buf.getData(), opts_len);
+    OptionPtr remote_id_opt(new Option(Option::V4,
+                                       RAI_OPTION_REMOTE_ID, buf_in));
+    ASSERT_TRUE(remote_id_opt);
+    rai->addOption(remote_id_opt);
 
-    // Use readVector because a function which parses option requires
-    // a vector as an input.
-    buffer_in.readVector(opts_buffer, opts_len);
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
-                    col_back, deferred_options));
+    OptionPtr subscriber_id_opt(new Option(Option::V4,
+                                           RAI_OPTION_SUBSCRIBER_ID, buf_in));
+    ASSERT_TRUE(subscriber_id_opt);
+    rai->addOption(subscriber_id_opt);
 
-    uint8_t index = 0;
-    uint8_t opt_number = 0;
-    uint32_t opt_type = RAI_OPTION_AGENT_CIRCUIT_ID;
-    ASSERT_EQ(3, col_back.size());
-    for (auto const& option : col_back) {
-        ASSERT_EQ(option.first, DHO_DHCP_AGENT_OPTIONS);
-        for (auto const& sub_option : option.second->getOptions()) {
-            if (sub_option.first != opt_type) {
-                opt_type = sub_option.first;
-                ASSERT_EQ(index, 128);
-                index = 0;
-                opt_number++;
-            }
-            if (opt_number == 0) {
-                ASSERT_EQ(sub_option.first, RAI_OPTION_AGENT_CIRCUIT_ID);
-            } else if (opt_number == 1) {
-                ASSERT_EQ(sub_option.first, RAI_OPTION_REMOTE_ID);
-            } else if (opt_number == 2){
-                ASSERT_EQ(sub_option.first, RAI_OPTION_SUBSCRIBER_ID);
-            }
-            for (auto const& value : sub_option.second->getData()) {
-                ASSERT_EQ(value, index);
-                index++;
-            }
-        }
+    typedef function<void()> CallBack;
+    ThreadPool<CallBack> tp;
+    tp.start(256);
+
+    for (uint32_t count = 0; count < 1024; ++count) {
+        auto const& work = [&] {
+            splitOptionWithSuboptionWhichOverflow(rai, circuit_id_opt, remote_id_opt, subscriber_id_opt);
+        };
+
+        boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
+        tp.add(call_back);
     }
-    ASSERT_EQ(index, 128);
+    ASSERT_TRUE(tp.wait(5));
 }
 
 // This test verifies that split options for v4 is working correctly.
@@ -933,72 +1441,61 @@ TEST_F(LibDhcpTest, splitLongOptionWithLongSuboption) {
     ASSERT_TRUE(subscriber_id_opt);
     rai->addOption(subscriber_id_opt);
 
-    isc::util::OutputBuffer buf(0);
-    Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 1234));
-    OptionCollection& col = pkt->options_;
-    col.clear();
-    col.insert(std::make_pair(DHO_DHCP_AGENT_OPTIONS, rai));
-    std::string expected = pkt->toText();
-    {
-        ScopedPkt4OptionsCopy initial_scoped_options(*pkt);
-        ManagedScopedOptionsCopyContainer scoped_options;
-        ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_));
-        ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
-        ASSERT_NE(expected, pkt->toText());
+    splitLongOptionWithLongSuboption(rai, circuit_id_opt, remote_id_opt, subscriber_id_opt);
+}
 
-        ASSERT_EQ(23, col.size());
-        ASSERT_EQ((11 + 1 + 11) * rai->getHeaderLen() + 11 * circuit_id_opt->getHeaderLen() +
-                  remote_id_opt->getHeaderLen() + 11 * subscriber_id_opt->getHeaderLen() +
-                  2560 + 64 + 2560, buf.getLength());
+// This test verifies that split options for v4 is working correctly.
+TEST_F(LibDhcpTest, splitLongOptionWithLongSuboptionMultiThreading) {
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_def);
+    // Create RAI options which should be fused by the server.
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    OptionBuffer buf_in(2560);
+    for (uint32_t i = 0; i < 2560; ++i) {
+        buf_in[i] = i;
     }
-    ASSERT_EQ(expected, pkt->toText());
 
-    OptionCollection col_back;
-    std::list<uint16_t> deferred_options;
+    OptionPtr circuit_id_opt(new Option(Option::V4,
+                                        RAI_OPTION_AGENT_CIRCUIT_ID, buf_in));
+    ASSERT_TRUE(circuit_id_opt);
+    rai->addOption(circuit_id_opt);
 
-    size_t opts_len = buf.getLength();
-    vector<uint8_t> opts_buffer;
-    InputBuffer buffer_in(buf.getData(), opts_len);
-
-    // Use readVector because a function which parses option requires
-    // a vector as an input.
-    buffer_in.readVector(opts_buffer, opts_len);
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
-                    col_back, deferred_options));
-
-    uint32_t index = 0;
-    uint8_t opt_number = 0;
-    uint32_t opt_type = RAI_OPTION_AGENT_CIRCUIT_ID;
-    ASSERT_EQ(23, col_back.size());
-    for (auto const& option : col_back) {
-        ASSERT_EQ(option.first, DHO_DHCP_AGENT_OPTIONS);
-        for (auto const& sub_option : option.second->getOptions()) {
-            if (sub_option.first != opt_type) {
-                opt_type = sub_option.first;
-                if (opt_number == 0) {
-                    ASSERT_EQ(index, 2560);
-                } else if (opt_number == 1) {
-                    ASSERT_EQ(index, 64);
-                } else if (opt_number == 2){
-                    ASSERT_EQ(index, 2560);
-                }
-                index = 0;
-                opt_number++;
-            }
-            if (opt_number == 0) {
-                ASSERT_EQ(sub_option.first, RAI_OPTION_AGENT_CIRCUIT_ID);
-            } else if (opt_number == 1) {
-                ASSERT_EQ(sub_option.first, RAI_OPTION_REMOTE_ID);
-            } else if (opt_number == 2){
-                ASSERT_EQ(sub_option.first, RAI_OPTION_SUBSCRIBER_ID);
-            }
-            for (auto const& value : sub_option.second->getData()) {
-                ASSERT_EQ(value, static_cast<uint8_t>(index));
-                index++;
-            }
-        }
+    // Create a buffer holding some binary data. This data will be
+    // used as reference when we read back the data from a created
+    // option.
+    OptionBuffer small_buf_in(64);
+    for (uint32_t i = 0; i < 64; ++i) {
+        small_buf_in[i] = i;
     }
-    ASSERT_EQ(index, 2560);
+
+    OptionPtr remote_id_opt(new Option(Option::V4,
+                                       RAI_OPTION_REMOTE_ID, small_buf_in));
+    ASSERT_TRUE(remote_id_opt);
+    rai->addOption(remote_id_opt);
+
+    OptionPtr subscriber_id_opt(new Option(Option::V4,
+                                           RAI_OPTION_SUBSCRIBER_ID, buf_in));
+    ASSERT_TRUE(subscriber_id_opt);
+    rai->addOption(subscriber_id_opt);
+
+    typedef function<void()> CallBack;
+    ThreadPool<CallBack> tp;
+    tp.start(256);
+
+    for (uint32_t count = 0; count < 1024; ++count) {
+        auto const& work = [&] {
+            splitLongOptionWithLongSuboption(rai, circuit_id_opt, remote_id_opt, subscriber_id_opt);
+        };
+
+        boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
+        tp.add(call_back);
+    }
+    ASSERT_TRUE(tp.wait(5));
 }
 
 // This test verifies that fuse options for v4 is working correctly.
@@ -1235,7 +1732,6 @@ TEST_F(LibDhcpTest, extendVivso) {
 
 // This test verifies that pack options for v4 is working correctly.
 TEST_F(LibDhcpTest, packOptions4) {
-
     vector<uint8_t> payload[5];
     for (unsigned i = 0; i < 5; i++) {
         payload[i].resize(3);
@@ -1313,7 +1809,6 @@ TEST_F(LibDhcpTest, packOptions4) {
 // This test verifies that pack options for v4 is working correctly
 // and RAI option is packed last.
 TEST_F(LibDhcpTest, packOptions4Order) {
-
     uint8_t expected[] = {
         12,  3, 0,   1,  2, // Just a random option
         99,  3, 10, 11, 12, // Another random option
@@ -1346,7 +1841,6 @@ TEST_F(LibDhcpTest, packOptions4Order) {
 }
 
 TEST_F(LibDhcpTest, unpackOptions4) {
-
     vector<uint8_t> v4packed(v4_opts, v4_opts + sizeof(v4_opts));
     isc::dhcp::OptionCollection options; // list of options
     list<uint16_t> deferred;
@@ -1784,7 +2278,6 @@ TEST_F(LibDhcpTest, option43End) {
     // There should be 0 suboptions.
     EXPECT_EQ(0, options.size());
 
-
     // Create option definition for option 255.
     OptionDefinitionPtr opt_def255(new OptionDefinition("max", 255, space, "uint8"));
 
@@ -1851,7 +2344,6 @@ TEST_F(LibDhcpTest, option43Factory) {
 // Verifies that an Host Name (option 12), will be dropped when empty,
 // while subsequent options will still be unpacked.
 TEST_F(LibDhcpTest, emptyHostName) {
-
     uint8_t opts[] = {
         12,  0,             // Empty Hostname
         60,  3, 10, 11, 12  // Class Id
@@ -1878,9 +2370,7 @@ TEST_F(LibDhcpTest, emptyHostName) {
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], opts + 4, 3));
 };
 
-
 TEST_F(LibDhcpTest, stdOptionDefs4) {
-
     // Create a buffer that holds dummy option data.
     // It will be used to create most of the options.
     std::vector<uint8_t> buf(48, 1);
@@ -2349,7 +2839,6 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
 // This test have to be extended once all option definitions are
 // created.
 TEST_F(LibDhcpTest, stdOptionDefs6) {
-
     // Create a buffer that holds dummy option data.
     // It will be used to create most of the options.
     std::vector<uint8_t> buf(48, 1);
@@ -2702,7 +3191,6 @@ TEST_F(LibDhcpTest, getOptionDefByName6) {
     }
 }
 
-
 // This test checks if the DHCPv4 option definition can be searched by
 // an option name.
 TEST_F(LibDhcpTest, getOptionDefByName4) {
@@ -2870,7 +3358,6 @@ TEST_F(LibDhcpTest, fqdnListTrunc) {
 
 // tests whether v6 vendor-class option can be parsed properly.
 TEST_F(LibDhcpTest, vendorClass6) {
-
     isc::dhcp::OptionCollection options; // Will store parsed option here
 
     // Exported from wireshark: vendor-class option with enterprise-id = 4491
@@ -2962,8 +3449,6 @@ TEST_F(LibDhcpTest, option43) {
 // These options are have complex structure, so dedicated tests are needed
 // to test them reliably.
 TEST_F(LibDhcpTest, sw46options) {
-
-
     // This constant defines the following structure:
     // MAP-E container
     //  - BR address option

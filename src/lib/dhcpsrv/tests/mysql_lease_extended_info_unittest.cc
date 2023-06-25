@@ -182,7 +182,7 @@ MySqlExtendedInfoTest::testInitLease4() {
     // Use the page version as it returns leases in order.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4(zero, LeasePageSize(100)));
     ASSERT_EQ(leases4.size(), got.size());
-    auto compare = [](Lease4Ptr& left, Lease4Ptr& right) {
+    auto compare = [](Lease4Ptr const& left, Lease4Ptr const& right) {
         return (left->addr_ < right->addr_);
     };
     std::sort(got.begin(), got.end(), compare);
@@ -1011,7 +1011,7 @@ MySqlExtendedInfoTest::testInitLease6() {
     Lease6Collection got;
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6());
     ASSERT_EQ(leases6.size(), got.size());
-    auto compare = [](Lease6Ptr& left, Lease6Ptr& right) {
+    auto compare = [](Lease6Ptr const& left, Lease6Ptr const& right) {
         return (left->addr_ < right->addr_);
     };
     std::sort(got.begin(), got.end(), compare);

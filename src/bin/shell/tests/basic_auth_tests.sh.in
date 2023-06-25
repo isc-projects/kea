@@ -193,4 +193,4 @@ shell_command_test "shell.bad-auth" \
     "Failed to run: HTTP Error 401: Unauthorized"
 shell_command_test "shell.authorized" \
     "--auth-user pet --auth-password meow" "list-commands" "" \
-    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
