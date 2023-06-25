@@ -436,7 +436,7 @@ LibDHCP::unpackOptions6(const OptionBuffer& buf,
                 opt = def->optionFactory(Option::V6, opt_type,
                                          buf.begin() + offset,
                                          buf.begin() + offset + opt_len);
-            } catch (const SkipThisOptionError&)  {
+            } catch (const SkipThisOptionError&) {
                 opt.reset();
             }
         }
@@ -518,7 +518,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
             return (last_offset);
         }
 
-        uint8_t opt_len =  buf[offset++];
+        uint8_t opt_len = buf[offset++];
         if (offset + opt_len > buf.size()) {
             // We peeked at the option header of the next option, but
             // discovered that it would end up beyond buffer end, so
@@ -599,7 +599,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf,
                 opt = def->optionFactory(Option::V4, opt_type,
                                          buf.begin() + offset,
                                          buf.begin() + offset + opt_len);
-            } catch (const SkipThisOptionError&)  {
+            } catch (const SkipThisOptionError&) {
                 opt.reset();
             }
         }
@@ -824,7 +824,7 @@ LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
                           << static_cast<int>(opt_type));
             }
 
-            uint8_t opt_len =  buf[offset++];
+            uint8_t opt_len = buf[offset++];
             if (offset + opt_len > offset_end) {
                 isc_throw(SkipRemainingOptionsError,
                           "Option parse failed. Tried to parse "
@@ -943,19 +943,47 @@ LibDHCP::splitOptions4(OptionCollection& options,
         OptionCollection copy = options;
         // Iterate over all options in the container.
         for (auto const& option : options) {
-            OptionPtr candidate = option.second;
+            OptionPtr candidate = option.second->clone();
             OptionCollection& sub_options = candidate->getMutableOptions();
             // Split suboptions recursively, if any.
             OptionCollection distinct_options;
             bool updated = false;
             bool found_suboptions = false;
+            // There are 3 cases when the total size is larger than (255 - used):
+            // 1. option has no suboptions and has large data
+            // 2. option has large suboptions and has no data
+            // 3. option has both options and suboptions:
+            // 3.1. suboptions are large and data is large
+            // 3.2. suboptions are large and data is small
+            // 3.3. suboptions are small and data is large
+            // 3.4. suboptions are small and data is small but combined they are large
+            // All other combinations reside in total size smaller than (255 - used):
+            // 4. no split of any suboption or data:
+            // 4.1 option has no suboptions and has small data
+            // 4.2 option has small suboptions and has no data
+            // 4.3 option has both small suboptions and small data
+            // 4.4 option has no suboptions and has no data
             if (sub_options.size()) {
+                // The 2. and 3. and 4.2 and 4.3 cases are handled here (the suboptions part).
                 ScopedOptionsCopyPtr candidate_scoped_options(new ScopedSubOptionsCopy(candidate));
                 found_suboptions = LibDHCP::splitOptions4(sub_options, scoped_options,
                                                           used + candidate->getHeaderLen());
+                // There are 3 cases here:
+                // 2. option has large suboptions and has no data
+                // 3. option has both options and suboptions:
+                // 3.1. suboptions are large and data is large so there is suboption splitting
+                // and found_suboptions is true
+                // 3.2. suboptions are large and data is small so there is suboption splitting
+                // and found_suboptions is true
+                // 3.3. suboptions are small and data is large so there is no suboption splitting
+                // and found_suboptions is false
+                // 3.4. suboptions are small and data is small so there is no suboption splitting
+                // and found_suboptions is false but combined they are large
+                // 4. no split of any suboption or data
                 // Also split if the overflow is caused by adding the suboptions
                 // to the option data.
-                if (found_suboptions || candidate->len() > 255) {
+                if (found_suboptions || candidate->len() > (255 - used)) {
+                    // The 2. and 3. cases are handled here (the suboptions part).
                     updated = true;
                     scoped_options.push_back(candidate_scoped_options);
                     // Erase the old options from the new container so that only
@@ -979,6 +1007,7 @@ LibDHCP::splitOptions4(OptionCollection& options,
                     }
                 }
             }
+            // The 1. and 3. and 4. cases are handled here (the data part).
             // Create a new option containing only data that needs to be split
             // and no suboptions (which are inserted in completely separate
             // options which are added at the end).
@@ -1004,7 +1033,16 @@ LibDHCP::splitOptions4(OptionCollection& options,
             // data must be split and serialized.
             uint32_t size = buf.getLength() - header_len;
             // Only split if data does not fit in the current option.
+            // There are 3 cases here:
+            // 1. option has no suboptions and has large data
+            // 3. option has both options and suboptions:
+            // 3.1. suboptions are large and data is large
+            // 3.2. suboptions are large and data is small
+            // 3.3. suboptions are small and data is large
+            // 3.4. suboptions are small and data is small but combined they are large
+            // 4. no split of any suboption or data
             if (size > len) {
+                // The 1. and 3.1. and 3.3 cases are handled here (the data part).
                 // Erase the old option from the new container so that only new
                 // options are present.
                 if (!updated) {
@@ -1038,7 +1076,8 @@ LibDHCP::splitOptions4(OptionCollection& options,
                     // Add the new option to the new container.
                     copy.insert(make_pair(candidate->getType(), new_option));
                 }
-            } else if (candidate->len() > 255 && size) {
+            } else if ((candidate->len() > (255 - used)) && size) {
+                // The 3.2 and 3.4 cases are handled here (the data part).
                 // Also split if the overflow is caused by adding the suboptions
                 // to the option data (which should be of non zero size).
                 // Add the new option to the new container.
@@ -1082,7 +1121,7 @@ LibDHCP::OptionFactoryRegister(Option::Universe u,
     {
         if (v6factories_.find(opt_type) != v6factories_.end()) {
             isc_throw(BadValue, "There is already DHCPv6 factory registered "
-                     << "for option type "  << opt_type);
+                     << "for option type " << opt_type);
         }
         v6factories_[opt_type] = factory;
         return;
@@ -1102,7 +1141,7 @@ LibDHCP::OptionFactoryRegister(Option::Universe u,
         }
         if (v4factories_.find(opt_type) != v4factories_.end()) {
             isc_throw(BadValue, "There is already DHCPv4 factory registered "
-                     << "for option type "  << opt_type);
+                     << "for option type " << opt_type);
         }
         v4factories_[opt_type] = factory;
         return;
