@@ -39,7 +39,7 @@ Currently, the following commands are supported:
   reservations by pages, either all or in a specified subnet.
 
 - :isccmd:`reservation-get-by-address`, which returns all reservations with a
-  specified IP address and optionally in a subnet.
+  specified IP address or a delegated prefix (without a prefix length), and optionally a subnet id.
 
 - :isccmd:`reservation-get-by-hostname`, which returns all reservations with a
   specified hostname and optionally in a subnet.
@@ -588,11 +588,13 @@ The ``reservation-get-by-address`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :isccmd:`reservation-get-by-address` can be used to query the host database and
-retrieve all reservations for given IP address in a specified subnet or in all
-subnets. This command uses parameters providing the mandatory
-``ip-address`` and the optional ``subnet-id`` and ``operation-target``.
+retrieve all reservations for given IP address or a delegated prefix (without
+a prefix length) in a specified subnet or in all subnets. This command uses
+parameters providing the mandatory ``ip-address`` and the optional ``subnet-id``
+and ``operation-target``.
 
-For instance, retrieving host reservations for IPv4 "192.0.200.181" in the subnet 1:
+For instance, retrieving host reservations for the IPv4 address "192.0.200.181"
+in the subnet 1:
 
 ::
 
@@ -607,7 +609,7 @@ For instance, retrieving host reservations for IPv4 "192.0.200.181" in the subne
        ]
    }
 
-returns some IPv4 hosts:
+can return two IPv4 hosts:
 
 ::
 
@@ -656,7 +658,7 @@ To search for all reservations in all subnets simply skip the ``subnet-id`` para
        ]
    }
 
-Response:
+An example response can be:
 
 ::
 
@@ -714,11 +716,12 @@ Response:
    }
 
 When using the command for retrieving DHCP6 host reservations, one can provide
-either IPv6 address or a IPv6 delegated prefix as a ``ip-address`` parameter.
-Please notice that in current implementation this command does not take prefix
-length as a parameter. That's why when searching for e.g. IPv6 PD ``2001:db8:2:cafe::``,
-the command will return host reservations having for instance PD ``2001:db8:2:cafe::/63``
-as well as PD ``2001:db8:2:cafe::/64``. Please consider below example:
+either an IPv6 address or a delegated prefix as the ``ip-address`` parameter.
+Please notice that this command does not take prefix length as a parameter in the
+current implementation. That's why searching by an IP address ``2001:db8:2:cafe::``
+can return host reservations having delegated prefixes matching this search with
+different lengths. For example: ``2001:db8:2:cafe::/63``, ``2001:db8:2:cafe::/64`` etc.
+Please consider the example below:
 
 ::
 
