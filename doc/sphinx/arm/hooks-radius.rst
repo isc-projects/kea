@@ -47,6 +47,45 @@ specific pool. Furthermore, the same mechanism can be used to control
 what kind of options the client gets if there are DHCP options
 specified for a particular class.
 
+.. _hooks-radius-pkg-install:
+
+Installation from packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ISC offers a FreeRADIUS client library using packages (rpm, deb) that contain
+the necessary code for the radius hook. Instructions how to setup Kea repository
+hosted by `Cloudsmith <https://cloudsmith.io/~isc/repos/>`_ can be found
+`on KB <https://kb.isc.org/docs/isc-kea-packages>`_
+
+The packages provided by ISC are based on the official freeradius packages
+and always have a version that includes ``1.1.7-isc``. Ones that contains compiled
+libraries need to run Kea are e.g. ``libfreeradius-client_1.1.7-isc20200318122047_amd64.deb``,
+and those which contains development (``-dev`` in deb and ``-devel`` in rpm)
+header files e.g. ``libfreeradius-client-dev_1.1.7-isc20200318122047_amd64.deb``.
+
+When listed (deb):
+
+.. code-block:: console
+
+   $ dpkg -l | grep libfreeradius
+     ii  libfreeradius-client                   1.1.7-isc20200318122047        amd64        Enhanced RADIUS client library
+     ii  libfreeradius-client-dev               1.1.7-isc20200318122047        amd64        Enhanced RADIUS client library development files
+
+When listed (rpm):
+
+.. code-block:: console
+
+   $ dnf list installed | grep freeradius
+      freeradius-client.x86_64                      1.1.7-isc20200318134606.el8               @isc-kea-2-2-prv
+      freeradius-client-devel.x86_64                1.1.7-isc20200318134606.el8               @isc-kea-2-2-prv
+
+If official freeradius packages will be installed Kea will return error
+on startup, typically displaying:
+
+.. code-block:: console
+
+   HOOKS_OPEN_ERROR failed to open hook library /usr/lib64/kea/hooks/libdhcp_radius.so: /usr/lib64/kea/hooks/libdhcp_radius.so: undefined symbol: rc_acct_async
+
 .. _hooks-radius-install:
 
 Compilation and Installation of the RADIUS Hook
@@ -58,7 +97,7 @@ on CentOS 7.0. Other systems may differ slightly.
 .. note::
 
    ISC provides Kea software and hooks in convenient-to-use
-   native Alpine, deb, and RPM packages. This includes the RADIUS hook and the required patched version
+   native DEB, and RPM packages. This includes the RADIUS hook and the required patched version
    of the FreeRADIUS client library. The software compilation for RADIUS is complicated; unless
    there are specific reasons to compile it, administrators should seriously consider using
    native packages.
@@ -326,7 +365,7 @@ takes many parameters. For example, this configuration could be used:
          "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
      },
      {
-         "library": "/usr/local/lib/kea/hooks/libdhc_radius.so",
+         "library": "/usr/local/lib/kea/hooks/libdhcp_radius.so",
          "parameters": {
 
              # Specify where FreeRADIUS dictionary could be located
