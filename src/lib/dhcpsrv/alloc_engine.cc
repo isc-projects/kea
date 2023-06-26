@@ -420,6 +420,13 @@ AllocEngine::findReservation(ClientContext6& ctx) {
         // done here.
         subnet = subnet->getNextSubnet(ctx.subnet_, classes);
     }
+
+    // The hosts can be used by the server to return reserved options to
+    // the DHCP client. Such options must be encapsulated (i.e., they must
+    // include suboptions).
+    for (auto host : ctx.hosts_) {
+        host.second->encapsulateOptions();
+    }
 }
 
 ConstHostPtr
@@ -3775,6 +3782,13 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         // is not (a plain subnet), getNextSubnet will return NULL and we're
         // done here.
         subnet = subnet->getNextSubnet(ctx.subnet_, classes);
+    }
+
+    // The hosts can be used by the server to return reserved options to
+    // the DHCP client. Such options must be encapsulated (i.e., they must
+    // include suboptions).
+    for (auto host : ctx.hosts_) {
+        host.second->encapsulateOptions();
     }
 }
 

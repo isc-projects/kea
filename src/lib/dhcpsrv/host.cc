@@ -637,6 +637,16 @@ Host::toElement6() const {
     return (map);
 }
 
+void
+Host::encapsulateOptions() const {
+    if (!cfg_option4_->isEncapsulated()) {
+        cfg_option4_->encapsulate();
+    }
+    if (!cfg_option6_->isEncapsulated()) {
+        cfg_option6_->encapsulate();
+    }
+}
+
 std::string
 Host::toText() const {
     std::ostringstream s;

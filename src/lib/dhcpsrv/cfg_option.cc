@@ -51,7 +51,8 @@ OptionDescriptor::equals(const OptionDescriptor& other) const {
             option_->equals(other.option_));
 }
 
-CfgOption::CfgOption() {
+CfgOption::CfgOption()
+    : encapsulated_(false) {
 }
 
 bool
@@ -263,6 +264,7 @@ CfgOption::encapsulate() {
     encapsulateInternal(DHCP4_OPTION_SPACE);
     // Append sub-options to the top level "dhcp6" option space.
     encapsulateInternal(DHCP6_OPTION_SPACE);
+    encapsulated_ = true;
 }
 
 void

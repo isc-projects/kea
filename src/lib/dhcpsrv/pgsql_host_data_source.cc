@@ -651,6 +651,11 @@ private:
                 def = LibDHCP::getRuntimeOptionDef(space, code);
             }
 
+            // Finish with a last resort option definition.
+            if (!def) {
+                def = LibDHCP::getLastResortOptionDef(space, code);
+            }
+
             OptionPtr option;
 
             if (!def) {

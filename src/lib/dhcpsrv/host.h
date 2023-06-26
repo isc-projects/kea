@@ -669,6 +669,12 @@ public:
         return (cfg_option6_);
     }
 
+    /// @brief Encapsulates host-specific options with their suboptions.
+    ///
+    /// This function must be called before the server returns host-specific
+    /// DHCP options to the client.
+    void encapsulateOptions() const;
+
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 

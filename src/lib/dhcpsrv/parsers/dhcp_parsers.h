@@ -302,10 +302,13 @@ public:
     /// @param pools is the storage in which to store the parsed pool
     /// @param pool_structure a single entry on a list of pools
     /// @param address_family AF_INET (for DHCPv4) or AF_INET6 (for DHCPv6).
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
     virtual void parse(PoolStoragePtr pools,
                        isc::data::ConstElementPtr pool_structure,
-                       const uint16_t address_family);
+                       const uint16_t address_family,
+                       bool encapsulate_options = true);
 
 protected:
     /// @brief Creates a Pool object given a IPv4 prefix and the prefix length.
@@ -389,9 +392,12 @@ public:
     ///
     /// @param pools is the storage in which to store the parsed pools.
     /// @param pools_list a list of pool structures
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
     virtual void parse(PoolStoragePtr pools,
-                       isc::data::ConstElementPtr pools_list) = 0;
+                       isc::data::ConstElementPtr pools_list,
+                       bool encapsulate_options) = 0;
 
 protected:
 
@@ -415,8 +421,11 @@ public:
     ///
     /// @param pools storage container in which to store the parsed pool.
     /// @param pools_list a list of pool structures
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    void parse(PoolStoragePtr pools, data::ConstElementPtr pools_list);
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pools_list,
+               bool encapsulate_options = true);
 
 protected:
 
@@ -520,10 +529,13 @@ protected:
     /// Subnet6ConfigParser) classes.
     ///
     /// @param subnet pointer to the content of subnet definition
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @return a pointer to newly created subnet
     ///
     /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
-    SubnetPtr parse(isc::data::ConstElementPtr subnet);
+    SubnetPtr parse(isc::data::ConstElementPtr subnet,
+                    bool encapsulate_options);
 
     /// @brief Instantiates the subnet based on a given IP prefix and prefix
     /// length.
@@ -574,9 +586,6 @@ protected:
     /// Pointer to relay information
     isc::dhcp::Network::RelayInfoPtr relay_info_;
 
-    /// Pointer to the options configuration.
-    CfgOptionPtr options_;
-
     /// Check if the specified interface exists in the system.
     bool check_iface_;
 };
@@ -601,8 +610,11 @@ public:
     /// Configuration Manager.
     ///
     /// @param subnet A new subnet being configured.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @return a pointer to created Subnet4 object
-    Subnet4Ptr parse(data::ConstElementPtr subnet);
+    Subnet4Ptr parse(data::ConstElementPtr subnet,
+                     bool encapsulate_options = true);
 
 protected:
 
@@ -659,16 +671,22 @@ public:
     ///
     /// @param cfg Pointer to server configuration.
     /// @param subnets_list pointer to a list of IPv4 subnets
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @return number of subnets created
-    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list,
+                 bool encapsulate_options = true);
 
     /// @brief Parses contents of the subnet4 list.
     ///
     /// @param [out] subnets Container where parsed subnets will be stored.
     /// @param subnets_list pointer to a list of IPv4 subnets
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @return Number of subnets created.
     size_t parse(Subnet4Collection& subnets,
-                 data::ConstElementPtr subnets_list);
+                 data::ConstElementPtr subnets_list,
+                 bool encapsulate_options = true);
 
 protected:
 
@@ -727,8 +745,11 @@ public:
     ///
     /// @param pools storage container in which to store the parsed pool.
     /// @param pools_list a list of pool structures
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    void parse(PoolStoragePtr pools, data::ConstElementPtr pools_list);
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pools_list,
+               bool encapsulate_options = true);
 
 protected:
 
@@ -778,9 +799,12 @@ public:
     /// @param pools storage container in which to store the parsed pool.
     /// @param pd_pool_ pointer to an element that holds configuration entries
     /// that define a prefix delegation pool.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     ///
     /// @throw DhcpConfigError if configuration parsing fails.
-    void parse(PoolStoragePtr pools, data::ConstElementPtr pd_pool_);
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pd_pool_,
+               bool encapsulate_options = true);
 
 protected:
 
@@ -796,9 +820,6 @@ protected:
 
     /// Pointer to the created pool object.
     isc::dhcp::Pool6Ptr pool_;
-
-    /// A storage for pool specific option values.
-    CfgOptionPtr options_;
 
     /// @brief User context (optional, may be null)
     ///
@@ -869,8 +890,11 @@ public:
     /// Configuration Manager.
     ///
     /// @param subnet A new subnet being configured.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @return a pointer to created Subnet6 object
-    Subnet6Ptr parse(data::ConstElementPtr subnet);
+    Subnet6Ptr parse(data::ConstElementPtr subnet,
+                     bool encapsulate_options = true);
 
 protected:
     /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet
@@ -947,8 +971,11 @@ public:
     ///
     /// @param cfg configuration (parsed subnets will be stored here)
     /// @param subnets_list pointer to a list of IPv6 subnets
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
-    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list,
+                 bool encapsulate_options = true);
 
     /// @brief Parses contents of the subnet6 list.
     ///
@@ -956,7 +983,8 @@ public:
     /// @param subnets_list pointer to a list of IPv6 subnets
     /// @return Number of subnets created.
     size_t parse(Subnet6Collection& subnets,
-                 data::ConstElementPtr subnets_list);
+                 data::ConstElementPtr subnets_list,
+                 bool encapsulate_options = true);
 
 protected:
 

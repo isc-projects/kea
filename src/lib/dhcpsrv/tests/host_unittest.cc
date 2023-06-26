@@ -951,6 +951,29 @@ TEST_F(HostTest, addOptions4) {
     EXPECT_TRUE(options->empty());
 }
 
+// This test checks that host-specific DHCPv4 options can be encapsulated.
+TEST_F(HostTest, encapsulateOptions4) {
+    Host host("01:02:03:04:05:06", "hw-address", SubnetID(1), SubnetID(2),
+              IOAddress("192.0.2.3"));
+
+    OptionPtr option43(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS));
+    option43->setEncapsulatedSpace(VENDOR_ENCAPSULATED_OPTION_SPACE);
+    ASSERT_NO_THROW(host.getCfgOption4()->add(option43, false, false, DHCP4_OPTION_SPACE));
+
+    OptionPtr option1(new Option(Option::V4, 1));
+    ASSERT_NO_THROW(host.getCfgOption4()->add(option1, false, false,
+                                              VENDOR_ENCAPSULATED_OPTION_SPACE));
+
+    ASSERT_NO_THROW(host.encapsulateOptions());
+
+    auto returned_option43 = host.getCfgOption4()->get(DHCP4_OPTION_SPACE,
+                                                       DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(returned_option43.option_);
+
+    auto returned_option1 = returned_option43.option_->getOption(1);
+    ASSERT_TRUE(returned_option1);
+}
+
 // This test checks that it is possible to add DHCPv6 options for a host.
 TEST_F(HostTest, addOptions6) {
     Host host("01:02:03:04:05:06", "hw-address", SubnetID(1), SubnetID(2),
@@ -1014,6 +1037,29 @@ TEST_F(HostTest, addOptions6) {
     options = host.getCfgOption6()->getAll("abcd");
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
+}
+
+// This test checks that it is possible to add DHCPv6 options for a host.
+TEST_F(HostTest, encapsulateOptions6) {
+    Host host("01:02:03:04:05:06", "hw-address", SubnetID(1), SubnetID(2),
+              IOAddress("192.0.2.3"));
+
+    OptionPtr option94(new Option(Option::V6, D6O_S46_CONT_MAPE));
+    option94->setEncapsulatedSpace(MAPE_V6_OPTION_SPACE);
+    ASSERT_NO_THROW(host.getCfgOption6()->add(option94, false, false, DHCP6_OPTION_SPACE));
+
+    OptionPtr option1(new Option(Option::V6, 1));
+    ASSERT_NO_THROW(host.getCfgOption6()->add(option1, false, false,
+                                              MAPE_V6_OPTION_SPACE));
+
+    ASSERT_NO_THROW(host.encapsulateOptions());
+
+    auto returned_option94 = host.getCfgOption6()->get(DHCP6_OPTION_SPACE,
+                                                       D6O_S46_CONT_MAPE);
+    ASSERT_TRUE(returned_option94.option_);
+
+    auto returned_option1 = returned_option94.option_->getOption(1);
+    ASSERT_TRUE(returned_option1);
 }
 
 // This test verifies that it is possible to retrieve a textual

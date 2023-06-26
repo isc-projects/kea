@@ -101,13 +101,15 @@ namespace dhcp {
 
 HostPtr
 HostReservationParser::parse(const SubnetID& subnet_id,
-                             isc::data::ConstElementPtr reservation_data) {
-    return (parseInternal(subnet_id, reservation_data));
+                             isc::data::ConstElementPtr reservation_data,
+                             bool encapsulate_options) {
+    return (parseInternal(subnet_id, reservation_data, encapsulate_options));
 }
 
 HostPtr
 HostReservationParser::parseInternal(const SubnetID&,
-                                     isc::data::ConstElementPtr reservation_data) {
+                                     isc::data::ConstElementPtr reservation_data,
+                                     bool) {
     std::string identifier;
     std::string identifier_name;
     std::string hostname;
@@ -187,8 +189,10 @@ HostReservationParser::isSupportedParameter(const std::string& param_name) const
 
 HostPtr
 HostReservationParser4::parseInternal(const SubnetID& subnet_id,
-                                      isc::data::ConstElementPtr reservation_data) {
-    HostPtr host = HostReservationParser::parseInternal(subnet_id, reservation_data);
+                                      isc::data::ConstElementPtr reservation_data,
+                                      bool encapsulate_options) {
+    HostPtr host = HostReservationParser::parseInternal(subnet_id, reservation_data,
+                                                        encapsulate_options);
 
     host->setIPv4SubnetID(subnet_id);
 
@@ -203,7 +207,7 @@ HostReservationParser4::parseInternal(const SubnetID& subnet_id,
             // parses the Element structure immediately, there's no need
             // to go through build/commit phases.
             OptionDataListParser parser(AF_INET);
-            parser.parse(cfg_option, element.second);
+            parser.parse(cfg_option, element.second, encapsulate_options);
 
        // Everything else should be surrounded with try-catch to append
        // position.
@@ -246,8 +250,10 @@ HostReservationParser4::getSupportedParameters(const bool identifiers_only) cons
 
 HostPtr
 HostReservationParser6::parseInternal(const SubnetID& subnet_id,
-                                      isc::data::ConstElementPtr reservation_data) {
-    HostPtr host = HostReservationParser::parseInternal(subnet_id, reservation_data);
+                                      isc::data::ConstElementPtr reservation_data,
+                                      bool encapsulate_options) {
+    HostPtr host = HostReservationParser::parseInternal(subnet_id, reservation_data,
+                                                        encapsulate_options);
 
     host->setIPv6SubnetID(subnet_id);
 
@@ -263,7 +269,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
             // parses the Element structure immediately, there's no need
             // to go through build/commit phases.
             OptionDataListParser parser(AF_INET6);
-            parser.parse(cfg_option, element.second);
+            parser.parse(cfg_option, element.second, encapsulate_options);
 
         } else if (element.first == "ip-addresses" || element.first == "prefixes") {
             BOOST_FOREACH(ConstElementPtr prefix_element,

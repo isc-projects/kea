@@ -37,11 +37,14 @@ public:
     ///
     /// @param shared_network_data Data element holding shared network
     /// configuration to be parsed.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     ///
     /// @return Pointer to an object representing shared network.
     /// @throw DhcpConfigError when shared network configuration is invalid.
     SharedNetwork4Ptr
-    parse(const data::ConstElementPtr& shared_network_data);
+    parse(const data::ConstElementPtr& shared_network_data,
+          bool encapsulate_options = true);
 
 protected:
 
@@ -84,11 +87,14 @@ public:
     ///
     /// @param shared_network_data Data element holding shared network
     /// configuration to be parsed.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     ///
     /// @return Pointer to an object representing shared network.
     /// @throw DhcpConfigError when shared network configuration is invalid.
     SharedNetwork6Ptr
-    parse(const data::ConstElementPtr& shared_network_data);
+    parse(const data::ConstElementPtr& shared_network_data,
+          bool encapsulate_options = true);
 
 protected:
 

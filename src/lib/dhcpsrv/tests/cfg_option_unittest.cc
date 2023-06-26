@@ -694,10 +694,14 @@ TEST_F(CfgOptionTest, encapsulate) {
 
     generateEncapsulatedOptions(cfg);
 
+    EXPECT_FALSE(cfg.isEncapsulated());
+
     // Append options from "foo" and "bar" space as sub-options and options
     // from "foo-subs" and "bar-subs" as sub-options of "foo" and "bar"
     // options.
     ASSERT_NO_THROW(cfg.encapsulate());
+
+    EXPECT_TRUE(cfg.isEncapsulated());
 
     // Verify that we have 40 top-level options.
     OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);

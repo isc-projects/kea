@@ -128,7 +128,7 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
                   DHCP4_OPTION_SPACE);
         opts->add(createOption<OptionUint32>(Option::V4, 1, false, false,
                                              formatted, 312131),
-                  "vendor-encapsulated-options");
+                  "vendor-encapsulated-options-space");
         opts->add(createAddressOption<Option4AddrLst>(254, false, false,
                                                       formatted, "192.0.2.3"),
                   DHCP4_OPTION_SPACE);
@@ -137,11 +137,17 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
                                                       formatted, "10.0.0.5",
                                                       "10.0.0.3", "10.0.3.4"),
                   "isc");
+        auto def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE,
+                                                   DHO_VENDOR_ENCAPSULATED_OPTIONS);
+        opts->add(OptionDescriptor(def->optionFactory(Option::V4,
+                                                      DHO_VENDOR_ENCAPSULATED_OPTIONS,
+                                                      OptionBuffer()),
+                                   true, false), DHCP4_OPTION_SPACE);
 
         // Add definitions for DHCPv4 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "vendor-encapsulated-1", 1,
-                         "vendor-encapsulated-options", "uint32")));
+                         "vendor-encapsulated-options-space", "uint32")));
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "option-254", 254, DHCP4_OPTION_SPACE,
                          "ipv4-address", true)));
@@ -2046,6 +2052,18 @@ GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
     ConstHostCollection hosts_by_subnet = hdsptr_->getAll4(subnet_id);
     ASSERT_EQ(1, hosts_by_subnet.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_subnet.begin()));
+
+    auto returned_host = *hosts_by_subnet.begin();
+    ASSERT_NO_THROW(returned_host->encapsulateOptions());
+    auto cfg_option = returned_host->getCfgOption4();
+
+    auto option43 = cfg_option->get(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(option43.option_);
+
+    EXPECT_TRUE(cfg_option->get("vendor-encapsulated-options-space", 1).option_);
+
+    auto option43_1 = option43.option_->getOption(1);
+    EXPECT_TRUE(option43_1);
 
     // getAll4(address)
     ConstHostCollection hosts_by_addr =

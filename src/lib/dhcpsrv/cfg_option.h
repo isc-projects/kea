@@ -543,6 +543,13 @@ public:
     /// options from this option space are appended to top-level options.
     void encapsulate();
 
+    /// @brief Checks if options have been encapsulated.
+    ///
+    /// @return true if options have been encapsulated, false otherwise.
+    bool isEncapsulated() const {
+        return (encapsulated_);
+    }
+
     /// @brief Returns all options for the specified option space.
     ///
     /// This method will not return vendor options, i.e. having option space
@@ -773,6 +780,9 @@ private:
                        OptionDescriptor, Selector>& src_container,
                        OptionSpaceContainer<OptionContainer,
                        OptionDescriptor, Selector>& dest_container) const;
+
+    /// @brief A flag indicating if options have been encapsulated.
+    bool encapsulated_;
 
     /// @brief Type of the container holding options grouped by option space.
     typedef OptionSpaceContainer<OptionContainer, OptionDescriptor,

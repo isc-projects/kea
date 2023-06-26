@@ -455,14 +455,17 @@ OptionDataListParser::OptionDataListParser(//const std::string&,
 
 
 void OptionDataListParser::parse(const CfgOptionPtr& cfg,
-                                 isc::data::ConstElementPtr option_data_list) {
+                                 isc::data::ConstElementPtr option_data_list,
+                                 bool encapsulate) {
     auto option_parser = createOptionDataParser();
     BOOST_FOREACH(ConstElementPtr data, option_data_list->listValue()) {
         std::pair<OptionDescriptor, std::string> option =
             option_parser->parse(data);
         // Use the option description to keep the formatted value
         cfg->add(option.first, option.second);
-        cfg->encapsulate();
+        if (encapsulate) {
+            cfg->encapsulate();
+        }
     }
 }
 

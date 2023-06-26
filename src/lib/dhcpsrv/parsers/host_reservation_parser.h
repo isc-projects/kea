@@ -27,12 +27,15 @@ public:
     /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     ///
     /// @return Pointer to the object representing parsed host.
     /// @throw DhcpConfigError If the configuration is invalid.
     virtual HostPtr
     parse(const SubnetID& subnet_id,
-          isc::data::ConstElementPtr reservation_data) final;
+          isc::data::ConstElementPtr reservation_data,
+          bool encapsulate_options = true) final;
 
 protected:
 
@@ -45,11 +48,14 @@ protected:
     /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     ///
     /// @return Pointer to the object representing parsed host.
     /// @throw DhcpConfigError If the configuration is invalid.
     virtual HostPtr parseInternal(const SubnetID& subnet_id,
-                                  isc::data::ConstElementPtr reservation_data);
+                                  isc::data::ConstElementPtr reservation_data,
+                                  bool encapsulate_options);
 
     /// @brief Checks if the specified parameter is a host identifier.
     ///
@@ -87,11 +93,14 @@ protected:
     /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     ///
     /// @return Pointer to the object representing parsed host.
     /// @throw DhcpConfigError If the configuration is invalid.
     virtual HostPtr parseInternal(const SubnetID& subnet_id,
-                                  isc::data::ConstElementPtr reservation_data);
+                                  isc::data::ConstElementPtr reservation_data,
+                                  bool encapsulate_options);
 
     /// @brief Returns set of the supported parameters for DHCPv4.
     ///
@@ -114,11 +123,14 @@ protected:
     /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
     ///
     /// @return Pointer to the object representing parsed host.
     /// @throw DhcpConfigError If the configuration is invalid.
     virtual HostPtr parseInternal(const SubnetID& subnet_id,
-                                  isc::data::ConstElementPtr reservation_data);
+                                  isc::data::ConstElementPtr reservation_data,
+                                  bool encapsulate_options);
 
     /// @brief Returns set of the supported parameters for DHCPv6.
     ///

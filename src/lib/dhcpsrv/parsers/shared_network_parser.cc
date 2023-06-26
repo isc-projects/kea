@@ -31,7 +31,8 @@ SharedNetwork4Parser::SharedNetwork4Parser(bool check_iface)
 }
 
 SharedNetwork4Ptr
-SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
+SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
+                            bool encapsulate_options) {
     SharedNetwork4Ptr shared_network;
     try {
 
@@ -75,7 +76,7 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             // Create parser instance for option-data.
             CfgOptionPtr cfg_option = shared_network->getCfgOption();
             auto parser = createOptionDataListParser();
-            parser->parse(cfg_option, json);
+            parser->parse(cfg_option, json, encapsulate_options);
         }
 
         if (shared_network_data->contains("subnet4")) {
@@ -240,7 +241,8 @@ SharedNetwork6Parser::SharedNetwork6Parser(bool check_iface)
 }
 
 SharedNetwork6Ptr
-SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
+SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
+                            bool encapsulate_options) {
     SharedNetwork6Ptr shared_network;
     std::string name;
     try {
@@ -324,7 +326,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             // Create parser instance for option-data.
             CfgOptionPtr cfg_option = shared_network->getCfgOption();
             auto parser = createOptionDataListParser();
-            parser->parse(cfg_option, json);
+            parser->parse(cfg_option, json, encapsulate_options);
         }
 
         if (shared_network_data->contains("client-class")) {

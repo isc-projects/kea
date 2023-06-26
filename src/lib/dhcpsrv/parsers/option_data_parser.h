@@ -209,8 +209,12 @@ public:
     ///
     /// @param cfg created options will be stored here
     /// @param option_data_list configuration that describes the options
+    /// @param encapsulate a boolean value indicating whether or not the
+    /// parser should encapsulate options with suboptions. The default
+    /// value is true (encapsulate).
     void parse(const CfgOptionPtr& cfg,
-               isc::data::ConstElementPtr option_data_list);
+               isc::data::ConstElementPtr option_data_list,
+               bool encapsulate = true);
 protected:
 
     /// @brief Returns an instance of the @c OptionDataListParser to

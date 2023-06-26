@@ -994,13 +994,27 @@ private:
                 def = LibDHCP::getRuntimeOptionDef(space, code_);
             }
 
+            // Finish with a last resort option definition.
+            if (!def) {
+                def = LibDHCP::getLastResortOptionDef(space, code_);
+            }
+
             OptionPtr option;
 
+            // If no definition found, we use generic option type.
             if (!def) {
-                // If no definition found, we use generic option type.
-                OptionBuffer buf(value_, value_ + value_length_);
-                option.reset(new Option(universe_, code_, buf.begin(),
-                                        buf.end()));
+                // We have to pay attention if the value is NULL. If it is,
+                // we must create an empty option instance. We can't rely on
+                // the value_length_ because it may contain garbage for the
+                // null values. Thus we check explicitly whether or not the
+                // NULL flag is set.
+                if (value_null_ == MLM_FALSE) {
+                    OptionBuffer buf(value_, value_ + value_length_);
+                    option.reset(new Option(universe_, code_, buf.begin(),
+                                            buf.end()));
+                } else {
+                    option.reset(new Option(universe_, code_));
+                }
             } else {
                 // The option value may be specified in textual or binary format
                 // in the database. If formatted_value is empty, the binary
@@ -1008,9 +1022,12 @@ private:
                 // variant of the optionFactory function.
                 if (formatted_value.empty()) {
                     OptionBuffer buf(value_, value_ + value_length_);
+                    // Again, check if the value is null before submitting the
+                    // buffer to the factory function.
                     option = def->optionFactory(universe_, code_, buf.begin(),
-                                                buf.end());
-                } else {
+                                                value_null_ == MLM_FALSE ? buf.end() :
+                                                buf.begin());
+                 } else {
                     // Spit the value specified in comma separated values
                     // format.
                     std::vector<std::string> split_vec;

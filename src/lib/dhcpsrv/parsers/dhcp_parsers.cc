@@ -350,7 +350,8 @@ RelayInfoParser::addAddress(const std::string& name,
 void
 PoolParser::parse(PoolStoragePtr pools,
                   ConstElementPtr pool_structure,
-                  const uint16_t address_family) {
+                  const uint16_t address_family,
+                  bool encapsulate_options) {
 
     if (address_family == AF_INET) {
         checkKeywords(SimpleParser4::POOL4_PARAMETERS, pool_structure);
@@ -484,7 +485,7 @@ PoolParser::parse(PoolStoragePtr pools,
         try {
             CfgOptionPtr cfg = pool->getCfgOption();
             auto option_parser = createOptionDataListParser(address_family);
-            option_parser->parse(cfg, option_data);
+            option_parser->parse(cfg, option_data, encapsulate_options);
         } catch (const std::exception& ex) {
             isc_throw(isc::dhcp::DhcpConfigError, ex.what()
                       << " (" << option_data->getPosition() << ")");
@@ -537,10 +538,11 @@ Pool4Parser::poolMaker (IOAddress &min, IOAddress &max, int32_t) {
 //****************************** Pools4ListParser *************************
 
 void
-Pools4ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list) {
+Pools4ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list,
+                        bool encapsulate_options) {
     BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
         auto parser = createPoolConfigParser();
-        parser->parse(pools, pool, AF_INET);
+        parser->parse(pools, pool, AF_INET, encapsulate_options);
     }
 }
 
@@ -555,19 +557,12 @@ Pools4ListParser::createPoolConfigParser() const {
 SubnetConfigParser::SubnetConfigParser(uint16_t family, bool check_iface)
     : pools_(new PoolStorage()),
       address_family_(family),
-      options_(new CfgOption()),
       check_iface_(check_iface) {
     relay_info_.reset(new isc::dhcp::Network::RelayInfo());
 }
 
 SubnetPtr
-SubnetConfigParser::parse(ConstElementPtr subnet) {
-
-    ConstElementPtr options_params = subnet->get("option-data");
-    if (options_params) {
-        auto opt_parser = createOptionDataListParser();
-        opt_parser->parse(options_, options_params);
-    }
+SubnetConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
 
     ConstElementPtr relay_params = subnet->get("relay");
     if (relay_params) {
@@ -582,6 +577,12 @@ SubnetConfigParser::parse(ConstElementPtr subnet) {
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError,
                   "subnet configuration failed: " << ex.what());
+    }
+
+    ConstElementPtr options_params = subnet->get("option-data");
+    if (options_params) {
+        auto opt_parser = createOptionDataListParser();
+        opt_parser->parse(subnet_->getCfgOption(), options_params, encapsulate_options);
     }
 
     return (subnet_);
@@ -686,7 +687,7 @@ Subnet4ConfigParser::Subnet4ConfigParser(bool check_iface)
 }
 
 Subnet4Ptr
-Subnet4ConfigParser::parse(ConstElementPtr subnet) {
+Subnet4ConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
     // Check parameters.
     checkKeywords(SimpleParser4::SUBNET4_PARAMETERS, subnet);
 
@@ -694,10 +695,10 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet) {
     ConstElementPtr pools = subnet->get("pools");
     if (pools) {
         auto parser = createPoolsListParser();
-        parser->parse(pools_, pools);
+        parser->parse(pools_, pools, encapsulate_options);
     }
 
-    SubnetPtr generic = SubnetConfigParser::parse(subnet);
+    SubnetPtr generic = SubnetConfigParser::parse(subnet, encapsulate_options);
 
     if (!generic) {
         // Sanity check: not supposed to fail.
@@ -945,9 +946,6 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     // options but this is no longer the case (they have a different
     // and not consecutive priority).
 
-    // Copy options to the subnet configuration.
-    options_->copyTo(*subnet4->getCfgOption());
-
     // Parse t1-percent and t2-percent
     parseTeePercents(params, network);
 
@@ -993,12 +991,13 @@ Subnets4ListConfigParser::Subnets4ListConfigParser(bool check_iface)
 
 size_t
 Subnets4ListConfigParser::parse(SrvConfigPtr cfg,
-                                ConstElementPtr subnets_list) {
+                                ConstElementPtr subnets_list,
+                                bool encapsulate_options) {
     size_t cnt = 0;
     BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
 
         auto parser = createSubnetConfigParser();
-        Subnet4Ptr subnet = parser->parse(subnet_json);
+        Subnet4Ptr subnet = parser->parse(subnet_json, encapsulate_options);
         if (subnet) {
 
             // Adding a subnet to the Configuration Manager may fail if the
@@ -1018,12 +1017,13 @@ Subnets4ListConfigParser::parse(SrvConfigPtr cfg,
 
 size_t
 Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
-                                data::ConstElementPtr subnets_list) {
+                                data::ConstElementPtr subnets_list,
+                                bool encapsulate_options) {
     size_t cnt = 0;
     BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
 
         auto parser = createSubnetConfigParser();
-        Subnet4Ptr subnet = parser->parse(subnet_json);
+        Subnet4Ptr subnet = parser->parse(subnet_json, encapsulate_options);
         if (subnet) {
             try {
                 auto ret = subnets.insert(subnet);
@@ -1067,10 +1067,11 @@ Pool6Parser::poolMaker(IOAddress &min, IOAddress &max, int32_t ptype)
 //**************************** Pool6ListParser ***************************
 
 void
-Pools6ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list) {
+Pools6ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list,
+                        bool encapsulate_options) {
     BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
         auto parser = createPoolConfigParser();
-        parser->parse(pools, pool, AF_INET6);
+        parser->parse(pools, pool, AF_INET6, encapsulate_options);
     }
 }
 
@@ -1082,11 +1083,12 @@ Pools6ListParser::createPoolConfigParser() const {
 
 //**************************** PdPoolParser ******************************
 
-PdPoolParser::PdPoolParser() : options_(new CfgOption()) {
+PdPoolParser::PdPoolParser() {
 }
 
 void
-PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
+PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_, 
+                    bool encapsulate_options) {
     checkKeywords(SimpleParser6::PD_POOL6_PARAMETERS, pd_pool_);
 
     std::string addr_str = getString(pd_pool_, "prefix");
@@ -1103,12 +1105,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
     uint8_t excluded_prefix_len = 0;
     if (pd_pool_->contains("excluded-prefix-len")) {
         excluded_prefix_len = getUint8(pd_pool_, "excluded-prefix-len");
-    }
-
-    ConstElementPtr option_data = pd_pool_->get("option-data");
-    if (option_data) {
-        auto opts_parser = createOptionDataListParser();
-        opts_parser->parse(options_, option_data);
     }
 
     ConstElementPtr user_context = pd_pool_->get("user-context");
@@ -1132,14 +1128,18 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
                               delegated_len,
                               IOAddress(excluded_prefix_str),
                               excluded_prefix_len));
-        // Merge options specified for a pool into pool configuration.
-        options_->copyTo(*pool_->getCfgOption());
     } catch (const std::exception& ex) {
         // Some parameters don't exist or are invalid. Since we are not
         // aware whether they don't exist or are invalid, let's append
         // the position of the pool map element.
         isc_throw(isc::dhcp::DhcpConfigError, ex.what()
                   << " (" << pd_pool_->getPosition() << ")");
+    }
+
+    ConstElementPtr option_data = pd_pool_->get("option-data");
+    if (option_data) {
+        auto opts_parser = createOptionDataListParser();
+        opts_parser->parse(pool_->getCfgOption(), option_data, encapsulate_options);
     }
 
     if (user_context_) {
@@ -1200,7 +1200,7 @@ Subnet6ConfigParser::Subnet6ConfigParser(bool check_iface)
 }
 
 Subnet6Ptr
-Subnet6ConfigParser::parse(ConstElementPtr subnet) {
+Subnet6ConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
     // Check parameters.
     checkKeywords(SimpleParser6::SUBNET6_PARAMETERS, subnet);
 
@@ -1208,7 +1208,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
     ConstElementPtr pools = subnet->get("pools");
     if (pools) {
         auto parser = createPoolsListParser();
-        parser->parse(pools_, pools);
+        parser->parse(pools_, pools, encapsulate_options);
     }
     ConstElementPtr pd_pools = subnet->get("pd-pools");
     if (pd_pools) {
@@ -1216,7 +1216,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
         parser->parse(pools_, pd_pools);
     }
 
-    SubnetPtr generic = SubnetConfigParser::parse(subnet);
+    SubnetPtr generic = SubnetConfigParser::parse(subnet, encapsulate_options);
 
     if (!generic) {
         // Sanity check: not supposed to fail.
@@ -1420,9 +1420,6 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
 
-    // Copy options to the subnet configuration.
-    options_->copyTo(*subnet6->getCfgOption());
-
     // Parse t1-percent and t2-percent
     parseTeePercents(params, network);
 
@@ -1466,12 +1463,13 @@ Subnets6ListConfigParser::Subnets6ListConfigParser(bool check_iface)
 
 size_t
 Subnets6ListConfigParser::parse(SrvConfigPtr cfg,
-                                ConstElementPtr subnets_list) {
+                                ConstElementPtr subnets_list,
+                                bool encapsulate_options) {
     size_t cnt = 0;
     BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
 
         auto parser = createSubnetConfigParser();
-        Subnet6Ptr subnet = parser->parse(subnet_json);
+        Subnet6Ptr subnet = parser->parse(subnet_json, encapsulate_options);
 
         // Adding a subnet to the Configuration Manager may fail if the
         // subnet id is invalid (duplicate). Thus, we catch exceptions
@@ -1489,12 +1487,13 @@ Subnets6ListConfigParser::parse(SrvConfigPtr cfg,
 
 size_t
 Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
-                                ConstElementPtr subnets_list) {
+                                ConstElementPtr subnets_list,
+                                bool encapsulate_options) {
     size_t cnt = 0;
     BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
 
         auto parser = createSubnetConfigParser();
-        Subnet6Ptr subnet = parser->parse(subnet_json);
+        Subnet6Ptr subnet = parser->parse(subnet_json, encapsulate_options);
         if (subnet) {
             try {
                 auto ret = subnets.insert(subnet);
