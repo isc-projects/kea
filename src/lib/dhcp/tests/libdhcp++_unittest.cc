@@ -304,6 +304,7 @@ public:
             for (auto const& top_subopt : col) {
                 ASSERT_EQ(top_subopt.second->getType(), 170);
                 if (opt_count == 0) {
+                    // First option contains only data (0..127) and no suboptions.
                     ASSERT_EQ(top_subopt.second->getData().size(), bottom_size);
                     index = 0;
                     for (auto const& value : top_subopt.second->getData()) {
@@ -312,10 +313,12 @@ public:
                     }
                     ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
                 } else {
+                    // All other options contain no data and suboption 171.
                     ASSERT_EQ(top_subopt.second->getOptions().size(), 1);
                     for (auto const& middle_subopt : top_subopt.second->getOptions()) {
                         ASSERT_EQ(middle_subopt.first, 171);
                         if (opt_count == 1) {
+                            // First suboption 171 contains only data (0) and no suboptions.
                             ASSERT_EQ(middle_subopt.second->getData().size(), middle_size);
                             index = 0;
                             for (auto const& value : middle_subopt.second->getData()) {
@@ -324,11 +327,13 @@ public:
                             }
                             ASSERT_EQ(middle_subopt.second->getOptions().size(), 0);
                         } else {
+                            // Second suboption 171 contains no data and suboption 172.
                             ASSERT_EQ(middle_subopt.second->getData().size(), 0);
                             ASSERT_EQ(middle_subopt.second->getOptions().size(), 1);
                             auto const& top_subopt = middle_subopt.second->getOptions().find(172);
                             ASSERT_NE(top_subopt, middle_subopt.second->getOptions().end());
                             ASSERT_EQ(top_subopt->second->getType(), 172);
+                            // Suboption 172 contains only data (0..248) and no suboptions.
                             ASSERT_EQ(top_subopt->second->getData().size(), top_size);
                             index = 0;
                             for (auto const& value : top_subopt->second->getData()) {
@@ -358,10 +363,16 @@ public:
                         col_back, deferred_options));
 
         ASSERT_EQ(3, col_back.size());
+        // The values for option counter are:
+        // 0 - first option 170 with data only
+        // 1 - second option 170 with suboption 171 with data only
+        // 2 - third option 170 with suboption 171 with suboption 172
+        // 3 - suboption 172
         opt_count = 0;
         for (auto const& top_subopt : col_back) {
             ASSERT_EQ(top_subopt.second->getType(), 170);
             if (opt_count == 0) {
+                // First option contains only data (0..127) and no suboptions.
                 ASSERT_EQ(top_subopt.second->getData().size(), bottom_size);
                 index = 0;
                 for (auto const& value : top_subopt.second->getData()) {
@@ -370,23 +381,35 @@ public:
                 }
                 ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
             } else {
+                // All other options contain no data and suboption 171.
+                // Using unpackOptions4 will not create suboptions, so entire data is serialized
+                // in the option buffer.
                 ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
+                // 1. and 4. The option 171 code.
                 index = 171;
+                bool data = false;
                 for (auto const& value : top_subopt.second->getData()) {
                     ASSERT_EQ(value, static_cast<uint8_t>(index));
-                    if (index == 171 && opt_count == 1) {
+                    if (index == 171 && opt_count == 1 && !data) {
+                        // 2. The option 171 data size (1) - only data.
                         index = middle_size;
-                    } else if (index == middle_size && opt_count == 1) {
+                    } else if (index == middle_size && opt_count == 1 && !data) {
+                        // 3. The option 171 data (0).
                         index = 0;
-                    } else if (index == 171 && opt_count == 2) {
+                        data = true;
+                    } else if (index == 171 && opt_count == 2 && !data) {
+                        // 5. The option 171 size - only suboptions (option 172).
                         index = top_size + top_opt->getHeaderLen();
-                    } else if (index == top_size + top_opt->getHeaderLen() && opt_count == 2) {
+                    } else if (index == top_size + top_opt->getHeaderLen() && opt_count == 2 && !data) {
+                        // 6. The option 172 code.
                         index = 172;
-                        opt_count++;
-                    } else if (index == 172 && opt_count == 3) {
+                    } else if (index == 172 && opt_count == 2 && !data) {
+                        // 7. The option 172 data size (249) - only data.
                         index = top_size;
-                    } else if (index == top_size && opt_count == 3) {
+                    } else if (index == top_size && opt_count == 2 && !data) {
+                        // 8. The option 172 data (0..248).
                         index = 0;
+                        data = true;
                         opt_count++;
                     } else {
                         index++;
@@ -1088,6 +1111,8 @@ TEST_F(LibDhcpTest, splitOptionNoBufferMultiThreading) {
     ThreadPool<CallBack> tp;
     tp.start(256);
 
+    // Options are shared between threads to mimic the server defined options
+    // in the packet which are added from running configuration.
     for (uint32_t count = 0; count < 1024; ++count) {
         auto const& work = [&] {
             splitOptionNoBuffer(option);
@@ -1142,6 +1167,8 @@ TEST_F(LibDhcpTest, splitOptionOneByteLeftBufferMultiThreading) {
     ThreadPool<CallBack> tp;
     tp.start(256);
 
+    // Options are shared between threads to mimic the server defined options
+    // in the packet which are added from running configuration.
     for (uint32_t count = 0; count < 1024; ++count) {
         auto const& work = [&] {
             splitOptionOneByteLeftBuffer(option);
@@ -1256,6 +1283,8 @@ TEST_F(LibDhcpTest, splitOptionWithSuboptionAtLimitMultiThreading) {
     ThreadPool<CallBack> tp;
     tp.start(256);
 
+    // Options are shared between threads to mimic the server defined options
+    // in the packet which are added from running configuration.
     for (uint32_t count = 0; count < 1024; ++count) {
         auto const& work = [&] {
             splitOptionWithSuboptionAtLimit(bottom_opt, middle_opt, top_opt);
@@ -1307,6 +1336,8 @@ TEST_F(LibDhcpTest, splitLongOptionMultiThreading) {
     ThreadPool<CallBack> tp;
     tp.start(256);
 
+    // Options are shared between threads to mimic the server defined options
+    // in the packet which are added from running configuration.
     for (uint32_t count = 0; count < 1024; ++count) {
         auto const& work = [&] {
             splitLongOption(option);
@@ -1391,6 +1422,8 @@ TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflowMultiThreading) {
     ThreadPool<CallBack> tp;
     tp.start(256);
 
+    // Options are shared between threads to mimic the server defined options
+    // in the packet which are added from running configuration.
     for (uint32_t count = 0; count < 1024; ++count) {
         auto const& work = [&] {
             splitOptionWithSuboptionWhichOverflow(rai, circuit_id_opt, remote_id_opt, subscriber_id_opt);
@@ -1487,6 +1520,8 @@ TEST_F(LibDhcpTest, splitLongOptionWithLongSuboptionMultiThreading) {
     ThreadPool<CallBack> tp;
     tp.start(256);
 
+    // Options are shared between threads to mimic the server defined options
+    // in the packet which are added from running configuration.
     for (uint32_t count = 0; count < 1024; ++count) {
         auto const& work = [&] {
             splitLongOptionWithLongSuboption(rai, circuit_id_opt, remote_id_opt, subscriber_id_opt);
