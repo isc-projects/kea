@@ -1640,10 +1640,12 @@ MATHJAX_FORMAT         = HTML-CSS
 # Content Delivery Network so you can quickly see the result without installing
 # MathJax. However, it is strongly recommended to install a local copy of
 # MathJax from https://www.mathjax.org before deployment.
-# The default value is: https://cdn.jsdelivr.net/npm/mathjax@2.
+# The default value is:
+# - for MathJax version 2: https://cdn.jsdelivr.net/npm/mathjax@2
+# - for MathJax version 3: https://cdn.jsdelivr.net/npm/mathjax@3
 # This tag requires that the tag USE_MATHJAX is set to YES.
 
-MATHJAX_RELPATH        = http://cdn.mathjax.org/mathjax/latest
+MATHJAX_RELPATH        =
 
 # The MATHJAX_EXTENSIONS tag can be used to specify one or more MathJax
 # extension names that should be enabled during MathJax rendering. For example
