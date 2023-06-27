@@ -540,9 +540,19 @@ TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
     size_t count = options.size();
     ASSERT_NE(0, count);
     ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+    std::string expected = pkt->toText();
+    pkt->pack();
+    auto buf = pkt->getBuffer();
     {
         ScopedPkt4OptionsCopy oc(*pkt);
-        ASSERT_EQ(pkt->options_, options);
+        ASSERT_NE(pkt->options_, options);
+        ASSERT_NE(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+        pkt->pack();
+        ASSERT_EQ(buf.getLength(), pkt->getBuffer().getLength());
+        for (size_t index = 0; index < buf.getLength(); ++index) {
+            ASSERT_EQ(buf[index], pkt->getBuffer()[index]);
+        }
+        ASSERT_EQ(expected, pkt->toText());
         pkt->delOption(DHO_BOOT_FILE_NAME);
         ASSERT_EQ(pkt->options_.size(), count - 1);
         ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
@@ -552,7 +562,14 @@ TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
     {
         try {
             ScopedPkt4OptionsCopy oc(*pkt);
-            ASSERT_EQ(pkt->options_, options);
+            ASSERT_NE(pkt->options_, options);
+            ASSERT_NE(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+            pkt->pack();
+            ASSERT_EQ(buf.getLength(), pkt->getBuffer().getLength());
+            for (size_t index = 0; index < buf.getLength(); ++index) {
+                ASSERT_EQ(buf[index], pkt->getBuffer()[index]);
+            }
+            ASSERT_EQ(expected, pkt->toText());
             pkt->delOption(DHO_BOOT_FILE_NAME);
             ASSERT_EQ(pkt->options_.size(), count - 1);
             ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
@@ -576,9 +593,19 @@ TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
     size_t count = options.size();
     ASSERT_NE(0, count);
     ASSERT_EQ(option, pkt->getOption(D6O_BOOTFILE_URL));
+    std::string expected = pkt->toText();
+    pkt->pack();
+    auto buf = pkt->getBuffer();
     {
         ScopedPkt6OptionsCopy oc(*pkt);
-        ASSERT_EQ(pkt->options_, options);
+        ASSERT_NE(pkt->options_, options);
+        ASSERT_NE(option, pkt->getOption(D6O_BOOTFILE_URL));
+        pkt->pack();
+        ASSERT_EQ(buf.getLength(), pkt->getBuffer().getLength());
+        for (size_t index = 0; index < buf.getLength(); ++index) {
+            ASSERT_EQ(buf[index], pkt->getBuffer()[index]);
+        }
+        ASSERT_EQ(expected, pkt->toText());
         pkt->delOption(D6O_BOOTFILE_URL);
         ASSERT_EQ(pkt->options_.size(), count - 1);
         ASSERT_FALSE(pkt->getOption(D6O_BOOTFILE_URL));
@@ -588,7 +615,14 @@ TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
     {
         try {
             ScopedPkt6OptionsCopy oc(*pkt);
-            ASSERT_EQ(pkt->options_, options);
+            ASSERT_NE(pkt->options_, options);
+            ASSERT_NE(option, pkt->getOption(D6O_BOOTFILE_URL));
+            pkt->pack();
+            ASSERT_EQ(buf.getLength(), pkt->getBuffer().getLength());
+            for (size_t index = 0; index < buf.getLength(); ++index) {
+                ASSERT_EQ(buf[index], pkt->getBuffer()[index]);
+            }
+            ASSERT_EQ(expected, pkt->toText());
             pkt->delOption(D6O_BOOTFILE_URL);
             ASSERT_EQ(pkt->options_.size(), count - 1);
             ASSERT_FALSE(pkt->getOption(D6O_BOOTFILE_URL));
@@ -615,6 +649,7 @@ TEST(ScopedOptionsCopy, subOptionsCopy) {
     {
         ScopedSubOptionsCopy oc(initial);
         ASSERT_EQ(initial->getOptions(), options);
+        ASSERT_EQ(option, initial->getOption(DHO_BOOT_FILE_NAME));
         initial->delOption(DHO_BOOT_FILE_NAME);
         ASSERT_EQ(initial->getOptions().size(), count - 1);
         ASSERT_FALSE(initial->getOption(DHO_BOOT_FILE_NAME));
@@ -625,6 +660,7 @@ TEST(ScopedOptionsCopy, subOptionsCopy) {
         try {
             ScopedSubOptionsCopy oc(initial);
             ASSERT_EQ(initial->getOptions(), options);
+            ASSERT_EQ(option, initial->getOption(DHO_BOOT_FILE_NAME));
             initial->delOption(DHO_BOOT_FILE_NAME);
             ASSERT_EQ(initial->getOptions().size(), count - 1);
             ASSERT_FALSE(initial->getOption(DHO_BOOT_FILE_NAME));
