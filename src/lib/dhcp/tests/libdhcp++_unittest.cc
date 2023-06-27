@@ -256,10 +256,10 @@ public:
 
             ASSERT_EQ(64, col.size());
             uint8_t index = 0;
-            for (auto const& option : col) {
-                ASSERT_EQ(option.first, 231);
-                ASSERT_EQ(1, option.second->getData().size());
-                ASSERT_EQ(index, option.second->getData()[0]);
+            for (auto const& opt : col) {
+                ASSERT_EQ(opt.first, 231);
+                ASSERT_EQ(1, opt.second->getData().size());
+                ASSERT_EQ(index, opt.second->getData()[0]);
                 index++;
             }
         }
@@ -301,21 +301,21 @@ public:
                       buf.getLength());
 
             ASSERT_EQ(3, col.size());
-            for (auto const& top_subopt : col) {
-                ASSERT_EQ(top_subopt.second->getType(), 170);
+            for (auto const& bottom_subopt : col) {
+                ASSERT_EQ(bottom_subopt.second->getType(), 170);
                 if (opt_count == 0) {
                     // First option contains only data (0..127) and no suboptions.
-                    ASSERT_EQ(top_subopt.second->getData().size(), bottom_size);
+                    ASSERT_EQ(bottom_subopt.second->getData().size(), bottom_size);
                     index = 0;
-                    for (auto const& value : top_subopt.second->getData()) {
+                    for (auto const& value : bottom_subopt.second->getData()) {
                         ASSERT_EQ(value, static_cast<uint8_t>(index));
                         index++;
                     }
-                    ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
+                    ASSERT_EQ(bottom_subopt.second->getOptions().size(), 0);
                 } else {
                     // All other options contain no data and suboption 171.
-                    ASSERT_EQ(top_subopt.second->getOptions().size(), 1);
-                    for (auto const& middle_subopt : top_subopt.second->getOptions()) {
+                    ASSERT_EQ(bottom_subopt.second->getOptions().size(), 1);
+                    for (auto const& middle_subopt : bottom_subopt.second->getOptions()) {
                         ASSERT_EQ(middle_subopt.first, 171);
                         if (opt_count == 1) {
                             // First suboption 171 contains only data (0) and no suboptions.
@@ -369,26 +369,26 @@ public:
         // 2 - third option 170 with suboption 171 with suboption 172
         // 3 - suboption 172
         opt_count = 0;
-        for (auto const& top_subopt : col_back) {
-            ASSERT_EQ(top_subopt.second->getType(), 170);
+        for (auto const& bottom_subopt : col_back) {
+            ASSERT_EQ(bottom_subopt.second->getType(), 170);
             if (opt_count == 0) {
                 // First option contains only data (0..127) and no suboptions.
-                ASSERT_EQ(top_subopt.second->getData().size(), bottom_size);
+                ASSERT_EQ(bottom_subopt.second->getData().size(), bottom_size);
                 index = 0;
-                for (auto const& value : top_subopt.second->getData()) {
+                for (auto const& value : bottom_subopt.second->getData()) {
                     ASSERT_EQ(value, static_cast<uint8_t>(index));
                     index++;
                 }
-                ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
+                ASSERT_EQ(bottom_subopt.second->getOptions().size(), 0);
             } else {
                 // All other options contain no data and suboption 171.
                 // Using unpackOptions4 will not create suboptions, so entire data is serialized
                 // in the option buffer.
-                ASSERT_EQ(top_subopt.second->getOptions().size(), 0);
+                ASSERT_EQ(bottom_subopt.second->getOptions().size(), 0);
                 // 1. and 4. The option 171 code.
                 index = 171;
                 bool data = false;
-                for (auto const& value : top_subopt.second->getData()) {
+                for (auto const& value : bottom_subopt.second->getData()) {
                     ASSERT_EQ(value, static_cast<uint8_t>(index));
                     if (index == 171 && opt_count == 1 && !data) {
                         // 2. The option 171 data size (1) - only data.
@@ -457,9 +457,9 @@ public:
 
         uint32_t index = 0;
         ASSERT_EQ(11, col_back.size());
-        for (auto const& option : col_back) {
-            ASSERT_EQ(option.first, 231);
-            for (auto const& value : option.second->getData()) {
+        for (auto const& opt : col_back) {
+            ASSERT_EQ(opt.first, 231);
+            for (auto const& value : opt.second->getData()) {
                 ASSERT_EQ(value, static_cast<uint8_t>(index));
                 index++;
             }
