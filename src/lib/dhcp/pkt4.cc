@@ -69,10 +69,11 @@ Pkt4::len() {
 
 void
 Pkt4::pack() {
-    ScopedPkt4OptionsCopy scoped_options(*this);
     if (!hwaddr_) {
         isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
     }
+
+    ScopedPkt4OptionsCopy scoped_options(*this);
 
     // Clear the output buffer to make sure that consecutive calls to pack()
     // will not result in concatenation of multiple packet copies.

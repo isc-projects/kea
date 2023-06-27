@@ -328,6 +328,10 @@ protected:
 
 public:
 
+    /// @brief Clones all options so that they can be safely modified - some
+    /// options reference objects directly in the server running configuration.
+    void cloneOptions();
+
     /// @brief Returns the first option of specified type.
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
@@ -862,6 +866,7 @@ public:
     ///
     /// @param pkt Pointer to the packet.
     ScopedPktOptionsCopy(PktType& pkt) : pkt_(pkt), options_(pkt.options_) {
+        pkt.cloneOptions();
     }
 
     /// @brief Destructor.

@@ -936,14 +936,21 @@ LibDHCP::splitOptions4(OptionCollection& options,
                        uint32_t used) {
     bool result = false;
     // We need to loop until all options have been split.
-    for (;;) {
+    uint32_t tries = 0;
+    for (;; tries++) {
+        // Let's not do this forever if there is a bug hiding here somewhere...
+        // 65535 times should be enough for any packet load...
+        if (tries == std::numeric_limits<uint16_t>::max()) {
+            isc_throw(BadValue, "packet split failed after trying "
+                     << tries << " times.");
+        }
         bool found = false;
         // Make a copy of the options so we can safely iterate over the
         // old container.
         OptionCollection copy = options;
         // Iterate over all options in the container.
         for (auto const& option : options) {
-            OptionPtr candidate = option.second->clone();
+            OptionPtr candidate = option.second;
             OptionCollection& sub_options = candidate->getMutableOptions();
             // Split suboptions recursively, if any.
             OptionCollection distinct_options;
