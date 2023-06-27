@@ -2,7 +2,7 @@
 	Fixed a crash when splitting long options or sending user defined
 	options when multi-threading is enabled. Also fixed some cases
 	when options are not properly split if the serialized data
-	reaches the end of the 255 bytes long boundry.
+	reaches the end of the 255 bytes long boundary.
 	(Gitlab #2945, #2942)
 
 2050.	[bug]		razvan
