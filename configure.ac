@@ -1125,15 +1125,20 @@ fi
 
 AM_CONDITIONAL([GENERATE_PARSER], [test x$enable_generate_parser != xno])
 
-# Kea-shell is written in python. It can work with python 2.7 or any 3.x.
-# It may likely work with earlier versions, but 2.7 was the oldest one we tested
-# it with. We require python only if kea-shell was enabled. It is disabled
-# by default to not introduce hard dependency on python.
+# Kea-shell is written in python. It can work with any 3.x.
+# We require python only if kea-shell was enabled. It is disabled by default to
+# not introduce hard dependency on python.
 AC_ARG_ENABLE(shell,
   [AS_HELP_STRING([--enable-shell],
     [enable kea-shell, a text management client for Control Agent [default=no]])],
   enable_shell=$enableval, enable_shell=no)
 
+if test "x$enable_shell" != "xno"; then
+  major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
+  if test "x$major" != "x3"; then
+    AC_MSG_WARN("kea-shell does not support python2")
+  fi
+fi
 
 AC_ARG_ENABLE(generate_docs,
   [AS_HELP_STRING([--enable-generate-docs],
@@ -1219,16 +1224,7 @@ if test "x${CRYPTO_NAME}" = "xBotan" && test "x$BOTAN_BOOST" = "xyes"; then
 fi
 
 # Decide if the shell TLS test can work.
-### This will be simpler when Python 2 support will be dropped.
-ca_tls_test=no
-if test "x$enable_shell" != "xno"; then
-  major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
-  if test "x$major" = "x3"; then
-    ca_tls_test="$tls_support"
-  else
-    AC_MSG_WARN("python2 kea-shell does not support HTTPS")
-  fi
-fi
+ca_tls_test="$tls_support"
 AM_CONDITIONAL(CA_TLS_TEST, test x$ca_tls_test != xno)
 
 AC_ARG_WITH([sphinx],
