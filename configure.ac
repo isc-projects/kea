@@ -380,7 +380,7 @@ fi
 
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
+# https://web.archive.org/web/20150911093559/https://svn.boost.org/trac/boost/ticket/3477
 # But older GCC compilers don't have the flag.
 KEA_CXX_TRY_FLAG([-Wno-missing-field-initializers],
         [KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-field-initializers"])
