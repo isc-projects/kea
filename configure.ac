@@ -1159,11 +1159,10 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
     prefix=$ac_default_prefix
   fi
 
-  # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
-  # We try to find 3.x first. If not found, we can do with 2.7.
+  # If kea-shell is enabled, we really need python 3.x.
   m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
-                    [python3 python python2])
-  AM_PATH_PYTHON([2.7])
+                    [python3 python])
+  AM_PATH_PYTHON([3.0])
 
   # Determine if the --with-site-packages flag was provided.
   AC_ARG_WITH(site-packages,
