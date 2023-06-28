@@ -1,3 +1,8 @@
+2165.	[bug]		marcin
+	DHCP options configured in the host database are now returned
+	with their encapsulated options to the clients.
+	(Gitlab #2826)
+
 2164.	[bug]		razvan
 	Added checks to catch invalid prefix/prefix-len combinations in
 	commands that create or update pools, leases, and reservations.
