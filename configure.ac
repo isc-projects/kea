@@ -1136,7 +1136,7 @@ AC_ARG_ENABLE(shell,
 if test "x$enable_shell" != "xno"; then
   major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
   if test "x$major" != "x3"; then
-    AC_MSG_WARN("kea-shell does not support python2")
+    AC_MSG_ERROR([kea-shell does not support python2])
   fi
 fi
 
