@@ -1133,13 +1133,6 @@ AC_ARG_ENABLE(shell,
     [enable kea-shell, a text management client for Control Agent [default=no]])],
   enable_shell=$enableval, enable_shell=no)
 
-if test "x$enable_shell" != "xno"; then
-  major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
-  if test "x$major" != "x3"; then
-    AC_MSG_ERROR([kea-shell does not support python2])
-  fi
-fi
-
 AC_ARG_ENABLE(generate_docs,
   [AS_HELP_STRING([--enable-generate-docs],
     [regenerate documentation using Sphinx [default=no]])],
