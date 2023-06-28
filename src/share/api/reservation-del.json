@@ -15,7 +15,7 @@
         "        \"ip-address\": <string>,",
         "        \"identifier-type\": <one of 'hw-address', 'duid', 'circuit-id', 'client-id' and 'flex-id'>,",
         "        \"identifier\": <string>,",
-        "        \"operation-target\": <string (primary, alternate, all, default)>",
+        "        \"operation-target\": <string (memory, database, all, default)>",
         "    }",
         "}"
     ],

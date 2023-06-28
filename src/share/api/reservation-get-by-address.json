@@ -13,7 +13,7 @@
         "    \"arguments\": {",
         "        \"ip-address\": <string>,",
         "        \"subnet-id\": <integer>,",
-        "        \"operation-target\": <string (primary, alternate, all, default)>",
+        "        \"operation-target\": <string (memory, database, all, default)>",
         "    }",
         "}"
     ],

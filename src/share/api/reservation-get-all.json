@@ -12,7 +12,7 @@
         "    \"command\": \"reservation-get-all\",",
         "    \"arguments\": {",
         "        \"subnet-id\": <integer>,",
-        "        \"operation-target\": <string (primary, alternate, all, default)>",
+        "        \"operation-target\": <string (memory, database, all, default)>",
         "    }",
         "}"
     ],

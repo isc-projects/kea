@@ -119,20 +119,21 @@ server) and this entry is ignored.
 The ``operation-target`` Parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Most host commands accept the ``operation-target`` parameter that specifies the
-database(s) to query. The commands may process data from the JSON configuration
-(primary source), the hosts database (alternate source), or both of them
-(all sources). The operation target parameter is optional. By default, the
-commands that only read the data use all data sources (JSON configuration and
-hosts database); the commands that modify the state (as :isccmd:`reservation-add`,
-:isccmd:`reservation-del`, and :isccmd:`reservation-update`) only use the alternate source.
+Most host commands accept the ``operation-target`` parameter that selects
+the host data source. The commands may process data from the server
+configuration (i.e., memory operation target), a database (database target),
+or both of them (all sources). The operation target parameter is optional.
+By default, the commands that only read the data use all data sources
+(memory and database); the commands that modify the state (i.e., :isccmd:`reservation-add`,
+:isccmd:`reservation-del`, and :isccmd:`reservation-update`) only use the
+database target.
 
-The operation target accepts the following values:
+The ``operation-target`` parameter accepts the following values:
 
-- ``primary`` - query the primary source - JSON configuration.
-- ``alternate`` - query the alternate source - hosts database(s).
-- ``all`` - query both sources - JSON configuration and host database(s).
-- ``default`` - query the default source - it's command specific.
+- ``memory`` - query or update the runtime server configuration.
+- ``database`` - query or update host database(s).
+- ``all`` - query or update both runtime configuration and host database(s).
+- ``default`` - query or update a default host data source - it is command specific.
 
 .. isccmd:: reservation-add
 .. _command-reservation-add:

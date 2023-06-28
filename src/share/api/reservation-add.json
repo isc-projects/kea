@@ -29,7 +29,7 @@
         "            \"subnet-id\": <integer>,",
         "            \"user-context\": <any valid JSON>",
         "        },",
-        "        \"operation-target\": <string (primary, alternate, all, default)>",
+        "        \"operation-target\": <string (memory, database, all, default)>",
         "    }",
         "}"
     ],
