@@ -1062,7 +1062,7 @@ LibDHCP::splitOptions4(OptionCollection& options,
         // Let's not do this forever if there is a bug hiding here somewhere...
         // 65535 times should be enough for any packet load...
         if (tries == std::numeric_limits<uint16_t>::max()) {
-            isc_throw(BadValue, "packet split failed after trying "
+            isc_throw(Unexpected, "packet split failed after trying "
                      << tries << " times.");
         }
         bool found = false;

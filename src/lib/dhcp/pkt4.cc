@@ -73,6 +73,9 @@ Pkt4::pack() {
         isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
     }
 
+    // This object is necessary to restore the packet options after performing
+    // splitOptions4 when function scope ends. It creates a container of option
+    // clones which are split and packed.
     ScopedPkt4OptionsCopy scoped_options(*this);
 
     // Clear the output buffer to make sure that consecutive calls to pack()

@@ -37,13 +37,13 @@ Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local
     }
 }
 
-void
+OptionCollection
 Pkt::cloneOptions() {
     OptionCollection options;
     for (auto const& option : options_) {
         options.emplace(std::make_pair(option.second->getType(), option.second->clone()));
     }
-    options_ = options;
+    return (options);
 }
 
 void
