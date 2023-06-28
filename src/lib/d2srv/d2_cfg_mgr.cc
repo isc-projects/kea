@@ -309,7 +309,7 @@ D2CfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
     } else {
 
         // Calculate hash of the configuration that was just set.
-        ElementPtr config = getContext()->toElement();
+        ConstElementPtr config = getContext()->toElement();
         std::string hash = BaseCommandMgr::getHash(config);
         ElementPtr params = Element::createMap();
         params->set("hash", Element::create(hash));
