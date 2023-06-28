@@ -1,3 +1,7 @@
+2163.	[build]		slawek
+	Dropped the Kea connector for Python 2.
+	(Gitlab #2467)
+
 2162.	[doc]		marcin
 	Documented renaming operation-target values in host_cmds hook
 	library. The "primary" was renamed to "memory", and the
