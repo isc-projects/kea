@@ -4771,8 +4771,12 @@ If not specified, the default value is:
 
    As soon as a host reservation is found the search is stopped so
    when a client has two host reservations using different enabled
-   identifier types the first is permanently returned and the second
-   ignored, i.e. this is a configuration mistake.
+   identifier types the first is always returned and the second
+   ignored. In other words, this is usually a a configuration mistake.
+   In rare cases when having two reservations for the same host makes sense,
+   you can control which of those will be used by ordering the list of
+   identifier types in `host-reservation-identifiers`.
+
 
 .. _global-reservations6:
 

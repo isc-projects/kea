@@ -1,3 +1,8 @@
+2161.	[doc]		fdupont
+	Clarified how Kea treats situations where there are multiple
+	reservations for the same host.
+	(Gitlab #2745)
+
 2160.	[doc]		tomek
 	Added clarification about RFC3046 (Relay agent option) support,
 	with some examples how to use its content.
