@@ -1,6 +1,6 @@
 2160.	[doc]		tomek
-	Added clarification about RFC3046 (Relay agent option) support, with
-	some examples how to use its content.
+	Added clarification about RFC3046 (Relay agent option) support,
+	with some examples how to use its content.
 	(Gitlab #2887)
 
 2159.	[bug]		razvan
