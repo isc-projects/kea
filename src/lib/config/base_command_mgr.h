@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -155,11 +155,12 @@ public:
 
     /// @brief returns a hash of a given Element structure
     ///
-    /// The hash is currently implemented as SHA256 on the string represenation of the structure.
+    /// The hash is currently implemented as SHA256 on the string
+    // representation of the structure.
     ///
     /// @param config typically full config, but hash can be calculated on any structure
-    /// @return string representation
-    static std::string getHash(isc::data::ElementPtr& config);
+    /// @return hash of string representation
+    static std::string getHash(const isc::data::ConstElementPtr& config);
 
 protected:
 

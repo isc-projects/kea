@@ -974,8 +974,9 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         .arg(CfgMgr::instance().getStagingCfg()->
              getConfigSummary(SrvConfig::CFGSEL_ALL4));
 
-    // Also calculate SHA256 hash of the config that was just set and append it to the response.
-    ElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+    // Also calculate SHA256 hash of the config that was just set and
+    // append it to the response.
+    ConstElementPtr config = CfgMgr::instance().getStagingCfg()->toElement();
     string hash = BaseCommandMgr::getHash(config);
     ElementPtr hash_map = Element::createMap();
     hash_map->set("hash", Element::create(hash));
