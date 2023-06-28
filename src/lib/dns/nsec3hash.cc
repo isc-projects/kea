@@ -68,11 +68,10 @@ public:
                       static_cast<unsigned int>(algorithm_));
         }
 
-        if (salt_data == NULL) {
-            isc_throw(isc::BadValue, "salt data is NULL");
-        }
-
         if (salt_length > 0) {
+            if (salt_data == NULL) {
+                isc_throw(isc::BadValue, "salt data is NULL");
+            }
             salt_data_ = static_cast<uint8_t*>(std::malloc(salt_length));
             if (salt_data_ == NULL) {
                 throw std::bad_alloc();
