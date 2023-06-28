@@ -602,7 +602,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             } else if (optarg_text == "avalanche") {
                 scenario_ = Scenario::AVALANCHE;
             } else {
-                isc_throw(InvalidParameter, "scenario value '" << optarg << "' is wrong - should be 'basic' or 'avalanche'");
+                isc_throw(InvalidParameter, "scenario value '" << optarg_text << "' is wrong - should be 'basic' or 'avalanche'");
             }
             break;
         }

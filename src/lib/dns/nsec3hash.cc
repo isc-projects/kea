@@ -62,15 +62,14 @@ public:
                      const uint8_t* salt_data, size_t salt_length) :
         algorithm_(algorithm), iterations_(iterations),
         salt_data_(NULL), salt_length_(salt_length),
-        digest_(DEFAULT_DIGEST_LENGTH), obuf_(Name::MAX_WIRE)
-    {
+        digest_(DEFAULT_DIGEST_LENGTH), obuf_(Name::MAX_WIRE) {
         if (algorithm_ != NSEC3_HASH_SHA1) {
             isc_throw(UnknownNSEC3HashAlgorithm, "Unknown NSEC3 algorithm: " <<
                       static_cast<unsigned int>(algorithm_));
         }
 
         if (salt_data == NULL) {
-            isc_throw(BadValue, "salt data is NULL");
+            isc_throw(isc::BadValue, "salt data is NULL");
         }
 
         if (salt_length > 0) {
