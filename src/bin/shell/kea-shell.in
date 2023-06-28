@@ -25,7 +25,7 @@ from base64 import b64encode
 sys.path.append('@PKGPYTHONDIR@')
 
 import kea_connector3 as kea_connector
-from kea_conn import CARequest # CAResponse
+from kea_conn import CARequest  # CAResponse
 
 
 VERSION = "@PACKAGE_VERSION@"

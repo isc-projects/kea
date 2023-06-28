@@ -1125,7 +1125,7 @@ fi
 
 AM_CONDITIONAL([GENERATE_PARSER], [test x$enable_generate_parser != xno])
 
-# Kea-shell is written in python. It can work with any 3.x.
+# Kea-shell is written in python. It can work with any python 3.x version.
 # We require python only if kea-shell was enabled. It is disabled by default to
 # not introduce hard dependency on python.
 AC_ARG_ENABLE(shell,
