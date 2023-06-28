@@ -2163,11 +2163,13 @@ what values are accepted for them.
    |                 | 2147483647.                                           |
    +-----------------+-------------------------------------------------------+
 
-Kea also supports the Relay Agent Information (RAI) option, sometimes referred to as the relay option, agent
+Kea also supports the Relay Agent Information (RAI, defined in
+`RFC 3046 <https://tools.ietf.org/html/rfc3046>`_) option, sometimes referred to as the relay option, agent
 option, or simply option 82. The option itself is just a container and does not convey any information
 on its own. The following table contains a list of RAI sub-options that Kea can understand. The RAI
 and its sub-options are inserted by the relay agent and received by Kea; there is no need for Kea
-to be configured with those options.
+to be configured with those options. Kea's classification and flex-id in host reservations can be
+used to process those and other options no listed in the table below.
 
 .. table:: List of RAI sub-options that Kea can understand
 
@@ -2189,8 +2191,30 @@ to be configured with those options.
    | relay-port         | 19   | If sent by the relay, Kea sends back its responses to this port.     |
    +--------------------+------+----------------------------------------------------------------------+
 
-All other RAI sub-options can be used in client classification to classify incoming packets to specific classes
-and/or by :ischooklib:`libdhcp_flex_id.so` to construct a unique device identifier.
+All other RAI sub-options (including those not listed here) can be used in client classification to
+classify incoming packets to specific classes and/or by :ischooklib:`libdhcp_flex_id.so` to
+construct a unique device identifier. For more information about expressions used in client
+classification, and flex-id, see :ref:`classify`. Recapping briefly, the RAI sub-options can be
+referenced using ``relay4[option-code].hex``. For example, to classify packets based on the
+``remote-id`` (sub-option code 2), one would use ``relay4[2].hex``. And example client class that
+would include all packets with specific ``remote-id`` values would looks as follows:
+
+::
+
+    "Dhcp4": {
+        "client-classes": [
+            {
+                "name": "remote-id-1020304",
+                "test": "relay4[2].hex == 0x01020304",
+                ...
+            }
+        ],
+        ...
+    }
+
+Classes should be used to segregate traffic into relatively small number of groups, which then
+can be used to select specific subnets, pools and extra options and more. If per host behavior
+is necessary, using host reservations with flex-id is strongly recommended.
 
 .. _dhcp4-custom-options:
 
