@@ -38,7 +38,7 @@ TcpStreamRequest::postBuffer(const void* buf, const size_t nbytes) {
             size_t need_bytes = expected_size_ - wire_size;
             size_t copy_bytes = (need_bytes <= bytes_left ? need_bytes : bytes_left);
             wire_data_.insert(wire_data_.end(), bufptr, bufptr + copy_bytes);
-            bytes_left -= copy_bytes;
+            // bytes_left -= copy_bytes;  // Since we break, we don't need to do this anymore.
             bytes_used += copy_bytes;
             break;
         }

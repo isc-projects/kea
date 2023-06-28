@@ -2323,7 +2323,6 @@ TEST_F(LibDhcpTest, option43End) {
     LibDHCP::commitRuntimeOptionDefs();
 
     options.clear();
-    offset = 0;
     ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, space,
                                                      options, deferred, true));
 

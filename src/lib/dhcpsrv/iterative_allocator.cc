@@ -172,7 +172,6 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
                 return (next);
             }
 
-            valid = false;
             getPoolState(*it)->resetLastAllocated();
         }
         // We hit pool boundary, let's try to jump to the next pool and try again
@@ -316,7 +315,6 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                 return (next);
             }
 
-            valid = false;
             getPoolState(*it)->resetLastAllocated();
         }
         // We hit pool boundary, let's try to jump to the next pool and try again

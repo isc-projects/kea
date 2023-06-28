@@ -450,7 +450,7 @@ D2Process::getD2CfgMgr() {
 }
 
 const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
-    const char* str = "invalid";
+    const char* str;
     switch (type) {
     case SD_NORMAL:
         str = "normal";
@@ -462,6 +462,7 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
         str = "now";
         break;
     default:
+        str = "invalid";
         break;
     }
 

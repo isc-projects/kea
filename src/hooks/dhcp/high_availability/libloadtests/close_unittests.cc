@@ -310,11 +310,9 @@ CloseHATest::runPartners(bool const backup /* = true */) {
     wthread_->clearReady(WatchedThread::TERMINATE);
     if (accept_partner1 >= 0) {
         close(accept_partner1);
-        accept_partner1 = -1;
     }
     if (accept_partner2 >= 0) {
         close(accept_partner2);
-        accept_partner2 = -1;
     }
     for (auto reader : readers) {
         if (!reader.second) {
