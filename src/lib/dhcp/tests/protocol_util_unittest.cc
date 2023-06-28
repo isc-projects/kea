@@ -428,7 +428,7 @@ TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
     ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
     std::string expected = pkt->toText();
     pkt->pack();
-    auto buf = pkt->getBuffer();
+    OutputBuffer buf = pkt->getBuffer();
     {
         ScopedPkt4OptionsCopy oc(*pkt);
         ASSERT_NE(pkt->options_, options);
@@ -481,7 +481,7 @@ TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
     ASSERT_EQ(option, pkt->getOption(D6O_BOOTFILE_URL));
     std::string expected = pkt->toText();
     pkt->pack();
-    auto buf = pkt->getBuffer();
+    OutputBuffer buf = pkt->getBuffer();
     {
         ScopedPkt6OptionsCopy oc(*pkt);
         ASSERT_NE(pkt->options_, options);

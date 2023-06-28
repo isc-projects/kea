@@ -328,9 +328,10 @@ protected:
 
 public:
 
-    /// @brief Clones all options so that they can be safely modified - some
-    /// options reference objects directly in the server running configuration.
-    void cloneOptions();
+    /// @brief Clones all options so that they can be safely modified.
+    ///
+    /// @return A container with option clones.
+    OptionCollection cloneOptions();
 
     /// @brief Returns the first option of specified type.
     ///
@@ -866,7 +867,7 @@ public:
     ///
     /// @param pkt Pointer to the packet.
     ScopedPktOptionsCopy(PktType& pkt) : pkt_(pkt), options_(pkt.options_) {
-        pkt.cloneOptions();
+        pkt_.options_ = pkt_.cloneOptions();
     }
 
     /// @brief Destructor.
