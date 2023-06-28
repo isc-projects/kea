@@ -650,13 +650,6 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         ConstElementPtr answer = updateConfig(module_config);
         int rcode = 0;
         parseAnswer(rcode, answer);
-
-        // When succeeded append the SHA256 hash of the config that
-        // was just set to the response.
-        if (rcode == CONTROL_RESULT_SUCCESS) {
-            // @todo
-        }
-
         // In all cases the right logging configuration is in the context.
         process_->getCfgMgr()->getContext()->applyLoggingCfg();
         return (answer);
