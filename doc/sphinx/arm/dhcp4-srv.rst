@@ -2194,10 +2194,10 @@ used to process those and other options no listed in the table below.
 All other RAI sub-options (including those not listed here) can be used in client classification to
 classify incoming packets to specific classes and/or by :ischooklib:`libdhcp_flex_id.so` to
 construct a unique device identifier. For more information about expressions used in client
-classification, and flex-id, see :ref:`classify`. Recapping briefly, the RAI sub-options can be
+classification, and flex-id, see :ref:`classify`. The RAI sub-options can be
 referenced using ``relay4[option-code].hex``. For example, to classify packets based on the
-``remote-id`` (sub-option code 2), one would use ``relay4[2].hex``. And example client class that
-would include all packets with specific ``remote-id`` values would looks as follows:
+``remote-id`` (sub-option code 2), one would use ``relay4[2].hex``. An example client class that
+would include all packets with a specific ``remote-id`` value would looks as follows:
 
 ::
 
@@ -2212,7 +2212,7 @@ would include all packets with specific ``remote-id`` values would looks as foll
         ...
     }
 
-Classes should be used to segregate traffic into relatively small number of groups, which then
+Classes may be used to segregate traffic into a relatively small number of groups, which then
 can be used to select specific subnets, pools and extra options and more. If per host behavior
 is necessary, using host reservations with flex-id is strongly recommended.
 
