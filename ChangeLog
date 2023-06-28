@@ -1,3 +1,9 @@
+2162.	[doc]		marcin
+	Documented renaming operation-target values in host_cmds hook
+	library. The "primary" was renamed to "memory", and the
+	"alternate" was renamed to "database".
+	(Gitlab #2901)
+
 2161.	[doc]		fdupont
 	Clarified how Kea treats situations where there are multiple
 	reservations for the same host.
