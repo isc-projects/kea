@@ -462,7 +462,7 @@ DControllerBase::configGetHandler(const std::string&,
 ConstElementPtr
 DControllerBase::configHashGetHandler(const std::string&,
                                       ConstElementPtr /*args*/) {
-    ElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+    ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
     std::string hash = BaseCommandMgr::getHash(config);
     ElementPtr params = Element::createMap();
     params->set("hash", Element::create(hash));
@@ -650,6 +650,13 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         ConstElementPtr answer = updateConfig(module_config);
         int rcode = 0;
         parseAnswer(rcode, answer);
+
+        // When succeeded append the SHA256 hash of the config that
+        // was just set to the response.
+        if (rcode == CONTROL_RESULT_SUCCESS) {
+            // @todo
+        }
+
         // In all cases the right logging configuration is in the context.
         process_->getCfgMgr()->getContext()->applyLoggingCfg();
         return (answer);

@@ -5675,8 +5675,8 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
         if (parameters.empty()) {
             EXPECT_EQ(0, status_code);
 
-            EXPECT_EQ(answer->str(), "{ \"arguments\": { \"hash\": \"AF30DC19D03AB71CB5AB6A77C0B8D"
-            "2B4D8C5F5A939D7457DF723CBFB09F80744\" }, \"result\": 0, \"text\": "
+            EXPECT_EQ(answer->str(), "{ \"arguments\": { \"hash\": \"A6695A043B32703BA06D981929076F1C"
+            "94DEC0CF414E45AF146CEF5B50DB3EAA\" }, \"result\": 0, \"text\": "
             "\"Configuration successful.\" }");
         } else {
             EXPECT_EQ(1, status_code);

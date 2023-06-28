@@ -193,6 +193,11 @@ BaseCommandMgr::listCommandsHandler(const std::string& /* name */,
 std::string
 BaseCommandMgr::getHash(const isc::data::ConstElementPtr& config) {
 
+    // Sanity.
+    if (!config) {
+        isc_throw(Unexpected, "BaseCommandMgr::getHash called with null");
+    }
+
     // First, get the string representation.
     std::string config_txt = config->str();
     isc::util::OutputBuffer hash_data(0);
@@ -212,7 +217,6 @@ BaseCommandMgr::getHash(const isc::data::ConstElementPtr& config) {
     // Now encode the value as base64 and we're done here.
     return (isc::util::encode::encodeHex(hash));
 }
-
 
 } // namespace isc::config
 } // namespace isc

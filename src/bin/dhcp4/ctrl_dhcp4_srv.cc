@@ -296,7 +296,7 @@ ControlledDhcpv4Srv::commandConfigGetHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigHashGetHandler(const string&,
                                                  ConstElementPtr /*args*/) {
-    ElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
 
     string hash = BaseCommandMgr::getHash(config);
 
