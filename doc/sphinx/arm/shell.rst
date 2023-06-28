@@ -123,6 +123,10 @@ default. To use it, specify ``--enable-shell`` when running ``configure``
 during the installation of Kea. When building on Debian systems,
 ``--with-site-packages=...`` may also be useful.
 
+.. note::
+
+   From Kea 2.4.0 version, the ``kea-shell`` no longer supports Python 2.7.
+
 The Kea shell is intended to serve more as a demonstration of the
 RESTful interface's capabilities (and, perhaps, an illustration for
 people interested in integrating their management environments with Kea)
