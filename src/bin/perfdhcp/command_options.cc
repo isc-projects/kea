@@ -289,7 +289,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'b':
             check(base_.size() > 3, "-b<value> already specified,"
                   " unexpected occurrence of 5th -b<value>");
-            base_.push_back(optarg);
+            base_.push_back(optarg ? optarg : "");
             decodeBase(base_.back());
             break;
 
@@ -303,7 +303,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
         case 'C':
             clean_report_ = true;
-            clean_report_separator_ = optarg;
+            clean_report_separator_ = optarg ? optarg : "";
             break;
 
         case 'd':
@@ -312,7 +312,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                   "unexpected 3rd occurrence of -d<value>");
             try {
                 drop_time_[drop_time_set_] =
-                    boost::lexical_cast<double>(optarg);
+                    boost::lexical_cast<double>(optarg ? optarg : "");
             } catch (const boost::bad_lexical_cast&) {
                 isc_throw(isc::InvalidParameter,
                           "value of drop time: -d<value>"
@@ -324,7 +324,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case 'D':
-            drop_arg = std::string(optarg);
+            drop_arg = std::string(optarg ? optarg : "");
             percent_loc = drop_arg.find('%');
             check(max_pdrop_.size() > 1 || max_drop_.size() > 1,
                   "values of maximum drops: -D<value> already "
@@ -369,7 +369,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case 'g': {
-            auto optarg_text = std::string(optarg);
+            std::string optarg_text(optarg ? optarg : "");
             if (optarg_text == "single") {
                 single_thread_mode_ = true;
             } else if (optarg_text == "multi") {
@@ -400,12 +400,12 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'J':
             check(num_subnet_list_files >= 1, "only one -J option can be specified");
             num_subnet_list_files++;
-            relay_addr_list_file_ = std::string(optarg);
+            relay_addr_list_file_ = std::string(optarg ? optarg : "");
             loadRelayAddr();
             break;
 
         case 'l':
-            localname_ = std::string(optarg);
+            localname_ = std::string(optarg ? optarg : "");
             initIsInterface();
             break;
 
@@ -432,7 +432,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'M':
             check(num_mac_list_files >= 1, "only one -M option can be specified");
             num_mac_list_files++;
-            mac_list_file_ = std::string(optarg);
+            mac_list_file_ = std::string(optarg ? optarg : "");
             loadMacs();
             break;
 
@@ -474,7 +474,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                    "-4 or -6 must be explicitly specified before -o is used.");
 
             // custom option (expected format: code,hexstring)
-            std::string opt_text = std::string(optarg);
+            std::string opt_text(optarg ? optarg : "");
             size_t comma_loc = opt_text.find(',');
             check(comma_loc == std::string::npos,
                   "-o option must provide option code, a comma and hexstring for"
@@ -596,7 +596,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case LONG_OPT_SCENARIO: {
-            auto optarg_text = std::string(optarg);
+            std::string optarg_text(optarg ? optarg : "");
             if (optarg_text == "basic") {
                 scenario_ = Scenario::BASIC;
             } else if (optarg_text == "avalanche") {
@@ -616,7 +616,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                   "-A must be explicitly specified before --or is used.");
 
             // custom option (expected format: encapsulation-level:code,hexstring)
-            std::string opt_text = std::string(optarg);
+            std::string opt_text(optarg ? optarg : "");
             size_t colon_loc = opt_text.find(':');
             size_t comma_loc = opt_text.find(',');
 
@@ -767,9 +767,9 @@ CommandOptions::initClientsNum() {
         // be able to detect negative values provided
         // by user. We would not detect negative values
         // if we casted directly to unsigned value.
-        long long clients_num = boost::lexical_cast<long long>(optarg);
+        long long clients_num = boost::lexical_cast<long long>(optarg ? optarg : "");
         check(clients_num < 0, errmsg);
-        clients_num_ = boost::lexical_cast<uint32_t>(optarg);
+        clients_num_ = boost::lexical_cast<uint32_t>(optarg ? optarg : "");
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(isc::InvalidParameter, errmsg);
     }
@@ -1106,7 +1106,7 @@ CommandOptions::check(bool condition, const std::string& errmsg) const {
 int
 CommandOptions::positiveInteger(const std::string& errmsg) const {
     try {
-        int value = boost::lexical_cast<int>(optarg);
+        int value = boost::lexical_cast<int>(optarg ? optarg : "");
         check(value <= 0, errmsg);
         return (value);
     } catch (const boost::bad_lexical_cast&) {
@@ -1117,7 +1117,7 @@ CommandOptions::positiveInteger(const std::string& errmsg) const {
 int
 CommandOptions::nonNegativeInteger(const std::string& errmsg) const {
     try {
-        int value = boost::lexical_cast<int>(optarg);
+        int value = boost::lexical_cast<int>(optarg ? optarg : "");
         check(value < 0, errmsg);
         return (value);
     } catch (const boost::bad_lexical_cast&) {
@@ -1127,7 +1127,7 @@ CommandOptions::nonNegativeInteger(const std::string& errmsg) const {
 
 std::string
 CommandOptions::nonEmptyString(const std::string& errmsg) const {
-    std::string sarg = optarg;
+    std::string sarg(optarg ? optarg : "");
     if (sarg.length() == 0) {
         isc_throw(isc::InvalidParameter, errmsg);
     }
@@ -1136,7 +1136,7 @@ CommandOptions::nonEmptyString(const std::string& errmsg) const {
 
 void
 CommandOptions::initLeaseType() {
-    std::string lease_type_arg = optarg;
+    std::string lease_type_arg(optarg ? optarg : "");
     lease_type_.fromCommandLine(lease_type_arg);
 }
 

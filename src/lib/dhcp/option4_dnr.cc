@@ -119,7 +119,11 @@ Option4Dnr::addDnrInstance(DnrInstance& dnr_instance) {
 
 const std::unordered_set<std::string> DnrInstance::FORBIDDEN_SVC_PARAMS = {"ipv4hint", "ipv6hint"};
 
-DnrInstance::DnrInstance(Option::Universe universe) : universe_(universe) {
+DnrInstance::DnrInstance(Option::Universe universe)
+    : universe_(universe), dnr_instance_data_length_(0), service_priority_(0),
+      adn_length_(0), addr_length_(0), svc_params_length_(0),
+      adn_only_mode_(true), dnr_instance_data_length_size_(0),
+      adn_length_size_(0), addr_length_size_(0), minimal_length_(0) {
     initMembers();
 }
 
@@ -128,8 +132,12 @@ DnrInstance::DnrInstance(Option::Universe universe,
                          const std::string& adn,
                          const DnrInstance::AddressContainer& ip_addresses,
                          const std::string& svc_params)
-    : universe_(universe), service_priority_(service_priority), ip_addresses_(ip_addresses),
-      svc_params_(svc_params) {
+    : universe_(universe), dnr_instance_data_length_(0),
+      service_priority_(service_priority), adn_length_(0),
+      addr_length_(0), ip_addresses_(ip_addresses), svc_params_length_(0),
+      adn_only_mode_(true), svc_params_(svc_params),
+      dnr_instance_data_length_size_(0), adn_length_size_(0),
+      addr_length_size_(0), minimal_length_(0) {
     initMembers();
     setAdn(adn);
     checkFields();
@@ -138,7 +146,11 @@ DnrInstance::DnrInstance(Option::Universe universe,
 DnrInstance::DnrInstance(Option::Universe universe,
                          const uint16_t service_priority,
                          const std::string& adn)
-    : universe_(universe), service_priority_(service_priority) {
+    : universe_(universe), dnr_instance_data_length_(0),
+      service_priority_(service_priority), adn_length_(0),
+      addr_length_(0), svc_params_length_(0), adn_only_mode_(true),
+      dnr_instance_data_length_size_(0), adn_length_size_(0),
+      addr_length_size_(0), minimal_length_(0) {
     initMembers();
     setAdn(adn);
 }

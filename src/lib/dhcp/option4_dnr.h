@@ -355,7 +355,7 @@ protected:
     uint16_t adn_length_;
 
     /// @brief Length of included IP addresses in octets.
-    uint16_t addr_length_ = 0;
+    uint16_t addr_length_;
 
     /// @brief Vector container holding one or more IP addresses.
     ///
@@ -366,13 +366,13 @@ protected:
     AddressContainer ip_addresses_;
 
     /// @brief Length of Service Parameters field in octets.
-    uint16_t svc_params_length_ = 0;
+    uint16_t svc_params_length_;
 
     /// @brief Flag stating whether ADN only mode is used or not.
     ///
     /// "Addr Length", "IP(v4/v6) Address(es)", and "Service Parameters (SvcParams)"
     /// fields are not present if the ADN-only mode is used.
-    bool adn_only_mode_ = true;
+    bool adn_only_mode_;
 
     /// @brief Service Parameters (SvcParams) (variable length).
     ///

@@ -820,7 +820,7 @@ private:
         /// @param tls_context server TLS context of this destination
         /// @param max_connections maximum number of concurrent connections
         /// allowed for in the list URL
-        Destination(Url url, TlsContextPtr tls_context, size_t max_connections)
+        Destination(Url const& url, TlsContextPtr tls_context, size_t max_connections)
             : url_(url), tls_context_(tls_context),
               max_connections_(max_connections), connections_(), queue_(),
               last_queue_warn_time_(min_date_time), last_queue_size_(0) {
@@ -990,7 +990,7 @@ private:
         /// to be growing it will emit a warning log.
         ///
         /// @param desc RequestDescriptor to queue.
-        void pushRequest(RequestDescriptor desc) {
+        void pushRequest(RequestDescriptor const& desc) {
             queue_.push(desc);
             size_t size = queue_.size();
             // If the queue size is larger than the threshold and growing, issue a
