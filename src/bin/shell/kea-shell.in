@@ -114,10 +114,7 @@ def shell_body():
         user = cmd_args.auth_user
         password = cmd_args.auth_password
         secret = b':'.join((user.encode('utf-8'), password.encode('utf-8')))
-        if sys.version_info[0] == 3:
-            params.auth = b64encode(secret).strip().decode('ascii')
-        else:
-            params.auth = b64encode(secret).strip().encode('ascii')
+        params.auth = b64encode(secret).strip().decode('ascii')
     params.timeout = cmd_args.timeout
     params.version = VERSION
 
