@@ -1203,7 +1203,9 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
   # Restore prefix.
   prefix="$saved_prefix"
 
-  shell_report='yes'
+  if test "x$enable_shell" != "xno"; then
+    shell_report='yes'
+  fi
 else
   PYTHON=no
 fi
