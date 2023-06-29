@@ -86,7 +86,7 @@ libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcp___la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcp___la_LIBADD += $(BOOST_LIBS)
 libkea_dhcp___la_LIBADD += $(CRYPTO_LIBS)
-libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 72:0:0
+libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 73:0:0
 libkea_dhcp___la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = README libdhcp++.dox

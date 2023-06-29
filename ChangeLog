@@ -1,3 +1,8 @@
+2166.	[build]		mgodzina
+	The library version numbers have been bumped up for the Kea 2.4.0
+	stable release.
+	(Gitlab #2939)
+
 2165.	[bug]		marcin
 	DHCP options configured in the host database are now returned
 	with their encapsulated options to the clients.
