@@ -947,10 +947,18 @@ TEST_F(HostReservationParserTest, dhcp6NullAddress) {
 }
 
 // This test verifies that the configuration parser throws an exception
+// when invalid prefix length type is specified.
+TEST_F(HostReservationParserTest, dhcp6InvalidPrefixLengthType) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:1::/abc\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
 // when invalid prefix length is specified.
 TEST_F(HostReservationParserTest, dhcp6InvalidPrefixLength) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
-        "\"prefixes\": [ \"2001:db8:1::/abc\" ] }";
+        "\"prefixes\": [ \"2001:db8:1::/32\" ] }";
     testInvalidConfig<HostReservationParser6>(config);
 }
 

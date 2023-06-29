@@ -308,9 +308,8 @@ Pool6::init(const Lease::Type& type,
                   << static_cast<int>(prefix_len) << ")");
     }
 
-    if (((type == Lease::TYPE_NA) || (type == Lease::TYPE_TA)) &&
-        (delegated_len != 128)) {
-        isc_throw(BadValue, "For IA or TA pools, delegated prefix length must"
+    if ((type != Lease::TYPE_PD) && (delegated_len != 128)) {
+        isc_throw(BadValue, "For NA or TA pools, delegated prefix length must"
                   << " be 128.");
     }
 
@@ -322,11 +321,13 @@ Pool6::init(const Lease::Type& type,
                   << static_cast<int>(delegated_len) << ")");
     }
 
-    IOAddress first_address = firstAddrInPrefix(prefix, prefix_len);
-    if (first_address != prefix) {
-        isc_throw(BadValue, "Invalid Pool6 address boundaries: " << prefix
-                  << " is not the first address in prefix: " << first_address
-                  << "/" << static_cast<uint32_t>(prefix_len));
+    if (prefix_len != 128) {
+        IOAddress first_address = firstAddrInPrefix(prefix, prefix_len);
+        if (first_address != prefix) {
+            isc_throw(BadValue, "Invalid Pool6 address boundaries: " << prefix
+                      << " is not the first address in prefix: " << first_address
+                      << "/" << static_cast<uint32_t>(prefix_len));
+        }
     }
 
     /// @todo: We should probably implement checks against weird addresses

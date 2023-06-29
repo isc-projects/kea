@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <asiolink/io_address.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
@@ -307,12 +308,27 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
                                       << "' is invalid");
                         }
 
-                        // Remove the  slash character and the prefix length
+                        if ((prefix_len == 0) || (prefix_len > 128)) {
+                            isc_throw(OutOfRange,
+                                      "'prefix-len' value must be in range of [1..128]");
+                        }
+
+                        // Remove the slash character and the prefix length
                         // from the parsed value.
                         prefix.erase(len_pos);
 
                         // Finally, set the reservation type.
                         resrv_type = IPv6Resrv::TYPE_PD;
+
+                        if (prefix_len != 128) {
+                            IOAddress addr(prefix);
+                            IOAddress first_address = firstAddrInPrefix(addr, prefix_len);
+                            if (first_address != addr) {
+                                isc_throw(BadValue, "Invalid lease address boundaries: " << addr
+                                          << " is not the first address in prefix: " << first_address
+                                          << "/" << static_cast<uint32_t>(prefix_len));
+                            }
+                        }
                     }
 
                     // Create a reservation for an address or prefix.
@@ -326,7 +342,6 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
                               << prefix_element->getPosition() << ")");
                 }
             }
-
 
         } else if (element.first == "client-classes") {
             try {

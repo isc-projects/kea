@@ -688,7 +688,7 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::\",\n"
         "        \"prefix-len\": 48,\n"
         "        \"type\": \"IA_PD\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
@@ -697,6 +697,22 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "    }\n"
         "}";
     exp_rsp = "Invalid declined state for PD prefix.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid prefix len for PD prefix.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"prefix-len\": 48,\n"
+        "        \"type\": \"IA_PD\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid Pool6 address boundaries: 2001:db8:1::1 is not the first address in prefix: 2001:db8:1::/48";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -2175,7 +2191,7 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::\",\n"
         "        \"prefix-len\": 48,\n"
         "        \"type\": \"IA_PD\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
@@ -2184,6 +2200,22 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "    }\n"
         "}";
     exp_rsp = "Invalid declined state for PD prefix.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid prefix len for PD prefix.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"prefix-len\": 48,\n"
+        "        \"type\": \"IA_PD\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid Pool6 address boundaries: 2001:db8:1::1 is not the first address in prefix: 2001:db8:1::/48";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -3178,7 +3210,7 @@ void Lease6CmdsTest::testLease6BulkApplyAddsOnlyBadParam() {
         "        \"leases\": ["
         "            {"
         "                \"subnet-id\": 66,\n"
-        "                \"ip-address\": \"2001:db8:1::123\",\n"
+        "                \"ip-address\": \"2001:db8:1::\",\n"
         "                \"prefix-len\": 48,\n"
         "                \"type\": \"IA_PD\",\n"
         "                \"duid\": \"11:11:11:11:11:11\",\n"
@@ -3189,6 +3221,26 @@ void Lease6CmdsTest::testLease6BulkApplyAddsOnlyBadParam() {
         "    }"
         "}";
     string exp_rsp = "Invalid declined state for PD prefix.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid prefix len for PD prefix.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::123\",\n"
+        "                \"prefix-len\": 48,\n"
+        "                \"type\": \"IA_PD\",\n"
+        "                \"duid\": \"11:11:11:11:11:11\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    exp_rsp = "Invalid Pool6 address boundaries: 2001:db8:1::123 is not the first address in prefix: 2001:db8:1::/48";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease was not inserted.
@@ -3259,7 +3311,7 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
         "            {"
         "                \"subnet-id\": 66,\n"
         "                \"ip-address\": \"2001:db8:1234:ab::\",\n"
-        "                \"prefix-len\": 56,\n"
+        "                \"prefix-len\": 64,\n"
         "                \"type\": \"IA_PD\",\n"
         "                \"duid\": \"77:77:77:77:77:77\",\n"
         "                \"iaid\": 1234,\n"
@@ -3269,6 +3321,26 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
         "    }"
         "}";
     string exp_rsp = "Invalid declined state for PD prefix.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid prefix len for PD prefix.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1234:ab::\",\n"
+        "                \"prefix-len\": 56,\n"
+        "                \"type\": \"IA_PD\",\n"
+        "                \"duid\": \"77:77:77:77:77:77\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    exp_rsp = "Invalid Pool6 address boundaries: 2001:db8:1234:ab:: is not the first address in prefix: 2001:db8:1234::/56";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease we inserted is stored.

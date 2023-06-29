@@ -4,9 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+
+#include <asiolink/io_address.h>
+#include <asiolink/addr_utilities.h>
 #include <cc/data.h>
 #include <dhcp/hwaddr.h>
-#include <asiolink/io_address.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_consistency.h>
@@ -381,6 +383,21 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
         }
         copied->set("comment", comment);
         ctx = copied;
+    }
+
+    // Check if the prefix length is sane
+    if (prefix_len == 0 || prefix_len > 128) {
+        isc_throw(BadValue, "Invalid prefix length: "
+                  << static_cast<unsigned>(prefix_len));
+    }
+
+    if (prefix_len != 128) {
+        IOAddress first_address = firstAddrInPrefix(addr, prefix_len);
+        if (first_address != addr) {
+            isc_throw(BadValue, "Invalid Pool6 address boundaries: " << addr
+                      << " is not the first address in prefix: " << first_address
+                      << "/" << static_cast<uint32_t>(prefix_len));
+        }
     }
 
     // Let's fabricate some data and we're ready to go.
