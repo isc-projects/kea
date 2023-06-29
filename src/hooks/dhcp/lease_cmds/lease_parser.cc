@@ -394,8 +394,8 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     if (prefix_len != 128) {
         IOAddress first_address = firstAddrInPrefix(addr, prefix_len);
         if (first_address != addr) {
-            isc_throw(BadValue, "Invalid Pool6 address boundaries: " << addr
-                      << " is not the first address in prefix: " << first_address
+            isc_throw(BadValue, "Prefix address: " << addr
+                      << " exceeds prefix/prefix-len pair: " << first_address
                       << "/" << static_cast<uint32_t>(prefix_len));
         }
     }

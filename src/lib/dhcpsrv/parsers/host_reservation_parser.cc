@@ -324,8 +324,8 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
                             IOAddress addr(prefix);
                             IOAddress first_address = firstAddrInPrefix(addr, prefix_len);
                             if (first_address != addr) {
-                                isc_throw(BadValue, "Invalid lease address boundaries: " << addr
-                                          << " is not the first address in prefix: " << first_address
+                                isc_throw(BadValue, "Prefix address: " << addr
+                                          << " exceeds prefix/prefix-len pair: " << first_address
                                           << "/" << static_cast<uint32_t>(prefix_len));
                             }
                         }

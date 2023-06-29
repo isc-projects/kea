@@ -712,7 +712,7 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "        \"iaid\": 1234\n"
         "    }\n"
         "}";
-    exp_rsp = "Invalid Pool6 address boundaries: 2001:db8:1::1 is not the first address in prefix: 2001:db8:1::/48";
+    exp_rsp = "Prefix address: 2001:db8:1::1 exceeds prefix/prefix-len pair: 2001:db8:1::/48";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -2215,7 +2215,7 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "        \"iaid\": 1234\n"
         "    }\n"
         "}";
-    exp_rsp = "Invalid Pool6 address boundaries: 2001:db8:1::1 is not the first address in prefix: 2001:db8:1::/48";
+    exp_rsp = "Prefix address: 2001:db8:1::1 exceeds prefix/prefix-len pair: 2001:db8:1::/48";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -3240,7 +3240,7 @@ void Lease6CmdsTest::testLease6BulkApplyAddsOnlyBadParam() {
         "        ]"
         "    }"
         "}";
-    exp_rsp = "Invalid Pool6 address boundaries: 2001:db8:1::123 is not the first address in prefix: 2001:db8:1::/48";
+    exp_rsp = "Prefix address: 2001:db8:1::123 exceeds prefix/prefix-len pair: 2001:db8:1::/48";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease was not inserted.
@@ -3340,7 +3340,7 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
         "        ]"
         "    }"
         "}";
-    exp_rsp = "Invalid Pool6 address boundaries: 2001:db8:1234:ab:: is not the first address in prefix: 2001:db8:1234::/56";
+    exp_rsp = "Prefix address: 2001:db8:1234:ab:: exceeds prefix/prefix-len pair: 2001:db8:1234::/56";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease we inserted is stored.
