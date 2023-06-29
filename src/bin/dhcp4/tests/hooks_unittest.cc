@@ -3273,9 +3273,13 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
         parseAnswer(status_code, answer);
         if (parameters.empty()) {
             EXPECT_EQ(0, status_code);
-            EXPECT_EQ(answer->str(), "{ \"arguments\": { \"hash\": \"C725E95F74A5BD2DC085B2F8A2877257"
-            "1BE04E99F127D3D78439264071A315B1\" }, \"result\": 0, \"text\": "
-            "\"Configuration successful.\" }");
+            string expected = "{ \"arguments\": { \"hash\": \"";
+            ConstElementPtr config =
+                CfgMgr::instance().getStagingCfg()->toElement();
+            expected += BaseCommandMgr::getHash(config);
+            expected += "\" }, \"result\": 0, \"text\": ";
+            expected += "\"Configuration successful.\" }";
+            EXPECT_EQ(answer->str(), expected);
         } else {
             EXPECT_EQ(1, status_code);
             if (parameters.find("fail-without-error") != string::npos) {

@@ -5674,10 +5674,13 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
         parseAnswer(status_code, answer);
         if (parameters.empty()) {
             EXPECT_EQ(0, status_code);
-
-            EXPECT_EQ(answer->str(), "{ \"arguments\": { \"hash\": \"A6695A043B32703BA06D981929076F1C"
-            "94DEC0CF414E45AF146CEF5B50DB3EAA\" }, \"result\": 0, \"text\": "
-            "\"Configuration successful.\" }");
+            string expected = "{ \"arguments\": { \"hash\": \"";
+            ConstElementPtr config =
+                CfgMgr::instance().getStagingCfg()->toElement();
+            expected += BaseCommandMgr::getHash(config);
+            expected += "\" }, \"result\": 0, \"text\": ";
+            expected += "\"Configuration successful.\" }";
+            EXPECT_EQ(answer->str(), expected);
         } else {
             EXPECT_EQ(1, status_code);
             if (parameters.find("fail-without-error") != string::npos) {
