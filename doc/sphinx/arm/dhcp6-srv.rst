@@ -7686,12 +7686,23 @@ MiNID.
 
 .. _dhcp6_allocation_strategies:
 
-Address Allocation Strategies in DHCPv6
-=======================================
+Allocation Strategies in DHCPv6
+===============================
 
 A DHCP server follows a complicated algorithm to select a DHCPv6 lease for a client.
 It prefers assigning specific addresses or delegated prefixes requested by the client
-and the ones for which the client has reservations. If the client requests no particular
+and the ones for which the client has reservations.
+
+When the client requests a specific delegated prefix, there are a few steps that
+:iscman:`kea-dhcp6` goes through to try to satisfy the request, in the following
+order:
+
+1. It searches for a lease that matches the requested prefix and prefix length.
+2. It searches for a lease that matches the prefix length.
+3. It searches for a lease with a larger address space (smaller prefix length).
+4. It searches for a lease with a smaller address space (larger prefix length).
+
+If the client requests no particular
 lease and has no reservations, or other clients are already using any requested leases, the server must
 find another available lease within the configured pools. A server function called
 an "allocator" is responsible in Kea for finding an available lease in such a case.

@@ -8040,7 +8040,9 @@ Address Allocation Strategies in DHCPv4
 
 A DHCP server follows a complicated algorithm to select an IPv4 address for a client.
 It prefers assigning specific addresses requested by the client and the addresses for
-which the client has reservations. If the client requests no particular address and
+which the client has reservations.
+
+If the client requests no particular address and
 has no reservations, or other clients are already using any requested addresses, the server must
 find another available address within the configured pools. A server function called
 an "allocator" is responsible in Kea for finding an available address in such a case.
