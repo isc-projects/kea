@@ -1,3 +1,8 @@
+2164.	[bug]		razvan
+	Added checks to catch invalid prefix/prefix-len combinations in
+	commands that create or update pools, leases, and reservations.
+	(Gitlab #2725)
+
 2163.	[build]		slawek
 	Dropped the Kea connector for Python 2.
 	(Gitlab #2467)
