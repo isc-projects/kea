@@ -2054,6 +2054,7 @@ GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_subnet.begin()));
 
     auto returned_host = *hosts_by_subnet.begin();
+    EXPECT_FALSE(returned_host->getCfgOption4()->isEncapsulated());
     ASSERT_NO_THROW(returned_host->encapsulateOptions());
     auto cfg_option = returned_host->getCfgOption4();
 

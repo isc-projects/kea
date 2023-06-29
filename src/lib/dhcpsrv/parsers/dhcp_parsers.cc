@@ -579,6 +579,12 @@ SubnetConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
                   "subnet configuration failed: " << ex.what());
     }
 
+    // We create subnet first and then parse the options straight into the subnet's
+    // CfgOption structure. Previously, we first parsed the options and then copied
+    // them into the CfgOption after creating the subnet but it had two issues. First,
+    // it cost performance. Second, copying options reset the isEncapsulated() flag.
+    // If the options have been encapsulated we want to preserve the flag to ensure
+    // they are not encapsulated several times.
     ConstElementPtr options_params = subnet->get("option-data");
     if (options_params) {
         auto opt_parser = createOptionDataListParser();
@@ -1136,6 +1142,12 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_,
                   << " (" << pd_pool_->getPosition() << ")");
     }
 
+    // We create subnet first and then parse the options straight into the subnet's
+    // CfgOption structure. Previously, we first parsed the options and then copied
+    // them into the CfgOption after creating the subnet but it had two issues. First,
+    // it cost performance. Second, copying options reset the isEncapsulated() flag.
+    // If the options have been encapsulated we want to preserve the flag to ensure
+    // they are not encapsulated several times.
     ConstElementPtr option_data = pd_pool_->get("option-data");
     if (option_data) {
         auto opts_parser = createOptionDataListParser();
