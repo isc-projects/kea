@@ -1354,8 +1354,8 @@ values of x and y, even though only 10.0.0.0 and 10.255.255.255 must be
 excluded according to RFC standards. The ``exclude-first-last-24`` configuration
 compatibility flag (:ref:`dhcp4-compatibility`) does this
 automatically, rather than requiring explicit configuration of many pools or
-reservations for fake hosts. When ``true``, it applies only to subnets
-with prefix lengths less than 24 bits; the default is ``false``.
+reservations for fake hosts. When ``true``, it applies only to subnets of
+24 prefix length or smaller i.e. larger address space; the default is ``false``.
 
 In this case, "exclude" means to skip these addresses in the free address pickup
 routine of the allocation engine; if a client explicitly requests or
@@ -8024,12 +8024,12 @@ and include incorrect Link Selection information.
       }
     }
 
-Exclude First Last Addresses in Subnets Bigger Than /24
--------------------------------------------------------
+Exclude First Last Addresses in /24 Subnets or Larger
+-----------------------------------------------------
 
 The ``exclude-first-last-24`` compatibility flag is described in
 :ref:`dhcp4-address-config` (when true .0 and .255 addresses are excluded
-from subnets with prefix length less than 24).
+from subnets with prefix length less than or equal to 24).
 
 .. _dhcp4_allocation_strategies:
 
