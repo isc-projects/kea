@@ -734,6 +734,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                 | pool_params ","
 
      pool_param ::= pool_entry
+               | pool_id
                | option_data_list
                | client_class
                | require_client_classes
@@ -742,6 +743,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                | unknown_map_entry
 
      pool_entry ::= "pool" ":" STRING
+
+     pool_id ::= "pool-id" ":" INTEGER
 
      user_context ::= "user-context" ":" map_value
 
