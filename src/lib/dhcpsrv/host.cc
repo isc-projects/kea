@@ -107,16 +107,6 @@ IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
                   << static_cast<int>(prefix_len)
                   << "' for reserved IPv6 address, expected 128");
     }
-    /* uncomment if strict prefix and prefix length is required. see #2943
-    else if ((type == TYPE_PD) && (prefix_len != 128)) {
-        IOAddress first_address = firstAddrInPrefix(prefix, prefix_len);
-        if (first_address != prefix) {
-            isc_throw(BadValue, "Invalid host address boundaries: " << prefix
-                      << " is not the first address in prefix: " << first_address
-                      << "/" << static_cast<uint32_t>(prefix_len));
-        }
-    }
-    */
 
     type_ = type;
     prefix_ = prefix;

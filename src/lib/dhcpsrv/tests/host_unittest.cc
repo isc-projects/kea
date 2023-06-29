@@ -86,14 +86,6 @@ TEST(IPv6ResrvTest, constructiorInvalidPrefixLength) {
     EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                IOAddress("2001:db8:1::"), 64),
                      isc::BadValue, expected);
-    /* uncomment if strict prefix and prefix length is required. see #2943
-    // Check for extra specified bits in prefix.
-    expected = "Invalid host address boundaries: 2001:db8:1:: is not the first "
-            "address in prefix: 2001:db8::/32";
-    EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                               IOAddress("2001:db8:1::"), 32),
-                     isc::BadValue, expected);
-    */
 }
 
 // This test verifies that it is possible to modify prefix and its
@@ -124,14 +116,6 @@ TEST(IPv6ResrvTest, setPrefix) {
     EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_PD,
                                IOAddress("2001:db8:1::"), 129),
                      isc::BadValue, expected);
-    /* uncomment if strict prefix and prefix length is required. see #2943
-    // Check for extra specified bits in prefix.
-    expected = "Invalid host address boundaries: 2001:db8:1:: is not the first "
-            "address in prefix: 2001:db8::/32";
-    EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_PD,
-                               IOAddress("2001:db8:1::"), 32),
-                     isc::BadValue, expected);
-    */
 }
 
 // This test checks that the equality operators work fine.

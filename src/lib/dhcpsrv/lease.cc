@@ -462,16 +462,6 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
         if (type != Lease::TYPE_PD) {
             isc_throw(BadValue, "prefixlen must be 128 for non prefix type");
         }
-        /* uncomment if strict prefix and prefix length is required. see #2943
-        else {
-            IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
-            if (first_address != addr) {
-                isc_throw(BadValue, "Invalid lease address boundaries: " << addr
-                          << " is not the first address in prefix: " << first_address
-                          << "/" << static_cast<uint32_t>(prefixlen));
-            }
-        }
-        */
     }
 
     cltt_ = time(NULL);
@@ -497,16 +487,6 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
         if (type != Lease::TYPE_PD) {
             isc_throw(BadValue, "prefixlen must be 128 for non prefix type");
         }
-        /* uncomment if strict prefix and prefix length is required. see #2943
-        else {
-            IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
-            if (first_address != addr) {
-                isc_throw(BadValue, "Invalid lease address boundaries: " << addr
-                          << " is not the first address in prefix: " << first_address
-                          << "/" << static_cast<uint32_t>(prefixlen));
-            }
-        }
-        */
     }
 
     cltt_ = time(NULL);

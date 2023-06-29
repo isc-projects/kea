@@ -657,22 +657,6 @@ TEST(Lease6Test, constructorDefault) {
                                              subnet_id, true, true, "", HWAddrPtr())),
                      BadValue, "DUID is mandatory for an IPv6 lease");
 
-    /* uncomment if strict prefix and prefix length is required. see #2943
-    // Lease6 must have a valid prefix and prefix length.
-    addr = IOAddress(ADDRESS[5]);
-    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
-                                             duid, iaid, 100, 200,
-                                             subnet_id, HWAddrPtr(), 16)),
-                     BadValue, "Invalid lease address boundaries: 8000::1 is not "
-                               "the first address in prefix: 8000::/16");
-
-    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
-                                             duid, iaid, 100, 200,
-                                             subnet_id, true, true, "", HWAddrPtr(), 16)),
-                     BadValue, "Invalid lease address boundaries: 8000::1 is not "
-                               "the first address in prefix: 8000::/16");
-    */
-
     // Lease6 must have a prefixlen set to 128 for non prefix type.
     addr = IOAddress(ADDRESS[4]);
     EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
