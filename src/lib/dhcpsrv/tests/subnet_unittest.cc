@@ -941,7 +941,7 @@ TEST(Subnet6Test, inRange) {
     EXPECT_EQ(4000, subnet.getValid().get());
 
     EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:0:ffff:ffff:ffff:ffff:ffff")));
-    EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::0")));
+    EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::")));
     EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::1")));
     EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::ffff:ffff:ffff:ffff")));
     EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:1:1::")));

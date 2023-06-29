@@ -464,7 +464,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
         } else {
             IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
             if (first_address != addr) {
-                isc_throw(BadValue, "Invalid Lease address boundaries: " << addr
+                isc_throw(BadValue, "Invalid lease address boundaries: " << addr
                           << " is not the first address in prefix: " << first_address
                           << "/" << static_cast<uint32_t>(prefixlen));
             }
@@ -496,7 +496,7 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
         } else {
             IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
             if (first_address != addr) {
-                isc_throw(BadValue, "Invalid Lease address boundaries: " << addr
+                isc_throw(BadValue, "Invalid lease address boundaries: " << addr
                           << " is not the first address in prefix: " << first_address
                           << "/" << static_cast<uint32_t>(prefixlen));
             }

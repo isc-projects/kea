@@ -82,10 +82,16 @@ TEST(IPv6ResrvTest, constructiorInvalidPrefixLength) {
     EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_PD,
                            IOAddress("2001:db8:1::"), 244),
                      isc::BadValue, expected);
-    expected = "invalid prefix length '64' for reserved IPv6 address, ";
-    expected += "expected 128";
+    expected = "invalid prefix length '64' for reserved IPv6 address, expected 128";
     EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                IOAddress("2001:db8:1::"), 64),
+                     isc::BadValue, expected);
+
+    // Check for extra specified bits in prefix.
+    expected = "Invalid host address boundaries: 2001:db8:1:: is not the first "
+            "address in prefix: 2001:db8::/32";
+    EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                               IOAddress("2001:db8:1::"), 32),
                      isc::BadValue, expected);
 }
 
@@ -116,6 +122,13 @@ TEST(IPv6ResrvTest, setPrefix) {
     expected = "invalid prefix length '129' for new IPv6 reservation";
     EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_PD,
                                IOAddress("2001:db8:1::"), 129),
+                     isc::BadValue, expected);
+
+    // Check for extra specified bits in prefix.
+    expected = "Invalid host address boundaries: 2001:db8:1:: is not the first "
+            "address in prefix: 2001:db8::/32";
+    EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_PD,
+                               IOAddress("2001:db8:1::"), 32),
                      isc::BadValue, expected);
 }
 

@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/addr_utilities.h>
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcp/dhcp6.h>
@@ -1635,7 +1636,8 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     ASSERT_TRUE(hdsptr_);
 
     HostPtr host;
-    IOAddress current_address("2001:db8::0");
+    IOAddress current_address("2001:db8::");
+    ASSERT_LT(subnets, std::numeric_limits<uint16_t>::max()) << "Too many subnets. Broken test?";
     for (int i = 0; i < subnets; ++i) {
         // Last boolean value set to false indicates that the same identifier
         // must be used for each generated host.
@@ -1650,7 +1652,7 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
 
         // Increase address to make sure we don't assign the same address
         // in different subnets.
-        current_address = IOAddress::increase(current_address);
+        current_address = offsetAddress(current_address, (uint128_t(1) << 80));
     }
 
     // Check that the reservations can be retrieved from each subnet separately.
@@ -1683,13 +1685,13 @@ GenericHostDataSourceTest::testGetByIPv6(Host::IdentifierType id, bool prefix) {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
-    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1",
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8:1::",
                                                         id, prefix, "key##1");
-    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2",
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8:2::",
                                                         id, prefix, "key##2");
-    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3",
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8:3::",
                                                         id, prefix, "key##3");
-    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4",
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8:4::",
                                                         id, prefix, "key##4");
 
     // ... and add them to the data source.
@@ -1702,10 +1704,10 @@ GenericHostDataSourceTest::testGetByIPv6(Host::IdentifierType id, bool prefix) {
     uint8_t len = prefix ? 64 : 128;
 
     // And then try to retrieve them back.
-    ConstHostPtr from_hds1 = hdsptr_->get6(IOAddress("2001:db8::1"), len);
-    ConstHostPtr from_hds2 = hdsptr_->get6(IOAddress("2001:db8::2"), len);
-    ConstHostPtr from_hds3 = hdsptr_->get6(IOAddress("2001:db8::3"), len);
-    ConstHostPtr from_hds4 = hdsptr_->get6(IOAddress("2001:db8::4"), len);
+    ConstHostPtr from_hds1 = hdsptr_->get6(IOAddress("2001:db8:1::"), len);
+    ConstHostPtr from_hds2 = hdsptr_->get6(IOAddress("2001:db8:2::"), len);
+    ConstHostPtr from_hds3 = hdsptr_->get6(IOAddress("2001:db8:3::"), len);
+    ConstHostPtr from_hds4 = hdsptr_->get6(IOAddress("2001:db8:4::"), len);
 
     // Make sure we got something back.
     ASSERT_TRUE(from_hds1);
@@ -1772,7 +1774,7 @@ GenericHostDataSourceTest::testAddDuplicate6WithSameDUID() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_DUID, true);
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -1787,7 +1789,7 @@ GenericHostDataSourceTest::testAddDuplicate6WithSameHWAddr() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_HWADDR, true);
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -1802,14 +1804,14 @@ GenericHostDataSourceTest::testAddDuplicateIPv6() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservation.
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_HWADDR, true);
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
     // Create a host with a different identifier but the same IPv6 address. An attempt
     // to create the reservation for the same IPv6 address should fail.
-    host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
+    host = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_HWADDR, true);
     EXPECT_THROW(hdsptr_->add(host), DuplicateEntry);
 }
 
@@ -1820,8 +1822,8 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
     ASSERT_TRUE(hdsptr_->setIPReservationsUnique(false));
 
     // Create a host reservations.
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, true);
-    addIPv6Address(host, "2001:db8::2");
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_HWADDR, true, true);
+    addIPv6Address(host, "2001:db8:2::");
     auto host_id = host->getHostId();
     auto subnet_id = host->getIPv6SubnetID();
 
@@ -1830,8 +1832,8 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
 
     // Then try to add it again, it should throw an exception because the
     // HWADDR is the same.
-    host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, false);
-    addIPv6Address(host, "2001:db8::2");
+    host = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_HWADDR, true, false);
+    addIPv6Address(host, "2001:db8:2::");
     host->setHostId(++host_id);
     host->setIPv6SubnetID(subnet_id);
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
@@ -1840,21 +1842,21 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
     // This update should succeed because we permitted to create
     // multiple IP reservations for the same IP address but different
     // identifier.
-    host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true, true);
+    host = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_HWADDR, true, true);
     host->setHostId(++host_id);
     host->setIPv6SubnetID(subnet_id);
     ASSERT_NO_THROW(hdsptr_->add(host));
 
     ConstHostCollection returned;
-    ASSERT_NO_THROW(returned = hdsptr_->getAll6(host->getIPv6SubnetID(), IOAddress("2001:db8::1")));
+    ASSERT_NO_THROW(returned = hdsptr_->getAll6(host->getIPv6SubnetID(), IOAddress("2001:db8:1::")));
     EXPECT_EQ(2, returned.size());
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
 
     // Let's now try to delete the hosts by subnet_id and address.
     bool deleted = false;
-    ASSERT_NO_THROW(deleted = hdsptr_->del(subnet_id, IOAddress("2001:db8::1")));
+    ASSERT_NO_THROW(deleted = hdsptr_->del(subnet_id, IOAddress("2001:db8:1::")));
     ASSERT_TRUE(deleted);
-    ASSERT_NO_THROW(returned = hdsptr_->getAll6(host->getIPv6SubnetID(), IOAddress("2001:db8::1")));
+    ASSERT_NO_THROW(returned = hdsptr_->getAll6(host->getIPv6SubnetID(), IOAddress("2001:db8:1::")));
     EXPECT_TRUE(returned.empty());
 }
 
@@ -1945,7 +1947,7 @@ GenericHostDataSourceTest::testAddr6AndPrefix() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations with prefix reservation (prefix = true)
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_DUID, true);
 
     // Create IPv6 reservation (for an address) and add it to the host
     IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), 128);
@@ -4196,7 +4198,7 @@ HostMgrTest::testGet6ByPrefix(BaseHostDataSource& data_source1,
     addHost6(data_source1, duids_[0], SubnetID(2), IOAddress("2001:db8:1::"), 64);
 
     // Add another host having a reservation for prefix 2001:db8:1:0:6::/72.
-    addHost6(data_source2, duids_[1], SubnetID(3), IOAddress("2001:db8:1:0:6::"), 72);
+    addHost6(data_source2, duids_[1], SubnetID(3), IOAddress("2001:db8:1:0:6::"), 80);
 
     CfgMgr::instance().commit();
 
@@ -4212,10 +4214,10 @@ HostMgrTest::testGet6ByPrefix(BaseHostDataSource& data_source1,
     EXPECT_FALSE(host);
 
     // Retrieve second reservation.
-    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 72);
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 80);
     ASSERT_TRUE(host);
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                               IOAddress("2001:db8:1:0:6::"), 72)));
+                                               IOAddress("2001:db8:1:0:6::"), 80)));
 
     // Make sure the second reservation is not retrieved when the prefix
     // length is incorrect.
@@ -4236,11 +4238,11 @@ HostMgrTest::testGet6ByPrefix(BaseHostDataSource& data_source1,
         EXPECT_FALSE(host);
     }
 
-    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 72, HostMgrOperationTarget::PRIMARY_SOURCE);
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 80, HostMgrOperationTarget::PRIMARY_SOURCE);
     if (is_second_source_primary) {
         EXPECT_TRUE(host);
         EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                         IOAddress("2001:db8:1:0:6::"), 72)));
+                                         IOAddress("2001:db8:1:0:6::"), 80)));
     } else {
         EXPECT_FALSE(host);
     }
@@ -4255,17 +4257,17 @@ HostMgrTest::testGet6ByPrefix(BaseHostDataSource& data_source1,
         EXPECT_FALSE(host);
     }
 
-    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 72, HostMgrOperationTarget::ALTERNATE_SOURCES);
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 80, HostMgrOperationTarget::ALTERNATE_SOURCES);
     if (!is_second_source_primary) {
         EXPECT_TRUE(host);
         EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                         IOAddress("2001:db8:1:0:6::"), 72)));
+                                         IOAddress("2001:db8:1:0:6::"), 80)));
     } else {
         EXPECT_FALSE(host);
     }
 
     // Select hosts for an unspecified source.
-    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 72, HostMgrOperationTarget::UNSPECIFIED_SOURCE);
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 80, HostMgrOperationTarget::UNSPECIFIED_SOURCE);
     EXPECT_FALSE(host);
 }
 

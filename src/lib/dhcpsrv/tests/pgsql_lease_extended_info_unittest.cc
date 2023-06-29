@@ -38,7 +38,7 @@ const vector<string> ADDRESS4 = {
 
 /// @brief IPv6 addresses used in the tests.
 const vector<string> ADDRESS6 = {
-    "2001:db8::0", "2001:db8::1", "2001:db8::2", "2001:db8::3",
+    "2001:db8::", "2001:db8::1", "2001:db8::2", "2001:db8::3",
     "2001:db8::4", "2001:db8::5", "2001:db8::6", "2001:db8::7"
 };
 
