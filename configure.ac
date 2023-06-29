@@ -1152,10 +1152,19 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
     prefix=$ac_default_prefix
   fi
 
-  # If kea-shell is enabled, we really need python 3.x.
+  # If generate_docs is enabled, we really need python. 2.7 or anything newer will do.
+  # We try to find 3.x first. If not found, we can do with 2.7.
   m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
-                    [python3 python])
-  AM_PATH_PYTHON([3.0])
+                    [python3 python python2])
+  AM_PATH_PYTHON([2.7])
+  
+  # If kea-shell is enabled, we really need python3
+  if test "x$enable_shell" != "xno"; then
+    major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
+    if test "x$major" != "x3"; then
+      AC_MSG_ERROR("kea-shell does not support detected python version $PYTHON_VERSION")
+    fi
+  fi
 
   # Determine if the --with-site-packages flag was provided.
   AC_ARG_WITH(site-packages,
@@ -1216,7 +1225,10 @@ if test "x${CRYPTO_NAME}" = "xBotan" && test "x$BOTAN_BOOST" = "xyes"; then
 fi
 
 # Decide if the shell TLS test can work.
-ca_tls_test="$tls_support"
+ca_tls_test=no
+if test "x$enable_shell" != "xno"; then
+  ca_tls_test="$tls_support"
+fi
 AM_CONDITIONAL(CA_TLS_TEST, test x$ca_tls_test != xno)
 
 AC_ARG_WITH([sphinx],
