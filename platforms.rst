@@ -22,8 +22,8 @@ and FreeBSD systems. Kea-|release| builds have been tested on:
 
 * Alpine — 3.15, 3.16, 3.17
 * CentOS — 7
-* Debian — 10, 11
-* Fedora — 36
+* Debian — 10, 11, 12
+* Fedora — 36, 37, 38
 * FreeBSD — 12, 13
 * RHEL — 8, 9
 * Ubuntu — 18.04, 20.04, 22.04
