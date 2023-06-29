@@ -737,9 +737,95 @@ A client class definition can contain the following properties:
    ``max-preferred-lifetime`` are not mandatory and configure the preferred
    lifetime fields for this client class. It is used in DHCPv6 only.
 
-A valid configuration contains either the ``test`` or ``template-test``
-parameters, or neither, but not both. The ``template-test`` parameter also indicates
-if the class is a template class. If both are provided, the configuration is rejected.
+
+.. note::
+
+   ``test`` and ``template-test`` are mutually exclusive in a client class
+   definition. Use either one, or neither, but not both. If both are provided,
+   the configuration is rejected.
+
+In the following example, the class named ``Client_foo`` is defined. It is
+comprised of all clients whose client IDs (option 61) start with the string
+``foo``. Members of this class will be given 192.0.2.1 and 192.0.2.2 as their
+domain name servers.
+
+::
+
+   "Dhcp4": {
+       "client-classes": [
+           {
+               "name": "Client_foo",
+               "test": "substring(option[61].hex,0,3) == 'foo'",
+               "option-data": [
+                   {
+                       "name": "domain-name-servers",
+                       "code": 6,
+                       "space": "dhcp4",
+                       "csv-format": true,
+                       "data": "192.0.2.1, 192.0.2.2"
+                   }
+               ]
+           },
+           ...
+       ],
+       ...
+   }
+
+The next example shows a client class being defined for use by the DHCPv6
+server. In it the class named "Client_enterprise" is defined. It is
+comprised of all clients whose client identifiers start with the given
+hex string (which would indicate a DUID based on an enterprise ID of
+``0x0002AABBCCDD``). Members of this class will be given 2001:db8:0::1 and
+2001:db8:2::1 as their domain name servers.
+
+::
+
+   "Dhcp6": {
+       "client-classes": [
+           {
+               "name": "Client_enterprise",
+               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
+               "option-data": [
+                   {
+                       "name": "dns-servers",
+                       "code": 23,
+                       "space": "dhcp6",
+                       "csv-format": true,
+                       "data": "2001:db8:0::1, 2001:db8:2::1"
+                   }
+               ]
+           },
+           ...
+       ],
+       ...
+   }
+
+It is also possible to have both left and right operands of the evaluated
+expression processed at runtime. Expressions related to packets can appear in
+the expression as many times as needed; there is no limit. However, each token
+has a small impact on performance and excessively complex expressions may cause a
+bottleneck.
+
+::
+
+   "Dhcp4": {
+       "client-classes": [
+           {
+               "name": "Infrastructure",
+               "test": "option[82].option[2].hex == pkt4.mac",
+               ...
+           },
+           ...
+       ],
+       ...
+   }
+
+.. _template-classes:
+
+Template Classes
+----------------
+
+The ``template-test`` parameter indicates that the class is a template class.
 
 ::
 
@@ -869,81 +955,6 @@ is not mandatory that the flag be set to ``true``.
        ...
    }
 
-In the following example, the class named ``Client_foo`` is defined. It is
-comprised of all clients whose client IDs (option 61) start with the string
-``foo``. Members of this class will be given 192.0.2.1 and 192.0.2.2 as their
-domain name servers.
-
-::
-
-   "Dhcp4": {
-       "client-classes": [
-           {
-               "name": "Client_foo",
-               "test": "substring(option[61].hex,0,3) == 'foo'",
-               "option-data": [
-                   {
-                       "name": "domain-name-servers",
-                       "code": 6,
-                       "space": "dhcp4",
-                       "csv-format": true,
-                       "data": "192.0.2.1, 192.0.2.2"
-                   }
-               ]
-           },
-           ...
-       ],
-       ...
-   }
-
-The next example shows a client class being defined for use by the DHCPv6
-server. In it the class named "Client_enterprise" is defined. It is
-comprised of all clients whose client identifiers start with the given
-hex string (which would indicate a DUID based on an enterprise ID of
-``0x0002AABBCCDD``). Members of this class will be given 2001:db8:0::1 and
-2001:db8:2::1 as their domain name servers.
-
-::
-
-   "Dhcp6": {
-       "client-classes": [
-           {
-               "name": "Client_enterprise",
-               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
-               "option-data": [
-                   {
-                       "name": "dns-servers",
-                       "code": 23,
-                       "space": "dhcp6",
-                       "csv-format": true,
-                       "data": "2001:db8:0::1, 2001:db8:2::1"
-                   }
-               ]
-           },
-           ...
-       ],
-       ...
-   }
-
-It is also possible to have both left and right operands of the evaluated
-expression processed at runtime. Expressions related to packets can appear in
-the expression as many times as needed; there is no limit. However, each token
-has a small impact on performance and excessively complex expressions may cause a
-bottleneck.
-
-::
-
-   "Dhcp4": {
-       "client-classes": [
-           {
-               "name": "Infrastructure",
-               "test": "option[82].option[2].hex == pkt4.mac",
-               ...
-           },
-           ...
-       ],
-       ...
-   }
 
 .. _classification-using-host-reservations:
 
