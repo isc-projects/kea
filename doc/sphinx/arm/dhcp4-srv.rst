@@ -5921,7 +5921,9 @@ mechanism.
 
 The following example demonstrates this concept. It indicates a single IPv4 subnet
 and all clients will get an address from it. However, only known clients (those that
-have reservations) will get their default router configured.
+have reservations) will get their default router configured. Empty reservations
+i.e. reservations that only have the identification criterion, can be
+specifically useful in this regard of making the clients known.
 
 ::
 
