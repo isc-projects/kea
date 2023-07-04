@@ -321,7 +321,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE address = $1" },
+      "WHERE address = cast($1 as inet)" },
 
     // GET_LEASE6_DUID_IAID
     { 3, { OID_BYTEA, OID_INT8, OID_INT2 },
@@ -3811,12 +3811,6 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
 }
 
 size_t
-PgSqlLeaseMgr::buildExtendedInfoTables6(bool /* update */, bool /* current */) {
-    isc_throw(isc::NotImplemented,
-              "PgSqlLeaseMgr::buildExtendedInfoTables6 not implemented");
-}
-
-size_t
 PgSqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
     auto check = CfgMgr::instance().getCurrentCfg()->
         getConsistency()->getExtendedInfoSanityCheck();
@@ -3840,10 +3834,7 @@ PgSqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
         PsqlBindArray bind_array;
 
         // Bind start address.
-        std::string start_addr_str = "0";
-        if (!start_addr.isV6Zero()) {
-            start_addr_str = start_addr.toText();
-        }
+        std::string start_addr_str = start_addr.toText();
         bind_array.add(start_addr_str);
 
         // Bind page size value.

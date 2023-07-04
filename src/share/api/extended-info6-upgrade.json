@@ -1,6 +1,6 @@
 {
     "access": "write",
-    "avail": "2.3.9",
+    "avail": "2.5.0",
     "brief": [
         "This command sanitizes extended info of all IPv6 leases and rebuilds when they are enabled relay and remote ID tables in the SQL lease database."
     ],

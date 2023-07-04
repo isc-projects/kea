@@ -1131,14 +1131,6 @@ public:
     /// @return The number of updates in the database.
     virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) override;
 
-    /// @brief Build extended info v6 tables.
-    ///
-    /// @param update Update extended info in database.
-    /// @param current specify whether to use current (true) or staging
-    /// (false) config.
-    /// @return The number of updates in the database or 0.
-    virtual size_t buildExtendedInfoTables6(bool update, bool current) override;
-
     /// @brief Upgrade extended info (v6).
     ///
     /// All leases with a not null user context.

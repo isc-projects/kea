@@ -3458,16 +3458,6 @@ Memfile_LeaseMgr::buildExtendedInfoTables6() {
 }
 
 size_t
-Memfile_LeaseMgr::buildExtendedInfoTables6(bool update, bool current) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (buildExtendedInfoTables6Internal(update, current));
-    } else {
-        return (buildExtendedInfoTables6Internal(update, current));
-    }
-}
-
-size_t
 Memfile_LeaseMgr::upgradeExtendedInfo6(const LeasePageSize& /* page_size */) {
     return (0);
 }

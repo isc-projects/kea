@@ -4540,12 +4540,15 @@ MySqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         memset(inbind, 0, sizeof(inbind));
 
         // Bind the lease address.
-        std::string addr_data = addr.toText();
-        unsigned long addr_size = addr_data.size();
-        inbind[0].buffer_type = MYSQL_TYPE_STRING;
-        inbind[0].buffer = const_cast<char*>(addr_data.c_str());
-        inbind[0].buffer_length = addr_size;
-        inbind[0].length = &addr_size;
+        std::vector<uint8_t>addr_bytes = addr.toBytes();
+        unsigned long addr_length = addr_bytes.size();
+        if (addr_length != 16) {
+            isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
+        }
+        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+        inbind[0].buffer = reinterpret_cast<char*>(&addr_bytes[0]);
+        inbind[0].buffer_length = addr_length;
+        inbind[0].length = &addr_length;
 
         // Get the lease.
         Lease6Ptr lease;
@@ -4706,12 +4709,15 @@ MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         memset(inbind, 0, sizeof(inbind));
 
         // Bind the lease address.
-        std::string addr_data = addr.toText();
-        unsigned long addr_size = addr_data.size();
-        inbind[0].buffer_type = MYSQL_TYPE_STRING;
-        inbind[0].buffer = const_cast<char*>(addr_data.c_str());
-        inbind[0].buffer_length = addr_size;
-        inbind[0].length = &addr_size;
+        std::vector<uint8_t>addr_bytes = addr.toBytes();
+        unsigned long addr_length = addr_bytes.size();
+        if (addr_length != 16) {
+            isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
+        }
+        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+        inbind[0].buffer = reinterpret_cast<char*>(&addr_bytes[0]);
+        inbind[0].buffer_length = addr_length;
+        inbind[0].length = &addr_length;
 
         // Get the lease.
         Lease6Ptr lease;
@@ -4809,12 +4815,6 @@ MySqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
 }
 
 size_t
-MySqlLeaseMgr::buildExtendedInfoTables6(bool /* update */, bool /* current */) {
-    isc_throw(isc::NotImplemented,
-              "MySqlLeaseMgr::buildExtendedInfoTables6 not implemented");
-}
-
-size_t
 MySqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
     auto check = CfgMgr::instance().getCurrentCfg()->
         getConsistency()->getExtendedInfoSanityCheck();
@@ -4839,14 +4839,15 @@ MySqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
         memset(inbind, 0, sizeof(inbind));
 
         // Bind start address.
-        std::string start_addr_str = "";
-        if (!start_addr.isV6Zero()) {
-            start_addr_str = start_addr.toText();
+        std::vector<uint8_t>start_addr_bytes = start_addr.toBytes();
+        if (start_addr_bytes.size() != 16) {
+            isc_throw(DbOperationError, "start address is not 16 bytes long");
         }
-        unsigned long start_addr_size = start_addr_str.size();
-        inbind[0].buffer_type = MYSQL_TYPE_STRING;
-        inbind[0].buffer = const_cast<char*>(start_addr_str.c_str());
-        inbind[0].buffer_length = start_addr_size;
+
+        unsigned long start_addr_size = 16;
+        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+        inbind[0].buffer = reinterpret_cast<char*>(&start_addr_bytes[0]);
+        inbind[0].buffer_length = 16;
         inbind[0].length = &start_addr_size;
 
         // Bind page size value.

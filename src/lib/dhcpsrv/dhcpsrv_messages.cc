@@ -196,9 +196,6 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_START_TRANSACTION = "DHCPSRV_MYSQ
 extern const isc::log::MessageID DHCPSRV_MYSQL_TLS_CIPHER = "DHCPSRV_MYSQL_TLS_CIPHER";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPDATE_ADDR4 = "DHCPSRV_MYSQL_UPDATE_ADDR4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPDATE_ADDR6 = "DHCPSRV_MYSQL_UPDATE_ADDR6";
-extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6 = "DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6";
-extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_ERROR = "DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_ERROR";
-extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_PAGE = "DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_PAGE";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4 = "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_ERROR = "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_ERROR";
 extern const isc::log::MessageID DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_PAGE = "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_PAGE";
@@ -259,9 +256,6 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_START_TRANSACTION = "DHCPSRV_PGSQ
 extern const isc::log::MessageID DHCPSRV_PGSQL_TLS_SUPPORT = "DHCPSRV_PGSQL_TLS_SUPPORT";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPDATE_ADDR4 = "DHCPSRV_PGSQL_UPDATE_ADDR4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPDATE_ADDR6 = "DHCPSRV_PGSQL_UPDATE_ADDR6";
-extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6 = "DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6";
-extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_ERROR = "DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_ERROR";
-extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_PAGE = "DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_PAGE";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4 = "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR = "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR";
 extern const isc::log::MessageID DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE = "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE";
@@ -486,9 +480,6 @@ const char* values[] = {
     "DHCPSRV_MYSQL_TLS_CIPHER", "TLS cipher: %1",
     "DHCPSRV_MYSQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_MYSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
-    "DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6", "upgrading IPv6 leases done in %1 pages with %2 updated leases",
-    "DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_ERROR", "upgrading binary address for IPv6 lease at %1 failed with %2",
-    "DHCPSRV_MYSQL_UPGRADE_BINARY_ADDRESS6_PAGE", "upgrading IPv6 lease binary addresses at page %1 starting at %2 (updated %3)",
     "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4", "upgrading IPv4 leases done in %1 pages with %2 updated leases",
     "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_ERROR", "upgrading extending info for IPv4 lease at %1 failed with %2",
     "DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_PAGE", "upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)",
@@ -549,9 +540,6 @@ const char* values[] = {
     "DHCPSRV_PGSQL_TLS_SUPPORT", "Attempt to configure TLS: %1",
     "DHCPSRV_PGSQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "DHCPSRV_PGSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
-    "DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6", "upgrading IPv6 leases done in %1 pages with %2 updated leases",
-    "DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_ERROR", "upgrading binary address for IPv6 lease at %1 failed with %2",
-    "DHCPSRV_PGSQL_UPGRADE_BINARY_ADDRESS6_PAGE", "upgrading IPv6 lease binary addresses at page %1 starting at %2 (updated %3)",
     "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4", "upgrading IPv4 leases done in %1 pages with %2 updated leases",
     "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR", "upgrading extending info for IPv4 lease at %1 failed with %2",
     "DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE", "upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)",

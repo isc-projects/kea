@@ -211,9 +211,9 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Check for extended info tables.
     const char* EX_INFO = "extended-info-tables=true";
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, EX_INFO)),
-        NotImplemented);
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, EX_INFO)));
+    LeaseMgrFactory::destroy();
 
     // Tidy up after the test
     destroyPgSQLSchema();
