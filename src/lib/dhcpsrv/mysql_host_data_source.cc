@@ -1027,7 +1027,7 @@ private:
                     option = def->optionFactory(universe_, code_, buf.begin(),
                                                 value_null_ == MLM_FALSE ? buf.end() :
                                                 buf.begin());
-                 } else {
+                } else {
                     // Spit the value specified in comma separated values
                     // format.
                     std::vector<std::string> split_vec;
@@ -1788,9 +1788,6 @@ private:
 
     /// @brief Binary address data.
     std::vector<uint8_t> addr6_;
-
-    /// @brief Binary address buffer.
-    uint8_t addr6_buffer_[isc::asiolink::V6ADDRESS_LEN];
 
     /// @brief Binary address length.
     unsigned long addr6_length_;
