@@ -576,56 +576,58 @@ PgSqlTaggedStatement tagged_statements[] = {
       "DELETE FROM lease6_remote_id" },
 
     // DELETE_RELAY_ID6
-    { 1, { OID_BYTEA },
+    { 1, { OID_VARCHAR },
       "delete_relay_id6",
-      "DELETE FROM lease6_relay_id WHERE lease_addr = $1" },
+      "DELETE FROM lease6_relay_id WHERE lease_addr = cast($1 as inet)" },
 
     // DELETE_REMOTE_ID6
-    { 1, { OID_BYTEA },
+    { 1, { OID_VARCHAR },
       "delete_remote_id6",
-      "DELETE FROM lease6_remote_id WHERE lease_addr = $1" },
+      "DELETE FROM lease6_remote_id WHERE lease_addr = cast($1 as inet)" },
 
     // ADD_RELAY_ID6
-    { 2, { OID_BYTEA, OID_BYTEA },
+    { 2, { OID_BYTEA, OID_VARCHAR },
       "add_relay_id6",
       "INSERT INTO lease6_relay_id(relay_id, lease_addr) "
-      "VALUES ($1, $2)" },
+      "VALUES ($1, cast($2 as inet))" },
 
     // ADD_REMOTE_ID6
-    { 2, { OID_BYTEA, OID_BYTEA },
+    { 2, { OID_BYTEA, OID_VARCHAR },
       "add_remote_id6",
       "INSERT INTO lease6_remote_id(remote_id, lease_addr) "
-      "VALUES ($1, $2)" },
+      "VALUES ($1, cast($2 as inet))" },
 
     // GET_RELAY_ID6
-    { 3, { OID_BYTEA, OID_BYTEA, OID_INT8 },
+    { 3, { OID_BYTEA, OID_VARCHAR, OID_INT8 },
       "get_relay_id6",
-      "SELECT lease_addr FROM lease6_relay_id "
-      "WHERE relay_id = $1 AND lease_addr > $2 "
+      "SELECT host(lease_addr) FROM lease6_relay_id "
+      "WHERE relay_id = $1 AND lease_addr > cast($2 as inet) "
       "ORDER BY lease_addr "
       "LIMIT $3" },
 
     // GET_REMOTE_ID6
-    { 3, { OID_BYTEA, OID_BYTEA, OID_INT8 },
+    { 3, { OID_BYTEA, OID_VARCHAR, OID_INT8 },
       "get_remote_id6",
-      "SELECT lease_addr FROM lease6_remote_id "
-      "WHERE remote_id = $1 AND lease_addr > $2 "
+      "SELECT host(lease_addr) FROM lease6_remote_id "
+      "WHERE remote_id = $1 AND lease_addr > cast($2 as inet) "
       "ORDER BY lease_addr "
       "LIMIT $3" },
 
     // GET_RELAY_ID6_LINK
-    { 4, { OID_BYTEA, OID_BYTEA, OID_BYTEA, OID_INT8 },
+    { 4, { OID_BYTEA, OID_VARCHAR, OID_VARCHAR, OID_INT8 },
       "get_relay_id6_link",
-      "SELECT lease_addr FROM lease6_relay_id "
-      "WHERE relay_id = $1 AND lease_addr BETWEEN $2 and $3 "
+      "SELECT host(lease_addr) FROM lease6_relay_id "
+      "WHERE relay_id = $1 AND lease_addr "
+        "BETWEEN cast($2 as inet) and cast($3 as inet) "
       "ORDER BY lease_addr "
       "LIMIT $4" },
 
     // GET_REMOTE_ID6_LINK
-    { 4, { OID_BYTEA, OID_BYTEA, OID_BYTEA, OID_INT8 },
+    { 4, { OID_BYTEA, OID_VARCHAR, OID_VARCHAR, OID_INT8 },
       "get_remote_id6_link",
-      "SELECT lease_addr FROM lease6_remote_id "
-      "WHERE remote_id = $1 AND lease_addr BETWEEN $2 and $3 "
+      "SELECT host(lease_addr) FROM lease6_remote_id "
+      "WHERE remote_id = $1 AND lease_addr "
+        "BETWEEN cast($2 as inet) and cast($3 as inet) "
       "ORDER BY lease_addr "
       "LIMIT $4" },
 
@@ -3029,8 +3031,7 @@ PgSqlLeaseMgr::deleteRelayId6(const IOAddress& addr) {
     // Set up the WHERE clause value.
     PsqlBindArray bind_array;
 
-    std::vector<uint8_t> addr_data = addr.toBytes();
-    // Do not check the address length as it does not really matter.
+    std::string addr_data = addr.toText();
     bind_array.add(addr_data);
 
     // Get a context.
@@ -3058,8 +3059,7 @@ PgSqlLeaseMgr::deleteRemoteId6(const IOAddress& addr) {
     // Set up the WHERE clause value.
     PsqlBindArray bind_array;
 
-    std::vector<uint8_t> addr_data = addr.toBytes();
-    // Do not check the address length as it does not really matter.
+    std::string addr_data = addr.toText();
     bind_array.add(addr_data);
 
     // Get a context.
@@ -3095,10 +3095,7 @@ PgSqlLeaseMgr::addRelayId6(const IOAddress& lease_addr,
     bind_array.add(relay_id);
 
     // Bind the lease address.
-    std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
-    if (lease_addr_data.size() != 16) {
-        isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
-    }
+    std::string lease_addr_data = lease_addr.toText();
     bind_array.add(lease_addr_data);
 
     // Get a context.
@@ -3134,10 +3131,7 @@ PgSqlLeaseMgr::addRemoteId6(const IOAddress& lease_addr,
     bind_array.add(remote_id);
 
     // Bind the lease address.
-    std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
-    if (lease_addr_data.size() != 16) {
-        isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
-    }
+    std::string lease_addr_data = lease_addr.toText();
     bind_array.add(lease_addr_data);
 
     // Get a context.
@@ -3459,12 +3453,8 @@ PgSqlLeaseMgr::getExtendedInfo6Common(PgSqlLeaseContextPtr& ctx,
     int rows = PQntuples(r);
     std::list<IOAddress> result;
     for (int i = 0; i < rows; ++i) {
-        std::vector<uint8_t> addr_data;
-        PgSqlLeaseExchange::convertFromBytea(r, i, 0, addr_data);
-        if (addr_data.size() != 16) {
-            isc_throw(BadValue, "received lease6 address is not 16 bytes long");
-        }
-        result.push_back(IOAddress::fromBytes(AF_INET6, &addr_data[0]));
+        IOAddress addr(PgSqlLeaseExchange::getIPv6Value(r, i, 0));
+        result.push_back(addr);
     }
     return (result);
 }
@@ -3519,10 +3509,7 @@ PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         bind_array.add(relay_id_data);
 
         // Bind the lower bound address.
-        std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
-        if (lb_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
-        }
+        std::string lb_addr_data = lower_bound_address.toText();
         bind_array.add(lb_addr_data);
 
         // Bind page size value.
@@ -3552,17 +3539,11 @@ PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
         bind_array.add(relay_id_data);
 
         // Bind the start address.
-        std::vector<uint8_t> start_addr_data = start_addr.toBytes();
-        if (start_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "start address is not 16 bytes long");
-        }
+        std::string start_addr_data = start_addr.toText();
         bind_array.add(start_addr_data);
 
         // Bind the last address.
-        std::vector<uint8_t> last_addr_data = last_addr.toBytes();
-        if (last_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "last address is not 16 bytes long");
-        }
+        std::string last_addr_data = last_addr.toText();
         bind_array.add(last_addr_data);
 
         // Bind page size value.
@@ -3654,10 +3635,7 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         bind_array.add(remote_id);
 
         // Bind the lower bound address.
-        std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
-        if (lb_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
-        }
+        std::string lb_addr_data = lower_bound_address.toText();
         bind_array.add(lb_addr_data);
 
         // Bind page size value.
@@ -3687,17 +3665,11 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
         bind_array.add(remote_id);
 
         // Bind the start address.
-        std::vector<uint8_t> start_addr_data = start_addr.toBytes();
-        if (start_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "start address is not 16 bytes long");
-        }
+        std::string start_addr_data = start_addr.toText();
         bind_array.add(start_addr_data);
 
         // Bind the last address.
-        std::vector<uint8_t> last_addr_data = last_addr.toBytes();
-        if (last_addr_data.size() != 16) {
-            isc_throw(DbOperationError, "last address is not 16 bytes long");
-        }
+        std::string last_addr_data = last_addr.toText();
         bind_array.add(last_addr_data);
 
         // Bind page size value.

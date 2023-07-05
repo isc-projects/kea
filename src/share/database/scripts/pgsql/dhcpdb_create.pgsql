@@ -6284,6 +6284,18 @@ UPDATE dhcp6_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
 WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
 
+-- Clear lease6_relay_id table.
+DELETE FROM lease6_relay_id;
+
+-- Change lease6_relay_id:lease_addr to INET.
+ALTER TABLE lease6_relay_id ALTER COLUMN lease_addr TYPE INET USING '::';
+
+-- Clear lease6_remote_id table.
+DELETE FROM lease6_remote_id;
+
+-- Change lease6_remote_id:lease_addr to INET.
+ALTER TABLE lease6_remote_id ALTER COLUMN lease_addr TYPE INET USING '::';
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '19', minor = '0';
