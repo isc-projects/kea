@@ -93,56 +93,68 @@ $(srcdir)/arm/platforms.rst:
 
 # UML files
 
-if HAVE_PLANTUML
-.uml.png:
-	@PLANTUML@ $<
+umls  =
+umls += uml/appendRequestedOptions.uml
+umls += uml/appendRequestedVendorOptions.uml
+umls += uml/assign-lease4.uml
+umls += uml/buildCfgOptionList.uml
+umls += uml/currentHost4.uml
+umls += uml/lease-states.uml
+umls += uml/main-loop.uml
+umls += uml/packet4.uml
+umls += uml/request4-lease.uml
+umls += uml/request4.uml
+umls += uml/requestLease4.uml
+umls += uml/select4.uml
+umls += uml/tkey.uml
+umls += uml/update.uml
 
-.uml.svg:
-	@PLANTUML@ -svg $<
+pngs  =
+pngs += uml/appendRequestedOptions.png
+pngs += uml/appendRequestedVendorOptions.png
+pngs += uml/assign-lease4.png
+pngs += uml/buildCfgOptionList.png
+pngs += uml/currentHost4.png
+pngs += uml/lease-states.png
+pngs += uml/main-loop.png
+pngs += uml/packet4.png
+pngs += uml/request4-lease.png
+pngs += uml/request4.png
+pngs += uml/requestLease4.png
+pngs += uml/select4.png
+pngs += uml/tkey.png
+pngs += uml/update.png
+
+svgs  =
+svgs += uml/appendRequestedOptions.svg
+svgs += uml/appendRequestedVendorOptions.svg
+svgs += uml/assign-lease4.svg
+svgs += uml/buildCfgOptionList.svg
+svgs += uml/currentHost4.svg
+svgs += uml/lease-states.svg
+svgs += uml/main-loop.svg
+svgs += uml/packet4.svg
+svgs += uml/request4-lease.svg
+svgs += uml/request4.svg
+svgs += uml/requestLease4.svg
+svgs += uml/select4.svg
+svgs += uml/tkey.svg
+svgs += uml/update.svg
+
+if HAVE_PLANTUML
+uml-to-png: $(umls)
+	@PLANTUML@ $^
+
+uml-to-svg: $(umls)
+	@PLANTUML@ -svg $^
+
+format-svgs: $(svgs)
+	for svg in $(svgs); do xq -x . $$svg > tmp; mv tmp $$svg; done
 endif
 
-EXTRA_DIST += uml/appendRequestedOptions.png
-EXTRA_DIST += uml/appendRequestedOptions.svg
-EXTRA_DIST += uml/appendRequestedOptions.uml
-EXTRA_DIST += uml/appendRequestedVendorOptions.png
-EXTRA_DIST += uml/appendRequestedVendorOptions.svg
-EXTRA_DIST += uml/appendRequestedVendorOptions.uml
-EXTRA_DIST += uml/assign-lease4.png
-EXTRA_DIST += uml/assign-lease4.svg
-EXTRA_DIST += uml/assign-lease4.uml
-EXTRA_DIST += uml/buildCfgOptionList.png
-EXTRA_DIST += uml/buildCfgOptionList.svg
-EXTRA_DIST += uml/buildCfgOptionList.uml
-EXTRA_DIST += uml/currentHost4.png
-EXTRA_DIST += uml/currentHost4.svg
-EXTRA_DIST += uml/currentHost4.uml
-EXTRA_DIST += uml/lease-states.png
-EXTRA_DIST += uml/lease-states.svg
-EXTRA_DIST += uml/lease-states.uml
-EXTRA_DIST += uml/main-loop.png
-EXTRA_DIST += uml/main-loop.svg
-EXTRA_DIST += uml/main-loop.uml
-EXTRA_DIST += uml/packet4.png
-EXTRA_DIST += uml/packet4.svg
-EXTRA_DIST += uml/packet4.uml
-EXTRA_DIST += uml/request4-lease.png
-EXTRA_DIST += uml/request4-lease.svg
-EXTRA_DIST += uml/request4-lease.uml
-EXTRA_DIST += uml/request4.png
-EXTRA_DIST += uml/request4.svg
-EXTRA_DIST += uml/request4.uml
-EXTRA_DIST += uml/requestLease4.png
-EXTRA_DIST += uml/requestLease4.svg
-EXTRA_DIST += uml/requestLease4.uml
-EXTRA_DIST += uml/select4.png
-EXTRA_DIST += uml/select4.svg
-EXTRA_DIST += uml/select4.uml
-EXTRA_DIST += uml/tkey.png
-EXTRA_DIST += uml/tkey.svg
-EXTRA_DIST += uml/tkey.uml
-EXTRA_DIST += uml/update.png
-EXTRA_DIST += uml/update.svg
-EXTRA_DIST += uml/update.uml
+EXTRA_DIST += $(umls)
+EXTRA_DIST += $(pngs)
+EXTRA_DIST += $(svgs)
 
 PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
 
@@ -186,7 +198,7 @@ clean-local:
 	rm -f $(srcdir)/kea-messages.rst $(srcdir)/api.rst
 	rm -f $(srcdir)/arm/platforms.rst
 
-.PHONY: all pdf html mans
+.PHONY: all pdf html mans update-python-dependencies uml-to-png uml-to-svg format-svgs
 
 endif
 
