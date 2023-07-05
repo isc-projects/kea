@@ -3485,7 +3485,7 @@ PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
 
     // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+        isc_throw(InvalidAddressFamily, "expected IPv6 link address while "
                   "retrieving leases from the lease database, got "
                   << link_addr);
     }
@@ -3494,7 +3494,7 @@ PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
                   << static_cast<unsigned>(link_len));
     }
     if (!lower_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+        isc_throw(InvalidAddressFamily, "expected IPv6 start address while "
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
     }
@@ -3621,7 +3621,7 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
 
     // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+        isc_throw(InvalidAddressFamily, "expected IPv6 link address while "
                   "retrieving leases from the lease database, got "
                   << link_addr);
     }
@@ -3630,7 +3630,7 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
                   << static_cast<unsigned>(link_len));
     }
     if (!lower_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+        isc_throw(InvalidAddressFamily, "expected IPv6 start address while "
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
     }
@@ -3754,7 +3754,7 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
 
     // Expecting IPv6 valid prefix and address.
     if (!link_addr.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+        isc_throw(InvalidAddressFamily, "expected IPv6 link address while "
                   "retrieving leases from the lease database, got "
                   << link_addr);
     }
@@ -3765,7 +3765,7 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
     }
 
     if (!lower_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+        isc_throw(InvalidAddressFamily, "expected IPv6 start address while "
                   "retrieving leases from the lease database, got "
                   << lower_bound_address);
     }

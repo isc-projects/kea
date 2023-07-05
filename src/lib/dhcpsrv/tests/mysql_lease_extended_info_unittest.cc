@@ -240,23 +240,23 @@ public:
 };
 
 /// @brief Verifies that the lease manager can start.
-TEST_F(MySqlExtendedInfoTest, startFalse) {
+TEST_F(MySqlExtendedInfoTest, startWithoutExtendedTables) {
     start(false);
 }
 
 /// @brief Verifies that the lease manager can start with MT.
-TEST_F(MySqlExtendedInfoTest, startFalseMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, startWithoutExtendedTablesMultiThreading) {
     MultiThreadingTest mt(true);
     start(false);
 }
 
 /// @brief Verifies that the lease manager can start with tables.
-TEST_F(MySqlExtendedInfoTest, startTrue) {
+TEST_F(MySqlExtendedInfoTest, startWithExtendedTables) {
     start(true);
 }
 
 /// @brief Verifies that the lease manager can start with tables and MT.
-TEST_F(MySqlExtendedInfoTest, startTrueMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, startWithExtendedTablesMultiThreading) {
     MultiThreadingTest mt(true);
     start(true);
 }

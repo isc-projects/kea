@@ -240,23 +240,23 @@ public:
 };
 
 /// @brief Verifies that the lease manager can start.
-TEST_F(PgSqlExtendedInfoTest, startFalse) {
+TEST_F(PgSqlExtendedInfoTest, startWithoutExtendedTables) {
     start(false);
 }
 
 /// @brief Verifies that the lease manager can start with MT.
-TEST_F(PgSqlExtendedInfoTest, startFalseMultiThreading) {
+TEST_F(PgSqlExtendedInfoTest, startWithoutExtendedTablesMultiThreading) {
     MultiThreadingTest mt(true);
     start(false);
 }
 
 /// @brief Verifies that the lease manager can start with tables.
-TEST_F(PgSqlExtendedInfoTest, startTrue) {
+TEST_F(PgSqlExtendedInfoTest, startWithExtendedTables) {
     start(true);
 }
 
 /// @brief Verifies that the lease manager can start with tables and MT.
-TEST_F(PgSqlExtendedInfoTest, startTrueMultiThreading) {
+TEST_F(PgSqlExtendedInfoTest, startWithExtendedTablesMultiThreading) {
     MultiThreadingTest mt(true);
     start(true);
 }
