@@ -27,6 +27,7 @@ libdhcpsrvtest_la_SOURCES += lease_file_io.cc lease_file_io.h
 libdhcpsrvtest_la_SOURCES += test_config_backend.h
 libdhcpsrvtest_la_SOURCES += test_config_backend_dhcp4.cc test_config_backend_dhcp4.h
 libdhcpsrvtest_la_SOURCES += test_config_backend_dhcp6.cc test_config_backend_dhcp6.h
+libdhcpsrvtest_la_SOURCES += generic_extended_info_unittest.h
 
 if HAVE_MYSQL
 libdhcpsrvtest_la_SOURCES += mysql_generic_backend_unittest.cc mysql_generic_backend_unittest.h
