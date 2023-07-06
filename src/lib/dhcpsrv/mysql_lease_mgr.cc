@@ -3525,9 +3525,7 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
         // Delete references from extended info tables.
-        if (getExtendedInfoTablesEnabled()) {
-            deleteExtendedInfo6(lease->addr_);
-        }
+        // Performed by the delete cascade.
 
         // Run installed callbacks.
         if (hasCallbacks()) {

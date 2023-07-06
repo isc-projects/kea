@@ -8,7 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <dhcpsrv/testutils/generic_extended_info_unittest.h>
+#include <dhcpsrv/testutils/generic_lease_extended_info_unittest.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 
@@ -170,6 +170,15 @@ TEST_F(MySqlExtendedInfoTest, enableTables) {
 TEST_F(MySqlExtendedInfoTest, enableTablesMultiThreading) {
     MultiThreadingTest mt(true);
     testEnableTables();
+}
+
+TEST_F(MySqlExtendedInfoTest, deleteCascade) {
+    testDeleteCascade();
+}
+
+TEST_F(MySqlExtendedInfoTest, deleteCascadeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDeleteCascade();
 }
 
 TEST_F(MySqlExtendedInfoTest, getLeases6ByRelayId) {

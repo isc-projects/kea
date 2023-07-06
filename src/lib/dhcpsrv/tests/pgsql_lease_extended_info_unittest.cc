@@ -8,7 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <dhcpsrv/testutils/generic_extended_info_unittest.h>
+#include <dhcpsrv/testutils/generic_lease_extended_info_unittest.h>
 #include <pgsql/testutils/pgsql_schema.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 
@@ -170,6 +170,15 @@ TEST_F(PgSqlExtendedInfoTest, enableTables) {
 TEST_F(PgSqlExtendedInfoTest, enableTablesMultiThreading) {
     MultiThreadingTest mt(true);
     testEnableTables();
+}
+
+TEST_F(PgSqlExtendedInfoTest, deleteCascade) {
+    testDeleteCascade();
+}
+
+TEST_F(PgSqlExtendedInfoTest, deleteCascadeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDeleteCascade();
 }
 
 TEST_F(PgSqlExtendedInfoTest, getLeases6ByRelayId) {

@@ -73,6 +73,18 @@ UPDATE dhcp6_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
 WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
 
+-- Add a constraint on lease6_relay_id that any lease_addr must map to
+-- a lease6 address.
+ALTER TABLE lease6_relay_id
+    ADD CONSTRAINT fk_lease6_relay_id_addr FOREIGN KEY (lease_addr)
+    REFERENCES lease6 (address) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- Add a constraint on lease6_remote_id that any lease_addr must map to
+-- a lease6 address.
+ALTER TABLE lease6_remote_id
+    ADD CONSTRAINT fk_lease6_remote_id_addr FOREIGN KEY (lease_addr)
+    REFERENCES lease6 (address) ON DELETE CASCADE ON UPDATE NO ACTION;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '20', minor = '0';

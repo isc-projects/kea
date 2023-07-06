@@ -105,7 +105,8 @@ public:
             std::vector<uint8_t> duid_data = createFromString(DUIDS[i]);
             DuidPtr duid(new DUID(duid_data));
             asiolink::IOAddress addr(ADDRESS6[i]);
-            ASSERT_NO_THROW(lease.reset(new Lease6(((i % 2) ? Lease::TYPE_NA : Lease::TYPE_PD), addr, duid,
+            ASSERT_NO_THROW(lease.reset(new Lease6(((i % 2) ? Lease::TYPE_NA : Lease::TYPE_PD),
+                                                   addr, duid,
                                                    123, 1000, 2000,
                                                    static_cast<SubnetID>(i))));
             leases6.push_back(lease);
@@ -178,6 +179,9 @@ public:
 
     /// @brief Test initLease6 with tables.
     void testEnableTables();
+
+    /// @brief Test delete cascade on tables.
+    void testDeleteCascade();
 
     /// @brief Test getLeases6ByRelayId.
     void testGetLeases6ByRelayId();
@@ -1025,6 +1029,46 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testEnableTables() {
             << "expected: " << expected->str() << "\n"
             << "got: " << lease->toElement()->str() << "\n";
     }
+}
+
+/// @brief Verifies that the delete cascade feature works as expected,
+/// i.e. that deleteLease() does not require an explicit call to
+/// deleteExtendedInfo6().
+template<typename NakedLeaseMgrType> void
+GenericExtendedInfoTest<NakedLeaseMgrType>::testDeleteCascade() {
+    // Lease manager is created with empty tables.
+    start(true);
+    initLease6();
+    EXPECT_EQ(0, lease_mgr_->byRelayId6size());
+    EXPECT_EQ(0, lease_mgr_->byRemoteId6size());
+
+    // Create parameter values.
+    asiolink::IOAddress lease_addr(ADDRESS6[0]);
+    std::vector<uint8_t> relay_id_data0 = createFromString(DUIDS[0]);
+    DUID relay_id0(relay_id_data0);
+    std::vector<uint8_t> relay_id_data1 = createFromString(DUIDS[1]);
+    DUID relay_id1(relay_id_data1);
+    std::vector<uint8_t> remote_id0 = createFromString(DUIDS[2]);
+    std::vector<uint8_t> remote_id1 = createFromString(DUIDS[3]);
+
+    // Fill the table.
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, relay_id_data0));
+    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, relay_id_data1));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, remote_id0));
+    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, remote_id1));
+    EXPECT_EQ(2, lease_mgr_->byRelayId6size());
+    EXPECT_EQ(2, lease_mgr_->byRemoteId6size());
+
+    // Remove the first lease.
+    EXPECT_NO_THROW(lease_mgr_->deleteLease(leases6[0]));
+
+    // Check the first lease was gone.
+    EXPECT_FALSE(lease_mgr_->getLease6(Lease::TYPE_NA, lease_addr));
+    EXPECT_FALSE(lease_mgr_->getLease6(Lease::TYPE_PD, lease_addr));
+
+    // Check tables are now empty.
+    EXPECT_EQ(0, lease_mgr_->byRelayId6size());
+    EXPECT_EQ(0, lease_mgr_->byRemoteId6size());
 }
 
 /// @brief Verifies that getLeases6ByRelayId works as expected.
