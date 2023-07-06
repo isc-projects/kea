@@ -2912,7 +2912,9 @@ def _get_features(args):
         # as they are not compatible with others
         features = set(ALL_FEATURES)
         features.discard('all')
-        features.discard('native-pkg')
+        # do not include `native-pkg` in `all` if not set explicidly in parameters
+        if 'native-pkg' not in set(vars(args)['with']):
+            features.discard('native-pkg')
 
     # if we build native packages then some features are required and some not
     if 'native-pkg' in features:
