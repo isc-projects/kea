@@ -6290,11 +6290,23 @@ DELETE FROM lease6_relay_id;
 -- Change lease6_relay_id:lease_addr to INET.
 ALTER TABLE lease6_relay_id ALTER COLUMN lease_addr TYPE INET USING '::';
 
+-- Add a constraint on lease6_relay_id that any lease_addr must map to
+-- a lease6 address.
+ALTER TABLE lease6_relay_id
+    ADD CONSTRAINT fk_lease6_relay_id_addr FOREIGN KEY (lease_addr)
+    REFERENCES lease6 (address) ON DELETE CASCADE ON UPDATE NO ACTION;
+
 -- Clear lease6_remote_id table.
 DELETE FROM lease6_remote_id;
 
 -- Change lease6_remote_id:lease_addr to INET.
 ALTER TABLE lease6_remote_id ALTER COLUMN lease_addr TYPE INET USING '::';
+
+-- Add a constraint on lease6_remote_id that any lease_addr must map to
+-- a lease6 address.
+ALTER TABLE lease6_remote_id
+    ADD CONSTRAINT fk_lease6_remote_id_addr FOREIGN KEY (lease_addr)
+    REFERENCES lease6 (address) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- Update the schema version number.
 UPDATE schema_version
