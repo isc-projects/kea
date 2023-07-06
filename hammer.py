@@ -1563,7 +1563,7 @@ def prepare_system_local(features, check_times):
     elif system == 'rhel':
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
                     'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel', 'postgresql-devel']
+                    'openssl-devel']
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1571,10 +1571,7 @@ def prepare_system_local(features, check_times):
             packages.append('boost169-devel')
 
         if 'native-pkg' in features:
-            packages.extend(['python3-devel', 'rpm-build'])
-
-        if 'docs' in features and int(revision) < 9:
-            packages.extend(['python3-virtualenv'])
+            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server'])
@@ -1584,15 +1581,11 @@ def prepare_system_local(features, check_times):
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
+            packages.extend(['postgresql', 'postgresql-server'])
             if revision == '9':
-                execute('sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm',
-                        env=env, timeout=60, check_times=check_times)
-                execute('sudo dnf -qy module disable postgresql',
-                        env=env, timeout=60, check_times=check_times)
-                packages.extend(['postgresql14-devel', 'postgresql14-server'])
+                packages.append('postgresql-server-devel ')
             else:
-                packages.extend(['postgresql-server-devel', 'postgresql-server'])
-            packages.extend(['postgresql', 'libpq-devel'])
+                packages.append('postgresql-devel')
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
