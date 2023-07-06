@@ -5812,6 +5812,32 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 19.0.
 
+-- This line starts the schema upgrade to version 20.0.
+
+-- Convert ddns-use-conflict-resolution to ddns-conflict-resolution-mode
+SET @disable_audit = 1;
+UPDATE dhcp4_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = 'true';
+
+UPDATE dhcp4_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
+
+UPDATE dhcp6_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = 'true';
+
+UPDATE dhcp6_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '20', minor = '0';
+
+-- This line concludes the schema upgrade to version 20.0.
+
 # Notes:
 #
 # Indexes

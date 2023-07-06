@@ -6264,6 +6264,32 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 18.0.
 
+-- This line starts the schema upgrade to version 19.0.
+
+-- Convert ddns-use-conflict-resolution to ddns-conflict-resolution-mode
+SELECT set_config('kea.disable_audit', 'true', false);
+UPDATE dhcp4_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = 'true';
+
+UPDATE dhcp4_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
+
+UPDATE dhcp6_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = 'true';
+
+UPDATE dhcp6_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '19', minor = '0';
+
+-- This line concludes the schema upgrade to version 19.0.
+
 -- Commit the script transaction.
 COMMIT;
 

@@ -143,7 +143,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "18.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "19.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -868,6 +868,14 @@ pgsql_upgrade_17_to_18_test() {
     run_statement "ipv6_reservations_insert" "$qry" "3001::99"
 }
 
+pgsql_upgrade_18_to_19_test() {
+    # The function, pgsql_ddns_conflict_resolution_mode_update_test, is called explicitly
+    # and tests conversion of ddns-use-conflict-resolution to ddns-conflict-resolution-mode.
+    # For now this function only verifies version number.
+    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "19.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -886,7 +894,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "18.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "19.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -935,6 +943,9 @@ pgsql_upgrade_test() {
 
     # Check 17 to 18 upgrade
     pgsql_upgrade_17_to_18_test
+
+    # Check 18 to 19 upgrade
+    pgsql_upgrade_18_to_19_test
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -2047,6 +2058,73 @@ insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
     test_finish 0
 }
 
+# Verifies that you can upgrade from an earlier version and
+# that reservation_mode values in subnet and shared network tables are
+# converted to new reservations flags.
+pgsql_ddns_conflict_resolution_mode_update_test() {
+    test_start "pgsql_ddns_conflict_resolution_mode_update_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 18.0
+    pgsql_upgrade_schema_to_version 18.0
+
+    # Now we need insert some subnets and shared networks.
+    sql=\
+"select set_config('kea.disable_audit', 'true', false);\
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution', 'false', current_timestamp, 2);
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution', 'true', current_timestamp, 2);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution', 'false', current_timestamp,2);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution', 'true', current_timestamp, 2);"
+
+    run_statement "insert ddns_conflict_resolution_mode" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-use-conflict-resolution';"
+    run_statement "#get 4_global parameter count before update" "$qry" 2
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-use-conflict-resolution';"
+    run_statement "#get 6_global parameter count before update" "$qry" 2
+
+    # Upgrade to schema 19.0
+    pgsql_upgrade_schema_to_version 19.0
+
+    # Verify we converted parameters correctly.
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='check-with-dhcid'"
+    run_statement "#get 4_check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='no-check-with-dhcid'"
+    run_statement "#get 4_no-check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='check-with-dhcid'"
+    run_statement "#get 6_check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='no-check-with-dhcid'"
+    run_statement "#get 6_no-check-with-dhcid after update" "$qry" 1
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
 # Run tests.
 pgsql_db_init_test
 pgsql_db_version_test
@@ -2066,3 +2144,4 @@ pgsql_lease_stat_recount_test
 pgsql_unused_subnet_id_test
 pgsql_update_empty_duid_test
 pgsql_update_v6_addresses_to_binary
+pgsql_ddns_conflict_resolution_mode_update_test
