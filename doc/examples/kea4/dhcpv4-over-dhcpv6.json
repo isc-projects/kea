@@ -12,7 +12,7 @@
 
   "lease-database": {
       "type": "memfile",
-      "name": "leases4",
+      "name": "/tmp/kea-dhcp4.csv",
       "lfc-interval": 3600
   },
 
