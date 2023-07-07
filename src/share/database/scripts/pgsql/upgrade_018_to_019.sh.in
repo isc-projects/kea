@@ -56,8 +56,6 @@ UPDATE dhcp6_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
 WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
 
--- This line starts the schema upgrade to version 19.0.
-
 -- Clear lease6_relay_id table.
 DELETE FROM lease6_relay_id;
 
