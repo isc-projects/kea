@@ -953,13 +953,13 @@ public:
                                           // reasons, see memset() above
 
         // hwaddr: varbinary(20)
+        hwaddr_null_ = MLM_FALSE;
         hwaddr_length_ = sizeof(hwaddr_buffer_);
         bind_[1].buffer_type = MYSQL_TYPE_BLOB;
         bind_[1].buffer = reinterpret_cast<char*>(hwaddr_buffer_);
         bind_[1].buffer_length = hwaddr_length_;
         bind_[1].length = &hwaddr_length_;
-        // bind_[1].is_null = &MLM_FALSE; // commented out for performance
-                                          // reasons, see memset() above
+        bind_[1].is_null = &hwaddr_null_;
 
         // client_id: varbinary(255)
         client_id_length_ = sizeof(client_id_buffer_);
