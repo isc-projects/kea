@@ -1615,10 +1615,10 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     // Verify getting a collection of leases by type, DUID, and IAID.
     // Iterate over the lease types, asking for leases based on
     // lease type, DUID, and IAID.
-    for (int i = 0; i < 3; ++i) {
+    for (size_t i = 0; i < 3; ++i) {
         Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i], *duid, 142);
 
-        auto compare = [](Lease6Ptr& left, Lease6Ptr& right) {
+        auto compare = [](const Lease6Ptr& left, const Lease6Ptr& right) {
             return (left->addr_ < right->addr_);
         };
         std::sort(returned.begin(), returned.end(), compare);
