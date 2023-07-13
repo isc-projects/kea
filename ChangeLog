@@ -4,9 +4,9 @@
 	(Gitlab #2735, port of #2724)
 
 2047.	[bug]		marcin
-	Fixed a bug that caused a response to a config-get command to lack
-	the configured read-timeout, write-timeout, and tcp-user-timeout
-	parameters.
+	Fixed a bug that caused a response to a config-get command to
+	lack the configured read-timeout, write-timeout, and
+	tcp-user-timeout parameters.
 	(Gitlab #2735, port of #2741)
 
 2046.	[func]		marcin
