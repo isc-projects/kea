@@ -1,3 +1,9 @@
+2170.	[build]		fdupont
+	Moved from C++ 11 to C++ 14 as the minimal C++ version
+	which should be supported by the C++ compiler to
+	build Kea.
+	(Gitlab #2876)
+
 2169.	[bug]		marcin
 	Applied a workaround in the connection to MySQL that prevents
 	potential crashes in libmysqlclient library when connection
