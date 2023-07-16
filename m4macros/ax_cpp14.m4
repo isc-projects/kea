@@ -1,13 +1,13 @@
-AC_DEFUN([AX_ISC_CPP11], [
+AC_DEFUN([AX_ISC_CPP14], [
 
 CXX_SAVED=$CXX
 feature=
-for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
+for retry in "none" "--std=c++14" "--std=c++0x" "--std=c++1x" "fail"; do
         if test "$retry" = "fail"; then
-                AC_MSG_ERROR([$feature (a C++11 feature) is not supported])
+                AC_MSG_ERROR([$feature (a C++14 feature) is not supported])
         fi
         if test "$retry" != "none"; then
-                AC_MSG_WARN([unsupported C++11 feature])
+                AC_MSG_WARN([unsupported C++14 feature])
                 AC_MSG_NOTICE([retrying by adding $retry to $CXX])
                 CXX="$CXX_SAVED $retry"
                 AC_MSG_CHECKING($retry support)
@@ -238,4 +238,4 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
         break
 done
 
-])dnl AX_ISC_CPP11
+])dnl AX_ISC_CPP14

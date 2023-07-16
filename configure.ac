@@ -158,8 +158,8 @@ AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 # USE_CLANGPP is no longer used, keep it by symmetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
-# Check for C++11 features support
-AX_ISC_CPP11
+# Check for C++14 features support
+AX_ISC_CPP14
 
 # Check for C++20 compiler support.
 AX_ISC_CPP20
@@ -614,7 +614,7 @@ AC_COMPILE_IFELSE(
 )
 
 usable_regex=
-AC_MSG_CHECKING(for usable C++11 regex)
+AC_MSG_CHECKING(for usable C++14 regex)
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <regex>
 #include <iostream>
@@ -633,7 +633,7 @@ int main() {
 # usable or not.
 # Let's be optimistic and assume it is by testing only the negative case.
 if test "x$usable_regex" != "xno" ; then
-        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])
+        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++14 regex is usable])
 fi
 
 # Check for NETCONF support. If NETCONF was enabled in the build, and this check
@@ -971,7 +971,7 @@ AC_CHECK_LIB(pthread, pthread_create,[ LDFLAGS="$LDFLAGS -lpthread" ], [])
 AX_TLS
 
 #
-# Some Googletest versions bug with C++11 compilers
+# Some Googletest versions bug with C++14 compilers
 #
 if test $enable_gtest != "no"; then
    AC_MSG_CHECKING([if Google Test is compatible with the compiler])

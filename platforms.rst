@@ -4,7 +4,7 @@ Supported Platforms
 ===================
 
 In general, this version of Kea builds and runs on any POSIX-compliant
-system with a C++ compiler (with C++11 support), the Botan cryptographic library,
+system with a C++ compiler (with C++14 support), the Botan cryptographic library,
 the log4cplus logging library and the Boost system library.
 
 The Kea build has been checked with GCC g++ 4.8.5 and some later versions,
