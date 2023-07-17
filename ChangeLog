@@ -1,3 +1,9 @@
+2169.	[bug]		marcin
+	Applied a workaround in the connection to MySQL that prevents
+	potential crashes in libmysqlclient library when connection
+	to the database is lost and re-established.
+	(Gitlab #2792)
+
 2168.	[func]		fdupont
 	Cross-reference tables to bind relay and remote
 	identifiers from extended info of DHCPv6 leases
