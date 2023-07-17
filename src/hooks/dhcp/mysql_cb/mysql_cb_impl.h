@@ -113,7 +113,7 @@ public:
                                     const db::DbCallback db_reconnect_callback);
 
     /// @brief Destructor.
-    virtual ~MySqlConfigBackendImpl();
+    virtual ~MySqlConfigBackendImpl() {};
 
     /// @brief Creates MySQL binding from an @c Optional of integer type.
     ///
