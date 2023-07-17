@@ -1,13 +1,13 @@
 2048.	[bug]		andrei
 	A spacing issue in a prepared statement that prevented Config
 	Backend from working with PostgreSQL 15 and above has been fixed.
-	(Gitlab #2735, port of #2724)
+	(Gitlab #2735, #2724)
 
 2047.	[bug]		marcin
 	Fixed a bug that caused a response to a config-get command to
 	lack the configured read-timeout, write-timeout, and
 	tcp-user-timeout parameters.
-	(Gitlab #2735, port of #2741)
+	(Gitlab #2735, #2741)
 
 2046.	[func]		marcin
 	New database connection parameters, "read-timeout" and
@@ -16,7 +16,7 @@
 	communication with the PostgreSQL database. Setting these
 	timeouts can prevent occasional Kea hangs due to issues with
 	the database connectivity.
-	(Gitlab #2735, port of #2688)
+	(Gitlab #2735, #2688)
 
 Kea 2.2.0 (stable) released on July 27, 2022
 
