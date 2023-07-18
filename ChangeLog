@@ -1,7 +1,6 @@
 2170.	[build]		fdupont
 	Moved from C++ 11 to C++ 14 as the minimal C++ version
-	which should be supported by the C++ compiler to
-	build Kea.
+	which must be supported by the C++ compiler tobuild Kea.
 	(Gitlab #2876)
 
 2169.	[bug]		marcin

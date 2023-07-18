@@ -614,7 +614,7 @@ AC_COMPILE_IFELSE(
 )
 
 usable_regex=
-AC_MSG_CHECKING(for usable C++14 regex)
+AC_MSG_CHECKING(for usable C++11 regex)
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <regex>
 #include <iostream>
@@ -633,7 +633,7 @@ int main() {
 # usable or not.
 # Let's be optimistic and assume it is by testing only the negative case.
 if test "x$usable_regex" != "xno" ; then
-        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++14 regex is usable])
+        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])
 fi
 
 # Check for NETCONF support. If NETCONF was enabled in the build, and this check
@@ -971,7 +971,7 @@ AC_CHECK_LIB(pthread, pthread_create,[ LDFLAGS="$LDFLAGS -lpthread" ], [])
 AX_TLS
 
 #
-# Some Googletest versions bug with C++14 compilers
+# Some Googletest versions bug with >= C++11 compilers
 #
 if test $enable_gtest != "no"; then
    AC_MSG_CHECKING([if Google Test is compatible with the compiler])

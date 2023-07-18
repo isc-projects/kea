@@ -2,7 +2,7 @@ AC_DEFUN([AX_ISC_CPP14], [
 
 CXX_SAVED=$CXX
 feature=
-for retry in "none" "--std=c++14" "--std=c++0x" "--std=c++1x" "fail"; do
+for retry in "none" "--std=c++14" "--std=c++1y" "fail"; do
         if test "$retry" = "fail"; then
                 AC_MSG_ERROR([$feature (a C++14 feature) is not supported])
         fi
@@ -232,6 +232,18 @@ for retry in "none" "--std=c++14" "--std=c++0x" "--std=c++1x" "fail"; do
                         [#include <chrono>
                          using namespace std::chrono;],
                         [auto now = high_resolution_clock::now();])],
+                [AC_MSG_RESULT([yes])],
+                [AC_MSG_RESULT([no])
+                 continue])
+
+        AC_MSG_CHECKING(variable template support)
+        feature="variable template"
+        AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM(
+                        [template<class T>
+                         constexpr T pi = T(3.1415926535897932385L);],
+                        [int a = pi<int>;],
+                )],
                 [AC_MSG_RESULT([yes])],
                 [AC_MSG_RESULT([no])
                  continue])
