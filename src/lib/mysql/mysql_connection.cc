@@ -391,11 +391,6 @@ MySqlConnection::prepareStatements(const TaggedStatement* start_statement,
     }
 }
 
-void MySqlConnection::clearStatements() {
-    statements_.clear();
-    text_statements_.clear();
-}
-
 /// @brief Destructor
 MySqlConnection::~MySqlConnection() {
     // Free up the prepared statements, ignoring errors. (What would we do
