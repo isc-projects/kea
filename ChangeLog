@@ -1,3 +1,10 @@
+2051.	[bug]		razvan
+	Fixed a crash when splitting long options or sending user defined
+	options when multi-threading is enabled. Also fixed some cases
+	when options are not properly split if the serialized data
+	reaches the end of the 255 bytes long boundry.
+	(Gitlab #2945, #2942)
+
 2050.	[bug]		razvan
 	Fixed a bug which was causing the Kea server to crash when
 	using high-availability hooks library and running reconfigure
