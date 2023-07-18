@@ -301,9 +301,6 @@ public:
     void prepareStatements(const TaggedStatement* start_statement,
                            const TaggedStatement* end_statement);
 
-    /// @brief Clears prepared statements and text statements.
-    void clearStatements();
-
     /// @brief Returns a prepared statement by an index
     ///
     /// @tparam StatementIndex Type of the statement index enum.
