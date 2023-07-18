@@ -304,6 +304,24 @@ public:
     /// @brief Clears prepared statements and text statements.
     void clearStatements();
 
+    /// @brief Returns a prepared statement by an index
+    ///
+    /// @tparam StatementIndex Type of the statement index enum.
+    ///
+    /// @param index Statement index.
+    /// @return Pointer to the prepared statement.
+    /// @throw isc::db::DbConnectionUnusable when the @c mysql pointer in the
+    ///        returned statement is NULL; it may be the result of the database
+    ///        connectivity loss.
+    template<typename StatementIndex>
+    MYSQL_STMT* getStatement(StatementIndex index) const {
+        if (statements_[index]->mysql == 0) {
+            isc_throw(db::DbConnectionUnusable,
+                      "MySQL pointer for the prepared statement is NULL as a result of connectivity loss");
+        }
+        return (statements_[index]);
+    }
+
     /// @brief Open Database
     ///
     /// Opens the database using the information supplied in the parameters
@@ -436,7 +454,7 @@ public:
         int status = 0;
         if (!in_bind_vec.empty()) {
             // Bind parameters to the prepared statement.
-            status = mysql_stmt_bind_param(statements_[index],
+            status = mysql_stmt_bind_param(getStatement(index),
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
             checkError(status, index, "unable to bind parameters for select");
         }
@@ -447,20 +465,20 @@ public:
             out_bind_vec.push_back(out_binding->getMySqlBinding());
         }
         if (!out_bind_vec.empty()) {
-            status = mysql_stmt_bind_result(statements_[index], &out_bind_vec[0]);
+            status = mysql_stmt_bind_result(getStatement(index), &out_bind_vec[0]);
             checkError(status, index, "unable to bind result parameters for select");
         }
 
         // Execute query.
-        status = MysqlExecuteStatement(statements_[index]);
+        status = MysqlExecuteStatement(getStatement(index));
         checkError(status, index, "unable to execute");
 
-        status = mysql_stmt_store_result(statements_[index]);
+        status = mysql_stmt_store_result(getStatement(index));
         checkError(status, index, "unable to set up for storing all results");
 
         // Fetch results.
-        MySqlFreeResult fetch_release(statements_[index]);
-        while ((status = mysql_stmt_fetch(statements_[index])) ==
+        MySqlFreeResult fetch_release(getStatement(index));
+        while ((status = mysql_stmt_fetch(getStatement(index))) ==
                MLM_MYSQL_FETCH_SUCCESS) {
             try {
                 // For each returned row call user function which should
@@ -511,12 +529,12 @@ public:
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(statements_[index],
+        int status = mysql_stmt_bind_param(getStatement(index),
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = MysqlExecuteStatement(statements_[index]);
+        status = MysqlExecuteStatement(getStatement(index));
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
@@ -555,12 +573,12 @@ public:
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(statements_[index],
+        int status = mysql_stmt_bind_param(getStatement(index),
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = MysqlExecuteStatement(statements_[index]);
+        status = MysqlExecuteStatement(getStatement(index));
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
@@ -581,7 +599,7 @@ public:
         }
 
         // Let's return how many rows were affected.
-        return (static_cast<uint64_t>(mysql_stmt_affected_rows(statements_[index])));
+        return (static_cast<uint64_t>(mysql_stmt_affected_rows(getStatement(index))));
     }
 
     /// @brief Commits current transaction
@@ -731,13 +749,13 @@ private:
     template<typename T>
     void setIntParameterValue(const std::string& name, int64_t min, int64_t max, T& value);
 
-public:
-
     /// @brief Prepared statements
     ///
-    /// This field is public, because it is used heavily from MySqlConnection
-    /// and will be from MySqlHostDataSource.
+    /// The statements should be accessed using the @c getStatement method because
+    /// it checks whether the returned statement is valid.
     std::vector<MYSQL_STMT*> statements_;
+
+public:
 
     /// @brief Raw text of statements
     ///

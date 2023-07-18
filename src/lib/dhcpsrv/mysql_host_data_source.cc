@@ -2937,11 +2937,11 @@ MySqlHostDataSourceImpl::addStatement(MySqlHostContextPtr& ctx,
                                       StatementIndex stindex,
                                       std::vector<MYSQL_BIND>& bind) {
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), &bind[0]);
     checkError(ctx, status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
 
     if (status != 0) {
         // Failure: check for the special case of duplicate entry.
@@ -2956,7 +2956,7 @@ MySqlHostDataSourceImpl::addStatement(MySqlHostContextPtr& ctx,
     // index in the database. Unique indexes are not created in the database
     // when it may be sometimes allowed to insert duplicated records per
     // server's configuration.
-    my_ulonglong numrows = mysql_stmt_affected_rows(ctx->conn_.statements_[stindex]);
+    my_ulonglong numrows = mysql_stmt_affected_rows(ctx->conn_.getStatement(stindex));
     if (numrows == 0) {
         isc_throw(DuplicateEntry, "Database duplicate entry error");
     }
@@ -2967,18 +2967,18 @@ MySqlHostDataSourceImpl::delStatement(MySqlHostContextPtr& ctx,
                                       StatementIndex stindex,
                                       MYSQL_BIND* bind) {
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), &bind[0]);
     checkError(ctx, status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
 
     if (status != 0) {
         checkError(ctx, status, stindex, "unable to execute");
     }
 
     // Let's check how many hosts were deleted.
-    my_ulonglong numrows = mysql_stmt_affected_rows(ctx->conn_.statements_[stindex]);
+    my_ulonglong numrows = mysql_stmt_affected_rows(ctx->conn_.getStatement(stindex));
 
     return (numrows != 0);
 }
@@ -3046,30 +3046,30 @@ MySqlHostDataSourceImpl::getHostCollection(MySqlHostContextPtr& ctx,
                                            bool single) const {
 
     // Bind the selection parameters to the statement
-    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), bind);
     checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
 
     // Set up the MYSQL_BIND array for the data being returned and bind it to
     // the statement.
     std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
-    status = mysql_stmt_bind_result(ctx->conn_.statements_[stindex], &outbind[0]);
+    status = mysql_stmt_bind_result(ctx->conn_.getStatement(stindex), &outbind[0]);
     checkError(ctx, status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the statement
-    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
     checkError(ctx, status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
     // overhead of going back and forth between client and server.
-    status = mysql_stmt_store_result(ctx->conn_.statements_[stindex]);
+    status = mysql_stmt_store_result(ctx->conn_.getStatement(stindex));
     checkError(ctx, status, stindex, "unable to set up for storing all results");
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
     // retrieve the data. mysql_stmt_fetch return value equal to 0 represents
     // successful data fetch.
-    MySqlFreeResult fetch_release(ctx->conn_.statements_[stindex]);
-    while ((status = mysql_stmt_fetch(ctx->conn_.statements_[stindex])) ==
+    MySqlFreeResult fetch_release(ctx->conn_.getStatement(stindex));
+    while ((status = mysql_stmt_fetch(ctx->conn_.getStatement(stindex))) ==
            MLM_MYSQL_FETCH_SUCCESS) {
         try {
             exchange->processFetchedData(result);

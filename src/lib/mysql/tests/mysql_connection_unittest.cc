@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <database/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
 #include <mysql/testutils/mysql_schema.h>
@@ -740,6 +741,16 @@ TEST_F(MySqlConnectionTest, writeTimeoutZero) {
 }
 
 #endif  // HAVE_MYSQL_GET_OPTION
+
+
+// Tests that the statement can be accessed by index.
+TEST_F(MySqlConnectionTest, getStatement) {
+    auto statement0 = conn_.getStatement(0);
+    ASSERT_TRUE(statement0);
+    auto statement1 = conn_.getStatement(1);
+    ASSERT_TRUE(statement1);
+    EXPECT_NE(statement0, statement1);
+}
 
 TEST_F(MySqlConnectionWithPrimaryKeyTest, select) {
     select();

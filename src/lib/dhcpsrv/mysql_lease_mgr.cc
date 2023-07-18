@@ -1713,7 +1713,7 @@ private:
                       " - invalid statement index" << statement_index_);
         }
 
-        statement_ = conn_.statements_[statement_index_];
+        statement_ = conn_.getStatement(statement_index_);
     }
 
     /// @brief Database connection to use to execute the query
@@ -1949,11 +1949,11 @@ MySqlLeaseMgr::addLeaseCommon(MySqlLeaseContextPtr& ctx,
                               std::vector<MYSQL_BIND>& bind) {
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), &bind[0]);
     checkError(ctx, status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
     if (status != 0) {
 
         // Failure: check for the special case of duplicate entry.  If this is
@@ -2051,31 +2051,31 @@ MySqlLeaseMgr::getLeaseCollection(MySqlLeaseContextPtr& ctx,
 
     if (bind) {
         // Bind the selection parameters to the statement
-        status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+        status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), bind);
         checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
     }
 
     // Set up the MYSQL_BIND array for the data being returned and bind it to
     // the statement.
     std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
-    status = mysql_stmt_bind_result(ctx->conn_.statements_[stindex], &outbind[0]);
+    status = mysql_stmt_bind_result(ctx->conn_.getStatement(stindex), &outbind[0]);
     checkError(ctx, status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the statement
-    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
     checkError(ctx, status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
     // overhead of going back and forth between client and server.
-    status = mysql_stmt_store_result(ctx->conn_.statements_[stindex]);
+    status = mysql_stmt_store_result(ctx->conn_.getStatement(stindex));
     checkError(ctx, status, stindex, "unable to set up for storing all results");
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
     // retrieve the data.
-    MySqlFreeResult fetch_release(ctx->conn_.statements_[stindex]);
+    MySqlFreeResult fetch_release(ctx->conn_.getStatement(stindex));
     int count = 0;
-    while ((status = mysql_stmt_fetch(ctx->conn_.statements_[stindex])) == 0) {
+    while ((status = mysql_stmt_fetch(ctx->conn_.getStatement(stindex))) == 0) {
         try {
             result.push_back(exchange->getLeaseData());
 
@@ -2809,16 +2809,16 @@ MySqlLeaseMgr::updateLeaseCommon(MySqlLeaseContextPtr& ctx,
                                  const LeasePtr& lease) {
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), bind);
     checkError(ctx, status, stindex, "unable to bind parameters");
 
     // Execute
-    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
     checkError(ctx, status, stindex, "unable to execute");
 
     // See how many rows were affected.  The statement should only update a
     // single row.
-    int affected_rows = mysql_stmt_affected_rows(ctx->conn_.statements_[stindex]);
+    int affected_rows = mysql_stmt_affected_rows(ctx->conn_.getStatement(stindex));
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
@@ -2951,16 +2951,16 @@ MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
     // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), bind);
     checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
 
     // Execute
-    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
     checkError(ctx, status, stindex, "unable to execute");
 
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
-    return (static_cast<uint64_t>(mysql_stmt_affected_rows(ctx->conn_.statements_[stindex])));
+    return (static_cast<uint64_t>(mysql_stmt_affected_rows(ctx->conn_.getStatement(stindex))));
 }
 
 bool
