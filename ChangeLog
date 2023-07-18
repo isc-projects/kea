@@ -1,3 +1,9 @@
+2052.	[bug]		marcin
+	Applied a workaround in the connection to MySQL that prevents
+	potential crashes in libmysqlclient library when connection
+	to the database is lost and re-established.
+	(Gitlab #2978)
+
 2051.	[bug]		razvan
 	Fixed a crash when splitting long options or sending user defined
 	options when multi-threading is enabled. Also fixed some cases
