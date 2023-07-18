@@ -1713,14 +1713,11 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'netconf' in features:
-            if int(revision) <= 11:
-                packages.extend(['cmake', 'libpcre3-dev'])
-                deferred_functions.extend([
-                    _install_libyang_from_sources,
-                    _install_sysrepo_from_sources,
-                ])
-            else:
-                packages.extend(['libyang-dev', 'libyang-cpp-dev', 'libsysrepo-dev', 'libsysrepo-cpp-dev'])
+            packages.extend(['cmake', 'libpcre3-dev'])
+            deferred_functions.extend([
+                _install_libyang_from_sources,
+                _install_sysrepo_from_sources,
+            ])
 
         if 'docs' in features:
             if revision == '8':
