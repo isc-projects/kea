@@ -84,7 +84,7 @@ CmdHttpListener::start() {
         thread_io_service_.reset();
         http_listener_.reset();
         thread_pool_.reset();
-        isc_throw(Unexpected, "CmdHttpListener::run failed:" << ex.what());
+        isc_throw(Unexpected, "CmdHttpListener::start failed: " << ex.what());
     }
 }
 
