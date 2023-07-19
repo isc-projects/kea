@@ -300,6 +300,9 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                        | lfc_interval
                        | readonly
                        | connect_timeout
+                       | read_timeout
+                       | write_timeout
+                       | tcp_user_timeout
                        | max_reconnect_tries
                        | reconnect_wait_time
                        | on_fail
@@ -333,6 +336,12 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      readonly ::= "readonly" ":" BOOLEAN
 
      connect_timeout ::= "connect-timeout" ":" INTEGER
+
+     read_timeout ::= "read-timeout" ":" INTEGER
+
+     write_timeout ::= "write-timeout" ":" INTEGER
+
+     tcp_user_timeout ::= "tcp-user-timeout" ":" INTEGER
 
      max_reconnect_tries ::= "max-reconnect-tries" ":" INTEGER
 
