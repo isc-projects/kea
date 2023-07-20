@@ -3123,7 +3123,7 @@ to add DNS entries or they were somehow lost by the DNS server.
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.  This
 boolean parameter was passed through to D2 and enabled or disabled conflict resolution
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__.  Beginning with
-Kea 2.4.0, it is deprecated and replaced by ``ddns-conflict-resolution-mode`` which
+Kea 2.5.0, it is deprecated and replaced by ``ddns-conflict-resolution-mode`` which
 offers four modes of conflict resolution-related behavior:
 
     - ``check-with-dhcid`` - The default mode, it instructs D2 to carry out RFC
