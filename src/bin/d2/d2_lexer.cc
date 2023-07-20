@@ -1096,7 +1096,7 @@ static const flex_int16_t yy_rule_linenum[68] =
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "d2_lexer.ll"
-/* Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this

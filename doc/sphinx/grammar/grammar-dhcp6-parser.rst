@@ -144,6 +144,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | ddns_qualifying_suffix
                  | ddns_update_on_renew
                  | ddns_use_conflict_resolution
+                 | ddns_conflict_resolution_mode
                  | ddns_ttl_percent
                  | store_extended_info
                  | statistic_default_sample_count
@@ -209,6 +210,13 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      ddns_update_on_renew ::= "ddns-update-on-renew" ":" BOOLEAN
 
      ddns_use_conflict_resolution ::= "ddns-use-conflict-resolution" ":" BOOLEAN
+
+     ddns_conflict_resolution_mode ::= "ddns-conflict-resolution-mode" ":" ddns_conflict_resolution_mode_value
+
+     ddns_conflict_resolution_mode_value ::= "check-with-dhcid"
+                                        | "no-check-with-dhcid"
+                                        | "check-exists-with-dhcid"
+                                        | "no-check-without-dhcid"
 
      ddns_ttl_percent ::= "ddns-ttl-percent" ":" FLOAT
 
@@ -524,6 +532,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | ddns_qualifying_suffix
                   | ddns_update_on_renew
                   | ddns_use_conflict_resolution
+                  | ddns_conflict_resolution_mode
                   | ddns_ttl_percent
                   | store_extended_info
                   | allocator
@@ -610,6 +619,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | ddns_qualifying_suffix
                          | ddns_update_on_renew
                          | ddns_use_conflict_resolution
+                         | ddns_conflict_resolution_mode
                          | ddns_ttl_percent
                          | store_extended_info
                          | allocator

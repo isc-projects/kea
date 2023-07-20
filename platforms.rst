@@ -21,7 +21,6 @@ Kea is officially supported on Alpine, CentOS, Fedora, RHEL, Ubuntu, Debian,
 and FreeBSD systems. Kea-|release| builds have been tested on:
 
 * Alpine — 3.15, 3.16, 3.17
-* CentOS — 7
 * Debian — 10, 11, 12
 * Fedora — 36, 37, 38
 * FreeBSD — 12, 13
@@ -55,7 +54,7 @@ adverse effect on officially supported platforms.
 These include platforms past their respective EOL dates, such as:
 
 * Alpine — 3.10, 3.11, 3.12, 3.13, 3.14 (EOL 01 May 2023)
-* CentOS — 6, 8 (EOL 31 December 2021)
+* CentOS — 6, 7, 8 (EOL 31 December 2021)
 * Debian — 8, 9 (EOL 30 June 2022)
 * Fedora — 31, 32, 33, 34, 35 (EOL 13 December 2022)
 * FreeBSD — 10, 11 (EOL 30 September 2021)
