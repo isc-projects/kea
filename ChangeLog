@@ -1,3 +1,8 @@
+2171.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 2.5.0
+	development release.
+	(Gitlab #2990)
+
 2170.	[build]		fdupont
 	Moved from C++ 11 to C++ 14 as the minimal C++ version
 	which must be supported by the C++ compiler tobuild Kea.
