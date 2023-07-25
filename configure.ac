@@ -6,7 +6,7 @@ AC_PREREQ([2.69])
 # For released versions, this is in x.y.z format.
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the next development
 # version that is worked on and that is to be released.
-AC_INIT(kea, 2.5.0-git, kea-dev@lists.isc.org)
+AC_INIT(kea, 2.5.1-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -1157,7 +1157,7 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
   m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
                     [python3 python python2])
   AM_PATH_PYTHON([2.7])
-  
+
   # If kea-shell is enabled, we really need python3
   if test "x$enable_shell" != "xno"; then
     major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
