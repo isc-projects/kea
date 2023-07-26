@@ -4170,6 +4170,9 @@ identifier which is different from the client identifier used by the
 client, the lease will be assumed to belong to another client and a
 new lease will be allocated.
 
+For a more visual representation of how Kea recognizes the same client,
+check :ref:`uml-recognizing-same-client`.
+
 .. _dhcp4-authoritative:
 
 Authoritative DHCPv4 Server Behavior

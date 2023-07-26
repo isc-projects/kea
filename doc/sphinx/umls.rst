@@ -144,3 +144,14 @@ Before sending a response, options are added:
 .. figure:: uml/appendRequestedVendorOptions.*
 
     The appendRequestedVendorOptions (append vendor requested options) algorithm
+
+
+.. _uml-recognizing-same-client:
+
+How Kea Recognizes the Same Client In Different DHCP Messages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+..
+    Use the PNG, because, for some reason, the SVG has missing text.
+
+.. figure:: uml/recognizing-same-client.png
