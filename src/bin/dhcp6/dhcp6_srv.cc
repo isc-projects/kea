@@ -573,11 +573,9 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     evaluateClasses(pkt, true);
 
     const ClientClasses& classes = pkt->getClasses();
-    if (!classes.empty()) {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
-            .arg(pkt->getLabel())
-            .arg(classes.toText());
-    }
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(pkt->getLabel())
+        .arg(classes.toText());
 
     // Check the DROP special class.
     if (pkt->inClass("DROP")) {
@@ -3543,6 +3541,10 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
     conditionallySetReservedClientClasses(solicit, ctx);
     requiredClassify(solicit, ctx);
 
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(solicit->getLabel())
+        .arg(solicit->getClasses().toText());
+
     copyClientOptions(solicit, response);
     CfgOptionList co_list;
     buildCfgOptionList(solicit, ctx, co_list);
@@ -3581,6 +3583,10 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     conditionallySetReservedClientClasses(request, ctx);
     requiredClassify(request, ctx);
 
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(request->getLabel())
+        .arg(request->getClasses().toText());
+
     copyClientOptions(request, reply);
     CfgOptionList co_list;
     buildCfgOptionList(request, ctx, co_list);
@@ -3614,6 +3620,10 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
 
     conditionallySetReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(renew->getLabel())
+        .arg(renew->getClasses().toText());
 
     copyClientOptions(renew, reply);
     CfgOptionList co_list;
@@ -3649,6 +3659,10 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     conditionallySetReservedClientClasses(rebind, ctx);
     requiredClassify(rebind, ctx);
 
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(rebind->getLabel())
+        .arg(rebind->getClasses().toText());
+
     copyClientOptions(rebind, reply);
     CfgOptionList co_list;
     buildCfgOptionList(rebind, ctx, co_list);
@@ -3669,6 +3683,10 @@ Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
     Pkt6Ptr confirm = ctx.query_;
     conditionallySetReservedClientClasses(confirm, ctx);
     requiredClassify(confirm, ctx);
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(confirm->getLabel())
+        .arg(confirm->getClasses().toText());
 
     // Get IA_NAs from the Confirm. If there are none, the message is
     // invalid and must be discarded. There is nothing more to do.
@@ -3760,6 +3778,10 @@ Dhcpv6Srv::processRelease(AllocEngine::ClientContext6& ctx) {
     conditionallySetReservedClientClasses(release, ctx);
     requiredClassify(release, ctx);
 
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(release->getLabel())
+        .arg(release->getClasses().toText());
+
     // Create an empty Reply message.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
@@ -3785,6 +3807,10 @@ Dhcpv6Srv::processDecline(AllocEngine::ClientContext6& ctx) {
     Pkt6Ptr decline = ctx.query_;
     conditionallySetReservedClientClasses(decline, ctx);
     requiredClassify(decline, ctx);
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(decline->getLabel())
+        .arg(decline->getClasses().toText());
 
     // Create an empty Reply message.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
@@ -4102,6 +4128,10 @@ Dhcpv6Srv::processInfRequest(AllocEngine::ClientContext6& ctx) {
     conditionallySetReservedClientClasses(inf_request, ctx);
     requiredClassify(inf_request, ctx);
 
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(inf_request->getLabel())
+        .arg(inf_request->getClasses().toText());
+
     // Create a Reply packet, with the same trans-id as the client's.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, inf_request->getTransid()));
 
@@ -4230,13 +4260,6 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
             pkt->addClass(*cclass);
         }
     }
-
-    const ClientClasses& classes = pkt->getClasses();
-    if (!classes.empty()) {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
-            .arg(pkt->getLabel())
-            .arg(classes.toText());
-    }
 }
 
 void
@@ -4324,13 +4347,13 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
             if (status) {
                 LOG_INFO(dhcp6_logger, EVAL_RESULT)
                     .arg(*cclass)
-                    .arg(status);
+                    .arg("true");
                 // Matching: add the class
                 pkt->addClass(*cclass);
             } else {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, EVAL_RESULT)
                     .arg(*cclass)
-                    .arg(status);
+                    .arg("false");
             }
         } catch (const Exception& ex) {
             LOG_ERROR(dhcp6_logger, EVAL_RESULT)

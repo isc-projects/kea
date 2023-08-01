@@ -150,13 +150,13 @@ ClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
         if (status) {
             LOG_INFO(dhcpsrv_logger, EVAL_RESULT)
                 .arg(getName())
-                .arg(status);
+                .arg("true");
             // Matching: add the class
             pkt->addClass(getName());
         } else {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, EVAL_RESULT)
                 .arg(getName())
-                .arg(status);
+                .arg("false");
         }
     } catch (const Exception& ex) {
         LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)

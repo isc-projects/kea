@@ -16,6 +16,7 @@ extern const isc::log::MessageID DHCP4_BUFFER_WAIT_SIGNAL = "DHCP4_BUFFER_WAIT_S
 extern const isc::log::MessageID DHCP4_CB_ON_DEMAND_FETCH_UPDATES_FAIL = "DHCP4_CB_ON_DEMAND_FETCH_UPDATES_FAIL";
 extern const isc::log::MessageID DHCP4_CB_PERIODIC_FETCH_UPDATES_FAIL = "DHCP4_CB_PERIODIC_FETCH_UPDATES_FAIL";
 extern const isc::log::MessageID DHCP4_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED = "DHCP4_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED";
+extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED = "DHCP4_CLASSES_ASSIGNED";
 extern const isc::log::MessageID DHCP4_CLASS_ASSIGNED = "DHCP4_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED = "DHCP4_CLASS_UNCONFIGURED";
 extern const isc::log::MessageID DHCP4_CLASS_UNDEFINED = "DHCP4_CLASS_UNDEFINED";
@@ -186,7 +187,8 @@ const char* values[] = {
     "DHCP4_CB_ON_DEMAND_FETCH_UPDATES_FAIL", "error on demand attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP4_CB_PERIODIC_FETCH_UPDATES_FAIL", "error on periodic attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP4_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED", "maximum number of configuration fetch attempts: 10, has been exhausted without success",
-    "DHCP4_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class(es): %2",
+    "DHCP4_CLASSES_ASSIGNED", "%1: client packet has been assigned to following classes: %2",
+    "DHCP4_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class: %2",
     "DHCP4_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
     "DHCP4_CLASS_UNDEFINED", "required class %1 has no definition",
     "DHCP4_CLASS_UNTESTABLE", "required class %1 has no test expression",

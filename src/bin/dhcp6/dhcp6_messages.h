@@ -18,6 +18,7 @@ extern const isc::log::MessageID DHCP6_BUFFER_WAIT_SIGNAL;
 extern const isc::log::MessageID DHCP6_CB_ON_DEMAND_FETCH_UPDATES_FAIL;
 extern const isc::log::MessageID DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL;
 extern const isc::log::MessageID DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED;
+extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED;
 extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED;
 extern const isc::log::MessageID DHCP6_CLASS_UNCONFIGURED;
 extern const isc::log::MessageID DHCP6_CLASS_UNDEFINED;

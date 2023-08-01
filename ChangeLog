@@ -1,3 +1,8 @@
+2172.	[func]		fdupont
+	Completed and imporved logs showing what client classes
+	are assigned to queries during processing.
+	(Gitlab #2908)
+
 Kea 2.5.0 (development) released on July 26, 2023
 
 2171.	[build]		andrei

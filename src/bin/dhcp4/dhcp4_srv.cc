@@ -253,11 +253,9 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     evaluateClasses(query, true);
 
     const ClientClasses& classes = query_->getClasses();
-    if (!classes.empty()) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
-            .arg(query_->getLabel())
-            .arg(classes.toText());
-    }
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
+        .arg(query_->getLabel())
+        .arg(classes.toText());
 
     // Check the DROP special class.
     if (query_->inClass("DROP")) {
@@ -3436,6 +3434,10 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
         // Required classification
         requiredClassify(ex);
 
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
+            .arg(discover->getLabel())
+            .arg(discover->getClasses().toText());
+
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
@@ -3513,6 +3515,10 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
 
         // Required classification
         requiredClassify(ex);
+
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
+            .arg(request->getLabel())
+            .arg(request->getClasses().toText());
 
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
@@ -3892,6 +3898,10 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& contex
     ex.conditionallySetReservedClientClasses();
 
     requiredClassify(ex);
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
+        .arg(inform->getLabel())
+        .arg(inform->getClasses().toText());
 
     buildCfgOptionList(ex);
     appendRequestedOptions(ex);
@@ -4296,13 +4306,13 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
             if (status) {
                 LOG_INFO(dhcp4_logger, EVAL_RESULT)
                     .arg(*cclass)
-                    .arg(status);
+                    .arg("true");
                 // Matching: add the class
                 query->addClass(*cclass);
             } else {
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
                     .arg(*cclass)
-                    .arg(status);
+                    .arg("false");
             }
         } catch (const Exception& ex) {
             LOG_ERROR(dhcp4_logger, EVAL_RESULT)
