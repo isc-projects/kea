@@ -135,6 +135,7 @@ extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_REQUEST = "DHCP6_PROCESS_IA
 extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_EXTEND = "DHCP6_PROCESS_IA_PD_EXTEND";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_REQUEST = "DHCP6_PROCESS_IA_PD_REQUEST";
 extern const isc::log::MessageID DHCP6_QUERY_DATA = "DHCP6_QUERY_DATA";
+extern const isc::log::MessageID DHCP6_QUERY_LABEL = "DHCP6_QUERY_LABEL";
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT = "DHCP6_RAPID_COMMIT";
 extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_NA = "DHCP6_RELEASE_NA";
@@ -304,6 +305,7 @@ const char* values[] = {
     "DHCP6_PROCESS_IA_PD_EXTEND", "%1: extending lease lifetime for IA_PD option with iaid=%2",
     "DHCP6_PROCESS_IA_PD_REQUEST", "%1: server is processing IA_PD option with iaid=%2 and hint=%3",
     "DHCP6_QUERY_DATA", "%1, packet details: %2",
+    "DHCP6_QUERY_LABEL", "received query: %1",
     "DHCP6_RAPID_COMMIT", "%1: Rapid Commit option received, following 2-way exchange",
     "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
     "DHCP6_RELEASE_NA", "%1: binding for address %2 and iaid=%3 was released properly",

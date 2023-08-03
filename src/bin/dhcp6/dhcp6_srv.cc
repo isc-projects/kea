@@ -816,6 +816,10 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         }
     }
 
+    // Classify can emit INFO logs so help to track the query.
+    LOG_INFO(dhcp6_logger, DHCP6_QUERY_LABEL)
+        .arg(query->getLabel());
+
     // Update statistics accordingly for received packet.
     processStatsReceived(query);
 

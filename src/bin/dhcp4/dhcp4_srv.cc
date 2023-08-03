@@ -1229,6 +1229,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         }
     }
 
+    // Classify can emit INFO logs so help to track the query.
+    LOG_INFO(dhcp4_logger, DHCP4_QUERY_LABEL)
+        .arg(query->getLabel());
+
     // Update statistics accordingly for received packet.
     processStatsReceived(query);
 

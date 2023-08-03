@@ -795,6 +795,10 @@ A debug message printing the details of the received packet. The first
 argument includes the client and the transaction identification
 information.
 
+% DHCP6_QUERY_LABEL received query: %1
+This information message indicates that a query was received. It displays
+the client and the transaction identification information.
+
 % DHCP6_RAPID_COMMIT %1: Rapid Commit option received, following 2-way exchange
 This debug message is issued when the server found a Rapid Commit option
 in the client's message and 2-way exchanges are supported by the

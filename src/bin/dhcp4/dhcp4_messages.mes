@@ -815,6 +815,10 @@ A debug message printing the details of the received packet. The first
 argument includes the client and the transaction identification
 information.
 
+% DHCP4_QUERY_LABEL received query: %1
+This information message indicates that a query was received. It displays
+the client and the transaction identification information.
+
 % DHCP4_RECLAIM_EXPIRED_LEASES_FAIL failed to reclaim expired leases: %1
 This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.

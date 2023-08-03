@@ -136,6 +136,7 @@ extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_REQUEST;
 extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_EXTEND;
 extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_REQUEST;
 extern const isc::log::MessageID DHCP6_QUERY_DATA;
+extern const isc::log::MessageID DHCP6_QUERY_LABEL;
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT;
 extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_FAIL;
 extern const isc::log::MessageID DHCP6_RELEASE_NA;
