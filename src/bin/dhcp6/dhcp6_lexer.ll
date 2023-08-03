@@ -12,6 +12,7 @@
 #include <cctype>
 #include <cerrno>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <dhcp6/parser_context.h>
