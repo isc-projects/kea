@@ -1,3 +1,10 @@
+2174.	[func]		fdupont
+	Added a new information message which displays the
+	client and the transaction identification information
+	for received queries between message unpacking and
+	first classification.
+	(Gitlab #2854)
+
 2173.	[bug]		tmark
 	Fixed a sporadic failure of IOSignaltest.mixedSignals
 	unit test.  Test no longer relies on signals arriving
