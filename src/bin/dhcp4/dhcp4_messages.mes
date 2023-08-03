@@ -65,7 +65,7 @@ The server will continue to operate but won't make any further attempts
 to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
 
-% DHCP4_CLASSES_ASSIGNED %1: client packet has been assigned to following classes: %2
+% DHCP4_CLASSES_ASSIGNED %1: client packet has been assigned to the following classes: %2
 This debug message informs that incoming packet has been assigned to specified
 classes. This is a normal behavior and indicates successful operation.
 The first argument specifies the client and transaction identification

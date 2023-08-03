@@ -1,5 +1,5 @@
 2172.	[func]		fdupont
-	Completed and imporved logs showing what client classes
+	Completed and improved logs showing what client classes
 	are assigned to queries during processing.
 	(Gitlab #2908)
 
