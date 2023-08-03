@@ -1520,13 +1520,13 @@ int yy_flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[70] =
     {   0,
-      134,  136,  138,  143,  144,  149,  150,  151,  163,  166,
-      171,  178,  187,  196,  205,  218,  231,  240,  249,  258,
-      267,  276,  285,  294,  303,  312,  321,  330,  339,  348,
-      357,  366,  375,  384,  393,  402,  411,  420,  429,  438,
-      447,  456,  465,  474,  483,  492,  501,  510,  519,  528,
-      537,  638,  654,  703,  711,  726,  727,  728,  729,  730,
-      731,  733,  751,  764,  769,  773,  775,  777,  779
+      135,  137,  139,  144,  145,  150,  151,  152,  164,  167,
+      172,  179,  188,  197,  206,  219,  232,  241,  250,  259,
+      268,  277,  286,  295,  304,  313,  322,  331,  340,  349,
+      358,  367,  376,  385,  394,  403,  412,  421,  430,  439,
+      448,  457,  466,  475,  484,  493,  502,  511,  520,  529,
+      538,  639,  655,  704,  712,  727,  728,  729,  730,  731,
+      732,  734,  752,  765,  770,  774,  776,  778,  780
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1538,7 +1538,7 @@ static const flex_int16_t yy_rule_linenum[70] =
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "agent_lexer.ll"
-/* Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1551,6 +1551,7 @@ char *yytext;
 #include <cctype>
 #include <cerrno>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <agent/parser_context.h>
@@ -1582,7 +1583,7 @@ using isc::agent::AgentParser;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::agent::ParserContext::fatal(msg)
-#line 1585 "agent_lexer.cc"
+#line 1586 "agent_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -1603,13 +1604,13 @@ using isc::agent::AgentParser;
    can be used during actual token definitions. Note some can match
    incorrect inputs (e.g., IP addresses) which must be checked. */
 /* for errors */
-#line 97 "agent_lexer.ll"
+#line 98 "agent_lexer.ll"
 /* This code run each time a pattern is matched. It updates the location
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
-#line 1611 "agent_lexer.cc"
 #line 1612 "agent_lexer.cc"
+#line 1613 "agent_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -1891,11 +1892,11 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 103 "agent_lexer.ll"
+#line 104 "agent_lexer.ll"
 
 
 
-#line 107 "agent_lexer.ll"
+#line 108 "agent_lexer.ll"
     /* This part of the code is copied over to the verbatim to the top
        of the generated yylex function. Explanation:
        http://www.gnu.org/software/bison/manual/html_node/Multiple-start_002dsymbols.html */
@@ -1923,7 +1924,7 @@ YY_DECL
     }
 
 
-#line 1926 "agent_lexer.cc"
+#line 1927 "agent_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2001,17 +2002,17 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 134 "agent_lexer.ll"
+#line 135 "agent_lexer.ll"
 ;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 136 "agent_lexer.ll"
+#line 137 "agent_lexer.ll"
 ;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 138 "agent_lexer.ll"
+#line 139 "agent_lexer.ll"
 {
   BEGIN(COMMENT);
   comment_start_line = driver.loc_.end.line;;
@@ -2019,33 +2020,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 143 "agent_lexer.ll"
+#line 144 "agent_lexer.ll"
 BEGIN(INITIAL);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 144 "agent_lexer.ll"
+#line 145 "agent_lexer.ll"
 ;
 	YY_BREAK
 case YY_STATE_EOF(COMMENT):
-#line 145 "agent_lexer.ll"
+#line 146 "agent_lexer.ll"
 {
     isc_throw(ParseError, "Comment not closed. (/* in line " << comment_start_line);
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 149 "agent_lexer.ll"
+#line 150 "agent_lexer.ll"
 BEGIN(DIR_ENTER);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 150 "agent_lexer.ll"
+#line 151 "agent_lexer.ll"
 BEGIN(DIR_INCLUDE);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 151 "agent_lexer.ll"
+#line 152 "agent_lexer.ll"
 {
     /* Include directive. */
 
@@ -2059,19 +2060,19 @@ YY_RULE_SETUP
 case YY_STATE_EOF(DIR_ENTER):
 case YY_STATE_EOF(DIR_INCLUDE):
 case YY_STATE_EOF(DIR_EXIT):
-#line 160 "agent_lexer.ll"
+#line 161 "agent_lexer.ll"
 {
     isc_throw(ParseError, "Directive not closed.");
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 163 "agent_lexer.ll"
+#line 164 "agent_lexer.ll"
 BEGIN(INITIAL);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 166 "agent_lexer.ll"
+#line 167 "agent_lexer.ll"
 {
     /* Ok, we found a with space. Let's ignore it and update loc variable. */
     driver.loc_.step();
@@ -2080,7 +2081,7 @@ YY_RULE_SETUP
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 171 "agent_lexer.ll"
+#line 172 "agent_lexer.ll"
 {
     /* Newline found. Let's update the location and continue. */
     driver.loc_.lines(yyleng);
@@ -2089,7 +2090,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 178 "agent_lexer.ll"
+#line 179 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::CONFIG:
@@ -2101,7 +2102,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 187 "agent_lexer.ll"
+#line 188 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2113,7 +2114,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 196 "agent_lexer.ll"
+#line 197 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2125,7 +2126,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 205 "agent_lexer.ll"
+#line 206 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2141,7 +2142,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 218 "agent_lexer.ll"
+#line 219 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2157,7 +2158,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 231 "agent_lexer.ll"
+#line 232 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2169,7 +2170,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 240 "agent_lexer.ll"
+#line 241 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AUTHENTICATION:
@@ -2181,7 +2182,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 249 "agent_lexer.ll"
+#line 250 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AUTH_TYPE:
@@ -2193,7 +2194,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 258 "agent_lexer.ll"
+#line 259 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AUTHENTICATION:
@@ -2205,7 +2206,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 267 "agent_lexer.ll"
+#line 268 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AUTHENTICATION:
@@ -2217,7 +2218,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 276 "agent_lexer.ll"
+#line 277 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AUTHENTICATION:
@@ -2229,7 +2230,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 285 "agent_lexer.ll"
+#line 286 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::CLIENTS:
@@ -2241,7 +2242,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 294 "agent_lexer.ll"
+#line 295 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::CLIENTS:
@@ -2253,7 +2254,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 303 "agent_lexer.ll"
+#line 304 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::CLIENTS:
@@ -2265,7 +2266,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 312 "agent_lexer.ll"
+#line 313 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::CLIENTS:
@@ -2277,7 +2278,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 321 "agent_lexer.ll"
+#line 322 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2289,7 +2290,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 330 "agent_lexer.ll"
+#line 331 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2301,7 +2302,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 339 "agent_lexer.ll"
+#line 340 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2313,7 +2314,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 348 "agent_lexer.ll"
+#line 349 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2325,7 +2326,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 357 "agent_lexer.ll"
+#line 358 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2337,7 +2338,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 366 "agent_lexer.ll"
+#line 367 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKETS:
@@ -2349,7 +2350,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 375 "agent_lexer.ll"
+#line 376 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKETS:
@@ -2361,7 +2362,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 384 "agent_lexer.ll"
+#line 385 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKETS:
@@ -2373,7 +2374,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 393 "agent_lexer.ll"
+#line 394 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::SERVER:
@@ -2385,7 +2386,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 402 "agent_lexer.ll"
+#line 403 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::SERVER:
@@ -2397,7 +2398,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 411 "agent_lexer.ll"
+#line 412 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::SOCKET_TYPE:
@@ -2409,7 +2410,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 420 "agent_lexer.ll"
+#line 421 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2421,7 +2422,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 429 "agent_lexer.ll"
+#line 430 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::HOOKS_LIBRARIES:
@@ -2433,7 +2434,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 438 "agent_lexer.ll"
+#line 439 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::HOOKS_LIBRARIES:
@@ -2445,7 +2446,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 447 "agent_lexer.ll"
+#line 448 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
@@ -2457,7 +2458,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 456 "agent_lexer.ll"
+#line 457 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
@@ -2469,7 +2470,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 465 "agent_lexer.ll"
+#line 466 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
@@ -2481,7 +2482,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 474 "agent_lexer.ll"
+#line 475 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2493,7 +2494,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 483 "agent_lexer.ll"
+#line 484 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2505,7 +2506,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 492 "agent_lexer.ll"
+#line 493 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2517,7 +2518,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 501 "agent_lexer.ll"
+#line 502 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2529,7 +2530,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 510 "agent_lexer.ll"
+#line 511 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2541,7 +2542,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 519 "agent_lexer.ll"
+#line 520 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
@@ -2553,7 +2554,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 528 "agent_lexer.ll"
+#line 529 "agent_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
@@ -2565,7 +2566,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 537 "agent_lexer.ll"
+#line 538 "agent_lexer.ll"
 {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
@@ -2670,7 +2671,7 @@ YY_RULE_SETUP
 case 52:
 /* rule 52 can match eol */
 YY_RULE_SETUP
-#line 638 "agent_lexer.ll"
+#line 639 "agent_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     std::string raw(yytext+1);
@@ -2690,7 +2691,7 @@ YY_RULE_SETUP
 case 53:
 /* rule 53 can match eol */
 YY_RULE_SETUP
-#line 654 "agent_lexer.ll"
+#line 655 "agent_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     std::string raw(yytext+1);
@@ -2742,7 +2743,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 703 "agent_lexer.ll"
+#line 704 "agent_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     std::string raw(yytext+1);
@@ -2753,7 +2754,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 711 "agent_lexer.ll"
+#line 712 "agent_lexer.ll"
 {
     /* Bad string with an open unicode escape at the end */
     std::string raw(yytext+1);
@@ -2771,37 +2772,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 726 "agent_lexer.ll"
+#line 727 "agent_lexer.ll"
 { return AgentParser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 727 "agent_lexer.ll"
+#line 728 "agent_lexer.ll"
 { return AgentParser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 728 "agent_lexer.ll"
+#line 729 "agent_lexer.ll"
 { return AgentParser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 729 "agent_lexer.ll"
+#line 730 "agent_lexer.ll"
 { return AgentParser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 730 "agent_lexer.ll"
+#line 731 "agent_lexer.ll"
 { return AgentParser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 731 "agent_lexer.ll"
+#line 732 "agent_lexer.ll"
 { return AgentParser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 733 "agent_lexer.ll"
+#line 734 "agent_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -2822,7 +2823,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 751 "agent_lexer.ll"
+#line 752 "agent_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -2838,7 +2839,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 764 "agent_lexer.ll"
+#line 765 "agent_lexer.ll"
 {
     string tmp(yytext);
     return AgentParser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -2846,33 +2847,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 769 "agent_lexer.ll"
+#line 770 "agent_lexer.ll"
 {
    return AgentParser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 773 "agent_lexer.ll"
+#line 774 "agent_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 775 "agent_lexer.ll"
+#line 776 "agent_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 777 "agent_lexer.ll"
+#line 778 "agent_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 779 "agent_lexer.ll"
+#line 780 "agent_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 781 "agent_lexer.ll"
+#line 782 "agent_lexer.ll"
 {
     if (driver.states_.empty()) {
         return AgentParser::make_END(driver.loc_);
@@ -2898,10 +2899,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 804 "agent_lexer.ll"
+#line 805 "agent_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2904 "agent_lexer.cc"
+#line 2905 "agent_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -4006,7 +4007,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 804 "agent_lexer.ll"
+#line 805 "agent_lexer.ll"
 
 
 using namespace isc::dhcp;
