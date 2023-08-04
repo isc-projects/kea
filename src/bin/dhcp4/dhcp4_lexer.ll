@@ -1296,6 +1296,16 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+/* Add the dash alias */
+\"output-options\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LOGGERS:
+        return isc::dhcp::Dhcp4Parser::make_OUTPUT_OPTIONS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("output-options", driver.loc_);
+    }
+}
+
 \"output\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:

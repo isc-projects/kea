@@ -246,6 +246,23 @@ TEST(ParserTest, embbededComments) {
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
+// Test that output-options is an alias of output_options.
+TEST(ParserTest, outputDashOptions) {
+    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"preferred-lifetime\": 3000,\n"
+                "\"rebind-timer\": 2000,\n"
+                "\"renew-timer\": 1000, \n"
+                "\"valid-lifetime\": 4000,\n"
+                "\"loggers\": [ { "
+                "    \"name\": \"kea-dhcp6\","
+                "    \"output-options\": [ { \"output\": \"stdout\" } ],"
+                "    \"severity\": \"INFO\" } ]\n"
+                "} }";
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
+}
+
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy

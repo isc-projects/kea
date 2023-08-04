@@ -240,6 +240,20 @@ TEST(ParserTest, embbededComments) {
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
+// Test that output-options is an alias of output_options.
+TEST(ParserTest, outputDashOptions) {
+    string txt=
+        "{ \"DhcpDdns\" : \n"
+            "{ \n"
+            "\"loggers\": [ {\n"
+            "    \"name\": \"kea-dhcp-ddns\",\n"
+            "    \"output-options\": [ { \"output\": \"stdout\" } ],\n"
+            "    \"severity\": \"INFO\" } ]\n"
+            "} \n"
+        "} \n";
+    testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
+}
+
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy

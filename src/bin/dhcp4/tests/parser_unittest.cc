@@ -241,6 +241,22 @@ TEST(ParserTest, embbededComments) {
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
+// Test that output-options is an alias of output_options.
+TEST(ParserTest, outputDashOptions) {
+    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"rebind-timer\": 2000,\n"
+                "\"renew-timer\": 1000, \n"
+                "\"valid-lifetime\": 4000,\n"
+                "\"loggers\": [ { "
+                "    \"name\": \"kea-dhcp4\","
+                "    \"output-options\": [ { \"output\": \"stdout\" } ],"
+                "    \"severity\": \"INFO\" } ]\n"
+                "} }";
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
+}
+
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy

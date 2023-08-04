@@ -346,6 +346,17 @@ TEST(ParserTest, embbededComments) {
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 }
 
+// Test that output-options is an alias of output_options.
+TEST(ParserTest, outputDashOptions) {
+    string txt= "{ \"Netconf\": {"
+                " \"loggers\": [ { "
+                "     \"name\": \"kea-netconf\","
+                "     \"output-options\": [ { \"output\": \"stdout\" } ],"
+                "     \"severity\": \"INFO\" } ]"
+                "} }";
+    testParser(txt, ParserContext::PARSER_NETCONF, false);
+}
+
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy

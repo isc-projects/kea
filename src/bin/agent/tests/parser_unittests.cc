@@ -286,6 +286,17 @@ TEST(ParserTest, embbededComments) {
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
+// Test that output-options is an alias of output_options.
+TEST(ParserTest, outputDashOptions) {
+    string txt= "{ \"Control-agent\": {"
+                " \"loggers\": [ { "
+                "     \"name\": \"kea-ctrl-agent\","
+                "     \"output-options\": [ { \"output\": \"stdout\" } ],"
+                "     \"severity\": \"INFO\" } ]"
+                "} }";
+    testParser(txt, ParserContext::PARSER_AGENT, false);
+}
+
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy

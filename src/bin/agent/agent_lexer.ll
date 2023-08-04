@@ -471,6 +471,16 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+/* Add the dash	alias */
+\"output-options\" {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGERS:
+        return AgentParser::make_OUTPUT_OPTIONS(driver.loc_);
+    default:
+        return AgentParser::make_STRING("output-options", driver.loc_);
+    }
+}
+
 \"output\" {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
