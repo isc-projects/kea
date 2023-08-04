@@ -726,6 +726,9 @@ TEST_F(CommandOptionsTest, MaxDrop) {
     // Too many -D<value%> options
     EXPECT_THROW(process(opt, "perfdhcp -D 99% -D 13% -l ethx -D 10% all"),
                  isc::InvalidParameter);
+    // Value is out of bounds
+    EXPECT_THROW(process(opt, "perfdhcp -D 0 -l ethx all"),
+                 isc::InvalidParameter);
     // Percentage is out of bounds
     EXPECT_THROW(process(opt, "perfdhcp -D101% -D 13% -l ethx all"),
                  isc::InvalidParameter);

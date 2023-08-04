@@ -410,7 +410,7 @@ Options Controlling a Test
 
 ``-D max-drop``
    Aborts the test immediately if "max-drop" requests have been dropped.
-   Use ``-D 0`` to abort if even a single request has
+   Use ``-D 1`` to abort if even a single request has
    been dropped. "max-drop" must be a positive integer. If "max-drop"
    includes the suffix ``%``, it specifies the maximum percentage of
    requests that may be dropped before aborting. In this case, testing of
