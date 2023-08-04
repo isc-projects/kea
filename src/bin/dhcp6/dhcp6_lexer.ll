@@ -1638,7 +1638,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-/* Add the dash	alias */
 \"output-options\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:

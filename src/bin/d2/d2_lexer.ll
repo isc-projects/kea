@@ -470,7 +470,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-/* Add the dash	alias */
 \"output-options\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
