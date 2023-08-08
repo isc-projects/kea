@@ -91,7 +91,7 @@ TEST(ParserTest, mapInMap) {
 
 TEST(ParserTest, listInList) {
     string txt = "[ [ \"Britain\", \"Wales\", \"Scotland\" ], "
-                 "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
+                 "  [ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -107,13 +107,13 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                   "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
     string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+                 "  { \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -257,7 +257,6 @@ TEST(ParserTest, keywordSubNetconf) {
         "    }"
         "   ]"
         "}";
-
     // This is only a subset of full config, so we'll parse with PARSER_SUB_NETCONF.
     testParser(txt, ParserContext::PARSER_SUB_NETCONF);
     testParser(txt, ParserContext::PARSER_JSON);
@@ -269,13 +268,13 @@ TEST(ParserTest, bashComments) {
     string txt= "{ \"Netconf\": {"
                 "  \"managed-servers\": {\n"
                 "    \"d2\": {\n"
-                "      \"model\": \"foo\",\n"
-                "      \"control-socket\": {\n"
+                "        \"model\": \"foo\",\n"
+                "        \"control-socket\": {\n"
                 "# this is a comment\n"
-                "\"socket-type\": \"unix\", \n"
+                "            \"socket-type\": \"unix\", \n"
                 "# This socket is mine. I can name it whatever\n"
                 "# I like, ok?\n"
-                "\"socket-name\": \"Hector\" \n"
+                "            \"socket-name\": \"Hector\" \n"
                 "} } } } }";
     testParser(txt, ParserContext::PARSER_NETCONF);
 }
@@ -287,12 +286,11 @@ TEST(ParserTest, cppComments) {
                 "    // Let's try talking to D2. Sadly, it never talks"
                 "    // to us back :( Maybe he doesn't like his name?\n"
                 "    \"d2\": {\n"
-                "      \"model\": \"foo\",\n"
-                "      \"control-socket\": {\n"
-                "\"socket-type\": \"unix\", \n"
-                "\"socket-name\": \"Hector\" \n"
+                "        \"model\": \"foo\",\n"
+                "        \"control-socket\": {\n"
+                "            \"socket-type\": \"unix\", \n"
+                "            \"socket-name\": \"Hector\" \n"
                 "} } } } }";
-
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 }
 
@@ -301,10 +299,10 @@ TEST(ParserTest, bashCommentsInline) {
     string txt= "{ \"Netconf\": {"
                 "  \"managed-servers\": {\n"
                 "    \"d2\": {\n"
-                "      \"model\": \"foo\",\n"
-                "      \"control-socket\": {\n"
-                "\"socket-type\": \"unix\", # Maybe Hector is not really a \n"
-                "\"socket-name\": \"Hector\" # Unix process?\n"
+                "        \"model\": \"foo\",\n"
+                "        \"control-socket\": {\n"
+                "            \"socket-type\": \"unix\", # Maybe Hector is not really a \n"
+                "            \"socket-name\": \"Hector\" # Unix process?\n"
                 "# Oh no! He's a windows one and just pretending!\n"
                 "} } } } }";
     testParser(txt, ParserContext::PARSER_NETCONF, false);
@@ -323,10 +321,10 @@ TEST(ParserTest, multilineComments) {
                 "  /* Ok, forget about it. If Hector doesn't want to talk,\n"
                 "     we won't talk to him either. We now have quiet days. */\n"
                 "  /* \"d2\": {"
-                "  \"model\": \"bar\",\n"
-                "  \"control-socket\": {\n"
-                "  \"socket-type\": \"unix\",\n"
-                "\"socket-name\": \"Hector\"\n"
+                "         \"model\": \"bar\",\n"
+                "         \"control-socket\": {\n"
+                "             \"socket-type\": \"unix\",\n"
+                "             \"socket-name\": \"Hector\"\n"
                 "} }*/ } } }";
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 }
@@ -337,9 +335,9 @@ TEST(ParserTest, embbededComments) {
                 "  \"comment\": \"a comment\","
                 "  \"managed-servers\": {\n"
                 "    \"dhcp4\": {\n"
-                "      \"control-socket\": {\n"
-                "        \"user-context\": { \"comment\": \"indirect\" },\n"
-                "        \"socket-type\": \"stdout\"\n"
+                "        \"control-socket\": {\n"
+                "            \"user-context\": { \"comment\": \"indirect\" },\n"
+                "            \"socket-type\": \"stdout\"\n"
                 "    } } },\n"
                 "  \"user-context\": { \"compatible\": true }\n"
                 "} }";

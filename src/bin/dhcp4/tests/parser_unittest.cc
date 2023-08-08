@@ -89,7 +89,7 @@ TEST(ParserTest, mapInMap) {
 
 TEST(ParserTest, listInList) {
     string txt = "[ [ \"Britain\", \"Wales\", \"Scotland\" ], "
-                 "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
+                 "  [ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
     testParser(txt, Parser4Context::PARSER_JSON);
 }
 
@@ -105,13 +105,13 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                   "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, Parser4Context::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
     string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+                 "  { \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, Parser4Context::PARSER_JSON);
 }
 
@@ -135,7 +135,7 @@ TEST(ParserTest, keywordJSON) {
 
 TEST(ParserTest, keywordDhcp4) {
      string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
+                  "  \"interfaces\": [ \"type\", \"htype\" ] },\n"
                   "\"rebind-timer\": 2000, \n"
                   "\"renew-timer\": 1000, \n"
                   "\"subnet4\": [ { "
@@ -143,117 +143,117 @@ TEST(ParserTest, keywordDhcp4) {
                   "  \"id\": 1, "
                   "  \"subnet\": \"192.0.2.0/24\", "
                   "  \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
+                  "\"valid-lifetime\": 4000 } }";
      testParser(txt, Parser4Context::PARSER_DHCP4);
 }
 
 // Tests if bash (#) comments are supported. That's the only comment type that
 // was supported by the old parser.
 TEST(ParserTest, bashComments) {
-    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "# this is a comment\n"
-                "\"rebind-timer\": 2000, \n"
-                "# lots of comments here\n"
-                "# and here\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet4\": [ { "
-                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-                "    \"id\": 1, "
-                "    \"subnet\": \"192.0.2.0/24\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "# this is a comment\n"
+                 "\"rebind-timer\": 2000, \n"
+                 "# lots of comments here\n"
+                 "# and here\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet4\": [ { "
+                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                 "    \"id\": 1, "
+                 "    \"subnet\": \"192.0.2.0/24\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 // Tests if C++ (//) comments can start anywhere, not just in the first line.
 TEST(ParserTest, cppComments) {
-    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"rebind-timer\": 2000, // everything after // is ignored\n"
-                "\"renew-timer\": 1000, // this will be ignored, too\n"
-                "\"subnet4\": [ { "
-                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-                "    \"id\": 1, "
-                "    \"subnet\": \"192.0.2.0/24\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"rebind-timer\": 2000, // everything after // is ignored\n"
+                 "\"renew-timer\": 1000, // this will be ignored, too\n"
+                 "\"subnet4\": [ { "
+                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                 "    \"id\": 1, "
+                 "    \"subnet\": \"192.0.2.0/24\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 // Tests if bash (#) comments can start anywhere, not just in the first line.
 TEST(ParserTest, bashCommentsInline) {
-    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"rebind-timer\": 2000, # everything after # is ignored\n"
-                "\"renew-timer\": 1000, # this will be ignored, too\n"
-                "\"subnet4\": [ { "
-                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-                "    \"id\": 1, "
-                "    \"subnet\": \"192.0.2.0/24\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"rebind-timer\": 2000, # everything after # is ignored\n"
+                 "\"renew-timer\": 1000, # this will be ignored, too\n"
+                 "\"subnet4\": [ { "
+                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                 "    \"id\": 1, "
+                 "    \"subnet\": \"192.0.2.0/24\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 // Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
-    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "   /* this is a C style comment\n"
-                "that\n can \n span \n multiple \n lines */ \n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet4\": [ { "
-                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-                "    \"id\": 1, "
-                "    \"subnet\": \"192.0.2.0/24\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "   /* this is a C style comment\n"
+                 "that\n can \n span \n multiple \n lines */ \n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet4\": [ { "
+                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                 "    \"id\": 1, "
+                 "    \"subnet\": \"192.0.2.0/24\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 // Tests if embedded comments are handled correctly.
 TEST(ParserTest, embbededComments) {
-    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"comment\": \"a comment\",\n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet4\": [ { "
-                "    \"user-context\": { \"comment\": \"indirect\" },"
-                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-                "    \"id\": 1, "
-                "    \"subnet\": \"192.0.2.0/24\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"user-context\": { \"compatible\": true },"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"comment\": \"a comment\",\n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet4\": [ { "
+                 "    \"user-context\": { \"comment\": \"indirect\" },"
+                 "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                 "    \"id\": 1, "
+                 "    \"subnet\": \"192.0.2.0/24\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"user-context\": { \"compatible\": true },"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 // Test that output-options is an alias of output_options.
 TEST(ParserTest, outputDashOptions) {
-    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"valid-lifetime\": 4000,\n"
-                "\"loggers\": [ { "
-                "    \"name\": \"kea-dhcp4\","
-                "    \"output-options\": [ { \"output\": \"stdout\" } ],"
-                "    \"severity\": \"INFO\" } ]\n"
-                "} }";
+    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"valid-lifetime\": 4000,\n"
+                 "\"loggers\": [ { "
+                 "    \"name\": \"kea-dhcp4\","
+                 "    \"output-options\": [ { \"output\": \"stdout\" } ],"
+                 "    \"severity\": \"INFO\" } ]\n"
+                 "} }";
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 

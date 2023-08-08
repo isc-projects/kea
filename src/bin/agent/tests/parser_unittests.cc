@@ -89,7 +89,7 @@ TEST(ParserTest, mapInMap) {
 
 TEST(ParserTest, listInList) {
     string txt = "[ [ \"Britain\", \"Wales\", \"Scotland\" ], "
-                 "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
+                 "  [ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -105,13 +105,13 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                   "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
     string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+                 "  { \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -199,7 +199,6 @@ TEST(ParserTest, keywordSubAgent) {
         "    }"
         "   ]"
         "}";
-
     // This is only a subset of full config, so we'll parse with PARSER_SUB_AGENT.
     testParser(txt, ParserContext::PARSER_SUB_AGENT);
     testParser(txt, ParserContext::PARSER_JSON);
@@ -208,33 +207,32 @@ TEST(ParserTest, keywordSubAgent) {
 // Tests if bash (#) comments are supported. That's the only comment type that
 // was supported by the old parser.
 TEST(ParserTest, bashComments) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"http-host\": \"localhost\","
-                "  \"http-port\": 9000,\n"
-                "  \"control-sockets\": {\n"
-                "    \"d2\": {\n"
-                "# this is a comment\n"
-                "\"socket-type\": \"unix\", \n"
-                "# This socket is mine. I can name it whatever\n"
-                "# I like, ok?\n"
-                "\"socket-name\": \"Hector\" \n"
-                "} } } }";
+    string txt = "{ \"Control-agent\": {"
+                 "  \"http-host\": \"localhost\","
+                 "  \"http-port\": 9000,\n"
+                 "  \"control-sockets\": {\n"
+                 "    \"d2\": {\n"
+                 "# this is a comment\n"
+                 "        \"socket-type\": \"unix\", \n"
+                 "# This socket is mine. I can name it whatever\n"
+                 "# I like, ok?\n"
+                 "        \"socket-name\": \"Hector\" \n"
+                 "} } } }";
     testParser(txt, ParserContext::PARSER_AGENT);
 }
 
 // Tests if C++ (//) comments can start anywhere, not just in the first line.
 TEST(ParserTest, cppComments) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"http-host\": \"localhost\","
-                "  \"http-port\": 9001, // the level is over 9000!\n"
-                "  \"control-sockets\": {\n"
-                "    // Let's try talking to D2. Sadly, it never talks"
-                "    // to us back :( Maybe he doesn't like his name?\n"
-                "    \"d2\": {"
-                "\"socket-type\": \"unix\", \n"
-                "\"socket-name\": \"Hector\" \n"
-                "} } } }";
-
+    string txt = "{ \"Control-agent\": {"
+                 "  \"http-host\": \"localhost\","
+                 "  \"http-port\": 9001, // the level is over 9000!\n"
+                 "  \"control-sockets\": {\n"
+                 "    // Let's try talking to D2. Sadly, it never talks"
+                 "    // to us back :( Maybe he doesn't like his name?\n"
+                 "    \"d2\": {"
+                 "        \"socket-type\": \"unix\", \n"
+                 "        \"socket-name\": \"Hector\" \n"
+                 "} } } }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
@@ -245,8 +243,8 @@ TEST(ParserTest, bashCommentsInline) {
                 "  \"http-port\": 9000,\n"
                 "  \"control-sockets\": {\n"
                 "    \"d2\": {"
-                "\"socket-type\": \"unix\", # Maybe Hector is not really a \n"
-                "\"socket-name\": \"Hector\" # Unix process?\n"
+                "        \"socket-type\": \"unix\", # Maybe Hector is not really a \n"
+                "        \"socket-name\": \"Hector\" # Unix process?\n"
                 "# Oh no! He's a windows one and just pretending!\n"
                 "} } } }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
@@ -254,46 +252,46 @@ TEST(ParserTest, bashCommentsInline) {
 
 // Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"http-host\": \"localhost\","
-                "  \"http-port\": 9000,\n"
-                "  \"control-sockets\": {\n"
-                "    \"dhcp4\": {\n"
-                "        \"socket-type\": \"unix\"\n"
-                "    }\n"
-                "  /* Ok, forget about it. If Hector doesn't want to talk,\n"
-                "     we won't talk to him either. We now have quiet days. */\n"
-                "  /* \"d2\": {"
-                "  \"socket-type\": \"unix\",\n"
-                "\"socket-name\": \"Hector\"\n"
-                "}*/ } } }";
+    string txt = "{ \"Control-agent\": {"
+                 "  \"http-host\": \"localhost\","
+                 "  \"http-port\": 9000,\n"
+                 "  \"control-sockets\": {\n"
+                 "    \"dhcp4\": {\n"
+                 "        \"socket-type\": \"unix\"\n"
+                 "    }\n"
+                 "  /* Ok, forget about it. If Hector doesn't want to talk,\n"
+                 "     we won't talk to him either. We now have quiet days. */\n"
+                 "  /* \"d2\": {"
+                 "         \"socket-type\": \"unix\",\n"
+                 "         \"socket-name\": \"Hector\"\n"
+                 "}*/ } } }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
 // Tests if embedded comments are handled correctly.
 TEST(ParserTest, embbededComments) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"comment\": \"a comment\","
-                "  \"http-host\": \"localhost\","
-                "  \"http-port\": 9000,\n"
-                "  \"control-sockets\": {\n"
-                "    \"dhcp4\": {\n"
-                "        \"user-context\": { \"comment\": \"indirect\" },\n"
-                "        \"socket-type\": \"unix\"\n"
-                "    } },\n"
-                "  \"user-context\": { \"compatible\": true }\n"
-                "} }";
+    string txt = "{ \"Control-agent\": {"
+                 "  \"comment\": \"a comment\","
+                 "  \"http-host\": \"localhost\","
+                 "  \"http-port\": 9000,\n"
+                 "  \"control-sockets\": {\n"
+                 "    \"dhcp4\": {\n"
+                 "        \"user-context\": { \"comment\": \"indirect\" },\n"
+                 "        \"socket-type\": \"unix\"\n"
+                 "    } },\n"
+                 "  \"user-context\": { \"compatible\": true }\n"
+                 "} }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
 // Test that output-options is an alias of output_options.
 TEST(ParserTest, outputDashOptions) {
-    string txt= "{ \"Control-agent\": {"
-                " \"loggers\": [ { "
-                "     \"name\": \"kea-ctrl-agent\","
-                "     \"output-options\": [ { \"output\": \"stdout\" } ],"
-                "     \"severity\": \"INFO\" } ]"
-                "} }";
+    string txt = "{ \"Control-agent\": {"
+                 " \"loggers\": [ { "
+                 "     \"name\": \"kea-ctrl-agent\","
+                 "     \"output-options\": [ { \"output\": \"stdout\" } ],"
+                 "     \"severity\": \"INFO\" } ]"
+                 "} }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 

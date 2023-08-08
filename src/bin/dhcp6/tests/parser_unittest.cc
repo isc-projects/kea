@@ -89,7 +89,7 @@ TEST(ParserTest, mapInMap) {
 
 TEST(ParserTest, listInList) {
     string txt = "[ [ \"Britain\", \"Wales\", \"Scotland\" ], "
-                 "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
+                 "  [ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
     testParser(txt, Parser6Context::PARSER_JSON);
 }
 
@@ -105,13 +105,13 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                   "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, Parser6Context::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
     string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+                 "  { \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, Parser6Context::PARSER_JSON);
 }
 
@@ -135,7 +135,7 @@ TEST(ParserTest, keywordJSON) {
 
 TEST(ParserTest, keywordDhcp6) {
      string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
+                  "  \"interfaces\": [ \"type\", \"htype\" ] },\n"
                   "\"preferred-lifetime\": 3000,\n"
                   "\"rebind-timer\": 2000, \n"
                   "\"renew-timer\": 1000, \n"
@@ -144,122 +144,122 @@ TEST(ParserTest, keywordDhcp6) {
                   "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                   "    \"subnet\": \"2001:db8:1::/48\", "
                   "    \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
+                  "\"valid-lifetime\": 4000 } }";
      testParser(txt, Parser6Context::PARSER_DHCP6);
 }
 
 // Tests if bash (#) comments are supported. That's the only comment type that
 // was supported by the old parser.
 TEST(ParserTest, bashComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000,\n"
-                "# this is a comment\n"
-                "\"rebind-timer\": 2000, \n"
-                "# lots of comments here\n"
-                "# and here\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"id\": 1, "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000,\n"
+                 "# this is a comment\n"
+                 "\"rebind-timer\": 2000, \n"
+                 "# lots of comments here\n"
+                 "# and here\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6);
 }
 
 // Tests if C++ (//) comments can start anywhere, not just in the first line.
 TEST(ParserTest, cppComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, // this is a comment \n"
-                "\"rebind-timer\": 2000, // everything after // is ignored\n"
-                "\"renew-timer\": 1000, // this will be ignored, too\n"
-                "\"subnet6\": [ { "
-                "    \"id\": 1, "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000, // this is a comment \n"
+                 "\"rebind-timer\": 2000, // everything after // is ignored\n"
+                 "\"renew-timer\": 1000, // this will be ignored, too\n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Tests if bash (#) comments can start anywhere, not just in the first line.
 TEST(ParserTest, bashCommentsInline) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, # this is a comment \n"
-                "\"rebind-timer\": 2000, # everything after # is ignored\n"
-                "\"renew-timer\": 1000, # this will be ignored, too\n"
-                "\"subnet6\": [ { "
-                "    \"id\": 1, "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000, # this is a comment \n"
+                 "\"rebind-timer\": 2000, # everything after # is ignored\n"
+                 "\"renew-timer\": 1000, # this will be ignored, too\n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
-                "that\n can \n span \n multiple \n lines */ \n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"id\": 1, "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
+                 "that\n can \n span \n multiple \n lines */ \n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Tests if embedded comments are handled correctly.
 TEST(ParserTest, embbededComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"comment\": \"a comment\",\n"
-                "\"preferred-lifetime\": 3000,\n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"id\": 1, "
-                "    \"user-context\": { \"comment\": \"indirect\" },"
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"user-context\": { \"compatible\": true },"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"comment\": \"a comment\",\n"
+                 "\"preferred-lifetime\": 3000,\n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"user-context\": { \"comment\": \"indirect\" },"
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"user-context\": { \"compatible\": true },"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Test that output-options is an alias of output_options.
 TEST(ParserTest, outputDashOptions) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000,\n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"valid-lifetime\": 4000,\n"
-                "\"loggers\": [ { "
-                "    \"name\": \"kea-dhcp6\","
-                "    \"output-options\": [ { \"output\": \"stdout\" } ],"
-                "    \"severity\": \"INFO\" } ]\n"
-                "} }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000,\n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"valid-lifetime\": 4000,\n"
+                 "\"loggers\": [ { "
+                 "    \"name\": \"kea-dhcp6\","
+                 "    \"output-options\": [ { \"output\": \"stdout\" } ],"
+                 "    \"severity\": \"INFO\" } ]\n"
+                 "} }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 

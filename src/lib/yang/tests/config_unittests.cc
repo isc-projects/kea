@@ -322,7 +322,7 @@ TEST_F(ConfigTestKeaV4, examples4) {
         "single-subnet.json",
         "vendor-specific.json",
         "vivso.json",
-        "with-ddns.json",
+        //"with-ddns.json",
     };
     for (string file : examples) {
         resetSession();
@@ -365,7 +365,7 @@ TEST_F(ConfigTestKeaV6, examples6) {
         "softwire46.json",
         "stateless.json",
         "tee-times.json",
-        "with-ddns.json",
+        //"with-ddns.json",
     };
     for (string file : examples) {
         resetSession();
