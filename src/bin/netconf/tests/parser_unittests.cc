@@ -91,7 +91,7 @@ TEST(ParserTest, mapInMap) {
 
 TEST(ParserTest, listInList) {
     string txt = "[ [ \"Britain\", \"Wales\", \"Scotland\" ], "
-                 "  [ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
+                 "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -107,31 +107,31 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                   "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                 "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
-    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 "  { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 }, "
+                 "{ \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, types) {
-    string txt = "{ \"string\": \"foo\","
-                   "\"integer\": 42,"
-                   "\"boolean\": true,"
-                   "\"map\": { \"foo\": \"bar\" },"
-                   "\"list\": [ 1, 2, 3 ],"
-                   "\"null\": null }";
+    string txt = "{ \"string\": \"foo\", "
+                 "\"integer\": 42, "
+                 "\"boolean\": true, "
+                 "\"map\": { \"foo\": \"bar\" }, "
+                 "\"list\": [ 1, 2, 3 ], "
+                 "\"null\": null }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, keywordJSON) {
-    string txt = "{ \"name\": \"user\","
-                   "\"type\": \"password\","
-                   "\"user\": \"name\","
-                   "\"password\": \"type\" }";
+    string txt = "{ \"name\": \"user\", "
+                 "\"type\": \"password\", "
+                 "\"user\": \"name\", "
+                 "\"password\": \"type\" }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 

@@ -89,7 +89,7 @@ TEST(ParserTest, mapInMap) {
 
 TEST(ParserTest, listInList) {
     string txt = "[ [ \"Britain\", \"Wales\", \"Scotland\" ], "
-                 "  [ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
+                 "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -105,31 +105,31 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                   "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                 "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
-    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 "  { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 }, "
+                 "{ \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, types) {
-    string txt = "{ \"string\": \"foo\","
-                   "\"integer\": 42,"
-                   "\"boolean\": true,"
-                   "\"map\": { \"foo\": \"bar\" },"
-                   "\"list\": [ 1, 2, 3 ],"
-                   "\"null\": null }";
+    string txt = "{ \"string\": \"foo\", "
+                 "\"integer\": 42, "
+                 "\"boolean\": true, "
+                 "\"map\": { \"foo\": \"bar\" }, "
+                 "\"list\": [ 1, 2, 3 ], "
+                 "\"null\": null }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, keywordJSON) {
-    string txt = "{ \"name\": \"user\","
-                   "\"type\": \"password\","
-                   "\"user\": \"name\","
-                   "\"password\": \"type\" }";
+    string txt = "{ \"name\": \"user\", "
+                 "\"type\": \"password\", "
+                 "\"user\": \"name\", "
+                 "\"password\": \"type\" }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -199,6 +199,7 @@ TEST(ParserTest, keywordSubAgent) {
         "    }"
         "   ]"
         "}";
+
     // This is only a subset of full config, so we'll parse with PARSER_SUB_AGENT.
     testParser(txt, ParserContext::PARSER_SUB_AGENT);
     testParser(txt, ParserContext::PARSER_JSON);
@@ -207,8 +208,8 @@ TEST(ParserTest, keywordSubAgent) {
 // Tests if bash (#) comments are supported. That's the only comment type that
 // was supported by the old parser.
 TEST(ParserTest, bashComments) {
-    string txt = "{ \"Control-agent\": {"
-                 "  \"http-host\": \"localhost\","
+    string txt = "{ \"Control-agent\": {\n"
+                 "  \"http-host\": \"localhost\",\n"
                  "  \"http-port\": 9000,\n"
                  "  \"control-sockets\": {\n"
                  "    \"d2\": {\n"
@@ -223,8 +224,8 @@ TEST(ParserTest, bashComments) {
 
 // Tests if C++ (//) comments can start anywhere, not just in the first line.
 TEST(ParserTest, cppComments) {
-    string txt = "{ \"Control-agent\": {"
-                 "  \"http-host\": \"localhost\","
+    string txt = "{ \"Control-agent\": {\n"
+                 "  \"http-host\": \"localhost\",\n"
                  "  \"http-port\": 9001, // the level is over 9000!\n"
                  "  \"control-sockets\": {\n"
                  "    // Let's try talking to D2. Sadly, it never talks"
@@ -238,8 +239,8 @@ TEST(ParserTest, cppComments) {
 
 // Tests if bash (#) comments can start anywhere, not just in the first line.
 TEST(ParserTest, bashCommentsInline) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"http-host\": \"localhost\","
+    string txt= "{ \"Control-agent\": {\n"
+                "  \"http-host\": \"localhost\",\n"
                 "  \"http-port\": 9000,\n"
                 "  \"control-sockets\": {\n"
                 "    \"d2\": {"
@@ -252,8 +253,8 @@ TEST(ParserTest, bashCommentsInline) {
 
 // Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
-    string txt = "{ \"Control-agent\": {"
-                 "  \"http-host\": \"localhost\","
+    string txt = "{ \"Control-agent\": {\n"
+                 "  \"http-host\": \"localhost\",\n"
                  "  \"http-port\": 9000,\n"
                  "  \"control-sockets\": {\n"
                  "    \"dhcp4\": {\n"
@@ -270,9 +271,9 @@ TEST(ParserTest, multilineComments) {
 
 // Tests if embedded comments are handled correctly.
 TEST(ParserTest, embbededComments) {
-    string txt = "{ \"Control-agent\": {"
-                 "  \"comment\": \"a comment\","
-                 "  \"http-host\": \"localhost\","
+    string txt = "{ \"Control-agent\": {\n"
+                 "  \"comment\": \"a comment\",\n"
+                 "  \"http-host\": \"localhost\",\n"
                  "  \"http-port\": 9000,\n"
                  "  \"control-sockets\": {\n"
                  "    \"dhcp4\": {\n"
