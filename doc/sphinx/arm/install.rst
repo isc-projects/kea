@@ -20,7 +20,7 @@ instructions or refer to ISC `KB article <https://kb.isc.org/docs/isc-kea-packag
 
 Installation From Cloudsmith Packages
 -------------------------------------
-ISC provides Kea packages for Alpine, CentOS, Debian, Fedora, RHEL, and Ubuntu.
+ISC provides Kea packages for Alpine, Debian, Fedora, RHEL, and Ubuntu.
 The recommended method for installing Kea on any of these systems, from the
 Cloudsmith repository for Kea release 2.3.1 or later, is to install the ``isc-kea``
 metapackage. This metapackage is included on all supported distros and

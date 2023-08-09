@@ -92,25 +92,24 @@ Compilation and Installation of the RADIUS Hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following section describes how to compile and install the software
-on CentOS 7.0. Other systems may differ slightly.
+on Ubuntu 22.04. Other systems may differ slightly.
 
 .. note::
 
-   ISC provides Kea software and hooks in convenient-to-use
-   native DEB, and RPM packages. This includes the RADIUS hook and the required patched version
-   of the FreeRADIUS client library. The software compilation for RADIUS is complicated; unless
-   there are specific reasons to compile it, administrators should seriously consider using
-   native packages.
+   ISC provides Kea software and hooks in convenient-to-use native DEB, and RPM
+   packages. This includes the RADIUS hook and the required patched version of
+   the FreeRADIUS client library. The software compilation for RADIUS is
+   complicated; unless there are specific reasons to compile it, administrators
+   should seriously consider using native packages.
 
 STEP 1: Install dependencies
 
-Several tools are needed to build the dependencies and Kea itself. The
-following commands should install them:
+Several tools are needed to build the dependencies and Kea itself. The following
+commands should install them:
 
 .. code-block:: console
 
-   $ sudo rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-   $ sudo yum install gcc-g++ openssl-devel log4cplus-devel wget git
+   $ apt-get install gcc g++ make autoconf automake libtool libssl-dev liblog4cplus-dev libboost-system-dev
 
 STEP 2: Install FreeRADIUS
 
@@ -137,44 +136,11 @@ version, please use the following steps:
    $ sudo make install
 
 Additional parameters may be passed to the configure script, if needed.
-The FreeRADIUS client will be installed in
-/usr/local, which is the default path where Kea will look for it.
-It can be installed in a different directory; if so,
+The FreeRADIUS client will be installed in /usr/local, which is the default path
+where Kea will look for it. It can be installed in a different directory; if so,
 make sure to add that path to the configure script when compiling Kea.
 
-STEP 3: Install a recent Boost version
-
-Kea requires a reasonably recent Boost version. Unfortunately, the
-version available in CentOS 7 is too old, so a newer Boost version is
-necessary. Furthermore, CentOS 7 has an old version of the g++ compiler
-that does not handle the latest Boost versions. Fortunately, Boost 1.65
-meets both requirements; it is both recent enough for Kea and can be
-compiled using the g++ 4.8 version in CentOS.
-
-To download and compile Boost 1.65, please use the following commands:
-
-.. code-block:: console
-
-   $ wget -nd https://boostorg.jfrog.io/artifactory/main/release/1.65.1/source/boost_1_65_1.tar.gz
-   $ tar -zxvf boost_1_65_1.tar.gz
-   $ cd boost_1_65_1/
-   $ ./bootstrap.sh
-   $ ./b2 --without-python
-   $ sudo ./b2 install
-
-Note that the ``b2`` script may optionally take extra parameters; one of
-them specifies the destination path where the sources are to be
-compiled.
-
-Alternatively, some systems provide newer Boost packages. For example,
-CentOS 7 provides ``boost169-devel``. If it is installed with
-``yum install boost169-devel``, Kea must be pointed to it with:
-
-.. code-block:: console
-
-   $ ./configure --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
-
-STEP 4: Compile and install Kea
+STEP 3: Compile and install Kea
 
 Obtain the Kea sources either by downloading them from the git
 repository or extracting the tarball. Use one of these commands
@@ -234,18 +200,7 @@ be specified.
 .. code-block:: console
 
    $ autoreconf -i
-   $ ./configure --with-freeradius=/path/to/freeradius --with-boost-include=/path/to/boost --with-boost-lib-dir=/path/to/boost/state/lib
-
-For example, assuming the FreeRADIUS client was installed in the default
-directory (/usr/local) and the Boost 1.65 sources were compiled in
-/home/thomson/devel/boost1_65_1, the configure path should look as
-follows:
-
-.. code-block:: console
-
-   $ ./configure --with-freeradius=/usr/local \
-         --with-boost-include=/home/thomson/devel/boost_1_65_1 \
-         --with-boost-lib-dir=/home/thomson/devel/boost_1_65_1/stage/lib
+   $ ./configure --with-freeradius=/path/to/freeradius
 
 After some checks, the configure script should print a report similar to
 the following:
@@ -257,20 +212,25 @@ the following:
 
    Package:
      Name:              kea
-     Version:           |release|
-     Extended version:  |release| (tarball)
+     Version:           2.4.0
+     Extended version:  2.4.0 (tarball)
+     Version type:      stable
      OS Family:         Linux
 
+     Prefix:            /usr/local
      Hooks directory:   /usr/local/lib/kea/hooks
      Premium hooks:     yes
-     Included Hooks:    forensic_log flex_id host_cmds subnet_cmds radius host_cache
+     Included Hooks:    ddns_tuning forensic_log flex_id host_cmds limits subnet_cmds radius host_cache class_cmds cb_cmds lease_query gss_tsig rbac
+
+   Configure arguments:
+    '--with-freeradius'
 
    C++ Compiler:
-     CXX:             g++ --std=c++11
-     CXX_VERSION:     g++ (GCC) 4.8.5 20150623 (Red Hat 4.8.5-16)
-     CXX_STANDARD:    201103
+     CXX:             g++
+     CXX_VERSION:     g++ (Ubuntu 12.3.0-1ubuntu1~22.04) 12.3.0
+     CXX_STANDARD:    201703
      DEFS:            -DHAVE_CONFIG_H
-     CPPFLAGS:         -DOS_LINUX  -DBOOST_ASIO_HEADER_ONLY
+     CPPFLAGS:         -DOS_LINUX  -I$(top_srcdir) -I$(top_builddir)
      CXXFLAGS:        -g -O2
      LDFLAGS:          -lpthread
      KEA_CXXFLAGS:     -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare -pthread -Wno-missing-field-initializers -fPIC
@@ -279,33 +239,49 @@ the following:
      PYTHON_VERSION:  not needed (because kea-shell is disabled)
 
    Boost:
-     BOOST_VERSION:   1.65.1
-     BOOST_INCLUDES:  -I/home/thomson/devel/boost_1_65_1
-     BOOST_LIBS:      -L/home/thomson/devel/boost_1_65_1/stage/lib  -lboost_system
+     BOOST_VERSION:   1.74
+     BOOST_INCLUDES:
+     BOOST_LIBS:       -lboost_system
 
    OpenSSL:
-     CRYPTO_VERSION:  OpenSSL 1.0.2k  26 Jan 2017
+     CRYPTO_VERSION:  OpenSSL 3.0.2 15 Mar 2022
      CRYPTO_CFLAGS:
      CRYPTO_INCLUDES:
      CRYPTO_LDFLAGS:
-     CRYPTO_LIBS:     -lcrypto
+     CRYPTO_LIBS:     -lssl -lcrypto
+     TLS support:     yes
 
    Botan: no
 
    Log4cplus:
-     LOG4CPLUS_VERSION:  1.1.3
+     LOG4CPLUS_VERSION:  2.0.5
      LOG4CPLUS_INCLUDES: -I/usr/include
      LOG4CPLUS_LIBS:     -L/usr/lib -L/usr/lib64 -llog4cplus
 
    Flex/bison:
      FLEX:  flex
-     BISON: bison -y
+     BISON: /usr/bin/bison
 
    MySQL:
      no
 
    PostgreSQL:
      no
+
+   NETCONF:
+     no
+
+     libyang:
+       no
+
+     libyang-cpp:
+       no
+
+     sysrepo:
+       no
+
+     sysrepo-cpp:
+       no
 
    Google Test:
      no
@@ -316,23 +292,25 @@ the following:
      FREERADIUS_DICTIONARY: /usr/local/etc/radiusclient/dictionary
 
    Developer:
-     Enable Debugging:       no
-     Google Tests:           no
-     Valgrind:               not found
-     C++ Code Coverage:      no
-     Logger checks:          no
-     Generate Documentation: no
-     Parser Generation:      no
-     Kea-shell:              no
-     Perfdhcp:               no
+     Enable Debugging:          no
+     Google Tests:              no
+     Valgrind:                  no
+     C++ Code Coverage:         no
+     Logger checks:             no
+     Install existing manuals:  yes
+     Generate Documentation:    no
+     Generate Parser:           no
+     Generate Messages Files:   no
+     Perfdhcp:                  no
+     Kea-shell:                 no
+     Enable fuzzing:            no
 
 Please make sure that the compilation includes the following:
 
 -  RADIUS listed in Included Hooks;
 -  FreeRADIUS client directories printed and pointing to the right
    directories;
--  Boost version at least 1.65.1. The versions available in CentOS 7
-   (1.48 and 1.53) are too old.
+-  Boost version at least 1.65.1.
 
 Once the configuration is complete, compile Kea using ``make``. If the
 system has more than one core, using the ``-jN``

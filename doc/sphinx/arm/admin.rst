@@ -541,8 +541,8 @@ which the servers will access it. A number of steps are required:
    file is normally located in the primary data directory for the
    PostgreSQL server. The precise path may vary depending on the
    operating system and version, but the default location for PostgreSQL is
-   ``/etc/postgresql/*/main/postgresql.conf``. However, on some systems
-   (notably CentOS 8), the file may reside in ``/var/lib/pgsql/data``.
+   ``/etc/postgresql/*/main/postgresql.conf``. However, on some systems, the
+   file may reside in ``/var/lib/pgsql/data``.
 
    Assuming Kea is running on the same host as PostgreSQL, adding lines
    similar to the following should be sufficient to provide
