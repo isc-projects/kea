@@ -3624,7 +3624,7 @@ ISC tested the following configuration:
 
        "loggers": [ {
            "name": "kea-dhcp6",
-           "output_options": [ {
+           "output-options": [ {
                "output": "/tmp/kea-dhcp6.log"
            } ],
            "severity": "DEBUG",

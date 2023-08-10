@@ -4272,7 +4272,7 @@ ISC tested the following configuration:
        "loggers": [
        {
            "name": "kea-dhcp4",
-           "output_options": [
+           "output-options": [
            {
                "output": "/tmp/kea-dhcp4.log"
            }

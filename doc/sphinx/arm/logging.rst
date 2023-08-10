@@ -608,11 +608,20 @@ level of debug messages to be printed. It ranges from 0 (least
 verbose) to 99 (most verbose). If severity for the logger is not DEBUG,
 this value is ignored.
 
-The ``output_options`` (list) Logger
+The ``output-options`` (list) Logger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each logger can have zero or more ``output_options``. These specify
+Each logger can have zero or more ``output-options``. These specify
 where log messages are sent and are explained in detail below.
+
+.. note::
+
+   As of Kea 2.5.1, alias ``output-options`` was added to replace
+   previous ``output_options`` configuration key. The reason behind this
+   was to keep all configuration keys consistent i.e. to use "dash" instead
+   of "underscore" in the key name. For the time being both configuration keys
+   are considered correct and mean the same to Kea parsers. In future, older
+   ``output_options`` configuration key will be deprecated.
 
 The ``output`` (string) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -939,7 +948,7 @@ console using standard output.
        "loggers": [
            {
                "name": "kea-dhcp4",
-               "output_options": [
+               "output-options": [
                    {
                        "output": "stdout"
                    }
@@ -959,7 +968,7 @@ logfile grows to 2MB, it should be renamed and a new file should be created.
        "loggers": [
            {
                "name": "kea-dhcp6",
-               "output_options": [
+               "output-options": [
                    {
                        "output": "/var/log/kea-debug.log",
                        "maxver": 8,

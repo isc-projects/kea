@@ -631,7 +631,7 @@ Kea sources.
            "loggers": [
                {
                    "name": "kea-netconf",
-                   "output_options": [
+                   "output-options": [
                        {
                            "output": "/var/log/kea-netconf.log",
                            // Several additional parameters are possible in
@@ -779,7 +779,7 @@ The following is the example ``netconf.json`` configuration for
           {
             "debuglevel": 99,
             "name": "kea-netconf",
-            "output_options": [
+            "output-options": [
               {
                 "output": "stderr"
               }
@@ -1102,7 +1102,7 @@ The corresponding Kea configuration in JSON is:
        "loggers": [
          {
            "name": "kea-dhcp6",
-           "output_options": [
+           "output-options": [
              {
                "output": "stderr"
              }

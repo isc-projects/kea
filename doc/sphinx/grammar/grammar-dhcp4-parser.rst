@@ -1003,7 +1003,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      severity ::= "severity" ":" STRING
 
-     output_options_list ::= "output_options" ":" "[" output_options_list_content "]"
+     output_options_list ::= "output-options" ":" "[" output_options_list_content "]"
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry
