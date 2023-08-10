@@ -1,3 +1,9 @@
+2173.	[bug]		tmark
+	Fixed a sporadic failure of IOSignaltest.mixedSignals
+	unit test.  Test no longer relies on signals arriving
+	in order they are sent as it cannot be guaranteed.
+	(Gitlab #2954)
+
 2172.	[func]		fdupont
 	Completed and improved logs showing what client classes
 	are assigned to queries during processing.

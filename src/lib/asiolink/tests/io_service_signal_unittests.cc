@@ -229,16 +229,20 @@ TEST_F(IOSignalTest, mixedSignals) {
     ASSERT_NO_THROW(io_signal_set_->add(SIGUSR1));
     ASSERT_NO_THROW(io_signal_set_->add(SIGUSR2));
 
+    // Stop the IO run once we have received eight signals.
     stop_at_count_ = 8;
 
-    // User a repeating TimedSignal so we should generate a signal every 3, 5
-    // and 7 ms until we hit our stop count.
-    TimedSignal sig_1(*io_service_, SIGINT, 3,
-                      asiolink::IntervalTimer::REPEATING);
-    TimedSignal sig_2(*io_service_, SIGUSR1, 5,
-                      asiolink::IntervalTimer::REPEATING);
-    TimedSignal sig_3(*io_service_, SIGUSR2, 7,
-                      asiolink::IntervalTimer::REPEATING);
+    // Since signal order arrival cannot be guaranteed, we'll use
+    // explicit one shot signals so we can guarantee how many
+    // of each signal we should get.
+    TimedSignal sig1(*io_service_, SIGINT, 2);
+    TimedSignal sig2(*io_service_, SIGUSR1, 2);
+    TimedSignal sig3(*io_service_, SIGINT, 2);
+    TimedSignal sig4(*io_service_, SIGUSR2, 2);
+    TimedSignal sig5(*io_service_, SIGINT, 2);
+    TimedSignal sig6(*io_service_, SIGUSR1, 2);
+    TimedSignal sig7(*io_service_, SIGINT, 2);
+    TimedSignal sig8(*io_service_, SIGUSR2, 2);
 
     // Start processing IO.  This should continue until we stop either by
     // hitting the stop count or if things go wrong, max test time.
