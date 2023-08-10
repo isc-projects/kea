@@ -616,12 +616,11 @@ where log messages are sent and are explained in detail below.
 
 .. note::
 
-   As of Kea 2.5.1, alias ``output-options`` was added to replace
-   previous ``output_options`` configuration key. The reason behind this
-   was to keep all configuration keys consistent i.e. to use "dash" instead
-   of "underscore" in the key name. For the time being both configuration keys
-   are considered correct and mean the same to Kea parsers. In future, older
-   ``output_options`` configuration key will be deprecated.
+   As of Kea 2.5.1, alias ``output-options`` was added that can be used
+   interchangeably with previous ``output_options`` configuration key.
+   The reason behind this was to keep all configuration keys consistent i.e.
+   to use "dash" instead of "underscore" in the key name. For the time being
+   both configuration keys are considered correct and mean the same to Kea parsers.
 
 The ``output`` (string) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
