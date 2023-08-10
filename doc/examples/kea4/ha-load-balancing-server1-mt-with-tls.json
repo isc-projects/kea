@@ -259,7 +259,7 @@
             // component. It tells DHCPv4 server to write all log messages (on
             // severity INFO or more) to a file.
             "name": "kea-dhcp4",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }
@@ -271,7 +271,7 @@
             // This section specifies configuration of the HA hook library-specific
             // logger.
             "name": "kea-dhcp4.ha-hooks",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

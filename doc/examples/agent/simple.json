@@ -126,7 +126,7 @@
         "loggers": [
             {
                 "name": "kea-ctrl-agent",
-                "output_options": [
+                "output-options": [
                     {
                         "output": "/var/log/kea-ctrl-agent.log",
                         // Several additional parameters are possible in addition
