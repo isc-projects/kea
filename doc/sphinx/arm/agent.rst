@@ -83,7 +83,7 @@ The following example demonstrates the basic CA configuration.
 
            "hooks-libraries": [
            {
-               "library": "/opt/local/control-agent-commands.so",
+               "library": "/opt/local/custom_hooks_example.so",
                "parameters": {
                    "param1": "foo"
                }

@@ -131,11 +131,11 @@ in two independent configuration sources.
 
 .. note::
 
-   It is recommended that :ischooklib:`libsubnet_cmds.so` not be used to
+   It is recommended that :ischooklib:`libdhcp_subnet_cmds.so` not be used to
    manage subnets when the configuration backend is used as a source
-   of information about the subnets. :ischooklib:`libsubnet_cmds.so`
+   of information about the subnets. :ischooklib:`libdhcp_subnet_cmds.so`
    modifies the local subnets configuration in the server's memory,
-   not in the database. Use :ischooklib:`libcb_cmds.so` to manage the
+   not in the database. Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
    subnets information in the database instead.
 
 .. note::

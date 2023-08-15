@@ -59,7 +59,7 @@ modify data stored in the host database, the hosts database must be specified
 and it must not operate in read-only mode (for details, see the
 ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4` and
 :ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not
-specified or are running in read-only mode, :ischooklib:`libhost_cmds.so` will
+specified or are running in read-only mode, :ischooklib:`libdhcp_host_cmds.so` will
 load, but any attempts to use :isccmd:`reservation-add`, :isccmd:`reservation-del`, and
 :isccmd:`reservation-update` to modify data in that database will fail.
 

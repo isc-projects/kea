@@ -191,10 +191,10 @@ configuration would be:
        :
        "hooks-libraries": [
            {
-               "library": "/opt/charging.so"
+               "library": "/opt/first_custom_hooks_example.so"
            },
            {
-               "library": "/opt/local/notification.so",
+               "library": "/opt/local/second_custom_hooks_example.so",
                "parameters": {
                    "mail": "spam@example.com",
                    "floor": 13,
@@ -220,12 +220,12 @@ Libraries may have additional parameters that are not mandatory, in the
 sense that there may be libraries that do not require them. However, for any
 given library there is often a requirement to specify a certain
 set of parameters. Please consult the documentation for each individual library for
-details. In the example above, the first library (``/opt/charging.so``) has no parameters. The
-second library (``/opt/local/notification.so``) has five parameters: specifying mail (string parameter),
-floor (integer parameter), debug (boolean parameter), lists
-(list of strings), and maps (containing strings). Nested parameters can
-be used if the library supports it. This topic is explained in detail in
-the `Hooks Developer's Guide section of the Kea Developer's Guide
+details. In the example above, the first library (``/opt/first_custom_hooks_example.so``)
+has no parameters. The second library (``/opt/local/second_custom_hooks_example.so``)
+has five parameters: specifying mail (string parameter), floor (integer parameter),
+debug (boolean parameter), lists (list of strings), and maps (containing strings).
+Nested parameters can be used if the library supports it. This topic is explained in detail
+in the `Hooks Developer's Guide section of the Kea Developer's Guide
 <https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html>`__.
 
 Some hooks use user context to set the parameters. See :ref:`user-context-hooks`.
