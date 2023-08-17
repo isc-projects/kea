@@ -95,6 +95,7 @@ exclude_patterns = [
     'arm/hooks-lease-cmds.rst',
     'arm/hooks-lease-query.rst',
     'arm/hooks-limits.rst',
+    'arm/hooks-ping-check.rst',
     'arm/hooks-radius.rst',
     'arm/hooks-rbac.rst',
     'arm/hooks-run-script.rst',
