@@ -6631,6 +6631,29 @@ the configuration for the interface on which the message has been
 received and, if the server configuration does not match any configured
 subnet, the message is discarded.
 
+An optional interface parameter is available within a subnet definition to
+designate that a given subnet is local, i.e. reachable directly over the
+specified interface. For example, a server that is intended to serve a local
+subnet over eth0 may be configured as follows:
+
+::
+
+   "Dhcp4": {
+       "subnet4": [
+           {
+               "id": 1,
+               "subnet": "192.0.2.0/24",
+               "pools": [
+                    {
+                        "pool": "192.0.2.100 - 192.0.2.199"
+                    }
+                ],
+               "interface": "eth0"
+           }
+       ],
+       ...
+   }
+
 Assuming that the server's interface is configured with the IPv4 address
 192.0.2.3, the server only processes messages received through this
 interface from a directly connected client if there is a subnet
