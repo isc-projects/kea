@@ -1,3 +1,9 @@
+2176.	[doc]		piotrek
+	Updated ARM docs with new configuration key alias
+	"output-options". All config examples, where previous
+	"output_options" key appeared, were updated.
+	(Gitlab #2904)
+
 Kea 2.5.1 (development) released on August 30, 2023
 
 2175.	[build]		razvan
