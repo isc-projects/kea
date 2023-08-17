@@ -91,7 +91,7 @@
         "loggers": [
             {
                 "name": "kea-netconf",
-                "output-options": [
+                "output_options": [
                     {
                         // "output": "/var/log/kea-netconf.log",
                         "output": "stdout",

@@ -144,7 +144,7 @@
             // component. It tells DHCPv6 server to write all log messages (on
             // severity INFO or more) to a file.
             "name": "kea-dhcp6",
-            "output-options": [
+            "output_options": [
                 {
                     "output": "stdout"
                 }
@@ -156,7 +156,7 @@
             // This section specifies configuration of the HA hook library-specific
             // logger.
             "name": "kea-dhcp6.ha-hooks",
-            "output-options": [
+            "output_options": [
                 {
                     "output": "stdout"
                 }

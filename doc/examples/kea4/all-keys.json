@@ -1239,7 +1239,7 @@
                 "name": "kea-dhcp4",
 
                 // Configures how the log should be output.
-                "output-options": [
+                "output_options": [
                     {
                         // Determines whether the log should be flushed to a file.
                         "flush": true,

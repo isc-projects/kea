@@ -134,7 +134,7 @@
     "loggers": [
         {
             "name": "kea-dhcp4",
-            "output-options": [
+            "output_options": [
                 {
                     "output": "stdout"
                 }

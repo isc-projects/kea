@@ -148,7 +148,7 @@
     "loggers": [
         {
             "name": "kea-dhcp-ddns",
-            "output-options": [
+            "output_options": [
                 {
                     "output": "stdout",
                     // Several additional parameters are possible in addition
