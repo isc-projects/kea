@@ -280,7 +280,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      severity ::= "severity" ":" STRING
 
-     output_options_list ::= "output-options" ":" "[" output_options_list_content "]"
+     output_options_list ::= "output_options" ":" "[" output_options_list_content "]"
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry
