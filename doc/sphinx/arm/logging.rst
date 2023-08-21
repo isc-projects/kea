@@ -706,9 +706,9 @@ text string.  In addition to the components, the string may contain any other
 useful text for the administrator.
 
 The behavior of Kea's format strings is determined by log4cplus. The following
-format options are possible:
+time format options are possible enclosed in ``%D{}`` or ``%d{}``:
 
-.. table:: List of supported format string components by Kea's logger
+.. table:: List of supported time format string components by Kea's logger
    :class: longtable
    :widths: 8 40
 
@@ -774,7 +774,7 @@ below:
 
 ::
 
-    "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i.%t] %m\n";
+    "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i.%t] %m\n"
 
 and a typical log produced by this pattern looks something like this:
 
@@ -839,7 +839,7 @@ The default pattern for ``syslog`` output is:
 
 ::
 
-    "%-5p [%c.%t] %m\n";
+    "%-5p [%c.%t] %m\n"
 
 It omits the date and time as well as the process ID, as this
 information is typically output by ``syslog``. Note that Kea uses the pattern
@@ -849,6 +849,77 @@ no influence on the content ``syslog`` may add or formatting it may do.
 Consult the OS documentation for ``syslog`` behavior, as there are multiple
 implementations.
 
+A complete list of logging parameters supported by Kea is shown in the table below:
+
+.. table:: List of supported format string components by Kea's logger
+   :class: longtable
+   :widths: 8 40
+
+   +-----------+------------------------------------------------------------------------+
+   | Component | Value                                                                  |
+   +===========+========================================================================+
+   | ``%b``    | Outputs file that called the log e.g., logger_impl.cc                  |
+   +-----------+------------------------------------------------------------------------+
+   | ``%c``    | Outputs the logger of the event e.g., kea-dhcp4.hosts                  |
+   +-----------+------------------------------------------------------------------------+
+   | ``%d``    | ``%d{}`` formats UTC time output e.g., ``%d{%Y-%m-%d %H:%M:%S.%q}``    |
+   +-----------+------------------------------------------------------------------------+
+   | ``%D``    | ``%D{}`` formats LOCAL time output e.g., ``%D{%Y-%m-%d %H:%M:%S.%q}``  |
+   +-----------+------------------------------------------------------------------------+
+   | ``%E``    | Outputs environment variables e.g., ``%E{PATH}``                       |
+   +-----------+------------------------------------------------------------------------+
+   | ``%F``    | Outputs filename where logging request was issued e.g., logger_impl.cc |
+   +-----------+------------------------------------------------------------------------+
+   | ``%h``    | Outputs hostname of the system e.g., host-1                            |
+   +-----------+------------------------------------------------------------------------+
+   | ``%H``    | Outputs fully qualified domain name e.g., host-1.example.com           |
+   +-----------+------------------------------------------------------------------------+
+   | ``%l``    | Equivalent to ``%F:%L`` e.g., logger_impl.cc:179                       |
+   +-----------+------------------------------------------------------------------------+
+   | ``%L``    | Outputs the line number where the log was called e.g., 179             |
+   +-----------+------------------------------------------------------------------------+
+   | ``%m``    | Outputs the actual log message                                         |
+   +-----------+------------------------------------------------------------------------+
+   | ``%M``    | Outputs caller of the log message                                      |
+   +-----------+------------------------------------------------------------------------+
+   | ``%n``    | Outputs line separator suppored by platform e.g., ``\n`` in Linux      |
+   +-----------+------------------------------------------------------------------------+
+   | ``%p``    | Outputs log severity e.g., INFO                                        |
+   +-----------+------------------------------------------------------------------------+
+   | ``%r``    | Outputs milliseconds since program start e.g., 1235                    |
+   +-----------+------------------------------------------------------------------------+
+   | ``%t``    | Outputs thread id that generated the log message e.g, 281472855306256  |
+   +-----------+------------------------------------------------------------------------+
+   | ``%T``    | Outputs thread name that generated the log message e.g., 168005        |
+   +-----------+------------------------------------------------------------------------+
+   | ``%i``    | Outputs process id that generated the log message e.g., 168030         |
+   +-----------+------------------------------------------------------------------------+
+   | ``%%``    | Outputs a literal percent sign                                         |
+   +-----------+------------------------------------------------------------------------+
+
+Padding and truncation are also possible with modifiers preceeding the component.  Ths is 
+done by placing a number and other modifier characters between the component and the % 
+sign. There are five ways of modifying the output shown by example here.
+
+  - ``%20p``
+    Left pads with spaces (align right) if the severity is shorter than 20 characters.
+
+  - ``%-15r``
+    Right pads with spaces (align left) if the milliseconds since program start is less
+    than 15 characters.
+
+  - ``%.30m``
+    Truncates from the beginning of the message if the message is longer than 30
+    characters.
+
+  - ``%10.35E{PATH}``
+    Left pad with spaces (align right) if the environment variable "PATH" is shorter than
+    10 characters.  If the content is longer than 35 characters, then truncate from the
+    beginning of the string.
+
+  - ``%-15.40m``
+    Right pad with spaces (align left) if the log message is shorter than 15 characters.
+    If the message is longer than 40 characters, truncate from the beginning.
 
 Example Logger Configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
