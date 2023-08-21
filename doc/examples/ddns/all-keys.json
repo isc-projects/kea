@@ -152,7 +152,7 @@
             "name": "kea-dhcp-ddns",
 
             // Configures how the log should be output.
-            "output_options": [
+            "output-options": [
                 {
                     // Determines whether the log should be flushed to a file.
                     "flush": true,

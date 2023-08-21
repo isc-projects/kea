@@ -283,7 +283,7 @@ TEST_F(DaemonTest, parsingConsoleOutput) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"stdout\""
     "            }"

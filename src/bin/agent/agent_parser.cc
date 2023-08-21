@@ -1697,16 +1697,16 @@ namespace isc { namespace agent {
   case 185: // $@39: %empty
 #line 791 "agent_parser.yy"
                                     {
-    ctx.unique("output_options", ctx.loc2pos(yystack_[0].location));
+    ctx.unique("output-options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
 #line 1707 "agent_parser.cc"
     break;
 
-  case 186: // output_options_list: "output_options" $@39 ":" "[" output_options_list_content "]"
+  case 186: // output_options_list: "output-options" $@39 ":" "[" output_options_list_content "]"
 #line 797 "agent_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
@@ -2454,7 +2454,7 @@ namespace isc { namespace agent {
   "\"key-file\"", "\"cert-required\"", "\"control-sockets\"", "\"dhcp4\"",
   "\"dhcp6\"", "\"d2\"", "\"socket-name\"", "\"socket-type\"", "\"unix\"",
   "\"hooks-libraries\"", "\"library\"", "\"parameters\"", "\"loggers\"",
-  "\"name\"", "\"output_options\"", "\"output\"", "\"debuglevel\"",
+  "\"name\"", "\"output-options\"", "\"output\"", "\"debuglevel\"",
   "\"severity\"", "\"flush\"", "\"maxsize\"", "\"maxver\"", "\"pattern\"",
   "START_JSON", "START_AGENT", "START_SUB_AGENT", "\"constant string\"",
   "\"integer\"", "\"floating point\"", "\"boolean\"", "$accept", "start",

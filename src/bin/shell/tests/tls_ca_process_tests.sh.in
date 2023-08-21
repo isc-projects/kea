@@ -37,7 +37,7 @@ CONFIG_NONE="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
                 }
@@ -61,7 +61,7 @@ CONFIG_NOCR="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
                 }
@@ -85,7 +85,7 @@ CONFIG="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
                 }

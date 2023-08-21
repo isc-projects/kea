@@ -104,7 +104,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
         info.debuglevel_ = 99;
     }
 
-    isc::data::ConstElementPtr output_options = entry->get("output_options");
+    isc::data::ConstElementPtr output_options = entry->get("output-options");
 
     if (output_options) {
         parseOutputOptions(info.destinations_, output_options);
@@ -116,7 +116,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
 void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destination,
                                          isc::data::ConstElementPtr output_options) {
     if (!output_options) {
-        isc_throw(BadValue, "Missing 'output_options' structure in 'loggers'");
+        isc_throw(BadValue, "Missing 'output-options' structure in 'loggers'");
     }
 
     BOOST_FOREACH(ConstElementPtr output_option, output_options->listValue()) {
@@ -125,7 +125,7 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
 
         isc::data::ConstElementPtr output = output_option->get("output");
         if (!output) {
-            isc_throw(BadValue, "output_options entry does not have a mandatory 'output' "
+            isc_throw(BadValue, "output-options entry does not have a mandatory 'output' "
                       "element (" << output_option->getPosition() << ")");
         }
         dest.output_ = output->stringValue();

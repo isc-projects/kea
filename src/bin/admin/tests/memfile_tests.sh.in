@@ -121,7 +121,7 @@ memfile_init_test() {
       {
         "debuglevel": 99,
         "name": "kea-dhcpx",
-        "output_options": [
+        "output-options": [
           {
             "output": "@abs_top_builddir@/src/bin/admin/tests/kea.log"
           }

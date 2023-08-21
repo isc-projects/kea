@@ -23,7 +23,7 @@ namespace process {
 /// The data structures converted to JSON format have the following syntax:
 /// {
 ///     "name": "kea",
-///     "output_options": [
+///     "output-options": [
 ///         {
 ///             "output": "/home/thomson/kea-inst/kea-warn.log",
 ///             "maxver": 8,
@@ -66,7 +66,7 @@ private:
     /// @brief parses one structure in Server/loggers.
     void parseConfigEntry(isc::data::ConstElementPtr entry);
 
-    /// @brief Parses output_options structure
+    /// @brief Parses output-options structure
     ///
     /// @ref @c LogConfigParser for an example in JSON format.
     ///

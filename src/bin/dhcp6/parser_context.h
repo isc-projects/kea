@@ -320,7 +320,7 @@ public:
         /// Used while parsing Dhcp6/loggers structures.
         LOGGERS,
 
-        /// Used while parsing Dhcp6/loggers/output_options structures.
+        /// Used while parsing Dhcp6/loggers/output-options structures.
         OUTPUT_OPTIONS,
 
         /// Used while parsing Dhcp6/dhcp-ddns.

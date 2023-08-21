@@ -35,7 +35,7 @@
     {
         // This specifies the logging for D2 (DHCP-DDNS) daemon.
         "name": "kea-dhcp-ddns",
-        "output_options": [
+        "output-options": [
             {
                 // Specifies the output file. There are several special values
                 // supported:

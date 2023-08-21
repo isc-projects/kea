@@ -259,7 +259,7 @@ using namespace std;
   RESERVATIONS_LOOKUP_FIRST "reservations-lookup-first"
 
   LOGGERS "loggers"
-  OUTPUT_OPTIONS "output_options"
+  OUTPUT_OPTIONS "output-options"
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
@@ -2906,9 +2906,9 @@ severity: SEVERITY {
 };
 
 output_options_list: OUTPUT_OPTIONS {
-    ctx.unique("output_options", ctx.loc2pos(@1));
+    ctx.unique("output-options", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 } COLON LSQUARE_BRACKET output_options_list_content RSQUARE_BRACKET {

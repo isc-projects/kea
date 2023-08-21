@@ -53,7 +53,7 @@ TranslatorLogger::getLoggerKea(DataNode const& data_node) {
 
     ConstElementPtr options = getOutputOptions(data_node);
     if (options) {
-        result->set("output_options", options);
+        result->set("output-options", options);
     }
 
     return (result->empty() ? ElementPtr() : result);
@@ -106,7 +106,7 @@ TranslatorLogger::setLoggerKea(string const& xpath, ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "severity", LeafBaseType::Enum);
     checkAndSetUserContext(elem, xpath);
 
-    ConstElementPtr options = elem->get("output_options");
+    ConstElementPtr options = elem->get("output-options");
     if (options && !options->empty()) {
         setOutputOptions(xpath, options);
     }

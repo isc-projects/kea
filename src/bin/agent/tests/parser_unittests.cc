@@ -285,12 +285,12 @@ TEST(ParserTest, embbededComments) {
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
-// Test that output-options is an alias of output_options.
+// Test that output_options is an alias of output-options.
 TEST(ParserTest, outputDashOptions) {
     string txt = "{ \"Control-agent\": {"
                  " \"loggers\": [ { "
                  "     \"name\": \"kea-ctrl-agent\","
-                 "     \"output-options\": [ { \"output\": \"stdout\" } ],"
+                 "     \"output_options\": [ { \"output\": \"stdout\" } ],"
                  "     \"severity\": \"INFO\" } ]"
                  "} }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
@@ -912,7 +912,7 @@ TEST_F(TrailingCommasTest, tests) {
       {
         "debuglevel": 99,
         "name": "kea-ctrl-agent",
-        "output_options": [
+        "output-options": [
           {
             "output": "stdout",
           },

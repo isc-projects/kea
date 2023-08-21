@@ -85,7 +85,7 @@ TEST_F(TranslatorLoggersTestv6, get) {
     ASSERT_TRUE(severity);
     ASSERT_EQ(Element::string, severity->getType());
     EXPECT_EQ("WARN", severity->stringValue());
-    ConstElementPtr options = logger->get("output_options");
+    ConstElementPtr options = logger->get("output-options");
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
     ConstElementPtr option = options->get(0);
@@ -114,7 +114,7 @@ TEST_F(TranslatorLoggersTestv4, set) {
     ElementPtr logger = Element::createMap();
     logger->set("name", Element::create("foo"));
     logger->set("severity", Element::create("WARN"));
-    logger->set("output_options", options);
+    logger->set("output-options", options);
     ElementPtr loggers = Element::createList();
     loggers->add(logger);
     ASSERT_NO_THROW_LOG(translator_->setLoggers(xpath, loggers));
@@ -135,7 +135,7 @@ TEST_F(TranslatorLoggersTestv4, set) {
     ASSERT_TRUE(severity);
     ASSERT_EQ(Element::string, severity->getType());
     EXPECT_EQ("WARN", severity->stringValue());
-    ConstElementPtr got_os = logger->get("output_options");
+    ConstElementPtr got_os = logger->get("output-options");
     ASSERT_TRUE(got_os);
     ASSERT_EQ(1, got_os->size());
     ConstElementPtr got_o = got_os->get(0);

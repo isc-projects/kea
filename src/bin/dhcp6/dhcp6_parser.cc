@@ -4760,16 +4760,16 @@ namespace isc { namespace dhcp {
   case 869: // $@137: %empty
 #line 3054 "dhcp6_parser.yy"
                                     {
-    ctx.unique("output_options", ctx.loc2pos(yystack_[0].location));
+    ctx.unique("output-options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
 #line 4770 "dhcp6_parser.cc"
     break;
 
-  case 870: // output_options_list: "output_options" $@137 ":" "[" output_options_list_content "]"
+  case 870: // output_options_list: "output-options" $@137 ":" "[" output_options_list_content "]"
 #line 3060 "dhcp6_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
@@ -6363,7 +6363,7 @@ namespace isc { namespace dhcp {
   "\"when-not-present\"", "\"hostname-char-set\"",
   "\"hostname-char-replacement\"", "\"early-global-reservations-lookup\"",
   "\"ip-reservations-unique\"", "\"reservations-lookup-first\"",
-  "\"loggers\"", "\"output_options\"", "\"output\"", "\"debuglevel\"",
+  "\"loggers\"", "\"output-options\"", "\"output\"", "\"debuglevel\"",
   "\"severity\"", "\"flush\"", "\"maxsize\"", "\"maxver\"", "\"pattern\"",
   "\"compatibility\"", "\"lenient-option-parsing\"", "TOPLEVEL_JSON",
   "TOPLEVEL_DHCP6", "SUB_DHCP6", "SUB_INTERFACES6", "SUB_SUBNET6",

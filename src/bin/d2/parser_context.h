@@ -260,7 +260,7 @@ public:
         /// Used while parsing DhcpDdns/loggers structures.
         LOGGERS,
 
-        /// Used while parsing DhcpDdns/loggers/output_options structures.
+        /// Used while parsing DhcpDdns/loggers/output-options structures.
         OUTPUT_OPTIONS,
 
         /// Used while parsing DhcpDdns/ncr-protocol

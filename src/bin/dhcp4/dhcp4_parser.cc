@@ -4597,16 +4597,16 @@ namespace isc { namespace dhcp {
   case 830: // $@132: %empty
 #line 2908 "dhcp4_parser.yy"
                                     {
-    ctx.unique("output_options", ctx.loc2pos(yystack_[0].location));
+    ctx.unique("output-options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
 #line 4607 "dhcp4_parser.cc"
     break;
 
-  case 831: // output_options_list: "output_options" $@132 ":" "[" output_options_list_content "]"
+  case 831: // output_options_list: "output-options" $@132 ":" "[" output_options_list_content "]"
 #line 2914 "dhcp4_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
@@ -6192,7 +6192,7 @@ namespace isc { namespace dhcp {
   "\"when-present\"", "\"never\"", "\"always\"", "\"when-not-present\"",
   "\"hostname-char-set\"", "\"hostname-char-replacement\"",
   "\"early-global-reservations-lookup\"", "\"ip-reservations-unique\"",
-  "\"reservations-lookup-first\"", "\"loggers\"", "\"output_options\"",
+  "\"reservations-lookup-first\"", "\"loggers\"", "\"output-options\"",
   "\"output\"", "\"debuglevel\"", "\"severity\"", "\"flush\"",
   "\"maxsize\"", "\"maxver\"", "\"pattern\"", "\"compatibility\"",
   "\"lenient-option-parsing\"", "\"ignore-dhcp-server-identifier\"",

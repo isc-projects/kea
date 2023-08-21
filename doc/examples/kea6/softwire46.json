@@ -76,7 +76,7 @@
     "loggers": [
         {
             "name": "kea-dhcp6",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "/var/log/kea-debug.log"
                 }

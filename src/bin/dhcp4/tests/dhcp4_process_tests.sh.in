@@ -56,7 +56,7 @@ CONFIG="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -92,7 +92,7 @@ CONFIG_BAD_SYNTAX="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -128,7 +128,7 @@ CONFIG_BAD_VALUES="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -164,7 +164,7 @@ CONFIG_INVALID="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -216,7 +216,7 @@ INVALID_CONFIG_HOOKS_LOAD="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -268,7 +268,7 @@ INVALID_CONFIG_HOOKS_CALLOUT_FAIL="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }

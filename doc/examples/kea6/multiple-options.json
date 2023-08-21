@@ -170,7 +170,7 @@
     "loggers": [
         {
             "name": "kea-dhcp6",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

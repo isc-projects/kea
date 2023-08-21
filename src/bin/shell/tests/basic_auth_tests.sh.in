@@ -43,7 +43,7 @@ CONFIG="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }

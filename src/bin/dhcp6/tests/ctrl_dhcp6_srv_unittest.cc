@@ -703,7 +703,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
-        "            \"output_options\": [{ \n"
+        "            \"output-options\": [{ \n"
         "                \"output\": \"/dev/null\" \n"
         "            }] \n"
         "        }] \n";
@@ -919,7 +919,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
-        "            \"output_options\": [{ \n"
+        "            \"output-options\": [{ \n"
         "                \"output\": \"/dev/null\" \n"
         "            }] \n"
         "        }] \n";

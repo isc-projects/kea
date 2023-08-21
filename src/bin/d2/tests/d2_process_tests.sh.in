@@ -32,7 +32,7 @@ CONFIG="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -55,7 +55,7 @@ CONFIG_BAD_SYNTAX="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -78,7 +78,7 @@ CONFIG_BAD_VALUE="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -102,7 +102,7 @@ CONFIG_INVALID="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }

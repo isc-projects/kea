@@ -46,7 +46,7 @@
             {
                 "debuglevel": 0,
                 "name": "kea-dhcp-ddns",
-                "output_options": [
+                "output-options": [
                     {
                         "flush": true,
                         "output": "stdout",

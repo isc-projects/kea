@@ -168,13 +168,13 @@ LoggingInfo::toElement() const {
     contextToElement(result);
     // Set name
     result->set("name", Element::create(name_));
-    // Set output_options if not empty
+    // Set output-options if not empty
     if (!destinations_.empty()) {
         ElementPtr options = Element::createList();
         for (auto const& dest : destinations_) {
             options->add(dest.toElement());
         }
-        result->set("output_options", options);
+        result->set("output-options", options);
     }
     // Set severity
     std::string severity;

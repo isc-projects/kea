@@ -222,7 +222,7 @@ public:
         ///< Used while parsing Netconf/loggers structures.
         LOGGERS,
 
-        ///< Used while parsing Netconf/loggers/output_options structures.
+        ///< Used while parsing Netconf/loggers/output-options structures.
         OUTPUT_OPTIONS
 
     } LexerContext;

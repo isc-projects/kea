@@ -92,7 +92,7 @@ dhcp4_config="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -131,7 +131,7 @@ dhcp6_config="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp6\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -154,7 +154,7 @@ dhcp_ddns_config="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -173,7 +173,7 @@ control_agent_config="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -190,7 +190,7 @@ netconf_config="{
         \"loggers\": [
         {
             \"name\": \"kea-netconf\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }

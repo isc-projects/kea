@@ -1498,16 +1498,16 @@ namespace isc { namespace netconf {
   case 155: // $@29: %empty
 #line 680 "netconf_parser.yy"
                                     {
-    ctx.unique("output_options", ctx.loc2pos(yystack_[0].location));
+    ctx.unique("output-options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
 #line 1508 "netconf_parser.cc"
     break;
 
-  case 156: // output_options_list: "output_options" $@29 ":" "[" output_options_list_content "]"
+  case 156: // output_options_list: "output-options" $@29 ":" "[" output_options_list_content "]"
 #line 686 "netconf_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
@@ -2221,7 +2221,7 @@ namespace isc { namespace netconf {
   "\"control-socket\"", "\"socket-type\"", "\"unix\"", "\"http\"",
   "\"stdout\"", "\"socket-name\"", "\"socket-url\"", "\"hooks-libraries\"",
   "\"library\"", "\"parameters\"", "\"loggers\"", "\"name\"",
-  "\"output_options\"", "\"output\"", "\"debuglevel\"", "\"severity\"",
+  "\"output-options\"", "\"output\"", "\"debuglevel\"", "\"severity\"",
   "\"flush\"", "\"maxsize\"", "\"maxver\"", "\"pattern\"", "START_JSON",
   "START_NETCONF", "START_SUB_NETCONF", "\"constant string\"",
   "\"integer\"", "\"floating point\"", "\"boolean\"", "$accept", "start",

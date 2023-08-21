@@ -240,14 +240,14 @@ TEST(ParserTest, embbededComments) {
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
-// Test that output-options is an alias of output_options.
+// Test that output_options is an alias of output-options.
 TEST(ParserTest, outputDashOptions) {
     string txt =
         "{ \"DhcpDdns\" : \n"
         "{ \n"
         " \"loggers\": [ {\n"
         "     \"name\": \"kea-dhcp-ddns\",\n"
-        "     \"output-options\": [ { \"output\": \"stdout\" } ],\n"
+        "     \"output_options\": [ { \"output\": \"stdout\" } ],\n"
         "     \"severity\": \"INFO\" } ]\n"
         " } \n"
         "} \n";
@@ -851,7 +851,7 @@ TEST_F(TrailingCommasTest, tests) {
     "loggers": [
       {
         "name": "kea-dhcp-ddns",
-        "output_options": [
+        "output-options": [
           {
             "output": "stdout"
           },

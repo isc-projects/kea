@@ -344,12 +344,12 @@ TEST(ParserTest, embbededComments) {
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 }
 
-// Test that output-options is an alias of output_options.
+// Test that output_options is an alias of output-options.
 TEST(ParserTest, outputDashOptions) {
     string txt= "{ \"Netconf\": {"
                 " \"loggers\": [ { "
                 "     \"name\": \"kea-netconf\","
-                "     \"output-options\": [ { \"output\": \"stdout\" } ],"
+                "     \"output_options\": [ { \"output\": \"stdout\" } ],"
                 "     \"severity\": \"INFO\" } ]"
                 "} }";
     testParser(txt, ParserContext::PARSER_NETCONF, false);

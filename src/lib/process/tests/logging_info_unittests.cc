@@ -89,7 +89,7 @@ TEST_F(LoggingInfoTest, defaults) {
     std::string header = "{\n";
     std::string begin =
         "\"name\": \"kea\",\n"
-        "\"output_options\": [ {\n"
+        "\"output-options\": [ {\n"
         " \"output\": \"stdout\", \"flush\": true, \"pattern\": \"\" } ],\n"
         "\"severity\": \"";
     std::string dbglvl = "\",\n\"debuglevel\": ";

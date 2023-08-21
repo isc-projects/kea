@@ -427,7 +427,7 @@
         // component. It tells DHCPv4 server to write all log messages (on
         // severity INFO or more) to a file.
         "name": "kea-dhcp4",
-        "output_options": [
+        "output-options": [
             {
                 // Specifies the output file. There are several special values
                 // supported:

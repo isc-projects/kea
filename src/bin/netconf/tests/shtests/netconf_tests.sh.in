@@ -35,7 +35,7 @@ CONFIG="{
         \"loggers\": [
         {
             \"name\": \"kea-netconf\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }

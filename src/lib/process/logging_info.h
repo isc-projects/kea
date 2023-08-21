@@ -66,7 +66,7 @@ public:
 /// The structure in JSON form has the following syntax:
 ///        {
 ///            "name": "*",
-///            "output_options": [
+///            "output-options": [
 ///                {
 ///                    "output": "/path/to/the/logfile.log",
 ///                    "maxver": 8,

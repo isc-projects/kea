@@ -18,7 +18,7 @@ namespace yang {
 /// @code
 /// {
 ///     "name": <name>,
-///     "output_options": [ <output options> ],
+///     "output-options": [ <output options> ],
 ///     "severity": <severity>,
 ///     "debuglevel": <debug level>,
 ///     "user-context": { <json map> },
@@ -58,7 +58,7 @@ namespace yang {
 ///     {
 ///         "name": "foo",
 ///         "severity": "WARN",
-///         "output_options":
+///         "output-options":
 ///             [
 ///                 {
 ///                     "output": "/bar",

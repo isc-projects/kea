@@ -1940,16 +1940,16 @@ namespace isc { namespace d2 {
   case 235: // $@54: %empty
 #line 915 "d2_parser.yy"
                                     {
-    ctx.unique("output_options", ctx.loc2pos(yystack_[0].location));
+    ctx.unique("output-options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
 #line 1950 "d2_parser.cc"
     break;
 
-  case 236: // output_options_list: "output_options" $@54 ":" "[" output_options_list_content "]"
+  case 236: // output_options_list: "output-options" $@54 ":" "[" output_options_list_content "]"
 #line 921 "d2_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
@@ -2744,7 +2744,7 @@ namespace isc { namespace d2 {
   "\"dns-servers\"", "\"hostname\"", "\"tsig-keys\"", "\"algorithm\"",
   "\"digest-bits\"", "\"secret\"", "\"control-socket\"", "\"socket-type\"",
   "\"socket-name\"", "\"hooks-libraries\"", "\"library\"",
-  "\"parameters\"", "\"loggers\"", "\"name\"", "\"output_options\"",
+  "\"parameters\"", "\"loggers\"", "\"name\"", "\"output-options\"",
   "\"output\"", "\"debuglevel\"", "\"severity\"", "\"flush\"",
   "\"maxsize\"", "\"maxver\"", "\"pattern\"", "TOPLEVEL_JSON",
   "TOPLEVEL_DHCPDDNS", "SUB_DHCPDDNS", "SUB_TSIG_KEY", "SUB_TSIG_KEYS",

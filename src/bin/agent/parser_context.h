@@ -227,7 +227,7 @@ public:
         ///< Used while parsing Control-agent/loggers structures.
         LOGGERS,
 
-        ///< Used while parsing Control-agent/loggers/output_options structures.
+        ///< Used while parsing Control-agent/loggers/output-options structures.
         OUTPUT_OPTIONS
     } LexerContext;
 

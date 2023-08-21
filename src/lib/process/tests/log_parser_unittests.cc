@@ -98,7 +98,7 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"stdout\","
     "                \"flush\": true"
@@ -140,7 +140,7 @@ TEST_F(LoggingTest, parsingNoSeverity) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"stdout\","
     "                \"flush\": true"
@@ -188,7 +188,7 @@ TEST_F(LoggingTest, parsingFile) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"logfile.txt\""
     "            }"
@@ -233,7 +233,7 @@ TEST_F(LoggingTest, multipleLoggers) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"logfile.txt\","
     "                \"flush\": true"
@@ -243,7 +243,7 @@ TEST_F(LoggingTest, multipleLoggers) {
     "    },"
     "    {"
     "        \"name\": \"wombat\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"logfile2.txt\","
     "                \"flush\": false"
@@ -292,7 +292,7 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"logfile.txt\""
     "            },"
@@ -341,7 +341,7 @@ TEST_F(LoggingTest, logRotate) {
         "{ \"loggers\": ["
         "    {"
         "        \"name\": \"kea\","
-        "        \"output_options\": ["
+        "        \"output-options\": ["
         "            {"
         "                \"output\": \""
         << TEST_LOG_NAME << "\","  <<
@@ -399,7 +399,7 @@ TEST_F(LoggingTest, validPattern) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"stdout\","
     "                \"pattern\": \"mylog %m\\n\""
@@ -438,7 +438,7 @@ TEST_F(LoggingTest, emptyPattern) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"stdout\","
     "                \"pattern\": \"\""
@@ -478,7 +478,7 @@ void testMaxSize(uint64_t maxsize_candidate, uint64_t expected_maxsize) {
 
           "debuglevel": 99,
           "name": "kea",
-          "output_options": [
+          "output-options": [
             {
               "output": "kea.test.log",
               "flush": true,
