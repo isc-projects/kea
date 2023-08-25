@@ -1,3 +1,8 @@
+2175.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.5.1
+	development release.
+	(Gitlab #3026)
+
 2174.	[func]		fdupont
 	Added a new information message which displays the
 	client and the transaction identification information
