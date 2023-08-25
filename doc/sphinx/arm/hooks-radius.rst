@@ -109,7 +109,7 @@ commands should install them:
 
 .. code-block:: console
 
-   $ apt-get install gcc g++ make autoconf automake libtool libssl-dev liblog4cplus-dev libboost-system-dev
+   $ apt-get install tar git gcc g++ make autoconf automake libtool libssl-dev liblog4cplus-dev libboost-system-dev
 
 STEP 2: Install FreeRADIUS
 
