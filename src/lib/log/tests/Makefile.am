@@ -6,8 +6,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-AM_LDADD  =
-AM_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+AM_LDADD = $(top_builddir)/src/lib/log/libkea-log.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 AM_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 AM_LDADD += $(LOG4CPLUS_LIBS) $(GTEST_LDADD)
@@ -16,6 +15,8 @@ AM_LDFLAGS  =
 if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
+
+if HAVE_GTEST
 
 CLEANFILES = *.gcno *.gcda *.lock
 
@@ -70,8 +71,6 @@ SHTESTS += severity_test.sh
 # "make distclean", but not on "make clean".
 DISTCLEANFILES = tempdir.h
 DISTCLEANFILES += $(SHTESTS)
-
-if HAVE_GTEST
 
 TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 

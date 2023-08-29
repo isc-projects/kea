@@ -48,6 +48,8 @@ endif
 # -rpath /nowhere is a hack to trigger libtool to not create a
 # convenience archive, resulting in shared modules
 
+if HAVE_GTEST
+
 libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco1_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -65,8 +67,6 @@ libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 # Don't install test libraries.
 noinst_LTLIBRARIES = libco1.la libco2.la libco3.la
-
-if HAVE_GTEST
 
 # C++ tests
 PROGRAM_TESTS = dhcp6_unittests
