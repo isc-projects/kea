@@ -63,7 +63,7 @@ TEST(StampedValueTest, createFromInteger) {
     EXPECT_EQ(Element::integer, value->getType());
     EXPECT_EQ("bar", value->getName());
     EXPECT_EQ("5", value->getValue());
-    int64_t signed_integer;
+    int64_t signed_integer = 0;
     ASSERT_NO_THROW(signed_integer = value->getIntegerValue());
     EXPECT_EQ(5, signed_integer);
 
