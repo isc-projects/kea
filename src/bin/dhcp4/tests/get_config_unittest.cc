@@ -6958,7 +6958,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"always-send\": false,\n"
 "                \"code\": 43,\n"
 "                \"csv-format\": false,\n"
-"                \"data\": \"0104000004D20204C0A80201\",\n"
+"                \"data\": \"\",\n"
 "                \"name\": \"vendor-encapsulated-options\",\n"
 "                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"

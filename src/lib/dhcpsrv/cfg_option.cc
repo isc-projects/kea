@@ -479,13 +479,23 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             // Set the data item
             if (!opt.formatted_value_.empty()) {
                 map->set("csv-format", Element::create(true));
-                map->set("data", Element::create(opt.formatted_value_));
+                if (def && def->getType() == OPT_EMPTY_TYPE &&
+                    def->getEncapsulatedSpace() != def->getOptionSpaceName()) {
+                    map->set("data", Element::create(""));
+                } else {
+                    map->set("data", Element::create(opt.formatted_value_));
+                }
             } else {
                 std::vector<uint8_t> bin = opt.option_->toBinary();
                 if (!opt.cancelled_ || !bin.empty()) {
                     map->set("csv-format", Element::create(false));
-                    std::string repr = util::encode::encodeHex(bin);
-                    map->set("data", Element::create(repr));
+                    if (def && def->getType() == OPT_EMPTY_TYPE &&
+                        def->getEncapsulatedSpace() != def->getOptionSpaceName()) {
+                        map->set("data", Element::create(""));
+                    } else {
+                        std::string repr = util::encode::encodeHex(bin);
+                        map->set("data", Element::create(repr));
+                    }
                 }
             }
             // Set the persistency flag
@@ -531,13 +541,23 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             // Set the data item
             if (!opt.formatted_value_.empty()) {
                 map->set("csv-format", Element::create(true));
-                map->set("data", Element::create(opt.formatted_value_));
+                if (def && def->getType() == OPT_EMPTY_TYPE &&
+                    def->getEncapsulatedSpace() != def->getOptionSpaceName()) {
+                    map->set("data", Element::create(""));
+                } else {
+                    map->set("data", Element::create(opt.formatted_value_));
+                }
             } else {
                 std::vector<uint8_t> bin = opt.option_->toBinary();
                 if (!opt.cancelled_ || !bin.empty()) {
                     map->set("csv-format", Element::create(false));
-                    std::string repr = util::encode::encodeHex(bin);
-                    map->set("data", Element::create(repr));
+                    if (def && def->getType() == OPT_EMPTY_TYPE &&
+                        def->getEncapsulatedSpace() != def->getOptionSpaceName()) {
+                        map->set("data", Element::create(""));
+                    } else {
+                        std::string repr = util::encode::encodeHex(bin);
+                        map->set("data", Element::create(repr));
+                    }
                 }
             }
             // Set the persistency flag
