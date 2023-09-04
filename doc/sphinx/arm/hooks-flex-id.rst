@@ -156,6 +156,12 @@ for non-printable characters and do not require the use of the
        ...
    }
 
+.. note::
+
+    One less common scenario where the examples above may prove useful is for
+    DHCPv6 clients that change their DUIDs between exchanges. Certain PXE
+    clients are known to behave this way.
+
 The ``replace-client-id`` Flag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
