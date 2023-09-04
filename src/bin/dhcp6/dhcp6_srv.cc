@@ -573,7 +573,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     evaluateClasses(pkt, true);
 
     const ClientClasses& classes = pkt->getClasses();
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION)
         .arg(pkt->getLabel())
         .arg(classes.toText());
 
@@ -3547,6 +3547,7 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(solicit->getLabel())
+        .arg(solicit->getName())
         .arg(solicit->getClasses().toText());
 
     copyClientOptions(solicit, response);
@@ -3589,6 +3590,7 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(request->getLabel())
+        .arg(request->getName())
         .arg(request->getClasses().toText());
 
     copyClientOptions(request, reply);
@@ -3627,6 +3629,7 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(renew->getLabel())
+        .arg(renew->getName())
         .arg(renew->getClasses().toText());
 
     copyClientOptions(renew, reply);
@@ -3665,6 +3668,7 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(rebind->getLabel())
+        .arg(rebind->getName())
         .arg(rebind->getClasses().toText());
 
     copyClientOptions(rebind, reply);
@@ -3690,6 +3694,7 @@ Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(confirm->getLabel())
+        .arg(confirm->getName())
         .arg(confirm->getClasses().toText());
 
     // Get IA_NAs from the Confirm. If there are none, the message is
@@ -3784,6 +3789,7 @@ Dhcpv6Srv::processRelease(AllocEngine::ClientContext6& ctx) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(release->getLabel())
+        .arg(release->getName())
         .arg(release->getClasses().toText());
 
     // Create an empty Reply message.
@@ -3814,6 +3820,7 @@ Dhcpv6Srv::processDecline(AllocEngine::ClientContext6& ctx) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(decline->getLabel())
+        .arg(decline->getName())
         .arg(decline->getClasses().toText());
 
     // Create an empty Reply message.
@@ -4134,6 +4141,7 @@ Dhcpv6Srv::processInfRequest(AllocEngine::ClientContext6& ctx) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(inf_request->getLabel())
+        .arg(inf_request->getName())
         .arg(inf_request->getClasses().toText());
 
     // Create a Reply packet, with the same trans-id as the client's.

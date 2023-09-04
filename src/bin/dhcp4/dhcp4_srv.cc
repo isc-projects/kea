@@ -253,7 +253,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     evaluateClasses(query, true);
 
     const ClientClasses& classes = query_->getClasses();
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION)
         .arg(query_->getLabel())
         .arg(classes.toText());
 
@@ -3440,6 +3440,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
             .arg(discover->getLabel())
+            .arg(discover->getName())
             .arg(discover->getClasses().toText());
 
         buildCfgOptionList(ex);
@@ -3522,6 +3523,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
             .arg(request->getLabel())
+            .arg(request->getName())
             .arg(request->getClasses().toText());
 
         buildCfgOptionList(ex);
@@ -3905,6 +3907,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& contex
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
         .arg(inform->getLabel())
+        .arg(inform->getName())
         .arg(inform->getClasses().toText());
 
     buildCfgOptionList(ex);
