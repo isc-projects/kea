@@ -72,14 +72,14 @@ The server will continue to operate but won't make any further attempts
 to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
 
-% DHCP6_CLASSES_ASSIGNED %1: on %2 message the client packet has been assigned to the following classes: %3
+% DHCP6_CLASSES_ASSIGNED %1: client packet has been assigned on %2 message to the following classes: %3
 This debug message informs that incoming packet has been assigned to specified
 classes. This is a normal behavior and indicates successful operation.
 The first argument specifies the client and transaction identification
 information. The second argument specifies the DHCPv6 message type. The third
 argument includes all classes to which the packet has been assigned.
 
-% DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION %1: the client packet has been assigned to the following classes: %2
+% DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION %1: client packet has been assigned to the following classes: %2
 This debug message informs that incoming packet has been assigned to specified
 classes. This is a normal behavior and indicates successful operation.
 The first argument specifies the client and transaction identification
