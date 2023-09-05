@@ -42,7 +42,7 @@ protected:
     /// @param text string text to be used as the response description
     void setSuccessResponse(hooks::CalloutHandle& handle, const std::string& text) {
         data::ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS, text);
-        setResponse (handle, response);
+        setResponse(handle, response);
     }
 
     /// @brief Set the callout argument "response" to indicate an error
@@ -52,9 +52,9 @@ protected:
     /// @param status numeric value to use as the response result, defaults to
     /// CONTROL_RESULT_ERROR
     void setErrorResponse(hooks::CalloutHandle& handle, const std::string& text,
-        int status=CONTROL_RESULT_ERROR) {
+                          int status = CONTROL_RESULT_ERROR) {
         data::ConstElementPtr response = createAnswer(status, text);
-        setResponse (handle, response);
+        setResponse(handle, response);
     }
 
     /// @brief Set the callout argument "response" to the given response
@@ -62,7 +62,7 @@ protected:
     /// @param handle Callout context handle in which to set the "response" argument
     /// @param response ElementPtr to the result to use as the response
     void setResponse(hooks::CalloutHandle& handle, data::ConstElementPtr& response) {
-        handle.setArgument ("response", response);
+        handle.setArgument("response", response);
     }
 
     /// @brief Stores the command name extracted by a call to extractCommand
