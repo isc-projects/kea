@@ -444,6 +444,22 @@ for decline4 hook point and one of the callouts set next step status to DROP.
 The server will now abort processing of the packet as if it was never
 received. The lease will continue to be assigned to this client.
 
+% DHCP4_HOOK_LEASE4_OFFER_DROP %1: packet is dropped, because a callout set the next step to DROP
+This debug message is printed when a callout installed on the lease4_offer
+hook point sets the next step to DROP.
+
+% DHCP4_HOOK_LEASE4_OFFER_PARK %1: packet is parked, because a callout set the next step to PARK
+This debug message is printed when a callout installed on the lease4_offer
+hook point sets the next step to PARK.
+
+% DHCP4_HOOK_LEASE4_OFFER_PARKING_LOT_FULL The parked-packet-limit %1, has been reached, dropping query: %2
+This debug message occurs when the parking lot used to hold client queries
+while hook library work for them completes has reached or exceeded the
+limit set by the parked-packet-limit global parameter. This can occur when
+kea-dhcp4 is using hook libraries (e.g. ping-check) that implement the
+"lease4-offer" callout and client queries are arriving faster than
+those callouts can fulfill them.
+
 % DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the next step to SKIP
 This debug message is printed when a callout installed on lease4_release
 hook point set the next step status to SKIP. For this particular hook point, the
@@ -457,7 +473,7 @@ hook point sets the next step to DROP.
 This debug message is printed when a callout installed on the leases4_committed
 hook point sets the next step to PARK.
 
-% DHCP4_HOOK_LEASES4_PARKING_LOT_FULL The parked-packet-limit %1, has been reached, dropping query: %2
+% DHCP4_HOOK_LEASES4_COMMITTED_PARKING_LOT_FULL The parked-packet-limit %1, has been reached, dropping query: %2
 This debug message occurs when the parking lot used to hold client queries
 while hook library work for them completes has reached or exceeded the
 limit set by the parked-packet-limit global parameter. This can occur when

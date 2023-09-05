@@ -82,10 +82,13 @@ extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_SKIP = "DHCP4_HOOK_BUFFE
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_SEND_SKIP = "DHCP4_HOOK_BUFFER_SEND_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_DDNS_UPDATE = "DHCP4_HOOK_DDNS_UPDATE";
 extern const isc::log::MessageID DHCP4_HOOK_DECLINE_SKIP = "DHCP4_HOOK_DECLINE_SKIP";
+extern const isc::log::MessageID DHCP4_HOOK_LEASE4_OFFER_DROP = "DHCP4_HOOK_LEASE4_OFFER_DROP";
+extern const isc::log::MessageID DHCP4_HOOK_LEASE4_OFFER_PARK = "DHCP4_HOOK_LEASE4_OFFER_PARK";
+extern const isc::log::MessageID DHCP4_HOOK_LEASE4_OFFER_PARKING_LOT_FULL = "DHCP4_HOOK_LEASE4_OFFER_PARKING_LOT_FULL";
 extern const isc::log::MessageID DHCP4_HOOK_LEASE4_RELEASE_SKIP = "DHCP4_HOOK_LEASE4_RELEASE_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_DROP = "DHCP4_HOOK_LEASES4_COMMITTED_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_PARK = "DHCP4_HOOK_LEASES4_COMMITTED_PARK";
-extern const isc::log::MessageID DHCP4_HOOK_LEASES4_PARKING_LOT_FULL = "DHCP4_HOOK_LEASES4_PARKING_LOT_FULL";
+extern const isc::log::MessageID DHCP4_HOOK_LEASES4_COMMITTED_PARKING_LOT_FULL = "DHCP4_HOOK_LEASES4_COMMITTED_PARKING_LOT_FULL";
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_RCVD_SKIP = "DHCP4_HOOK_PACKET_RCVD_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_DROP = "DHCP4_HOOK_PACKET_SEND_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_SKIP = "DHCP4_HOOK_PACKET_SEND_SKIP";
@@ -255,10 +258,13 @@ const char* values[] = {
     "DHCP4_HOOK_BUFFER_SEND_SKIP", "%1: prepared response is dropped because a callout set the next step to SKIP.",
     "DHCP4_HOOK_DDNS_UPDATE", "A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6",
     "DHCP4_HOOK_DECLINE_SKIP", "Decline4 hook callouts set status to DROP, ignoring packet.",
+    "DHCP4_HOOK_LEASE4_OFFER_DROP", "%1: packet is dropped, because a callout set the next step to DROP",
+    "DHCP4_HOOK_LEASE4_OFFER_PARK", "%1: packet is parked, because a callout set the next step to PARK",
+    "DHCP4_HOOK_LEASE4_OFFER_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
     "DHCP4_HOOK_LEASE4_RELEASE_SKIP", "%1: lease was not released because a callout set the next step to SKIP",
     "DHCP4_HOOK_LEASES4_COMMITTED_DROP", "%1: packet is dropped, because a callout set the next step to DROP",
     "DHCP4_HOOK_LEASES4_COMMITTED_PARK", "%1: packet is parked, because a callout set the next step to PARK",
-    "DHCP4_HOOK_LEASES4_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
+    "DHCP4_HOOK_LEASES4_COMMITTED_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
     "DHCP4_HOOK_PACKET_RCVD_SKIP", "%1: packet is dropped, because a callout set the next step to SKIP",
     "DHCP4_HOOK_PACKET_SEND_DROP", "%1: prepared DHCPv4 response was not sent because a callout set the next ste to DROP",
     "DHCP4_HOOK_PACKET_SEND_SKIP", "%1: prepared response is not sent, because a callout set the next stp to SKIP",

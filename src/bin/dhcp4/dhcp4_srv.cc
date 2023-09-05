@@ -96,6 +96,7 @@ struct Dhcp4Hooks {
     int hook_index_lease4_decline_;    ///< index for "lease4_decline" hook point
     int hook_index_host4_identifier_;  ///< index for "host4_identifier" hook point
     int hook_index_ddns4_update_;      ///< index for "ddns4_update" hook point
+    int hook_index_lease4_offer_;      ///< index for "lease4_offer" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
@@ -109,6 +110,7 @@ struct Dhcp4Hooks {
         hook_index_lease4_decline_    = HooksManager::registerHook("lease4_decline");
         hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
         hook_index_ddns4_update_      = HooksManager::registerHook("ddns4_update");
+        hook_index_lease4_offer_      = HooksManager::registerHook("lease4_offer");
     }
 };
 
@@ -1408,129 +1410,143 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
-    if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases4_committed_)) {
-        // The ScopedCalloutHandleState class which guarantees that the task
-        // is added to the thread pool after the response is reset (if needed)
-        // and CalloutHandle state is reset. In ST it does nothing.
-        // A smart pointer is used to store the ScopedCalloutHandleState so that
-        // a copy of the pointer is created by the lambda and only on the
-        // destruction of the last reference the task is added.
-        // In MT there are 2 cases:
-        // 1. packet is unparked before current thread smart pointer to
-        //    ScopedCalloutHandleState is destroyed:
-        //  - the lambda uses the smart pointer to set the callout which adds the
-        //    task, but the task is added after ScopedCalloutHandleState is
-        //    destroyed, on the destruction of the last reference which is held
-        //    by the current thread.
-        // 2. packet is unparked after the current thread smart pointer to
-        //    ScopedCalloutHandleState is destroyed:
-        //  - the current thread reference to ScopedCalloutHandleState is
-        //    destroyed, but the reference in the lambda keeps it alive until
-        //    the lambda is called and the last reference is released, at which
-        //    time the task is actually added.
-        // Use the RAII wrapper to make sure that the callout handle state is
-        // reset when this object goes out of scope. All hook points must do
-        // it to prevent possible circular dependency between the callout
-        // handle and its arguments.
-        std::shared_ptr<ScopedCalloutHandleState> callout_handle_state =
+    if (ctx) {
+        int hook_idx = Hooks.hook_index_leases4_committed_;
+        std::string hook_label = "leases4_committed";
+        MessageID pkt_park_msg = DHCP4_HOOK_LEASES4_COMMITTED_PARK;
+        MessageID pkt_drop_msg = DHCP4_HOOK_LEASES4_COMMITTED_DROP;
+        MessageID parking_lot_full_msg = DHCP4_HOOK_LEASES4_COMMITTED_PARKING_LOT_FULL;
+        if (ctx->fake_allocation_) {
+            hook_idx = Hooks.hook_index_lease4_offer_;
+            hook_label = "lease4_offer";
+            pkt_park_msg = DHCP4_HOOK_LEASE4_OFFER_PARK;
+            pkt_drop_msg = DHCP4_HOOK_LEASE4_OFFER_DROP;
+            parking_lot_full_msg = DHCP4_HOOK_LEASE4_OFFER_PARKING_LOT_FULL;
+        }
+
+        if (HooksManager::calloutsPresent(hook_idx)) {
+            // The ScopedCalloutHandleState class which guarantees that the task
+            // is added to the thread pool after the response is reset (if needed)
+            // and CalloutHandle state is reset. In ST it does nothing.
+            // A smart pointer is used to store the ScopedCalloutHandleState so that
+            // a copy of the pointer is created by the lambda and only on the
+            // destruction of the last reference the task is added.
+            // In MT there are 2 cases:
+            // 1. packet is unparked before current thread smart pointer to
+            //    ScopedCalloutHandleState is destroyed:
+            //  - the lambda uses the smart pointer to set the callout which adds the
+            //    task, but the task is added after ScopedCalloutHandleState is
+            //    destroyed, on the destruction of the last reference which is held
+            //    by the current thread.
+            // 2. packet is unparked after the current thread smart pointer to
+            //    ScopedCalloutHandleState is destroyed:
+            //  - the current thread reference to ScopedCalloutHandleState is
+            //    destroyed, but the reference in the lambda keeps it alive until
+            //    the lambda is called and the last reference is released, at which
+            //    time the task is actually added.
+            // Use the RAII wrapper to make sure that the callout handle state is
+            // reset when this object goes out of scope. All hook points must do
+            // it to prevent possible circular dependency between the callout
+            // handle and its arguments.
+            std::shared_ptr<ScopedCalloutHandleState> callout_handle_state =
                 std::make_shared<ScopedCalloutHandleState>(callout_handle);
 
-        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
+            ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
 
-        // Also pass the corresponding query packet as argument
-        callout_handle->setArgument("query4", query);
+            // Also pass the corresponding query packet as argument
+            callout_handle->setArgument("query4", query);
 
-        Lease4CollectionPtr new_leases(new Lease4Collection());
-        // Filter out the new lease if it was reused so not committed.
-        if (ctx->new_lease_ && (ctx->new_lease_->reuseable_valid_lft_ == 0)) {
-            new_leases->push_back(ctx->new_lease_);
-        }
-        callout_handle->setArgument("leases4", new_leases);
-
-        Lease4CollectionPtr deleted_leases(new Lease4Collection());
-        if (ctx->old_lease_) {
-            if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
-                deleted_leases->push_back(ctx->old_lease_);
+            Lease4CollectionPtr new_leases(new Lease4Collection());
+            // Filter out the new lease if it was reused so not committed.
+            if (ctx->new_lease_ && (ctx->new_lease_->reuseable_valid_lft_ == 0)) {
+                new_leases->push_back(ctx->new_lease_);
             }
-        }
-        callout_handle->setArgument("deleted_leases4", deleted_leases);
+            callout_handle->setArgument("leases4", new_leases);
 
-        if (allow_packet_park) {
-            // Get the parking limit. Parsing should ensure the value is present.
-            uint32_t parked_packet_limit = 0;
-            data::ConstElementPtr ppl = CfgMgr::instance().getCurrentCfg()->
-                getConfiguredGlobal(CfgGlobals::PARKED_PACKET_LIMIT);
-            if (ppl) {
-                parked_packet_limit = ppl->intValue();
-            }
-
-            if (parked_packet_limit) {
-                const auto& parking_lot = ServerHooks::getServerHooks().
-                    getParkingLotPtr("leases4_committed");
-
-                if (parking_lot && (parking_lot->size() >= parked_packet_limit)) {
-                    // We can't park it so we're going to throw it on the floor.
-                    LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING,
-                              DHCP4_HOOK_LEASES4_PARKING_LOT_FULL)
-                              .arg(parked_packet_limit)
-                              .arg(query->getLabel());
-                    isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                              static_cast<int64_t>(1));
-                    rsp.reset();
-                    return;
+            Lease4CollectionPtr deleted_leases(new Lease4Collection());
+            if (ctx->old_lease_) {
+                if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
+                    deleted_leases->push_back(ctx->old_lease_);
                 }
             }
+            callout_handle->setArgument("deleted_leases4", deleted_leases);
 
-            // We proactively park the packet. We'll unpark it without invoking
-            // the callback (i.e. drop) unless the callout status is set to
-            // NEXT_STEP_PARK.  Otherwise the callback we bind here will be
-            // executed when the hook library unparks the packet.
-            HooksManager::park("leases4_committed", query,
-            [this, callout_handle, query, rsp, callout_handle_state]() mutable {
-                if (MultiThreadingMgr::instance().getMode()) {
-                    typedef function<void()> CallBack;
-                    boost::shared_ptr<CallBack> call_back =
-                        boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::sendResponseNoThrow,
-                                                               this, callout_handle, query, rsp));
-                    callout_handle_state->on_completion_ = [call_back]() {
-                        MultiThreadingMgr::instance().getThreadPool().add(call_back);
-                    };
-                } else {
-                    processPacketPktSend(callout_handle, query, rsp);
-                    processPacketBufferSend(callout_handle, rsp);
-                }
-            });
-        }
-
-        try {
-            // Call all installed callouts
-            HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
-                                       *callout_handle);
-        } catch (...) {
-            // Make sure we don't orphan a parked packet.
             if (allow_packet_park) {
-                HooksManager::drop("leases4_committed", query);
+                // Get the parking limit. Parsing should ensure the value is present.
+                uint32_t parked_packet_limit = 0;
+                data::ConstElementPtr ppl = CfgMgr::instance().getCurrentCfg()->
+                    getConfiguredGlobal(CfgGlobals::PARKED_PACKET_LIMIT);
+                if (ppl) {
+                    parked_packet_limit = ppl->intValue();
+                }
+
+                if (parked_packet_limit) {
+                    const auto& parking_lot =
+                        ServerHooks::getServerHooks().getParkingLotPtr(hook_label);
+
+                    if (parking_lot && (parking_lot->size() >= parked_packet_limit)) {
+                        // We can't park it so we're going to throw it on the floor.
+                        LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, parking_lot_full_msg)
+                            .arg(parked_packet_limit)
+                            .arg(query->getLabel());
+                        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                                  static_cast<int64_t>(1));
+                        rsp.reset();
+                        return;
+                    }
+                }
+
+                // We proactively park the packet. We'll unpark it without invoking
+                // the callback (i.e. drop) unless the callout status is set to
+                // NEXT_STEP_PARK.  Otherwise the callback we bind here will be
+                // executed when the hook library unparks the packet.
+                HooksManager::park(
+                    hook_label, query,
+                    [this, callout_handle, query, rsp, callout_handle_state]() mutable {
+                        if (MultiThreadingMgr::instance().getMode()) {
+                            typedef function<void()> CallBack;
+                            boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(
+                                std::bind(&Dhcpv4Srv::sendResponseNoThrow, this, callout_handle,
+                                          query, rsp));
+                            callout_handle_state->on_completion_ = [call_back]() {
+                                MultiThreadingMgr::instance().getThreadPool().add(call_back);
+                            };
+                        } else {
+                            processPacketPktSend(callout_handle, query, rsp);
+                            processPacketBufferSend(callout_handle, rsp);
+                        }
+                    });
             }
 
-            throw;
-        }
+            try {
+                // Call all installed callouts
+                HooksManager::callCallouts(hook_idx, *callout_handle);
+            } catch (...) {
+                // Make sure we don't orphan a parked packet.
+                if (allow_packet_park) {
+                    HooksManager::drop(hook_label, query);
+                }
 
-        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK)
-            && allow_packet_park) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_LEASES4_COMMITTED_PARK)
-                      .arg(query->getLabel());
-            // Since the hook library(ies) are going to do the unparking, then
-            // reset the pointer to the response to indicate to the caller that
-            // it should return, as the packet processing will continue via
-            // the callback.
-            rsp.reset();
-        } else {
-            // Drop the park job on the packet, it isn't needed.
-            HooksManager::drop("leases4_committed", query);
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
-                LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP4_HOOK_LEASES4_COMMITTED_DROP)
-                          .arg(query->getLabel());
+                throw;
+            }
+
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK) &&
+                allow_packet_park) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, pkt_park_msg)
+                    .arg(query->getLabel());
+                // Since the hook library(ies) are going to do the unparking, then
+                // reset the pointer to the response to indicate to the caller that
+                // it should return, as the packet processing will continue via
+                // the callback.
                 rsp.reset();
+            } else {
+                // Drop the park job on the packet, it isn't needed.
+                HooksManager::drop(hook_label, query);
+                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+                    LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, pkt_drop_msg)
+                        .arg(query->getLabel());
+                    rsp.reset();
+                }
             }
         }
     }
