@@ -880,7 +880,7 @@ A complete list of logging parameters supported by Kea is shown in the table bel
    +-----------+------------------------------------------------------------------------+
    | ``%m``    | Outputs the actual log message                                         |
    +-----------+------------------------------------------------------------------------+
-   | ``%M``    | Outputs caller of the log message                                      |
+   | ``%M``    | Outputs caller (function name) of the log message                      |
    +-----------+------------------------------------------------------------------------+
    | ``%n``    | Outputs line separator suppored by platform e.g., ``\n`` in Linux      |
    +-----------+------------------------------------------------------------------------+
@@ -888,7 +888,7 @@ A complete list of logging parameters supported by Kea is shown in the table bel
    +-----------+------------------------------------------------------------------------+
    | ``%r``    | Outputs milliseconds since program start e.g., 1235                    |
    +-----------+------------------------------------------------------------------------+
-   | ``%t``    | Outputs thread id that generated the log message e.g, 281472855306256  |
+   | ``%t``    | Outputs thread id that generated the log message e.g., 281472855306256 |
    +-----------+------------------------------------------------------------------------+
    | ``%T``    | Outputs thread name that generated the log message e.g., 168005        |
    +-----------+------------------------------------------------------------------------+
@@ -905,7 +905,7 @@ sign. There are five ways of modifying the output shown by example here.
     Left pads with spaces (align right) if the severity is shorter than 20 characters.
 
   - ``%-15r``
-    Right pads with spaces (align left) if the milliseconds since program start is less
+    Right pads with spaces (align left) if the milliseconds since program start is shorter
     than 15 characters.
 
   - ``%.30m``
@@ -920,6 +920,12 @@ sign. There are five ways of modifying the output shown by example here.
   - ``%-15.40m``
     Right pad with spaces (align left) if the log message is shorter than 15 characters.
     If the message is longer than 40 characters, truncate from the beginning.
+
+Supported parameters depend on the liblog4cplus version used to compile Kea.  This can
+be checked by executing ``kea-dhcp4 -W | grep -i log4cplus`` which will produce output
+like this: ``LOG4CPLUS_VERSION:  2.0.5``.  Consult the documentation in the 
+`log4cplus wiki <https://github.com/log4cplus/log4cplus/wiki>`__ for further information
+about the version you have installed.
 
 Example Logger Configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
