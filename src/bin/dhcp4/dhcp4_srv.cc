@@ -1411,6 +1411,8 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
     if (ctx) {
+        // leases4_committed and lease4_offer callouts are treated in the same way,
+        // so prepare correct set of variables basing on the packet context.
         int hook_idx = Hooks.hook_index_leases4_committed_;
         std::string hook_label = "leases4_committed";
         MessageID pkt_park_msg = DHCP4_HOOK_LEASES4_COMMITTED_PARK;
@@ -1470,6 +1472,12 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                 }
             }
             callout_handle->setArgument("deleted_leases4", deleted_leases);
+
+            if (ctx->fake_allocation_) {
+                // Arguments required only for lease4_offer callout.
+                callout_handle->setArgument("offer_lifetime", ctx->offer_lft_);
+                callout_handle->setArgument("old_lease", ctx->old_lease_);
+            }
 
             if (allow_packet_park) {
                 // Get the parking limit. Parsing should ensure the value is present.
