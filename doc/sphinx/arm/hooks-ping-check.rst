@@ -5,8 +5,7 @@
 =====================================
 
 This hook library is under development and currently provides no functionality.
-Once complete it will provide :iscman:`kea-dhcp4` with the ability to carry out ping
-checks of candiate addresses prior to offering them in leases to clients.
+Once complete it will provide :iscman:`kea-dhcp4` with the ability to carry out ping checks of candidate addresses prior to offering them in leases to clients.
 
 .. note::
 
