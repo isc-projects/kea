@@ -3491,6 +3491,10 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
 
     appendServerID(ex);
 
+    // Return the pointer to the context, which will be required by the
+    // lease4_offer callouts.
+    context = ex.getContext();
+
     return (ex.getResponse());
 }
 
