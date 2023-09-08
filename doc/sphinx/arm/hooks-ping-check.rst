@@ -10,7 +10,7 @@ checks of candiate addresses prior to offering them in leases to clients.
 
 .. note::
 
-    libdhcp_ping_check.so will be available only to ISC customers with a paid support
+    :ischooklib:`libdhcp_ping_check.so` will be available only to ISC customers with a paid support
     contract. For more information on subscription options, please complete the form
     at https://www.isc.org/contact.
 
