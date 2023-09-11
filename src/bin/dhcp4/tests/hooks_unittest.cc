@@ -57,6 +57,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     int hook_index_select_subnet = -1;
     int hook_index_leases4_committed = -1;
     int hook_index_host4_identifier = -1;
+    int hook_index_lease4_offer = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_dhcp4_srv_configured = ServerHooks::getServerHooks()
@@ -81,6 +82,8 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
                     .getIndex("leases4_committed"));
     EXPECT_NO_THROW(hook_index_host4_identifier = ServerHooks::getServerHooks()
                     .getIndex("host4_identifier"));
+    EXPECT_NO_THROW(hook_index_lease4_offer = ServerHooks::getServerHooks()
+                    .getIndex("lease4_offer"));
 
     EXPECT_TRUE(hook_index_dhcp4_srv_configured > 0);
     EXPECT_TRUE(hook_index_buffer4_receive > 0);
@@ -93,6 +96,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_select_subnet > 0);
     EXPECT_TRUE(hook_index_leases4_committed > 0);
     EXPECT_TRUE(hook_index_host4_identifier > 0);
+    EXPECT_TRUE(hook_index_lease4_offer > 0);
 }
 
 // A dummy MAC address, padded with 0s
@@ -159,6 +163,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host4_identifier");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_offer");
 
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
@@ -771,6 +776,41 @@ public:
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
+    lease4_offer_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_offer");
+
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
+
+        Lease4CollectionPtr leases4;
+        callout_handle.getArgument("leases4", leases4);
+        if (leases4->size() > 0) {
+            callback_lease4_ = leases4->at(0);
+        }
+
+        Lease4CollectionPtr deleted_leases4;
+        callout_handle.getArgument("deleted_leases4", deleted_leases4);
+        if (deleted_leases4->size() > 0) {
+            callback_deleted_lease4_ = deleted_leases4->at(0);
+        }
+
+        callout_handle.getArgument("offer_lifetime", callback_offer_lft_);
+        callout_handle.getArgument("old_lease", callback_old_lease_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
     leases4_committed_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("leases4_committed");
 
@@ -976,6 +1016,12 @@ public:
     /// Flag indicating if copying retrieved options was enabled for
     /// a response during callout execution.
     static bool callback_resp_options_copy_;
+
+    /// Offer lifetime returned in the lease4_offer callout
+    static uint32_t callback_offer_lft_;
+
+    /// Old lease returned in the lease4_offer callout
+    static Lease4Ptr callback_old_lease_;
 };
 
 // The following fields are used in testing pkt4_receive_callout.
@@ -993,6 +1039,8 @@ Lease4Ptr HooksDhcpv4SrvTest::callback_deleted_lease4_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 bool HooksDhcpv4SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv4SrvTest::callback_resp_options_copy_;
+uint32_t HooksDhcpv4SrvTest::callback_offer_lft_;
+Lease4Ptr HooksDhcpv4SrvTest::callback_old_lease_;
 
 /// @brief Fixture class used to do basic library load/unload tests
 class LoadUnloadDhcpv4SrvTest : public ::testing::Test {
@@ -3437,6 +3485,144 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
 
     // Statistic should still show one drop.
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+}
+
+// This test verifies that the lease4_offer hook point is triggered
+// for the DHCPDISCOVER and is NOT triggered for the DHCPREQUEST.
+TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverRequest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Install lease4_offer_callout
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "lease4_offer", lease4_offer_callout));
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_offer", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("deleted_leases4");
+    expected_argument_names.push_back("leases4");
+    expected_argument_names.push_back("offer_lifetime");
+    expected_argument_names.push_back("old_lease");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No allocated lease expected yet.
+    EXPECT_FALSE(callback_lease4_);
+
+    // Deleted lease must not be present.
+    EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+
+    resetCalloutBuffers();
+
+    // Renew the lease and make sure that the callout has NOT been executed.
+    client.setState(Dhcp4Client::RENEWING);
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+}
+
+// This test verifies that the lease4_offer hook point is not triggered
+// for the DHCPINFORM.
+TEST_F(HooksDhcpv4SrvTest, lease4OfferInform) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "lease4_offer", lease4_offer_callout));
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.useRelay();
+    ASSERT_NO_THROW(client.doInform());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+}
+
+// This test verifies that the lease4_offer hook point is not triggered
+// for the DHCPDECLINE.
+TEST_F(HooksDhcpv4SrvTest, lease4OfferDecline) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "lease4_offer", lease4_offer_callout));
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.useRelay();
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    resetCalloutBuffers();
+
+    ASSERT_NO_THROW(client.doDecline());
+
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+}
+
+// This test verifies that the lease4_offer hook point is not triggered
+// for the DHCPRELEASE.
+TEST_F(HooksDhcpv4SrvTest, lease4OfferRelease) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "lease4_offer", lease4_offer_callout));
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    resetCalloutBuffers();
+
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 }  // namespace
