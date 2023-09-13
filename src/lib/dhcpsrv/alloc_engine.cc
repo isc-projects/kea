@@ -3674,7 +3674,7 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
         }
 
         if (ctx.fake_allocation_) {
-            return (discoverLease4(ctx));
+            ctx.new_lease_ = discoverLease4(ctx);
         } else {
             ctx.new_lease_ = requestLease4(ctx);
         }
