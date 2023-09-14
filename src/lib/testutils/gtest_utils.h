@@ -86,11 +86,15 @@ namespace test {
     } \
 } \
 
-/// @brief Skip a test without failure if the given expression is false.
+/// @brief Skip a test without failure if the given expression is true.
 ///
 /// SKIP_IF(exp) provides a means to exit a test without failing
 /// if the given expression is true.  This works around the lack of
 /// GTEST_SKIP prior to googletest 1.10.
+///
+/// @note  This macro cannot be used in ::testingL:Test::SetUp()
+/// to skip tests (unless running with googletest 1.10 or later).
+/// It must be used directly within the body of each unit test.
 ///
 /// @param expression logical expression to execute
 #ifndef GTEST_SKIP

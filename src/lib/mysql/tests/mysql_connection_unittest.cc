@@ -848,11 +848,7 @@ TEST_F(MySqlSecureConnectionTest, Tcp) {
 
 /// @brief Check the SSL/TLS protected connection.
 TEST_F(MySqlSecureConnectionTest, Tls) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,
@@ -868,11 +864,7 @@ TEST_F(MySqlSecureConnectionTest, Tls) {
 
 /// @brief Check the SSL/TLS protected connection still requires the password.
 TEST_F(MySqlSecureConnectionTest, TlsInvalidPassword) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             INVALID_PASSWORD, 0, 0,
@@ -884,11 +876,7 @@ TEST_F(MySqlSecureConnectionTest, TlsInvalidPassword) {
 
 /// @brief Check the SSL/TLS protected connection requires crypto parameters.
 TEST_F(MySqlSecureConnectionTest, TlsNoCrypto) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD);
@@ -898,11 +886,7 @@ TEST_F(MySqlSecureConnectionTest, TlsNoCrypto) {
 
 /// @brief Check the SSL/TLS protected connection requires valid key.
 TEST_F(MySqlSecureConnectionTest, TlsInvalidKey) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,
@@ -914,11 +898,7 @@ TEST_F(MySqlSecureConnectionTest, TlsInvalidKey) {
 
 /// @brief Check the SSL/TLS protected connection requires a key.
 TEST_F(MySqlSecureConnectionTest, TlsNoKey) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,

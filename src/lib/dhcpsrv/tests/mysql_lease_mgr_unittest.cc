@@ -1111,10 +1111,7 @@ TEST_F(MySqlLeaseMgrTest, isJsonSupported) {
 // Verifies that v4 class lease counts are correctly adjusted
 // when leases have class lists.
 TEST_F(MySqlLeaseMgrTest, classLeaseCount4) {
-    if (!LeaseMgrFactory::instance().isJsonSupported()) {
-        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
-        return;
-    }
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
 
     testClassLeaseCount4();
 }
@@ -1122,10 +1119,7 @@ TEST_F(MySqlLeaseMgrTest, classLeaseCount4) {
 // Verifies that v6 IA_NA class lease counts are correctly adjusted
 // when leases have class lists.
 TEST_F(MySqlLeaseMgrTest, classLeaseCount6_NA) {
-    if (!LeaseMgrFactory::instance().isJsonSupported()) {
-        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
-        return;
-    }
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
 
     testClassLeaseCount6(Lease::TYPE_NA);
 }
@@ -1133,10 +1127,7 @@ TEST_F(MySqlLeaseMgrTest, classLeaseCount6_NA) {
 // Verifies that v6 IA_PD class lease counts are correctly adjusted
 // when leases have class lists.
 TEST_F(MySqlLeaseMgrTest, classLeaseCount6_PD) {
-    if (!LeaseMgrFactory::instance().isJsonSupported()) {
-        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
-        return;
-    }
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
 
     testClassLeaseCount6(Lease::TYPE_PD);
 }
@@ -1152,11 +1143,7 @@ TEST_F(MySqlLeaseMgrTest, checkLimitsNull) {
 
 /// @brief Checks a few v4 limit checking scenarios.
 TEST_F(MySqlLeaseMgrTest, checkLimits4) {
-    // Can't assume anything about the error message.
-    if (!LeaseMgrFactory::instance().isJsonSupported()) {
-        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
-        return;
-    }
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
 
     // The rest of the checks are only for databases with JSON support.
     testLeaseLimits4();
@@ -1164,11 +1151,7 @@ TEST_F(MySqlLeaseMgrTest, checkLimits4) {
 
 /// @brief Checks a few v6 limit checking scenarios.
 TEST_F(MySqlLeaseMgrTest, checkLimits6) {
-    // Can't assume anything about the error message.
-    if (!LeaseMgrFactory::instance().isJsonSupported()) {
-        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
-        return;
-    }
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
 
     // The rest of the checks are only for databases with JSON support.
     testLeaseLimits6();
