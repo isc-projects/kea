@@ -297,7 +297,7 @@ the following:
      Valgrind:                  no
      C++ Code Coverage:         no
      Logger checks:             no
-     Install existing manuals:  yes
+     Install existing manuals:  no
      Generate Documentation:    no
      Generate Parser:           no
      Generate Messages Files:   no

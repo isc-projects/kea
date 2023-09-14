@@ -154,8 +154,6 @@ the system:
 -  log4cplus (at least version 1.0.3) development include headers.
 
 -  A C++ compiler (with C++14 support) and standard development headers.
-   The Kea build has been checked with GCC g++ 4.8.5 and some later versions,
-   and Clang 800.0.38 and some later versions.
 
 -  The development tools automake, libtool, and pkg-config.
 

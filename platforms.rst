@@ -7,9 +7,6 @@ In general, this version of Kea builds and runs on any POSIX-compliant
 system with a C++ compiler (with C++14 support), the Botan cryptographic library,
 the log4cplus logging library and the Boost system library.
 
-The Kea build has been checked with GCC g++ 4.8.5 and some later versions,
-and Clang 800.0.38 and some later versions.
-
 ISC regularly tests Kea on many operating systems and architectures, but
 lacks the resources to test all of them. Consequently, ISC is only able to
 offer support on a "best-effort" basis for some.
