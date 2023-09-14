@@ -1465,18 +1465,19 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
             }
             callout_handle->setArgument("leases4", new_leases);
 
-            Lease4CollectionPtr deleted_leases(new Lease4Collection());
-            if (ctx->old_lease_) {
-                if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
-                    deleted_leases->push_back(ctx->old_lease_);
-                }
-            }
-            callout_handle->setArgument("deleted_leases4", deleted_leases);
-
             if (ctx->fake_allocation_) {
                 // Arguments required only for lease4_offer callout.
                 callout_handle->setArgument("offer_lifetime", ctx->offer_lft_);
                 callout_handle->setArgument("old_lease", ctx->old_lease_);
+            } else {
+                // Arguments required only for leases4_committed callout.
+                Lease4CollectionPtr deleted_leases(new Lease4Collection());
+                if (ctx->old_lease_) {
+                    if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
+                            deleted_leases->push_back(ctx->old_lease_);
+                    }
+                }
+                callout_handle->setArgument("deleted_leases4", deleted_leases);
             }
 
             if (allow_packet_park) {
