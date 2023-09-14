@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,6 +85,34 @@ namespace test {
         GTEST_FAIL() << #statement <<  " threw non-std::exception"; \
     } \
 } \
+
+/// @brief Skip a test without failure if the given expression is false.
+///
+/// SKIP_IF(exp) provides a means to exit a test without failing
+/// if the given expression is true.  This works around the lack of
+/// GTEST_SKIP prior to googletest 1.10.
+///
+/// @param expression logical expression to execute
+#ifndef GTEST_SKIP
+#define SKIP_IF(expression) \
+{ \
+    if (expression) { \
+        const auto info = ::testing::UnitTest::GetInstance()->current_test_info(); \
+        std::cerr << "SKIPPING: " << info->test_case_name() << ":" << info->name() \
+                  << ":" << #expression << " is true" << std::endl; \
+        return; \
+    } \
+}
+#else
+#define SKIP_IF(expression) \
+{ \
+    if (expression) { \
+        const auto info = ::testing::UnitTest::GetInstance()->current_test_info(); \
+        GTEST_SKIP() << "SKIPPING: " << info->test_case_name() << ":" << info->name() \
+                  << ":" << #expression << " is true"; \
+    } \
+}
+#endif
 
 }; // end of isc::test namespace
 }; // end of isc namespace
