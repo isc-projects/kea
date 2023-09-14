@@ -42,7 +42,7 @@ public:
         handler_called_ = false;
         callout_name_ = "";
         callout_argument_names_.clear();
-        std::string processed_log_ = "";
+        processed_log_ = "";
 
         CommandMgr::instance().deregisterAll();
         CommandMgr::instance().closeCommandSocket();
@@ -81,7 +81,7 @@ public:
         // callouts registered.
         std::vector<std::string> hooks = ServerHooks::getServerHooksPtr()->getHookNames();
         for (auto h = hooks.cbegin(); h != hooks.cend(); ++h) {
-                HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(*h);
+            HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(*h);
         }
     }
 
