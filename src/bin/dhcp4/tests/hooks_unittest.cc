@@ -800,6 +800,42 @@ public:
         return (0);
     }
 
+    /// @brief Test callback which asks the server to park the packet.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_offer_park_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_offer");
+
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
+
+        io_service_->post(std::bind(&HooksDhcpv4SrvTest::pkt4_unpark_callout,
+                                    callout_handle.getParkingLotHandlePtr(),
+                                    callback_qry_pkt4_));
+
+        callout_handle.getParkingLotHandlePtr()->reference(callback_qry_pkt4_);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
+
+        Lease4CollectionPtr leases4;
+        callout_handle.getArgument("leases4", leases4);
+        if (leases4->size() > 0) {
+            callback_lease4_ = leases4->at(0);
+        }
+
+        callout_handle.getArgument("offer_lifetime", callback_offer_lft_);
+        callout_handle.getArgument("old_lease", callback_old_lease_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
     /// @brief Test callback that stores callout name and passed parameters.
     ///
     /// @param callout_handle handle passed by the hooks framework
@@ -834,10 +870,12 @@ public:
 
     /// @brief Test callback which asks the server to unpark the packet.
     ///
+    /// This can be used with hook points: leases4_committed, lease4_offer.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static void
-    leases4_committed_unpark_callout(ParkingLotHandlePtr parking_lot, Pkt4Ptr query) {
+    pkt4_unpark_callout(ParkingLotHandlePtr parking_lot, Pkt4Ptr query) {
         parking_lot->unpark(query);
     }
 
@@ -851,7 +889,7 @@ public:
 
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
-        io_service_->post(std::bind(&HooksDhcpv4SrvTest::leases4_committed_unpark_callout,
+        io_service_->post(std::bind(&HooksDhcpv4SrvTest::pkt4_unpark_callout,
                                     callout_handle.getParkingLotHandlePtr(),
                                     callback_qry_pkt4_));
 
@@ -3630,6 +3668,217 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferRelease) {
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(client.getContext().query_);
+}
+
+// This test verifies that it is possible to park a packet as a result of
+// the lease4_offer callout.
+TEST_F(HooksDhcpv4SrvTest, lease4OfferParkRequests) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // This callout uses provided IO service object to post a function
+    // that unparks the packet. The packet is parked and can be unparked
+    // by simply calling IOService::poll.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "lease4_offer", lease4_offer_park_callout));
+
+    // Create first client and perform DORA.
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+    client1.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // We should not be offered an address yet
+    // at this point, because the packet is parked.
+    ASSERT_FALSE(client1.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_offer", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("leases4");
+    expected_argument_names.push_back("offer_lifetime");
+    expected_argument_names.push_back("old_lease");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be passed to the callout.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client1.getContext().query_);
+
+    // Reset all indicators because we'll be now creating a second client.
+    resetCalloutBuffers();
+
+    // Create the second client to test that it may communicate with the
+    // server while the previous packet is parked.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+    client2.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
+
+    // We should not be offered an address yet
+    // at this point, because the packet is parked.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed.
+    EXPECT_EQ("lease4_offer", callback_name_);
+
+    // There should be now two actions scheduled on our IO service
+    // by the invoked callouts. They unpark both DHCPOFFER messages.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client1.receiveResponse());
+    Pkt4Ptr rsp = client1.getContext().response_;
+    ASSERT_TRUE(rsp);
+    EXPECT_EQ(DHCPOFFER, rsp->getType());
+    EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
+
+    // Receive and check the second response.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
+    EXPECT_EQ(DHCPOFFER, rsp->getType());
+    EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client2.getContext().query_);
+}
+
+// This test verifies that parked-packet-limit is properly enforced with lease4_offer callout.
+TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+                    "    \"interfaces\": [ \"*\" ]"
+                    "},"
+                    "\"rebind-timer\": 2000, "
+                    "\"renew-timer\": 1000, "
+                    "\"parked-packet-limit\": 1,"
+                    "\"subnet4\": [ { "
+                    "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+                    "    \"subnet\": \"192.0.2.0/24\", "
+                    "    \"id\": 1, "
+                    "    \"interface\": \"eth1\" "
+                    " } ],"
+                    "\"valid-lifetime\": 4000"
+                    "}";
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Commit the config
+    CfgMgr::instance().commit();
+    IfaceMgr::instance().openSockets4();
+
+    // This callout uses the provided IO service object to post a function
+    // that unparks the packet. Once the packet is parked, it can be unparked
+    // by simply calling IOService::poll.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "lease4_offer", lease4_offer_park_callout));
+
+    // Statistic should not show any drops.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+
+    // Create a client and initiate a DORA cycle for it.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Check that the callback called is indeed the one we installed
+    ASSERT_EQ("lease4_offer", callback_name_);
+
+    // Make sure that we have not received a response.
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Verify we have a packet parked.
+    const auto& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("lease4_offer");
+    ASSERT_TRUE(parking_lot);
+    ASSERT_EQ(1, parking_lot->size());
+
+    // Clear callout buffers.
+    resetCalloutBuffers();
+
+    // Create a second client and initiate a DORA for it.
+    // Since the parking lot limit has been reached, the packet
+    // should be dropped with no response.
+    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+    client2.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
+
+    // Check that no callback was called.
+    ASSERT_EQ("", callback_name_);
+
+    // Make sure that we have not received a response.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Verify we have not parked another packet.
+    ASSERT_EQ(1, parking_lot->size());
+
+    // Statistic should show one drop.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+
+    // Invoking poll should run the scheduled action only for
+    // the first client.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client.receiveResponse());
+    Pkt4Ptr rsp = client.getContext().response_;
+    ASSERT_TRUE(rsp);
+    EXPECT_EQ(DHCPOFFER, rsp->getType());
+    EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
+
+    // Verify we have no parked packets.
+    ASSERT_EQ(0, parking_lot->size());
+
+    resetCalloutBuffers();
+
+    // Try client2 again.
+    ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
+
+    // Check that the callback called is indeed the one we installed
+    ASSERT_EQ("lease4_offer", callback_name_);
+
+    // Make sure that we have not received a response.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Verify we parked the packet.
+    ASSERT_EQ(1, parking_lot->size());
+
+    // Invoking poll should run the scheduled action.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
+    EXPECT_EQ(DHCPOFFER, rsp->getType());
+    EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
+
+    // Verify we have no parked packets.
+    ASSERT_EQ(0, parking_lot->size());
+
+    // Statistic should still show one drop.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 }  // namespace
