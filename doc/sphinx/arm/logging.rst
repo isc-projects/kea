@@ -897,7 +897,7 @@ A complete list of logging parameters supported by Kea is shown in the table bel
    | ``%%``    | Outputs a literal percent sign                                         |
    +-----------+------------------------------------------------------------------------+
 
-Padding and truncation are also possible with modifiers preceeding the component.  Ths is 
+Padding and truncation are also possible with modifiers preceeding the component.  This is 
 done by placing a number and other modifier characters between the component and the % 
 sign. There are five ways of modifying the output shown by example here.
 
