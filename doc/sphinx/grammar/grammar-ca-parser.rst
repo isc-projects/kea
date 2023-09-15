@@ -223,7 +223,7 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      severity ::= "severity" ":" STRING
 
-     output_options_list ::= "output_options" ":" "[" output_options_list_content "]"
+     output_options_list ::= "output-options" ":" "[" output_options_list_content "]"
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry

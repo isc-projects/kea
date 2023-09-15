@@ -622,6 +622,9 @@ where log messages are sent and are explained in detail below.
    to use "dash" instead of "underscore" in the key name. For the time being
    both configuration keys are considered correct and mean the same to Kea parsers.
 
+   As of Kea 2.5.2, the ``output-options`` becomes the default configuration key
+   and ``output_options`` can be used as an alias.
+
 The ``output`` (string) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
