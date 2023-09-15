@@ -69,7 +69,6 @@ IndentFunctionDeclarationAfterType: false
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: false
-KeepEmptyLinesAtTheStartOfBlocks: true
 Language: Cpp
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
