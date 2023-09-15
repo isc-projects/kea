@@ -1069,33 +1069,21 @@ TEST_F(PgSqlGenericBackendTest, leaseCount) {
 // Verifies that v4 class lease counts are correctly adjusted
 // when leases have class lists.
 TEST_F(PgSqlLeaseMgrTest, classLeaseCount4) {
-    if (!LeaseMgrFactory::instance().isJsonSupported()) {
-        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
-        return;
-    }
-
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
     testClassLeaseCount4();
 }
 
 // Verifies that v6 IA_NA class lease counts are correctly adjusted
 // when leases have class lists.
 TEST_F(PgSqlLeaseMgrTest, classLeaseCount6_NA) {
-    if (!LeaseMgrFactory::instance().isJsonSupported()) {
-        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
-        return;
-    }
-
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
     testClassLeaseCount6(Lease::TYPE_NA);
 }
 
 // Verifies that v6 IA_PD class lease counts are correctly adjusted
 // when leases have class lists.
 TEST_F(PgSqlLeaseMgrTest, classLeaseCount6_PD) {
-    if (!LeaseMgrFactory::instance().isJsonSupported()) {
-        std::cout << "Skipped test because of lack of JSON support in the database." << std::endl;
-        return;
-    }
-
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
     testClassLeaseCount6(Lease::TYPE_PD);
 }
 
