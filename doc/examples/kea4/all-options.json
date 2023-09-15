@@ -1475,7 +1475,43 @@
         "name": "sip-ua-cs-domains"
       },
 
-      // Option codes 142-145 are not defined in Kea.
+      // Option code 142 is not defined in Kea.
+
+      /*
+       0                             1
+       0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+      +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+      |   option-code (143)   |     option-length     |
+      +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+      .                                               .
+      .    bootstrap-server-list (variable length)    .
+      .                                               .
+      +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+      option-code: OPTION_V4_SZTP_REDIRECT (143)
+
+      option-length: The option length in octets.
+
+      bootstrap-server-list: A list of servers for the
+       client to attempt contacting, in order to obtain
+       further bootstrapping data. Each URI entry in the
+       bootstrap-server-list is structured as follows:
+
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...-+-+-+-+-+-+-+
+      |       uri-length              |          URI                  |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...-+-+-+-+-+-+-+
+
+      uri-length: 2 octets long; specifies the length of the URI data.
+      URI: URI of the SZTP bootstrap server.
+      */
+      // Type: array of {tuple}
+      {
+        "code": 143,
+        "data": "https://sztp1.example.com:8443, https://sztp2.example.com:8444",
+        "name": "v4-sztp-redirect"
+      },
+
+      // Option codes 144-145 are not defined in Kea.
 
       // Type: uint8, IPv4 address, IPv4 address, array of {FQDN}
       {
