@@ -1,3 +1,8 @@
+2179.	[doc]		piotrek
+	Updated Developer's Guide with information about new hook
+	point "lease4_offer".
+	(Gitlab #3067)
+
 2178.	[doc]		andrei
 	Clarified in the ARM that DHCPv6 clients with unstable DUIDs can
 	be handled using the flex-id library. The configuration examples
