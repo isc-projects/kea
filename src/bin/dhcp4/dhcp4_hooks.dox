@@ -317,6 +317,34 @@ called before "subnet4_select".
    packet (hold packet processing) until the hook libraries explicitly unpark
    the packet after they are done performing asynchronous operations.
 
+@subsection dhcpv4Lease4Offer lease4_offer
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
+   - name: @b offer_lifetime, type: uint32_t, direction: <b>in</b>
+   - name: @b old_lease, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has received
+   DHCPDISCOVER from the client and the DHCPOFFER is yet to be sent back
+   to the client. The argument "query4" contains a pointer to an isc::dhcp::Pkt4
+   object that contains all information regarding incoming DHCPDISCOVER packet.
+   The "leases4" object will hold the pointer to the new candidate lease for this
+   client. The "offer_lifetime" argument comes from the context information for the
+   DHCPv4 lease allocation. If "offer_lifetime" is not zero,  it indicates that the
+   lease already exists in the lease store. The "old_lease" argument also comes from
+   the context information for the DHCPv4 lease allocation. If not Null, it is a pointer
+   to an old lease that the client had before.
+
+ - <b>Next step status</b>: If any callout installed on the "lease4_offer"
+   sets the next step action to DROP, the server will drop the processed query.
+   The callout is responsible for dealing with Declined lease for the Offer that
+   in this case will NOT be sent back to the client.
+   If any callout installed on the "lease4_offer" sets the next step action to PARK,
+   the server will park the processed packet (hold packet processing) until the hook
+   libraries explicitly unpark the packet after they are done performing asynchronous
+   operations. Upon the packet UNPARK, the Offer will be sent to the client.
+   This was originally intended to be used by "ping-check" premium hook.
 
 @subsection dhcpv4HooksPkt4Send pkt4_send
 
