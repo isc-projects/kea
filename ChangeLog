@@ -1,8 +1,8 @@
 2177.	[func]		piotrek
 	Implemented new DHCPv4 hook point "lease4_offer".
-	The callout is executed after the server has
-	received the DHCPDISCOVER and the DHCPOFFER is yet
-	to be sent back to the client.
+	The callout is executed after the server has received
+	the DHCPDISCOVER and the DHCPOFFER has been constructed
+	but not yet sent to the client.
 	(Gitlab #3038, #3063)
 
 2176.	[doc]		piotrek, razvan
