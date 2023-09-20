@@ -1,3 +1,10 @@
+2180.	[build]		andrei
+	Apart from enabling log4cplus's own logging, and adding more
+	sanity checks in DNS code, the --enable-debug configure flag
+	now also makes the compiler produce more abundant debugging
+	information that can be read by a debugger.
+	(Gitlab #1520)
+
 2179.	[doc]		piotrek
 	Updated Developer's Guide with information about new hook
 	point "lease4_offer".
