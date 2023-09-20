@@ -90,7 +90,7 @@ fi
 # by default.
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug],
-    [enable debugging (default is no)])],
+    [enable debugging symbols, enable log4cplus's own logging, add more sanity checks in DNS code (default is no)])],
   [case "${enableval}" in
     yes) debug_enabled=yes ;;
     no)  debug_enabled=no ;;
@@ -98,6 +98,12 @@ AC_ARG_ENABLE([debug],
   esac],[debug_enabled=no])
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
+if test "${debug_enabled}" = 'yes'; then
+  if test "${GXX}" = 'yes'; then
+    KEA_CXXFLAGS="${KEA_CXXFLAGS} -ggdb3 -grecord-gcc-switches"
+  fi
+  KEA_CXXFLAGS="${KEA_CXXFLAGS} -g3 -O0"
+fi
 
 # Include premium configuration
 INCLUDED_HOOKS=
