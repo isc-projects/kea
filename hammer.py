@@ -2322,6 +2322,16 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
 
     execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g %s/SPECS/kea.spec' % (frc_version, rpm_root_path), check_times=check_times, dry_run=dry_run)
 
+    services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
+
+    # centos/rhel 7 does not support some fields in systemd unit files so they need to be commented out
+    if system == 'centos' and revision == '7':
+        for f in services_list:
+            for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode', 'StateDirectory', 'ConfigurationDirectory']:
+                cmd = "sed -i -E 's/^(%s=.*)/#\\1/' %s" % (k, f)
+                execute(cmd, cwd=rpm_dir, check_times=check_times, dry_run=dry_run)
+
+
     # do rpm build
     cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba %s/SPECS/kea.spec"
     cmd += " -D'_topdir %s'"
@@ -2407,7 +2417,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
     execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g control' % frc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
-    services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
+    services_list = ['isc-kea-dhcp4.isc-kea-dhcp4-server.service', 'isc-kea-dhcp6.isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns.isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
 
     # debian 9 does not support some fields in systemd unit files so they need to be commented out
     if system == 'debian' and revision == '9':
@@ -2426,6 +2436,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         # install packages
         execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
         # check if kea services can be started
+        services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
         _check_installed_rpm_or_debs(services_list)
 
 
