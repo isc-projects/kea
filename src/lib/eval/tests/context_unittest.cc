@@ -26,9 +26,7 @@ namespace {
 class EvalContextTest : public ::testing::Test {
 public:
     /// @brief constructor to initialize members
-    EvalContextTest() : ::testing::Test(),
-    universe_(Option::V4), parsed_(false)
-    { }
+    EvalContextTest() : ::testing::Test(), universe_(Option::V4), parsed_(false) { }
 
     /// @brief checks if the given token is a string with the expected value
     void checkTokenString(const TokenPtr& token, const std::string& expected) {
@@ -39,6 +37,46 @@ public:
 
         Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
         ValueStack values;
+
+        EXPECT_NO_THROW(token->evaluate(*pkt4, values));
+
+        ASSERT_EQ(1, values.size());
+
+        EXPECT_EQ(expected, values.top());
+    }
+
+    /// @brief checks if the given token is a constant lower case string with
+    /// the expected value
+    void checkTokenLowerCase(const TokenPtr& token, const std::string& expected) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenLowerCase> str =
+            boost::dynamic_pointer_cast<TokenLowerCase>(token);
+        ASSERT_TRUE(str);
+
+        Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+        ValueStack values;
+
+        values.push(expected);
+
+        EXPECT_NO_THROW(token->evaluate(*pkt4, values));
+
+        ASSERT_EQ(1, values.size());
+
+        EXPECT_EQ(expected, values.top());
+    }
+
+    /// @brief checks if the given token is a constant upper case string with
+    /// the expected value
+    void checkTokenUpperCase(const TokenPtr& token, const std::string& expected) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenUpperCase> str =
+            boost::dynamic_pointer_cast<TokenUpperCase>(token);
+        ASSERT_TRUE(str);
+
+        Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+        ValueStack values;
+
+        values.push(expected);
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
@@ -1508,6 +1546,46 @@ TEST_F(EvalContextTest, toHexString) {
     checkTokenHexString(tmp1, "fo");
     checkTokenString(tmp2, "-");
     checkTokenToHexString(tmp3);
+}
+
+// Test the parsing of lcase expression
+TEST_F(EvalContextTest, lcase) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("lcase('LoWeR') == 'lower'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenString(tmp1, "LoWeR");
+    checkTokenLowerCase(tmp2, "lower");
+    checkTokenString(tmp3, "lower");
+    checkTokenEq(tmp4);
+}
+
+// Test the parsing of ucase expression
+TEST_F(EvalContextTest, ucase) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("ucase('uPpEr') == 'UPPER'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenString(tmp1, "uPpEr");
+    checkTokenUpperCase(tmp2, "UPPER");
+    checkTokenString(tmp3, "UPPER");
+    checkTokenEq(tmp4);
 }
 
 // Test the parsing of an addrtotext expression

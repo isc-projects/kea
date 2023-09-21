@@ -48,7 +48,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-
 /// @brief Base class for all tokens
 ///
 /// It provides an interface for all tokens and storage for string representation
@@ -116,9 +115,7 @@ public:
     /// Value is set during token construction.
     ///
     /// @param str constant string to be represented.
-    TokenString(const std::string& str)
-        : value_(str){
-    }
+    TokenString(const std::string& str) : value_(str) {}
 
     /// @brief Token evaluation (puts value of the constant string on the stack)
     ///
@@ -153,6 +150,40 @@ public:
 
 protected:
     std::string value_; ///< Constant value
+};
+
+/// @brief Token representing a constant lower case string
+///
+/// This token converts a string expression value of the corresponding lower
+/// case string value e.g. it evaluates to "lower" in expression lcase('lOwEr')
+class TokenLowerCase : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenLowerCase() {}
+
+    /// @brief Token evaluation (puts value of the evaluated string expression
+    /// converted to lower case on the stack)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented string will be pushed here)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token representing a constant upper case string
+///
+/// This token converts a string expression value of the corresponding upper
+/// case string value e.g. it evaluates to "UPPER" in expression lcase('UpPeR')
+class TokenUpperCase : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenUpperCase() {}
+
+    /// @brief Token evaluation (puts value of the evaluated string expression
+    /// converted to upper case on the stack)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented string will be pushed here)
+    void evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing an unsigned 32 bit integer
@@ -518,8 +549,7 @@ public:
     };
 
     /// @brief Constructor (does nothing)
-    TokenPkt(const MetadataType type)
-        : type_(type) {}
+    TokenPkt(const MetadataType type) : type_(type) {}
 
     /// @brief Gets a value from the specified packet.
     ///
@@ -875,7 +905,7 @@ public:
 class TokenIfElse : public Token {
 public:
     /// @brief Constructor (does nothing)
-    TokenIfElse() { }
+    TokenIfElse() {}
 
     /// @brief Alternative.
     ///
@@ -905,7 +935,7 @@ public:
 class TokenToHexString : public Token {
 public:
     /// @brief Constructor (does nothing)
-    TokenToHexString() { }
+    TokenToHexString() {}
 
     /// @brief Convert a binary value to its hexadecimal string representation
     ///
@@ -1017,7 +1047,7 @@ public:
     ///
     /// @param client_class client class name
     TokenMember(const std::string& client_class)
-        : client_class_(client_class){
+        : client_class_(client_class) {
     }
 
     /// @brief Token evaluation (check if client_class_ was added to
@@ -1073,7 +1103,6 @@ public:
     /// @param vendor_id specifies enterprise-id (0 means any)
     /// @param field specifies which field should be returned
     TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field);
-
 
     /// @brief Constructor used for accessing an option
     ///

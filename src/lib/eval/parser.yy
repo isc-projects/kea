@@ -89,6 +89,8 @@ using namespace isc::eval;
   UINT8TOTEXT "uint8totext"
   UINT16TOTEXT "uint16totext"
   UINT32TOTEXT "uint32totext"
+  LCASE "lcase"
+  UCASE "ucase"
   PKT6 "pkt6"
   MSGTYPE "msgtype"
   TRANSID "transid"
@@ -380,6 +382,16 @@ string_expr : STRING
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
+                  }
+            | LCASE "(" string_expr ")"
+                  {
+                      TokenPtr lcase(new TokenLowerCase());
+                      ctx.expression.push_back(lcase);
+                  }
+            | UCASE "(" string_expr ")"
+                  {
+                      TokenPtr ucase(new TokenUpperCase());
+                      ctx.expression.push_back(ucase);
                   }
             | IFELSE "(" bool_expr "," string_expr "," string_expr ")"
                   {

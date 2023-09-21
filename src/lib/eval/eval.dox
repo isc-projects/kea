@@ -142,26 +142,32 @@ instantiated with the appropriate value and put onto the expression vector.
  - isc::dhcp::TokenString -- represents a constant string, e.g. "MSFT".
  - isc::dhcp::TokenHexString -- represents a constant string, encoded as
    hex string, e.g. 0x666f6f which is actually "foo".
+ - isc::dhcp::TokenLowerCase -- represents an operator which converts a string
+   expression to the corresponding lower case string.
+ - isc::dhcp::TokenUpperCase -- represents an operator which converts a string
+   expression to the corresponding upper case string.
  - isc::dhcp::TokenIpAddress -- represents a constant IP address, encoded as
    a 4 or 16 byte binary string, e.g., 10.0.0.1 is 0x10000001.
  - isc::dhcp::TokenIpAddressToText -- represents an IP address in text format.
  - isc::dhcp::TokenOption -- represents an option in a packet, e.g.
-                    option[123].text.
+   option[123].text.
  - isc::dhcp::TokenRelay4Option -- represents a sub-option inserted by the
-                    DHCPv4 relay, e.g. relay[123].text or relay[123].hex
+   DHCPv4 relay, e.g. relay[123].text or relay[123].hex
  - isc::dhcp::TokenRelay6Option -- represents a sub-option inserted by
    a DHCPv6 relay
  - isc::dhcp::TokenPkt -- represents a DHCP packet meta data (incoming
    interface name, source/remote or destination/local IP address, length).
  - isc::dhcp::TokenPkt4 -- represents a DHCPv4 packet field.
- - isc::dhcp::TokenPkt6 -- represents a DHCPv6 packet field (message type
-   or transaction id).
+ - isc::dhcp::TokenPkt6 -- represents a DHCPv6 packet field (message type or
+   transaction id).
  - isc::dhcp::TokenRelay6Field -- represents a DHCPv6 relay information field.
  - isc::dhcp::TokenEqual -- represents the equal (==) operator.
- - isc::dhcp::TokenSubstring -- represents the substring(text, start, length) operator.
- - isc::dhcp::TokenConcat -- represents the concat operator which
-   concatenate two other tokens.
- - isc::dhcp::TokenIfElse -- represents the ifelse(cond, iftrue, ifelse) operator.
+ - isc::dhcp::TokenSubstring -- represents the substring(text, start, length)
+   operator.
+ - isc::dhcp::TokenConcat -- represents the concat operator which concatenate
+   two other tokens.
+ - isc::dhcp::TokenIfElse -- represents the ifelse(cond, iftrue, ifelse)
+   operator.
  - isc::dhcp::TokenToHexString -- represents the hexstring operator which
    converts a binary value to its hexadecimal string representation.
  - isc::dhcp::TokenInt8ToText -- represents the signed 8 bit integer in string
@@ -170,21 +176,23 @@ instantiated with the appropriate value and put onto the expression vector.
    representation.
  - isc::dhcp::TokenInt32ToText -- represents the signed 32 bit integer in string
    representation.
- - isc::dhcp::TokenUInt8ToText -- represents the unsigned 8 bit integer in string
-   representation.
- - isc::dhcp::TokenUInt16ToText -- represents the unsigned 16 bit integer in string
-   representation.
- - isc::dhcp::TokenUInt32ToText -- represents the unsigned 32 bit integer in string
-   representation.
+ - isc::dhcp::TokenUInt8ToText -- represents the unsigned 8 bit integer in
+   string representation.
+ - isc::dhcp::TokenUInt16ToText -- represents the unsigned 16 bit integer in
+   string representation.
+ - isc::dhcp::TokenUInt32ToText -- represents the unsigned 32 bit integer in
+   string representation.
  - isc::dhcp::TokenNot -- the logical not operator.
  - isc::dhcp::TokenAnd -- the logical and (strict) operator.
  - isc::dhcp::TokenOr -- the logical or (strict) operator (strict means
    it always evaluates its operands).
  - isc::dhcp::TokenVendor -- represents vendor information option's existence,
    enterprise-id field and possible sub-options. (e.g. vendor[1234].exists,
-   vendor[*].enterprise-id, vendor[1234].option[1].exists, vendor[1234].option[1].hex)
- - isc::dhcp::TokenVendorClass -- represents vendor information option's existence,
-   enterprise-id and included data chunks. (e.g. vendor-class[1234].exists,
+   vendor[*].enterprise-id, vendor[1234].option[1].exists,
+   vendor[1234].option[1].hex)
+ - isc::dhcp::TokenVendorClass -- represents vendor information option's
+   existence, enterprise-id and included data chunks. (e.g.
+   vendor-class[1234].exists,
    vendor-class[*].enterprise-id, vendor-class[*].data[3])
 
 More operators are expected to be implemented in upcoming releases.

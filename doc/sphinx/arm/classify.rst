@@ -521,7 +521,17 @@ Notes:
    +-----------------------+-------------------------+-----------------------+
    | Hexstring             | hexstring('foo', '-')   | Converts the value to |
    |                       |                         | a hexadecimal string, |
-   |                       |                         | e.g. 0a:1b:2c:3e      |
+   |                       |                         | e.g. 66-6F-6F         |
+   +-----------------------+-------------------------+-----------------------+
+   | Lcase                 | lcase('LoWeR')          | Converts the value of |
+   |                       |                         | a string expression   |
+   |                       |                         | to lower case e.g.    |
+   |                       |                         | 'lower'               |
+   +-----------------------+-------------------------+-----------------------+
+   | Ucase                 | ucase('uPpEr')          | Converts the value of |
+   |                       |                         | a string expression   |
+   |                       |                         | to upper case e.g.    |
+   |                       |                         | 'UPPER'               |
    +-----------------------+-------------------------+-----------------------+
    | Split                 | split('foo.bar', '.', 2)| Return the second     |
    |                       |                         | field, splitting on   |

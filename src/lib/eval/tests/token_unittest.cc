@@ -745,6 +745,48 @@ TEST_F(TokenTest, hexstring6) {
     EXPECT_TRUE(checkFile());
 }
 
+// This simple test checks that a TokenLowerCase, representing a constant lower
+// case string, can be used in Pkt evaluation. (The actual packet is not used)
+TEST_F(TokenTest, lcase) {
+    // Store constant string "lower" in the TokenLowerCase object.
+    ASSERT_NO_THROW(t_.reset(new TokenLowerCase()));
+    values_.push("LoWeR");
+
+    // Make sure that the token can be evaluated without exceptions.
+    ASSERT_NO_THROW(t_->evaluate(*pkt6_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("lower", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_LCASE Poping string 'LoWeR' and pushing converted value to lower case 'lower'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This simple test checks that a TokenUpperCase, representing a constant upper
+// case string, can be used in Pkt evaluation. (The actual packet is not used)
+TEST_F(TokenTest, ucase) {
+    // Store constant string "UPPER" in the TokenUpperCase object.
+    ASSERT_NO_THROW(t_.reset(new TokenUpperCase()));
+    values_.push("uPpEr");
+
+    // Make sure that the token can be evaluated without exceptions.
+    ASSERT_NO_THROW(t_->evaluate(*pkt6_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("UPPER", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_UCASE Poping string 'uPpEr' and pushing converted value to upper case 'UPPER'");
+    EXPECT_TRUE(checkFile());
+}
+
 // This test checks that a TokenIpAddress, representing an IP address as
 // a constant string, can be used in Pkt4/Pkt6 evaluation.
 // (The actual packet is not used)

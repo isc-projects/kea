@@ -20,6 +20,7 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -81,6 +82,42 @@ TokenHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_HEXSTRING)
         .arg(toHex(value_));
+}
+
+void
+TokenLowerCase::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+
+    values.pop();
+    string result(boost::algorithm::to_lower_copy(op));
+    values.push(result);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_LCASE)
+        .arg('\'' + op + '\'')
+        .arg('\'' + result + '\'');
+}
+
+void
+TokenUpperCase::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+
+    values.pop();
+    string result(boost::algorithm::to_upper_copy(op));
+    values.push(result);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UCASE)
+        .arg('\'' + op + '\'')
+        .arg('\'' + result + '\'');
 }
 
 TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {

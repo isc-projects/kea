@@ -216,6 +216,8 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "data"         return isc::eval::EvalParser::make_DATA(loc);
 "enterprise"   return isc::eval::EvalParser::make_ENTERPRISE(loc);
 "substring"    return isc::eval::EvalParser::make_SUBSTRING(loc);
+"lcase"        return isc::eval::EvalParser::make_LCASE(loc);
+"ucase"        return isc::eval::EvalParser::make_UCASE(loc);
 "split"        return isc::eval::EvalParser::make_SPLIT(loc);
 "all"          return isc::eval::EvalParser::make_ALL(loc);
 "concat"       return isc::eval::EvalParser::make_CONCAT(loc);

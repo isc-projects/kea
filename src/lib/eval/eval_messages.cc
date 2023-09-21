@@ -18,6 +18,7 @@ extern const isc::log::MessageID EVAL_DEBUG_INT32TOTEXT = "EVAL_DEBUG_INT32TOTEX
 extern const isc::log::MessageID EVAL_DEBUG_INT8TOTEXT = "EVAL_DEBUG_INT8TOTEXT";
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESS = "EVAL_DEBUG_IPADDRESS";
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESSTOTEXT = "EVAL_DEBUG_IPADDRESSTOTEXT";
+extern const isc::log::MessageID EVAL_DEBUG_LCASE = "EVAL_DEBUG_LCASE";
 extern const isc::log::MessageID EVAL_DEBUG_MEMBER = "EVAL_DEBUG_MEMBER";
 extern const isc::log::MessageID EVAL_DEBUG_NOT = "EVAL_DEBUG_NOT";
 extern const isc::log::MessageID EVAL_DEBUG_OPTION = "EVAL_DEBUG_OPTION";
@@ -38,6 +39,7 @@ extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_RANGE = "EVAL_DEBUG_SUBSTR
 extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION = "EVAL_DEBUG_SUB_OPTION";
 extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION_NO_OPTION = "EVAL_DEBUG_SUB_OPTION_NO_OPTION";
 extern const isc::log::MessageID EVAL_DEBUG_TOHEXSTRING = "EVAL_DEBUG_TOHEXSTRING";
+extern const isc::log::MessageID EVAL_DEBUG_UCASE = "EVAL_DEBUG_UCASE";
 extern const isc::log::MessageID EVAL_DEBUG_UINT16TOTEXT = "EVAL_DEBUG_UINT16TOTEXT";
 extern const isc::log::MessageID EVAL_DEBUG_UINT32TOTEXT = "EVAL_DEBUG_UINT32TOTEXT";
 extern const isc::log::MessageID EVAL_DEBUG_UINT8TOTEXT = "EVAL_DEBUG_UINT8TOTEXT";
@@ -70,6 +72,7 @@ const char* values[] = {
     "EVAL_DEBUG_INT8TOTEXT", "Pushing Int8 %1",
     "EVAL_DEBUG_IPADDRESS", "Pushing IPAddress %1",
     "EVAL_DEBUG_IPADDRESSTOTEXT", "Pushing IPAddress %1",
+    "EVAL_DEBUG_LCASE", "Poping string %1 and pushing converted value to lower case %2",
     "EVAL_DEBUG_MEMBER", "Checking membership of '%1', pushing result %2",
     "EVAL_DEBUG_NOT", "Popping %1 pushing %2",
     "EVAL_DEBUG_OPTION", "Pushing option %1 with value %2",
@@ -90,6 +93,7 @@ const char* values[] = {
     "EVAL_DEBUG_SUB_OPTION", "Pushing option %1 sub-option %2 with value %3",
     "EVAL_DEBUG_SUB_OPTION_NO_OPTION", "Requested option %1 sub-option %2, but the parent option is not present, pushing result %3",
     "EVAL_DEBUG_TOHEXSTRING", "Popping binary value %1 and separator %2, pushing result %3",
+    "EVAL_DEBUG_UCASE", "Poping string %1 and pushing converted value to upper case %2",
     "EVAL_DEBUG_UINT16TOTEXT", "Pushing UInt16 %1",
     "EVAL_DEBUG_UINT32TOTEXT", "Pushing UInt32 %1",
     "EVAL_DEBUG_UINT8TOTEXT", "Pushing UInt8 %1",

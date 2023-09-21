@@ -34,6 +34,18 @@ the value stack.  The strings are displayed in hex.
 This debug message indicates that the given binary string is being pushed
 onto the value stack.  The string is displayed in hex.
 
+# For use with TokenLowerCase
+
+% EVAL_DEBUG_LCASE Poping string %1 and pushing converted value to lower case %2
+This debug message indicates that the given string representation is being
+converted to lower case and pushed onto the value stack.
+
+# For use with TokenUpperCase
+
+% EVAL_DEBUG_UCASE Poping string %1 and pushing converted value to upper case %2
+This debug message indicates that the given string representation is being
+converted to upper case and pushed onto the value stack.
+
 # For use with TokenIfElse
 
 % EVAL_DEBUG_IFELSE_FALSE Popping %1 (false) and %2, leaving %3
