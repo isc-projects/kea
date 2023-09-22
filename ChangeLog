@@ -1,3 +1,8 @@
+2182.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.5.2
+	development release.
+	(Gitlab #3085)
+
 2181.	[func]		razvan
 	Added additional tokens which evaluate string expressions:
 	"lcase" which converts to lower case and "ucase" which
