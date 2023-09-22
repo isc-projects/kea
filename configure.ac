@@ -28,6 +28,14 @@ AC_CONFIG_MACRO_DIR([m4macros])
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
 
+# Check if the user provided a CXXFLAGS. Must be done before AC_PROG_CXX which
+# sets it to a default.
+if test -n "${CXXFLAGS+x}"; then
+  custom_cxxflags=true
+else
+  custom_cxxflags=false
+fi
+
 # Check for compilers.
 AC_PROG_CXX
 
@@ -99,10 +107,22 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 if test "${debug_enabled}" = 'yes'; then
+  # If the shell variable CXXFLAGS was not already set, based on compiler,
+  # AC_PROG_CXX can set it to -g, -O2, or both. Since they can conflict with
+  # what --enable-debug is setting, let's remove them, but only if the user has
+  # not explicitly set the variable. We don't inspect what the user set. If one
+  # of the conflicting flags was set, it might mean that the user wanted to
+  # override, which is fine.
+  if ! ${custom_cxxflags}; then
+    CXXFLAGS=''
+  fi
+
+  KEA_CXXFLAGS="${KEA_CXXFLAGS} -g3 -O0"
+
+  # g++ has some additional flags that can be useful.
   if test "${GXX}" = 'yes'; then
     KEA_CXXFLAGS="${KEA_CXXFLAGS} -ggdb3 -grecord-gcc-switches"
   fi
-  KEA_CXXFLAGS="${KEA_CXXFLAGS} -g3 -O0"
 fi
 
 # Include premium configuration
