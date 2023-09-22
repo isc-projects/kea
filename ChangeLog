@@ -1,3 +1,9 @@
+2181.	[func]		razvan
+	Added additional tokens which evaluate string expressions:
+	"lcase" which converts to lower case and "ucase" which
+	converts to upper case.
+	(Gitlab #3048)
+
 2180.	[build]		andrei
 	Apart from enabling log4cplus's own logging, and adding more
 	sanity checks in DNS code, the --enable-debug configure flag

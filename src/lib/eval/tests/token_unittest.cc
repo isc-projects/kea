@@ -745,10 +745,10 @@ TEST_F(TokenTest, hexstring6) {
     EXPECT_TRUE(checkFile());
 }
 
-// This simple test checks that a TokenLowerCase, representing a constant lower
-// case string, can be used in Pkt evaluation. (The actual packet is not used)
+// This simple test checks that a TokenLowerCase, representing a string
+// converted to lower case, can be used in Pkt evaluation.  (The actual packet
+// is not used)
 TEST_F(TokenTest, lcase) {
-    // Store constant string "lower" in the TokenLowerCase object.
     ASSERT_NO_THROW(t_.reset(new TokenLowerCase()));
     values_.push("LoWeR");
 
@@ -766,10 +766,32 @@ TEST_F(TokenTest, lcase) {
     EXPECT_TRUE(checkFile());
 }
 
-// This simple test checks that a TokenUpperCase, representing a constant upper
-// case string, can be used in Pkt evaluation. (The actual packet is not used)
+// This simple test checks that a TokenLowerCase, representing a complex string
+// converted to lower case, can be used in Pkt evaluation.  (The actual packet
+// is not used)
+TEST_F(TokenTest, lcaseComplex) {
+    ASSERT_NO_THROW(t_.reset(new TokenLowerCase()));
+    values_.push("12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \b\r\f");
+
+    // Make sure that the token can be evaluated without exceptions.
+    ASSERT_NO_THROW(t_->evaluate(*pkt6_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_LCASE Poping string '12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \b\r\f' "
+              "and pushing converted value to lower case '12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This simple test checks that a TokenUpperCase, representing a string
+// converted to upper case, can be used in Pkt evaluation.  (The actual packet
+// is not used)
 TEST_F(TokenTest, ucase) {
-    // Store constant string "UPPER" in the TokenUpperCase object.
     ASSERT_NO_THROW(t_.reset(new TokenUpperCase()));
     values_.push("uPpEr");
 
@@ -784,6 +806,28 @@ TEST_F(TokenTest, ucase) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_UCASE Poping string 'uPpEr' and pushing converted value to upper case 'UPPER'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This simple test checks that a TokenUpperCase, representing a complex string
+// converted to upper case, can be used in Pkt evaluation.  (The actual packet
+// is not used)
+TEST_F(TokenTest, ucaseComplex) {
+    ASSERT_NO_THROW(t_.reset(new TokenUpperCase()));
+    values_.push("12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \b\r\f");
+
+    // Make sure that the token can be evaluated without exceptions.
+    ASSERT_NO_THROW(t_->evaluate(*pkt6_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_UCASE Poping string '12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \b\r\f' "
+              "and pushing converted value to upper case '12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f'");
     EXPECT_TRUE(checkFile());
 }
 

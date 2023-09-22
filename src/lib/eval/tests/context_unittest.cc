@@ -1568,6 +1568,27 @@ TEST_F(EvalContextTest, lcase) {
     checkTokenEq(tmp4);
 }
 
+// Test the parsing of complex lcase expression
+TEST_F(EvalContextTest, lcaseComplex) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("lcase('12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \b\r\f') == "
+                                               "'12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenString(tmp1, "12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \b\r\f");
+    checkTokenLowerCase(tmp2, "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f");
+    checkTokenString(tmp3, "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f");
+    checkTokenEq(tmp4);
+}
+
 // Test the parsing of ucase expression
 TEST_F(EvalContextTest, ucase) {
     EvalContext eval(Option::V4);
@@ -1585,6 +1606,27 @@ TEST_F(EvalContextTest, ucase) {
     checkTokenString(tmp1, "uPpEr");
     checkTokenUpperCase(tmp2, "UPPER");
     checkTokenString(tmp3, "UPPER");
+    checkTokenEq(tmp4);
+}
+
+// Test the parsing of complex ucase expression
+TEST_F(EvalContextTest, ucaseComplex) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("ucase('12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \b\r\f') == "
+                                               "'12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenString(tmp1, "12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \b\r\f");
+    checkTokenUpperCase(tmp2, "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f");
+    checkTokenString(tmp3, "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f");
     checkTokenEq(tmp4);
 }
 
