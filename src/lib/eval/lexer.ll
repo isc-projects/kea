@@ -118,8 +118,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
        for 'foo' we should get foo */
-    std::string tmp(evaltext+1);
-    tmp.resize(tmp.size() - 1);
+    std::string tmp(evaltext+1, evalleng-2);
 
     return isc::eval::EvalParser::make_STRING(tmp, loc);
 }

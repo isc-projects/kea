@@ -590,6 +590,30 @@ TEST_F(TokenTest, string4) {
 }
 
 // This simple test checks that a TokenString, representing a constant string,
+// can be used in Pkt4 evaluation. (The actual packet is not used)
+TEST_F(TokenTest, string4Complex) {
+    char data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    string data_str(data, sizeof(data) - 1);
+    // Store constant string in the TokenString object.
+    ASSERT_NO_THROW(t_.reset(new TokenString(data_str)));
+
+    // Make sure that the token can be evaluated without exceptions.
+    ASSERT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ(data_str, values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    char expected[] = "EVAL_DEBUG_STRING Pushing text string '12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
+    string expected_str(expected, sizeof(expected) - 1);
+    addString(expected_str);
+    EXPECT_TRUE(checkFile());
+}
+
+// This simple test checks that a TokenString, representing a constant string,
 // can be used in Pkt6 evaluation. (The actual packet is not used)
 TEST_F(TokenTest, string6) {
 
@@ -607,6 +631,30 @@ TEST_F(TokenTest, string6) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_STRING Pushing text string 'foo'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This simple test checks that a TokenString, representing a constant string,
+// can be used in Pkt6 evaluation. (The actual packet is not used)
+TEST_F(TokenTest, string6Complex) {
+    char data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    string data_str(data, sizeof(data) - 1);
+    // Store constant string in the TokenString object.
+    ASSERT_NO_THROW(t_.reset(new TokenString(data_str)));
+
+    // Make sure that the token can be evaluated without exceptions.
+    ASSERT_NO_THROW(t_->evaluate(*pkt6_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ(data_str, values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    char expected[] = "EVAL_DEBUG_STRING Pushing text string '12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
+    string expected_str(expected, sizeof(expected) - 1);
+    addString(expected_str);
     EXPECT_TRUE(checkFile());
 }
 
@@ -771,20 +819,26 @@ TEST_F(TokenTest, lcase) {
 // is not used)
 TEST_F(TokenTest, lcaseComplex) {
     ASSERT_NO_THROW(t_.reset(new TokenLowerCase()));
-    values_.push("12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \b\r\f");
+    char data[] = "12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \0\b\r\f";
+    string data_str(data, sizeof(data) - 1);
+    values_.push(data_str);
 
     // Make sure that the token can be evaluated without exceptions.
     ASSERT_NO_THROW(t_->evaluate(*pkt6_, values_));
 
     // Check that the evaluation put its value on the values stack.
     ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f", values_.top());
+    char expected_data[] = "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f";
+    string expected_data_str(expected_data, sizeof(expected_data) - 1);
+    EXPECT_EQ(expected_data_str, values_.top());
 
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_LCASE Poping string '12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \b\r\f' "
-              "and pushing converted value to lower case '12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f'");
+    char expected[] = "EVAL_DEBUG_LCASE Poping string '12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \0\b\r\f' "
+                      "and pushing converted value to lower case '12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f'";
+    string expected_str(expected, sizeof(expected) - 1);
+    addString(expected_str);
     EXPECT_TRUE(checkFile());
 }
 
@@ -814,20 +868,26 @@ TEST_F(TokenTest, ucase) {
 // is not used)
 TEST_F(TokenTest, ucaseComplex) {
     ASSERT_NO_THROW(t_.reset(new TokenUpperCase()));
-    values_.push("12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \b\r\f");
+    char data[] = "12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \0\b\r\f";
+    string data_str(data, sizeof(data) - 1);
+    values_.push(data_str);
 
     // Make sure that the token can be evaluated without exceptions.
     ASSERT_NO_THROW(t_->evaluate(*pkt6_, values_));
 
     // Check that the evaluation put its value on the values stack.
     ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f", values_.top());
+    char expected_data[] = "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f";
+    string expected_data_str(expected_data, sizeof(expected_data) - 1);
+    EXPECT_EQ(expected_data_str, values_.top());
 
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_UCASE Poping string '12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \b\r\f' "
-              "and pushing converted value to upper case '12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f'");
+    char expected[] = "EVAL_DEBUG_UCASE Poping string '12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \0\b\r\f' "
+                      "and pushing converted value to upper case '12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f'";
+    string expected_str(expected, sizeof(expected) - 1);
+    addString(expected_str);
     EXPECT_TRUE(checkFile());
 }
 

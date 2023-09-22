@@ -854,9 +854,32 @@ TEST_F(EvalContextTest, string) {
 
     TokenPtr tmp1  = eval.expression.at(0);
     TokenPtr tmp2  = eval.expression.at(1);
+    TokenPtr tmp3  = eval.expression.at(2);
 
     checkTokenString(tmp1, "foo");
     checkTokenString(tmp2, "bar");
+    checkTokenEq(tmp3);
+}
+
+// Test the parsing of a string terminal
+TEST_F(EvalContextTest, stringComplex) {
+    EvalContext eval(Option::V4);
+
+    char data[] = "'12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f' == 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
+    EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp1  = eval.expression.at(0);
+    TokenPtr tmp2  = eval.expression.at(1);
+    TokenPtr tmp3  = eval.expression.at(2);
+
+    char l_data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f";
+    char r_data[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    checkTokenString(tmp1, string(l_data, sizeof(l_data) - 1));
+    checkTokenString(tmp2, string(r_data, sizeof(r_data) - 1));
+    checkTokenEq(tmp3);
 }
 
 // Test the parsing of a basic expression using integers
@@ -864,8 +887,7 @@ TEST_F(EvalContextTest, integer) {
 
     EvalContext eval(Option::V4);
 
-    EXPECT_NO_THROW(parsed_ =
-        eval.parseString("substring(option[123].text, 0, 2) == '42'"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("substring(option[123].text, 0, 2) == '42'"));
     EXPECT_TRUE(parsed_);
 }
 
@@ -1572,8 +1594,9 @@ TEST_F(EvalContextTest, lcase) {
 TEST_F(EvalContextTest, lcaseComplex) {
     EvalContext eval(Option::V4);
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("lcase('12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \b\r\f') == "
-                                               "'12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f'"));
+    char data[] = "lcase('12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \0\b\r\f') == "
+                  "'12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f'";
+    EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
     EXPECT_TRUE(parsed_);
 
     ASSERT_EQ(4, eval.expression.size());
@@ -1583,9 +1606,11 @@ TEST_F(EvalContextTest, lcaseComplex) {
     TokenPtr tmp3 = eval.expression.at(2);
     TokenPtr tmp4 = eval.expression.at(3);
 
-    checkTokenString(tmp1, "12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \b\r\f");
-    checkTokenLowerCase(tmp2, "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f");
-    checkTokenString(tmp3, "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \b\r\f");
+    char expected_data[] = "12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \0\b\r\f";
+    char expected_updated_data[] = "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f";
+    checkTokenString(tmp1, string(expected_data, sizeof(expected_data) - 1));
+    checkTokenLowerCase(tmp2, string(expected_updated_data, sizeof(expected_updated_data) - 1));
+    checkTokenString(tmp3, string(expected_updated_data, sizeof(expected_updated_data) - 1));
     checkTokenEq(tmp4);
 }
 
@@ -1613,8 +1638,9 @@ TEST_F(EvalContextTest, ucase) {
 TEST_F(EvalContextTest, ucaseComplex) {
     EvalContext eval(Option::V4);
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("ucase('12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \b\r\f') == "
-                                               "'12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f'"));
+    char data[] = "ucase('12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \0\b\r\f') == "
+                  "'12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f'";
+    EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
     EXPECT_TRUE(parsed_);
 
     ASSERT_EQ(4, eval.expression.size());
@@ -1624,9 +1650,11 @@ TEST_F(EvalContextTest, ucaseComplex) {
     TokenPtr tmp3 = eval.expression.at(2);
     TokenPtr tmp4 = eval.expression.at(3);
 
-    checkTokenString(tmp1, "12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \b\r\f");
-    checkTokenUpperCase(tmp2, "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f");
-    checkTokenString(tmp3, "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \b\r\f");
+    char expected_data[] = "12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \0\b\r\f";
+    char expected_updated_data[] = "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f";
+    checkTokenString(tmp1, string(expected_data, sizeof(expected_data) - 1));
+    checkTokenUpperCase(tmp2, string(expected_updated_data, sizeof(expected_updated_data) - 1));
+    checkTokenString(tmp3, string(expected_updated_data, sizeof(expected_updated_data) - 1));
     checkTokenEq(tmp4);
 }
 
