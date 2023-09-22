@@ -71,7 +71,7 @@ if test "x$enable_gtest" = "xyes" ; then
             AC_MSG_CHECKING([for gtest source])
             # If not specified, try some common paths.
             GTEST_SOURCE=
-            for d in /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
+            for d in /usr/src/googletest/googletest /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
                 if test -f $d/src/gtest-all.cc -a $d/src/gtest_main.cc; then
                     GTEST_SOURCE=$d
                     AC_MSG_RESULT([$GTEST_SOURCE])
@@ -98,14 +98,31 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
         GTEST_VERSION="`basename $GTEST_SOURCE`"
 
-# Versions starting from 1.8.0 are put in the googletest directory. If the basename
-# returns googletest string, we need to cut it off and try baseline again.
+        # Versions starting from 1.8.0 are put in the googletest directory. If the basename
+        # returns googletest string, we need to cut it off and try baseline again.
         if test "$GTEST_VERSION" = "googletest"; then
             GTEST_VERSION=${GTEST_SOURCE%"/googletest"}
             GTEST_VERSION=`basename $GTEST_VERSION`
         fi
         GTEST_VERSION="${GTEST_VERSION#googletest-release-}"
         GTEST_VERSION="${GTEST_VERSION#gtest-}"
+        GTEST_VERSION="${GTEST_VERSION#googletest-}"
+
+        # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
+        # Let's try to extract it from CMake build script used by Google Test.
+        # semverRegex='\([[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}'
+        semverRegex='^\(v\{0,1\}\)\([[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.\{0,\}\)$'
+
+        semver_found_len=
+        semver_found_len=`expr ${GTEST_VERSION} : "${semverRegex}"`
+
+        if test -z $semver_found_len || "$semver_found_len" = "0"; then
+            # AC_MSG_NOTICE([case 1])
+            GTEST_VERSION=`grep "set(GOOGLETEST_VERSION" -h $GTEST_SOURCE/* 2>/dev/null | cut -d' ' -f2 | sed 's/)//'`
+        else
+            # AC_MSG_NOTICE([case 2])
+        fi
+        # AC_MSG_RESULT([GTEST_VERSION $GTEST_VERSION])
     fi
 
     if test "$gtest_path" != "no" ; then
