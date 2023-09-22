@@ -5,6 +5,7 @@ EXTRA_DIST += config-backend.dox
 EXTRA_DIST += congestion-handling.dox
 EXTRA_DIST += contribute.dox
 EXTRA_DIST += cross-compile.dox
+EXTRA_DIST += debug.dox
 EXTRA_DIST += doc.dox
 EXTRA_DIST += fuzz.dox
 EXTRA_DIST += mainpage.dox

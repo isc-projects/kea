@@ -154,7 +154,8 @@
  * - @subpage LoggingApi
  * - @subpage SocketSessionUtility
  * - @subpage crossCompile
+ * - @subpage debug
  * - @subpage docs
- * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
+ * - <a href="./doxygen-error.log"><b>Documentation Warnings and Errors</b></a>
  *
  */

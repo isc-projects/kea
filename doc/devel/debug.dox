@@ -1,0 +1,26 @@
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+ @page debug Debugging Kea
+
+@section debugSymbols Enabling debug symbols
+
+The --enable-debug flag can be useful when developing, since it
+makes the compiler produce more abundant debugging information that
+can be read by a debugger.
+
+Some compilers don't document some of the flags, such as clang for
+-g3. However, practice shows that clang behaves the same way as g++
+in that regard. As an experiment, providing -g4 results in
+`error: unknown argument: '-g4'`, but providing -g3 succesfully
+compiles, and supposedly puts it into effect.
+
+On top of that, the flag enables log4cplus's own logging, and adds
+more sanity checks in DNS code.
+
+*/
