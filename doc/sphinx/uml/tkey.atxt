@@ -1,0 +1,13 @@
+         TKEY Exchange (GSS-TSIG hook)
+
+     ,-------------.          ,----------.
+     |Kea D2 server|          |DNS server|
+     `------+------'          `----+-----'
+            |     TKEY request     |
+            |---------------------->
+            |                      |
+            |TKEY response (signed)|
+            |<----------------------
+     ,------+------.          ,----+-----.
+     |Kea D2 server|          |DNS server|
+     `-------------'          `----------'

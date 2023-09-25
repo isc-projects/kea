@@ -145,14 +145,19 @@ svgs += uml/tkey.svg
 svgs += uml/update.svg
 
 if HAVE_PLANTUML
+uml: uml-to-png uml-to-svg format-svgs uml-to-txt
+
 uml-to-png: $(umls)
-	@PLANTUML@ $^
+	@PLANTUML@ -tpng $^
 
 uml-to-svg: $(umls)
-	@PLANTUML@ -svg $^
+	@PLANTUML@ -tsvg $^
 
 format-svgs: $(svgs)
 	for svg in $(svgs); do xq -x . $$svg > tmp; mv tmp $$svg; done
+
+uml-to-txt: $(umls)
+	@PLANTUML@ -ttxt $^
 endif
 
 EXTRA_DIST += $(umls)
@@ -201,7 +206,7 @@ clean-local:
 	rm -f $(srcdir)/kea-messages.rst $(srcdir)/api.rst
 	rm -f $(srcdir)/arm/platforms.rst
 
-.PHONY: all pdf html mans update-python-dependencies uml-to-png uml-to-svg format-svgs
+.PHONY: all pdf html mans update-python-dependencies uml uml-to-png uml-to-svg format-svgs uml-to-txt
 
 endif
 
