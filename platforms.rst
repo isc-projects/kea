@@ -67,6 +67,7 @@ These are platforms on which versions of Kea since 1.7 are known *not* to build 
 * Windows Server (all versions)
 * Any platform with OpenSSL 1.0.1 or earlier, which does not also have Botan as an alternative
 * Any platform with log4cplus version 1.0.2 or earlier.
+* Any platform with a compiler that doesn't support C++14.
 
 .. _required-software:
 
