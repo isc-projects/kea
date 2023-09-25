@@ -96,33 +96,44 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
-        GTEST_VERSION="`basename $GTEST_SOURCE`"
+        GTEST_VERSION="$(basename $GTEST_SOURCE)"
 
         # Versions starting from 1.8.0 are put in the googletest directory. If the basename
         # returns googletest string, we need to cut it off and try baseline again.
+        cmakelists=
         if test "$GTEST_VERSION" = "googletest"; then
             GTEST_VERSION=${GTEST_SOURCE%"/googletest"}
-            GTEST_VERSION=`basename $GTEST_VERSION`
+            cmakelists="$GTEST_VERSION/CMakeLists.txt"
+            GTEST_VERSION=$(basename "$GTEST_VERSION")
         fi
         GTEST_VERSION="${GTEST_VERSION#googletest-release-}"
         GTEST_VERSION="${GTEST_VERSION#gtest-}"
         GTEST_VERSION="${GTEST_VERSION#googletest-}"
 
         # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
-        # Let's try to extract it from CMake build script used by Google Test.
-        # semverRegex='\([[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}'
-        semverRegex='^\(v\{0,1\}\)\([[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.[[:digit:]]\{1,\}\)\{0,1\}\(.\{0,\}\)$'
+        # Let's try to extract it from CMake build script used by Google Test starting from version 1.8.0.
+        semverRegex='.*\([[0-9]]\+\.[[0-9]]\+\.[[0-9]]\+\).*'
+        gtest_version_candidate=
+        gtest_version_candidate=$(expr "$GTEST_VERSION" : "$semverRegex")
+        gtest_version_found="no"
 
-        semver_found_len=
-        semver_found_len=`expr ${GTEST_VERSION} : "${semverRegex}"`
-
-        if test -z $semver_found_len || "$semver_found_len" = "0"; then
-            # AC_MSG_NOTICE([case 1])
-            GTEST_VERSION=`grep "set(GOOGLETEST_VERSION" -h $GTEST_SOURCE/* 2>/dev/null | cut -d' ' -f2 | sed 's/)//'`
+        if test -z "$gtest_version_candidate" ; then
+            if test -f "$cmakelists" ; then
+                gtest_version_line=$($AWK '/set\(GOOGLETEST_VERSION/ { print }' "$cmakelists")
+                gtest_version_candidate=$(expr "$gtest_version_line" : "$semverRegex")
+                if test -n "$gtest_version_candidate"; then
+                    gtest_version_found="yes"
+                    GTEST_VERSION=$gtest_version_candidate
+                fi
+            fi
         else
-            # AC_MSG_NOTICE([case 2])
+            gtest_version_found="yes"
+            GTEST_VERSION=$gtest_version_candidate
         fi
-        # AC_MSG_RESULT([GTEST_VERSION $GTEST_VERSION])
+
+        if test $gtest_version_found = "no" ; then
+            GTEST_VERSION="unknown"
+        fi
     fi
 
     if test "$gtest_path" != "no" ; then
