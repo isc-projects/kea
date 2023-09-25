@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,18 +35,6 @@ This debug message indicates that the given binary string is being pushed
 onto the value stack.  The string is displayed in hex.
 
 # For use with TokenLowerCase
-
-% EVAL_DEBUG_LCASE Poping string %1 and pushing converted value to lower case %2
-This debug message indicates that the given string representation is being
-converted to lower case and pushed onto the value stack.
-
-# For use with TokenUpperCase
-
-% EVAL_DEBUG_UCASE Poping string %1 and pushing converted value to upper case %2
-This debug message indicates that the given string representation is being
-converted to upper case and pushed onto the value stack.
-
-# For use with TokenIfElse
 
 % EVAL_DEBUG_IFELSE_FALSE Popping %1 (false) and %2, leaving %3
 This debug message indicates that the condition is false so
@@ -91,6 +79,12 @@ being pushed onto the value stack.  This represents either an IPv4 or IPv6
 address.
 
 # For use with TokenInt8ToText
+
+% EVAL_DEBUG_LCASE Poping string %1 and pushing converted value to lower case %2
+This debug message indicates that the given string representation is being
+converted to lower case and pushed onto the value stack.
+
+# For use with TokenUpperCase
 
 % EVAL_DEBUG_MEMBER Checking membership of '%1', pushing result %2
 This debug message indicates that the membership of the packet for
@@ -227,6 +221,12 @@ the value stack and a result is being pushed onto the value stack.
 The values being popped are the binary value to convert and the separator.
 The binary value is converted to its hexadecimal string representation
 and pushed onto the stack. The binary value is displayed in hex.
+
+% EVAL_DEBUG_UCASE Poping string %1 and pushing converted value to upper case %2
+This debug message indicates that the given string representation is being
+converted to upper case and pushed onto the value stack.
+
+# For use with TokenIfElse
 
 % EVAL_DEBUG_UINT16TOTEXT Pushing UInt16 %1
 This debug message indicates that the given address string representation is
