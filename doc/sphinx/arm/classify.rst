@@ -148,28 +148,6 @@ The classification process is conducted in several steps:
 
 .. note::
 
-   Client classes in Kea follow the order in which they are specified in
-   the configuration (vs. alphabetical order). Required classes follow
-   the order in which they are required.
-
-When determining which options to include in the response, the server
-examines the union of options from all of the assigned classes. If two
-or more classes include the same option, the value from the first class
-examined is used; classes are examined in the order they were
-associated, so ``ALL`` is always the first class and matching required
-classes are last.
-
-As an example, imagine that an incoming packet matches two classes.
-Class ``foo`` defines values for an NTP server (option 42 in DHCPv4) and
-an SMTP server (option 69 in DHCPv4), while class ``bar`` defines values
-for an NTP server and a POP3 server (option 70 in DHCPv4). The server
-examines the three options - NTP, SMTP, and POP3 - and returns any that
-the client requested. As the NTP server was defined twice, the server
-chooses only one of the values for the reply; the class from which the
-value is obtained is determined as explained in the previous paragraph.
-
-.. note::
-
    Care should be taken with client classification, as it is easy for
    clients that do not meet any class criteria to be denied service
    altogether.
@@ -1153,17 +1131,38 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
        ...
    }
 
-Using Classes
-=============
+Class Priority
+==============
 
-Currently classes can be used for two functions: they can supply options
-to members of the class, and they can be used to choose a subnet from
-which an address will be assigned to a class member.
+Client classes in Kea follow the order in which they are specified in the
+configuration (vs. alphabetical order). Required classes follow the order in
+which they are required.
 
-When options are defined as part of the class definition
-they override any global options that may be defined, and
-in turn will be overridden by any options defined for an
-individual subnet.
+When determining which client-class information (comprising of
+options, lease lifetimes or DHCPv4 field values) that is part of class
+definitions, to include in the response, the server examines the union of
+options from all of the assigned classes. If two or more classes include the
+same class information, the value from the first assigned class is used.
+``ALL`` is always the first class, hence the class with the highest
+priority, and matching required classes are last, so they have the
+lowest priority.
+
+Optons defined in classes override any global options, and in turn will be
+overridden by options defined for an individual subnet, shared network, pool or
+reservation.
+
+On the other hand, lease lifetimes and DHCPv4 field values defined at class
+scope override any values defined globally, in a subnet scope, or in a
+shared-network scope.
+
+As an example, imagine that an incoming packet matches two classes.
+Class ``foo`` defines values for an NTP server (option 42 in DHCPv4) and
+an SMTP server (option 69 in DHCPv4), while class ``bar`` defines values
+for an NTP server and a POP3 server (option 70 in DHCPv4). The server
+examines the three options - NTP, SMTP, and POP3 - and returns any that
+the client requested. As the NTP server was defined twice, the server
+chooses only one of the values for the reply; the class from which the
+value is obtained is determined as explained in the previous paragraphs.
 
 Classes and Hooks
 =================
