@@ -129,7 +129,8 @@ if test "x$enable_gtest" = "xyes" ; then
                     gtest_version_found="yes"
                     GTEST_VERSION=$gtest_version_candidate
                 fi
-            else
+            fi
+            if test $gtest_version_found = "no" ; then
                 dpkg -l googletest libgtest-dev 2>/dev/null
                 # Try to get googletest version from debian/ubuntu package
                 dpkg -S "$GTEST_SOURCE" | cut -d':' -f1 &> /dev/null
