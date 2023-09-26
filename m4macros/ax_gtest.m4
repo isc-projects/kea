@@ -113,6 +113,7 @@ if test "x$enable_gtest" = "xyes" ; then
         # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
         # Let's try to extract it from CMake build script used by Google Test starting from version 1.8.0.
         semverRegex='.*\([[0-9]]\+\.[[0-9]]\+\.[[0-9]]\+\).*'
+        semverRegex='.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*'
         gtest_version_candidate=
         gtest_version_candidate=$(expr "$GTEST_VERSION" : "$semverRegex")
         gtest_version_found="no"
@@ -129,6 +130,7 @@ if test "x$enable_gtest" = "xyes" ; then
                     GTEST_VERSION=$gtest_version_candidate
                 fi
             else
+                dpkg -l googletest libgtest-dev 2>/dev/null
                 # Try to get googletest version from debian/ubuntu package
                 dpkg -S "$GTEST_SOURCE" | cut -d':' -f1 &> /dev/null
                 if test $? -eq 0; then
