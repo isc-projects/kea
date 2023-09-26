@@ -125,6 +125,17 @@ if test "x$enable_gtest" = "xyes" ; then
                     gtest_version_found="yes"
                     GTEST_VERSION=$gtest_version_candidate
                 fi
+            else
+                # Try to get googletest version from debian/ubuntu package
+                dpkg -S "$GTEST_SOURCE" | cut -d':' -f1 &> /dev/null
+                if test $? -eq 0; then
+                    package_name="$(dpkg -S "$GTEST_SOURCE" | cut -d':' -f1)"
+                    dpkg-query --showformat='${Version}' --show "$package_name" | cut -d'-' -f1 &> /dev/null
+                    if test $? -eq 0; then
+                        gtest_version_found="yes"
+                        GTEST_VERSION="$(dpkg-query --showformat='${Version}' --show "$package_name" | cut -d'-' -f1)"
+                    fi
+                fi
             fi
         else
             gtest_version_found="yes"
@@ -173,6 +184,20 @@ if test "x$enable_gtest" = "xyes" ; then
                             pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc" &> /dev/null
                             if test $? -eq 0; then
                                 GTEST_VERSION="$(pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc")"
+                            fi
+                        fi
+                        break
+                    elif test -f "$dir/lib/$dumpmachine/libgtest.a" || \
+                         test -f "$dir/lib/$dumpmachine/libgtest.so"; then
+                        GTEST_INCLUDES="-I$dir/include"
+                        # check also multiarch dir in debian/ubuntu distributions
+                        GTEST_LDFLAGS="-L$dir/lib/$dumpmachine"
+                        GTEST_LDADD="-lgtest"
+                        GTEST_FOUND="true"
+                        if test -f "$dir/lib/$dumpmachine/pkgconfig/gtest.pc" ; then
+                            pkg-config --modversion "$dir/lib/$dumpmachine/pkgconfig/gtest.pc" &> /dev/null
+                            if test $? -eq 0; then
+                                GTEST_VERSION="$(pkg-config --modversion "$dir/lib/$dumpmachine/pkgconfig/gtest.pc")"
                             fi
                         fi
                         break
