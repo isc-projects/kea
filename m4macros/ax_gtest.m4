@@ -119,8 +119,11 @@ if test "x$enable_gtest" = "xyes" ; then
 
         if test -z "$gtest_version_candidate" ; then
             if test -f "$cmakelists" ; then
+                AC_MSG_NOTICE([CMakeLists.txt found $cmakelists])
                 gtest_version_line=$($AWK '/set\(GOOGLETEST_VERSION/ { print }' "$cmakelists")
+                AC_MSG_NOTICE([gtest_version_line $gtest_version_line])
                 gtest_version_candidate=$(expr "$gtest_version_line" : "$semverRegex")
+                AC_MSG_NOTICE([gtest_version_candidate $gtest_version_candidate])
                 if test -n "$gtest_version_candidate"; then
                     gtest_version_found="yes"
                     GTEST_VERSION=$gtest_version_candidate
