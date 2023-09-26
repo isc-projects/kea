@@ -169,6 +169,12 @@ if test "x$enable_gtest" = "xyes" ; then
                         GTEST_LDFLAGS="-L$dir/lib"
                         GTEST_LDADD="-lgtest"
                         GTEST_FOUND="true"
+                        if test -f "$dir/lib/pkgconfig/gtest.pc" ; then
+                            pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc" &> /dev/null
+                            if test $? -eq 0; then
+                                GTEST_VERSION="$(pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc")"
+                            fi
+                        fi
                         break
                     else
                         AC_MSG_WARN([Found Google Test include but not the library in $dir.])
