@@ -112,10 +112,16 @@ if test "x$enable_gtest" = "xyes" ; then
 
         # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
         # Let's try to extract it from CMake build script used by Google Test starting from version 1.8.0.
-        semverRegex='.*\([[0-9]]\+\.[[0-9]]\+\.[[0-9]]\+\).*'
-        semverRegex='.*\([0-9]\+\.[0-9]\+\.[0-9]\+\).*'
+        posix_regex=$(expr "5" : "\([[:digit:]]\)")
+        if test "$posix_regex" = "5" ; then
+            semver_regex='[^[:digit:]]\{0,\}\([[:digit:]]\{1,\}\.[[:digit:]]\{1,\}\.[[:digit:]]\{1,\}\).\{0,\}'
+            AC_MSG_NOTICE([posix regex used])
+        else
+            semver_regex='[[^0-9]]\{0,\}\([[0-9]]\{1,\}\.[[0-9]]\{1,\}\.[[0-9]]\{1,\}\).\{0,\}'
+            AC_MSG_NOTICE([non posix regex used])
+        fi
         gtest_version_candidate=
-        gtest_version_candidate=$(expr "$GTEST_VERSION" : "$semverRegex")
+        gtest_version_candidate=$(expr "$GTEST_VERSION" : "$semver_regex")
         gtest_version_found="no"
 
         if test -z "$gtest_version_candidate" ; then
@@ -123,7 +129,7 @@ if test "x$enable_gtest" = "xyes" ; then
                 AC_MSG_NOTICE([CMakeLists.txt found $cmakelists])
                 gtest_version_line=$($AWK '/set\(GOOGLETEST_VERSION/ { print }' "$cmakelists")
                 AC_MSG_NOTICE([gtest_version_line $gtest_version_line])
-                gtest_version_candidate=$(expr "$gtest_version_line" : "$semverRegex")
+                gtest_version_candidate=$(expr "$gtest_version_line" : "$semver_regex")
                 AC_MSG_NOTICE([gtest_version_candidate $gtest_version_candidate])
                 if test -n "$gtest_version_candidate"; then
                     gtest_version_found="yes"
@@ -131,12 +137,11 @@ if test "x$enable_gtest" = "xyes" ; then
                 fi
             fi
             if test $gtest_version_found = "no" ; then
-                dpkg -l googletest libgtest-dev 2>/dev/null
                 # Try to get googletest version from debian/ubuntu package
-                dpkg -S "$GTEST_SOURCE" | cut -d':' -f1 &> /dev/null
+                dpkg -S "$GTEST_SOURCE" | cut -d':' -f1 >/dev/null 2>&1
                 if test $? -eq 0; then
                     package_name="$(dpkg -S "$GTEST_SOURCE" | cut -d':' -f1)"
-                    dpkg-query --showformat='${Version}' --show "$package_name" | cut -d'-' -f1 &> /dev/null
+                    dpkg-query --showformat='${Version}' --show "$package_name" | cut -d'-' -f1 >/dev/null 2>&1
                     if test $? -eq 0; then
                         gtest_version_found="yes"
                         GTEST_VERSION="$(dpkg-query --showformat='${Version}' --show "$package_name" | cut -d'-' -f1)"
@@ -187,7 +192,7 @@ if test "x$enable_gtest" = "xyes" ; then
                         GTEST_LDADD="-lgtest"
                         GTEST_FOUND="true"
                         if test -f "$dir/lib/pkgconfig/gtest.pc" ; then
-                            pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc" &> /dev/null
+                            pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc" >/dev/null 2>&1
                             if test $? -eq 0; then
                                 GTEST_VERSION="$(pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc")"
                             fi
@@ -201,7 +206,7 @@ if test "x$enable_gtest" = "xyes" ; then
                         GTEST_LDADD="-lgtest"
                         GTEST_FOUND="true"
                         if test -f "$dir/lib/$dumpmachine/pkgconfig/gtest.pc" ; then
-                            pkg-config --modversion "$dir/lib/$dumpmachine/pkgconfig/gtest.pc" &> /dev/null
+                            pkg-config --modversion "$dir/lib/$dumpmachine/pkgconfig/gtest.pc" >/dev/null 2>&1
                             if test $? -eq 0; then
                                 GTEST_VERSION="$(pkg-config --modversion "$dir/lib/$dumpmachine/pkgconfig/gtest.pc")"
                             fi
