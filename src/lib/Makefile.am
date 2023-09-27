@@ -1,5 +1,11 @@
 # The following build order must be maintained.
-SUBDIRS = exceptions util log cryptolink dns asiolink cc testutils database
+SUBDIRS = exceptions util log cryptolink dns asiolink cc
+
+if HAVE_GTEST
+SUBDIRS += testutils
+endif
+
+SUBDIRS += database
 
 if HAVE_MYSQL
 SUBDIRS += mysql

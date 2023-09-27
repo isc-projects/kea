@@ -1,6 +1,9 @@
 CLEANFILES = *.gcno *.gcda
 
-TESTS = sysrepo_setup_tests
+TESTS =
+
+if HAVE_GTEST
+TESTS += sysrepo_setup_tests
 
 sysrepo_setup_tests_SOURCES = sysrepo_setup_tests.cc
 sysrepo_setup_tests_CPPFLAGS  =
@@ -21,5 +24,6 @@ sysrepo_setup_tests_LDADD += $(LIBYANG_LIBS)
 sysrepo_setup_tests_LDADD += $(LIBYANGCPP_LIBS)
 sysrepo_setup_tests_LDADD += $(SYSREPO_LIBS)
 sysrepo_setup_tests_LDADD += $(SYSREPOCPP_LIBS)
+endif
 
 noinst_PROGRAMS = $(TESTS)
