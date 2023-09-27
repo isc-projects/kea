@@ -633,6 +633,7 @@ TEST(TLSTest, loadCertKeyFile) {
     exps.addThrow("no start line (PEM routines, CRYPTO_internal)");
     exps.addThrow("PEM lib");
     exps.addThrow("PEM lib (SSL routines)");
+    exps.addThrow("unsupported (DECODER routines)");
     // Another possible error.
     exps.addThrow("No such file or directory");
     exps.runCanThrow([] {
