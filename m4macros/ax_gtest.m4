@@ -66,27 +66,31 @@ if test "x$enable_gtest" = "xyes" ; then
 
     if test -n "$with_gtest_source" ; then
 
+        AC_MSG_CHECKING([for gtest source])
+
         if test "x$GTEST_SOURCE" = "xyes" ; then
 
-            AC_MSG_CHECKING([for gtest source])
             # If not specified, try some common paths.
             GTEST_SOURCE=
-            for d in /usr/src/googletest/googletest /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
-                if test -f $d/src/gtest-all.cc -a $d/src/gtest_main.cc; then
+            for d in /usr/src/googletest /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
+                if test ! -d "$d"/src -a -d "$d"/googletest; then
+                    d=$d/googletest
+                fi
+                if test -f $d/src/gtest-all.cc -a -f $d/src/gtest_main.cc; then
                     GTEST_SOURCE=$d
                     AC_MSG_RESULT([$GTEST_SOURCE])
                     break
                 fi
             done
             if test -z $GTEST_SOURCE ; then
-                AC_MSG_ERROR([no gtest source but it was selected])
+                AC_MSG_ERROR([no gtest sources found])
             fi
         else
             if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
                 GTEST_SOURCE=$GTEST_SOURCE/googletest
             fi
-            if test -f $GTEST_SOURCE/src/gtest-all.cc -a $GTEST_SOURCE/src/gtest_main.cc; then
-                have_gtest_source=yes
+            if test -f $GTEST_SOURCE/src/gtest-all.cc -a -f $GTEST_SOURCE/src/gtest_main.cc; then
+                AC_MSG_RESULT([$GTEST_SOURCE])
             else
                 AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])
             fi
@@ -99,7 +103,7 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_VERSION="$(basename $GTEST_SOURCE)"
 
         # Versions starting from 1.8.0 are put in the googletest directory. If the basename
-        # returns googletest string, we need to cut it off and try baseline again.
+        # returns googletest string, we need to cut it off and try basename again.
         cmakelists=
         if test "$GTEST_VERSION" = "googletest"; then
             GTEST_VERSION=${GTEST_SOURCE%"/googletest"}
@@ -134,13 +138,14 @@ if test "x$enable_gtest" = "xyes" ; then
             fi
             if test $gtest_version_found = "no" ; then
                 # Try to get googletest version from debian/ubuntu package
-                dpkg -S "$GTEST_SOURCE" | cut -d':' -f1 >/dev/null 2>&1
-                if test $? -eq 0; then
-                    package_name="$(dpkg -S "$GTEST_SOURCE" | cut -d':' -f1)"
-                    dpkg-query --showformat='${Version}' --show "$package_name" | cut -d'-' -f1 >/dev/null 2>&1
+                AC_PATH_PROG(DPKG, dpkg)
+                AC_PATH_PROG(DPKGQUERY, dpkg-query)
+                if test -n "${DPKG}" -a -n "${DPKGQUERY}"; then
+                    # Let's check if there is a googletest package owning files under given GTEST_SOURCE path
+                    ${DPKG} -S "$GTEST_SOURCE" 2>/dev/null | grep googletest >/dev/null 2>&1
                     if test $? -eq 0; then
                         gtest_version_found="yes"
-                        GTEST_VERSION="$(dpkg-query --showformat='${Version}' --show "$package_name" | cut -d'-' -f1)"
+                        GTEST_VERSION="$(${DPKGQUERY} --showformat='${Version}' --show googletest | cut -d'-' -f1)"
                     fi
                 fi
             fi
@@ -158,9 +163,7 @@ if test "x$enable_gtest" = "xyes" ; then
     if test "$gtest_path" != "no" ; then
         if test "$gtest_path" != "yes"; then
             GTEST_PATHS=$gtest_path
-            if test -x "${gtest_path}/bin/gtest-config" ; then
-                GTEST_CONFIG="${gtest_path}/bin/gtest-config"
-            fi
+            AC_PATH_PROG([GTEST_CONFIG], [gtest-config], [], [${gtest_path}/bin])
         else
             AC_PATH_PROG([GTEST_CONFIG], [gtest-config])
         fi
@@ -179,6 +182,7 @@ if test "x$enable_gtest" = "xyes" ; then
             GTEST_FOUND="false"
         fi
         if test "${GTEST_FOUND}" != "true"; then
+            AC_MSG_CHECKING([for gtest lib path])
             GTEST_FOUND="false"
             for dir in $GTEST_PATHS; do
                 if test -f "$dir/include/gtest/gtest.h"; then
@@ -188,10 +192,11 @@ if test "x$enable_gtest" = "xyes" ; then
                         GTEST_LDFLAGS="-L$dir/lib"
                         GTEST_LDADD="-lgtest"
                         GTEST_FOUND="true"
+                        AC_MSG_RESULT([$dir/lib])
                         if test -f "$dir/lib/pkgconfig/gtest.pc" ; then
-                            pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc" >/dev/null 2>&1
-                            if test $? -eq 0; then
-                                GTEST_VERSION="$(pkg-config --modversion "$dir/lib/pkgconfig/gtest.pc")"
+                            AX_FIND_LIBRARY([gtest], ["$dir/lib/pkgconfig/gtest.pc"])
+                            if "${LIBRARY_FOUND}"; then
+                              GTEST_VERSION="${LIBRARY_VERSION}"
                             fi
                         fi
                         break
@@ -202,10 +207,11 @@ if test "x$enable_gtest" = "xyes" ; then
                         GTEST_LDFLAGS="-L$dir/lib/$dumpmachine"
                         GTEST_LDADD="-lgtest"
                         GTEST_FOUND="true"
+                        AC_MSG_RESULT([$dir/lib/$dumpmachine])
                         if test -f "$dir/lib/$dumpmachine/pkgconfig/gtest.pc" ; then
-                            pkg-config --modversion "$dir/lib/$dumpmachine/pkgconfig/gtest.pc" >/dev/null 2>&1
-                            if test $? -eq 0; then
-                                GTEST_VERSION="$(pkg-config --modversion "$dir/lib/$dumpmachine/pkgconfig/gtest.pc")"
+                            AX_FIND_LIBRARY([gtest], ["$dir/lib/$dumpmachine/pkgconfig/gtest.pc"])
+                            if "${LIBRARY_FOUND}"; then
+                              GTEST_VERSION="${LIBRARY_VERSION}"
                             fi
                         fi
                         break
