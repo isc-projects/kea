@@ -7,18 +7,20 @@
 #include <config.h>
 
 #include <gtest/gtest.h>
-#include <boost/foreach.hpp>
+
 #include <boost/pointer_cast.hpp>
 #include <boost/assign/std/vector.hpp>
+
 #include <climits>
 
 #include <cc/data.h>
 #include <util/unittests/check_valgrind.h>
+#include <util/bigints.h>
 
 using namespace isc::data;
+using namespace isc::util;
 
 #include <sstream>
-#include <iostream>
 using std::oct;
 #include <iomanip>
 using std::setfill;
@@ -77,7 +79,7 @@ TEST(Element, TypeNameConversion) {
     EXPECT_EQ("unknown", Element::typeToName(static_cast<Element::types>(123)));
 }
 
-TEST(Element, from_and_to_json) {
+TEST(Element, ToAndFromJson) {
     // a set of inputs that are the same when converted to json and
     // back to a string (tests for inputs that have equivalent, but
     // different string representations when converted back are below)
@@ -104,7 +106,7 @@ TEST(Element, from_and_to_json) {
     // which means that character '\xFF' would not parse properly.
     sv.push_back("\"\\u00ff\"");
 
-    BOOST_FOREACH(const std::string& s, sv) {
+    for (const std::string& s : sv) {
         // Test two types of fromJSON(): with string and istream.
         for (unsigned i = 0; i < 2; ++i) {
             // test << operator, which uses Element::str()
@@ -135,8 +137,6 @@ TEST(Element, from_and_to_json) {
 
     sv.clear();
     sv.push_back("{1}");
-    //ElementPtr ep = Element::fromJSON("\"aaa\nbbb\"err");
-    //std::cout << ep << std::endl;
     sv.push_back("\n\nTrue");
     sv.push_back("\n\ntru");
     sv.push_back("{ \n \"aaa\nbbb\"err:");
@@ -159,7 +159,7 @@ TEST(Element, from_and_to_json) {
     sv.push_back("\"\\u00ag\"");
     sv.push_back("\"\\u00BH\"");
 
-    BOOST_FOREACH(std::string s, sv) {
+    for (std::string s : sv) {
         EXPECT_THROW(el = Element::fromJSON(s), isc::data::JSONError);
     }
 
@@ -171,16 +171,6 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("100.0", Element::fromJSON("1e2")->str());
     EXPECT_EQ("100.0", Element::fromJSON("+1e2")->str());
     EXPECT_EQ("-100.0", Element::fromJSON("-1e2")->str());
-
-    EXPECT_NO_THROW({
-       EXPECT_EQ("9223372036854775807", Element::fromJSON("9223372036854775807")->str());
-    });
-    EXPECT_NO_THROW({
-       EXPECT_EQ("-9223372036854775808", Element::fromJSON("-9223372036854775808")->str());
-    });
-    EXPECT_THROW({
-       EXPECT_NE("9223372036854775808", Element::fromJSON("9223372036854775808")->str());
-    }, JSONError);
 
     EXPECT_EQ("0.01", Element::fromJSON("1e-2")->str());
     EXPECT_EQ("0.01", Element::fromJSON(".01")->str());
@@ -197,21 +187,54 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
     EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
 
-    // number overflows
-    EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
+    // 64 min and max
+    EXPECT_NO_THROW({
+        EXPECT_EQ("-9223372036854775808", Element::fromJSON("-9223372036854775808")->str());
+    });
+    EXPECT_NO_THROW({
+        EXPECT_EQ("9223372036854775807", Element::fromJSON("9223372036854775807")->str());
+    });
+
+    // Just out of range on 64 bits, they get treated as int128_t under the hood.
+    EXPECT_NO_THROW({
+        EXPECT_EQ("-9223372036854775809", Element::fromJSON("-9223372036854775809")->str());
+    });
+    EXPECT_NO_THROW({
+        EXPECT_EQ("9223372036854775808", Element::fromJSON("9223372036854775808")->str());
+    });
+
+    // 128 min and max
+    EXPECT_NO_THROW({
+        EXPECT_EQ("-340282366920938463463374607431768211455", Element::fromJSON("-340282366920938463463374607431768211455")->str());
+    });
+    EXPECT_NO_THROW({
+        EXPECT_EQ("340282366920938463463374607431768211455", Element::fromJSON("340282366920938463463374607431768211455")->str());
+    });
+
+    // Just out of range on 128 bits, error is expected.
+    EXPECT_THROW({
+        EXPECT_NE("-340282366920938463463374607431768211456", Element::fromJSON("-340282366920938463463374607431768211456")->str());
+    }, JSONError);
+    EXPECT_THROW({
+        EXPECT_NE("340282366920938463463374607431768211456", Element::fromJSON("340282366920938463463374607431768211456")->str());
+    }, JSONError);
+
+    // other number overflows
     EXPECT_THROW(Element::fromJSON("1.1e12345678901234567890")->str(), JSONError);
-    EXPECT_THROW(Element::fromJSON("-1.1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e50000")->str(), JSONError);
-    // number underflow
-    // EXPECT_THROW(Element::fromJSON("1.1e-12345678901234567890")->str(), JSONError);
 
+    // other number underflows
+    EXPECT_THROW(Element::fromJSON("-1.1e12345678901234567890")->str(), JSONError);
+    EXPECT_THROW(Element::fromJSON("-1e12345678901234567890")->str(), JSONError);
+    EXPECT_THROW(Element::fromJSON("-1e50000")->str(), JSONError);
 }
 
 template <typename T>
 void
 testGetValueInt() {
     T el;
+    int128_t i128;
     int64_t i;
     int32_t i32;
     uint32_t ui32;
@@ -278,6 +301,12 @@ testGetValueInt() {
     });
     EXPECT_TRUE(el->getValue(i));
     EXPECT_EQ(l, i);
+
+    i128 = int128_t(1) << 127;
+    el = Element::create(i128);
+    EXPECT_NO_THROW({
+        EXPECT_EQ(i128, el->bigIntValue());
+    });
 }
 
 template <typename T>
@@ -415,7 +444,7 @@ testGetValueMap() {
     EXPECT_EQ("{  }", el->str());
 }
 
-TEST(Element, create_and_value_throws) {
+TEST(Element, CreateAndSetValue) {
     // this test checks whether elements throw exceptions if the
     // incorrect type is requested
     ElementPtr el;
@@ -739,7 +768,7 @@ TEST(Element, MapElement) {
     EXPECT_EQ("{ \"value\": None }", el->str());
 }
 
-TEST(Element, to_and_from_wire) {
+TEST(Element, ToAndFromWire) {
     // Wire format is now plain JSON.
     EXPECT_EQ("1", Element::create(1)->toWire());
     EXPECT_EQ("1.1", Element::create(1.1)->toWire());
