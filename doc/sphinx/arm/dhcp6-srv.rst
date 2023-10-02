@@ -2993,8 +2993,8 @@ NCRs. Each NCR contains the following information:
 
 1. Whether it is a request to add (update) or remove DNS entries.
 
-2. Whether the change requests forward DNS updates (AAAA records),
-   reverse DNS updates (PTR records), or both.
+2. Whether the change requests forward DNS updates (AAAA records) reverse
+   DNS updates (PTR records), or both.
 
 3. The Fully Qualified Domain Name (FQDN), lease address, and DHCID
    (information identifying the client associated with the FQDN).
@@ -3163,7 +3163,7 @@ offers four modes of conflict resolution-related behavior:
     prevent. This means that existing entries for an FQDN or an
     IP address made for Client-A can be deleted or replaced by entries
     for Client-B. Furthermore, there are two scenarios by which entries
-    for multiple clients for the same key (e.g. FQDN or IP) can be created
+    for multiple clients for the same key (e.g. FQDN or IP) can be created.
 
     1. Client-B uses the same FQDN as Client-A but a different IP address.
     In this case, the forward DNS entries (AAAA and DHCID RRs) for
@@ -3187,7 +3187,7 @@ offers four modes of conflict resolution-related behavior:
     to generate DNS removal requests to D2.
 
 The DNS entries Kea creates contain a value for TTL (time to live).
-:iscman:`kea-dhcp6` calculates that value based on
+The :iscman:`kea-dhcp6` server calculates that value based on
 `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
 which suggests that the TTL value be 1/3 of the lease's lifetime, with
 a minimum value of 10 minutes.
@@ -3273,8 +3273,9 @@ out the actual DNS updates and dealing with such things as conflict
 resolution are within the purview of D2 itself
 (see :ref:`dhcp-ddns-server`). This section describes when :iscman:`kea-dhcp6`
 generates NCRs and the configuration parameters that can be used to
-influence this decision. It assumes that the ``enable-updates``
-parameter is ``true``.
+influence this decision. It assumes that both the connectivity parameter
+``enable-updates`` and the behavioral parameter ``ddns-send-updates``,
+are ``true``.
 
 .. note::
 
@@ -3300,42 +3301,44 @@ single DDNS request - to remove its entries will be made.
 As for the first case, the decisions involved when granting a new lease are
 more complex. When a new lease is granted, :iscman:`kea-dhcp6` generates a
 DDNS update request only if the DHCPREQUEST contains the FQDN option
-(code 39). By default, :iscman:`kea-dhcp6` respects the FQDN N and S flags
+(code 39).
+By default, :iscman:`kea-dhcp6` respects the FQDN N and S flags
 specified by the client as shown in the following table:
 
 .. table:: Default FQDN flag behavior
 
-   +-----------------+-----------------+-----------------+-----------------+
-   | Client          | Client Intent   | Server Response | Server          |
-   | Flags:N-S       |                 |                 | Flags:N-S-O     |
-   +=================+=================+=================+=================+
-   | 0-0             | Client wants to | Server          | 1-0-0           |
-   |                 | do forward      | generates       |                 |
-   |                 | updates, server | reverse-only    |                 |
-   |                 | should do       | request         |                 |
-   |                 | reverse updates |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | 0-1             | Server should   | Server          | 0-1-0           |
-   |                 | do both forward | generates       |                 |
-   |                 | and reverse     | request to      |                 |
-   |                 | updates         | update both     |                 |
-   |                 |                 | directions      |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | 1-0             | Client wants no | Server does not | 1-0-0           |
-   |                 | updates done    | generate a      |                 |
-   |                 |                 | request         |                 |
-   +-----------------+-----------------+-----------------+-----------------+
+   +------------+-----------------+-----------------+-------------+
+   | Client     | Client Intent   | Server Response | Server      |
+   | Flags:N-S  |                 |                 | Flags:N-S-O |
+   +============+=================+=================+=============+
+   | 0-0        | Client wants to | Server          | 1-0-0       |
+   |            | do forward      | generates       |             |
+   |            | updates, server | reverse-only    |             |
+   |            | should do       | request         |             |
+   |            | reverse updates |                 |             |
+   +------------+-----------------+-----------------+-------------+
+   | 0-1        | Server should   | Server          | 0-1-0       |
+   |            | do both forward | generates       |             |
+   |            | and reverse     | request to      |             |
+   |            | updates         | update both     |             |
+   |            |                 | directions      |             |
+   +------------+-----------------+-----------------+-------------+
+   | 1-0        | Client wants no | Server does not | 1-0-0       |
+   |            | updates done    | generate a      |             |
+   |            |                 | request         |             |
+   +------------+-----------------+-----------------+-------------+
 
 The first row in the table above represents "client delegation." Here
 the DHCP client states that it intends to do the forward DNS updates and
 the server should do the reverse updates. By default, :iscman:`kea-dhcp6`
-honors the client's wishes and generates a DDNS request to D2 to update
-only reverse DNS data. The parameter ``ddns-override-client-update`` can be
-used to instruct the server to override client delegation requests. When
-this parameter is ``true``, :iscman:`kea-dhcp6` disregards requests for client
-delegation and generates a DDNS request to update both forward and
-reverse DNS data. In this case, the N-S-O flags in the server's response
-to the client will be 0-1-1 respectively.
+honors the client's wishes and generates a DDNS request to the D2 server
+to update only reverse DNS data. The parameter
+``ddns-override-client-update`` can be used to instruct the server to
+override client delegation requests. When this parameter is ``true``,
+:iscman:`kea-dhcp6` disregards requests for client delegation and generates a
+DDNS request to update both forward and reverse DNS data. In this case,
+the N-S-O flags in the server's response to the client will be 0-1-1
+respectively.
 
 (Note that the flag combination N=1, S=1 is prohibited according to `RFC
 4702 <https://tools.ietf.org/html/rfc4702>`__. If such a combination is
@@ -3379,10 +3382,10 @@ is the name submitted to D2 in the DDNS update request.
 :iscman:`kea-dhcp6` Name Generation for DDNS Update Requests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each NameChangeRequest must of course include the fully qualified
-domain name whose DNS entries are to be affected. :iscman:`kea-dhcp6` can be
-configured to supply a portion or all of that name, based upon what it
-receives from the client in the DHCPREQUEST.
+Each NameChangeRequest must of course include the fully qualified domain
+name whose DNS entries are to be affected. :iscman:`kea-dhcp6` can be configured
+to supply a portion or all of that name, based on what it receives
+from the client in the DHCPREQUEST.
 
 The default rules for constructing the FQDN that will be used for DNS
 entries are:
@@ -3415,12 +3418,11 @@ parameter, which provides the following modes of behavior:
 
 .. note::
 
-   In early versions of Kea, this parameter was a boolean and
-   permitted only values of ``true`` and ``false``.
-   Boolean values have been deprecated and are no longer accepted.
-   Administrators currently using booleans must replace them with the
-   desired mode name. A value of ``true`` maps to ``when-present``, while
-   ``false`` maps to ``never``.
+   In early versions of Kea, this parameter was a boolean and permitted only
+   values of ``true`` and ``false``. Boolean values have been deprecated
+   and are no longer accepted. Administrators currently using booleans
+   must replace them with the desired mode name. A value of ``true``
+   maps to ``when-present``, while ``false`` maps to ``never``.
 
 For example, to instruct :iscman:`kea-dhcp6` to always generate the FQDN for a
 client, set the parameter ``ddns-replace-client-name`` to ``always`` as
@@ -3445,9 +3447,10 @@ its value, simply set it to the desired string:
     }
 
 The suffix used when generating an FQDN, or when qualifying a partial
-name, is specified by the ``ddns-qualifying-suffix`` parameter. This
-parameter has no default value; thus, it is mandatory when DDNS updates
-are enabled. To set its value simply set it to the desired string:
+name, is specified by the ``ddns-qualifying-suffix`` parameter. It is
+strongly recommended that the user supply a value for the qualifying prefix when
+DDNS updates are enabled. For obvious reasons, we cannot supply a
+meaningful default.
 
 ::
 
@@ -3484,8 +3487,8 @@ qualifying suffix is "example.com", and the default value is used for
 Sanitizing Client FQDN Names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Some DHCP clients may provide values in the name
-component of the FQDN option (option code 39) that contain undesirable
+Some DHCP clients may provide values in the name component of the FQDN
+option (option code 39) that contain undesirable
 characters. It is possible to configure :iscman:`kea-dhcp6` to sanitize these
 values. The most typical use case is ensuring that only characters that
 are permitted by RFC 1035 be included: A-Z, a-z, 0-9, and "-". This may be
@@ -3528,8 +3531,9 @@ qualifying suffix (if one is defined and needed).
    mechanism should consider writing a hook that can carry out
    sufficiently complex logic to address their needs.
 
-   Do not include dots in the ``hostname-char-set`` expression. When
-   scrubbing FQDNs, dots are treated as delimiters and used to separate
+   Make sure that the dot, "." is considered a valid character by the
+   ``hostname-char-set`` expression, such as this: ``"[^A-Za-z0-9.-]"``.
+   When scrubbing FQDNs, dots are treated as delimiters and used to separate
    the option value into individual domain labels that are scrubbed and
    then re-assembled.
 
@@ -3552,6 +3556,12 @@ qualifying suffix (if one is defined and needed).
    host names to be sanitized without requiring a ``dhcp-ddns`` entry. When
    a ``hostname-char`` parameter is defined at both the global scope and
    in a ``dhcp-ddns`` entry, the second (local) value is used.
+
+   For the ability to generate host names procedurally, based on an expression, and
+   for the ability to skip DDNS updates on a per-client basis, or fine-tuning various
+   DNS update aspects, the :iscman:`kea-dhcp6` can load the premium hook library
+   `libdhcp_ddns_tuning.so` which is available from ISC. Please refer to
+   :ref:`hooks-ddns-tuning` documentation for the configuration options.
 
 .. _dhcp6-dhcp4o6-config:
 

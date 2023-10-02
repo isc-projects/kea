@@ -1086,7 +1086,7 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV4) {
     subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
     subnet_->setDdnsGeneratedPrefix("prefix");
     subnet_->setDdnsQualifyingSuffix("suffix.com");
-    subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
+    subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
     subnet_->setHostnameCharReplacement("x");
 
     // Get the sanitizer.
@@ -1169,7 +1169,7 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
     subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
     subnet_->setDdnsGeneratedPrefix("prefix");
     subnet_->setDdnsQualifyingSuffix("suffix.com");
-    subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
+    subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
     subnet_->setHostnameCharReplacement("x");
 
     // Get the sanitizer.

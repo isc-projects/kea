@@ -12,12 +12,19 @@ Overview
 The DHCP-DDNS Server (:iscman:`kea-dhcp-ddns`, known informally as D2) conducts
 the client side of the Dynamic DNS protocol (DDNS, defined in `RFC
 2136 <https://tools.ietf.org/html/rfc2136>`__) on behalf of the DHCPv4
-and DHCPv6 servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` respectively). The DHCP
-servers construct DDNS update requests, known as NameChangeRequests
+and DHCPv6 servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` respectively).
+The DHCP servers construct DDNS update requests, known as NameChangeRequests
 (NCRs), based on DHCP lease change events and then post them to D2. D2
 attempts to match each request to the appropriate DNS server(s) and
 carries out the necessary conversation with those servers to update the
 DNS data.
+
+For the ability to generate host names procedurally, based on an expression, and
+for the ability to skip DDNS updates on a per-client basis, or fine-tuning
+various DNS update aspects, the :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` can
+load the premium hook library `libdhcp_ddns_tuning.so` which is available from
+ISC. Please refer to :ref:`hooks-ddns-tuning` documentation for the
+configuration options.
 
 .. _dhcp-ddns-dns-server-selection:
 

@@ -3652,9 +3652,9 @@ control this communication:
 By default, :iscman:`kea-dhcp-ddns` is assumed to be running on the same machine
 as :iscman:`kea-dhcp4`, and all of the default values mentioned above should be
 sufficient. If, however, D2 has been configured to listen on a different
-address or port, these values must be altered accordingly. For example,
-if D2 has been configured to listen on 192.168.1.10 port 900, the
-following configuration is required:
+address or port, these values must be altered accordingly. For example, if
+D2 has been configured to listen on 192.168.1.10 port 900, the following
+configuration is required:
 
 ::
 
@@ -3702,32 +3702,32 @@ As for the first case, the decisions involved when granting a new lease are
 more complex. When a new lease is granted, :iscman:`kea-dhcp4` generates a
 DDNS update request if the DHCPREQUEST contains either the FQDN option
 (code 81) or the Host Name option (code 12). If both are present, the
-server uses the FQDN option. By default, :iscman:`kea-dhcp4` respects the
-FQDN N and S flags specified by the client as shown in the following
-table:
+server uses the FQDN option.
+By default, :iscman:`kea-dhcp4` respects the FQDN N and S flags
+specified by the client as shown in the following table:
 
 .. table:: Default FQDN flag behavior
 
-   +------------+---------------------+-----------------+-------------+
-   | Client     | Client Intent       | Server Response | Server      |
-   | Flags:N-S  |                     |                 | Flags:N-S-O |
-   +============+=====================+=================+=============+
-   | 0-0        | Client wants to     | Server          | 1-0-0       |
-   |            | do forward          | generates       |             |
-   |            | updates, server     | reverse-only    |             |
-   |            | should do           | request         |             |
-   |            | reverse updates     |                 |             |
-   +------------+---------------------+-----------------+-------------+
-   | 0-1        | Server should       | Server          | 0-1-0       |
-   |            | do both forward     | generates       |             |
-   |            | and reverse         | request to      |             |
-   |            | updates             | update both     |             |
-   |            |                     | directions      |             |
-   +------------+---------------------+-----------------+-------------+
-   | 1-0        | Client wants no     | Server does not | 1-0-0       |
-   |            | updates done        | generate a      |             |
-   |            |                     | request         |             |
-   +------------+---------------------+-----------------+-------------+
+   +------------+-----------------+-----------------+-------------+
+   | Client     | Client Intent   | Server Response | Server      |
+   | Flags:N-S  |                 |                 | Flags:N-S-O |
+   +============+=================+=================+=============+
+   | 0-0        | Client wants to | Server          | 1-0-0       |
+   |            | do forward      | generates       |             |
+   |            | updates, server | reverse-only    |             |
+   |            | should do       | request         |             |
+   |            | reverse updates |                 |             |
+   +------------+-----------------+-----------------+-------------+
+   | 0-1        | Server should   | Server          | 0-1-0       |
+   |            | do both forward | generates       |             |
+   |            | and reverse     | request to      |             |
+   |            | updates         | update both     |             |
+   |            |                 | directions      |             |
+   +------------+-----------------+-----------------+-------------+
+   | 1-0        | Client wants no | Server does not | 1-0-0       |
+   |            | updates done    | generate a      |             |
+   |            |                 | request         |             |
+   +------------+-----------------+-----------------+-------------+
 
 The first row in the table above represents "client delegation." Here
 the DHCP client states that it intends to do the forward DNS updates and
@@ -3760,8 +3760,8 @@ requests that no DNS updates be done. The parameter
 ``ddns-override-no-update`` can be used to instruct the server to disregard
 the client's wishes. When this parameter is ``true``, :iscman:`kea-dhcp4`
 generates DDNS update requests to :iscman:`kea-dhcp-ddns` even if the client
-requests that no updates be done. The N-S-O flags in the server's
-response to the client will be 0-1-1.
+requests that no updates be done. The N-S-O flags in the server's response to
+the client will be 0-1-1.
 
 To override client delegation, issue the following commands:
 
@@ -3861,7 +3861,19 @@ meaningful default.
         ...
     }
 
-When generating a name, :iscman:`kea-dhcp4` constructs the name in the format:
+When qualifying a partial name, :iscman:`kea-dhcp4` constructs the name in the
+format:
+
+``[candidate-name].[ddns-qualifying-suffix].``
+
+where ``candidate-name`` is the partial name supplied in the DHCPREQUEST.
+For example, if the FQDN domain name value is "some-computer" and the
+``ddns-qualifying-suffix`` is "example.com", the generated FQDN is:
+
+``some-computer.example.com.``
+
+When generating the entire name, :iscman:`kea-dhcp4` constructs the name in
+the format:
 
 ``[ddns-generated-prefix]-[address-text].[ddns-qualifying-suffix].``
 
@@ -3878,11 +3890,11 @@ Sanitizing Client Host Name and FQDN Names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some DHCP clients may provide values in the Host Name
-option (option code 12) or FQDN option (option code 81) that contain
-undesirable characters. It is possible to configure :iscman:`kea-dhcp4` to
-sanitize these values. The most typical use case is ensuring that only
-characters that are permitted by RFC 1035 be included: A-Z, a-z, 0-9,
-and "-". This may be accomplished with the following two parameters:
+option (option code 12) or FQDN option (option code 81) that contain undesirable
+characters. It is possible to configure :iscman:`kea-dhcp4` to sanitize these
+values. The most typical use case is ensuring that only characters that
+are permitted by RFC 1035 be included: A-Z, a-z, 0-9, and "-". This may be
+accomplished with the following two parameters:
 
 -  ``hostname-char-set`` - a regular expression describing the invalid
    character set. This can be any valid, regular expression using POSIX
@@ -3916,19 +3928,20 @@ qualifying suffix (if one is defined and needed).
    Name sanitizing is meant to catch the more common cases of invalid
    characters through a relatively simple character-replacement scheme.
    It is difficult to devise a scheme that works well in all cases, for
-   both Host Name and FQDN options. Administrators who find they have clients
-   with odd corner cases of character combinations that cannot be
-   readily handled with this mechanism should consider writing a
-   hook that can carry out sufficiently complex logic to address their
-   needs.
+   both Host Name and FQDN options.
+   Administrators who find they have clients with odd corner cases of
+   character combinations that cannot be readily handled with this
+   mechanism should consider writing a hook that can carry out
+   sufficiently complex logic to address their needs.
 
    If clients include domain names in the Host Name option and the administrator
    wants these preserved, they need to make sure that the dot, ".",
    is considered a valid character by the ``hostname-char-set`` expression,
    such as this: ``"[^A-Za-z0-9.-]"``. This does not affect dots in FQDN
-   Option values. When scrubbing FQDNs, dots are treated as delimiters
-   and used to separate the option value into individual domain labels
-   that are scrubbed and then re-assembled.
+   Option values.
+   When scrubbing FQDNs, dots are treated as delimiters and used to separate
+   the option value into individual domain labels that are scrubbed and
+   then re-assembled.
 
    If clients are sending values that differ only by characters
    considered as invalid by the ``hostname-char-set``, be aware that
@@ -3949,6 +3962,12 @@ qualifying suffix (if one is defined and needed).
    host names to be sanitized without requiring a ``dhcp-ddns`` entry. When
    a ``hostname-char`` parameter is defined at both the global scope and
    in a ``dhcp-ddns`` entry, the second (local) value is used.
+
+   For the ability to generate host names procedurally, based on an expression, and
+   for the ability to skip DDNS updates on a per-client basis, or fine-tuning various
+   DNS update aspects, the :iscman:`kea-dhcp4` can load the premium hook library
+   `libdhcp_ddns_tuning.so` which is available from ISC. Please refer to
+   :ref:`hooks-ddns-tuning` documentation for the configuration options.
 
 .. _dhcp4-next-server:
 
