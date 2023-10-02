@@ -16,9 +16,9 @@
 namespace isc {
 namespace util {
 
-using int128_t = boost::multiprecision::int128_t;
+using int128_t = boost::multiprecision::checked_int128_t;
 
-using uint128_t = boost::multiprecision::uint128_t;
+using uint128_t = boost::multiprecision::checked_uint128_t;
 
 }  // namespace util
 }  // namespace isc
