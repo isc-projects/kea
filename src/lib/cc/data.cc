@@ -916,7 +916,6 @@ void
 MapElement::toJSON(std::ostream& ss) const {
     ss << "{ ";
 
-    const std::map<std::string, ConstElementPtr>& m = mapValue();
     for (auto it = m.begin(); it != m.end(); ++it) {
         if (it != m.begin()) {
             ss << ", ";
