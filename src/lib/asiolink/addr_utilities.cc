@@ -9,9 +9,9 @@
 #include <asiolink/addr_utilities.h>
 #include <exceptions/exceptions.h>
 
-#include <vector>
+#include <cstring>
 #include <limits>
-#include <string.h>
+#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -357,8 +357,9 @@ uint128_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
     uint8_t const count(delegated_len - pool_len);
 
     if (count == 128) {
-        // One off is the best we can do, unless we promote to uint256_t.
-        return uint128_t(-1);
+        // UINT128_MAX is one off from the real value, but it is the best we
+        // can do, unless we promote to uint256_t.
+        return std::numeric_limits<uint128_t>::max();
     }
 
     return (uint128_t(1) << count);

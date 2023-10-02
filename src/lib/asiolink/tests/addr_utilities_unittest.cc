@@ -12,10 +12,10 @@
 
 #include <gtest/gtest.h>
 
+#include <cstdint>
+#include <cstdlib>
+#include <limits>
 #include <vector>
-
-#include <stdint.h>
-#include <stdlib.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -346,27 +346,42 @@ TEST(AddrUtilitiesTest, prefixLengthFromRange6) {
 
 // Checks if prefixInRange returns valid number of prefixes in specified range.
 TEST(AddrUtilitiesTest, prefixesInRange) {
-
     // How many /64 prefixes are in /64 pool?
-    EXPECT_EQ(1, prefixesInRange(64, 64));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(1, prefixesInRange(64, 64));
+    });
 
     // How many /63 prefixes are in /64 pool?
-    EXPECT_EQ(2, prefixesInRange(63, 64));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(2, prefixesInRange(63, 64));
+    });
 
     // How many /64 prefixes are in /48 pool?
-    EXPECT_EQ(65536, prefixesInRange(48, 64));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(65536, prefixesInRange(48, 64));
+    });
 
     // How many /127 prefixes are in /64 pool?
-    EXPECT_EQ(uint64_t(9223372036854775808ull), prefixesInRange(64, 127));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(uint64_t(9223372036854775808ull), prefixesInRange(64, 127));
+    });
 
     // How many /128 prefixes are in /64 pool?
-    EXPECT_EQ(uint128_t(1) << 64, prefixesInRange(64, 128));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(uint128_t(1) << 64, prefixesInRange(64, 128));
+    });
 
-    // Let's go overboard again. How many IPv6 addresses are there?
-    EXPECT_EQ(uint128_t(1) << 127, prefixesInRange(1, 128));
+    // Let's go overboard again. How many IPv6 addresses are there in a /1?
+    EXPECT_NO_THROW({
+        EXPECT_EQ(uint128_t(1) << 127, prefixesInRange(1, 128));
+    });
 
-    // Let's go overboard again. How many IPv6 addresses are there?
-    EXPECT_EQ(uint128_t(-1), prefixesInRange(0, 128));
+    // Let's go overboard again. How many IPv6 addresses are there? The result is
+    // one off from the real value, but it's preferred rather than having an
+    // overflow_error thrown.
+    EXPECT_NO_THROW({
+        EXPECT_EQ(numeric_limits<uint128_t>::max(), prefixesInRange(0, 128));
+    });
 }
 
 // Checks the function which finds an IPv4 address from input address and offset.
