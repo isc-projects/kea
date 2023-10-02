@@ -1,3 +1,15 @@
+2183.	[bug]		andrei
+	Fixed a bug where one of the commands that retrieve statistic
+	values sent to the kea-ctrl-agent would get an overflow error in
+	the response if the inquired statistic was intended to have a big
+	integer data type, and if the integer value would not be
+	representable on 64 bits. Affected statistics are "total-nas" and
+	"total-pds", and the bug only manifests if the inquired pool (or
+	the inquired subnet's aggregated pool space) is larger than /64
+	or larger in case of prefix delegation. Prior to this fix, the
+	command would still get an accurate response over unix socket.
+	(Gitlab #3068)
+
 Kea 2.5.2 (development) released on September 27, 2023
 
 2182.	[build]		razvan
