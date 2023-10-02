@@ -501,6 +501,12 @@ numberFromStringstream(std::istream& in, int& pos) {
 // that can also hold an e value? (and have specific getters if the
 // value is larger than an int can handle)
 //
+// At the moment of writing, the only way that the code flow can reach the
+// int128_t cast, and not throw, is by retrieving one of the few bigint
+// statistics through kea-ctrl-agent. If kea-ctrl-agent ever gets removed, and
+// its HTTP listener embeded in Kea, then the cast to int128_t can be removed as
+// well, as there is no deserialization of bigints required, although the only
+// benefit would be better performance for error cases, so it's arguable.
 ElementPtr
 fromStringstreamNumber(std::istream& in, const std::string& file,
                        const int line, int& pos) {
