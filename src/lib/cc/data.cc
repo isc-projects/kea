@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/data.h>
+#include <util/bigints.h>
 
 #include <cstring>
 #include <cassert>
@@ -26,6 +27,8 @@
 #include <cmath>
 
 using namespace std;
+
+using isc::util::int128_t;
 
 namespace {
 const char* const WHITESPACE = " \b\f\n\r\t";
@@ -507,21 +510,32 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
     // This will move the pos to the end of the value.
     const std::string number = numberFromStringstream(in, pos);
 
+    // Is it a double?
     if (number.find_first_of(".eE") < number.size()) {
         try {
             return (Element::create(boost::lexical_cast<double>(number),
                                     Element::Position(file, line, start_pos)));
-        } catch (const boost::bad_lexical_cast&) {
-            throwJSONError(std::string("Number overflow: ") + number,
+        } catch (const boost::bad_lexical_cast& exception) {
+            throwJSONError("Number overflow while trying to cast '" + number +
+                           "' to double: " + exception.what(),
                            file, line, start_pos);
         }
-    } else {
+    }
+
+    // Is it an integer?
+    try {
+        return (Element::create(boost::lexical_cast<int64_t>(number),
+                                Element::Position(file, line, start_pos)));
+    } catch (const boost::bad_lexical_cast& exception64) {
+        // Is it a big integer?
         try {
-            return (Element::create(boost::lexical_cast<int64_t>(number),
+            return (Element::create(int128_t(number),
                                     Element::Position(file, line, start_pos)));
-        } catch (const boost::bad_lexical_cast&) {
-            throwJSONError(std::string("Number overflow: ") + number, file,
-                           line, start_pos);
+        } catch (overflow_error const& exception128) {
+            throwJSONError("Number overflow while trying to cast '" + number +
+                           "' to int64 and subsequently to int128: " +
+                           exception64.what() + ", " + exception128.what(),
+                           file, line, start_pos);
         }
     }
     return (ElementPtr());
