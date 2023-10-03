@@ -166,9 +166,10 @@ else
 	@ printf 'WARNING: xmllint not found. SVGs not formatted.\n'
 endif
 
-uml-to-txt: $(umls)
+# Only sequence diagrams support ASCII art.
+uml-to-txt: uml/tkey.uml uml/update.uml
 	@ @PLANTUML@ -ttxt $^
-	for txt in $(txts); do sed 's/ *$$//g' $$txt > tmp; mv tmp $$txt; done
+	@ for txt in $(txts); do sed 's/ *$$//g' $$txt > tmp; mv tmp $$txt; done
 endif
 
 EXTRA_DIST += $(umls)
