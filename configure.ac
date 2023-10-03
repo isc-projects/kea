@@ -43,8 +43,17 @@ AC_PROG_CXX
 AC_PROG_CXXCPP
 
 # Check for exact Kea version.
-AC_MSG_CHECKING(whether this is a tarball or git source)
-if test -d "${srcdir}/.git"; then
+AC_MSG_CHECKING(whether this is a tarball or git source or package preparation)
+# KEA_PKG_VERSION_IN_CONFIGURE and KEA_PKG_TYPE_IN_CONFIGURE names may be weird
+# considering those are placed inside configure script, but those are designed
+# to be set in package sources (APKBUILD, rules or kea.spec) kea-packaging repo
+# KEA_PKG_VERSION_IN_CONFIGURE will be date and timestamp of the package
+#                              e.g. "isc20230921141113"
+# KEA_PKG_TYPE_IN_CONFIGURE will be type of the package "rpm", "deb" or "apk"
+if test -n "$KEA_PKG_VERSION_IN_CONFIGURE"; then
+        KEA_SRCID="$KEA_PKG_VERSION_IN_CONFIGURE $KEA_PKG_TYPE_IN_CONFIGURE"
+        AC_MSG_RESULT("$KEA_PKG_TYPE_IN_CONFIGURE")
+elif test -d "${srcdir}/.git"; then
         KEA_SRCID="git `(cd "${top_srcdir}";git rev-parse HEAD)`"
         AC_MSG_RESULT("git")
 else
