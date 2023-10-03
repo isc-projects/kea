@@ -102,20 +102,20 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
-        GTEST_VERSION="$(basename $GTEST_SOURCE)"
+        gtest_src_basename="$(basename $GTEST_SOURCE)"
 
         # Versions starting from 1.8.0 are put in the googletest directory. If the basename
         # returns googletest string, we need to cut it off and try basename again.
-        if test "$GTEST_VERSION" = "googletest"; then
-            GTEST_VERSION=${GTEST_SOURCE%"/googletest"}
-            if test -f "$GTEST_VERSION/CMakeLists.txt" ; then
-                cmakelists="$GTEST_VERSION/CMakeLists.txt"
+        if test "$gtest_src_basename" = "googletest"; then
+            gtest_src_parent_dir=${GTEST_SOURCE%"/googletest"}
+            if test -f "$gtest_src_parent_dir/CMakeLists.txt" ; then
+                cmakelists="$gtest_src_parent_dir/CMakeLists.txt"
             fi
-            GTEST_VERSION=$(basename "$GTEST_VERSION")
+            gtest_src_basename=$(basename "$gtest_src_parent_dir")
         fi
-        GTEST_VERSION="${GTEST_VERSION#googletest-release-}"
-        GTEST_VERSION="${GTEST_VERSION#gtest-}"
-        GTEST_VERSION="${GTEST_VERSION#googletest-}"
+        gtest_src_basename="${gtest_src_basename#googletest-release-}"
+        gtest_src_basename="${gtest_src_basename#gtest-}"
+        gtest_src_basename="${gtest_src_basename#googletest-}"
 
         posix_regex=$(expr "5" : "\([[:digit:]]\)")
         if test "${posix_regex}" = "5" ; then
@@ -125,8 +125,7 @@ if test "x$enable_gtest" = "xyes" ; then
         fi
 
         gtest_version_candidate=
-        gtest_version_candidate=$(expr "$GTEST_VERSION" : "$semver_regex")
-        gtest_version_found="no"
+        gtest_version_candidate=$(expr "$gtest_src_basename" : "$semver_regex")
 
         if test -z "$gtest_version_candidate" ; then
             # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
@@ -135,11 +134,10 @@ if test "x$enable_gtest" = "xyes" ; then
                 gtest_version_line=$($AWK '/set\(GOOGLETEST_VERSION/ { print }' "$cmakelists")
                 gtest_version_candidate=$(expr "$gtest_version_line" : "$semver_regex")
                 if test -n "$gtest_version_candidate"; then
-                    gtest_version_found="yes"
                     GTEST_VERSION=$gtest_version_candidate
                 fi
             fi
-            if test $gtest_version_found = "no" ; then
+            if test $GTEST_VERSION = "unknown" ; then
                 # Try to get googletest version from debian/ubuntu package
                 AC_PATH_PROG(DPKG, dpkg)
                 AC_PATH_PROG(DPKGQUERY, dpkg-query)
@@ -147,19 +145,16 @@ if test "x$enable_gtest" = "xyes" ; then
                     # Let's check if there is a googletest package owning files under given GTEST_SOURCE path
                     ${DPKG} -S "$GTEST_SOURCE" 2>/dev/null | grep googletest >/dev/null 2>&1
                     if test $? -eq 0; then
-                        gtest_version_found="yes"
                         GTEST_VERSION="$(${DPKGQUERY} --showformat='${Version}' --show googletest | cut -d'-' -f1)"
                     fi
                 fi
             fi
         else
-            gtest_version_found="yes"
             GTEST_VERSION=$gtest_version_candidate
         fi
 
-        if test $gtest_version_found = "no" ; then
+        if test $GTEST_VERSION = "unknown" ; then
             AC_MSG_WARN([Could not find GTEST version])
-            GTEST_VERSION="unknown"
         fi
     fi
 
