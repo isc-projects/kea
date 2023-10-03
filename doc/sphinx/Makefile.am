@@ -144,20 +144,31 @@ svgs += uml/select4.svg
 svgs += uml/tkey.svg
 svgs += uml/update.svg
 
+txts  =
+txts += uml/option-data-priority.atxt
+txts += uml/priority-of-lease-lifetimes-and-dhcpv4-fields.atxt
+txts += uml/tkey.atxt
+txts += uml/update.atxt
+
 if HAVE_PLANTUML
 uml: uml-to-png uml-to-svg format-svgs uml-to-txt
 
 uml-to-png: $(umls)
-	@PLANTUML@ -tpng $^
+	@ @PLANTUML@ -tpng $^
 
 uml-to-svg: $(umls)
-	@PLANTUML@ -tsvg $^
+	@ @PLANTUML@ -tsvg $^
 
 format-svgs: $(svgs)
-	for svg in $(svgs); do xq -x . $$svg > tmp; mv tmp $$svg; done
+if HAVE_XMLLINT
+	@ for svg in $(svgs); do xmllint --format $$svg > tmp; mv tmp $$svg; done
+else
+	@ printf 'WARNING: xmllint not found. SVGs not formatted.\n'
+endif
 
 uml-to-txt: $(umls)
-	@PLANTUML@ -ttxt $^
+	@ @PLANTUML@ -ttxt $^
+	for txt in $(txts); do sed 's/ *$$//g' $$txt > tmp; mv tmp $$txt; done
 endif
 
 EXTRA_DIST += $(umls)

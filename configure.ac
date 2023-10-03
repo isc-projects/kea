@@ -1383,6 +1383,10 @@ AM_CONDITIONAL(HAVE_ASCIIDOC, test "x$ASCIIDOC" != "xno")
 AC_PATH_PROG(PLANTUML, plantuml, no)
 AM_CONDITIONAL(HAVE_PLANTUML, test "x$PLANTUML" != "xno")
 
+# Check for xmllint.
+AC_PATH_PROG(XMLLINT, xmllint, no)
+AM_CONDITIONAL(HAVE_XMLLINT, test "x$XMLLINT" != "xno")
+
 # Check for valgrind
 AC_PATH_PROG(VALGRIND, valgrind, no)
 AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
