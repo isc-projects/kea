@@ -73,6 +73,7 @@ if test "x$enable_gtest" = "xyes" ; then
             # If not specified, try some common paths.
             GTEST_SOURCE=
             for d in /usr/src/googletest /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
+                cmakelists="$d/CMakeLists.txt"
                 if test ! -d "$d"/src -a -d "$d"/googletest; then
                     d=$d/googletest
                 fi
@@ -86,6 +87,7 @@ if test "x$enable_gtest" = "xyes" ; then
                 AC_MSG_ERROR([no gtest sources found])
             fi
         else
+            cmakelists="$GTEST_SOURCE/CMakeLists.txt"
             if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
                 GTEST_SOURCE=$GTEST_SOURCE/googletest
             fi
@@ -104,10 +106,11 @@ if test "x$enable_gtest" = "xyes" ; then
 
         # Versions starting from 1.8.0 are put in the googletest directory. If the basename
         # returns googletest string, we need to cut it off and try basename again.
-        cmakelists=
         if test "$GTEST_VERSION" = "googletest"; then
             GTEST_VERSION=${GTEST_SOURCE%"/googletest"}
-            cmakelists="$GTEST_VERSION/CMakeLists.txt"
+            if test -f "$GTEST_VERSION/CMakeLists.txt" ; then
+                cmakelists="$GTEST_VERSION/CMakeLists.txt"
+            fi
             GTEST_VERSION=$(basename "$GTEST_VERSION")
         fi
         GTEST_VERSION="${GTEST_VERSION#googletest-release-}"
