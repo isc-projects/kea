@@ -2993,7 +2993,7 @@ NCRs. Each NCR contains the following information:
 
 1. Whether it is a request to add (update) or remove DNS entries.
 
-2. Whether the change requests forward DNS updates (AAAA records) reverse
+2. Whether the change requests forward DNS updates (AAAA records), reverse
    DNS updates (PTR records), or both.
 
 3. The Fully Qualified Domain Name (FQDN), lease address, and DHCID
@@ -3448,9 +3448,9 @@ its value, simply set it to the desired string:
 
 The suffix used when generating an FQDN, or when qualifying a partial
 name, is specified by the ``ddns-qualifying-suffix`` parameter. It is
-strongly recommended that the user supply a value for the qualifying prefix when
-DDNS updates are enabled. For obvious reasons, we cannot supply a
-meaningful default.
+strongly recommended that the user supply a value for the qualifying
+prefix when DDNS updates are enabled. For obvious reasons, we cannot
+supply a meaningful default.
 
 ::
 

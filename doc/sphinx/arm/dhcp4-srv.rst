@@ -3850,9 +3850,9 @@ its value, simply set it to the desired string:
 
 The suffix used when generating an FQDN, or when qualifying a partial
 name, is specified by the ``ddns-qualifying-suffix`` parameter. It is
-strongly recommended that the user supply a value for the qualifying prefix when
-DDNS updates are enabled. For obvious reasons, we cannot supply a
-meaningful default.
+strongly recommended that the user supply a value for the qualifying
+prefix when DDNS updates are enabled. For obvious reasons, we cannot
+supply a meaningful default.
 
 ::
 
