@@ -2664,6 +2664,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 authoritative = flag->boolValue();
             }
         }
+    } else if (fake_allocation) {
+        LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER)
+            .arg(query->getLabel())
+            .arg(hint != IOAddress::IPV4_ZERO_ADDRESS() ? hint.toText() : "(no hint)");
     }
 
     // If there is no subnet configuration for that client we ignore the
@@ -2865,7 +2869,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // We have a lease! Let's set it in the packet and send it back to
         // the client.
         if (fake_allocation) {
-            LOG_INFO(lease4_logger, DHCP4_LEASE_ADVERT)
+            LOG_INFO(lease4_logger, DHCP4_LEASE_OFFER)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText());
         } else {

@@ -69,6 +69,7 @@ extern const isc::log::MessageID DHCP4_DHCP4O6_RESPONSE_DATA = "DHCP4_DHCP4O6_RE
 extern const isc::log::MessageID DHCP4_DHCP4O6_SUBNET_DATA = "DHCP4_DHCP4O6_SUBNET_DATA";
 extern const isc::log::MessageID DHCP4_DHCP4O6_SUBNET_SELECTED = "DHCP4_DHCP4O6_SUBNET_SELECTED";
 extern const isc::log::MessageID DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED = "DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED";
+extern const isc::log::MessageID DHCP4_DISCOVER = "DHCP4_DISCOVER";
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION = "DHCP4_DYNAMIC_RECONFIGURATION";
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_FAIL = "DHCP4_DYNAMIC_RECONFIGURATION_FAIL";
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS = "DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS";
@@ -97,8 +98,8 @@ extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_SKIP = "DHCP4_HOOK_SU
 extern const isc::log::MessageID DHCP4_INFORM_DIRECT_REPLY = "DHCP4_INFORM_DIRECT_REPLY";
 extern const isc::log::MessageID DHCP4_INIT_FAIL = "DHCP4_INIT_FAIL";
 extern const isc::log::MessageID DHCP4_INIT_REBOOT = "DHCP4_INIT_REBOOT";
-extern const isc::log::MessageID DHCP4_LEASE_ADVERT = "DHCP4_LEASE_ADVERT";
 extern const isc::log::MessageID DHCP4_LEASE_ALLOC = "DHCP4_LEASE_ALLOC";
+extern const isc::log::MessageID DHCP4_LEASE_OFFER = "DHCP4_LEASE_OFFER";
 extern const isc::log::MessageID DHCP4_LEASE_REUSE = "DHCP4_LEASE_REUSE";
 extern const isc::log::MessageID DHCP4_MULTI_THREADING_INFO = "DHCP4_MULTI_THREADING_INFO";
 extern const isc::log::MessageID DHCP4_NCR_CREATION_FAILED = "DHCP4_NCR_CREATION_FAILED";
@@ -245,6 +246,7 @@ const char* values[] = {
     "DHCP4_DHCP4O6_SUBNET_DATA", "%1: the selected subnet details: %2",
     "DHCP4_DHCP4O6_SUBNET_SELECTED", "%1: the subnet with ID %2 was selected for client assignments",
     "DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED", "%1: failed to select subnet for the client",
+    "DHCP4_DISCOVER", "%1: server is processing DHCPDISCOVER with hint=%2",
     "DHCP4_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command",
     "DHCP4_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS", "dynamic server reconfiguration succeeded with file: %1",
@@ -273,8 +275,8 @@ const char* values[] = {
     "DHCP4_INFORM_DIRECT_REPLY", "%1: DHCPACK in reply to the DHCPINFORM will be sent directly to %2 over %3",
     "DHCP4_INIT_FAIL", "failed to initialize Kea server: %1",
     "DHCP4_INIT_REBOOT", "%1: client is in INIT-REBOOT state and requests address %2",
-    "DHCP4_LEASE_ADVERT", "%1: lease %2 will be advertised",
     "DHCP4_LEASE_ALLOC", "%1: lease %2 has been allocated for %3 seconds",
+    "DHCP4_LEASE_OFFER", "%1: lease %2 will be offered",
     "DHCP4_LEASE_REUSE", "%1: lease %2 has been reused for %3 seconds",
     "DHCP4_MULTI_THREADING_INFO", "enabled: %1, number of threads: %2, queue size: %3",
     "DHCP4_NCR_CREATION_FAILED", "%1: failed to generate name change requests for DNS: %2",
