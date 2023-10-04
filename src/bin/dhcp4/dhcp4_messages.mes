@@ -551,6 +551,14 @@ about the address that the client would like to have allocated.
 If there is no hint, the argument should provide the text indicating
 that the hint hasn't been sent.
 
+% DHCP4_REQUEST %1: server is processing DHCPREQUEST with hint=%2
+This is a debug message that indicates the processing of a received DHCPREQUEST
+message. The first argument contains the client and the transaction
+identification information. The second argument may hold the hint for the server
+about the address that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
+
 % DHCP4_LEASE_ALLOC %1: lease %2 has been allocated for %3 seconds
 This informational message indicates that the server successfully granted a
 lease in response to client's DHCPREQUEST message. The lease information will

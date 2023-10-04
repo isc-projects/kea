@@ -2668,6 +2668,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER)
             .arg(query->getLabel())
             .arg(hint != IOAddress::IPV4_ZERO_ADDRESS() ? hint.toText() : "(no hint)");
+    } else {
+        LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST)
+            .arg(query->getLabel())
+            .arg(hint != IOAddress::IPV4_ZERO_ADDRESS() ? hint.toText() : "(no hint)");
     }
 
     // If there is no subnet configuration for that client we ignore the
