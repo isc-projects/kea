@@ -187,36 +187,47 @@ TEST(Element, toAndFromJson) {
     EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
     EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
 
+    string number;
+
     // 64 min and max
     EXPECT_NO_THROW({
-        EXPECT_EQ("-9223372036854775808", Element::fromJSON("-9223372036854775808")->str());
+        number = "-9223372036854775808";
+        EXPECT_EQ(number, Element::fromJSON(number)->str());
     });
     EXPECT_NO_THROW({
-        EXPECT_EQ("9223372036854775807", Element::fromJSON("9223372036854775807")->str());
+        number = "9223372036854775807";
+        EXPECT_EQ(number, Element::fromJSON(number)->str());
     });
 
     // Just out of range on 64 bits, they get treated as int128_t under the hood.
     EXPECT_NO_THROW({
-        EXPECT_EQ("-9223372036854775809", Element::fromJSON("-9223372036854775809")->str());
+        number = "-9223372036854775809";
+        EXPECT_EQ(number, Element::fromJSON(number)->str());
     });
     EXPECT_NO_THROW({
-        EXPECT_EQ("9223372036854775808", Element::fromJSON("9223372036854775808")->str());
+        number = "9223372036854775808";
+        EXPECT_EQ(number, Element::fromJSON(number)->str());
     });
 
-    // 128 min and max
+    // 128 min and max. Min is -2^128 + 1.
+    // This is unlike the usual integers that have -2^n as min.
     EXPECT_NO_THROW({
-        EXPECT_EQ("-340282366920938463463374607431768211455", Element::fromJSON("-340282366920938463463374607431768211455")->str());
+        number = "-340282366920938463463374607431768211455";
+        EXPECT_EQ(number, Element::fromJSON(number)->str());
     });
     EXPECT_NO_THROW({
-        EXPECT_EQ("340282366920938463463374607431768211455", Element::fromJSON("340282366920938463463374607431768211455")->str());
+        number = "340282366920938463463374607431768211455";
+        EXPECT_EQ(number, Element::fromJSON(number)->str());
     });
 
     // Just out of range on 128 bits, error is expected.
     EXPECT_THROW({
-        EXPECT_NE("-340282366920938463463374607431768211456", Element::fromJSON("-340282366920938463463374607431768211456")->str());
+        number = "-340282366920938463463374607431768211456";
+        EXPECT_EQ(number, Element::fromJSON(number)->str());
     }, JSONError);
     EXPECT_THROW({
-        EXPECT_NE("340282366920938463463374607431768211456", Element::fromJSON("340282366920938463463374607431768211456")->str());
+        number = "340282366920938463463374607431768211456";
+        EXPECT_EQ(number, Element::fromJSON(number)->str());
     }, JSONError);
 
     // other number overflows
@@ -712,7 +723,9 @@ TEST(Element, listElement) {
 
 TEST(Element, mapElement) {
     // this function checks the specific functions for ListElements
-    ElementPtr el = Element::fromJSON("{ \"name\": \"foo\", \"value1\": \"bar\", \"value2\": { \"number\": 42 } }");
+    ElementPtr el = Element::fromJSON("{ \"name\": \"foo\", "
+                                      "\"value1\": \"bar\", "
+                                      "\"value2\": { \"number\": 42 } }");
     ConstElementPtr el2;
 
     EXPECT_EQ(el->get("name")->stringValue(), "foo");
