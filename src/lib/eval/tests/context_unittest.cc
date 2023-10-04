@@ -865,7 +865,8 @@ TEST_F(EvalContextTest, string) {
 TEST_F(EvalContextTest, stringComplex) {
     EvalContext eval(Option::V4);
 
-    char data[] = "'12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f' == 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
+    char data[] = "'12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f' == "
+            "'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
     EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
     EXPECT_TRUE(parsed_);
 
@@ -1595,7 +1596,7 @@ TEST_F(EvalContextTest, lcaseComplex) {
     EvalContext eval(Option::V4);
 
     char data[] = "lcase('12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \0\b\r\f') == "
-                  "'12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f'";
+            "'12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f'";
     EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
     EXPECT_TRUE(parsed_);
 
@@ -1639,7 +1640,7 @@ TEST_F(EvalContextTest, ucaseComplex) {
     EvalContext eval(Option::V4);
 
     char data[] = "ucase('12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \0\b\r\f') == "
-                  "'12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f'";
+            "'12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f'";
     EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
     EXPECT_TRUE(parsed_);
 

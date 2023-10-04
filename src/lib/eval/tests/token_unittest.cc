@@ -592,7 +592,8 @@ TEST_F(TokenTest, string4) {
 // This simple test checks that a TokenString, representing a constant string,
 // can be used in Pkt4 evaluation. (The actual packet is not used)
 TEST_F(TokenTest, string4Complex) {
-    char data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    char data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\""
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     string data_str(data, sizeof(data) - 1);
     // Store constant string in the TokenString object.
     ASSERT_NO_THROW(t_.reset(new TokenString(data_str)));
@@ -607,7 +608,9 @@ TEST_F(TokenTest, string4Complex) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    char expected[] = "EVAL_DEBUG_STRING Pushing text string '12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
+    char expected[] = "EVAL_DEBUG_STRING Pushing text string '"
+            "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\""
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
     string expected_str(expected, sizeof(expected) - 1);
     addString(expected_str);
     EXPECT_TRUE(checkFile());
@@ -637,7 +640,8 @@ TEST_F(TokenTest, string6) {
 // This simple test checks that a TokenString, representing a constant string,
 // can be used in Pkt6 evaluation. (The actual packet is not used)
 TEST_F(TokenTest, string6Complex) {
-    char data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    char data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\""
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     string data_str(data, sizeof(data) - 1);
     // Store constant string in the TokenString object.
     ASSERT_NO_THROW(t_.reset(new TokenString(data_str)));
@@ -652,7 +656,9 @@ TEST_F(TokenTest, string6Complex) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    char expected[] = "EVAL_DEBUG_STRING Pushing text string '12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
+    char expected[] = "EVAL_DEBUG_STRING Pushing text string '"
+            "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\""
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
     string expected_str(expected, sizeof(expected) - 1);
     addString(expected_str);
     EXPECT_TRUE(checkFile());
@@ -835,8 +841,10 @@ TEST_F(TokenTest, lcaseComplex) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    char expected[] = "EVAL_DEBUG_LCASE Poping string '12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \0\b\r\f' "
-                      "and pushing converted value to lower case '12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f'";
+    char expected[] = "EVAL_DEBUG_LCASE Poping string '"
+            "12345~!@#$%^&*()_+LoWeR{}[];:<>/?\\67890\t \0\b\r\f' "
+            "and pushing converted value to lower case '"
+            "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f'";
     string expected_str(expected, sizeof(expected) - 1);
     addString(expected_str);
     EXPECT_TRUE(checkFile());
@@ -884,8 +892,10 @@ TEST_F(TokenTest, ucaseComplex) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    char expected[] = "EVAL_DEBUG_UCASE Poping string '12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \0\b\r\f' "
-                      "and pushing converted value to upper case '12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f'";
+    char expected[] = "EVAL_DEBUG_UCASE Poping string '"
+            "12345~!@#$%^&*()_+uPpEr{}[];:<>/?\\67890\t \0\b\r\f' "
+            "and pushing converted value to upper case '"
+            "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f'";
     string expected_str(expected, sizeof(expected) - 1);
     addString(expected_str);
     EXPECT_TRUE(checkFile());
