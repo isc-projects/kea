@@ -117,22 +117,13 @@ if test "x$enable_gtest" = "xyes" ; then
         gtest_src_basename="${gtest_src_basename#gtest-}"
         gtest_src_basename="${gtest_src_basename#googletest-}"
 
-        posix_regex=$(expr "5" : "\([[:digit:]]\)")
-        if test "${posix_regex}" = "5" ; then
-            semver_regex='[^[:digit:]]\{0,\}\([[:digit:]]\{1,\}\.[[:digit:]]\{1,\}\.[[:digit:]]\{1,\}\).\{0,\}'
-        else
-            semver_regex='[[^0-9]]\{0,\}\([[0-9]]\{1,\}\.[[0-9]]\{1,\}\.[[0-9]]\{1,\}\).\{0,\}'
-        fi
-
-        gtest_version_candidate=
-        gtest_version_candidate=$(expr "$gtest_src_basename" : "$semver_regex")
+        gtest_version_candidate=$(echo "$gtest_src_basename" | grep -Eo '[[0-9]+\.[0-9]+\.[0-9]+]')
 
         if test -z "$gtest_version_candidate" ; then
             # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
             # Let's try to extract it from CMake build script used by Google Test starting from version 1.8.0.
             if test -f "$cmakelists" ; then
-                gtest_version_line=$($AWK '/set\(GOOGLETEST_VERSION/ { print }' "$cmakelists")
-                gtest_version_candidate=$(expr "$gtest_version_line" : "$semver_regex")
+                gtest_version_candidate=$(< "$cmakelists" grep -F 'set(GOOGLETEST_VERSION' | grep -Eo '[[0-9]+\.[0-9]+\.[0-9]+]')
                 if test -n "$gtest_version_candidate"; then
                     GTEST_VERSION=$gtest_version_candidate
                 fi
