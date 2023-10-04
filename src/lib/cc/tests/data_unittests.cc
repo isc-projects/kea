@@ -55,7 +55,7 @@ TEST(Element, type) {
 
 }
 
-TEST(Element, TypeNameConversion) {
+TEST(Element, typeNameConversion) {
     EXPECT_EQ(Element::integer, Element::nameToType("integer"));
     EXPECT_EQ(Element::bigint, Element::nameToType("bigint"));
     EXPECT_EQ(Element::real, Element::nameToType("real"));
@@ -79,7 +79,7 @@ TEST(Element, TypeNameConversion) {
     EXPECT_EQ("unknown", Element::typeToName(static_cast<Element::types>(123)));
 }
 
-TEST(Element, ToAndFromJson) {
+TEST(Element, toAndFromJson) {
     // a set of inputs that are the same when converted to json and
     // back to a string (tests for inputs that have equivalent, but
     // different string representations when converted back are below)
@@ -159,7 +159,7 @@ TEST(Element, ToAndFromJson) {
     sv.push_back("\"\\u00ag\"");
     sv.push_back("\"\\u00BH\"");
 
-    for (std::string s : sv) {
+    for (const std::string& s : sv) {
         EXPECT_THROW(el = Element::fromJSON(s), isc::data::JSONError);
     }
 
@@ -444,7 +444,7 @@ testGetValueMap() {
     EXPECT_EQ("{  }", el->str());
 }
 
-TEST(Element, CreateAndSetValue) {
+TEST(Element, createAndSetValue) {
     // this test checks whether elements throw exceptions if the
     // incorrect type is requested
     ElementPtr el;
@@ -680,7 +680,7 @@ TEST(Element, backslash2) {
     EXPECT_EQ(exp, elem->stringValue());
 }
 
-TEST(Element, ListElement) {
+TEST(Element, listElement) {
     // this function checks the specific functions for ListElements
     ElementPtr el = Element::fromJSON("[ 1, \"bar\", 3 ]");
     EXPECT_EQ(el->get(0)->intValue(), 1);
@@ -710,7 +710,7 @@ TEST(Element, ListElement) {
     EXPECT_ANY_THROW(el->set(3, Element::create(0)));
 }
 
-TEST(Element, MapElement) {
+TEST(Element, mapElement) {
     // this function checks the specific functions for ListElements
     ElementPtr el = Element::fromJSON("{ \"name\": \"foo\", \"value1\": \"bar\", \"value2\": { \"number\": 42 } }");
     ConstElementPtr el2;
@@ -768,7 +768,7 @@ TEST(Element, MapElement) {
     EXPECT_EQ("{ \"value\": None }", el->str());
 }
 
-TEST(Element, ToAndFromWire) {
+TEST(Element, toAndFromWire) {
     // Wire format is now plain JSON.
     EXPECT_EQ("1", Element::create(1)->toWire());
     EXPECT_EQ("1.1", Element::create(1.1)->toWire());
