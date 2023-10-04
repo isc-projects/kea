@@ -183,7 +183,7 @@ enum DHCPOptionType {
     DHO_SUBNET_SELECTION             = 118, /* RFC3011 */
     DHO_DOMAIN_SEARCH                = 119, /* RFC3397 */
 //  DHO_SIP_SERVERS                  = 120, /* RFC3361 */
-//  DHO_CLASSLESS_STATIC_ROUTE       = 121, /* RFC3442 */
+    DHO_CLASSLESS_STATIC_ROUTE       = 121, /* RFC3442 */
 //  DHO_CCC                          = 122, /* RFC3495 */
 //  DHO_GEOCONF                      = 123, /* RFC6225 */
     DHO_VIVCO_SUBOPTIONS             = 124, /* RFC3925 */
