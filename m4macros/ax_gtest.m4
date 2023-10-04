@@ -143,10 +143,6 @@ if test "x$enable_gtest" = "xyes" ; then
         else
             GTEST_VERSION=$gtest_version_candidate
         fi
-
-        if test $GTEST_VERSION = "unknown" ; then
-            AC_MSG_WARN([Could not find GTEST version])
-        fi
     fi
 
     if test "$gtest_path" != "no" ; then
@@ -164,7 +160,6 @@ if test "x$enable_gtest" = "xyes" ; then
             GTEST_VERSION=`${GTEST_CONFIG} --version`
             GTEST_FOUND="true"
         else
-            AC_MSG_WARN([Unable to locate Google Test gtest-config.])
             if test -z "${GTEST_PATHS}" ; then
                 GTEST_PATHS="/usr /usr/local"
             fi
