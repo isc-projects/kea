@@ -74,24 +74,24 @@ if test "x$enable_gtest" = "xyes" ; then
             GTEST_SOURCE=
             for d in /usr/src/googletest /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
                 cmakelists="$d/CMakeLists.txt"
-                if test ! -d "$d"/src -a -d "$d"/googletest; then
-                    d=$d/googletest
+                if test ! -d "$d/src" -a -d "$d/googletest"; then
+                    d="$d/googletest"
                 fi
-                if test -f $d/src/gtest-all.cc -a -f $d/src/gtest_main.cc; then
-                    GTEST_SOURCE=$d
+                if test -f "$d/src/gtest-all.cc" -a -f "$d/src/gtest_main.cc"; then
+                    GTEST_SOURCE="$d"
                     AC_MSG_RESULT([$GTEST_SOURCE])
                     break
                 fi
             done
-            if test -z $GTEST_SOURCE ; then
+            if test -z "$GTEST_SOURCE" ; then
                 AC_MSG_ERROR([no gtest sources found])
             fi
         else
             cmakelists="$GTEST_SOURCE/CMakeLists.txt"
-            if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
-                GTEST_SOURCE=$GTEST_SOURCE/googletest
+            if test ! -d "$GTEST_SOURCE/src" -a -d "$GTEST_SOURCE/googletest"; then
+                GTEST_SOURCE="$GTEST_SOURCE/googletest"
             fi
-            if test -f $GTEST_SOURCE/src/gtest-all.cc -a -f $GTEST_SOURCE/src/gtest_main.cc; then
+            if test -f "$GTEST_SOURCE/src/gtest-all.cc" -a -f "$GTEST_SOURCE/src/gtest_main.cc"; then
                 AC_MSG_RESULT([$GTEST_SOURCE])
             else
                 AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])
@@ -123,12 +123,12 @@ if test "x$enable_gtest" = "xyes" ; then
             # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
             # Let's try to extract it from CMake build script used by Google Test starting from version 1.8.0.
             if test -f "$cmakelists" ; then
-                gtest_version_candidate=$(< "$cmakelists" grep -F 'set(GOOGLETEST_VERSION' | grep -Eo '[[0-9]+\.[0-9]+\.[0-9]+]')
+                gtest_version_candidate=$(grep -F 'set(GOOGLETEST_VERSION' "$cmakelists" | grep -Eo '[[0-9]+\.[0-9]+\.[0-9]+]')
                 if test -n "$gtest_version_candidate"; then
-                    GTEST_VERSION=$gtest_version_candidate
+                    GTEST_VERSION="$gtest_version_candidate"
                 fi
             fi
-            if test $GTEST_VERSION = "unknown" ; then
+            if test "$GTEST_VERSION" = "unknown" ; then
                 # Try to get googletest version from debian/ubuntu package
                 AC_PATH_PROG(DPKG, dpkg)
                 AC_PATH_PROG(DPKGQUERY, dpkg-query)
@@ -141,7 +141,7 @@ if test "x$enable_gtest" = "xyes" ; then
                 fi
             fi
         else
-            GTEST_VERSION=$gtest_version_candidate
+            GTEST_VERSION="$gtest_version_candidate"
         fi
     fi
 
