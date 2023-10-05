@@ -3055,8 +3055,8 @@ The default configuration and values would appear as follows:
 
    "Dhcp6": {
         "dhcp-ddns": {
-           // Connectivity parameters
-           "enable-updates": false,
+            // Connectivity parameters
+            "enable-updates": false,
             "server-ip": "127.0.0.1",
             "server-port":53001,
             "sender-ip":"",
@@ -3151,7 +3151,7 @@ offers four modes of conflict resolution-related behavior:
 
     For backward compatibility, ddns-use-conflict-resolution is still accepted in
     JSON configuration.  The server will replace the value internally, with the
-    ``ddns-conflict-resolution-mode`` and an appropriate vavlue: `
+    ``ddns-conflict-resolution-mode`` and an appropriate value: `
     `check-with-dhcid`` for ``true`` and ``no-check-with-dhcid`` for ``false``.
 
 .. note::
