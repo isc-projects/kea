@@ -888,7 +888,8 @@ TEST_F(EvalContextTest, integer) {
 
     EvalContext eval(Option::V4);
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("substring(option[123].text, 0, 2) == '42'"));
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("substring(option[123].text, 0, 2) == '42'"));
     EXPECT_TRUE(parsed_);
 }
 
@@ -1078,7 +1079,7 @@ TEST_F(EvalContextTest, relay4Option) {
 
     EvalContext eval(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-                    eval.parseString("relay4[13].hex == 'thirteen'"));
+        eval.parseString("relay4[13].hex == 'thirteen'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
 
@@ -1361,7 +1362,7 @@ TEST_F(EvalContextTest, logicalPrecedence) {
     EvalContext evaloa(Option::V4);
     EXPECT_NO_THROW(parsed_ =
         evaloa.parseString("option[123].exists or option[123].exists "
-                         "and option[123].exists"));
+                           "and option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(5, evaloa.expression.size());
     token = evaloa.expression.at(4);
@@ -1390,7 +1391,7 @@ TEST_F(EvalContextTest, logicalParentheses) {
     EvalContext evaloa(Option::V4);
     EXPECT_NO_THROW(parsed_ =
         evaloa.parseString("(option[123].exists or option[123].exists) "
-                         "and option[123].exists"));
+                           "and option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(5, evaloa.expression.size());
     token = evaloa.expression.at(4);
