@@ -1,3 +1,8 @@
+2184.	[bug]		razvan
+	Fixed a bug in evaluated expression parser which was not propelry
+	handling escaped null characters.
+	(Gitlab #3086)
+
 2183.	[bug]		andrei
 	Fixed a bug where one of the commands that retrieve statistic
 	values sent to the kea-ctrl-agent would get an overflow error in
