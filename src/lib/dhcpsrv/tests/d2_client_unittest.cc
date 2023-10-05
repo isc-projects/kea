@@ -1086,6 +1086,11 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV4) {
     subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
     subnet_->setDdnsGeneratedPrefix("prefix");
     subnet_->setDdnsQualifyingSuffix("suffix.com");
+    // In V4 the dot (".") can, and equally can not be specified in the
+    // "hostname-char-set" because the FQDN is split before any character
+    // is replaced and then is put back together. However it does have an
+    // effect on the hostname option 12 (DHO_HOST_NAME), but this test is
+    // only checking the FQDN option.
     subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
     subnet_->setHostnameCharReplacement("x");
 
@@ -1169,6 +1174,9 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
     subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
     subnet_->setDdnsGeneratedPrefix("prefix");
     subnet_->setDdnsQualifyingSuffix("suffix.com");
+    // In V6 the dot (".") can, and equally can not be specified in the
+    // "hostname-char-set" because the FQDN is split before any character
+    // is replaced and then is put back together.
     subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
     subnet_->setHostnameCharReplacement("x");
 

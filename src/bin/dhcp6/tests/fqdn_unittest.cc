@@ -129,6 +129,9 @@ public:
                                               D2ClientConfig::RCM_NEVER);
         subnet_->setDdnsGeneratedPrefix("myhost");
         subnet_->setDdnsQualifyingSuffix("example.com");
+        // In V6 the dot (".") can, and equally can not be specified in the
+        // "hostname-char-set" because the FQDN is split before any character
+        // is replaced and then is put back together.
         subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
         subnet_->setHostnameCharReplacement("x");
         subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
