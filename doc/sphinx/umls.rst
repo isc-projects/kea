@@ -151,7 +151,4 @@ Before sending a response, options are added:
 How Kea Recognizes the Same Client In Different DHCP Messages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-..
-    Use the PNG, because, for some reason, the SVG has missing text.
-
-.. figure:: uml/recognizing-same-client.png
+.. figure:: uml/recognizing-same-client.*

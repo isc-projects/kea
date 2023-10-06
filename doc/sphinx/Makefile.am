@@ -159,6 +159,7 @@ uml-to-png: $(umls)
 uml-to-svg: $(umls)
 	@ @PLANTUML@ -tsvg $^
 
+# Formatting puts every tag on a separate line, which makes it easier for diffing.
 format-svgs: $(svgs)
 if HAVE_XMLLINT
 	@ for svg in $(svgs); do xmllint --format $$svg > tmp; mv tmp $$svg; done
