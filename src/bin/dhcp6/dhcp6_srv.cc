@@ -2340,10 +2340,17 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query,
         hint = hint_opt->getAddress();
     }
 
-    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_REQUEST)
-        .arg(query->getLabel())
-        .arg(ia->getIAID())
-        .arg(hint_opt ? hint.toText() : "(no hint)");
+    if (ctx.fake_allocation_) {
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_SOLICIT)
+            .arg(query->getLabel())
+            .arg(ia->getIAID())
+            .arg(hint_opt ? hint.toText() : "(no hint)");
+    } else {
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_REQUEST)
+            .arg(query->getLabel())
+            .arg(ia->getIAID())
+            .arg(hint_opt ? hint.toText() : "(no hint)");
+    }
 
     // convenience values
     const Subnet6Ptr& subnet = ctx.subnet_;
@@ -2474,10 +2481,17 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
         hint = hint_opt->getAddress();
     }
 
-    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
-        .arg(query->getLabel())
-        .arg(ia->getIAID())
-        .arg(hint_opt ? hint.toText() : "(no hint)");
+    if (ctx.fake_allocation_) {
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_SOLICIT)
+            .arg(query->getLabel())
+            .arg(ia->getIAID())
+            .arg(hint_opt ? hint.toText() : "(no hint)");
+    } else {
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
+            .arg(query->getLabel())
+            .arg(ia->getIAID())
+            .arg(hint_opt ? hint.toText() : "(no hint)");
+    }
 
     const Subnet6Ptr& subnet = ctx.subnet_;
 

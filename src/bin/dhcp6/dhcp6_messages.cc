@@ -133,8 +133,10 @@ extern const isc::log::MessageID DHCP6_PD_LEASE_REUSE = "DHCP6_PD_LEASE_REUSE";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_EXTEND = "DHCP6_PROCESS_IA_NA_EXTEND";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_RELEASE = "DHCP6_PROCESS_IA_NA_RELEASE";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_REQUEST = "DHCP6_PROCESS_IA_NA_REQUEST";
+extern const isc::log::MessageID DHCP6_PROCESS_IA_NA_SOLICIT = "DHCP6_PROCESS_IA_NA_SOLICIT";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_EXTEND = "DHCP6_PROCESS_IA_PD_EXTEND";
 extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_REQUEST = "DHCP6_PROCESS_IA_PD_REQUEST";
+extern const isc::log::MessageID DHCP6_PROCESS_IA_PD_SOLICIT = "DHCP6_PROCESS_IA_PD_SOLICIT";
 extern const isc::log::MessageID DHCP6_QUERY_DATA = "DHCP6_QUERY_DATA";
 extern const isc::log::MessageID DHCP6_QUERY_LABEL = "DHCP6_QUERY_LABEL";
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT = "DHCP6_RAPID_COMMIT";
@@ -304,8 +306,10 @@ const char* values[] = {
     "DHCP6_PROCESS_IA_NA_EXTEND", "%1: extending lease lifetime for IA_NA option with iaid=%2",
     "DHCP6_PROCESS_IA_NA_RELEASE", "%1: releasing lease for IA_NA option with iaid=%2",
     "DHCP6_PROCESS_IA_NA_REQUEST", "%1: server is processing IA_NA option with iaid=%2 and hint=%3",
+    "DHCP6_PROCESS_IA_NA_SOLICIT", "%1: server is processing IA_NA option with iaid=%2 and hint=%3",
     "DHCP6_PROCESS_IA_PD_EXTEND", "%1: extending lease lifetime for IA_PD option with iaid=%2",
     "DHCP6_PROCESS_IA_PD_REQUEST", "%1: server is processing IA_PD option with iaid=%2 and hint=%3",
+    "DHCP6_PROCESS_IA_PD_SOLICIT", "%1: server is processing IA_PD option with iaid=%2 and hint=%3",
     "DHCP6_QUERY_DATA", "%1, packet details: %2",
     "DHCP6_QUERY_LABEL", "received query: %1",
     "DHCP6_RAPID_COMMIT", "%1: Rapid Commit option received, following 2-way exchange",

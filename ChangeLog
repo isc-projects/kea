@@ -1,3 +1,10 @@
+2185.	[func]		razvan
+	Added extended log messages: DHCP4_DISCOVER, DHCP4_REQUEST,
+	DHCP6_PROCESS_IA_NA_SOLICIT, DHCP6_PROCESS_IA_PD_SOLICIT, which
+	include the hint address in the client request. The log message
+	tag DHCP4_LEASE_ADVERT has been renamed to DHCP4_LEASE_OFFER.
+	(Gitlab #2918)
+
 2184.	[bug]		razvan
 	Fixed a bug in evaluated expression parser which was not propelry
 	handling escaped null characters.
