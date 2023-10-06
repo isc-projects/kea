@@ -33,6 +33,7 @@ libkea_dhcp___la_SOURCES += option6_pdexclude.cc option6_pdexclude.h
 libkea_dhcp___la_SOURCES += option6_status_code.cc option6_status_code.h
 libkea_dhcp___la_SOURCES += option.cc option.h
 libkea_dhcp___la_SOURCES += option_custom.cc option_custom.h
+libkea_dhcp___la_SOURCES += option_classless_static_route.cc option_classless_static_route.h
 libkea_dhcp___la_SOURCES += option_data_types.cc option_data_types.h
 libkea_dhcp___la_SOURCES += option_definition.cc option_definition.h
 libkea_dhcp___la_SOURCES += option4_dnr.cc option4_dnr.h
