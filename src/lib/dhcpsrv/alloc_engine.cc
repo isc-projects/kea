@@ -4958,7 +4958,7 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
 
     OptionPtr remote_id = rai->getOption(RAI_OPTION_REMOTE_ID);
     if (remote_id) {
-        std::vector<uint8_t> bytes = remote_id->toBinary(false);
+        std::vector<uint8_t> bytes = remote_id->toBinary();
         lease->remote_id_ = bytes;
         if (bytes.size() > 0) {
             extended_info->set("remote-id",
@@ -5062,7 +5062,7 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
             if (remote_id_it != relay.options_.end()) {
                 OptionPtr remote_id = remote_id_it->second;
                 if (remote_id) {
-                    std::vector<uint8_t> bytes = remote_id->toBinary(false);
+                    std::vector<uint8_t> bytes = remote_id->toBinary();
                     if (bytes.size() > 0) {
                         relay_elem->set("remote-id",
                                         Element::create(encode::encodeHex(bytes)));

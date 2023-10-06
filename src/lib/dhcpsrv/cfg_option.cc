@@ -479,8 +479,7 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             // Set the data item
             if (!opt.formatted_value_.empty()) {
                 map->set("csv-format", Element::create(true));
-                if (def && def->getType() == OPT_EMPTY_TYPE &&
-                    def->getEncapsulatedSpace() != def->getOptionSpaceName()) {
+                if (def && def->getType() == OPT_EMPTY_TYPE) {
                     map->set("data", Element::create(""));
                 } else {
                     map->set("data", Element::create(opt.formatted_value_));
@@ -489,8 +488,7 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
                 std::vector<uint8_t> bin = opt.option_->toBinary();
                 if (!opt.cancelled_ || !bin.empty()) {
                     map->set("csv-format", Element::create(false));
-                    if (def && def->getType() == OPT_EMPTY_TYPE &&
-                        def->getEncapsulatedSpace() != def->getOptionSpaceName()) {
+                    if (def && def->getType() == OPT_EMPTY_TYPE) {
                         map->set("data", Element::create(""));
                     } else {
                         std::string repr = util::encode::encodeHex(bin);
@@ -541,8 +539,7 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             // Set the data item
             if (!opt.formatted_value_.empty()) {
                 map->set("csv-format", Element::create(true));
-                if (def && def->getType() == OPT_EMPTY_TYPE &&
-                    def->getEncapsulatedSpace() != def->getOptionSpaceName()) {
+                if (def && def->getType() == OPT_EMPTY_TYPE) {
                     map->set("data", Element::create(""));
                 } else {
                     map->set("data", Element::create(opt.formatted_value_));
@@ -551,8 +548,7 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
                 std::vector<uint8_t> bin = opt.option_->toBinary();
                 if (!opt.cancelled_ || !bin.empty()) {
                     map->set("csv-format", Element::create(false));
-                    if (def && def->getType() == OPT_EMPTY_TYPE &&
-                        def->getEncapsulatedSpace() != def->getOptionSpaceName()) {
+                    if (def && def->getType() == OPT_EMPTY_TYPE) {
                         map->set("data", Element::create(""));
                     } else {
                         std::string repr = util::encode::encodeHex(bin);

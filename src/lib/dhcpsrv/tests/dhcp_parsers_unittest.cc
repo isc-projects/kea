@@ -441,8 +441,7 @@ public:
     /// @return returns an OptionPtr which points to the found
     /// option or is empty.
     /// ASSERT_ tests don't work inside functions that return values
-    OptionPtr getOptionPtr(std::string space, uint32_t code)
-    {
+    OptionPtr getOptionPtr(std::string space, uint32_t code) {
         OptionPtr option_ptr;
         OptionContainerPtr options = CfgMgr::instance().getStagingCfg()->
             getCfgOption()->getAll(space);
@@ -3511,6 +3510,20 @@ TEST_F(ParseConfigTest, selfEncapsulationTest) {
 
     // Verify length is correct and doesn't infinitely recurse.
     EXPECT_EQ(19, opt->len());
+
+    // Option D6O_CLIENT_DATA is defined as OPT_EMPTY_TYPE so it is not
+    // serializing sub-options.
+    config =
+        "{"
+        " \"option-data\": ["
+        "{"
+        "    \"name\": \"client-data\","
+        "    \"code\": 45,"
+        "    \"csv-format\": false,"
+        "    \"space\": \"dhcp6\","
+        "    \"data\": \"\""
+        "}"
+        "]}";
 
     // Check if it can be unparsed.
     CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());

@@ -811,7 +811,7 @@ public:
         // Check that it contains requested option with the appropriate content.
         OptionPtr suboption(response_vendor_options->getOption(option_));
         ASSERT_TRUE(suboption);
-        vector<uint8_t> binary_suboption = suboption->toBinary(false);
+        vector<uint8_t> binary_suboption = suboption->toBinary();
         string text(binary_suboption.begin(), binary_suboption.end());
         EXPECT_EQ("2001:db8::1234:5678", text);
     }

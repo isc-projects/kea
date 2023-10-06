@@ -639,7 +639,7 @@ LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease,
 
             OptionPtr remote_id = rai->getOption(RAI_OPTION_REMOTE_ID);
             if (remote_id) {
-                vector<uint8_t> bytes = remote_id->toBinary(false);
+                vector<uint8_t> bytes = remote_id->toBinary();
                 if (bytes.size() > 0) {
                     upgraded->set("remote-id",
                                   Element::create(encode::encodeHex(bytes)));
@@ -898,7 +898,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
                 if (remote_id_it != opts.end()) {
                     OptionPtr remote_id = remote_id_it->second;
                     if (remote_id) {
-                        vector<uint8_t> bytes = remote_id->toBinary(false);
+                        vector<uint8_t> bytes = remote_id->toBinary();
                         if (bytes.size() > 0) {
                             relay->set("remote-id",
                                        Element::create(encode::encodeHex(bytes)));
