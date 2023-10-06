@@ -175,6 +175,7 @@ endif
 EXTRA_DIST += $(umls)
 EXTRA_DIST += $(pngs)
 EXTRA_DIST += $(svgs)
+EXTRA_DIST += $(txts)
 
 PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
 
