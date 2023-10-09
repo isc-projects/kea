@@ -9,16 +9,29 @@
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
+#include <dhcp/option_data_types.h>
 
 namespace isc {
 namespace dhcp {
 
+/// @brief Defines a tuple of Subnet number, Subnet mask width and IPv4 router address.
+typedef std::tuple<asiolink::IOAddress, PrefixLen, asiolink::IOAddress> StaticRouteTuple;
+
+/// @brief Represents DHCPv4 Classless Static Route %Option (code 121).
 class OptionClasslessStaticRoute : public Option {
 public:
-    /// @brief Constructor
-    OptionClasslessStaticRoute() : Option(V4, DHO_CLASSLESS_STATIC_ROUTE) {
+    /// @brief Empty Constructor
+    OptionClasslessStaticRoute() : Option(V4, DHO_CLASSLESS_STATIC_ROUTE) {}
 
-    }
+    /// @brief Constructor of the %Option from on-wire data.
+    ///
+    /// This constructor creates an instance of the option using a buffer with
+    /// on-wire data. It may throw an exception if the @c unpack method throws.
+    ///
+    /// @param begin Iterator pointing to the beginning of the buffer holding an
+    /// option.
+    /// @param end Iterator pointing to the end of the buffer holding an option.
+    OptionClasslessStaticRoute(OptionBufferConstIter begin, OptionBufferConstIter end);
 
     /// @brief Copies this option and returns a pointer to the copy.
     ///
@@ -35,13 +48,14 @@ public:
     /// @param check flag which indicates if checking the option length is
     /// required (used only in V4)
     ///
-    /// @throw InvalidOptionDnrDomainName Thrown when Option's mandatory field ADN is empty.
-    void pack(util::OutputBuffer& buf, bool check = false) const override;
+    /// @throw
+    void pack(util::OutputBuffer& buf, bool check = true) const override;
 
     /// @brief Parses received wire data buffer.
     ///
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
+    /// @throw
     void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) override;
 
     /// @brief Returns string representation of the option.
@@ -57,7 +71,28 @@ public:
     /// @return length of the option
     uint16_t len() const override;
 
+    /// @brief Adds static route to collection of all static routes.
+    /// @param route A tuple defining new static route
+    void addRoute(StaticRouteTuple& route);
+
+private:
+    /// @brief Container holding all static routes.
+    std::vector<StaticRouteTuple> static_routes_;
+
+    /// @brief Calculates subnet mask width from given uint_32 representation of subnet mask.
+    /// @param subnet_mask uint_32 representation of a subnet mask IPv4 address
+    /// @return width of subnet mask in a range of 0-32
+    static uint8_t calcMaskWidth(uint32_t subnet_mask);
+
+    /// @brief Encodes destination descriptor as per RFC3442.
+    /// @param route static route tuple
+    /// @return Contents of the destination descriptor as a vector
+    /// of bytes in network-byte order.
+    static std::vector<uint8_t> encodeDestinationDescriptor(StaticRouteTuple& route) ;
 };
+
+/// A pointer to the @c OptionClasslessStaticRoute object.
+typedef boost::shared_ptr<OptionClasslessStaticRoute> OptionClasslessStaticRoutePtr;
 
 }  // namespace dhcp
 }  // namespace isc
