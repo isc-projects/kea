@@ -37,7 +37,7 @@ TEST(HARelationshipMapper, mapGet) {
 }
 
 /// Tests getting a sole mapped object.
-TEST(HARelationshipMapper, mapGetSole) {
+TEST(HARelationshipMapper, mapGetOne) {
     HARelationshipMapper<HAConfig> mapper;
 
     auto rel1 = HAConfig::create();
@@ -45,6 +45,23 @@ TEST(HARelationshipMapper, mapGetSole) {
     EXPECT_NO_THROW(mapper.map("server2", rel1));
 
     EXPECT_EQ(rel1, mapper.get());
+}
+
+// Test getting all objects as a vector.
+TEST(HARelationshipMapper, mapGetAll) {
+    HARelationshipMapper<HAConfig> mapper;
+
+    auto rel1 = HAConfig::create();
+    auto rel2 = HAConfig::create();
+    EXPECT_NO_THROW(mapper.map("server1", rel1));
+    EXPECT_NO_THROW(mapper.map("server2", rel1));
+    EXPECT_NO_THROW(mapper.map("server3", rel2));
+    EXPECT_NO_THROW(mapper.map("server4", rel2));
+
+    const auto& all = mapper.getAll();
+    EXPECT_EQ(2, all.size());
+    EXPECT_EQ(rel1, all[0]);
+    EXPECT_EQ(rel2, all[1]);
 }
 
 /// Tests that getting a sole mapped object fails when there are multiple.

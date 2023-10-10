@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,21 +24,33 @@ public:
     /// @param [out] config_storage Pointer to the object where parsed configuration
     /// is going to be stored.
     ///
-    /// @param config Specified configuration.
+    /// @param config specified configuration.
     /// @throw ConfigError when parsing fails or configuration is invalid.
-    void parse(const HAConfigPtr& config_storage,
+    void parse(const HAConfigMapperPtr& config_storage,
                const data::ConstElementPtr& config);
 
 private:
 
-    /// @brief Parses HA configuration and can throw various exceptions..
+    /// @brief Parses HA configuration and can throw various exceptions.
     ///
     /// @param [out] config_storage Pointer to the object where parsed configuration
     /// is going to be stored.
     ///
     /// @param config Specified configuration.
-    void parseInternal(const HAConfigPtr& config_storage,
-                       const data::ConstElementPtr& config);
+    void parseAllInternal(const HAConfigMapperPtr& config_storage,
+                          const data::ConstElementPtr& config);
+
+    /// @brief Parses HA configuration for a single relationship.
+    ///
+    /// This function is called multiple times from the @c parseAllInternal.
+    ///
+    /// @param [out] config_storage pointer to the object where parsed configuration
+    /// is going to be stored.
+    ///
+    /// @param config specified configuration for a relationship.
+    /// @throw ConfigError when parsing fails or configuration is invalid.
+    void parseOneInternal(const HAConfigMapperPtr& config_storage,
+                          const data::ElementPtr& config);
 
     /// @brief Validates and returns a value of the parameter.
     ///
@@ -58,7 +70,7 @@ private:
     ///
     /// One example of such information is a warning message indicating that
     /// sending lease updates is disabled.
-    void logConfigStatus(const HAConfigPtr& config_storage) const;
+    void logConfigStatus(const HAConfigMapperPtr& config_storage) const;
 };
 
 } // end of namespace isc::ha

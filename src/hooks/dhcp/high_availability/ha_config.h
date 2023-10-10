@@ -35,8 +35,11 @@ class HAConfig;
 /// @brief Pointer to the High Availability configuration structure.
 typedef boost::shared_ptr<HAConfig> HAConfigPtr;
 
-/// @brief Pointer to an object mapping HAConfig to relationships.
-typedef boost::shared_ptr<HARelationshipMapper<HAConfig>> HAConfigMapperPtr;
+/// @brief Type of an object mapping @c HAConfig to relationships.
+typedef HARelationshipMapper<HAConfig> HAConfigMapper;
+
+/// @brief Pointer to an object mapping @c HAConfig to relationships.
+typedef boost::shared_ptr<HAConfigMapper> HAConfigMapperPtr;
 
 /// @brief Storage for High Availability configuration.
 class HAConfig {

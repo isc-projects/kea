@@ -65,12 +65,12 @@ namespace isc {
 namespace ha {
 
 void
-HAConfigParser::parse(const HAConfigPtr& config_storage,
+HAConfigParser::parse(const HAConfigMapperPtr& config_storage,
                       const ConstElementPtr& config) {
     try {
         // This may cause different types of exceptions. We catch them here
         // and throw unified exception type.
-        parseInternal(config_storage, config);
+        parseAllInternal(config_storage, config);
         logConfigStatus(config_storage);
 
     } catch (const ConfigError& ex) {
@@ -82,8 +82,8 @@ HAConfigParser::parse(const HAConfigPtr& config_storage,
 }
 
 void
-HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
-                              const ConstElementPtr& config) {
+HAConfigParser::parseAllInternal(const HAConfigMapperPtr& config_storage,
+                                 const ConstElementPtr& config) {
     // Config must be provided.
     if (!config) {
         isc_throw(ConfigError, "HA configuration must not be null");
@@ -97,37 +97,58 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
 
     // Get the HA configuration.
     const auto& config_vec = config->listValue();
-    ElementPtr c = config_vec[0];
+    if (config_vec.empty()) {
+        isc_throw(ConfigError, "a list of HA configurations must not be empty");
+    }
+    for (auto config : config_vec) {
+        parseOneInternal(config_storage, config);
+    }
+}
+
+void
+HAConfigParser::parseOneInternal(const HAConfigMapperPtr& config_storage,
+                                 const ElementPtr& config) {
+    // Config must be provided.
+    if (!config) {
+        isc_throw(ConfigError, "HA configuration must not be null");
+    }
+
+    // Config must be a map.
+    if (config->getType() != Element::map) {
+        isc_throw(ConfigError, "HA configuration for a relationship must be a map");
+    }
+
+    auto rel_config = HAConfig::create();
 
     // Get 'mode'. That's the first thing to gather because the defaults we
     // apply to the configuration depend on the mode.
-    config_storage->setHAMode(getString(c, "mode"));
+    rel_config->setHAMode(getString(config, "mode"));
 
     // Set load-balancing specific defaults.
-    if (config_storage->getHAMode() == HAConfig::LOAD_BALANCING) {
-        setDefaults(c, HA_CONFIG_LB_DEFAULTS);
+    if (rel_config->getHAMode() == HAConfig::LOAD_BALANCING) {
+        setDefaults(config, HA_CONFIG_LB_DEFAULTS);
     }
     // Set general defaults.
-    setDefaults(c, HA_CONFIG_DEFAULTS);
+    setDefaults(config, HA_CONFIG_DEFAULTS);
 
     // HA configuration must be a map.
-    if (c->getType() != Element::map) {
+    if (config->getType() != Element::map) {
         isc_throw(ConfigError, "expected list of maps in the HA configuration");
     }
 
     // It must contain peers section.
-    if (!c->contains("peers")) {
+    if (!config->contains("peers")) {
         isc_throw(ConfigError, "'peers' parameter missing in HA configuration");
     }
 
     // Peers configuration must be a list of maps.
-    ConstElementPtr peers = c->get("peers");
+    ConstElementPtr peers = config->get("peers");
     if (peers->getType() != Element::list) {
         isc_throw(ConfigError, "'peers' parameter must be a list");
     }
 
     // State machine configuration must be a map.
-    ConstElementPtr state_machine = c->get("state-machine");
+    ConstElementPtr state_machine = config->get("state-machine");
     ConstElementPtr states_list;
     if (state_machine) {
         if (state_machine->getType() != Element::map) {
@@ -143,55 +164,55 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // We have made major sanity checks, so let's try to gather some values.
 
     // Get 'this-server-name'.
-    config_storage->setThisServerName(getString(c, "this-server-name"));
+    rel_config->setThisServerName(getString(config, "this-server-name"));
 
     // Get 'send-lease-updates'.
-    config_storage->setSendLeaseUpdates(getBoolean(c, "send-lease-updates"));
+    rel_config->setSendLeaseUpdates(getBoolean(config, "send-lease-updates"));
 
     // Get 'sync-leases'.
-    config_storage->setSyncLeases(getBoolean(c, "sync-leases"));
+    rel_config->setSyncLeases(getBoolean(config, "sync-leases"));
 
     // Get 'sync-timeout'.
-    uint32_t sync_timeout = getAndValidateInteger<uint32_t>(c, "sync-timeout");
-    config_storage->setSyncTimeout(sync_timeout);
+    uint32_t sync_timeout = getAndValidateInteger<uint32_t>(config, "sync-timeout");
+    rel_config->setSyncTimeout(sync_timeout);
 
     // Get 'sync-page-limit'.
-    uint32_t sync_page_limit = getAndValidateInteger<uint32_t>(c, "sync-page-limit");
-    config_storage->setSyncPageLimit(sync_page_limit);
+    uint32_t sync_page_limit = getAndValidateInteger<uint32_t>(config, "sync-page-limit");
+    rel_config->setSyncPageLimit(sync_page_limit);
 
     // Get 'delayed-updates-limit'.
-    uint32_t delayed_updates_limit = getAndValidateInteger<uint32_t>(c, "delayed-updates-limit");
-    config_storage->setDelayedUpdatesLimit(delayed_updates_limit);
+    uint32_t delayed_updates_limit = getAndValidateInteger<uint32_t>(config, "delayed-updates-limit");
+    rel_config->setDelayedUpdatesLimit(delayed_updates_limit);
 
     // Get 'heartbeat-delay'.
-    uint16_t heartbeat_delay = getAndValidateInteger<uint16_t>(c, "heartbeat-delay");
-    config_storage->setHeartbeatDelay(heartbeat_delay);
+    uint16_t heartbeat_delay = getAndValidateInteger<uint16_t>(config, "heartbeat-delay");
+    rel_config->setHeartbeatDelay(heartbeat_delay);
 
     // Get 'max-response-delay'.
-    uint16_t max_response_delay = getAndValidateInteger<uint16_t>(c, "max-response-delay");
-    config_storage->setMaxResponseDelay(max_response_delay);
+    uint16_t max_response_delay = getAndValidateInteger<uint16_t>(config, "max-response-delay");
+    rel_config->setMaxResponseDelay(max_response_delay);
 
     // Get 'max-ack-delay'.
-    uint16_t max_ack_delay = getAndValidateInteger<uint16_t>(c, "max-ack-delay");
-    config_storage->setMaxAckDelay(max_ack_delay);
+    uint16_t max_ack_delay = getAndValidateInteger<uint16_t>(config, "max-ack-delay");
+    rel_config->setMaxAckDelay(max_ack_delay);
 
     // Get 'max-unacked-clients'.
-    uint32_t max_unacked_clients = getAndValidateInteger<uint32_t>(c, "max-unacked-clients");
-    config_storage->setMaxUnackedClients(max_unacked_clients);
+    uint32_t max_unacked_clients = getAndValidateInteger<uint32_t>(config, "max-unacked-clients");
+    rel_config->setMaxUnackedClients(max_unacked_clients);
 
     // Get 'max-rejected-lease-updates'.
-    uint32_t max_rejected_lease_updates = getAndValidateInteger<uint32_t>(c, "max-rejected-lease-updates");
-    config_storage->setMaxRejectedLeaseUpdates(max_rejected_lease_updates);
+    uint32_t max_rejected_lease_updates = getAndValidateInteger<uint32_t>(config, "max-rejected-lease-updates");
+    rel_config->setMaxRejectedLeaseUpdates(max_rejected_lease_updates);
 
     // Get 'wait-backup-ack'.
-    config_storage->setWaitBackupAck(getBoolean(c, "wait-backup-ack"));
+    rel_config->setWaitBackupAck(getBoolean(config, "wait-backup-ack"));
 
     // Get multi-threading map.
-    ElementPtr mt_config = boost::const_pointer_cast<Element>(c->get("multi-threading"));
+    ElementPtr mt_config = boost::const_pointer_cast<Element>(config->get("multi-threading"));
     if (!mt_config) {
         // Not there, make an empty one.
         mt_config = Element::createMap();
-        c->set("multi-threading", mt_config);
+        config->set("multi-threading", mt_config);
     } else if (mt_config->getType() != Element::map) {
         isc_throw(ConfigError, "multi-threading configuration must be a map");
     }
@@ -200,42 +221,42 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     setDefaults(mt_config, HA_CONFIG_MT_DEFAULTS);
 
     // Get 'enable-multi-threading'.
-    config_storage->setEnableMultiThreading(getBoolean(mt_config, "enable-multi-threading"));
+    rel_config->setEnableMultiThreading(getBoolean(mt_config, "enable-multi-threading"));
 
     // Get 'http-dedicated-listener'.
-    config_storage->setHttpDedicatedListener(getBoolean(mt_config, "http-dedicated-listener"));
+    rel_config->setHttpDedicatedListener(getBoolean(mt_config, "http-dedicated-listener"));
 
     // Get 'http-listener-threads'.
     uint32_t threads = getAndValidateInteger<uint32_t>(mt_config, "http-listener-threads");
-    config_storage->setHttpListenerThreads(threads);
+    rel_config->setHttpListenerThreads(threads);
 
     // Get 'http-client-threads'.
     threads = getAndValidateInteger<uint32_t>(mt_config, "http-client-threads");
-    config_storage->setHttpClientThreads(threads);
+    rel_config->setHttpClientThreads(threads);
 
     // Get optional 'trust-anchor'.
-    ConstElementPtr ca = c->get("trust-anchor");
+    ConstElementPtr ca = config->get("trust-anchor");
     if (ca) {
-        config_storage->setTrustAnchor(getString(c, "trust-anchor"));
+        rel_config->setTrustAnchor(getString(config, "trust-anchor"));
     }
 
     // Get optional 'cert-file'.
-    ConstElementPtr cert = c->get("cert-file");
+    ConstElementPtr cert = config->get("cert-file");
     if (cert) {
-        config_storage->setCertFile(getString(c, "cert-file"));
+        rel_config->setCertFile(getString(config, "cert-file"));
     }
 
     // Get optional 'key-file'.
-    ConstElementPtr key = c->get("key-file");
+    ConstElementPtr key = config->get("key-file");
     if (key) {
-        config_storage->setKeyFile(getString(c, "key-file"));
+        rel_config->setKeyFile(getString(config, "key-file"));
     }
 
     // Get 'require-client-certs'.
-    config_storage->setRequireClientCerts(getBoolean(c, "require-client-certs"));
+    rel_config->setRequireClientCerts(getBoolean(config, "require-client-certs"));
 
     // Get 'restrict-commands'.
-    config_storage->setRestrictCommands(getBoolean(c, "restrict-commands"));
+    rel_config->setRestrictCommands(getBoolean(config, "restrict-commands"));
 
     // Peers configuration parsing.
     const auto& peers_vec = peers->listValue();
@@ -251,7 +272,7 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
         setDefaults(*p, HA_CONFIG_PEER_DEFAULTS);
 
         // Server name.
-        auto cfg = config_storage->selectNextPeerConfig(getString(*p, "name"));
+        auto cfg = rel_config->selectNextPeerConfig(getString(*p, "name"));
 
         // URL.
         cfg->setUrl(Url(getString((*p), "url")));
@@ -343,7 +364,7 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
             }
             configured_states.insert(state);
 
-            config_storage->getStateMachineConfig()->
+            rel_config->getStateMachineConfig()->
                 getStateConfig(state)->setPausing(getString(*s, "pause"));
         }
     }
@@ -351,7 +372,12 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // We have gone over the entire configuration and stored it in the configuration
     // storage. However, we need to still validate it to detect errors like:
     // duplicate secondary/primary servers, no configuration for this server etc.
-    config_storage->validate();
+    rel_config->validate();
+
+    auto peer_configs = rel_config->getAllServersConfig();
+    for (auto peer_config : peer_configs) {
+        config_storage->map(peer_config.first, rel_config);
+    }
 }
 
 template<typename T>
@@ -370,39 +396,44 @@ T HAConfigParser::getAndValidateInteger(const ConstElementPtr& config,
 }
 
 void
-HAConfigParser::logConfigStatus(const HAConfigPtr& config_storage) const {
+HAConfigParser::logConfigStatus(const HAConfigMapperPtr& config_storage) const {
     LOG_INFO(ha_logger, HA_CONFIGURATION_SUCCESSFUL);
 
-    // If lease updates are disabled, we want to make sure that the user
-    // realizes that and that he has configured some other mechanism to
-    // populate leases.
-    if (!config_storage->amSendingLeaseUpdates()) {
-        LOG_WARN(ha_logger, HA_CONFIG_LEASE_UPDATES_DISABLED);
-    }
+    for (auto config : config_storage->getAll()) {
+        // If lease updates are disabled, we want to make sure that the user
+        // realizes that and that he has configured some other mechanism to
+        // populate leases.
+        if (!config->amSendingLeaseUpdates()) {
+            LOG_WARN(ha_logger, HA_CONFIG_LEASE_UPDATES_DISABLED)
+                .arg(config->getThisServerName());
+        }
 
-    // Same as above but for lease database synchronization.
-    if (!config_storage->amSyncingLeases()) {
-        LOG_WARN(ha_logger, HA_CONFIG_LEASE_SYNCING_DISABLED);
-    }
+        // Same as above but for lease database synchronization.
+        if (!config->amSyncingLeases()) {
+            LOG_WARN(ha_logger, HA_CONFIG_LEASE_SYNCING_DISABLED)
+                .arg(config->getThisServerName());
+        }
 
-    // Unusual configuration.
-    if (config_storage->amSendingLeaseUpdates() !=
-        config_storage->amSyncingLeases()) {
-        LOG_WARN(ha_logger, HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER)
-            .arg(config_storage->amSendingLeaseUpdates() ? "true" : "false")
-            .arg(config_storage->amSyncingLeases() ? "true" : "false");
-    }
+        // Unusual configuration.
+        if (config->amSendingLeaseUpdates() !=
+            config->amSyncingLeases()) {
+            LOG_WARN(ha_logger, HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER)
+                .arg(config->getThisServerName())
+                .arg(config->amSendingLeaseUpdates() ? "true" : "false")
+                .arg(config->amSyncingLeases() ? "true" : "false");
+        }
 
-    // With this setting the server will not take ownership of the partner's
-    // scope in case of partner's failure. This setting is OK if the
-    // administrator desires to have more control over scopes selection.
-    // The administrator will need to send ha-scopes command to instruct
-    // the server to take ownership of the scope. In some cases he may
-    // also need to send dhcp-enable command to enable DHCP service
-    // (specifically hot-standby mode for standby server).
-    if (!config_storage->getThisServerConfig()->isAutoFailover()) {
-        LOG_WARN(ha_logger, HA_CONFIG_AUTO_FAILOVER_DISABLED)
-            .arg(config_storage->getThisServerName());
+        // With this setting the server will not take ownership of the partner's
+        // scope in case of partner's failure. This setting is OK if the
+        // administrator desires to have more control over scopes selection.
+        // The administrator will need to send ha-scopes command to instruct
+        // the server to take ownership of the scope. In some cases he may
+        // also need to send dhcp-enable command to enable DHCP service
+        // (specifically hot-standby mode for standby server).
+        if (!config->getThisServerConfig()->isAutoFailover()) {
+            LOG_WARN(ha_logger, HA_CONFIG_AUTO_FAILOVER_DISABLED)
+                .arg(config->getThisServerName());
+        }
     }
 }
 

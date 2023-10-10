@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,9 +59,18 @@ public:
 
 public:
 
-    /// @brief Returns parsed configuration.
+    /// @brief Returns sole parsed configuration.
     HAConfigPtr getConfig() const {
-        return (config_);
+        return (config_->get());
+    }
+
+    /// @brief Returns parsed configuration by partner name.
+    ///
+    /// @param parameter_name name of a partner belonging to the relationship for
+    /// which the configuration should be retrieved.
+    /// @return Configuration for the relationship to which the partner belongs.
+    HAConfigPtr getConfig(const std::string& partner_name) const {
+        return (config_->get(partner_name));
     }
 
     /// @brief Implementation of the "buffer4_receive" callout.
@@ -172,7 +181,7 @@ public:
 protected:
 
     /// @brief Holds parsed configuration.
-    HAConfigPtr config_;
+    HAConfigMapperPtr config_;
 
     /// @brief Pointer to the high availability service (state machine).
     HAServicePtr service_;

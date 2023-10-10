@@ -187,16 +187,16 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
     setDHCPMultiThreadingConfig(true, 3);
 
     // Create the HA configuration
-    HAConfigPtr ha_config(new HAConfig());
+    HAConfigMapperPtr ha_config(new HAConfigMapper());
     HAConfigParser parser;
     ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
 
     // Instantiate the service.
     TestHAServicePtr service;
     ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
-                                                        ha_config)));
+                                                        ha_config->get())));
     // Multi-threading should be enabled.
-    ASSERT_TRUE(ha_config->getEnableMultiThreading());
+    ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
 
     // Command filtering is enabled.
     EXPECT_FALSE(CmdResponseCreator::command_accept_list_.empty());
@@ -308,16 +308,16 @@ TEST_F(HAMtServiceTest, multiThreadingTls) {
     setDHCPMultiThreadingConfig(true, 3);
 
     // Create the HA configuration
-    HAConfigPtr ha_config(new HAConfig());
+    HAConfigMapperPtr ha_config(new HAConfigMapper());
     HAConfigParser parser;
     ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
 
     // Instantiate the service.
     TestHAServicePtr service;
     ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
-                                                        ha_config)));
+                                                        ha_config->get())));
     // Multi-threading should be enabled.
-    ASSERT_TRUE(ha_config->getEnableMultiThreading());
+    ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
 
     // Now we'll start, pause, resume and stop a few times.
     for (int i = 0; i < 3; ++i) {
@@ -502,14 +502,14 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
         MultiThreadingMgr::instance().setMode(scenario.dhcp_mt_enabled_);
 
         // Create the HA configuration
-        HAConfigPtr ha_config(new HAConfig());
+        HAConfigMapperPtr ha_config(new HAConfigMapper());
         HAConfigParser parser;
         ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
 
         // Instantiate the service.
         TestHAServicePtr service;
         ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
-                                                            ha_config)));
+                                                            ha_config->get())));
         ASSERT_NO_THROW_LOG(service->startClientAndListener());
 
         // Verify the configuration is as expected.
@@ -526,7 +526,7 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
         }
 
         // Multi-threading should be enabled.
-        ASSERT_TRUE(ha_config->getEnableMultiThreading());
+        ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
 
         // When HA+MT is enabled, client should be multi-threaded.
         ASSERT_TRUE(service->client_);

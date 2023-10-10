@@ -402,7 +402,8 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
 }
 
-// Verifies that hot standby configuration is parsed correctly.
+// Verifies that the correct hub configuration in the hub-and-spoke model is parsed correctly
+// and accepted.
 TEST_F(HAConfigTest, configureHub) {
     const std::string ha_config =
         "["
@@ -430,13 +431,13 @@ TEST_F(HAConfigTest, configureHub) {
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server3\","
-        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"url\": \"http://127.0.0.1:8082/\","
         "                \"role\": \"primary\","
         "                \"auto-failover\": false"
         "            },"
         "            {"
         "                \"name\": \"server4\","
-        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"url\": \"http://127.0.0.1:8083/\","
         "                \"role\": \"standby\","
         "                \"auto-failover\": true"
         "            }"
@@ -446,65 +447,46 @@ TEST_F(HAConfigTest, configureHub) {
 
     HAImplPtr impl(new HAImpl());
     ASSERT_NO_THROW(impl->configure(Element::fromJSON(ha_config)));
-    EXPECT_EQ("server2", impl->getConfig()->getThisServerName());
-    EXPECT_EQ(HAConfig::HOT_STANDBY, impl->getConfig()->getHAMode());
 
-    HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
+    auto config = impl->getConfig("server2");
+    ASSERT_TRUE(config);
+
+    EXPECT_EQ("server2", config->getThisServerName());
+    EXPECT_EQ(HAConfig::HOT_STANDBY, config->getHAMode());
+
+    HAConfig::PeerConfigPtr cfg = config->getThisServerConfig();
     ASSERT_TRUE(cfg);
     EXPECT_EQ("server2", cfg->getName());
     EXPECT_EQ("http://127.0.0.1:8081/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::STANDBY, cfg->getRole());
     EXPECT_TRUE(cfg->isAutoFailover());
 
-    cfg = impl->getConfig()->getPeerConfig("server1");
+    cfg = config->getPeerConfig("server1");
     ASSERT_TRUE(cfg);
     EXPECT_EQ("server1", cfg->getName());
     EXPECT_EQ("http://127.0.0.1:8080/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
 
-    HAConfig::StateConfigPtr state_cfg;
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
-                    getStateConfig(HA_BACKUP_ST));
-    ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+    config = impl->getConfig("server4");
+    ASSERT_TRUE(config);
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
-                    getStateConfig(HA_HOT_STANDBY_ST));
-    ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ("server4", config->getThisServerName());
+    EXPECT_EQ(HAConfig::HOT_STANDBY, config->getHAMode());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
-                    getStateConfig(HA_PARTNER_DOWN_ST));
-    ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+    cfg = config->getThisServerConfig();
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server4", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8083/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::STANDBY, cfg->getRole());
+    EXPECT_TRUE(cfg->isAutoFailover());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
-                    getStateConfig(HA_READY_ST));
-    ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
-
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
-                    getStateConfig(HA_SYNCING_ST));
-    ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
-
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
-                    getStateConfig(HA_TERMINATED_ST));
-    ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
-
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
-                    getStateConfig(HA_WAITING_ST));
-    ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
-
-    // Verify multi-threading default values. Default is 0 for the listener and client threads, but
-    // after MT is applied, HAImpl resolves them to the auto-detected values.
-    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
-    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
-    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpListenerThreads());
-    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
+    cfg = config->getPeerConfig("server3");
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server3", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8082/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
+    EXPECT_FALSE(cfg->isAutoFailover());
 }
 
 // This server name must not be empty.
@@ -1980,5 +1962,84 @@ TEST_F(HAConfigTest, ipv6Url) {
     // Check the URL.
     EXPECT_EQ(impl->getConfig()->getThisServerConfig()->getUrl().toText(), "http://[2001:db8::1]:8080/");
 }
+
+TEST_F(HAConfigTest, hubAndSpokeNotHotStandbyConfig) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server2\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\""
+        "            }"
+        "        ]"
+        "    },"
+        "    {"
+        "        \"this-server-name\": \"server4\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server3\","
+        "                \"url\": \"http://127.0.0.1:8082/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server4\","
+        "                \"url\": \"http://127.0.0.1:8083/\","
+        "                \"role\": \"secondary\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "multiple HA relationships are only supported for 'hot-standby' mode");
+}
+
+TEST_F(HAConfigTest, hubAndSpokeRepeatingThisServerName) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server2\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\""
+        "            }"
+        "        ]"
+        "    },"
+        "    {"
+        "        \"this-server-name\": \"server2\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8082/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8083/\","
+        "                \"role\": \"standby\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "'this-server-name' must be unique for different relationships");
+}
+
 
 }  // namespace

@@ -2735,11 +2735,11 @@ TEST_F(HAServiceTest, processHeartbeat) {
         "]";
 
     // Parse the HA configuration.
-    HAConfigPtr config_storage(new HAConfig());
+    HAConfigMapperPtr config_storage(new HAConfigMapper());
     HAConfigParser parser;
     ASSERT_NO_THROW(parser.parse(config_storage, Element::fromJSON(config_text)));
 
-    TestHAService service(io_service_,  network_state_, config_storage);
+    TestHAService service(io_service_,  network_state_, config_storage->get());
     service.query_filter_.serveDefaultScopes();
 
     int unsent_updates = 6;

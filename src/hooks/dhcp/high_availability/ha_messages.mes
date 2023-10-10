@@ -113,7 +113,7 @@ library. The argument provides the detailed error message.
 This informational message is issued when the HA hook library configuration
 parser successfully parses and validates the new configuration.
 
-% HA_CONFIG_AUTO_FAILOVER_DISABLED auto-failover disabled for %1
+% HA_CONFIG_AUTO_FAILOVER_DISABLED %1 relationship: auto-failover disabled
 This warning message is issued to indicate that the 'auto-failover' parameter
 was administratively disabled for the specified server. The server will not
 automatically start serving partner's scope when the partner failure is detected.
@@ -129,7 +129,7 @@ This warning message is issued when HA configuration has disabled
 multi-threading while Kea global configuration has multi-threading enabled.
 This will likely cause performance degradation.
 
-% HA_CONFIG_LEASE_SYNCING_DISABLED lease database synchronization between HA servers is disabled
+% HA_CONFIG_LEASE_SYNCING_DISABLED %1 relationship: lease database synchronization between HA servers is disabled
 This warning message is issued when the lease database synchronization is
 administratively disabled. This is valid configuration if the leases are
 replicated between lease databases via some other mechanism, e.g. SQL
@@ -140,7 +140,7 @@ This informational message is issued as a reminder that lease database
 synchronization is administratively disabled and therefore the server
 transitions directly from the "waiting" to "ready" state.
 
-% HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER unusual configuration where "send-lease-updates": %1 and "sync-leases": %2
+% HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER %1 relationship: unusual configuration where "send-lease-updates": %1 and "sync-leases": %2
 This warning message is issued when the configuration values of the
 send-lease-updates and sync-leases parameters differ. This may be a
 valid configuration but is unusual. Normally, if the lease database
@@ -152,7 +152,7 @@ leases upon startup but later send lease updates to the partner, or
 the lease database should be synchronized upon startup, but no lease
 updates are later sent as a result of leases allocation.
 
-% HA_CONFIG_LEASE_UPDATES_DISABLED lease updates will not be generated
+% HA_CONFIG_LEASE_UPDATES_DISABLED %1 relationship: lease updates will not be generated
 This warning message is issued when the lease updates are administratively
 disabled. This is valid configuration if the leases are replicated to the
 partner's database via some other mechanism, e.g. SQL database replication.

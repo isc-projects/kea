@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,7 @@ namespace isc {
 namespace ha {
 
 HAImpl::HAImpl()
-    : config_(new HAConfig()) {
+    : config_(new HAConfigMapper()) {
 }
 
 void
@@ -43,7 +43,7 @@ HAImpl::startService(const IOServicePtr& io_service,
                      const HAServerType& server_type) {
     // Create the HA service and crank up the state machine.
     service_ = boost::make_shared<HAService>(io_service, network_state,
-                                             config_, server_type);
+                                             config_->get(), server_type);
     // Schedule a start of the services. This ensures we begin after
     // the dust has settled and Kea MT mode has been firmly established.
     io_service->post([&]() { service_->startClientAndListener(); } );
@@ -115,7 +115,7 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
     // If the hook library is configured to not send lease updates to the
     // partner, there is nothing to do because this whole callout is
     // currently about sending lease updates.
-    if (!config_->amSendingLeaseUpdates()) {
+    if (!config_->get()->amSendingLeaseUpdates()) {
         // No need to log it, because it was already logged when configuration
         // was applied.
         return;
@@ -229,7 +229,7 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
     // If the hook library is configured to not send lease updates to the
     // partner, there is nothing to do because this whole callout is
     // currently about sending lease updates.
-    if (!config_->amSendingLeaseUpdates()) {
+    if (!config_->get()->amSendingLeaseUpdates()) {
         // No need to log it, because it was already logged when configuration
         // was applied.
         return;
@@ -312,7 +312,7 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
         auto ha_relationship = Element::createMap();
         ConstElementPtr ha_servers = service_->processStatusGet();
         ha_relationship->set("ha-servers", ha_servers);
-        ha_relationship->set("ha-mode", Element::create(HAConfig::HAModeToString(config_->getHAMode())));
+        ha_relationship->set("ha-mode", Element::create(HAConfig::HAModeToString(config_->get()->getHAMode())));
         ha_relationships->add(ha_relationship);
         mutable_resp_args->set("high-availability", ha_relationships);
     }

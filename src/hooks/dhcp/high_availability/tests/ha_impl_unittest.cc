@@ -348,7 +348,7 @@ TEST_F(HAImplTest, leases4Committed) {
     // Make sure we wait for the acks from the backup server to be able to
     // test the case of sending lease updates even though the service is
     // in the state in which the lease updates are normally not sent.
-    ha_impl.config_->setWaitBackupAck(true);
+    ha_impl.config_->get()->setWaitBackupAck(true);
 
     // Create callout handle to be used for passing arguments to the
     // callout.
@@ -392,7 +392,7 @@ TEST_F(HAImplTest, leases4Committed) {
     leases4->push_back(lease4);
     callout_handle->setArgument("leases4", leases4);
 
-    ha_impl.config_->setSendLeaseUpdates(false);
+    ha_impl.config_->get()->setSendLeaseUpdates(false);
 
     // Park the packet.
     HooksManager::park("leases4_committed", query4, []{});
@@ -405,7 +405,7 @@ TEST_F(HAImplTest, leases4Committed) {
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
 
     // Enable updates and retry.
-    ha_impl.config_->setSendLeaseUpdates(true);
+    ha_impl.config_->get()->setSendLeaseUpdates(true);
     callout_handle->setArgument("leases4", leases4);
 
     // Park the packet.
@@ -434,7 +434,7 @@ TEST_F(HAImplTest, leases6Committed) {
     // Make sure we wait for the acks from the backup server to be able to
     // test the case of sending lease updates even though the service is
     // in the state in which the lease updates are normally not sent.
-    ha_impl.config_->setWaitBackupAck(true);
+    ha_impl.config_->get()->setWaitBackupAck(true);
 
     // Create callout handle to be used for passing arguments to the
     // callout.
@@ -477,7 +477,7 @@ TEST_F(HAImplTest, leases6Committed) {
     leases6->push_back(lease6);
     callout_handle->setArgument("leases6", leases6);
 
-    ha_impl.config_->setSendLeaseUpdates(false);
+    ha_impl.config_->get()->setSendLeaseUpdates(false);
 
     // Park the packet.
     HooksManager::park("leases6_committed", query6, []{});
@@ -490,7 +490,7 @@ TEST_F(HAImplTest, leases6Committed) {
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
 
     // Enable updates and retry.
-    ha_impl.config_->setSendLeaseUpdates(true);
+    ha_impl.config_->get()->setSendLeaseUpdates(true);
     callout_handle->setArgument("leases6", leases6);
 
     // Park the packet.
@@ -660,7 +660,7 @@ TEST_F(HAImplTest, statusGet) {
 TEST_F(HAImplTest, statusGetBackupServer) {
     TestHAImpl ha_impl;
     ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
-    ha_impl.config_->setThisServerName("server3");
+    ha_impl.config_->get()->setThisServerName("server3");
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
