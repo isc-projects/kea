@@ -45,7 +45,7 @@ OptionClasslessStaticRoute::unpack(OptionBufferConstIter begin, OptionBufferCons
     if (!distance(begin, end) || distance(begin, end) % (V4ADDRESS_LEN * 3)) {
         isc_throw(OutOfRange, "DHCPv4 OptionClasslessStaticRoute "
                                   << type_ << " has invalid length=" << distance(begin, end)
-                                  << ", must be not 0 and divisible by 12.");
+                                  << ", must be divisible by 12 and must not be 0.");
     }
 
     while (begin != end) {

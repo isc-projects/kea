@@ -1295,6 +1295,35 @@
         "name": "domain-search"
       },
 
+      /*
+        Code Len Destination 1    Router 1
+      +-----+---+----+-----+----+----+----+----+----+
+      | 121 | n | d1 | ... | dN | r1 | r2 | r3 | r4 |
+      +-----+---+----+-----+----+----+----+----+----+
+
+       Destination 2       Router 2
+      +----+-----+----+----+----+----+----+
+      | d1 | ... | dN | r1 | r2 | r3 | r4 |
+      +----+-----+----+----+----+----+----+
+
+      Destination 1...N     Destination descriptors - describe the IP
+                            subnet number and subnet mask of a particular
+                            destination using a compact encoding. This
+                            encoding consists of one octet describing
+                            the width of the subnet mask, followed by all
+                            the significant octets of the subnet number.
+
+      Router 1...N          The IP address of the router that should
+                            be used to reach that destination.
+      */
+      // Type: array of {IPv4 address}
+      {
+        "code": 121,
+      //         subnet1, mask1  , router1  , subnet2     , mask2          , router2   , subnet3    , mask3       ,  router3
+        "data": "0.0.0.0, 0.0.0.0, 10.17.0.1, 10.229.0.128, 255.255.255.128, 10.229.0.1, 10.27.129.0, 255.255.255.0, 10.27.129.1",
+        "name": "classless-static-route"
+      },
+
       // Option codes 120-123 are not defined in Kea.
 
       /*
