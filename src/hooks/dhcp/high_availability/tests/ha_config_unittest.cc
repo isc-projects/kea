@@ -402,6 +402,111 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
 }
 
+// Verifies that hot standby configuration is parsed correctly.
+TEST_F(HAConfigTest, configureHub) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server2\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    },"
+        "    {"
+        "        \"this-server-name\": \"server4\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server3\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server4\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+
+    HAImplPtr impl(new HAImpl());
+    ASSERT_NO_THROW(impl->configure(Element::fromJSON(ha_config)));
+    EXPECT_EQ("server2", impl->getConfig()->getThisServerName());
+    EXPECT_EQ(HAConfig::HOT_STANDBY, impl->getConfig()->getHAMode());
+
+    HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server2", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8081/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::STANDBY, cfg->getRole());
+    EXPECT_TRUE(cfg->isAutoFailover());
+
+    cfg = impl->getConfig()->getPeerConfig("server1");
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server1", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8080/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
+    EXPECT_FALSE(cfg->isAutoFailover());
+
+    HAConfig::StateConfigPtr state_cfg;
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_BACKUP_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_HOT_STANDBY_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_PARTNER_DOWN_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_READY_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_SYNCING_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_TERMINATED_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_WAITING_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    // Verify multi-threading default values. Default is 0 for the listener and client threads, but
+    // after MT is applied, HAImpl resolves them to the auto-detected values.
+    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
+}
+
 // This server name must not be empty.
 TEST_F(HAConfigTest, emptyServerName) {
     testInvalidConfig(

@@ -171,6 +171,11 @@ HAConfig::HAConfig()
       state_machine_(new StateMachineConfig()) {
 }
 
+HAConfigPtr
+HAConfig::create() {
+    return (boost::make_shared<HAConfig>());
+}
+
 HAConfig::PeerConfigPtr
 HAConfig::selectNextPeerConfig(const std::string& name) {
     // Check if there is a configuration for this server name already. We can't

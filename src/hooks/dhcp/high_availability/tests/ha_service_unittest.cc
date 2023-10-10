@@ -5025,7 +5025,9 @@ TEST_F(HAServiceTest, processSyncCompleteNotify) {
     EXPECT_NO_THROW(service.transition(HA_PARTNER_DOWN_ST, HAService::NOP_EVT));
 
     // Simulate disabling the DHCP service for synchronization.
-    EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::Origin::HA_COMMAND));
+    if (service.network_state_->isServiceEnabled()) {
+        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::Origin::HA_COMMAND));
+    }
 
     ConstElementPtr rsp;
     EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify());
@@ -5535,10 +5537,14 @@ public:
         // Also, let's preset the DHCP server state to the opposite of the expected
         // state.
         if (dhcp_enabled) {
-            service_->network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+            if (service_->network_state_->isServiceEnabled()) {
+                service_->network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+            }
 
         } else {
-            service_->network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+            if (!service_->network_state_->isServiceEnabled()) {
+                service_->network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+            }
         }
 
         // Transition to the desired state.

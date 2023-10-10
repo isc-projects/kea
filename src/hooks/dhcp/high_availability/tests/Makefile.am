@@ -34,6 +34,7 @@ ha_unittests_SOURCES += ha_impl_unittest.cc
 ha_unittests_SOURCES += ha_service_unittest.cc
 ha_unittests_SOURCES += ha_test.cc ha_test.h
 ha_unittests_SOURCES += ha_mt_unittest.cc
+ha_unittests_SOURCES += ha_relationship_mapper_unittest.cc
 ha_unittests_SOURCES += lease_update_backlog_unittest.cc
 ha_unittests_SOURCES += query_filter_unittest.cc
 ha_unittests_SOURCES += run_unittests.cc

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef HA_CONFIG_H
 #define HA_CONFIG_H
 
+#include <ha_relationship_mapper.h>
 #include <asiolink/crypto_tls.h>
 #include <exceptions/exceptions.h>
 #include <http/basic_auth.h>
@@ -28,6 +29,14 @@ public:
     HAConfigValidationError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+class HAConfig;
+
+/// @brief Pointer to the High Availability configuration structure.
+typedef boost::shared_ptr<HAConfig> HAConfigPtr;
+
+/// @brief Pointer to an object mapping HAConfig to relationships.
+typedef boost::shared_ptr<HARelationshipMapper<HAConfig>> HAConfigMapperPtr;
 
 /// @brief Storage for High Availability configuration.
 class HAConfig {
@@ -313,6 +322,9 @@ public:
 
     /// @brief Constructor.
     HAConfig();
+
+    /// @brief Instantiates a HAConfig.
+    static HAConfigPtr create();
 
     /// @brief Creates and returns pointer to the new peer's configuration.
     ///
@@ -815,9 +827,6 @@ public:
     PeerConfigMap peers_;                      ///< Map of peers' configurations.
     StateMachineConfigPtr state_machine_;      ///< State machine configuration.
 };
-
-/// @brief Pointer to the High Availability configuration structure.
-typedef boost::shared_ptr<HAConfig> HAConfigPtr;
 
 } // end of namespace isc::ha
 } // end of namespace isc

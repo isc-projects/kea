@@ -95,13 +95,8 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
         isc_throw(ConfigError, "HA configuration must be a list");
     }
 
-    const auto& config_vec = config->listValue();
-    if (config_vec.size() != 1) {
-        isc_throw(ConfigError, "invalid number of configurations in the HA configuration"
-                  " list. Expected exactly one configuration");
-    }
-
     // Get the HA configuration.
+    const auto& config_vec = config->listValue();
     ElementPtr c = config_vec[0];
 
     // Get 'mode'. That's the first thing to gather because the defaults we

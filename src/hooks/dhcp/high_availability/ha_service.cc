@@ -1037,7 +1037,7 @@ HAService::inScopeInternal(QueryPtrType& query) {
     query->addClass(dhcp::ClientClass(scope_class));
     // The following is the part of the server failure detection algorithm.
     // If the query should be processed by the partner we need to check if
-    // the partner responds. If the number of unanswered queries exceeds a
+    // the partner responds. If the number of unansweered queries exceeds a
     // configured threshold, we will consider the partner to be offline.
     if (!in_scope && communication_state_->isCommunicationInterrupted()) {
         communication_state_->analyzeMessage(query);
