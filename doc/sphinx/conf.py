@@ -34,7 +34,7 @@ with open(config_ac_path) as f:
     for line in f.readlines():
         if line.startswith('AC_INIT(kea'):
             parts = line.split(',')
-            release = parts[1]
+            release = parts[1].strip()
             # If the first line of the ChangeLog announces release, it means
             # that this is the final release.
             dash_parts = release.split('-')
