@@ -24,6 +24,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
+#include <dhcp/option_classless_static_route.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -883,6 +884,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
         case DHO_FQDN:
             // Record of 3 uint8 and a FQDN, no array.
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
+
+        case DHO_CLASSLESS_STATIC_ROUTE:
+            return (OptionPtr(new OptionClasslessStaticRoute(begin, end)));
 
         case DHO_VIVCO_SUBOPTIONS:
             // Record of uint32 followed by binary.
