@@ -1295,6 +1295,8 @@
         "name": "domain-search"
       },
 
+      // Option code 120 is not defined in Kea.
+
       /*
         Code Len Destination 1    Router 1
       +-----+---+----+-----+----+----+----+----+----+
@@ -1324,7 +1326,7 @@
         "name": "classless-static-route"
       },
 
-      // Option codes 120-123 are not defined in Kea.
+      // Option codes 122-123 are not defined in Kea.
 
       /*
                            1 1 1 1 1 1

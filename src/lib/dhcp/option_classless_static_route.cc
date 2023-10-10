@@ -55,12 +55,12 @@ OptionClasslessStaticRoute::unpack(OptionBufferConstIter begin, OptionBufferCons
         begin += V4ADDRESS_LEN;
 
         // Subnet mask e.g. 255.255.255.128
-        uint32_t subnet_mask = readUint32(ptr, distance(begin, end));
+        uint32_t subnet_mask = readUint32(ptr + V4ADDRESS_LEN, distance(begin, end));
         uint8_t mask_width = calcMaskWidth(subnet_mask);
         begin += V4ADDRESS_LEN;
 
         // Router IP address
-        auto router_addr = IOAddress(readUint32(ptr, distance(begin, end)));
+        auto router_addr = IOAddress(readUint32(ptr + (2 * V4ADDRESS_LEN), distance(begin, end)));
         begin += V4ADDRESS_LEN;
 
         StaticRouteTuple route = std::make_tuple(subnet_nr, mask_width, router_addr);
@@ -80,7 +80,7 @@ OptionClasslessStaticRoute::toText(int indent) const {
     for (const auto& route : static_routes_) {
         stream << ", Route " << ++i
                << " (subnet " << get<0>(route).toText() << "/"
-               << get<1>(route) << ", router IP "
+               << static_cast<int>(get<1>(route)) << ", router IP "
                << get<2>(route) << ")";
     }
 
