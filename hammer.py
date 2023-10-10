@@ -42,64 +42,71 @@ except:
 import xml.etree.ElementTree as ET
 
 
+# SYSTEMS = {
+#     'os': [
+#         ( 'version', True if supported else False ),
+#         ...
+#     ],
+#     ...
+# }
 SYSTEMS = {
     'fedora': [
-        #'27',  # EOLed
-        #'28',  # EOLed
-        #'29',  # EOLed
-        #'30',  # EOLed
-        #'31',  # EOLed
-        '32',   # EOLed
-        '33',   # EOLed
-        '34',
-        '35',
-        '36',
-        '37',
-        '38'
+        ( '27', False ),
+        ( '28', False ),
+        ( '29', False ),
+        ( '30', False ),
+        ( '31', False ),
+        ( '32', False ),
+        ( '33', False ),
+        ( '34', False ),
+        ( '35', False ),
+        ( '36', False ),
+        ( '37', True  ),
+        ( '38', True  ),
     ],
     'centos': [
-        '7',
-        '8',
-        '9',
+        ( '7', False ),
+        ( '8', True  ),
+        ( '9', True  ),
     ],
     'rhel': [
-        '8',
-        '9',
+        ( '8', True  ),
+        ( '9', True  ),
     ],
     'ubuntu': [
-        #'16.04',
-        '18.04',
-        #'18.10',  # EOLed
-        #'19.04',  # EOLed
-        #'19.10',  # EOLed
-        '20.04',
-        '20.10',
-        '21.04',
-        '22.04',
+        ( '16.04', False ),
+        ( '18.04', True  ),
+        ( '18.10', False ),
+        ( '19.04', False ),
+        ( '19.10', False ),
+        ( '20.04', True  ),
+        ( '20.10', False ),
+        ( '21.04', False ),
+        ( '22.04', True  ),
     ],
     'debian': [
-        #'8',
-        '9',
-        '10',
-        '11',
-        '12'
+        (  '8', False ),
+        (  '9', False ),
+        ( '10', True  ),
+        ( '11', True  ),
+        ( '12', True  ),
     ],
     'freebsd': [
-        '11.2',
-        '11.4',
-        '12.0',
-        '12.1',
-        '13.0',
+        ( '11.2', False ),
+        ( '11.4', False ),
+        ( '12.0', True  ),
+        ( '12.1', True  ),
+        ( '13.0', True  ),
     ],
     'alpine': [
-        #'3.10',   # EOLed
-        #'3.11',   # EOLed
-        #'3.12',   # EOLed
-        '3.13',
-        '3.14',
-        '3.15',
-        '3.16',
-        '3.17',
+        ( '3.10', False ),
+        ( '3.11', False ),
+        ( '3.12', False ),
+        ( '3.13', False ),
+        ( '3.14', False ),
+        ( '3.15', True  ),
+        ( '3.16', True  ),
+        ( '3.17', True  ),
     ],
     'arch': []
 }
@@ -2868,9 +2875,11 @@ def parse_args():
 
 def list_supported_systems():
     """List systems hammer can support (with supported providers)."""
-    for system, revisions in SYSTEMS.items():
+    for system, revisions_and_supported in SYSTEMS.items():
         print('%s:' % system)
-        for r in revisions:
+        for r, supported in revisions_and_supported:
+            if not supported:
+                continue
             providers = []
             for p in ['lxc', 'virtualbox']:
                 k = '%s-%s-%s' % (system, r, p)

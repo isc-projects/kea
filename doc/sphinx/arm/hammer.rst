@@ -32,25 +32,32 @@ or in VirtualBox. For a list of supported systems, use the
 
 .. code-block:: console
 
-   $ ./hammer.py supported-systems
-   fedora:
-     - 27: lxc, virtualbox
-     - 28: lxc, virtualbox
-     - 29: lxc, virtualbox
-   centos:
-     - 7: lxc, virtualbox
-   rhel:
-     - 8: virtualbox
-   ubuntu:
-     - 16.04: lxc, virtualbox
-     - 18.04: lxc, virtualbox
-     - 18.10: lxc, virtualbox
-   debian:
-     - 8: lxc, virtualbox
-     - 9: lxc, virtualbox
-   freebsd:
-     - 11.2: virtualbox
-     - 12.0: virtualbox
+    $ ./hammer.py supported-systems
+    fedora:
+      - 37: lxc
+      - 38:
+    centos:
+      - 8: lxc, virtualbox
+      - 9:
+    rhel:
+      - 8: virtualbox
+      - 9:
+    ubuntu:
+      - 18.04: lxc, virtualbox
+      - 20.04: lxc
+      - 22.04: lxc
+    debian:
+      - 10: lxc, virtualbox
+      - 11: lxc
+      - 12: lxc
+    freebsd:
+      - 12.0: virtualbox
+      - 12.1:
+      - 13.0: virtualbox
+    alpine:
+      - 3.15: lxc
+      - 3.16: lxc
+      - 3.17: lxc
 
 It is also possible to run the build locally, in the current system (if the OS
 is supported).
