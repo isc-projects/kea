@@ -1721,7 +1721,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
         if 'docs' in features:
             execute('python3 -m venv ~/venv',
                     env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme sphinx-tabs',
                     env=env, timeout=120, check_times=check_times)
 
     # prepare rhel
@@ -1773,7 +1773,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
         if 'docs' in features:
             execute('python3 -m venv ~/venv',
                     env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme sphinx-tabs',
                     env=env, timeout=120, check_times=check_times)
 
     # prepare ubuntu
@@ -1790,7 +1790,8 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'python3-sphinx-tabs',
+                             'texlive', 'texlive-latex-extra'])
             if revision == '22.04':
                 packages.extend(['tex-gyre'])
 
@@ -1849,7 +1850,8 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             if revision == '8':
                 packages.extend(['virtualenv'])
             else:
-                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
+                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'python3-sphinx-tabs',
+                                 'texlive', 'texlive-latex-extra'])
                 if revision == '9':
                     packages.extend(['texlive-generic-extra'])
                 if revision == '12':
@@ -1893,7 +1895,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             if revision == '8':
                 execute('python3 -m venv ~/venv',
                         env=env, timeout=60, check_times=check_times)
-                execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+                execute('~/venv/bin/pip install sphinx sphinx-rtd-theme sphinx-tabs',
                         env=env, timeout=120, check_times=check_times)
 
     # prepare freebsd

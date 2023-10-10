@@ -45,6 +45,7 @@ with open(config_ac_path) as f:
                     release = candidate_release
             break
 version = release
+dashed_version_series='-'.join(version.split('.')[0:2])
 
 # -- General configuration ---------------------------------------------------
 
@@ -58,6 +59,7 @@ version = release
 extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
+    'sphinx_tabs.tabs',
 ]
 
 # The suffix(es) of source filenames.
@@ -229,7 +231,13 @@ man_pages = [
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
+# -- Substitutions -----------------------------------------------------------
 
+rst_prolog="""
+.. |cloudsmith_repo| replace:: kea-{dashed_version_series}
+""".format(dashed_version_series=dashed_version_series)
+
+# -- Functions ---------------------------------------------------------------
 
 # Do generation of api.rst and kea-messages.rst here in conf.py instead of Makefile.am
 # so they are available on ReadTheDocs as there makefiles are not used for building docs.
