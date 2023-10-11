@@ -322,8 +322,15 @@ void configureCommandChannel() {
     }
 }
 
+/// @brief Process a DHCPv4 confguration and return an answer stating if the
+/// configuration is valid, or specifying details about the error otherwise.
+///
+/// @param config_set the configuration being processed
+/// @param check_only whether the processing is only for testing the
+///     configuration, in which case some configuration elements, such as
+///     interfaces, might be left uncommitted or unprocessed
 isc::data::ConstElementPtr
-processDhcp4Config(isc::data::ConstElementPtr config_set) {
+processDhcp4Config(isc::data::ConstElementPtr config_set, bool const check_only) {
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
@@ -444,10 +451,16 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
             parser.parse(hr_identifiers);
         }
 
+        // Interfaces are parsed one more time with test_mode=false in the
+        // caller context. Presumably, this would make it possible to create
+        // IfacesConfigParser with test_mode=false here, since if the result of
+        // processDhcp4Config is a success, the interfaces get applied there.
+        // However test_mode influences redetection which can influence the
+        // result of processDhcp4Config, so let's keep test_mode=check_only.
         ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
         if (ifaces_config) {
             parameter_name = "interfaces-config";
-            IfacesConfigParser parser(AF_INET, true);
+            IfacesConfigParser parser(AF_INET, check_only);
             CfgIfacePtr cfg_iface = srv_config->getCfgIface();
             parser.parse(cfg_iface, ifaces_config);
         }
@@ -763,7 +776,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START)
         .arg(server.redactConfig(config_set)->str());
 
-    auto answer = processDhcp4Config(config_set);
+    auto answer = processDhcp4Config(config_set, check_only);
 
     int status_code = CONTROL_RESULT_SUCCESS;
     isc::config::parseAnswer(status_code, answer);
