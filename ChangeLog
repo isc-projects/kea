@@ -1,3 +1,8 @@
+2186.	[bug]		andrei
+	Fixed interface redetection which had stopped working since
+	Kea 2.3.6.
+	(Gitlab #3017)
+
 2185.	[func]		razvan
 	Added extended log messages: DHCP4_DISCOVER, DHCP4_REQUEST,
 	DHCP6_PROCESS_IA_NA_SOLICIT, DHCP6_PROCESS_IA_PD_SOLICIT, which
