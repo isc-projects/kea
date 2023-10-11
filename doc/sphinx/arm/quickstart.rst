@@ -239,6 +239,57 @@ or all packages with a specified version number:
 
         # rc-update add kea-dhcp6
 
+
+.. _quick-start-docker:
+
+Quick Start Guide Using Docker Containers
+=========================================
+
+1. Go to `ISC docker repository on cloudsmith.io <https://cloudsmith.io/~isc/repos/docker/packages/>`__.
+
+2. Create an ipvlan network attached to the client-facing host interface and
+   assigned to the subnet that is served by Kea.
+
+.. code-block:: console
+
+    $ docker network create --driver ipvlan --ipv6 --subnet 2001:db8::/64 --opt parent=eth0 ipvlan0
+
+3. Pick the desired image and pull it locally.
+
+.. code-block:: console
+
+    $ docker pull docker.cloudsmith.io/isc/docker/kea-dhcp6
+
+
+4. Create a container out of the image. Mount the configuration volume and the
+   data volume if needed.
+
+.. code-block:: console
+
+    $ docker create \
+        --name kea-dhcp6 \
+        --network ipvlan0 \
+        --volume /local/kea/config:/etc/kea \
+        --volume /local/kea/data:/var/lib/kea \
+        docker.cloudsmith.io/isc/docker/kea-dhcp6
+
+5. Start the docker container.
+
+.. code-block:: console
+
+    $ docker start kea-dhcp6
+
+6. To stop the docker container, run:
+
+.. code-block:: console
+
+    $ docker stop kea-dhcp6
+
+.. note::
+
+    Refer to the `kea-docker readme <https://gitlab.isc.org/isc-projects/kea-docker#user-content-docker-files-for-building-kea-containers>`__ for more complex scenarios.
+
+
 .. _quick-start-services:
 
 Quick Start Guide for DHCPv4 and DHCPv6 Services
