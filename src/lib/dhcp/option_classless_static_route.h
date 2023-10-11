@@ -48,7 +48,8 @@ public:
     /// @param check flag which indicates if checking the option length is
     /// required (used only in V4)
     ///
-    /// @throw
+    /// @throw OutOfRange Thrown when @c check param set to @c true and
+    /// @c Option::packHeader(buf,check) throws due to option len>255 octets.
     void pack(util::OutputBuffer& buf, bool check = true) const override;
 
     /// @brief Parses received wire data buffer.

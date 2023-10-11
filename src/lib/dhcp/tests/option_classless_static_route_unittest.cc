@@ -27,6 +27,7 @@ TEST(OptionClasslessStaticRouteTest, emptyCtor) {
     EXPECT_EQ(DHO_CLASSLESS_STATIC_ROUTE, option->getType());
 }
 
+// This test verifies adding one route to OptionClasslessStaticRoute class.
 TEST(OptionClasslessStaticRouteTest, emptyCtorAddOneRoute) {
     // Create option instance. Check that constructor doesn't throw.
     OptionClasslessStaticRoutePtr option;
@@ -44,23 +45,21 @@ TEST(OptionClasslessStaticRouteTest, emptyCtorAddOneRoute) {
     EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=5, Route 1 (subnet 0.0.0.0/0,"
               " router IP 10.198.122.1)",
               option->toText());
-
-    // Check if member variables were correctly set by ctor.
-    EXPECT_EQ(Option::V4, option->getUniverse());
-    EXPECT_EQ(DHO_CLASSLESS_STATIC_ROUTE, option->getType());
 }
 
+// This test verifies constructor of the OptionClasslessStaticRoute class from config data.
+// Only one static route is defined.
 TEST(OptionClasslessStaticRouteTest, bufferCtorWithOneRoute) {
-    // Prepare data to decode - one route with 0 mask width
+    // Prepare data to decode - one route with mask width = 8.
     const uint8_t buf_data[] = {
-        10, 0, 0, 0,    // subnet nr
-        255, 0, 0, 0,   // mask
-        10, 198, 122, 1 // router IP
+        10,  0,   0,   0,  // subnet nr
+        255, 0,   0,   0,  // mask
+        10,  198, 122, 1   // router IP
     };
 
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
-    // Create option instance. Check that constructor doesn't throw.
+    // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
     OptionClasslessStaticRoutePtr option;
     EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
@@ -72,10 +71,41 @@ TEST(OptionClasslessStaticRouteTest, bufferCtorWithOneRoute) {
     EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=6, Route 1 (subnet 10.0.0.0/8,"
               " router IP 10.198.122.1)",
               option->toText());
+}
 
-    // Check if member variables were correctly set by ctor.
-    EXPECT_EQ(Option::V4, option->getUniverse());
-    EXPECT_EQ(DHO_CLASSLESS_STATIC_ROUTE, option->getType());
+// This test verifies constructor of the OptionClasslessStaticRoute class from config data.
+// 3 static routes are defined.
+TEST(OptionClasslessStaticRouteTest, bufferCtorWithMoreRoutes) {
+    // Prepare data to decode - 3 static routes
+    const uint8_t buf_data[] = {
+        0,   0,   0,   0,    // subnet nr
+        0,   0,   0,   0,    // mask
+        10,  17,  0,   1,    // router IP
+        10,  229, 0,   128,  // subnet nr
+        255, 255, 255, 128,  // mask
+        10,  229, 0,   1,    // router IP
+        10,  27,  129, 0,    // subnet nr
+        255, 255, 255, 0,    // mask
+        10,  27,  129, 1     // router IP
+    };
+
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
+    OptionClasslessStaticRoutePtr option;
+    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())));
+    ASSERT_TRUE(option);
+
+    // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
+    // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).
+    EXPECT_EQ(24, option->len());
+
+    // Verify toText() is working fine.
+    EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=22, "
+              "Route 1 (subnet 0.0.0.0/0, router IP 10.17.0.1), "
+              "Route 2 (subnet 10.229.0.128/25, router IP 10.229.0.1), "
+              "Route 3 (subnet 10.27.129.0/24, router IP 10.27.129.1)",
+              option->toText());
 }
 
 }
