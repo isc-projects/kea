@@ -11,6 +11,7 @@
 #include <ha_service_states.h>
 #include <cc/dhcp_config_error.h>
 #include <util/file_utilities.h>
+#include <boost/make_shared.hpp>
 #include <limits>
 #include <set>
 
@@ -64,14 +65,17 @@ const SimpleDefaults HA_CONFIG_STATE_DEFAULTS = {
 namespace isc {
 namespace ha {
 
-void
-HAConfigParser::parse(const HAConfigMapperPtr& config_storage,
-                      const ConstElementPtr& config) {
+HAConfigMapperPtr
+HAConfigParser::parse(const ConstElementPtr& config) {
     try {
+        auto config_storage = boost::make_shared<HAConfigMapper>();
+
         // This may cause different types of exceptions. We catch them here
         // and throw unified exception type.
         parseAllInternal(config_storage, config);
+        validateRelationships(config_storage);
         logConfigStatus(config_storage);
+        return (config_storage);
 
     } catch (const ConfigError& ex) {
         throw;
@@ -376,13 +380,18 @@ HAConfigParser::parseOneInternal(const HAConfigMapperPtr& config_storage,
 
     auto peer_configs = rel_config->getAllServersConfig();
     for (auto peer_config : peer_configs) {
-        config_storage->map(peer_config.first, rel_config);
+        try {
+            config_storage->map(peer_config.first, rel_config);
+
+        } catch (...) {
+            isc_throw(HAConfigValidationError, "server names must be unique for different relationships");
+        }
     }
 }
 
 template<typename T>
 T HAConfigParser::getAndValidateInteger(const ConstElementPtr& config,
-                                        const std::string& parameter_name) const {
+                                        const std::string& parameter_name) {
     int64_t value = getInteger(config, parameter_name);
     if (value < 0) {
         isc_throw(ConfigError, "'" << parameter_name << "' must not be negative");
@@ -396,7 +405,7 @@ T HAConfigParser::getAndValidateInteger(const ConstElementPtr& config,
 }
 
 void
-HAConfigParser::logConfigStatus(const HAConfigMapperPtr& config_storage) const {
+HAConfigParser::logConfigStatus(const HAConfigMapperPtr& config_storage) {
     LOG_INFO(ha_logger, HA_CONFIGURATION_SUCCESSFUL);
 
     for (auto config : config_storage->getAll()) {
@@ -433,6 +442,21 @@ HAConfigParser::logConfigStatus(const HAConfigMapperPtr& config_storage) const {
         if (!config->getThisServerConfig()->isAutoFailover()) {
             LOG_WARN(ha_logger, HA_CONFIG_AUTO_FAILOVER_DISABLED)
                 .arg(config->getThisServerName());
+        }
+    }
+}
+
+void
+HAConfigParser::validateRelationships(const HAConfigMapperPtr& config_storage) {
+    auto configs = config_storage->getAll();
+    if (configs.size() <= 1) {
+        return;
+    }
+    std::unordered_set<std::string> server_names;
+    for (auto config : configs) {
+        // Only the hot-standby mode is supported for multiple relationships.
+        if (config->getHAMode() != HAConfig::HOT_STANDBY) {
+            isc_throw(HAConfigValidationError, "multiple HA relationships are only supported for 'hot-standby' mode");
         }
     }
 }

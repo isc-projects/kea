@@ -187,9 +187,8 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
     setDHCPMultiThreadingConfig(true, 3);
 
     // Create the HA configuration
-    HAConfigMapperPtr ha_config(new HAConfigMapper());
-    HAConfigParser parser;
-    ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
+    HAConfigMapperPtr ha_config;
+    ASSERT_NO_THROW_LOG(ha_config = HAConfigParser::parse(config_json));
 
     // Instantiate the service.
     TestHAServicePtr service;
@@ -308,9 +307,8 @@ TEST_F(HAMtServiceTest, multiThreadingTls) {
     setDHCPMultiThreadingConfig(true, 3);
 
     // Create the HA configuration
-    HAConfigMapperPtr ha_config(new HAConfigMapper());
-    HAConfigParser parser;
-    ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
+    HAConfigMapperPtr ha_config;
+    ASSERT_NO_THROW_LOG(ha_config = HAConfigParser::parse(config_json));
 
     // Instantiate the service.
     TestHAServicePtr service;
@@ -502,9 +500,8 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
         MultiThreadingMgr::instance().setMode(scenario.dhcp_mt_enabled_);
 
         // Create the HA configuration
-        HAConfigMapperPtr ha_config(new HAConfigMapper());
-        HAConfigParser parser;
-        ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
+        HAConfigMapperPtr ha_config;
+        ASSERT_NO_THROW_LOG(ha_config = HAConfigParser::parse(config_json));
 
         // Instantiate the service.
         TestHAServicePtr service;

@@ -28,13 +28,12 @@ namespace isc {
 namespace ha {
 
 HAImpl::HAImpl()
-    : config_(new HAConfigMapper()) {
+    : config_() {
 }
 
 void
 HAImpl::configure(const ConstElementPtr& input_config) {
-    HAConfigParser parser;
-    parser.parse(config_, input_config);
+    config_ = HAConfigParser::parse(input_config);
 }
 
 void

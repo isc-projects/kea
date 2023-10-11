@@ -2038,7 +2038,7 @@ TEST_F(HAConfigTest, hubAndSpokeRepeatingThisServerName) {
         "        ]"
         "    }"
         "]",
-        "'this-server-name' must be unique for different relationships");
+        "server names must be unique for different relationships");
 }
 
 

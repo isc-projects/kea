@@ -225,19 +225,13 @@ HATest::createValidPassiveBackupJsonConfiguration() const {
 
 HAConfigPtr
 HATest::createValidConfiguration(const HAConfig::HAMode& ha_mode) const {
-    HAConfigMapperPtr config_storage(new HAConfigMapper());
-    HAConfigParser parser;
-
-    parser.parse(config_storage, createValidJsonConfiguration(ha_mode));
+    auto config_storage = HAConfigParser::parse(createValidJsonConfiguration(ha_mode));
     return (config_storage->get());
 }
 
 HAConfigPtr
 HATest::createValidPassiveBackupConfiguration() const {
-    HAConfigMapperPtr config_storage(new HAConfigMapper());
-    HAConfigParser parser;
-
-    parser.parse(config_storage, createValidPassiveBackupJsonConfiguration());
+    auto config_storage = HAConfigParser::parse(createValidPassiveBackupJsonConfiguration());
     return (config_storage->get());
 }
 

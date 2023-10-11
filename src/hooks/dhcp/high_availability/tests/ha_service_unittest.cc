@@ -2735,9 +2735,8 @@ TEST_F(HAServiceTest, processHeartbeat) {
         "]";
 
     // Parse the HA configuration.
-    HAConfigMapperPtr config_storage(new HAConfigMapper());
-    HAConfigParser parser;
-    ASSERT_NO_THROW(parser.parse(config_storage, Element::fromJSON(config_text)));
+    HAConfigMapperPtr config_storage;
+    ASSERT_NO_THROW(config_storage = HAConfigParser::parse(Element::fromJSON(config_text)));
 
     TestHAService service(io_service_,  network_state_, config_storage->get());
     service.query_filter_.serveDefaultScopes();
