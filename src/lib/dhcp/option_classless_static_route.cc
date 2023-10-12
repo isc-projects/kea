@@ -6,6 +6,10 @@
 
 #include <config.h>
 
+#include <util/strutil.h>
+
+#include <boost/algorithm/string/erase.hpp>
+
 #include <option_classless_static_route.h>
 
 using namespace isc::asiolink;
@@ -40,13 +44,90 @@ OptionClasslessStaticRoute::pack(isc::util::OutputBuffer& buf, bool check) const
 
 void
 OptionClasslessStaticRoute::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
-    // Static route definition requires n * 3 IPv4 addresses (n>0):
-    // Subnet number, subnet mask, router IP
-    if (!distance(begin, end) || distance(begin, end) % (V4ADDRESS_LEN * 3)) {
+    // Classless Static route option data must contain at least 5 octets.
+    // 1 octet - shortest possible destination descriptor (0x00) + 4 octets router IPv4 addr.
+    if (distance(begin, end) < 5) {
         isc_throw(OutOfRange, "DHCPv4 OptionClasslessStaticRoute "
                                   << type_ << " has invalid length=" << distance(begin, end)
-                                  << ", must be divisible by 12 and must not be 0.");
+                                  << ", must be at least 5.");
     }
+
+    // As an alternative to binary format,
+    // we provide convenience option definition as a string in format:
+    // subnet1 - router1 IP addr, subnet2 - router2 IP addr, ...
+    // e.g.:
+    // 10.0.0.0/8 - 10.2.3.1, 10.229.0.128/25 - 10.1.0.3, ...
+    // where destination descriptors will be encoded as per RFC3442.
+    // We need to determine if OptionBuffer contains dash `-` separator (0x2d).
+    // If not, we assume this is binary format and no encoding needs to be done.
+    auto begin_copy = begin;
+    while (begin_copy != end) {
+        if (*begin_copy == '-') {
+            break;
+        }
+        ++begin_copy;
+    }
+    if (begin_copy == end) {
+        // no separator found, assuming this is a hex on-wire data
+        setData(begin, end); // TODO: do this or parse hex and feed static_routes_
+        // TODO: pack(), toText(), len() etc. basing on _data
+    } else {
+        // separator was found, assuming this is option data string from config
+        std::string buffer_to_str = std::string(begin, end);
+        // this option allows more than one static route, so let's separate them using comma
+        std::vector<std::string> tokens = util::str::tokens(buffer_to_str, std::string(","));
+        std::ostringstream stream;
+        for (const auto& route_str : tokens) {
+            std::vector<std::string> parts = util::str::tokens(util::str::trim(route_str), std::string("-"));
+            if (parts.size() != 2) {
+                isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
+                                        << type_ << " has invalid value, route definition must"
+                                                    " have format as in example: 10.229.0.128/25 - 10.229.0.1, "
+                                                    "0.0.0.0/0 - 10.129.0.2");
+            }
+            std::string txt = parts[0];
+
+            // first let's remove any whitespaces
+            boost::erase_all(txt, " "); // space
+            boost::erase_all(txt, "\t"); // tabulation
+
+            // Is this prefix/len notation?
+            size_t pos = txt.find("/");
+
+            if (pos == std::string::npos) {
+                isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
+                                        << type_ << " has invalid value, provided IPv4 prefix "
+                                        << parts[0] << " is not valid.");
+            }
+
+            std::string txt_address = txt.substr(0, pos);
+            isc::asiolink::IOAddress address = isc::asiolink::IOAddress(txt_address);
+            if (!address.isV4()) {
+                isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
+                                        << type_ << " has invalid value, provided address "
+                                               << txt_address
+                                               << " is not a valid IPv4 address.");
+            }
+
+            std::string txt_prefix = txt.substr(pos + 1);
+            uint8_t len = 0;
+            try {
+                // start with the first character after /
+                len = static_cast<uint8_t>(boost::lexical_cast<int64_t>(txt_prefix));
+            } catch (...)  {
+                isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
+                                        << type_ << " has invalid value, provided prefix len "
+                                               << txt_prefix
+                                               << " is not valid.");
+            }
+
+            stream << route_str << ", ";
+        }
+
+
+        isc_throw(OutOfRange, "DHCPv4 OptionClasslessStaticRoute unpack from string '" + (buffer_to_str) + "' tokens: " + stream.str());
+    }
+
 
     while (begin != end) {
         // Subnet number IP address e.g. 10.229.0.128
