@@ -16,11 +16,11 @@ if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
 
+EXTRA_DIST = log_test_messages.mes
+
 if HAVE_GTEST
 
 CLEANFILES = *.gcno *.gcda *.lock
-
-EXTRA_DIST = log_test_messages.mes
 
 # Helper programs used in shell tests
 TEST_HELPERS = logger_example
