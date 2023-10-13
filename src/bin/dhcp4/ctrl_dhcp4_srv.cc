@@ -520,7 +520,7 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
 
     // If the args map does not contain 'origin' parameter, the default type
     // will be used (user command).
-    NetworkState::Origin type = NetworkState::Origin::USER_COMMAND;
+    auto type = NetworkState::USER_COMMAND;
 
     // Parse arguments to see if the 'max-period' or 'origin' parameters have
     // been specified.
@@ -548,14 +548,11 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
             ConstElementPtr origin_element = args->get("origin");
             // The 'origin' parameter is optional.
             if (origin_element) {
-                // It must be a string, if specified.
-                if (origin_element->getType() != Element::string) {
-                    message << "'origin' argument must be a string";
-
-                } else {
+                switch (origin_element->getType()) {
+                case Element::string:
                     origin = origin_element->stringValue();
                     if (origin == "ha-partner") {
-                        type = NetworkState::Origin::HA_COMMAND;
+                        type = NetworkState::HA_REMOTE_COMMAND;
                     } else if (origin != "user") {
                         if (origin.empty()) {
                             origin = "(empty string)";
@@ -563,6 +560,13 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
                         message << "invalid value used for 'origin' parameter: "
                                 << origin;
                     }
+                    break;
+                case Element::integer:
+                    type = origin_element->intValue();
+                    break;
+                default:
+                    // It must be a string or a number, if specified.
+                    message << "'origin' argument must be a string or a number";
                 }
             }
         }
@@ -598,7 +602,7 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
 
     // If the args map does not contain 'origin' parameter, the default type
     // will be used (user command).
-    NetworkState::Origin type = NetworkState::Origin::USER_COMMAND;
+    auto type = NetworkState::USER_COMMAND;
 
     // Parse arguments to see if the 'origin' parameter has been specified.
     if (args) {
@@ -610,14 +614,11 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
             ConstElementPtr origin_element = args->get("origin");
             // The 'origin' parameter is optional.
             if (origin_element) {
-                // It must be a string, if specified.
-                if (origin_element->getType() != Element::string) {
-                    message << "'origin' argument must be a string";
-
-                } else {
+                switch (origin_element->getType()) {
+                case Element::string:
                     origin = origin_element->stringValue();
                     if (origin == "ha-partner") {
-                        type = NetworkState::Origin::HA_COMMAND;
+                        type = NetworkState::HA_REMOTE_COMMAND;
                     } else if (origin != "user") {
                         if (origin.empty()) {
                             origin = "(empty string)";
@@ -625,6 +626,13 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
                         message << "invalid value used for 'origin' parameter: "
                                 << origin;
                     }
+                    break;
+                case Element::integer:
+                    type = origin_element->intValue();
+                    break;
+                default:
+                    // It must be a string or a number, if specified.
+                    message << "'origin' argument must be a string or a number";
                 }
             }
         }
@@ -948,7 +956,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->setAppendedParameters(params);
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
-        srv->getNetworkState()->reset(NetworkState::Origin::DB_CONNECTION);
+        srv->getNetworkState()->reset(NetworkState::DB_CONNECTION);
 
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
@@ -1337,7 +1345,7 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until the connection is recovered.
     if (db_reconnect_ctl->retriesLeft() == db_reconnect_ctl->maxRetries() &&
         db_reconnect_ctl->alterServiceState()) {
-        network_state_->disableService(NetworkState::Origin::DB_CONNECTION);
+        network_state_->disableService(NetworkState::DB_CONNECTION);
     }
 
     LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_LOST_CONNECTION);
@@ -1368,7 +1376,7 @@ ControlledDhcpv4Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
 
     // Enable service after the connection is recovered.
     if (db_reconnect_ctl->alterServiceState()) {
-        network_state_->enableService(NetworkState::Origin::DB_CONNECTION);
+        network_state_->enableService(NetworkState::DB_CONNECTION);
     }
 
     LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_SUCCEEDED);

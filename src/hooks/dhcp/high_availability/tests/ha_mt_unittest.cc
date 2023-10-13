@@ -36,16 +36,18 @@ public:
 
     /// @brief Constructor.
     ///
+    /// @param id Unique service id.
     /// @param io_service Pointer to the IO service used by the DHCP server.
     /// @param network_state Object holding state of the DHCP service
     /// (enabled/disabled).
     /// @param config Parsed HA hook library configuration.
     /// @param server_type Server type, i.e. DHCPv4 or DHCPv6 server.
-    TestHAService(const IOServicePtr& io_service,
+    TestHAService(const unsigned int id,
+                  const IOServicePtr& io_service,
                   const NetworkStatePtr& network_state,
                   const HAConfigPtr& config,
                   const HAServerType& server_type = HAServerType::DHCPv4)
-        : HAService(io_service, network_state, config, server_type) {
+        : HAService(id, io_service, network_state, config, server_type) {
     }
 
     /// @brief Test version of the @c HAService::runModel.
@@ -192,7 +194,7 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
 
     // Instantiate the service.
     TestHAServicePtr service;
-    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
+    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(1, io_service_, network_state_,
                                                         ha_config->get())));
     // Multi-threading should be enabled.
     ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
@@ -312,7 +314,7 @@ TEST_F(HAMtServiceTest, multiThreadingTls) {
 
     // Instantiate the service.
     TestHAServicePtr service;
-    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
+    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(1, io_service_, network_state_,
                                                         ha_config->get())));
     // Multi-threading should be enabled.
     ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
@@ -505,7 +507,7 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
 
         // Instantiate the service.
         TestHAServicePtr service;
-        ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
+        ASSERT_NO_THROW_LOG(service.reset(new TestHAService(1, io_service_, network_state_,
                                                             ha_config->get())));
         ASSERT_NO_THROW_LOG(service->startClientAndListener());
 

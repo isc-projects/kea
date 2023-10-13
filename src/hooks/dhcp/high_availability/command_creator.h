@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,22 +24,28 @@ public:
 
     /// @brief Creates dhcp-disable command for DHCP server.
     ///
+    /// @param origin A numeric value of the origin created from the
+    /// @c HAService identifier.
     /// @param max_period The max-period time the service can stay disabled
     /// before automatically transitioning to enabled state.
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
     ///
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createDHCPDisable(const unsigned int max_period,
+    createDHCPDisable(const unsigned int origin,
+                      const unsigned int max_period,
                       const HAServerType& server_type);
 
     /// @brief Creates dhcp-enable command for DHCP server.
     ///
+    /// @param origin A numeric value of the origin created from the
+    /// @c HAService identifier.
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
     ///
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createDHCPEnable(const HAServerType& server_type);
+    createDHCPEnable(const unsigned int origin,
+                     const HAServerType& server_type);
 
     /// @brief Creates ha-reset command.
     ///

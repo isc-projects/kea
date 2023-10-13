@@ -183,8 +183,8 @@ protected:
     /// @brief Holds parsed configuration.
     HAConfigMapperPtr config_;
 
-    /// @brief Pointer to the high availability service (state machine).
-    HAServicePtr service_;
+    /// @brief Pointer to the high availability services (state machines).
+    HAServiceMapperPtr services_;
 
 };
 

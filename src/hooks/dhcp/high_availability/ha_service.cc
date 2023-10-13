@@ -71,9 +71,10 @@ const int HAService::HA_MAINTENANCE_CANCEL_EVT;
 const int HAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED;
 const int HAService::HA_SYNCED_PARTNER_UNAVAILABLE_EVT;
 
-HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& network_state,
-                     const HAConfigPtr& config, const HAServerType& server_type)
-    : io_service_(io_service), network_state_(network_state), config_(config),
+HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
+                     const NetworkStatePtr& network_state, const HAConfigPtr& config,
+                     const HAServerType& server_type)
+    : id_(id), io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(), listener_(), communication_state_(),
       query_filter_(config), mutex_(), pending_requests_(),
       lease_update_backlog_(config->getDelayedUpdatesLimit()),
@@ -86,7 +87,7 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
         communication_state_.reset(new CommunicationState6(io_service_, config));
     }
 
-    network_state_->reset(NetworkState::Origin::HA_COMMAND);
+    network_state_->reset(NetworkState::HA_LOCAL_COMMAND+id_);
 
     startModel(HA_WAITING_ST);
 
@@ -144,7 +145,7 @@ HAService::~HAService() {
     // Stop client and/or listener.
     stopClientAndListener();
 
-    network_state_->reset(NetworkState::Origin::HA_COMMAND);
+    network_state_->reset(NetworkState::HA_LOCAL_COMMAND+id_);
 }
 
 void
@@ -1066,7 +1067,7 @@ HAService::adjustNetworkState() {
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_DISABLE)
             .arg(config_->getThisServerName())
             .arg(current_state_name);
-        network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+        network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+id_);
 
     } else if (should_enable && !network_state_->isServiceEnabled()) {
         std::string current_state_name = getStateLabel(getCurrState());
@@ -1074,7 +1075,7 @@ HAService::adjustNetworkState() {
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_ENABLE)
             .arg(config_->getThisServerName())
             .arg(current_state_name);
-        network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+        network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+id_);
     }
 }
 
@@ -1854,7 +1855,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPDisable(max_period,
+    request->setBodyAsJson(CommandCreator::createDHCPDisable(NetworkState::HA_REMOTE_COMMAND+id_,
+                                                             max_period,
                                                              server_type_));
     request->finalize();
 
@@ -1932,7 +1934,8 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPEnable(server_type_));
+    request->setBodyAsJson(CommandCreator::createDHCPEnable(NetworkState::HA_REMOTE_COMMAND+id_,
+                                                            server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -2000,12 +2003,12 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
 
 void
 HAService::localDisableDHCPService() {
-    network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+    network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+id_);
 }
 
 void
 HAService::localEnableDHCPService() {
-    network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+    network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+id_);
 }
 
 void

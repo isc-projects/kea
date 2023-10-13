@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,53 +20,54 @@ namespace dhcp {
 
 class NetworkStateImpl;
 
-/// @brief Holds information about DHCP service enabling status.
+/// @brief Controls the DHCP service enabling status.
 ///
-/// When the DHCP server receives a command to disable DHCP service entirely
-/// or for specific networks, this has to be recorded to allow for re-enabling
-/// DHCP service for these networks as a result of receiving a command from
-/// the administrator or when the timeout for re-enabling the service occurs.
-/// Currently there are two types of command originating either from user or
-/// HA internal mechanism.
-/// The global state can also be altered by the DB recovery mechanism which
-/// disables the service on connection loss and re-enables it after the
-/// connection is restored. Because the server supports recovery for multiple
-/// connections, this is implemented using an internal counter.
-/// Combining all the origins of the alteration of the network state, the
-/// behavior is:
-/// a) the network state is disabled if any of the originators explicitly set
-///    the disabled flag.
-/// b) the network state is restored only if all originators explicitly clear
-///    the disabled flag.
-/// In the future, it will be possible to specify "disabled" parameter for
-/// a subnet (or network) in the configuration file to indicate that this subnet
-/// should be excluded from the service. When a command is subsequently sent to
-/// temporarily disable a service for some other subnets for a specified amount
-/// of time, only these subnets should be re-enabled when the time elapses. This
-/// class fulfills this requirement by recording the subnets disabled with a command
-/// and re-enabling them when required. The subnets specified as "disabled" in
-/// the configuration file should remain disabled until explicitly enabled with a
-/// control command.
+/// Sometimes, a DHCP server must pause responding to the DHCP queries.
+/// Typical cases include a database connection loss when the server tries
+/// to reconnect and various cases related to the High Availability operation.
+/// It is also possible to explicitly turn the DHCP service on and off via the
+/// control channel. This class receives calls from different origins to
+/// disable and re-enable the DHCP service.
 ///
-/// This class also allows for disabling the DHCP service globally. In this case
-/// the server drops all received packets.
+/// The general rule is that the DHCP service must be disabled when the class
+/// receives at least one request to disable the service from any origin. The
+/// service must be re-enabled when all requestors previously disabling the
+/// service re-enabled it. This class also allows for specifying a timeout value
+/// for each request, after which the service gets re-enabled automatically. It
+/// is particularly useful in HA when there is no guarantee that the HA partner
+/// will be able to re-enable the service because it may experience an unexpected
+/// outage. In that case, the "max-period" parameter must accompany the "dhcp-disable"
+/// command to ensure that the service will eventually be re-enabled.
+
+/// The HA hook library may include several independent relationships. Each
+/// relationship is treated as a separate origin by this class. If one relationship
+/// disables the DHCP service, the service must remain disabled even when any other
+/// relationship requests enabling it. The service is re-enabled after all
+/// relationships requested re-enabling it (e.g., they all finished synchronizing
+/// the lease database).
 ///
-/// The "dhcp-disable" and "dhcp-enable" commands are used for globally disabling
-/// and enabling the DHCP service. The "dhcp-disable-scopes" and "dhcp-enable-scopes"
-/// commands are used to disable and enable DHCP service for subnets and networks.
-/// In case of the "dhcp-disable" and "dhcp-disable-scopes" commands, it is possible
-/// to specify "max-period" parameter which provides a timeout, after which the
-/// settings are reverted (service is re-enabled globally and/or for specific
-/// scopes).
+/// The HA service instances must have unique identifiers they use to specify the
+/// origin. For example, an @c HAService with the identifier of 1 should request
+/// disabling the local service like this:
 ///
-/// Disabling DHCP service with a timeout is useful to guard against issues when
-/// the controlling client dies after disabling the DHCP service on the server,
-/// e.g. failover peers may instruct each other to disable the DHCP service while
-/// database synchronization takes place. If the peer subsequently dies, the
-/// surviving server must re-enable DHCP on its own.
+/// @code
+///     NetworkState state;
+///     state.disableService(NetworkState::HA_LOCAL_COMMAND + 1);
+/// @endcode
 ///
-/// @todo This class currently supports only the case of globally disabling
-/// the DHCP service. Disabling per network/subnet will be added later.
+/// The DHCP state can also be altered by the database recovery mechanism, which
+/// disables the service on connection loss and re-enables it after the connection
+/// is restored. Unlike in HA, this is implemented using an internal counter. In
+/// this case, there is one origin for all database connections. The requests for
+/// the @c NetworkState::DB_CONNECTION are counted, and the DHCP service is
+/// re-enabled when the counter reaches 0.
+///
+/// @todo We should consider migrating the database recovery to the same mechanism
+///  we use for the HA. The reference counting works because the database connection
+/// classes ensure that for each request to disable the DHCP service, there is a
+/// corresponding request to enable the service. It prevents the situation that the
+/// service remains disabled because there were more requests to disable than to
+/// enable the service. It is hard to ensure the same consistency for the HA.
 class NetworkState {
 public:
 
@@ -81,15 +82,29 @@ public:
     /// The enumeration indicates the originator of the state transition of the
     /// network state: either user command, HA internal command or DB connection
     /// recovery mechanism.
-    enum class Origin {
-        /// @brief The network state is being altered by a user command.
-        USER_COMMAND,
-        /// @brief The network state is being altered by a HA internal command.
-        HA_COMMAND,
-        /// @brief The network state is being altered by the DB connection
-        /// recovery mechanics.
-        DB_CONNECTION
-    };
+
+    /// @brief The network state is being altered by a user command.
+    ///
+    /// Specify unique origins for different commands by adding a number to this
+    /// constant.
+    static const unsigned int USER_COMMAND = 1;
+
+    /// @brief The network state is being altered by an HA internal command.
+    ///
+    /// Specify HA service-specific origins by adding a unique local service
+    /// identifier to this constant.
+    static const unsigned int HA_LOCAL_COMMAND = 1000;
+
+    /// @brief The network state is being altered by a "dhcp-disable" or "dhcp-enable"
+    /// command sent by a HA partner.
+    ///
+    /// Specify HA service-specific origins by adding a unique remote service
+    /// identifier to this constant.
+    static const unsigned int HA_REMOTE_COMMAND = 1100;
+
+    /// @brief The network state is being altered by the DB connection
+    /// recovery mechanics.
+    static const unsigned int DB_CONNECTION = 2000;
 
     /// @brief Type of the container holding collection of subnet identifiers.
     typedef std::set<SubnetID> Subnets;
@@ -107,7 +122,7 @@ public:
     /// disabled until all flags are cleared.
     ///
     /// @param origin The origin of the state transition.
-    void disableService(const NetworkState::Origin& origin);
+    void disableService(unsigned int origin);
 
     /// @brief Enable the DHCP service state for respective transition origin.
     ///
@@ -116,7 +131,7 @@ public:
     /// disabled until all flags are cleared.
     ///
     /// @param origin The origin of the state transition.
-    void enableService(const NetworkState::Origin& origin);
+    void enableService(unsigned int origin);
 
     /// @brief Reset internal counters.
     ///
@@ -124,13 +139,13 @@ public:
     /// been reconfigured or all the connections have been restored.
     ///
     /// @param type The origin for which the state flags need to be reset.
-    void reset(const NetworkState::Origin& type);
+    void reset(unsigned int type);
 
     /// @brief Enables DHCP service globally and for scopes which have been
     /// disabled as a result of control command.
     ///
     /// @param origin The origin of the state transition.
-    void enableAll(const NetworkState::Origin& origin);
+    void enableAll(unsigned int origin);
 
     /// @brief Schedules enabling DHCP service in the future.
     ///
@@ -138,7 +153,7 @@ public:
     /// unless @c enableAll is enabled before that time.
     /// @param origin The origin of the state transition.
     void delayedEnableAll(const unsigned int seconds,
-                          const NetworkState::Origin& origin);
+                          unsigned int origin);
 
     /// @brief Checks if the DHCP service is globally enabled.
     ///

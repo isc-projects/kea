@@ -373,7 +373,7 @@ TEST_F(CloseHATest, close4) {
 
     // Check that the disabled state is reset on dhcp4_srv_configured.
     ASSERT_TRUE(network_state->isServiceEnabled());
-    network_state->disableService(NetworkState::Origin::HA_COMMAND);
+    network_state->disableService(NetworkState::HA_LOCAL_COMMAND);
     ASSERT_FALSE(network_state->isServiceEnabled());
 
     // Start HA service.
@@ -508,7 +508,7 @@ TEST_F(CloseHATest, close4Backup) {
     // It is first reset by the constructor and then adjusted by running the
     // state model.
     ASSERT_TRUE(network_state->isServiceEnabled());
-    network_state->disableService(NetworkState::Origin::HA_COMMAND);
+    network_state->disableService(NetworkState::HA_LOCAL_COMMAND);
     ASSERT_FALSE(network_state->isServiceEnabled());
 
     // Start HA service.
@@ -612,7 +612,7 @@ TEST_F(CloseHATest, close6) {
 
     // Check that the disabled state is reset on dhcp6_srv_configured.
     ASSERT_TRUE(network_state->isServiceEnabled());
-    network_state->disableService(NetworkState::Origin::HA_COMMAND);
+    network_state->disableService(NetworkState::HA_LOCAL_COMMAND);
     ASSERT_FALSE(network_state->isServiceEnabled());
 
     // Start HA service.
@@ -747,7 +747,7 @@ TEST_F(CloseHATest, close6Backup) {
     // It is first reset by the constructor and then adjusted by running the
     // state model.
     ASSERT_TRUE(network_state->isServiceEnabled());
-    network_state->disableService(NetworkState::Origin::HA_COMMAND);
+    network_state->disableService(NetworkState::HA_LOCAL_COMMAND);
     ASSERT_FALSE(network_state->isServiceEnabled());
 
     // Start HA service.

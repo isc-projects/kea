@@ -1796,7 +1796,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->enableService(NetworkState::Origin::USER_COMMAND);
+    server_->network_state_->enableService(NetworkState::USER_COMMAND);
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 
@@ -1816,7 +1816,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->enableService(NetworkState::Origin::USER_COMMAND);
+    server_->network_state_->enableService(NetworkState::USER_COMMAND);
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 
@@ -1836,7 +1836,27 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+    server_->network_state_->enableService(NetworkState::HA_REMOTE_COMMAND);
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
+                    "        \"origin\": 1101"
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    server_->network_state_->enableService(NetworkState::HA_REMOTE_COMMAND+1);
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
@@ -1925,7 +1945,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->disableService(NetworkState::Origin::USER_COMMAND);
+    server_->network_state_->disableService(NetworkState::USER_COMMAND);
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
@@ -1945,7 +1965,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+    server_->network_state_->disableService(NetworkState::HA_REMOTE_COMMAND);
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
@@ -1953,6 +1973,26 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
                     "    \"command\": \"dhcp-enable\","
                     "    \"arguments\": {"
                     "        \"origin\": \"ha-partner\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+
+    server_->network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+2);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin\": 1102"
                     "    }"
                     "}", response);
 

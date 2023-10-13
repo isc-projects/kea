@@ -35,6 +35,14 @@
 namespace isc {
 namespace ha {
 
+class HAService;
+
+/// @brief Type of an object mapping @c HAService to relationships.
+typedef HARelationshipMapper<HAService> HAServiceMapper;
+
+/// @brief Pointer to an object mapping @c HAService to relationships.
+typedef boost::shared_ptr<HAServiceMapper> HAServiceMapperPtr;
+
 /// @brief High availability service.
 ///
 /// This class derives from the @c util::StateModel and implements a
@@ -98,12 +106,14 @@ public:
     /// state model in waiting state.  Creates and starts the client and the
     /// listener (if one).
     ///
+    /// @param id Unique @c HAService id.
     /// @param io_service Pointer to the IO service used by the DHCP server.
     /// @param config Parsed HA hook library configuration.
     /// @param network_state Object holding state of the DHCP service
     /// (enabled/disabled).
     /// @param server_type Server type, i.e. DHCPv4 or DHCPv6 server.
-    HAService(const asiolink::IOServicePtr& io_service,
+    HAService(const unsigned int id,
+              const asiolink::IOServicePtr& io_service,
               const dhcp::NetworkStatePtr& network_state,
               const HAConfigPtr& config,
               const HAServerType& server_type = HAServerType::DHCPv4);
@@ -1152,6 +1162,9 @@ protected:
     ///
     /// @param tcp_native_fd socket descriptor to register
     void clientCloseHandler(int tcp_native_fd);
+
+    /// @brief Unique service id.
+    unsigned int id_;
 
     /// @brief Pointer to the IO service object shared between this hooks
     /// library and the DHCP server.

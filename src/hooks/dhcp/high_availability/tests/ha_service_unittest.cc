@@ -135,16 +135,18 @@ public:
 
     /// @brief Constructor.
     ///
+    /// @parma id Unique service identifier.
     /// @param io_service Pointer to the IO service used by the DHCP server.
     /// @param network_state Object holding state of the DHCP service
     /// (enabled/disabled).
     /// @param config Parsed HA hook library configuration.
     /// @param server_type Server type, i.e. DHCPv4 or DHCPv6 server.
-    TestHAService(const IOServicePtr& io_service,
+    TestHAService(const unsigned int id,
+                  const IOServicePtr& io_service,
                   const NetworkStatePtr& network_state,
                   const HAConfigPtr& config,
                   const HAServerType& server_type = HAServerType::DHCPv4)
-        : HAService(io_service, network_state, config, server_type) {
+        : HAService(id, io_service, network_state, config, server_type) {
     }
 
     /// @brief Test version of the @c HAService::runModel.
@@ -650,7 +652,7 @@ public:
                          const HAServerType& server_type = HAServerType::DHCPv4) {
 
         ASSERT_FALSE(config->getEnableMultiThreading());
-        ASSERT_NO_THROW_LOG(service_.reset(new TestHAService(io_service_, state,
+        ASSERT_NO_THROW_LOG(service_.reset(new TestHAService(1, io_service_, state,
                                            config, server_type)));
         ASSERT_TRUE(service_->client_);
         ASSERT_FALSE(service_->client_->getThreadIOService());
@@ -1054,7 +1056,7 @@ public:
         state->modifyPokeTime(-30);
 
         // Create the service and replace the default communication state object.
-        TestHAService service(io_service_, network_state_, config_storage);
+        TestHAService service(1, io_service_, network_state_, config_storage);
         service.communication_state_ = state;
 
         EXPECT_FALSE(state->isPoked());
@@ -2058,7 +2060,7 @@ public:
             listener3_->start();
         });
 
-        HAService service(io_service_, network_state_, config_storage);
+        HAService service(1, io_service_, network_state_, config_storage);
 
         // The tested function is synchronous, so we need to run server side IO service
         // in bakckground to not block the main thread.
@@ -2107,7 +2109,7 @@ public:
             listener3_->start();
         });
 
-        HAService service(io_service_, network_state_, config_storage,
+        HAService service(1, io_service_, network_state_, config_storage,
                           HAServerType::DHCPv6);
 
         // The tested function is synchronous, so we need to run server side IO service
@@ -2176,7 +2178,7 @@ TEST_F(HAServiceTest, loadBalancingScopeSelection) {
     // Create HA configuration for load balancing.
     HAConfigPtr config_storage = createValidConfiguration();
     // ... and HA service using this configuration.
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
     service.verboseTransition(HA_LOAD_BALANCING_ST);
     service.runModel(HAService::NOP_EVT);
 
@@ -2218,7 +2220,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
     config_storage->getPeerConfig("server2")->setRole("standby");
 
     // ... and HA service using this configuration.
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
     service.verboseTransition(HA_HOT_STANDBY_ST);
     service.runModel(HAService::NOP_EVT);
 
@@ -2268,7 +2270,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
     config_storage->setThisServerName("server2");
 
     // ... and HA service using this configuration.
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Check the reported info about servers.
     ConstElementPtr ha_servers = service.processStatusGet();
@@ -2738,7 +2740,7 @@ TEST_F(HAServiceTest, processHeartbeat) {
     HAConfigMapperPtr config_storage;
     ASSERT_NO_THROW(config_storage = HAConfigParser::parse(Element::fromJSON(config_text)));
 
-    TestHAService service(io_service_,  network_state_, config_storage->get());
+    TestHAService service(1, io_service_,  network_state_, config_storage->get());
     service.query_filter_.serveDefaultScopes();
 
     int unsent_updates = 6;
@@ -2812,7 +2814,7 @@ TEST_F(HAServiceTest, recurringHeartbeatDelay) {
     NakedCommunicationState4Ptr state(new NakedCommunicationState4(io_service_,
                                                                    config_storage));
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
     service.communication_state_ = state;
 
     // Let's explicitly transition the state machine to the load balancing state
@@ -2985,7 +2987,7 @@ TEST_F(HAServiceTest, asyncSyncLeases4) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
     // Setting the heartbeat delay to 0 disables the recurring heartbeat.
     // We just want to synchronize leases and not send the heartbeat.
     config_storage->setHeartbeatDelay(0);
@@ -3114,7 +3116,7 @@ TEST_F(HAServiceTest, asyncSyncLeases4Authorized) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
     // Setting the heartbeat delay to 0 disables the recurring heartbeat.
     // We just want to synchronize leases and not send the heartbeat.
     config_storage->setHeartbeatDelay(0);
@@ -3202,7 +3204,7 @@ TEST_F(HAServiceTest, asyncSyncLeases4WrongAnswer) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Start fetching leases asynchronously.
     ASSERT_NO_THROW(service.asyncSyncLeases());
@@ -3220,7 +3222,7 @@ TEST_F(HAServiceTest, asyncSyncLeases4ServerOffline) {
     // We just want to synchronize leases and not send the heartbeat.
     config_storage->setHeartbeatDelay(0);
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Start fetching leases asynchronously.
     ASSERT_NO_THROW(service.asyncSyncLeases());
@@ -3257,7 +3259,7 @@ TEST_F(HAServiceTest, asyncSyncLeases4ServerUnauthorized) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Start fetching leases asynchronously.
     ASSERT_NO_THROW(service.asyncSyncLeases());
@@ -3326,7 +3328,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage,
+    TestHAService service(1, io_service_, network_state_, config_storage,
                           HAServerType::DHCPv6);
     // Setting the heartbeat delay to 0 disables the recurring heartbeat.
     // We just want to synchronize leases and not send the heartbeat.
@@ -3456,7 +3458,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6Authorized) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage,
+    TestHAService service(1, io_service_, network_state_, config_storage,
                           HAServerType::DHCPv6);
     // Setting the heartbeat delay to 0 disables the recurring heartbeat.
     // We just want to synchronize leases and not send the heartbeat.
@@ -3545,7 +3547,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6WrongAnswer) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage,
+    TestHAService service(1, io_service_, network_state_, config_storage,
                           HAServerType::DHCPv6);
 
     // Start fetching leases asynchronously.
@@ -3564,7 +3566,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6ServerOffline) {
     // We just want to synchronize leases and not send the heartbeat.
     config_storage->setHeartbeatDelay(0);
 
-    TestHAService service(io_service_, network_state_, config_storage,
+    TestHAService service(1, io_service_, network_state_, config_storage,
                           HAServerType::DHCPv6);
 
     // Start fetching leases asynchronously.
@@ -3602,7 +3604,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6Unauthorized) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage,
+    TestHAService service(1, io_service_, network_state_, config_storage,
                           HAServerType::DHCPv6);
 
     // Start fetching leases asynchronously.
@@ -4022,7 +4024,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
@@ -4068,7 +4070,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4Authorized) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
@@ -4097,7 +4099,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ServerOffline) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
@@ -4132,7 +4134,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultError) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
@@ -4166,7 +4168,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultUnauthorized) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
@@ -4196,7 +4198,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
@@ -4241,7 +4243,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4Authorized) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
@@ -4269,7 +4271,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ServerOffline) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
@@ -4304,7 +4306,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultError) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
@@ -4338,7 +4340,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultUnauthorized) {
         listener3_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
@@ -4361,7 +4363,7 @@ TEST_F(HAServiceTest, processScopes) {
     HAConfigPtr config_storage = createValidConfiguration();
 
     // Create HA service using this configuration.
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Enable "server1" and "server2" scopes.
     ConstElementPtr rsp;
@@ -4409,7 +4411,7 @@ TEST_F(HAServiceTest, processContinue) {
     ASSERT_NO_THROW(config_storage->getStateMachineConfig()->
                     getStateConfig(HA_WAITING_ST)->setPausing("always"));
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Pause the state machine.
     EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
@@ -4462,7 +4464,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
         HA_HOT_STANDBY_ST,
     };
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Test transition from the states for which it is allowed.
     for (auto state : valid_states) {
@@ -4528,7 +4530,7 @@ TEST_F(HAServiceTest, processMaintenanceStartSuccess) {
         listener2_->start();
     });
 
-    HAService service(io_service_, network_state_, config_storage);
+    HAService service(1, io_service_, network_state_, config_storage);
 
     // The tested function is synchronous, so we need to run server side IO service
     // in background to not block the main thread.
@@ -4580,7 +4582,7 @@ TEST_F(HAServiceTest, processMaintenanceStartSuccessAuthorized) {
         listener2_->start();
     });
 
-    HAService service(io_service_, network_state_, config_storage);
+    HAService service(1, io_service_, network_state_, config_storage);
 
     // The tested function is synchronous, so we need to run server side IO service
     // in background to not block the main thread.
@@ -4623,7 +4625,7 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerDown) {
         listener_->start();
     });
 
-    HAService service(io_service_, network_state_, config_storage);
+    HAService service(1, io_service_, network_state_, config_storage);
 
     // The tested function is synchronous, so we need to run server side IO service
     // in background to not block the main thread.
@@ -4667,7 +4669,7 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerError) {
         listener2_->start();
     });
 
-    HAService service(io_service_, network_state_, config_storage);
+    HAService service(1, io_service_, network_state_, config_storage);
 
     // The tested function is synchronous, so we need to run server side IO service
     // in background to not block the main thread.
@@ -4709,7 +4711,7 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerUnauthorized) {
         listener2_->start();
     });
 
-    HAService service(io_service_, network_state_, config_storage);
+    HAService service(1, io_service_, network_state_, config_storage);
 
     // The tested function is synchronous, so we need to run server side IO service
     // in background to not block the main thread.
@@ -4752,7 +4754,7 @@ TEST_F(HAServiceTest, processMaintenanceStartNotAllowed) {
         listener2_->start();
     });
 
-    HAService service(io_service_, network_state_, config_storage);
+    HAService service(1, io_service_, network_state_, config_storage);
 
     // The tested function is synchronous, so we need to run server side IO service
     // in background to not block the main thread.
@@ -4794,7 +4796,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccess) {
         listener2_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
 
@@ -4845,7 +4847,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccessAuthorized) {
         listener2_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
 
@@ -4888,7 +4890,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerError) {
         listener2_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
 
@@ -4934,7 +4936,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerUnauthorized) {
         listener2_->start();
     });
 
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
 
@@ -4966,7 +4968,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerUnauthorized) {
 // This test verifies that the ha-reset command is processed successfully.
 TEST_F(HAServiceTest, processHAReset) {
     HAConfigPtr config_storage = createValidConfiguration();
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Transition the server to the load-balancing state.
     EXPECT_NO_THROW(service.transition(HA_LOAD_BALANCING_ST, HAService::NOP_EVT));
@@ -4991,7 +4993,7 @@ TEST_F(HAServiceTest, processHAReset) {
 // the server is already in the waiting state.
 TEST_F(HAServiceTest, processHAResetWaiting) {
     HAConfigPtr config_storage = createValidConfiguration();
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Transition the server to the waiting state.
     EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
@@ -5018,14 +5020,14 @@ TEST_F(HAServiceTest, processHAResetWaiting) {
 // state and enables the service when it is in another state.
 TEST_F(HAServiceTest, processSyncCompleteNotify) {
     HAConfigPtr config_storage = createValidConfiguration();
-    TestHAService service(io_service_, network_state_, config_storage);
+    TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Transition the server to the partner-down state.
     EXPECT_NO_THROW(service.transition(HA_PARTNER_DOWN_ST, HAService::NOP_EVT));
 
     // Simulate disabling the DHCP service for synchronization.
     if (service.network_state_->isServiceEnabled()) {
-        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::Origin::HA_COMMAND));
+        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+1));
     }
 
     ConstElementPtr rsp;
@@ -5054,7 +5056,7 @@ TEST_F(HAServiceTest, processSyncCompleteNotify) {
     EXPECT_NO_THROW(service.transition(HA_LOAD_BALANCING_ST, HAService::NOP_EVT));
 
     // Disable the service again.
-    EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::Origin::HA_COMMAND));
+    EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+1));
 
     EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify());
 
@@ -5537,12 +5539,12 @@ public:
         // state.
         if (dhcp_enabled) {
             if (service_->network_state_->isServiceEnabled()) {
-                service_->network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+                service_->network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+1);
             }
 
         } else {
             if (!service_->network_state_->isServiceEnabled()) {
-                service_->network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+                service_->network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+1);
             }
         }
 
@@ -8011,7 +8013,7 @@ TEST_F(HAServiceStateMachineTest, clearRejectedLeaseUpdatesPassiveBackup) {
 // Verifies that the server doesn't terminate when the partner is unavailable.
 TEST_F(HAServiceStateMachineTest, doNotTerminateWhenPartnerUnavailable) {
     HAConfigPtr config_storage = createValidConfiguration();
-    ASSERT_NO_THROW_LOG(service_.reset(new TestHAService(io_service_, network_state_,
+    ASSERT_NO_THROW_LOG(service_.reset(new TestHAService(1, io_service_, network_state_,
                                                          config_storage)));
     NakedCommunicationState4Ptr state(new NakedCommunicationState4(io_service_,
                                                                    config_storage));

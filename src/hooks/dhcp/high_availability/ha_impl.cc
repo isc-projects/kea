@@ -28,7 +28,7 @@ namespace isc {
 namespace ha {
 
 HAImpl::HAImpl()
-    : config_() {
+    : config_(), services_(new HAServiceMapper()) {
 }
 
 void
@@ -40,19 +40,34 @@ void
 HAImpl::startService(const IOServicePtr& io_service,
                      const NetworkStatePtr& network_state,
                      const HAServerType& server_type) {
-    // Create the HA service and crank up the state machine.
-    service_ = boost::make_shared<HAService>(io_service, network_state,
-                                             config_->get(), server_type);
+    auto configs = config_->getAll();
+    for (auto id = 0; id < configs.size(); ++id) {
+        // Create the HA service and crank up the state machine.
+        auto service = boost::make_shared<HAService>(id, io_service, network_state,
+                                                     configs[id], server_type);
+        for (auto peer_config : configs[id]->getAllServersConfig()) {
+            services_->map(peer_config.first, service);
+        }
+
+        /// @todo Running multiple HA services concurrently is not yet implemented.
+        /// The work is in progress. This break should be removed shortly, when we
+        /// finish up adding support for running multiple services.
+        break;
+    }
     // Schedule a start of the services. This ensures we begin after
     // the dust has settled and Kea MT mode has been firmly established.
-    io_service->post([&]() { service_->startClientAndListener(); } );
+    io_service->post([&]() {
+        for (auto service : services_->getAll()) {
+            service->startClientAndListener();
+        }
+    });
 }
 
 HAImpl::~HAImpl() {
-    if (service_) {
+    for (auto service : services_->getAll()) {
         // Shut down the services explicitly, we need finer control
         // than relying on destruction order.
-        service_->stopClientAndListener();
+        service->stopClientAndListener();
     }
 }
 
@@ -97,7 +112,7 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
     }
 
     // Check if we should process this query. If not, drop it.
-    if (!service_->inScope(query4)) {
+    if (!services_->get()->inScope(query4)) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_BUFFER4_RECEIVE_NOT_FOR_US)
             .arg(query4->getLabel());
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
@@ -153,7 +168,7 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
     // servers. In those cases we simply return without parking the DHCP query.
     // The response will be sent to the client immediately.
     try {
-        if (service_->asyncSendLeaseUpdates(query4, leases4, deleted_leases4, parking_lot) == 0) {
+        if (services_->get()->asyncSendLeaseUpdates(query4, leases4, deleted_leases4, parking_lot) == 0) {
             // Dereference the parked packet.  This releases our stake in it.
             parking_lot->dereference(query4);
             return;
@@ -211,7 +226,7 @@ HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
     }
 
     // Check if we should process this query. If not, drop it.
-    if (!service_->inScope(query6)) {
+    if (!services_->get()->inScope(query6)) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_BUFFER6_RECEIVE_NOT_FOR_US)
             .arg(query6->getLabel());
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
@@ -267,7 +282,7 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
     // servers. In those cases we simply return without parking the DHCP query.
     // The response will be sent to the client immediately.
     try {
-        if (service_->asyncSendLeaseUpdates(query6, leases6, deleted_leases6, parking_lot) == 0) {
+        if (services_->get()->asyncSendLeaseUpdates(query6, leases6, deleted_leases6, parking_lot) == 0) {
             // Dereference the parked packet.  This releases our stake in it.
             parking_lot->dereference(query6);
             return;
@@ -309,7 +324,7 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
         /// our sole relationship in a list.
         auto ha_relationships = Element::createList();
         auto ha_relationship = Element::createMap();
-        ConstElementPtr ha_servers = service_->processStatusGet();
+        ConstElementPtr ha_servers = services_->get()->processStatusGet();
         ha_relationship->set("ha-servers", ha_servers);
         ha_relationship->set("ha-mode", Element::create(HAConfig::HAModeToString(config_->get()->getHAMode())));
         ha_relationships->add(ha_relationship);
@@ -319,7 +334,7 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
 
 void
 HAImpl::heartbeatHandler(CalloutHandle& callout_handle) {
-    ConstElementPtr response = service_->processHeartbeat();
+    ConstElementPtr response = services_->get()->processHeartbeat();
     callout_handle.setArgument("response", response);
 }
 
@@ -380,8 +395,8 @@ HAImpl::synchronizeHandler(hooks::CalloutHandle& callout_handle) {
     }
 
     // Command parsing was successful, so let's process the command.
-    ConstElementPtr response = service_->processSynchronize(server_name->stringValue(),
-                                                            max_period_value);
+    ConstElementPtr response = services_->get()->processSynchronize(server_name->stringValue(),
+                                                                    max_period_value);
     callout_handle.setArgument("response", response);
 }
 
@@ -438,13 +453,13 @@ HAImpl::scopesHandler(hooks::CalloutHandle& callout_handle) {
     }
 
     // Command parsing was successful, so let's process the command.
-    ConstElementPtr response = service_->processScopes(scopes_vector);
+    ConstElementPtr response = services_->get()->processScopes(scopes_vector);
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::continueHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = service_->processContinue();
+    ConstElementPtr response = services_->get()->processContinue();
     callout_handle.setArgument("response", response);
 }
 
@@ -467,31 +482,31 @@ HAImpl::maintenanceNotifyHandler(hooks::CalloutHandle& callout_handle) {
         isc_throw(BadValue, "'cancel' must be a boolean in the 'ha-maintenance-notify' command");
     }
 
-    ConstElementPtr response = service_->processMaintenanceNotify(cancel_op->boolValue());
+    ConstElementPtr response = services_->get()->processMaintenanceNotify(cancel_op->boolValue());
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::maintenanceStartHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = service_->processMaintenanceStart();
+    ConstElementPtr response = services_->get()->processMaintenanceStart();
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::maintenanceCancelHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = service_->processMaintenanceCancel();
+    ConstElementPtr response = services_->get()->processMaintenanceCancel();
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::haResetHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = service_->processHAReset();
+    ConstElementPtr response = services_->get()->processHAReset();
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = service_->processSyncCompleteNotify();
+    ConstElementPtr response = services_->get()->processSyncCompleteNotify();
     callout_handle.setArgument("response", response);
 }
 

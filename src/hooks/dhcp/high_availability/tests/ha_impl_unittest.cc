@@ -61,7 +61,7 @@ class TestHAImpl : public HAImpl {
 public:
 
     using HAImpl::config_;
-    using HAImpl::service_;
+    using HAImpl::services_;
 };
 
 /// @brief Test fixture class for @c HAImpl.
@@ -115,8 +115,8 @@ TEST_F(HAImplTest, startService) {
 
     // Make sure that the HA service has been created for the requested
     // server type.
-    ASSERT_TRUE(ha_impl.service_);
-    EXPECT_EQ(HAServerType::DHCPv4, ha_impl.service_->getServerType());
+    ASSERT_TRUE(ha_impl.services_);
+    EXPECT_EQ(HAServerType::DHCPv4, ha_impl.services_->get()->getServerType());
 }
 
 // Tests that HAService object is created for DHCPv6 service.
@@ -134,8 +134,8 @@ TEST_F(HAImplTest, startService6) {
 
     // Make sure that the HA service has been created for the requested
     // server type.
-    ASSERT_TRUE(ha_impl.service_);
-    EXPECT_EQ(HAServerType::DHCPv6, ha_impl.service_->getServerType());
+    ASSERT_TRUE(ha_impl.services_);
+    EXPECT_EQ(HAServerType::DHCPv6, ha_impl.services_->get()->getServerType());
 }
 
 // Tests for buffer4_receive callout implementation.
@@ -155,7 +155,7 @@ TEST_F(HAImplTest, buffer4Receive) {
 
     // Initially the HA service is in the waiting state and serves no scopes.
     // We need to explicitly enable the scope to be served.
-    ha_impl.service_->serveDefaultScopes();
+    ha_impl.services_->get()->serveDefaultScopes();
 
     // Create callout handle to be used for passing arguments to the
     // callout.
@@ -263,7 +263,7 @@ TEST_F(HAImplTest, buffer6Receive) {
 
     // Initially the HA service is in the waiting state and serves no scopes.
     // We need to explicitly enable the scope to be served.
-    ha_impl.service_->serveDefaultScopes();
+    ha_impl.services_->get()->serveDefaultScopes();
 
     // Create callout handle to be used for passing arguments to the
     // callout.
