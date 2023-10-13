@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <cc/data.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <testutils/test_to_element.h>

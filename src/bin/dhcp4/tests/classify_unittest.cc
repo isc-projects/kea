@@ -7,7 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp/option_int.h>
 #include <stats/stats_mgr.h>

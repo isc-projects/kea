@@ -9,7 +9,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <util/multi_threading_mgr.h>

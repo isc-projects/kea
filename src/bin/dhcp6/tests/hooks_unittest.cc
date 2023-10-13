@@ -12,8 +12,8 @@
 #include <config/command_mgr.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp/tests/pkt_captures.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>

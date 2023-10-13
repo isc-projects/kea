@@ -12,7 +12,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
 #include <testutils/gtest_utils.h>

@@ -8,7 +8,7 @@
 #define DHCP6_MESSAGE_TEST_H
 
 #include <asiolink/io_address.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 

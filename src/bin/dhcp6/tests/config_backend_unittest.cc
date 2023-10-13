@@ -12,7 +12,7 @@
 #include <database/backend_selector.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/json_config_parser.h>

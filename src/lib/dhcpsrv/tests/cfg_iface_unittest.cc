@@ -6,9 +6,9 @@
 
 #include <config.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp/tests/pkt_filter_test_stub.h>
-#include <dhcp/tests/pkt_filter6_test_stub.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_filter_test_stub.h>
+#include <dhcp/testutils/pkt_filter6_test_stub.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <asiolink/io_service.h>
 #include <asiolink/asio_wrapper.h>

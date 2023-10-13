@@ -27,13 +27,13 @@
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_client.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
-#include <dhcp/tests/pkt_captures.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/dhcp4.h>
 #include <dhcpsrv/cfg_multi_threading.h>

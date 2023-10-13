@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>

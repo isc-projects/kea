@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/docsis3_option_defs.h>
@@ -19,7 +20,6 @@
 #include <testutils/gtest_utils.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
-#include <pkt_captures.h>
 
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>

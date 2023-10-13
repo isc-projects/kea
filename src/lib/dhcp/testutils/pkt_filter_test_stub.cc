@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include <dhcp/tests/pkt_filter_test_stub.h>
+#include <dhcp/testutils/pkt_filter_test_stub.h>
 
 namespace isc {
 namespace dhcp {

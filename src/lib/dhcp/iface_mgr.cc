@@ -477,44 +477,6 @@ IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
     return (false);
 }
 
-void IfaceMgr::stubDetectIfaces() {
-    string ifaceName;
-    const string v4addr("127.0.0.1"), v6addr("::1");
-
-    // This is a stub implementation for interface detection. Actual detection
-    // is faked by detecting loopback interface (lo or lo0). It will eventually
-    // be removed once we have actual implementations for all supported systems.
-
-    if (if_nametoindex("lo") > 0) {
-        ifaceName = "lo";
-        // this is Linux-like OS
-    } else if (if_nametoindex("lo0") > 0) {
-        ifaceName = "lo0";
-        // this is BSD-like OS
-    } else {
-        // we give up. What OS is this, anyway? Solaris? Hurd?
-        isc_throw(NotImplemented,
-                  "Interface detection on this OS is not supported.");
-    }
-
-    IfacePtr iface(new Iface(ifaceName, if_nametoindex(ifaceName.c_str())));
-    iface->flag_up_ = true;
-    iface->flag_running_ = true;
-
-    // Note that we claim that this is not a loopback. iface_mgr tries to open a
-    // socket on all interfaces that are up, running and not loopback. As this is
-    // the only interface we were able to detect, let's pretend this is a normal
-    // interface.
-    iface->flag_loopback_ = false;
-    iface->flag_multicast_ = true;
-    iface->flag_broadcast_ = true;
-    iface->setHWType(HWTYPE_ETHERNET);
-
-    iface->addAddress(IOAddress(v4addr));
-    iface->addAddress(IOAddress(v6addr));
-    addInterface(iface);
-}
-
 bool
 IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                        IfaceMgrErrorMsgCallback error_handler,

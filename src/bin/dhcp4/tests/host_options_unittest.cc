@@ -10,7 +10,7 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <stats/stats_mgr.h>

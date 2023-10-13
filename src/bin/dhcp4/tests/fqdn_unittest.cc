@@ -9,7 +9,7 @@
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp_ddns/ncr_msg.h>

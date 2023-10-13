@@ -5,9 +5,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/pkt6.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <util/encode/hex.h>
-#include <dhcp/tests/pkt_captures.h>
+
 #include <string>
 
 /// @file   pkt_captures6.cc

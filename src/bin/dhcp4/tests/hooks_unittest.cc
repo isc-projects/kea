@@ -10,7 +10,7 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>

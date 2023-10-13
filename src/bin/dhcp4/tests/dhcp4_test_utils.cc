@@ -17,8 +17,8 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp/tests/pkt_captures.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfgmgr.h>

@@ -31,6 +31,12 @@ namespace dhcp {
 /// only, as earlier versions did not support getifaddrs() API.
 void
 IfaceMgr::detectIfaces(bool update_only) {
+    if (detect_callback_) {
+        if (!detect_callback_(update_only)) {
+            return;
+        }
+    }
+
     if (isTestMode() && update_only) {
         return;
     }

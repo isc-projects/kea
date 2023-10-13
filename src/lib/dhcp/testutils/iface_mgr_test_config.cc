@@ -9,9 +9,9 @@
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp/tests/pkt_filter_test_stub.h>
-#include <dhcp/tests/pkt_filter6_test_stub.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_filter_test_stub.h>
+#include <dhcp/testutils/pkt_filter6_test_stub.h>
 
 #include <boost/foreach.hpp>
 
@@ -67,12 +67,15 @@ IfaceMgrTestConfig::addIface(const IfacePtr& iface) {
 }
 
 void
-IfaceMgrTestConfig::addIface(const std::string& name, const unsigned int ifindex) {
+IfaceMgrTestConfig::addIface(const std::string& name,
+                             const unsigned int ifindex) {
     IfaceMgr::instance().addInterface(createIface(name, ifindex));
 }
 
 IfacePtr
-IfaceMgrTestConfig::createIface(const std::string &name, const unsigned int ifindex) {
+IfaceMgrTestConfig::createIface(const std::string& name,
+                                const unsigned int ifindex,
+                                const std::string& mac) {
     IfacePtr iface(new Iface(name, ifindex));
     if (name == "lo") {
         iface->flag_loopback_ = true;
@@ -93,8 +96,9 @@ IfaceMgrTestConfig::createIface(const std::string &name, const unsigned int ifin
     iface->flag_up_ = true;
     iface->flag_running_ = true;
 
-    // Set MAC address to 08:08:08:08:08:08.
-    std::vector<uint8_t> mac_vec(6, 8);
+    // Set MAC address.
+    HWAddr hwaddr = HWAddr::fromText(mac);
+    std::vector<uint8_t> mac_vec = hwaddr.hwaddr_;
     iface->setMac(&mac_vec[0], mac_vec.size());
     iface->setHWType(HTYPE_ETHER);
 
@@ -202,6 +206,6 @@ IfaceMgrTestConfig::unicastOpen(const std::string& iface_name) const {
     return (false);
 }
 
-}
-}
-}
+} // end of namespace isc::dhcp::test
+} // end of namespace isc::dhcp
+} // end of namespace isc

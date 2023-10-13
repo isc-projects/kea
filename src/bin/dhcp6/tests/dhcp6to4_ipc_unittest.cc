@@ -9,8 +9,8 @@
 #include <asiolink/io_address.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp/tests/pkt_filter6_test_stub.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_filter6_test_stub.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>

@@ -5,12 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcp/tests/pkt_captures.h>
-#include <string>
+
 #include <asiolink/io_address.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <util/encode/hex.h>
 
-/// @file   wireshark.cc
+#include <string>
+
+/// @file   pkt_captures.cc
 ///
 /// @brief  contains packet captures imported from Wireshark
 ///

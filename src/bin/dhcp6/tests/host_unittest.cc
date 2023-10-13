@@ -10,7 +10,7 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <boost/algorithm/string/join.hpp>

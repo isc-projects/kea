@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
@@ -21,7 +22,6 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/docsis3_option_defs.h>
-#include <dhcp/tests/pkt_captures.h>
 #include <testutils/gtest_utils.h>
 #include <util/range_utilities.h>
 #include <boost/date_time/posix_time/posix_time.hpp>

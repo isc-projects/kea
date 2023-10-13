@@ -659,6 +659,14 @@ public:
     /// @param fd socket descriptor of the ready socket
     typedef std::function<void (int fd)> SocketCallback;
 
+    /// Defines callback used when detecting interfaces.
+    /// @param update_only Only add interfaces that do not exist and update
+    /// existing interfaces.
+    ///
+    /// @return true if callback exited with no issue and @ref detectIfaces
+    /// should continue with specific system calls, false otherwise.
+    typedef std::function<bool (bool)> DetectCallback;
+
     /// Keeps callback information for external sockets.
     struct SocketCallbackInfo {
         /// Socket descriptor of the external socket.
@@ -788,11 +796,18 @@ public:
     /// @c PktFilter class to mimic socket operation on these interfaces.
     void clearIfaces();
 
+    /// @brief Set a callback to perform operations before executing specific
+    /// system calls.
+    ///
+    /// @param cb The callback used before executing specific system calls.
+    void setDetectCallback(const DetectCallback& cb) {
+        detect_callback_ = cb;
+    }
+
     /// @brief Detects network interfaces.
     ///
-    /// This method will eventually detect available interfaces. For now
-    /// it offers stub implementation. First interface name and link-local
-    /// IPv6 address is read from interfaces.txt file.
+    /// If the @ref detect_callback_ returns true, the specific system calls are
+    /// executed, otherwise the @ref detectIfaces will return immediately.
     ///
     /// @param update_only Only add interfaces that do not exist and update
     /// existing interfaces.
@@ -972,7 +987,6 @@ public:
     /// @throw isc::Unexpected if failed to create and bind socket
     int openSocketFromRemoteAddress(const isc::asiolink::IOAddress& remote_addr,
                                     const uint16_t port);
-
 
     /// @brief Opens IPv6 sockets on detected interfaces.
     ///
@@ -1444,15 +1458,6 @@ protected:
     /// @return Pkt6 object representing received packet (or null)
     Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
-
-    /// @brief Stub implementation of network interface detection.
-    ///
-    /// This implementations reads a single line from interfaces.txt file
-    /// and pretends to detect such interface. First interface name and
-    /// link-local IPv6 address or IPv4 address is read from the
-    /// interfaces.txt file.
-    void stubDetectIfaces();
-
     /// @brief List of available interfaces
     IfaceCollection ifaces_;
 
@@ -1487,7 +1492,6 @@ private:
     isc::asiolink::IOAddress
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
-
 
     /// @brief Open an IPv6 socket with multicast support.
     ///
@@ -1585,6 +1589,13 @@ private:
 
     /// @brief Indicates if the IfaceMgr is in the test mode.
     bool test_mode_;
+
+    /// @brief Detect callback used to perform action before system dependent
+    /// function calls. Currently this function is used in unittests only.
+    ///
+    /// If the @ref detect_callback_ returns true, the specific system calls are
+    /// executed, otherwise the @ref detectIfaces will return immediately.
+    DetectCallback detect_callback_;
 
     /// @brief Allows to use loopback
     bool allow_loopback_;

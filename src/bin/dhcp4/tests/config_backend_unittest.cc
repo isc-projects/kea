@@ -10,7 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <database/backend_selector.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>

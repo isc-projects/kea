@@ -23,9 +23,9 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp6/json_config_parser.h>
-#include <dhcp/tests/pkt_captures.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcp/docsis3_option_defs.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option_string.h>
 #include <cc/command_interpreter.h>
 

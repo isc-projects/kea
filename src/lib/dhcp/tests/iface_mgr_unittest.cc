@@ -12,7 +12,7 @@
 #include <dhcp/option.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 #include <dhcp/tests/packet_queue_testutils.h>
 #include <testutils/gtest_utils.h>

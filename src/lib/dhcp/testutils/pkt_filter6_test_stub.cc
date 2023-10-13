@@ -7,7 +7,7 @@
 #include <config.h>
 #include <fcntl.h>
 
-#include <dhcp/tests/pkt_filter6_test_stub.h>
+#include <dhcp/testutils/pkt_filter6_test_stub.h>
 
 namespace isc {
 namespace dhcp {

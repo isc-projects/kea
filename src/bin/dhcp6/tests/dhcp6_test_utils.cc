@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 #include <cc/command_interpreter.h>
 #include <dhcp/option6_status_code.h>
-#include <dhcp/tests/pkt_captures.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>

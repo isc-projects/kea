@@ -13,7 +13,7 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
-#include <dhcp/tests/pkt_captures.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
@@ -25,7 +25,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/docsis3_option_defs.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>

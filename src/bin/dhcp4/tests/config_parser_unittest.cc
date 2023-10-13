@@ -18,7 +18,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/classify.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_expiration.h>

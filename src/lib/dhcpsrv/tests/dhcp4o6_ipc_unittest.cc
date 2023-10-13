@@ -8,7 +8,7 @@
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
