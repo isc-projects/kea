@@ -420,10 +420,6 @@ void IfaceMgr::detectIfaces(bool update_only) {
         }
     }
 
-    if (isTestMode() && update_only) {
-        return;
-    }
-
     // Copies of netlink messages about links will be stored here.
     Netlink::NetlinkMessages link_info;
 

@@ -156,7 +156,8 @@ public:
         }
         reset();
         IfaceMgr::instance().setTestMode(false);
-        IfaceMgr::instance().setDetectCallback(isc::dhcp::IfaceMgr::DetectCallback());
+        IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
+                                               IfaceMgr::instancePtr().get(), ph::_1));
     }
 
     /// @brief Destructor
@@ -164,7 +165,8 @@ public:
         server_.reset();
         reset();
         IfaceMgr::instance().setTestMode(false);
-        IfaceMgr::instance().setDetectCallback(isc::dhcp::IfaceMgr::DetectCallback());
+        IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
+                                               IfaceMgr::instancePtr().get(), ph::_1));
         IfaceMgr::instance().clearIfaces();
         IfaceMgr::instance().closeSockets();
         IfaceMgr::instance().detectIfaces();
@@ -1655,7 +1657,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadValid) {
 // file is loaded correctly.
 TEST_F(CtrlChannelDhcpv6SrvTest, configReloadDetectInterfaces) {
     interfaces_ = "\"eth0\"";
-    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", 0);
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
     auto detectIfaces = [&](bool update_only) {
         if (!update_only) {
             eth0->addAddress(IOAddress("10.0.0.1"));
@@ -1693,7 +1696,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadDetectInterfaces) {
     f << cfg_txt;
     f.close();
 
-    IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX);
+    IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
+                                                    "AA:BB:CC:DD:EE:FF");
     auto detectUpdateIfaces = [&](bool update_only) {
         if (!update_only) {
             eth1->addAddress(IOAddress("192.0.2.3"));

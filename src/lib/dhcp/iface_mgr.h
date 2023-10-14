@@ -312,7 +312,7 @@ public:
     /// @param addr address to be removed.
     ///
     /// @return true if removal was successful (address was in collection),
-    ///         false otherwise
+    /// false otherwise
     bool delAddress(const isc::asiolink::IOAddress& addr);
 
     /// @brief Adds socket descriptor to an interface.
@@ -655,11 +655,13 @@ std::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 ///
 class IfaceMgr : public boost::noncopyable {
 public:
-    /// Defines callback used when data is received over external sockets.
+    /// @brief Defines callback used when data is received over external sockets.
+    ///
     /// @param fd socket descriptor of the ready socket
     typedef std::function<void (int fd)> SocketCallback;
 
-    /// Defines callback used when detecting interfaces.
+    /// @brief Defines callback used when detecting interfaces.
+    ///
     /// @param update_only Only add interfaces that do not exist and update
     /// existing interfaces.
     ///
@@ -803,6 +805,16 @@ public:
     void setDetectCallback(const DetectCallback& cb) {
         detect_callback_ = cb;
     }
+
+    /// @brief Check if the specific system calls used to detect interfaces
+    /// should be executed.
+    ///
+    /// @param update_only Only add interfaces that do not exist and update
+    /// existing interfaces.
+    ///
+    /// @return true if the specific system calls should be executed, false
+    /// otherwise causing the @ref detectIfaces to return immediately.
+    bool checkDetectIfaces(bool update_only);
 
     /// @brief Detects network interfaces.
     ///
@@ -1590,8 +1602,8 @@ private:
     /// @brief Indicates if the IfaceMgr is in the test mode.
     bool test_mode_;
 
-    /// @brief Detect callback used to perform action before system dependent
-    /// function calls. Currently this function is used in unittests only.
+    /// @brief Detect callback used to perform actions before system dependent
+    /// function calls.
     ///
     /// If the @ref detect_callback_ returns true, the specific system calls are
     /// executed, otherwise the @ref detectIfaces will return immediately.

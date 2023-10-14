@@ -37,10 +37,6 @@ IfaceMgr::detectIfaces(bool update_only) {
         }
     }
 
-    if (isTestMode() && update_only) {
-        return;
-    }
-
     struct ifaddrs* iflist = 0;// The whole interface list
     struct ifaddrs* ifptr = 0; // The interface we're processing now
 
