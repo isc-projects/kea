@@ -40,7 +40,7 @@ public:
     /// @throw ConfigError when configuration fails.
     void configure(const data::ConstElementPtr& input_config);
 
-    /// @brief Creates high availability service using current configuration.
+    /// @brief Creates high availability services using current configuration.
     ///
     /// The caller must ensure that the HA configuration is valid before
     /// calling this function.
@@ -50,9 +50,9 @@ public:
     /// DHCP service (enabled/disabled).
     /// @param server_type DHCP server type for which the HA service should
     /// be created.
-    void startService(const asiolink::IOServicePtr& io_service,
-                      const dhcp::NetworkStatePtr& network_state,
-                      const HAServerType& server_type);
+    void startServices(const asiolink::IOServicePtr& io_service,
+                       const dhcp::NetworkStatePtr& network_state,
+                       const HAServerType& server_type);
 
     /// @brief Destructor.
     ~HAImpl();

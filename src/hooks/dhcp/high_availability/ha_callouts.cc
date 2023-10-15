@@ -57,7 +57,7 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
         }
         isc::dhcp::NetworkStatePtr network_state;
         handle.getArgument("network_state", network_state);
-        impl->startService(io_service, network_state, HAServerType::DHCPv4);
+        impl->startServices(io_service, network_state, HAServerType::DHCPv4);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_DHCP4_START_SERVICE_FAILED)
@@ -131,7 +131,7 @@ int dhcp6_srv_configured(CalloutHandle& handle) {
         }
         isc::dhcp::NetworkStatePtr network_state;
         handle.getArgument("network_state", network_state);
-        impl->startService(io_service, network_state, HAServerType::DHCPv6);
+        impl->startServices(io_service, network_state, HAServerType::DHCPv6);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_DHCP6_START_SERVICE_FAILED)

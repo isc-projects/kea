@@ -82,8 +82,8 @@ public:
 
         // Starting the service is required prior to running any callouts.
         NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-        ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                             HAServerType::DHCPv4));
+        ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                              HAServerType::DHCPv4));
 
         ConstElementPtr command = Element::fromJSON(ha_sync_command);
 
@@ -101,7 +101,7 @@ public:
 };
 
 // Tests that HAService object is created for DHCPv4 service.
-TEST_F(HAImplTest, startService) {
+TEST_F(HAImplTest, startServices) {
     // Valid configuration must be provided prior to starting the service.
     TestHAImpl ha_impl;
     ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
@@ -110,8 +110,8 @@ TEST_F(HAImplTest, startService) {
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
 
     // Start the service for DHCPv4 server.
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     // Make sure that the HA service has been created for the requested
     // server type.
@@ -120,7 +120,7 @@ TEST_F(HAImplTest, startService) {
 }
 
 // Tests that HAService object is created for DHCPv6 service.
-TEST_F(HAImplTest, startService6) {
+TEST_F(HAImplTest, startServices6) {
     // Valid configuration must be provided prior to starting the service.
     TestHAImpl ha_impl;
     ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
@@ -129,8 +129,8 @@ TEST_F(HAImplTest, startService6) {
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
 
     // Start the service for DHCPv4 server.
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
 
     // Make sure that the HA service has been created for the requested
     // server type.
@@ -150,8 +150,8 @@ TEST_F(HAImplTest, buffer4Receive) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     // Initially the HA service is in the waiting state and serves no scopes.
     // We need to explicitly enable the scope to be served.
@@ -258,8 +258,8 @@ TEST_F(HAImplTest, buffer6Receive) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
 
     // Initially the HA service is in the waiting state and serves no scopes.
     // We need to explicitly enable the scope to be served.
@@ -342,8 +342,8 @@ TEST_F(HAImplTest, leases4Committed) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     // Make sure we wait for the acks from the backup server to be able to
     // test the case of sending lease updates even though the service is
@@ -428,8 +428,8 @@ TEST_F(HAImplTest, leases6Committed) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
 
     // Make sure we wait for the acks from the backup server to be able to
     // test the case of sending lease updates even though the service is
@@ -580,8 +580,8 @@ TEST_F(HAImplTest, continueHandler) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     ConstElementPtr command = Element::fromJSON("{ \"command\": \"ha-continue\" }");
 
@@ -604,8 +604,8 @@ TEST_F(HAImplTest, statusGet) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     std::string name = "status-get";
     ConstElementPtr response =
@@ -664,8 +664,8 @@ TEST_F(HAImplTest, statusGetBackupServer) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     std::string name = "status-get";
     ConstElementPtr response =
@@ -712,8 +712,8 @@ TEST_F(HAImplTest, statusGetPassiveBackup) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     std::string name = "status-get";
     ConstElementPtr response =
@@ -759,8 +759,8 @@ TEST_F(HAImplTest, maintenanceNotify) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     ConstElementPtr command = Element::fromJSON(
         "{"
@@ -790,8 +790,8 @@ TEST_F(HAImplTest, haReset) {
 
     // Starting the service is required prior to running any callouts.
     NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     ConstElementPtr command = Element::fromJSON(
         "{"

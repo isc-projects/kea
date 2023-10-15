@@ -37,9 +37,9 @@ HAImpl::configure(const ConstElementPtr& input_config) {
 }
 
 void
-HAImpl::startService(const IOServicePtr& io_service,
-                     const NetworkStatePtr& network_state,
-                     const HAServerType& server_type) {
+HAImpl::startServices(const IOServicePtr& io_service,
+                      const NetworkStatePtr& network_state,
+                      const HAServerType& server_type) {
     auto configs = config_->getAll();
     for (auto id = 0; id < configs.size(); ++id) {
         // Create the HA service and crank up the state machine.
