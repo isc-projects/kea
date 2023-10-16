@@ -1,3 +1,9 @@
+2189.	[doc]		tomek
+	Security reporting process described in a Github-friendly format.
+	There is no new information, mostly pointers to already existing
+	documents.
+	(Gitlab #3080)
+
 2188.	[bug]		razvan
 	Fixed a race condition in free lease queue allocator.
 	(Gitlab #3111)
