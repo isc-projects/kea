@@ -75,7 +75,7 @@ DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
 # Keep the sysrepo-cpp config
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPOCPP_CONFIGURE_FLAG)
 
-dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md platforms.rst code_of_conduct.md
+dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md SECURITY.md platforms.rst code_of_conduct.md
 
 .PHONY: check-valgrind check-valgrind-suppress
 
