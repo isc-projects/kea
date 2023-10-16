@@ -571,10 +571,50 @@ TEST_F(HAImplTest, synchronizeHandler) {
                                " command");
     }
 
+    {
+        SCOPED_TRACE("Server name must be valid");
+        testSynchronizeHandler("{"
+                               "    \"command\": \"ha-sync\","
+                               "    \"arguments\": {"
+                               "        \"server-name\": \"server5\","
+                               "        \"max-period\": 20"
+                               "    }"
+                               "}", "server5 matches no configured 'server-name'");
+    }
+
 }
 
-// Tests ha-continue command handler.
+// Tests ha-continue command handler with a specified server name.
 TEST_F(HAImplTest, continueHandler) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON("{"
+        "\"command\": \"ha-continue\","
+        "\"arguments\": {"
+        "    \"server-name\": \"server1\""
+        "}"
+    "}");
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.continueHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA state machine is not paused.");
+}
+
+// Tests ha-continue command handler without a server name.
+TEST_F(HAImplTest, continueHandlerWithNoServerName) {
     HAImpl ha_impl;
     ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
 
@@ -595,6 +635,35 @@ TEST_F(HAImplTest, continueHandler) {
     ASSERT_TRUE(response);
 
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA state machine is not paused.");
+}
+
+// Tests ha-continue command handler with wrong server name.
+TEST_F(HAImplTest, continueHandlerWithWrongServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON("{"
+        "\"command\": \"ha-continue\","
+        "\"arguments\": {"
+        "    \"server-name\": \"server5\""
+        "}"
+    "}");
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.continueHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
 }
 
 // Tests status-get command processed handler.
@@ -752,8 +821,40 @@ TEST_F(HAImplTest, statusGetPassiveBackup) {
     EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
 }
 
-// Test ha-maintenance-notify command handler.
+// Test ha-maintenance-notify command handler with server name.
 TEST_F(HAImplTest, maintenanceNotify) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-maintenance-notify\","
+        "    \"arguments\": {"
+        "        \"cancel\": false,"
+        "        \"server-name\": \"server1\""
+        "    }"
+         "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.maintenanceNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server is in-maintenance state.");
+}
+
+// Test ha-maintenance-notify command handler without server name.
+TEST_F(HAImplTest, maintenanceNotifyNoServerName) {
     HAImpl ha_impl;
     ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
 
@@ -783,8 +884,72 @@ TEST_F(HAImplTest, maintenanceNotify) {
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server is in-maintenance state.");
 }
 
-// Test ha-reset command handler.
+// Test ha-maintenance-notify command handler without server name.
+TEST_F(HAImplTest, maintenanceNotifyBadServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-maintenance-notify\","
+        "    \"arguments\": {"
+        "        \"cancel\": false,"
+        "        \"server-name\": \"server5\""
+        "    }"
+         "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.maintenanceNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
+}
+
+
+// Test ha-reset command handler with a specified server name.
 TEST_F(HAImplTest, haReset) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-reset\","
+        "    \"arguments\": {"
+        "        \"server-name\": \"server1\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.haResetHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA state machine already in WAITING state.");
+}
+
+// Test ha-reset command handler without a specified server name.
+TEST_F(HAImplTest, haResetNoServerName) {
     HAImpl ha_impl;
     ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
 
@@ -810,5 +975,314 @@ TEST_F(HAImplTest, haReset) {
 
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA state machine already in WAITING state.");
 }
+
+// Test ha-reset command handler with a wrong server name.
+TEST_F(HAImplTest, haResetBadServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-reset\","
+        "    \"arguments\": {"
+        "        \"server-name\": \"server5\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.haResetHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
+}
+
+// Test ha-heartbeat command handler with a specified server name.
+TEST_F(HAImplTest, haHeartbeat) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-heartbeat\","
+        "    \"arguments\": {"
+        "        \"server-name\": \"server1\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.heartbeatHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA peer status returned.");
+}
+
+// Test ha-heartbeat command handler without a specified server name.
+TEST_F(HAImplTest, haHeartbeatNoServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-heartbeat\""
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.heartbeatHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA peer status returned.");
+}
+
+// Test ha-heartbeat command handler with a wrong server name.
+TEST_F(HAImplTest, haHeartbeatBadServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-heartbeat\","
+        "    \"arguments\": {"
+        "        \"server-name\": \"server5\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.heartbeatHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
+}
+
+// Test ha-sync-complete-notify command handler with a specified server name.
+TEST_F(HAImplTest, haSyncCompleteNotify) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-sync-complete-notify\","
+        "    \"arguments\": {"
+        "        \"server-name\": \"server1\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.syncCompleteNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS,
+                "Server successfully notified about the synchronization completion.");
+}
+
+// Test ha-sync-complete-notify command handler without a specified server name.
+TEST_F(HAImplTest, haSyncCompleteNotifyNoServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-sync-complete-notify\""
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.syncCompleteNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS,
+                "Server successfully notified about the synchronization completion.");
+}
+
+// Test ha-sync-complete-notify command handler with a wrong server name.
+TEST_F(HAImplTest, haSyncCompleteNotifyBadServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-sync-complete-notify\","
+        "    \"arguments\": {"
+        "        \"server-name\": \"server5\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.syncCompleteNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
+}
+
+// Test ha-scopes command handler with a specified server name.
+TEST_F(HAImplTest, haScopes) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-scopes\","
+        "    \"arguments\": {"
+        "        \"scopes\": [ \"server1\", \"server2\" ],"
+        "        \"server-name\": \"server1\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.scopesHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "New HA scopes configured.");
+}
+
+// Test ha-scopes command handler without a specified server name.
+TEST_F(HAImplTest, haScopesNoServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-scopes\","
+        "    \"arguments\": {"
+        "        \"scopes\": [ \"server1\", \"server2\" ]"
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.scopesHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "New HA scopes configured.");
+}
+
+// Test ha-scopes command handler with a wrong server name.
+TEST_F(HAImplTest, haScopesBadServerName) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-scopes\","
+        "    \"arguments\": {"
+        "        \"scopes\": [ \"server1\", \"server2\" ],"
+        "        \"server-name\": \"server5\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.scopesHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
+}
+
 
 }

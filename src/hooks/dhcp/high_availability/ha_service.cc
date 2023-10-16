@@ -1692,7 +1692,8 @@ HAService::asyncSendHeartbeat() {
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(partner_config->getUrl().getStrippedHostname()));
     partner_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createHeartbeat(server_type_));
+    request->setBodyAsJson(CommandCreator::createHeartbeat(config_->getThisServerConfig()->getName(),
+                                                           server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -2507,7 +2508,8 @@ void
 HAService::asyncSendHAReset(HttpClient& http_client,
                             const HAConfig::PeerConfigPtr& config,
                             PostRequestCallback post_request_action) {
-    ConstElementPtr command = CommandCreator::createHAReset(server_type_);
+    ConstElementPtr command = CommandCreator::createHAReset(config_->getThisServerConfig()->getName(),
+                                                            server_type_);
 
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
@@ -2867,7 +2869,8 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(server_type_));
+    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(config_->getThisServerConfig()->getName(),
+                                                                    server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs

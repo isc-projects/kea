@@ -49,16 +49,22 @@ public:
 
     /// @brief Creates ha-reset command.
     ///
+    /// @param server_name name of the server sending the command allowing
+    /// for associating the command with the relationship.
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createHAReset(const HAServerType& server_type);
+    createHAReset(const std::string& server_name,
+                  const HAServerType& server_type);
 
     /// @brief Creates ha-heartbeat command for DHCP server.
     ///
+    /// @param server_name name of the server sending the command allowing
+    /// for associating the command with the relationship.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createHeartbeat(const HAServerType& server_type);
+    createHeartbeat(const std::string& server_name,
+                    const HAServerType& server_type);
 
     /// @brief Creates lease4-update command.
     ///
@@ -174,10 +180,13 @@ public:
 
     /// @brief Creates ha-sync-complete-notify command.
     ///
+    /// @param server_name name of the server sending the command allowing
+    /// for associating the command with the relationship.
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createSyncCompleteNotify(const HAServerType& server_type);
+    createSyncCompleteNotify(const std::string& server_name,
+                             const HAServerType& server_type);
 
     /// @brief List of commands used by the High Availability in v4.
     static std::unordered_set<std::string> ha_commands4_;

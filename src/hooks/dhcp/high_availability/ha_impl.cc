@@ -319,22 +319,43 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
         ElementPtr mutable_resp_args =
             boost::const_pointer_cast<Element>(resp_args);
 
-        /// @todo Today we support only one HA relationship per Kea server.
-        /// In the future there will be more of them. Therefore we enclose
-        /// our sole relationship in a list.
+        // Process the status get command for each HA service.
         auto ha_relationships = Element::createList();
-        auto ha_relationship = Element::createMap();
-        ConstElementPtr ha_servers = services_->get()->processStatusGet();
-        ha_relationship->set("ha-servers", ha_servers);
-        ha_relationship->set("ha-mode", Element::create(HAConfig::HAModeToString(config_->get()->getHAMode())));
-        ha_relationships->add(ha_relationship);
-        mutable_resp_args->set("high-availability", ha_relationships);
+        for (auto service : services_->getAll()) {
+            auto ha_relationship = Element::createMap();
+            ConstElementPtr ha_servers = service->processStatusGet();
+            ha_relationship->set("ha-servers", ha_servers);
+            ha_relationship->set("ha-mode", Element::create(HAConfig::HAModeToString(config_->get()->getHAMode())));
+            ha_relationships->add(ha_relationship);
+            mutable_resp_args->set("high-availability", ha_relationships);
+        }
     }
 }
 
 void
 HAImpl::heartbeatHandler(CalloutHandle& callout_handle) {
-    ConstElementPtr response = services_->get()->processHeartbeat();
+    // Command must always be provided.
+    ConstElementPtr command;
+    callout_handle.getArgument("command", command);
+
+    // Retrieve arguments.
+    ConstElementPtr args;
+    static_cast<void>(parseCommand(args, command));
+
+    HAServicePtr service;
+    try {
+        service = getHAServiceByServerName("ha-heartbeat", args);
+
+    } catch (const std::exception& ex) {
+        // There was an error while parsing command arguments. Return an error status
+        // code to notify the user.
+        ConstElementPtr response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
+        callout_handle.setArgument("response", response);
+        return;
+    }
+
+    // Command parsing was successful, so let's process the command.
+    ConstElementPtr response = service->processHeartbeat();
     callout_handle.setArgument("response", response);
 }
 
@@ -351,6 +372,7 @@ HAImpl::synchronizeHandler(hooks::CalloutHandle& callout_handle) {
     ConstElementPtr server_name;
     unsigned int max_period_value = 0;
 
+    HAServicePtr service;
     try {
         // Arguments are required for the ha-sync command.
         if (!args) {
@@ -386,6 +408,8 @@ HAImpl::synchronizeHandler(hooks::CalloutHandle& callout_handle) {
             max_period_value = static_cast<unsigned int>(max_period->intValue());
         }
 
+        service = getHAServiceByServerName("ha-sync", args);
+
     } catch (const std::exception& ex) {
         // There was an error while parsing command arguments. Return an error status
         // code to notify the user.
@@ -395,8 +419,8 @@ HAImpl::synchronizeHandler(hooks::CalloutHandle& callout_handle) {
     }
 
     // Command parsing was successful, so let's process the command.
-    ConstElementPtr response = services_->get()->processSynchronize(server_name->stringValue(),
-                                                                    max_period_value);
+    ConstElementPtr response = service->processSynchronize(server_name->stringValue(),
+                                                           max_period_value);
     callout_handle.setArgument("response", response);
 }
 
@@ -410,8 +434,8 @@ HAImpl::scopesHandler(hooks::CalloutHandle& callout_handle) {
     ConstElementPtr args;
     static_cast<void>(parseCommand(args, command));
 
+    HAServicePtr service;
     std::vector<std::string> scopes_vector;
-
     try {
         // Arguments must be present.
         if (!args) {
@@ -444,6 +468,8 @@ HAImpl::scopesHandler(hooks::CalloutHandle& callout_handle) {
             scopes_vector.push_back(scope->stringValue());
         }
 
+        service = getHAServiceByServerName("ha-sync", args);
+
     } catch (const std::exception& ex) {
         // There was an error while parsing command arguments. Return an error status
         // code to notify the user.
@@ -453,13 +479,32 @@ HAImpl::scopesHandler(hooks::CalloutHandle& callout_handle) {
     }
 
     // Command parsing was successful, so let's process the command.
-    ConstElementPtr response = services_->get()->processScopes(scopes_vector);
+    ConstElementPtr response = service->processScopes(scopes_vector);
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::continueHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = services_->get()->processContinue();
+    // Command must always be provided.
+    ConstElementPtr command;
+    callout_handle.getArgument("command", command);
+
+    // Retrieve arguments.
+    ConstElementPtr args;
+    static_cast<void>(parseCommand(args, command));
+
+    HAServicePtr service;
+    try {
+        service = getHAServiceByServerName("ha-continue", args);
+
+    } catch (const std::exception& ex) {
+        // There was an error while parsing command arguments. Return an error status
+        // code to notify the user.
+        ConstElementPtr response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
+        callout_handle.setArgument("response", response);
+        return;
+    }
+    ConstElementPtr response = service->processContinue();
     callout_handle.setArgument("response", response);
 }
 
@@ -469,45 +514,138 @@ HAImpl::maintenanceNotifyHandler(hooks::CalloutHandle& callout_handle) {
     ConstElementPtr command;
     callout_handle.getArgument("command", command);
 
-    // Retrieve arguments.
-    ConstElementPtr args;
-    static_cast<void>(parseCommandWithArgs(args, command));
+    HAServicePtr service;
+    try {
+        // Retrieve arguments.
+        ConstElementPtr args;
+        static_cast<void>(parseCommandWithArgs(args, command));
 
-    ConstElementPtr cancel_op = args->get("cancel");
-    if (!cancel_op) {
-        isc_throw(BadValue, "'cancel' is mandatory for the 'ha-maintenance-notify' command");
+        ConstElementPtr cancel_op = args->get("cancel");
+        if (!cancel_op) {
+            isc_throw(BadValue, "'cancel' is mandatory for the 'ha-maintenance-notify' command");
+        }
+
+        if (cancel_op->getType() != Element::boolean) {
+            isc_throw(BadValue, "'cancel' must be a boolean in the 'ha-maintenance-notify' command");
+        }
+
+        service = getHAServiceByServerName("ha-maintenance-notify", args);
+
+        ConstElementPtr response = service->processMaintenanceNotify(cancel_op->boolValue());
+        callout_handle.setArgument("response", response);
+
+    } catch (const std::exception& ex) {
+        // There was an error while parsing command arguments. Return an error status
+        // code to notify the user.
+        ConstElementPtr response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
+        callout_handle.setArgument("response", response);
     }
-
-    if (cancel_op->getType() != Element::boolean) {
-        isc_throw(BadValue, "'cancel' must be a boolean in the 'ha-maintenance-notify' command");
-    }
-
-    ConstElementPtr response = services_->get()->processMaintenanceNotify(cancel_op->boolValue());
-    callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::maintenanceStartHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = services_->get()->processMaintenanceStart();
+    ConstElementPtr response;
+    for (auto service : services_->getAll()) {
+        response = service->processMaintenanceStart();
+        int rcode = CONTROL_RESULT_SUCCESS;
+        static_cast<void>(parseAnswer(rcode, response));
+        if (rcode != CONTROL_RESULT_SUCCESS) {
+            break;
+        }
+
+    }
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::maintenanceCancelHandler(hooks::CalloutHandle& callout_handle) {
-    ConstElementPtr response = services_->get()->processMaintenanceCancel();
+    ConstElementPtr response;
+    for (auto service : services_->getAll()) {
+        response = service->processMaintenanceCancel();
+    }
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::haResetHandler(hooks::CalloutHandle& callout_handle) {
+    // Command must always be provided.
+    ConstElementPtr command;
+    callout_handle.getArgument("command", command);
+
+    // Retrieve arguments.
+    ConstElementPtr args;
+    static_cast<void>(parseCommand(args, command));
+
+    HAServicePtr service;
+    try {
+        service = getHAServiceByServerName("ha-reset", args);
+
+    } catch (const std::exception& ex) {
+        // There was an error while parsing command arguments. Return an error status
+        // code to notify the user.
+        ConstElementPtr response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
+        callout_handle.setArgument("response", response);
+        return;
+    }
+
     ConstElementPtr response = services_->get()->processHAReset();
     callout_handle.setArgument("response", response);
 }
 
 void
 HAImpl::syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle) {
+    // Command must always be provided.
+    ConstElementPtr command;
+    callout_handle.getArgument("command", command);
+
+    // Retrieve arguments.
+    ConstElementPtr args;
+    static_cast<void>(parseCommand(args, command));
+
+    HAServicePtr service;
+    try {
+        service = getHAServiceByServerName("ha-sync-complete-notify", args);
+
+    } catch (const std::exception& ex) {
+        // There was an error while parsing command arguments. Return an error status
+        // code to notify the user.
+        ConstElementPtr response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
+        callout_handle.setArgument("response", response);
+        return;
+    }
+
     ConstElementPtr response = services_->get()->processSyncCompleteNotify();
     callout_handle.setArgument("response", response);
+}
+
+HAServicePtr
+HAImpl::getHAServiceByServerName(const std::string& command_name, ConstElementPtr args) const {
+    HAServicePtr service;
+    if (args) {
+        // Arguments must be a map.
+        if (args->getType() != Element::map) {
+            isc_throw(BadValue, "arguments in the '" << command_name << "' command are not a map");
+        }
+
+        auto server_name = args->get("server-name");
+
+        if (server_name) {
+            if (server_name->getType() != Element::string) {
+                isc_throw(BadValue, "'server-name' must be a string in the '" << command_name << "' command");
+            }
+            service = services_->get(server_name->stringValue());
+            if (!service) {
+                isc_throw(BadValue, server_name->stringValue() << " matches no configured"
+                          << " 'server-name'");
+            }
+        }
+    }
+
+    if (!service) {
+        service = services_->get();
+    }
+
+    return (service);
 }
 
 } // end of namespace isc::ha

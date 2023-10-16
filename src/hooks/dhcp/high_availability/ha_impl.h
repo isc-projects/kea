@@ -178,6 +178,20 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Attempts to get an @c HAService by server name.
+    ///
+    /// The function expects that the arguments contain the "server-name"
+    /// parameter. If the parameter is not specified, a default @c HAService
+    /// name is returned.
+    ///
+    /// @param command_name command name.
+    /// @param args command arguments or null.
+    /// @return Pointer to an @c HAService instance.
+    /// @throw BadValue if the specified server-name doesn't exist or if the
+    /// server-name wasn't specified and more than one @c HAService exists.
+    HAServicePtr getHAServiceByServerName(const std::string& command_name,
+                                          data::ConstElementPtr args) const;
+
 protected:
 
     /// @brief Holds parsed configuration.

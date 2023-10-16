@@ -191,14 +191,24 @@ TEST(CommandCreatorTest, createDHCPEnable4) {
 
 // This test verifies that the ha-reset command sent to DHCPv4 server is correct.
 TEST(CommandCreatorTest, createHAReset4) {
-    ConstElementPtr command = CommandCreator::createHAReset(HAServerType::DHCPv4);
-    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-reset", "dhcp4"));
+    ConstElementPtr command = CommandCreator::createHAReset("server1", HAServerType::DHCPv4);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-reset", "dhcp4", arguments));
+    auto server_name = arguments->get("server-name");
+    ASSERT_TRUE(server_name);
+    ASSERT_EQ(Element::string, server_name->getType());
+    EXPECT_EQ("server1", server_name->stringValue());
 }
 
 // This test verifies that the ha-heartbeat command is correct.
 TEST(CommandCreatorTest, createHeartbeat4) {
-    ConstElementPtr command = CommandCreator::createHeartbeat(HAServerType::DHCPv4);
-    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-heartbeat", "dhcp4"));
+    ConstElementPtr command = CommandCreator::createHeartbeat("server1", HAServerType::DHCPv4);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-heartbeat", "dhcp4", arguments));
+    auto server_name = arguments->get("server-name");
+    ASSERT_TRUE(server_name);
+    ASSERT_EQ(Element::string, server_name->getType());
+    EXPECT_EQ("server1", server_name->stringValue());
 }
 
 // This test verifies that the command generated for the lease update
@@ -326,8 +336,13 @@ TEST(CommandCreatorTest, createDHCPEnable6) {
 
 // This test verifies that the ha-reset command sent to DHCPv6 server is correct.
 TEST(CommandCreatorTest, createHAReset6) {
-    ConstElementPtr command = CommandCreator::createHAReset(HAServerType::DHCPv6);
-    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-reset", "dhcp6"));
+    ConstElementPtr arguments;
+    ConstElementPtr command = CommandCreator::createHAReset("server1", HAServerType::DHCPv6);
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-reset", "dhcp6", arguments));
+    auto server_name = arguments->get("server-name");
+    ASSERT_TRUE(server_name);
+    ASSERT_EQ(Element::string, server_name->getType());
+    EXPECT_EQ("server1", server_name->stringValue());
 }
 
 // This test verifies that the command generated for the lease update
@@ -520,16 +535,25 @@ TEST(CommandCreatorTest, createMaintenanceNotify6) {
 // This test verifies that the ha-sync-complete-notify command sent to a
 // DHCPv4 server is correct.
 TEST(CommandCreatorTest, createSyncCompleteNotify4) {
-    ConstElementPtr command = CommandCreator::createSyncCompleteNotify(HAServerType::DHCPv4);
-    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-sync-complete-notify", "dhcp4"));
+    ConstElementPtr command = CommandCreator::createSyncCompleteNotify("server1", HAServerType::DHCPv4);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-sync-complete-notify", "dhcp4", arguments));
+    auto server_name = arguments->get("server-name");
+    ASSERT_TRUE(server_name);
+    ASSERT_EQ(Element::string, server_name->getType());
+    EXPECT_EQ("server1", server_name->stringValue());
 }
 
 // This test verifies that the ha-sync-complete-notify command sent to a
 // DHCPv4 server is correct.
 TEST(CommandCreatorTest, createSyncCompleteNotify6) {
-    ConstElementPtr command = CommandCreator::createSyncCompleteNotify(HAServerType::DHCPv6);
+    ConstElementPtr command = CommandCreator::createSyncCompleteNotify("server1", HAServerType::DHCPv6);
     ConstElementPtr arguments;
-    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-sync-complete-notify", "dhcp6"));
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-sync-complete-notify", "dhcp6", arguments));
+    auto server_name = arguments->get("server-name");
+    ASSERT_TRUE(server_name);
+    ASSERT_EQ(Element::string, server_name->getType());
+    EXPECT_EQ("server1", server_name->stringValue());
 }
 
 }

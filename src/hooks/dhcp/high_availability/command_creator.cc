@@ -65,15 +65,21 @@ CommandCreator::createDHCPEnable(const unsigned int origin,
 }
 
 ConstElementPtr
-CommandCreator::createHAReset(const HAServerType& server_type) {
-    ConstElementPtr command = config::createCommand("ha-reset");
+CommandCreator::createHAReset(const std::string& server_name,
+                              const HAServerType& server_type) {
+    auto args = Element::createMap();
+    args->set("server-name", Element::create(server_name));
+    ConstElementPtr command = config::createCommand("ha-reset", args);
     insertService(command, server_type);
     return (command);
 }
 
 ConstElementPtr
-CommandCreator::createHeartbeat(const HAServerType& server_type) {
-    ConstElementPtr command = config::createCommand("ha-heartbeat");
+CommandCreator::createHeartbeat(const std::string& server_name,
+                                const HAServerType& server_type) {
+    auto args = Element::createMap();
+    args->set("server-name", Element::create(server_name));
+    ConstElementPtr command = config::createCommand("ha-heartbeat", args);
     insertService(command, server_type);
     return (command);
 }
@@ -250,8 +256,11 @@ CommandCreator::createMaintenanceNotify(const bool cancel, const HAServerType& s
 }
 
 ConstElementPtr
-CommandCreator::createSyncCompleteNotify(const HAServerType& server_type) {
-    auto command = config::createCommand("ha-sync-complete-notify");
+CommandCreator::createSyncCompleteNotify(const std::string& server_name,
+                                         const HAServerType& server_type) {
+    auto args = Element::createMap();
+    args->set("server-name", Element::create(server_name));
+    auto command = config::createCommand("ha-sync-complete-notify", args);
     insertService(command, server_type);
     return (command);
 }
