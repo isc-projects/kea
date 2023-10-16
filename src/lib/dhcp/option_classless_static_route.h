@@ -42,21 +42,19 @@ public:
     ///
     /// Writes option in wire-format to buffer, returns pointer to first unused
     /// byte after stored option (that is useful for writing options one after
-    /// another).
+    /// another). It may throw an exception if the @c packHeader method throws.
     ///
     /// @param buf pointer to a buffer
     /// @param check flag which indicates if checking the option length is
     /// required (used only in V4)
-    ///
-    /// @throw OutOfRange Thrown when @c check param set to @c true and
-    /// @c Option::packHeader(buf,check) throws due to option len>255 octets.
     void pack(util::OutputBuffer& buf, bool check = true) const override;
 
-    /// @brief Parses received wire data buffer.
+    /// @brief Parses option from the received buffer.
     ///
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
-    /// @throw
+    ///
+    /// @throw OutOfRange Thrown in case option contents are truncated.
     void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) override;
 
     /// @brief Returns string representation of the option.
@@ -110,9 +108,38 @@ private:
     /// Calculation is done according to static routes encoding rules in RFC3442.
     /// This should be called whenever @c static_routes_ is changed.
     void calcDataLen();
+
+    /// @brief Parses received wire data buffer.
+    ///
+    /// It is used by @c unpack method in case received buffer with
+    /// option data is in binary on-wire format.
+    ///
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    ///
+    /// @throw OutOfRange Thrown in case option contents are truncated.
+    /// @throw BadValue Thrown in case received width of subnet mask value is invalid.
+    void parseWireData(OptionBufferConstIter begin, OptionBufferConstIter end);
+
+    /// @brief Parses a convenient notation of the option data, which may be used in config.
+    ///
+    /// As an alternative to the binary format,
+    /// we provide convenience option definition as a string in format:
+    /// subnet1 - router1 IP addr, subnet2 - router2 IP addr, ..., subnetN - routerN IP addr
+    /// e.g.:
+    /// 10.0.0.0/8 - 10.2.3.1, 10.229.0.128/25 - 10.1.0.3
+    ///
+    /// This notation may be used in the server config, thanks to the possibility of specifying
+    /// data for binary option as a single-quoted text string within double quotes
+    /// (@c csv-format flag must be set to @c false).
+    ///
+    /// @param config_txt convenient notation of the option data received as string
+    ///
+    /// @throw BadValue Thrown in case parser found wrong format of received string.
+    void parseConfigData(const std::string& config_txt);
 };
 
-/// A pointer to the @c OptionClasslessStaticRoute object.
+/// A shared pointer to the @c OptionClasslessStaticRoute object.
 typedef boost::shared_ptr<OptionClasslessStaticRoute> OptionClasslessStaticRoutePtr;
 
 }  // namespace dhcp
