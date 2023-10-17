@@ -41,18 +41,18 @@ TrackingLeaseMgr::isLocked(const LeasePtr& lease) {
 }
 
 void
-TrackingLeaseMgr::trackAddLease(const LeasePtr& lease, bool mt_safe) {
-    runCallbacks(TRACK_ADD_LEASE, lease, mt_safe);
+TrackingLeaseMgr::trackAddLease(const LeasePtr& lease) {
+    runCallbacks(TRACK_ADD_LEASE, lease);
 }
 
 void
-TrackingLeaseMgr::trackUpdateLease(const LeasePtr& lease, bool mt_safe) {
-    runCallbacks(TRACK_UPDATE_LEASE, lease, mt_safe);
+TrackingLeaseMgr::trackUpdateLease(const LeasePtr& lease) {
+    runCallbacks(TRACK_UPDATE_LEASE, lease);
 }
 
 void
-TrackingLeaseMgr::trackDeleteLease(const LeasePtr& lease, bool mt_safe) {
-    runCallbacks(TRACK_DELETE_LEASE, lease, mt_safe);
+TrackingLeaseMgr::trackDeleteLease(const LeasePtr& lease) {
+    runCallbacks(TRACK_DELETE_LEASE, lease);
 }
 
 void
@@ -124,15 +124,15 @@ TrackingLeaseMgr::callbackTypeToString(CallbackType type) {
 }
 
 void
-TrackingLeaseMgr::runCallbacks(TrackingLeaseMgr::CallbackType type, const LeasePtr& lease,
-                               bool mt_safe) {
-    runCallbacksForSubnetID(type, SUBNET_ID_GLOBAL, lease, mt_safe);
-    runCallbacksForSubnetID(type, lease->subnet_id_, lease, mt_safe);
+TrackingLeaseMgr::runCallbacks(TrackingLeaseMgr::CallbackType type,
+                               const LeasePtr& lease) {
+    runCallbacksForSubnetID(type, SUBNET_ID_GLOBAL, lease);
+    runCallbacksForSubnetID(type, lease->subnet_id_, lease);
 }
 
 void
 TrackingLeaseMgr::runCallbacksForSubnetID(CallbackType type, SubnetID subnet_id,
-                                          const LeasePtr& lease, bool mt_safe) {
+                                          const LeasePtr& lease) {
     // The first index filters by callback type and subnet_id.
     auto& idx = callbacks_->get<0>();
     auto cbs = idx.equal_range(boost::make_tuple(type, subnet_id, lease->getType()));
@@ -142,7 +142,7 @@ TrackingLeaseMgr::runCallbacksForSubnetID(CallbackType type, SubnetID subnet_id,
     for (auto it = cbs.first; it != cbs.second; ++it) {
         auto cb = *it;
         try {
-            cb.fn(lease, mt_safe);
+            cb.fn(lease);
         } catch (const std::exception& ex) {
             LOG_WARN(dhcpsrv_logger, DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION)
                 .arg(callbackTypeToString(type))

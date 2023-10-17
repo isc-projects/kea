@@ -142,9 +142,7 @@ private:
     /// Removes the lease from the free lease queue.
     ///
     /// @param lease added lease.
-    /// @param mt_safe a boolean flag indicating if the callback
-    /// has been invoked in the MT-safe context.
-    void addLeaseCallback(LeasePtr lease, bool mt_safe);
+    void addLeaseCallback(LeasePtr lease);
 
     /// @brief Thread unsafe callback for adding a lease.
     ///
@@ -160,9 +158,7 @@ private:
     /// the lease is removed from the free lease queue, if exists.
     ///
     /// @param lease updated lease.
-    /// @param mt_safe a boolean flag indicating if the callback
-    /// has been invoked in the MT-safe context.
-    void updateLeaseCallback(LeasePtr lease, bool mt_safe);
+    void updateLeaseCallback(LeasePtr lease);
 
     /// @brief Thread unsafe callback for updating a lease.
     ///
@@ -178,9 +174,7 @@ private:
     /// Adds the lease to the free lease queue.
     ///
     /// @param lease deleted lease.
-    /// @param mt_safe a boolean flag indicating if the callback
-    /// has been invoked in the MT-safe context.
-    void deleteLeaseCallback(LeasePtr lease, bool mt_safe);
+    void deleteLeaseCallback(LeasePtr lease);
 
     /// @brief Thread unsafe callback for updating a lease.
     ///
