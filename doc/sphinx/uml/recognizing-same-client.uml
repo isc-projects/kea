@@ -67,12 +67,12 @@ is true
           by the client ID
           option (code 61).;
           stop
-        else
+        else (no)
           #palegreen:Client is recognized
           by the MAC address.;
           stop
         endif
-      else
+      else (no)
         #palegreen:Client is recognized
         by the MAC address.;
         stop
