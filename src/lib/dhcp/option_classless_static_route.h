@@ -21,7 +21,9 @@ typedef std::tuple<asiolink::IOAddress, uint8_t, asiolink::IOAddress> StaticRout
 class OptionClasslessStaticRoute : public Option {
 public:
     /// @brief Empty Constructor
-    OptionClasslessStaticRoute() : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0) {}
+    OptionClasslessStaticRoute()
+        : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0) {
+    }
 
     /// @brief Constructor of the %Option from on-wire data.
     ///
@@ -103,7 +105,8 @@ private:
     /// @return number of significant octets
     static uint8_t calcSignificantOctets(const uint8_t& mask_width);
 
-    /// @brief Calculates length in octets of all encoded static routes and stores it in @c data_len_
+    /// @brief Calculates length in octets of all encoded static routes and stores it in @c
+    /// data_len_
     ///
     /// Calculation is done according to static routes encoding rules in RFC3442.
     /// This should be called whenever @c static_routes_ is changed.

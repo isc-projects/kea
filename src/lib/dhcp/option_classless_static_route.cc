@@ -6,9 +6,9 @@
 
 #include <config.h>
 
+#include <asiolink/io_error.h>
 #include <util/strutil.h>
 
-#include <asiolink/io_error.h>
 #include <option_classless_static_route.h>
 
 using namespace isc::asiolink;
@@ -88,10 +88,8 @@ OptionClasslessStaticRoute::toText(int indent) const {
            << "len=" << (len() - getHeaderLen());
     int i = 0;
     for (const auto& route : static_routes_) {
-        stream << ", Route " << ++i
-               << " (subnet " << get<0>(route).toText() << "/"
-               << static_cast<int>(get<1>(route)) << ", router IP "
-               << get<2>(route) << ")";
+        stream << ", Route " << ++i << " (subnet " << get<0>(route).toText() << "/"
+               << static_cast<int>(get<1>(route)) << ", router IP " << get<2>(route) << ")";
     }
 
     return (stream.str());
@@ -186,8 +184,8 @@ OptionClasslessStaticRoute::parseWireData(OptionBufferConstIter begin, OptionBuf
 
         // once we know haw many significant octets there are, check for truncated data again
         if (distance(begin, end) < (significant_octets + V4ADDRESS_LEN)) {
-            isc_throw(OutOfRange, "DHCPv4 OptionClasslessStaticRoute "
-                                      << type_ << " is truncated.");
+            isc_throw(OutOfRange,
+                      "DHCPv4 OptionClasslessStaticRoute " << type_ << " is truncated.");
         }
 
         // following octets are significant octets of the subnet nr
@@ -201,18 +199,18 @@ OptionClasslessStaticRoute::parseWireData(OptionBufferConstIter begin, OptionBuf
         case 1:
             subnet_octets = *begin;
             subnet_nr = IOAddress(subnet_octets << 24);
-            break ;
+            break;
         case 2:
             subnet_octets = readUint16(&(*begin), distance(begin, end));
             subnet_nr = IOAddress(subnet_octets << 16);
-            break ;
+            break;
         case 3:
             // we are reading one octet too much in this case,
             // but since we did check for truncated data before,
             // we are safe do so and mask 4th octet with zeros
             subnet_octets = readUint32(&(*begin), distance(begin, end));
             subnet_nr = IOAddress(subnet_octets & 0xFFFFFF00);
-            break ;
+            break;
         case 4:
             subnet_octets = readUint32(&(*begin), distance(begin, end));
             subnet_nr = IOAddress(subnet_octets);
@@ -238,9 +236,10 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
         std::vector<std::string> parts = str::tokens(str::trim(route_str), std::string("-"));
         if (parts.size() != 2) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
-                                    << type_ << " has invalid value, route definition must"
-                                                " have format as in example: 10.229.0.128/25"
-                                                " - 10.229.0.1");
+                                    << type_
+                                    << " has invalid value, option definition must"
+                                       " have comma separated routes formatted as in "
+                                       "example: 10.229.0.128/25 - 10.229.0.1");
         }
 
         std::string txt_prefix = str::trim(parts[0]);
@@ -276,7 +275,7 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
             if (len > 32) {
                 isc_throw(BadValue, "");
             }
-        } catch (...)  {
+        } catch (...) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
                                     << type_ << " has invalid value, provided prefix len "
                                     << txt_prefix_len << " is not valid.");
