@@ -478,7 +478,8 @@ HAConfig::validate() {
     if (enable_multi_threading_) {
         if (!dhcp_mt_enabled) {
             // HA+MT requires DHCP multi-threading.
-            LOG_INFO(ha_logger, HA_CONFIG_DHCP_MT_DISABLED);
+            LOG_INFO(ha_logger, HA_CONFIG_DHCP_MT_DISABLED)
+                .arg(getThisServerName());
             enable_multi_threading_ = false;
             return;
         }
@@ -488,7 +489,8 @@ HAConfig::validate() {
             dhcp_threads = MultiThreadingMgr::detectThreadCount();
             // If machine says it cannot support threads.
             if (!dhcp_threads) {
-                LOG_INFO(ha_logger, HA_CONFIG_SYSTEM_MT_UNSUPPORTED);
+                LOG_INFO(ha_logger, HA_CONFIG_SYSTEM_MT_UNSUPPORTED)
+                    .arg(getThisServerName());
                 enable_multi_threading_ = false;
                 return;
             }
@@ -508,7 +510,8 @@ HAConfig::validate() {
     } else {
         if (dhcp_mt_enabled) {
             // DHCP multi-threading requires HA+MT for optimal performance.
-            LOG_WARN(ha_logger, HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED);
+            LOG_WARN(ha_logger, HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED)
+                .arg(getThisServerName());
             return;
         }
     }

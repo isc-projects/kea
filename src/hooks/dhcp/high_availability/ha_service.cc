@@ -137,6 +137,7 @@ HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
     }
 
     LOG_INFO(ha_logger, HA_SERVICE_STARTED)
+        .arg(config_->getThisServerName())
         .arg(HAConfig::HAModeToString(config->getHAMode()))
         .arg(HAConfig::PeerConfig::roleToString(config->getThisServerConfig()->getRole()));
 }
@@ -450,7 +451,8 @@ HAService::inMaintenanceStateHandler() {
         // Log if the state machine is paused.
         conditionalLogPausedState();
 
-        LOG_INFO(ha_logger, HA_MAINTENANCE_SHUTDOWN_SAFE);
+        LOG_INFO(ha_logger, HA_MAINTENANCE_SHUTDOWN_SAFE)
+            .arg(config_->getThisServerName());
     }
 
     scheduleHeartbeat();
@@ -490,7 +492,8 @@ HAService::partnerDownStateHandler() {
         if (maintenance) {
             // If we ended up in the partner-down state as a result of
             // receiving the ha-maintenance-start command let's log it.
-            LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN);
+            LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN)
+                .arg(config_->getThisServerName());
         }
 
     } else if (getLastEvent() == HA_SYNCED_PARTNER_UNAVAILABLE_EVT) {
@@ -565,7 +568,8 @@ HAService::partnerInMaintenanceStateHandler() {
         // Log if the state machine is paused.
         conditionalLogPausedState();
 
-        LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED);
+        LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED)
+            .arg(config_->getThisServerName());
     }
 
     scheduleHeartbeat();
@@ -795,7 +799,8 @@ HAService::terminatedStateHandler() {
         // Log if the state machine is paused.
         conditionalLogPausedState();
 
-        LOG_ERROR(ha_logger, HA_TERMINATED);
+        LOG_ERROR(ha_logger, HA_TERMINATED)
+            .arg(config_->getThisServerName());
     }
 
     postNextEvent(NOP_EVT);
@@ -879,7 +884,8 @@ HAService::waitingStateHandler() {
         // it hasn't been restarted yet. Probably, this server is the first one
         // being restarted after syncing the clocks. Let's just sit in the waiting
         // state until the partner gets restarted.
-        LOG_INFO(ha_logger, HA_TERMINATED_RESTART_PARTNER);
+        LOG_INFO(ha_logger, HA_TERMINATED_RESTART_PARTNER)
+            .arg(config_->getThisServerName());
         postNextEvent(NOP_EVT);
         break;
 
@@ -929,6 +935,7 @@ HAService::verboseTransition(const unsigned state) {
 
         // Log the transition.
         LOG_INFO(ha_logger, HA_STATE_TRANSITION)
+            .arg(config_->getThisServerName())
             .arg(current_state_name)
             .arg(new_state_name)
             .arg(partner_state_name);
@@ -936,6 +943,7 @@ HAService::verboseTransition(const unsigned state) {
     } else {
         // In the passive-backup mode we don't know the partner's state.
         LOG_INFO(ha_logger, HA_STATE_TRANSITION_PASSIVE_BACKUP)
+            .arg(config_->getThisServerName())
             .arg(current_state_name)
             .arg(new_state_name);
     }
@@ -945,7 +953,8 @@ HAService::verboseTransition(const unsigned state) {
     // administratively disabled. Let's remind the user about this
     // configuration setting.
     if ((state == HA_READY_ST) && (getCurrState() == HA_WAITING_ST)) {
-        LOG_INFO(ha_logger, HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER);
+        LOG_INFO(ha_logger, HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER)
+            .arg(config_->getThisServerName());
     }
 
     // Do the actual transition.
@@ -958,11 +967,13 @@ HAService::verboseTransition(const unsigned state) {
         (config_->getThisServerConfig()->getRole() != HAConfig::PeerConfig::BACKUP)) {
         if (shouldSendLeaseUpdates(config_->getFailoverPeerConfig())) {
             LOG_INFO(ha_logger, HA_LEASE_UPDATES_ENABLED)
+                .arg(config_->getThisServerName())
                 .arg(new_state_name);
 
         } else if (!config_->amSendingLeaseUpdates()) {
             // Lease updates are administratively disabled.
             LOG_INFO(ha_logger, HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER)
+                .arg(config_->getThisServerName())
                 .arg(new_state_name);
 
         } else {
@@ -970,6 +981,7 @@ HAService::verboseTransition(const unsigned state) {
             // are not issued because this is the backup server or because
             // in this state the server should not generate lease updates.
             LOG_INFO(ha_logger, HA_LEASE_UPDATES_DISABLED)
+                .arg(config_->getThisServerName())
                 .arg(new_state_name);
         }
     }
@@ -994,7 +1006,8 @@ HAService::getNormalState() const {
 bool
 HAService::unpause() {
     if (isModelPaused()) {
-        LOG_INFO(ha_logger, HA_STATE_MACHINE_CONTINUED);
+        LOG_INFO(ha_logger, HA_STATE_MACHINE_CONTINUED)
+            .arg(config_->getThisServerName());
         unpauseModel();
         return (true);
     }
@@ -1008,6 +1021,7 @@ HAService::conditionalLogPausedState() const {
         std::string state_name = stateToString(getCurrState());
         boost::to_upper(state_name);
         LOG_INFO(ha_logger, HA_STATE_MACHINE_PAUSED)
+            .arg(config_->getThisServerName())
             .arg(state_name);
     }
 }
@@ -1132,21 +1146,24 @@ HAService::isPartnerStateInvalid() const {
     switch (communication_state_->getPartnerState()) {
         case HA_COMMUNICATION_RECOVERY_ST:
             if (config_->getHAMode() != HAConfig::LOAD_BALANCING) {
-                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY);
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY)
+                    .arg(config_->getThisServerName());
                 return (true);
             }
             break;
 
         case HA_HOT_STANDBY_ST:
             if (config_->getHAMode() != HAConfig::HOT_STANDBY) {
-                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_HOT_STANDBY);
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_HOT_STANDBY)
+                    .arg(config_->getThisServerName());
                 return (true);
             }
             break;
 
         case HA_LOAD_BALANCING_ST:
             if (config_->getHAMode() != HAConfig::LOAD_BALANCING) {
-                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_LOAD_BALANCING);
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_LOAD_BALANCING)
+                    .arg(config_->getThisServerName());
                 return (true);
             }
             break;
@@ -1393,6 +1410,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
             // Handle first two groups of errors.
             if (ec || !error_str.empty()) {
                 LOG_WARN(ha_logger, HA_LEASE_UPDATE_COMMUNICATIONS_FAILED)
+                    .arg(config_->getThisServerName())
                     .arg(query->getLabel())
                     .arg(config->getLogLabel())
                     .arg(ec ? ec.message() : error_str);
@@ -1417,6 +1435,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                     communication_state_->reportRejectedLeaseUpdate(query);
 
                     LOG_WARN(ha_logger, HA_LEASE_UPDATE_CONFLICT)
+                        .arg(config_->getThisServerName())
                         .arg(query->getLabel())
                         .arg(config->getLogLabel())
                         .arg(ex.what());
@@ -1424,6 +1443,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                 } catch (const std::exception& ex) {
                     // Handle third group of errors.
                     LOG_WARN(ha_logger, HA_LEASE_UPDATE_FAILED)
+                        .arg(config_->getThisServerName())
                         .arg(query->getLabel())
                         .arg(config->getLogLabel())
                         .arg(ex.what());
@@ -1720,6 +1740,7 @@ HAService::asyncSendHeartbeat() {
             // Handle first two groups of errors.
             if (ec || !error_str.empty()) {
                 LOG_WARN(ha_logger, HA_HEARTBEAT_COMMUNICATIONS_FAILED)
+                    .arg(config_->getThisServerName())
                     .arg(partner_config->getLogLabel())
                     .arg(ec ? ec.message() : error_str);
                 heartbeat_success = false;
@@ -1784,6 +1805,7 @@ HAService::asyncSendHeartbeat() {
 
                 } catch (const std::exception& ex) {
                     LOG_WARN(ha_logger, HA_HEARTBEAT_FAILED)
+                        .arg(config_->getThisServerName())
                         .arg(partner_config->getLogLabel())
                         .arg(ex.what());
                     heartbeat_success = false;
@@ -1802,6 +1824,7 @@ HAService::asyncSendHeartbeat() {
                 // Log if the communication is interrupted.
                 if (communication_state_->isCommunicationInterrupted()) {
                     LOG_WARN(ha_logger, HA_COMMUNICATION_INTERRUPTED)
+                        .arg(config_->getThisServerName())
                         .arg(partner_config->getName());
                 }
             }
@@ -1887,6 +1910,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_DHCP_DISABLE_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -1899,6 +1923,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_DHCP_DISABLE_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -1965,6 +1990,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_DHCP_ENABLE_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -1977,6 +2003,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_DHCP_ENABLE_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -2114,6 +2141,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
             if (ec || !error_str.empty()) {
                 error_message = (ec ? ec.message() : error_str);
                 LOG_ERROR(ha_logger, HA_LEASES_SYNC_COMMUNICATIONS_FAILED)
+                    .arg(config_->getThisServerName())
                     .arg(partner_config->getLogLabel())
                     .arg(error_message);
 
@@ -2140,6 +2168,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                     const auto& leases_element = leases->listValue();
 
                     LOG_INFO(ha_logger, HA_LEASES_SYNC_LEASE_PAGE_RECEIVED)
+                        .arg(config_->getThisServerName())
                         .arg(leases_element.size())
                         .arg(server_name);
 
@@ -2166,6 +2195,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
 
                                 } else {
                                     LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE4_SKIP)
+                                        .arg(config_->getThisServerName())
                                         .arg(lease->addr_.toText())
                                         .arg(lease->subnet_id_);
                                 }
@@ -2199,6 +2229,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
 
                                 } else {
                                     LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE6_SKIP)
+                                        .arg(config_->getThisServerName())
                                         .arg(lease->addr_.toText())
                                         .arg(lease->subnet_id_);
                                 }
@@ -2214,6 +2245,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
 
                         } catch (const std::exception& ex) {
                             LOG_WARN(ha_logger, HA_LEASE_SYNC_FAILED)
+                                .arg(config_->getThisServerName())
                                 .arg((*l)->str())
                                 .arg(ex.what());
                         }
@@ -2351,7 +2383,9 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
         }
     });
 
-    LOG_INFO(ha_logger, HA_SYNC_START).arg(server_name);
+    LOG_INFO(ha_logger, HA_SYNC_START)
+        .arg(config_->getThisServerName())
+        .arg(server_name);
 
     // Measure duration of the synchronization.
     Stopwatch stopwatch;
@@ -2369,6 +2403,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
         postNextEvent(HA_SYNCING_FAILED_EVT);
 
         LOG_ERROR(ha_logger, HA_SYNC_FAILED)
+            .arg(config_->getThisServerName())
             .arg(server_name)
             .arg(status_message);
 
@@ -2381,6 +2416,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
     postNextEvent(HA_SYNCING_SUCCEEDED_EVT);
 
     LOG_INFO(ha_logger, HA_SYNC_SUCCESSFUL)
+        .arg(config_->getThisServerName())
         .arg(server_name)
         .arg(stopwatch.logFormatLastDuration());
 
@@ -2435,6 +2471,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_WARN(ha_logger, HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(config->getLogLabel())
                      .arg(ec ? ec.message() : error_str);
 
@@ -2445,6 +2482,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_WARN(ha_logger, HA_LEASES_BACKLOG_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(config->getLogLabel())
                          .arg(ex.what());
                  }
@@ -2467,7 +2505,8 @@ bool
 HAService::sendLeaseUpdatesFromBacklog() {
     auto num_updates = lease_update_backlog_.size();
     if (num_updates == 0) {
-        LOG_INFO(ha_logger, HA_LEASES_BACKLOG_NOTHING_TO_SEND);
+        LOG_INFO(ha_logger, HA_LEASES_BACKLOG_NOTHING_TO_SEND)
+            .arg(config_->getThisServerName());
         return (true);
     }
 
@@ -2477,6 +2516,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
     bool updates_successful = true;
 
     LOG_INFO(ha_logger, HA_LEASES_BACKLOG_START)
+        .arg(config_->getThisServerName())
         .arg(num_updates)
         .arg(remote_config->getName());
 
@@ -2497,6 +2537,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
 
     if (updates_successful) {
         LOG_INFO(ha_logger, HA_LEASES_BACKLOG_SUCCESS)
+            .arg(config_->getThisServerName())
             .arg(remote_config->getName())
             .arg(stopwatch.logFormatLastDuration());
     }
@@ -2536,6 +2577,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_WARN(ha_logger, HA_RESET_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(config->getLogLabel())
                      .arg(ec ? ec.message() : error_str);
 
@@ -2546,6 +2588,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_WARN(ha_logger, HA_RESET_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(config->getLogLabel())
                          .arg(ex.what());
                  }
@@ -2691,6 +2734,7 @@ HAService::processMaintenanceStart() {
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -2703,6 +2747,7 @@ HAService::processMaintenanceStart() {
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -2804,6 +2849,7 @@ HAService::processMaintenanceCancel() {
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -2817,6 +2863,7 @@ HAService::processMaintenanceCancel() {
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_CANCEL_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -2899,6 +2946,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -2914,6 +2962,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_SYNC_COMPLETE_NOTIFY_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -3168,13 +3217,15 @@ HAService::checkPermissionsClientAndListener() {
         }
     } catch (const isc::MultiThreadingInvalidOperation& ex) {
         LOG_ERROR(ha_logger, HA_PAUSE_CLIENT_LISTENER_ILLEGAL)
-                  .arg(ex.what());
+            .arg(config_->getThisServerName())
+            .arg(ex.what());
         // The exception needs to be propagated to the caller of the
         // @ref MultiThreadingCriticalSection constructor.
         throw;
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_PAUSE_CLIENT_LISTENER_FAILED)
-                  .arg(ex.what());
+            .arg(config_->getThisServerName())
+            .arg(ex.what());
     }
 }
 
@@ -3227,7 +3278,8 @@ HAService::resumeClientAndListener() {
         }
     } catch (std::exception& ex) {
         LOG_ERROR(ha_logger, HA_RESUME_CLIENT_LISTENER_FAILED)
-                  .arg(ex.what());
+            .arg(config_->getThisServerName())
+            .arg(ex.what());
     }
 }
 

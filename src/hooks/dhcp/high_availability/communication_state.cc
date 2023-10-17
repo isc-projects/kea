@@ -408,7 +408,8 @@ CommunicationState::clockSkewShouldWarnInternal() {
             (since_warn_duration.total_seconds() > MIN_TIME_SINCE_CLOCK_SKEW_WARN)) {
             last_clock_skew_warn_ = now;
             LOG_WARN(ha_logger, HA_HIGH_CLOCK_SKEW)
-                     .arg(logFormatClockSkewInternal());
+                .arg(config_->getThisServerName())
+                .arg(logFormatClockSkewInternal());
             return (true);
         }
     }
@@ -432,7 +433,8 @@ bool
 CommunicationState::clockSkewShouldTerminateInternal() {
     if (isClockSkewGreater(TERM_CLOCK_SKEW)) {
         LOG_ERROR(ha_logger, HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION)
-                  .arg(logFormatClockSkewInternal());
+            .arg(config_->getThisServerName())
+            .arg(logFormatClockSkewInternal());
         return (true);
     }
     return (false);
@@ -452,7 +454,8 @@ bool
 CommunicationState::rejectedLeaseUpdatesShouldTerminateInternal() {
     if (config_->getMaxRejectedLeaseUpdates() &&
         (config_->getMaxRejectedLeaseUpdates() <= getRejectedLeaseUpdatesCountInternal())) {
-        LOG_ERROR(ha_logger, HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION);
+        LOG_ERROR(ha_logger, HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION)
+            .arg(config_->getThisServerName());
         return (true);
     }
     return (false);
@@ -702,6 +705,7 @@ CommunicationState4::analyzeMessageInternal(const PktPtr& message) {
             // communication interrupted state. But, this client hasn't been
             // yet trying log enough to be considered unacked.
             LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4)
+                .arg(config_->getThisServerName())
                 .arg(message->getLabel());
         }
     }
@@ -714,6 +718,7 @@ CommunicationState4::analyzeMessageInternal(const PktPtr& message) {
             unacked_left = config_->getMaxUnackedClients() - unacked_total + 1;
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED)
+            .arg(config_->getThisServerName())
             .arg(message->getLabel())
             .arg(unacked_total)
             .arg(unacked_left);
@@ -875,6 +880,7 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
             // communication interrupted state. But, this client hasn't been
             // yet trying log enough to be considered unacked.
             LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6)
+                .arg(config_->getThisServerName())
                 .arg(message->getLabel());
         }
     }
@@ -887,6 +893,7 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
             unacked_left = config_->getMaxUnackedClients() - unacked_total + 1;
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED)
+            .arg(config_->getThisServerName())
             .arg(message->getLabel())
             .arg(unacked_total)
             .arg(unacked_left);

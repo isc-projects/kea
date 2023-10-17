@@ -58,7 +58,7 @@ reason for failure.
 This error message is issued when the callout for the command_processed hook
 point failed. The argument contains a reason for the error.
 
-% HA_COMMUNICATION_INTERRUPTED communication with %1 is interrupted
+% HA_COMMUNICATION_INTERRUPTED %1: communication with %2 is interrupted
 This warning message is issued by the server which discovered that the
 communication to the active partner has been interrupted for a time
 period longer than the configured heartbeat-delay time. At this stage
@@ -68,25 +68,26 @@ this traffic. If the max-unacked-clients value is set to 0 such
 verification is disabled in which case the server will transition to
 the partner-down state.
 
-% HA_COMMUNICATION_INTERRUPTED_CLIENT4 %1: new client attempting to get a lease from the partner
+% HA_COMMUNICATION_INTERRUPTED_CLIENT4 %1: new client %2 attempting to get a lease from the partner
 This informational message is issued when the surviving server observes
 a DHCP packet sent to the partner with which the communication is interrupted.
 The client whose packet is observed is not yet considered "unacked" because
 the secs field value does not exceed the configured threshold specified
 with max-ack-delay.
 
-% HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED %1: partner server failed to respond, %2 clients unacked so far, %3 clients left before transitioning to the partner-down state
+% HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED %1: partner server failed to respond to %2, %3 clients unacked so far, %4 clients left before transitioning to the partner-down state
 This informational message is issued when the surviving server determines
 that its partner failed to respond to the DHCP query and that this client
 is considered to not be served by the partner. The surviving server counts
 such clients and if the number of such clients exceeds the max-unacked-clients
 threshold, the server will transition to the partner-down state. The first
-argument contains client identification information. The second argument
-specifies the number of clients to which the server has failed to respond.
-The third argument specifies the number of additional clients which, if not
-provisioned, will cause the server to transition to the partner-down state.
+argument specifies the relationship name. The second argument contains client
+identification information. The second argument specifies the number of
+clients to which the server has failed to respond. The third argument specifies
+the number of additional clients which, if not provisioned, will cause the
+server to transition to the partner-down state.
 
-% HA_COMMUNICATION_INTERRUPTED_CLIENT6 %1: new client attempting to get a lease from the partner
+% HA_COMMUNICATION_INTERRUPTED_CLIENT6 %1: new client %2 attempting to get a lease from the partner
 This informational message is issued when the surviving server observes
 a DHCP packet sent to the partner with which the communication is interrupted.
 The client whose packet is observed is not yet considered "unacked" because
@@ -94,16 +95,17 @@ the elapsed time option value does not exceed the configured threshold
 specified with max-ack-delay. The sole argument specifies client
 identification information.
 
-% HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED %1: partner server failed to respond, %2 clients unacked so far, %3 clients left before transitioning to the partner-down state
+% HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED %1: partner server failed to respond to %2, %3 clients unacked so far, %4 clients left before transitioning to the partner-down state
 This informational message is issued when the surviving server determines
 that its partner failed to respond to the DHCP query and that this client
 is considered to not be served by the partner. The surviving server counts
 such clients and if the number of such clients exceeds the max-unacked-clients
 threshold, the server will transition to the partner-down state. The first
-argument contains client identification information. The second argument
-specifies the number of clients to which the server has failed to respond.
-The third argument specifies the number of additional clients which, if not
-provisioned, will cause the server to transition to the partner-down state.
+argument specifies the relationship name. The second argument contains client
+identification information. The second argument specifies the number of clients
+to which the server has failed to respond. The third argument specifies the
+number of additional clients which, if not provisioned, will cause the server
+to transition to the partner-down state.
 
 % HA_CONFIGURATION_FAILED failed to configure High Availability hooks library: %1
 This error message is issued when there is an error configuring the HA hooks
@@ -113,34 +115,34 @@ library. The argument provides the detailed error message.
 This informational message is issued when the HA hook library configuration
 parser successfully parses and validates the new configuration.
 
-% HA_CONFIG_AUTO_FAILOVER_DISABLED %1 relationship: auto-failover disabled
+% HA_CONFIG_AUTO_FAILOVER_DISABLED %1: auto-failover disabled
 This warning message is issued to indicate that the 'auto-failover' parameter
 was administratively disabled for the specified server. The server will not
 automatically start serving partner's scope when the partner failure is detected.
 The server administrator will need to enable this scope manually by
 sending appropriate ha-scopes command.
 
-% HA_CONFIG_DHCP_MT_DISABLED HA multi-threading has been disabled, it cannot be enabled when Kea global multi-threading is disabled
+% HA_CONFIG_DHCP_MT_DISABLED %1: HA multi-threading has been disabled, it cannot be enabled when Kea global multi-threading is disabled
 This informational message is issued when HA configuration has enabled
 multi-threading while Kea global configuration has multi-threading disabled.
 
-% HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED HA multi-threading is disabled while Kea global multi-threading is enabled which most likely cause performance degradation.
+% HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED %1: HA multi-threading is disabled while Kea global multi-threading is enabled which most likely cause performance degradation.
 This warning message is issued when HA configuration has disabled
 multi-threading while Kea global configuration has multi-threading enabled.
 This will likely cause performance degradation.
 
-% HA_CONFIG_LEASE_SYNCING_DISABLED %1 relationship: lease database synchronization between HA servers is disabled
+% HA_CONFIG_LEASE_SYNCING_DISABLED %1: lease database synchronization between HA servers is disabled
 This warning message is issued when the lease database synchronization is
 administratively disabled. This is valid configuration if the leases are
 replicated between lease databases via some other mechanism, e.g. SQL
 database replication.
 
-% HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER bypassing SYNCING state because lease database synchronization is administratively disabled
+% HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER %1: bypassing SYNCING state because lease database synchronization is administratively disabled
 This informational message is issued as a reminder that lease database
 synchronization is administratively disabled and therefore the server
 transitions directly from the "waiting" to "ready" state.
 
-% HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER %1 relationship: unusual configuration where "send-lease-updates": %1 and "sync-leases": %2
+% HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER %1: unusual configuration where "send-lease-updates": %2 and "sync-leases": %3
 This warning message is issued when the configuration values of the
 send-lease-updates and sync-leases parameters differ. This may be a
 valid configuration but is unusual. Normally, if the lease database
@@ -152,18 +154,18 @@ leases upon startup but later send lease updates to the partner, or
 the lease database should be synchronized upon startup, but no lease
 updates are later sent as a result of leases allocation.
 
-% HA_CONFIG_LEASE_UPDATES_DISABLED %1 relationship: lease updates will not be generated
+% HA_CONFIG_LEASE_UPDATES_DISABLED %1: lease updates will not be generated
 This warning message is issued when the lease updates are administratively
 disabled. This is valid configuration if the leases are replicated to the
 partner's database via some other mechanism, e.g. SQL database replication.
 
-% HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER lease updates are administratively disabled and will not be generated while in %1 state
+% HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER %1: lease updates are administratively disabled and will not be generated while in %2 state
 This informational message is issued as a reminder that the lease updates
 are administratively disabled and will not be issued in the HA state to
 which the server has transitioned. The sole argument specifies the state
 into which the server has transitioned.
 
-% HA_CONFIG_SYSTEM_MT_UNSUPPORTED HA multi-threading has been disabled, auto-detection of thread support reports 0
+% HA_CONFIG_SYSTEM_MT_UNSUPPORTED %1: HA multi-threading has been disabled, auto-detection of thread support reports 0
 This informational message is issued when HA multi-threading configuration has
 specified auto-detection for the number of threads to use and the system
 reports the number of concurrent threads as 0. If you know your system can
@@ -179,43 +181,47 @@ failure.
 This informational message indicates that the High Availability hooks library
 has been unloaded successfully.
 
-% HA_DHCP4_START_SERVICE_FAILED failed to start DHCPv4 HA service in dhcp4_srv_configured callout: %1
-This error message is issued when an attempt to start High Availability service
+% HA_DHCP4_START_SERVICE_FAILED failed to start DHCPv4 HA services in dhcp4_srv_configured callout: %1
+This error message is issued when an attempt to start High Availability services
 for the DHCPv4 server failed in the dhcp4_srv_configured callout. This
 is internal server error and a bug report should be created.
 
-% HA_DHCP6_START_SERVICE_FAILED failed to start DHCPv4 HA service in dhcp6_srv_configured callout: %1
-This error message is issued when an attempt to start High Availability service
+% HA_DHCP6_START_SERVICE_FAILED failed to start DHCPv6 HA services in dhcp6_srv_configured callout: %1
+This error message is issued when an attempt to start High Availability services
 for the DHCPv6 server failed in the dhcp6_srv_configured callout. This
 is internal server error and a bug report should be created.
 
-% HA_DHCP_DISABLE_COMMUNICATIONS_FAILED failed to send request to disable DHCP service of %1: %2
+% HA_DHCP_DISABLE_COMMUNICATIONS_FAILED %1: failed to send request to disable DHCP service of %2: %3
 This warning message indicates that there was a problem in communication with a
-HA peer while sending the dhcp-disable command. The first argument provides the
-remote server's name. The second argument provides a reason for failure.
+HA peer while sending the dhcp-disable command. The first argument specifies
+the local server's name. The second argument provides the remote server's name.
+The third argument provides a reason for failure.
 
-% HA_DHCP_DISABLE_FAILED failed to disable DHCP service of %1: %2
+% HA_DHCP_DISABLE_FAILED %1: failed to disable DHCP service of %2: %3
 This warning message indicates that a peer returned an error status code
-in response to a dhcp-disable command.  The first argument provides the
-remote server's name. The second argument provides a reason for failure.
+in response to a dhcp-disable command. The first argument provides the
+local server's name. The second argument provides the remote server's name.
+The third argument provides a reason for failure.
 
-% HA_DHCP_ENABLE_COMMUNICATIONS_FAILED failed to send request to enable DHCP service of %1: %2
+% HA_DHCP_ENABLE_COMMUNICATIONS_FAILED %1: failed to send request to enable DHCP service of %2: %3
 This warning message indicates that there was a problem in communication with a
 HA peer while sending the dhcp-enable command. The first argument provides the
-remote server's name. The second argument provides a reason for failure.
+local server's name. The second argument provides the remote server's name. The
+third argument provides a reason for failure.
 
-% HA_DHCP_ENABLE_FAILED failed to enable DHCP service of %1: %2
+% HA_DHCP_ENABLE_FAILED %1: failed to enable DHCP service of %2: %3
 This warning message indicates that a peer returned an error status code
-in response to a dhcp-enable command.  The first argument provides the
-remote server's name. The second argument provides a reason for failure.
+in response to a dhcp-enable command. The first argument provides the
+local server's name. The second argument provides the remote server's name.
+The third argument provides a reason for failure.
 
-% HA_HEARTBEAT_COMMUNICATIONS_FAILED failed to send heartbeat to %1: %2
+% HA_HEARTBEAT_COMMUNICATIONS_FAILED %1: failed to send heartbeat to %2: %3
 This warning message indicates that there was a problem in communication with a
 HA peer while sending a heartbeat. This is a first sign that the peer may be
 down. The server will keep trying to send heartbeats until it considers that
 communication is interrupted.
 
-% HA_HEARTBEAT_FAILED heartbeat to %1 failed: %2
+% HA_HEARTBEAT_FAILED %1: heartbeat to %2 failed: %3
 This warning message indicates that a peer returned an error status code
 in response to a heartbeat. This is the sign that the peer may not function
 properly. The server will keep trying to send heartbeats until it considers
@@ -226,14 +232,14 @@ This error message is issued to indicate that the heartbeat command handler
 failed while processing the command. The argument provides the reason for
 failure.
 
-% HA_HIGH_CLOCK_SKEW %1, please synchronize clocks!
+% HA_HIGH_CLOCK_SKEW %1: %2, please synchronize clocks!
 This warning message is issued when the clock skew between the active servers
 exceeds 30 seconds. The HA service continues to operate but may not function
 properly, especially for low lease lifetimes. The administrator should
 should synchronize the clocks, e.g. using NTP. If the clock skew exceeds
 60 seconds, the HA service will terminate.
 
-% HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION %1, causing HA service to terminate
+% HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION %1: %2, causing HA service to terminate
 This warning message is issued when the clock skew between the active servers
 exceeds 60 seconds. The HA service stops. The servers will continue to respond
 to the DHCP queries but won't exchange lease updates or send heartbeats.
@@ -244,19 +250,19 @@ servers to resume the HA service.
 This informational message indicates that the High Availability hooks library
 has been loaded successfully. Enjoy!
 
-% HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY partner is in the communication-recovery state unexpectedly
+% HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY %1: partner is in the communication-recovery state unexpectedly
 This warning message is issued when a partner is in the communication-recovery
 state, and this server is not running in the load balancing mode. The server
 may only transition to the communication-recovery state when it runs in the
 load balancing mode. The HA mode of both servers must be the same.
 
-% HA_INVALID_PARTNER_STATE_HOT_STANDBY partner is in the hot-standby state unexpectedly
+% HA_INVALID_PARTNER_STATE_HOT_STANDBY %1: partner is in the hot-standby state unexpectedly
 This warning message is issued when a partner is in the hot-standby state,
 and this server is not running in the hot standby mode. The server may only
 transition to the hot-standby state when it runs in the hot standby mode.
 The HA mode of both servers must be the same.
 
-% HA_INVALID_PARTNER_STATE_LOAD_BALANCING partner is in the load-balancing state unexpectedly
+% HA_INVALID_PARTNER_STATE_LOAD_BALANCING %1: partner is in the load-balancing state unexpectedly
 This warning message is issued when a partner is in the load-balancing state,
 and this server is not running in the load balancing mode. The server may only
 transition to the load-balancing state when it runs in the load balancing mode.
@@ -286,95 +292,98 @@ because there are neither new leases nor deleted leases for which updates
 should be sent. The sole argument specifies the details of the client
 which sent the packet.
 
-% HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED failed to communicate with %1 while sending lease updates backlog: %2
+% HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED %1: failed to communicate with %2 while sending lease updates backlog: %3
 This error message is issued to indicate that there was a communication error
 with a partner server while sending outstanding lease updates after resuming
-connection. The second argument contains a reason for the error.
+connection. The third argument contains a reason for the error.
 
-% HA_LEASES_BACKLOG_FAILED failed to send lease updates backlog to %1: %2
+% HA_LEASES_BACKLOG_FAILED %1: failed to send lease updates backlog to %2: %3
 This error message is issued to indicate that sending lease updates backlog
 to a partner server failed. The lease updates backlog is sent to the partner
 after resuming temporarily broken communication with the partner. If this
 operation fails the server will transition to the waiting state to initiate
 full lease database synchronization.
 
-% HA_LEASES_BACKLOG_NOTHING_TO_SEND no leases in backlog after communication recovery
+% HA_LEASES_BACKLOG_NOTHING_TO_SEND %1: no leases in backlog after communication recovery
 This informational message is issued when there are no outstanding leases to
 be sent after communication recovery with a partner. This means that the
 communication interruption was short enough that no DHCP clients obtained
 any leases from the server while it was in the communication-recovery state.
 The server may now transition to the load-balancing state.
 
-% HA_LEASES_BACKLOG_START starting to send %1 outstanding lease updates to %2
+% HA_LEASES_BACKLOG_START %1: starting to send %2 outstanding lease updates to %3
 This informational message is issued when the server starts to send outstanding
 lease updates to the partner after resuming communications. The first argument
-specifies the number of lease updates to be sent. The name of the partner is
-specified with the second argument.
+specifies the local server's name. The second argument specifies the number of
+lease updates to be sent. The name of the partner is specified with the third
+argument.
 
-% HA_LEASES_BACKLOG_SUCCESS sending lease updates backlog to %1 successful in %2
+% HA_LEASES_BACKLOG_SUCCESS %1: sending lease updates backlog to %2 successful in %3
 This informational message is issued when server successfully completes
 sending lease updates backlog to the partner. The first argument specifies the
-name of the remote server. The second argument specifies the duration of
+local server's name. The second argument specifies the name of the remote server.
+The third argument specifies the duration of
 this operation.
 
-% HA_LEASES_SYNC_COMMUNICATIONS_FAILED failed to communicate with %1 while syncing leases: %2
+% HA_LEASES_SYNC_COMMUNICATIONS_FAILED %1: failed to communicate with %2 while syncing leases: %3
 This error message is issued to indicate that there was a communication error
 with a partner server while trying to fetch leases from its lease database.
 The argument contains a reason for the error.
 
-% HA_LEASES_SYNC_FAILED failed to synchronize leases with %1: %2
+% HA_LEASES_SYNC_FAILED %1: failed to synchronize leases with %2: %3
 This error message is issued to indicate that there was a problem while
 parsing a response from the server from which leases have been fetched for
-local database synchronization. The argument contains a reason for the error.
+local database synchronization. The third argument contains a reason for
+the error.
 
-% HA_LEASES_SYNC_LEASE_PAGE_RECEIVED received %1 leases from %2
+% HA_LEASES_SYNC_LEASE_PAGE_RECEIVED %1: received %2 leases from %3
 This informational message is issued during lease database synchronization
 to indicate that a bulk of leases have been received. The first argument
-holds the count of leases received. The second argument specifies the
-partner server name.
+specifies the local server's name. The second argument holds the count of
+leases received. The third argument specifies the partner server name.
 
-% HA_LEASE_SYNC_FAILED synchronization failed for lease: %1, reason: %2
+% HA_LEASE_SYNC_FAILED %1: synchronization failed for lease: %2, reason: %3
 This warning message is issued when creating or updating a lease in the
 local lease database fails. The lease information in the JSON format is
-provided as a first argument. The second argument provides a reason for
+provided as a first argument. The third argument provides a reason for
 the failure.
 
-% HA_LEASE_SYNC_STALE_LEASE4_SKIP skipping stale lease %1 in subnet %2
+% HA_LEASE_SYNC_STALE_LEASE4_SKIP %1: skipping stale lease %2 in subnet %3
 This debug message is issued during lease database synchronization, when
 fetched IPv4 lease instance appears to be older than the instance in the
 local database. The newer instance is left in the database and the fetched
 lease is dropped. The remote server will still hold the older lease instance
-until it synchronizes its database with this server. The first argument specifies
-leased address. The second argument specifies a subnet to which the lease
-belongs.
+until it synchronizes its database with this server. The first argument
+specifies the local server's name. The second argument specifies leased
+address. The third argument specifies a subnet to which the lease belongs.
 
-% HA_LEASE_SYNC_STALE_LEASE6_SKIP skipping stale lease %1 in subnet %2
+% HA_LEASE_SYNC_STALE_LEASE6_SKIP %1: skipping stale lease %2 in subnet %3
 This debug message is issued during lease database synchronization, when
 fetched IPv6 lease instance appears to be older than the instance in the
 local database. The newer instance is left in the database and the fetched
 lease is dropped. The remote server will still hold the older lease instance
-until it synchronizes its database with this server. The first argument specifies
-leased address. The second argument specifies a subnet to which the lease
-belongs.
+until it synchronizes its database with this server. The first argument
+specifies the local server's name. The second argument specifies leased
+address. The second argument specifies a subnet to which the lease belongs.
 
-% HA_LEASE_UPDATES_DISABLED lease updates will not be sent to the partner while in %1 state
+% HA_LEASE_UPDATES_DISABLED %1: lease updates will not be sent to the partner while in %2 state
 This informational message is issued to indicate that lease updates will
 not be sent to the partner while the server is in the current state. The
-argument specifies the server's current state name. The lease updates
+second argument specifies the server's current state name. The lease updates
 are still sent to the backup servers if they are configured but any
 possible errors in communication with the backup servers are ignored.
 
-% HA_LEASE_UPDATES_ENABLED lease updates will be sent to the partner while in %1 state
+% HA_LEASE_UPDATES_ENABLED %1: lease updates will be sent to the partner while in %2 state
 This informational message is issued to indicate that lease updates will
 be sent to the partner while the server is in the current state. The
-argument specifies the server's current state name.
+second specifies the server's current state name.
 
-% HA_LEASE_UPDATE_COMMUNICATIONS_FAILED %1: failed to communicate with %2: %3
+% HA_LEASE_UPDATE_COMMUNICATIONS_FAILED %1: failed to send lease update %2 to %3: %4
 This warning message indicates that there was a problem in communication with a
 HA peer while processing a DHCP client query and sending lease update. The
 client's DHCP message will be dropped.
 
-% HA_LEASE_UPDATE_CONFLICT %1: lease update to %2 returned conflict status code: %3
+% HA_LEASE_UPDATE_CONFLICT %1: lease update %2 sent to %3 returned conflict status code: %4
 This warning message indicates that the partner returned a conflict status code
 in response to a lease update. The client's DHCP message will be dropped.
 If the server is configured to track conflicting lease updates, it may
@@ -392,23 +401,23 @@ This informational message is issued when one of the leases failed to delete
 on the HA peer while processing lease updates sent from this server. Typically,
 the lease fails to delete when it doesn't exist in the peer's database.
 
-% HA_LEASE_UPDATE_FAILED %1: lease update to %2 failed: %3
+% HA_LEASE_UPDATE_FAILED %1: lease update %2 sent to %3 failed: %4
 This warning message indicates that a peer returned an error status code
 in response to a lease update. The client's DHCP message will be dropped.
 
-% HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION too many rejected lease updates cause the HA service to terminate
+% HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION %1: too many rejected lease updates cause the HA service to terminate
 This error message is issued when the HA service terminates because the
 number of lease updates for which a conflict status code was returned
 by the partner exceeds the limit set with max-rejected-lease-updates
 configuration parameter.
 
-% HA_LOAD_BALANCING_DUID_MISSING load balancing failed for the DHCPv6 message (transaction id: %1) because DUID is missing
+% HA_LOAD_BALANCING_DUID_MISSING %1: load balancing failed for the DHCPv6 message (transaction id: %2) because DUID is missing
 This debug message is issued when the HA hook library was unable to load
 balance an incoming DHCPv6 query because neither client identifier nor
 HW address was included in the query. The query will be dropped. The
 sole argument contains transaction id.
 
-% HA_LOAD_BALANCING_IDENTIFIER_MISSING load balancing failed for the DHCPv4 message (transaction id: %1) because HW address and client identifier are missing
+% HA_LOAD_BALANCING_IDENTIFIER_MISSING %1: load balancing failed for the DHCPv4 message (transaction id: %2) because HW address and client identifier are missing
 This debug message is issued when the HA hook library was unable to load
 balance an incoming DHCPv4 query because neither client identifier nor
 HW address was included in the query. The query will be dropped. The
@@ -432,24 +441,27 @@ This error message is issued to indicate that the ha-maintenance-cancel command
 handler failed while processing the command. The argument provides the reason for
 failure.
 
-% HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED failed to send ha-maintenance-notify to %1 in attempt to cancel its maintenance: %2
+% HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED %1: failed to send ha-maintenance-notify to %2 in attempt to cancel its maintenance: %3
 This warning message indicates that there was a problem in communication with a
 HA peer while sending the ha-maintenance-notify command with the cancel flag
-set to true. The first argument provides the remote server's name. The second
-argument provides a reason for failure.
+set to true. The first argument provides the local server's name. The second
+argument provides the remote server's name. The third argument provides a reason
+for failure.
 
-% HA_MAINTENANCE_NOTIFY_CANCEL_FAILED error returned while processing ha-maintenance-notify by %1 in attempt to cancel its maintenance: %2
+% HA_MAINTENANCE_NOTIFY_CANCEL_FAILED %1: error returned while processing ha-maintenance-notify by %2 in attempt to cancel its maintenance: %3
 This warning message indicates that a peer returned an error status code
 in response to a ha-maintenance-notify command with the cancel flag set to
-true. The first argument provides the remote server's name. The second
-argument provides a reason for failure.
+true. The first argument provides the local server's name. The second argument
+provides the remote server's name. The third argument provides a reason for
+failure.
 
-% HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED failed to send ha-maintenance-notify to %1: %2
+% HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED %1: failed to send ha-maintenance-notify to %2: %3
 This warning message indicates that there was a problem in communication with a
-HA peer while sending the ha-maintenance-notify command. The first argument provides the
-remote server's name. The second argument provides a reason for failure.
+HA peer while sending the ha-maintenance-notify command. The first argument provides
+the local server's name. The second argument provides the remote server's name.
+The third argument provides a reason for failure.
 
-% HA_MAINTENANCE_NOTIFY_FAILED error returned while processing ha-maintenance-notify by %1: %2
+% HA_MAINTENANCE_NOTIFY_FAILED %1: error returned while processing ha-maintenance-notify by %2: %3
 This warning message indicates that a peer returned an error status code
 in response to a ha-maintenance-notify command.  The first argument provides the
 remote server's name. The second argument provides a reason for failure.
@@ -459,14 +471,14 @@ This error message is issued to indicate that the ha-maintenance-notify command
 handler failed while processing the command. The argument provides the reason for
 failure.
 
-% HA_MAINTENANCE_SHUTDOWN_SAFE the server can now be shutdown for maintenance as the partner has taken over the DHCP traffic
+% HA_MAINTENANCE_SHUTDOWN_SAFE %1: the server can now be shutdown for maintenance as the partner has taken over the DHCP traffic
 This informational message is displayed after the server transitions to the
 in-maintenance state. This server no longer responds to any DHCP queries and its
 partner - in partner-in-maintenance state - has taken over the DHCP traffic.
 When the server in-maintenance state is shut down, the partner moves to
 the partner-down state immediately.
 
-% HA_MAINTENANCE_STARTED the server is now in the partner-in-maintenance state and the partner is in-maintenance state
+% HA_MAINTENANCE_STARTED %1: the server is now in the partner-in-maintenance state and the partner is in-maintenance state
 This informational message is displayed when the server receiving the
 ha-maintenance-start command transitions to the partner-in-maintenance
 state. The server does it after sending the ha-maintenance-notify to
@@ -477,7 +489,7 @@ safely shut down for maintenance in which case this server will
 automatically transition from the partner-in-maintenance state to the
 partner-down state.
 
-% HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN the server is now in the partner-down mode as a result of requested maintenance
+% HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN %1: the server is now in the partner-down mode as a result of requested maintenance
 This informational message is displayed when the server receiving the
 ha-maintenance-start command transitions to the partner-down state
 because it was unable to communicate with the partner while receiving
@@ -499,33 +511,35 @@ This error message is issued to indicate that the configuration for the
 High Availability hooks library hasn't been specified. The 'high-availability'
 parameter must be specified for the hooks library to load properly.
 
-% HA_PAUSE_CLIENT_LISTENER_FAILED Pausing multi-threaded HTTP processing failed: %1
+% HA_PAUSE_CLIENT_LISTENER_FAILED %1: pausing multi-threaded HTTP processing failed: %2
 This error message is emitted when attempting to pause HA's HTTP client and
 listener threads. This error is highly unlikely and indicates a programmatic
 issue that should be reported as a defect.
 
-% HA_PAUSE_CLIENT_LISTENER_ILLEGAL Pausing multi-threaded HTTP processing failed: %1
+% HA_PAUSE_CLIENT_LISTENER_ILLEGAL %1: pausing multi-threaded HTTP processing failed: %2
 This error message is emitted when attempting to pause HA's HTTP client or
 listener thread pools from a worker thread. This error indicates that a command
 run on the listener threads is trying to use a critical section which would
 result in a dead-lock.
 
-% HA_RESET_COMMUNICATIONS_FAILED failed to send ha-reset command to %1: %2
+% HA_RESET_COMMUNICATIONS_FAILED %1: failed to send ha-reset command to %2: %3
 This warning message indicates a problem with communication with a HA peer
-while sending the ha-reset command. The first argument specifies a remote
-server name. The second argument specifies a reason for failure.
+while sending the ha-reset command. The first argument specifies the local
+server name. The second argument specifies a remote server name. The third
+argument specifies a reason for failure.
 
-% HA_RESET_FAILED failed to reset HA state machine of %1: %2
+% HA_RESET_FAILED %1: failed to reset HA state machine of %2: %3
 This warning message indicates that a peer returned an error status code
-in response to the ha-reset command.  The first argument specifies a
-remote server name. The second argument specifies a reason for failure.
+in response to the ha-reset command. The first argument specifies a local
+server name. The second argument specifies a remote server name. The third
+argument specifies a reason for failure.
 
 % HA_RESET_HANDLER_FAILED ha-reset command failed: %1
 This error message is issued to indicate that the ha-reset command handler
 failed while processing the command. The argument provides the reason for
 failure.
 
-% HA_RESUME_CLIENT_LISTENER_FAILED Resuming multi-threaded HTTP processing failed: %1
+% HA_RESUME_CLIENT_LISTENER_FAILED %1: resuming multi-threaded HTTP processing failed: %2
 This error message is emitted when attempting to resume HA's HTTP client and
 listener threads. This error is highly unlikely and indicates a programmatic
 issue that should be reported as a defect.
@@ -535,20 +549,20 @@ This error message is issued to indicate that the ha-scopes command handler
 failed while processing the command. The argument provides reason for
 the failure.
 
-% HA_SERVICE_STARTED started high availability service in %1 mode as %2 server
+% HA_SERVICE_STARTED %1: started high availability service in %2 mode as %3 server
 This informational message is issued when the HA service is started as a result
-of server startup or reconfiguration. The first argument provides the HA mode.
-The second argument specifies the role of this server instance in this
-configuration.
+of server startup or reconfiguration. The first argument specifies a local server
+name. The second argument provides the HA mode. The third argument specifies the
+role of this server instance in this configuration.
 
-% HA_STATE_MACHINE_CONTINUED state machine is un-paused
+% HA_STATE_MACHINE_CONTINUED %1: state machine is un-paused
 This informational message is issued when the HA state machine is un-paused.
 This unlocks the server from the current state. It may transition to any
 other state if it needs to do so, e.g. 'partner-down' if its partner appears
 to be offline. The server may also remain in the current state if the HA
 setup state warrants such behavior.
 
-% HA_STATE_MACHINE_PAUSED state machine paused in state %1
+% HA_STATE_MACHINE_PAUSED %1: state machine paused in state %2
 This informational message is issued when the HA state machine is paused.
 HA state machine may be paused in certain states specified in the HA hooks library
 configuration. When the state machine is paused, the server remains in the given
@@ -556,61 +570,63 @@ state until it is explicitly unpaused (via the ha-continue command). If the stat
 machine is paused, the server operates normally but cannot transition to any
 other state.
 
-% HA_STATE_TRANSITION server transitions from %1 to %2 state, partner state is %3
+% HA_STATE_TRANSITION %1: server transitions from %2 to %3 state, partner state is %4
 This informational message is issued when the server transitions to a new
 state as a result of some interaction (or lack of thereof) with its partner.
-The arguments specify initial server state, new server state and the partner's
-state.
+The arguments specify local server name, initial server state, new server state
+and the partner's state.
 
-% HA_STATE_TRANSITION_PASSIVE_BACKUP server transitions from %1 to %2 state
+% HA_STATE_TRANSITION_PASSIVE_BACKUP %1: server transitions from %2 to %3 state
 This informational message is issued when the server in passive-backup
-mode transitions to a new state. The arguments specify initial server state and
-a new server state.
+mode transitions to a new state. The arguments specify local server name, initial
+server state and a new server state.
 
-% HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED failed to send ha-sync-complete-notify to %1: %2
+% HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED %1: failed to send ha-sync-complete-notify to %2: %3
 This warning message indicates that there was a problem in communication with an
 HA peer while sending the ha-sync-complete-notify command. The first argument
-provides the remote server's name. The second argument provides a reason for
-failure.
+provides a local server's name. The second argument provides the remote server's
+name. The third argument provides a reason for failure.
 
-% HA_SYNC_COMPLETE_NOTIFY_FAILED error processing ha-sync-complete-notify command on %1: %2
+% HA_SYNC_COMPLETE_NOTIFY_FAILED %1: error processing ha-sync-complete-notify command on %2: %3
 This warning message indicates that a peer returned an error status code
-in response to the ha-sync-complete-notify command.  The first argument provides
-the remote server's name. The second argument provides a reason for failure.
+in response to the ha-sync-complete-notify command. The first argument provides
+a local server's name. The second argument provides the remote server's name. The
+third argument provides a reason for failure.
 
 % HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED ha-sync-complete-notify command failed: %1
 This error message is issued to indicate that the ha-sync-complete-notify command
 handler failed while processing the command. The argument provides the reason for
 failure.
 
-% HA_SYNC_FAILED lease database synchronization with %1 failed: %2
+% HA_SYNC_FAILED %1: lease database synchronization with %2 failed: %3
 This error message is issued to indicate that the lease database synchronization
-failed. The first argument provides the partner server's name. The second argument
-provides a reason for the failure.
+failed. The first argument provides the local server's name.  The second argument
+provides the partner server's name. The third argument provides a reason for the
+failure.
 
 % HA_SYNC_HANDLER_FAILED ha-sync command failed: %1
 This error message is issued to indicate that the ha-sync command handler
 failed while processing the command. The argument provides the reason for
 failure.
 
-% HA_SYNC_START starting lease database synchronization with %1
+% HA_SYNC_START %1: starting lease database synchronization with %2
 This informational message is issued when the server starts lease database
-synchronization with a partner. The name of the partner is specified with the
-sole argument.
+synchronization with a partner. The arguments specify the local and remote
+server names.
 
-% HA_SYNC_SUCCESSFUL lease database synchronization with %1 completed successfully in %2
+% HA_SYNC_SUCCESSFUL %1: lease database synchronization with %2 completed successfully in %3
 This informational message is issued when the server successfully completed
 lease database synchronization with the partner. The first argument specifies
-the name of the partner server. The second argument specifies the duration of
-the synchronization.
+local server name. The second argument specifies the name of the partner server.
+The third argument specifies the duration of the synchronization.
 
-% HA_TERMINATED HA service terminated due to an unrecoverable condition. Check previous error message(s), address the problem and restart!
+% HA_TERMINATED HA %1: service terminated due to an unrecoverable condition. Check previous error message(s), address the problem and restart!
 This error message is issued to indicate that the HA service has been stopped
 due to an unacceptable condition (e.g. too large of a clock skew). The exact
 cause should appear in a previous error message.  Address the condition
 reported then restart the servers to resume service.
 
-% HA_TERMINATED_RESTART_PARTNER waiting for the partner in the TERMINATED state to be restarted
+% HA_TERMINATED_RESTART_PARTNER %1: waiting for the partner in the TERMINATED state to be restarted
 This informational message is issued when the server has been restarted after
 correcting the clock skew. The partner server is still in the terminated
 state. The partner must be restarted before the server can synchronize the

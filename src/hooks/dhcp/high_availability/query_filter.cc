@@ -435,6 +435,7 @@ QueryFilter::loadBalance(const dhcp::Pkt4Ptr& query4) const {
             std::stringstream xid;
             xid << "0x" << std::hex << query4->getTransid() << std::dec;
             LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LOAD_BALANCING_IDENTIFIER_MISSING)
+                .arg(config_->getThisServerName())
                 .arg(xid.str());
             return (-1);
         }
@@ -459,6 +460,7 @@ QueryFilter::loadBalance(const dhcp::Pkt6Ptr& query6) const {
         std::stringstream xid;
         xid << "0x" << std::hex << query6->getTransid() << std::dec;
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LOAD_BALANCING_DUID_MISSING)
+            .arg(config_->getThisServerName())
             .arg(xid.str());
         return (-1);
     }
