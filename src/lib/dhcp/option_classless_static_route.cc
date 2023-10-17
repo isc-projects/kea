@@ -102,22 +102,6 @@ OptionClasslessStaticRoute::len() const {
     return (len);
 }
 
-uint8_t
-OptionClasslessStaticRoute::calcMaskWidth(uint32_t subnet_mask) {
-    uint8_t len = 0;
-    while (subnet_mask) {
-        if (subnet_mask & 0x80000000) {
-            ++len;
-            subnet_mask <<= 1;
-            continue;
-        }
-
-        break;
-    }
-
-    return (len);
-}
-
 void
 OptionClasslessStaticRoute::addRoute(const StaticRouteTuple& route) {
     static_routes_.push_back(route);

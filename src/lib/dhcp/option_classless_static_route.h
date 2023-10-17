@@ -83,11 +83,6 @@ private:
     /// @brief Length in octets of all encoded static routes.
     uint16_t data_len_;
 
-    /// @brief Calculates subnet mask width from given uint_32 representation of subnet mask.
-    /// @param subnet_mask uint_32 representation of a subnet mask IPv4 address
-    /// @return width of subnet mask in a range of 0-32
-    static uint8_t calcMaskWidth(uint32_t subnet_mask);
-
     /// @brief Encodes destination descriptor as per RFC3442.
     /// @param route static route tuple
     /// @return Contents of the destination descriptor as a vector
