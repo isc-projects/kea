@@ -2916,7 +2916,8 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(config_->getThisServerConfig()->getName(),
+    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(NetworkState::HA_REMOTE_COMMAND+id_,
+                                                                    config_->getThisServerConfig()->getName(),
                                                                     server_type_));
     request->finalize();
 
@@ -2989,11 +2990,11 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
 }
 
 ConstElementPtr
-HAService::processSyncCompleteNotify() {
+HAService::processSyncCompleteNotify(const unsigned int origin) {
     if (getCurrState() == HA_PARTNER_DOWN_ST) {
         sync_complete_notified_ = true;
     } else {
-        localEnableDHCPService();
+        network_state_->enableService(origin);
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "Server successfully notified about the synchronization completion."));

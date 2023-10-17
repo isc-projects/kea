@@ -180,12 +180,15 @@ public:
 
     /// @brief Creates ha-sync-complete-notify command.
     ///
+    /// @param origin a numeric value of the origin created from the
+    /// @c HAService identifier to enable the DHCP service.
     /// @param server_name name of the server sending the command allowing
     /// for associating the command with the relationship.
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createSyncCompleteNotify(const std::string& server_name,
+    createSyncCompleteNotify(const unsigned int origin,
+                             const std::string& server_name,
                              const HAServerType& server_type);
 
     /// @brief List of commands used by the High Availability in v4.

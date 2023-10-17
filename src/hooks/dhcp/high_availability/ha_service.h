@@ -1062,8 +1062,10 @@ public:
     /// In this state, the server will first have to check connectivity with
     /// the partner and transition to a state in which it will send lease updates.
     ///
+    /// @param origin a numeric value of the origin created from the
+    /// @c HAService identifier to enable the DHCP service.
     /// @return Pointer to the response to the ha-sync-complete-notify command.
-    data::ConstElementPtr processSyncCompleteNotify();
+    data::ConstElementPtr processSyncCompleteNotify(const unsigned int origin);
 
     /// @brief Start the client and(or) listener instances.
     ///

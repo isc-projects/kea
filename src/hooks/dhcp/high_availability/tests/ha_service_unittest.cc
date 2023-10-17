@@ -5027,11 +5027,11 @@ TEST_F(HAServiceTest, processSyncCompleteNotify) {
 
     // Simulate disabling the DHCP service for synchronization.
     if (service.network_state_->isServiceEnabled()) {
-        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+1));
+        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+1));
     }
 
     ConstElementPtr rsp;
-    EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify());
+    EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify(NetworkState::HA_REMOTE_COMMAND+1));
 
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
@@ -5056,9 +5056,9 @@ TEST_F(HAServiceTest, processSyncCompleteNotify) {
     EXPECT_NO_THROW(service.transition(HA_LOAD_BALANCING_ST, HAService::NOP_EVT));
 
     // Disable the service again.
-    EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+1));
+    EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+1));
 
-    EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify());
+    EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify(NetworkState::HA_REMOTE_COMMAND+1));
 
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_SUCCESS,

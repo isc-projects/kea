@@ -535,25 +535,33 @@ TEST(CommandCreatorTest, createMaintenanceNotify6) {
 // This test verifies that the ha-sync-complete-notify command sent to a
 // DHCPv4 server is correct.
 TEST(CommandCreatorTest, createSyncCompleteNotify4) {
-    ConstElementPtr command = CommandCreator::createSyncCompleteNotify("server1", HAServerType::DHCPv4);
+    ConstElementPtr command = CommandCreator::createSyncCompleteNotify(1, "server1", HAServerType::DHCPv4);
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-sync-complete-notify", "dhcp4", arguments));
     auto server_name = arguments->get("server-name");
     ASSERT_TRUE(server_name);
     ASSERT_EQ(Element::string, server_name->getType());
     EXPECT_EQ("server1", server_name->stringValue());
+    auto origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    EXPECT_EQ(Element::integer, origin->getType());
+    EXPECT_EQ(1, origin->intValue());
 }
 
 // This test verifies that the ha-sync-complete-notify command sent to a
-// DHCPv4 server is correct.
+// DHCPv6 server is correct.
 TEST(CommandCreatorTest, createSyncCompleteNotify6) {
-    ConstElementPtr command = CommandCreator::createSyncCompleteNotify("server1", HAServerType::DHCPv6);
+    ConstElementPtr command = CommandCreator::createSyncCompleteNotify(1, "server1", HAServerType::DHCPv6);
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-sync-complete-notify", "dhcp6", arguments));
     auto server_name = arguments->get("server-name");
     ASSERT_TRUE(server_name);
     ASSERT_EQ(Element::string, server_name->getType());
     EXPECT_EQ("server1", server_name->stringValue());
+    auto origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    EXPECT_EQ(Element::integer, origin->getType());
+    EXPECT_EQ(1, origin->intValue());
 }
 
 }

@@ -603,7 +603,18 @@ HAImpl::syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle) {
     static_cast<void>(parseCommand(args, command));
 
     HAServicePtr service;
+    auto origin_value = NetworkState::HA_REMOTE_COMMAND+1;
     try {
+        if (args) {
+            auto origin = args->get("origin");
+            if (origin) {
+                if (origin->getType() != Element::integer) {
+                    isc_throw(BadValue, "'origin' must be an integer in the 'ha-sync-complete-notify' command");
+                }
+                origin_value = origin->intValue();
+            }
+        }
+
         service = getHAServiceByServerName("ha-sync-complete-notify", args);
 
     } catch (const std::exception& ex) {
@@ -614,7 +625,7 @@ HAImpl::syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle) {
         return;
     }
 
-    ConstElementPtr response = services_->get()->processSyncCompleteNotify();
+    ConstElementPtr response = service->processSyncCompleteNotify(origin_value);
     callout_handle.setArgument("response", response);
 }
 

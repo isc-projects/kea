@@ -256,10 +256,12 @@ CommandCreator::createMaintenanceNotify(const bool cancel, const HAServerType& s
 }
 
 ConstElementPtr
-CommandCreator::createSyncCompleteNotify(const std::string& server_name,
+CommandCreator::createSyncCompleteNotify(const unsigned int origin,
+                                         const std::string& server_name,
                                          const HAServerType& server_type) {
     auto args = Element::createMap();
     args->set("server-name", Element::create(server_name));
+    args->set("origin", Element::create(origin));
     auto command = config::createCommand("ha-sync-complete-notify", args);
     insertService(command, server_type);
     return (command);
