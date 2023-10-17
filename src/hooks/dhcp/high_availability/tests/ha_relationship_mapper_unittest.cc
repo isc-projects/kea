@@ -64,18 +64,6 @@ TEST(HARelationshipMapper, mapGetAll) {
     EXPECT_EQ(rel2, all[1]);
 }
 
-/// Tests that getting a sole mapped object fails when there are multiple.
-TEST(HARelationshipMapper, multipleMappingsGetError) {
-    HARelationshipMapper<HAConfig> mapper;
-
-    auto rel1 = HAConfig::create();
-    auto rel2 = HAConfig::create();
-    EXPECT_NO_THROW(mapper.map("server1", rel1));
-    EXPECT_NO_THROW(mapper.map("server2", rel2));
-
-    EXPECT_THROW(mapper.get(), InvalidOperation);
-}
-
 /// Tests that the same server can't be associated with many relationships.
 TEST(HARelationshipMapper, existingMappingError) {
     HARelationshipMapper<HAConfig> mapper;

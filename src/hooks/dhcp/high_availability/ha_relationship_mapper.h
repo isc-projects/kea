@@ -70,13 +70,12 @@ public:
         return (obj->second);
     }
 
-    /// @brief Returns the sole mapped object.
+    /// @brief Returns the default mapped object.
     ///
     /// @return Mapped object.
-    /// @throw InvalidOperation when there is no mapped object or if there
-    /// are multiple mapped objects.
+    /// @throw InvalidOperation when there is no mapped object.
     MappedTypePtr get() const {
-        if (vector_.empty() || vector_.size() > 1) {
+        if (vector_.empty()) {
             isc_throw(InvalidOperation, "expected one relationship to be configured");
         }
         return (vector_[0]);
