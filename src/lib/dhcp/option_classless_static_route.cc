@@ -37,7 +37,7 @@ OptionClasslessStaticRoute::pack(isc::util::OutputBuffer& buf, bool check) const
         auto dest = encodeDestinationDescriptor(route);
         buf.writeData(&dest[0], dest.size());
         // IP address of the router
-        buf.writeUint32(get<2>(route).toUint32());
+        buf.writeUint32(std::get<2>(route).toUint32());
     }
 }
 
@@ -88,8 +88,9 @@ OptionClasslessStaticRoute::toText(int indent) const {
            << "len=" << (len() - getHeaderLen());
     int i = 0;
     for (const auto& route : static_routes_) {
-        stream << ", Route " << ++i << " (subnet " << get<0>(route).toText() << "/"
-               << static_cast<int>(get<1>(route)) << ", router IP " << get<2>(route) << ")";
+        stream << ", Route " << ++i << " (subnet " << std::get<0>(route).toText() << "/"
+               << static_cast<int>(std::get<1>(route)) << ", router IP "
+               << std::get<2>(route).toText() << ")";
     }
 
     return (stream.str());
@@ -111,8 +112,8 @@ OptionClasslessStaticRoute::addRoute(const StaticRouteTuple& route) {
 std::vector<uint8_t>
 OptionClasslessStaticRoute::encodeDestinationDescriptor(const StaticRouteTuple& route) {
     // Encoding as per RFC3442
-    const std::vector<uint8_t>& subnet = get<0>(route).toBytes();
-    const uint8_t& mask_width = get<1>(route);
+    const std::vector<uint8_t>& subnet = std::get<0>(route).toBytes();
+    const uint8_t& mask_width = std::get<1>(route);
 
     std::vector<uint8_t> res;
     res.push_back(mask_width);
@@ -137,7 +138,7 @@ OptionClasslessStaticRoute::calcDataLen() {
     uint16_t len = 0;
     for (const auto& route : static_routes_) {
         // 1-5 octets of destination descriptor
-        len += calcSignificantOctets(get<1>(route)) + 1;
+        len += calcSignificantOctets(std::get<1>(route)) + 1;
         // IP address of the router
         len += 4;
     }
