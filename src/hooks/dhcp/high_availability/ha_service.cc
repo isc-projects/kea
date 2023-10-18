@@ -2696,7 +2696,8 @@ HAService::processMaintenanceStart() {
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(false, server_type_));
+    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(config_->getThisServerName(),
+                                                                   false, server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -2822,7 +2823,8 @@ HAService::processMaintenanceCancel() {
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(true, server_type_));
+    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(config_->getThisServerName(),
+                                                                   true, server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs

@@ -507,7 +507,7 @@ TEST(CommandCreatorTest, createLease6GetPageZeroLimit) {
 // This test verifies that the ha-maintenance-notify command is correct
 // while being sent to the DHCPv4 server.
 TEST(CommandCreatorTest, createMaintenanceNotify4) {
-    ConstElementPtr command = CommandCreator::createMaintenanceNotify(true, HAServerType::DHCPv4);
+    ConstElementPtr command = CommandCreator::createMaintenanceNotify("server1", true, HAServerType::DHCPv4);
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-maintenance-notify", "dhcp4",
                                               arguments));
@@ -521,7 +521,7 @@ TEST(CommandCreatorTest, createMaintenanceNotify4) {
 // This test verifies that the ha-maintenance-notify command is correct
 // while being sent to the DHCPv6 server.
 TEST(CommandCreatorTest, createMaintenanceNotify6) {
-    ConstElementPtr command = CommandCreator::createMaintenanceNotify(false, HAServerType::DHCPv6);
+    ConstElementPtr command = CommandCreator::createMaintenanceNotify("server1", false, HAServerType::DHCPv6);
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-maintenance-notify", "dhcp6",
                                               arguments));

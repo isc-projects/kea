@@ -468,7 +468,7 @@ HAImpl::scopesHandler(hooks::CalloutHandle& callout_handle) {
             scopes_vector.push_back(scope->stringValue());
         }
 
-        service = getHAServiceByServerName("ha-sync", args);
+        service = getHAServiceByServerName("ha-scopes", args);
 
     } catch (const std::exception& ex) {
         // There was an error while parsing command arguments. Return an error status
@@ -588,7 +588,7 @@ HAImpl::haResetHandler(hooks::CalloutHandle& callout_handle) {
         return;
     }
 
-    ConstElementPtr response = services_->get()->processHAReset();
+    ConstElementPtr response = service->processHAReset();
     callout_handle.setArgument("response", response);
 }
 
