@@ -2198,7 +2198,19 @@ MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version = getVersion();
+
+    std::string timer_name = "";
+    bool retry = false;
+    if (parameters.count("retry-on-startup")) {
+        if (parameters.at("retry-on-startup") == "true") {
+            retry = true;
+        }
+    }
+    if (retry) {
+        timer_name = timer_name_;
+    }
+
+    std::pair<uint32_t, uint32_t> db_version = getVersion(timer_name);
     if (code_version != db_version) {
         isc_throw(DbOpenError,
                   "MySQL schema version mismatch: need version: "
@@ -2287,8 +2299,11 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 MySqlLeaseContextPtr
 MySqlLeaseMgr::createContext() const {
     MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_,
-        IOServiceAccessorPtr(new IOServiceAccessor(&LeaseMgr::getIOService)),
+        IOServiceAccessorPtr(new IOServiceAccessor(&DatabaseConnection::getIOService)),
         &MySqlLeaseMgr::dbReconnect));
+
+    // Create ReconnectCtl for this connection.
+    ctx->conn_.makeReconnectCtl(timer_name_);
 
     // Open the database.
     ctx->conn_.openDatabase();
@@ -2313,9 +2328,6 @@ MySqlLeaseMgr::createContext() const {
     // program and the database.
     ctx->exchange4_.reset(new MySqlLease4Exchange());
     ctx->exchange6_.reset(new MySqlLease6Exchange());
-
-    // Create ReconnectCtl for this connection.
-    ctx->conn_.makeReconnectCtl(timer_name_);
 
     return (ctx);
 }
@@ -3824,10 +3836,13 @@ MySqlLeaseMgr::getDescription() const {
 }
 
 std::pair<uint32_t, uint32_t>
-MySqlLeaseMgr::getVersion() const {
+MySqlLeaseMgr::getVersion(const string& timer_name) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_VERSION);
 
-    return (MySqlConnection::getVersion(parameters_));
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+    DbCallback cb(&MySqlLeaseMgr::dbReconnect);
+
+    return (MySqlConnection::getVersion(parameters_, ac, cb, timer_name));
 }
 
 void

@@ -135,7 +135,7 @@ public:
         // Open the "memfile" database for leases
         std::string memfile = "type=memfile universe=6 persist=false";
         isc::dhcp::LeaseMgrFactory::create(memfile);
-        LeaseMgr::setIOService(getIOService());
+        db::DatabaseConnection::setIOService(getIOService());
     }
 
     /// @brief fakes packet reception

@@ -125,7 +125,7 @@ public:
         // Create fixed server id.
         server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
                                             asiolink::IOAddress("192.0.3.1")));
-        LeaseMgr::setIOService(getIOService());
+        db::DatabaseConnection::setIOService(getIOService());
     }
 
     /// @brief Returns fixed server identifier assigned to the naked server

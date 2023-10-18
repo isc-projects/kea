@@ -41,6 +41,7 @@ GenericConfigBackendDbLostCallbackTest::SetUp() {
     DatabaseConnection::db_lost_callback_ = 0;
     DatabaseConnection::db_recovered_callback_ = 0;
     DatabaseConnection::db_failed_callback_ = 0;
+    isc::db::DatabaseConnection::setIOService(io_service_);
     setConfigBackendImplIOService(io_service_);
     isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
     isc::dhcp::CfgMgr::instance().clear();
@@ -61,9 +62,254 @@ GenericConfigBackendDbLostCallbackTest::TearDown() {
     DatabaseConnection::db_lost_callback_ = 0;
     DatabaseConnection::db_recovered_callback_ = 0;
     DatabaseConnection::db_failed_callback_ = 0;
+    isc::db::DatabaseConnection::setIOService(IOServicePtr());
     setConfigBackendImplIOService(IOServicePtr());
     isc::dhcp::TimerMgr::instance()->unregisterTimers();
     isc::dhcp::CfgMgr::instance().clear();
+}
+
+void
+GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectionString();
+    access += " retry-on-startup=true";
+
+    ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Connect to the CB backend.
+    ASSERT_THROW(addBackend(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ServerCollection servers;
+
+    // A query should fail with NoSuchDatabase,.
+    ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
+
+    access = validConnectionString();
+    CfgMgr::instance().clear();
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
+    config_ctl_info.reset(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+    const ConfigDbInfoList& cfg = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo()->getConfigDatabases();
+    (const_cast<ConfigDbInfoList&>(cfg))[0].setAccessString(access, true);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ASSERT_NO_THROW_LOG(servers = getAllServers());
+}
+
+void
+GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectionString();
+    access += " retry-on-startup=true";
+
+    ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Connect to the CB backend.
+    ASSERT_THROW(addBackend(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ServerCollection servers;
+
+    // A query should fail with NoSuchDatabase,.
+    ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+
+    // A query should fail with NoSuchDatabase,.
+    ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
+}
+
+void
+GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectionString();
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1 retry-on-startup=true";
+    access += extra;
+
+    ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Connect to the CB backend.
+    ASSERT_THROW(addBackend(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ServerCollection servers;
+
+    // A query should fail with NoSuchDatabase,.
+    ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    access = validConnectionString();
+    access += extra;
+    CfgMgr::instance().clear();
+    config_ctl_info.reset(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ASSERT_NO_THROW_LOG(servers = getAllServers());
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // No callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ASSERT_NO_THROW_LOG(servers = getAllServers());
+}
+
+void
+GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&GenericConfigBackendDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectionString();
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1 retry-on-startup=true";
+    access += extra;
+
+    ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
+    config_ctl_info->addConfigDatabase(access);
+    CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Connect to the CB backend.
+    ASSERT_THROW(addBackend(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ServerCollection servers;
+
+    // A query should fail with NoSuchDatabase,.
+    ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    // A query should fail with NoSuchDatabase,.
+    ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    // A query should fail with NoSuchDatabase,.
+    ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(3, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+
+    // A query should fail with NoSuchDatabase,.
+    ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 }
 
 void
@@ -158,6 +404,7 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndFailedCallback() {
         std::bind(&GenericConfigBackendDbLostCallbackTest::db_failed_callback, this, ph::_1);
 
     std::string access = validConnectionString();
+
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
@@ -221,6 +468,7 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallba
     std::string access = validConnectionString();
     std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1";
     access += extra;
+
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
@@ -310,6 +558,7 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback(
     std::string access = validConnectionString();
     std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1";
     access += extra;
+
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);

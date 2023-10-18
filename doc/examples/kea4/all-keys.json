@@ -408,6 +408,10 @@
                 // serve-retry-continue
                 "on-fail": "stop-retry-exit",
 
+                // Flag which indicates if the DB recovery should be attempted
+                // at server startup and on reconfiguration events.
+                "retry-on-startup": false,
+
                 // Connection connect timeout in seconds.
                 "connect-timeout": 100,
 

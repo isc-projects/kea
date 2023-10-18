@@ -5,8 +5,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -17,6 +19,7 @@
 #include <vector>
 
 using namespace isc::data;
+using namespace isc::db;
 
 namespace isc {
 namespace dhcp {
@@ -55,8 +58,19 @@ CfgDbAccess::getHostDbAccessStringList() const {
 
 void
 CfgDbAccess::createManagers() const {
-    // Recreate lease manager without preserving the registered callbacks.
-    LeaseMgrFactory::recreate(getLeaseDbAccessString(), false);
+    try {
+        // Recreate lease manager without preserving the registered callbacks.
+        LeaseMgrFactory::recreate(getLeaseDbAccessString(), false);
+    } catch (const isc::db::DbOpenErrorWithRetry& err) {
+        std::string redacted;
+        try {
+            DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(getLeaseDbAccessString());
+            redacted = DatabaseConnection::redactedAccessString(parameters);
+        } catch (...) {
+        }
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED)
+                .arg(redacted).arg(err.what());
+    }
 
     // Recreate host data source.
     HostMgr::create();
@@ -69,7 +83,18 @@ CfgDbAccess::createManagers() const {
     // Add database backends.
     std::list<std::string> host_db_access_list = getHostDbAccessStringList();
     for (std::string& hds : host_db_access_list) {
-        HostMgr::addBackend(hds);
+        try {
+            HostMgr::addBackend(hds);
+        } catch (const isc::db::DbOpenErrorWithRetry& err) {
+            std::string redacted;
+            try {
+                DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(hds);
+                redacted = DatabaseConnection::redactedAccessString(parameters);
+            } catch (...) {
+            }
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED)
+                    .arg(redacted).arg(err.what());
+        }
     }
 
     // Check for a host cache.

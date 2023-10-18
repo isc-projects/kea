@@ -12,7 +12,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
@@ -3348,6 +3348,204 @@ void
 LeaseMgrDbLostCallbackTest::TearDown() {
     destroySchema();
     isc::dhcp::LeaseMgrFactory::destroy();
+}
+
+void
+LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+    access += " retry-on-startup=true";
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Connect to the lease backend.
+    ASSERT_THROW(LeaseMgrFactory::create(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    ASSERT_FALSE(LeaseMgrFactory::haveInstance());
+
+    access = validConnectString();
+    access += " retry-on-startup=true";
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_TRUE(LeaseMgrFactory::haveInstance());
+}
+
+void
+LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+    access += " retry-on-startup=true";
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Connect to the lease backend.
+    ASSERT_THROW(LeaseMgrFactory::create(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    ASSERT_FALSE(LeaseMgrFactory::haveInstance());
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+
+    ASSERT_FALSE(LeaseMgrFactory::haveInstance());
+}
+
+void
+LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1 retry-on-startup=true";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Connect to the lease backend.
+    ASSERT_THROW(LeaseMgrFactory::create(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    ASSERT_FALSE(LeaseMgrFactory::haveInstance());
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    access = validConnectString();
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_TRUE(LeaseMgrFactory::haveInstance());
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // No callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_TRUE(LeaseMgrFactory::haveInstance());
+}
+
+void
+LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    DatabaseConnection::db_recovered_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    DatabaseConnection::db_failed_callback_ =
+        std::bind(&LeaseMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1 retry-on-startup=true";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Connect to the lease backend.
+    ASSERT_THROW(LeaseMgrFactory::create(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    ASSERT_FALSE(LeaseMgrFactory::haveInstance());
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_FALSE(LeaseMgrFactory::haveInstance());
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(3, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+
+    ASSERT_FALSE(LeaseMgrFactory::haveInstance());
 }
 
 void

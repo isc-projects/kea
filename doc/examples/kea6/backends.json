@@ -42,6 +42,7 @@
 //      "reconnect-wait-time": 3000, // expressed in ms
 //      "max-reconnect-tries": 3,
 //      "on-fail": "stop-retry-exit",
+//      "retry-on-startup": false,
 //      "connect-timeout": 3
 //  },
 
@@ -62,6 +63,7 @@
 //      "reconnect-wait-time": 3000, // expressed in ms
 //      "max-reconnect-tries": 3,
 //      "on-fail": "stop-retry-exit",
+//      "retry-on-startup": false,
 //      "connect-timeout": 3
 //  },
 

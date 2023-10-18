@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <database/database_connection.h>
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
@@ -243,7 +244,23 @@ MySqlConnection::openDatabase() {
     MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
                                        port, NULL, CLIENT_FOUND_ROWS);
     if (status != mysql_) {
-        isc_throw(DbOpenError, mysql_error(mysql_));
+        std::string error_message = mysql_error(mysql_);
+
+        auto const& rec = reconnectCtl();
+        if (rec && DatabaseConnection::retry_) {
+            // Start the connection recovery.
+            startRecoverDbConnection();
+
+            std::ostringstream s;
+
+            s << " (scheduling retry " << rec->retriesLeft() << " in " << rec->retryInterval() << " milliseconds)";
+
+            error_message += s.str();
+
+            isc_throw(DbOpenErrorWithRetry, error_message);
+        }
+
+        isc_throw(DbOpenError, error_message);
     }
 
     // Enable autocommit. In case transaction is explicitly used, this
@@ -268,9 +285,16 @@ MySqlConnection::openDatabase() {
 // Get schema version.
 
 std::pair<uint32_t, uint32_t>
-MySqlConnection::getVersion(const ParameterMap& parameters) {
+MySqlConnection::getVersion(const ParameterMap& parameters,
+                            const IOServiceAccessorPtr& ac,
+                            const DbCallback& cb,
+                            const string& timer_name) {
     // Get a connection.
-    MySqlConnection conn(parameters);
+    MySqlConnection conn(parameters, ac, cb);
+
+    if (!timer_name.empty()) {
+        conn.makeReconnectCtl(timer_name);
+    }
 
     // Open the database.
     conn.openDatabase();

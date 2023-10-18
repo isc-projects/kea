@@ -106,12 +106,14 @@ public:
 
     /// @brief Constructor.
     ///
+    /// @param space The DHCP space (v4 or v6).
     /// @param parameters A data structure relating keywords and values
     /// concerned with the database.
     /// @param db_reconnect_callback The connection recovery callback.
     /// @param last_insert_id_index statement index of the SQL statement to
     /// use when fetching the last insert id for a given table.
-    explicit PgSqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters,
+    explicit PgSqlConfigBackendImpl(const std::string& space,
+                                    const db::DatabaseConnection::ParameterMap& parameters,
                                     const db::DbCallback db_reconnect_callback,
                                     const size_t last_insert_id_index);
 

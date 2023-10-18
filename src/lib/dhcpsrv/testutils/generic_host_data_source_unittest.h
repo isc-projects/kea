@@ -555,7 +555,7 @@ public:
         isc::db::DatabaseConnection::db_lost_callback_ = 0;
         isc::db::DatabaseConnection::db_recovered_callback_ = 0;
         isc::db::DatabaseConnection::db_failed_callback_ = 0;
-        isc::dhcp::HostMgr::setIOService(io_service_);
+        isc::db::DatabaseConnection::setIOService(io_service_);
         isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
         isc::dhcp::CfgMgr::instance().clear();
     }
@@ -564,7 +564,7 @@ public:
         isc::db::DatabaseConnection::db_lost_callback_ = 0;
         isc::db::DatabaseConnection::db_recovered_callback_ = 0;
         isc::db::DatabaseConnection::db_failed_callback_ = 0;
-        isc::dhcp::HostMgr::setIOService(isc::asiolink::IOServicePtr());
+        isc::db::DatabaseConnection::setIOService(isc::asiolink::IOServicePtr());
         isc::dhcp::TimerMgr::instance()->unregisterTimers();
         isc::dhcp::CfgMgr::instance().clear();
     }
@@ -606,6 +606,50 @@ public:
     /// string
     virtual std::string invalidConnectString() = 0;
 
+    /// @brief Verifies the host manager's behavior if DB connection can not be
+    /// established but succeeds on retry
+    ///
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// verifies that connectivity is unavailable and then recovered on retry:
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked
+    void testRetryOpenDbLostAndRecoveredCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection can not be
+    /// established but fails on retry
+    ///
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// It verifies that connectivity is unavailable and then fails again on
+    /// retry:
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked
+    void testRetryOpenDbLostAndFailedCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection can not be
+    /// established but succeeds on retry
+    ///
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// verifies that connectivity is unavailable and then recovered on retry:
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection can not be
+    /// established but fails on retry
+    ///
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// It verifies that connectivity is unavailable and then fails again on
+    /// retry:
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+
     /// @brief Verifies open failures do NOT invoke db lost callback
     ///
     /// The db lost callback should only be invoked after successfully
@@ -620,7 +664,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbRecoveredCallback was invoked
     void testDbLostAndRecoveredCallback();
@@ -632,7 +676,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbFailedCallback was invoked
     void testDbLostAndFailedCallback();
@@ -644,7 +688,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbRecoveredCallback was invoked after two reconnect
     /// attempts (once failing and second triggered by timer)
@@ -657,7 +701,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbFailedCallback was invoked after two reconnect
     /// attempts (once failing and second triggered by timer)
@@ -1034,7 +1078,7 @@ protected:
 
     /// @brief Utility function that returns true if a given data source
     /// is primary (it isn't an alternate source).
-    /// @param data_source  Host data source to check.
+    /// @param data_source Host data source to check.
     /// @return True if the data source is primary. Otherwise, false.
     bool isPrimaryDataSource(const BaseHostDataSource& data_source) const;
 

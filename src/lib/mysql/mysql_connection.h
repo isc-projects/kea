@@ -260,6 +260,9 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
+    /// @param ac An IOServiceAccessor object.
+    /// @param cb The dbReconnect callback.
+    /// @param timer_name The DB reconnect timer name.
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
@@ -267,7 +270,10 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     static std::pair<uint32_t, uint32_t>
-    getVersion(const ParameterMap& parameters);
+    getVersion(const ParameterMap& parameters,
+               const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
+               const DbCallback& cb = DbCallback(),
+               const std::string& timer_name = "");
 
     /// @brief Prepare Single Statement
     ///

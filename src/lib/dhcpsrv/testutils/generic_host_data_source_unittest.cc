@@ -2675,6 +2675,216 @@ GenericHostDataSourceTest::testMultipleHosts6() {
 }
 
 void
+HostMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+    access += " retry-on-startup=true";
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    ASSERT_THROW(HostMgr::addBackend(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    ASSERT_FALSE(HostMgr::instance().getHostDataSource());
+
+    access = validConnectString();
+    access += " retry-on-startup=true";
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_TRUE(HostMgr::instance().getHostDataSource());
+}
+
+void
+HostMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+    access += " retry-on-startup=true";
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    ASSERT_THROW(HostMgr::addBackend(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    ASSERT_FALSE(HostMgr::instance().getHostDataSource());
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+
+    ASSERT_FALSE(HostMgr::instance().getHostDataSource());
+}
+
+void
+HostMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1 retry-on-startup=true";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    ASSERT_THROW(HostMgr::addBackend(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    ASSERT_FALSE(HostMgr::instance().getHostDataSource());
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    access = validConnectString();
+    access += extra;
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and recovered connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_TRUE(HostMgr::instance().getHostDataSource());
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // No callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(1, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_TRUE(HostMgr::instance().getHostDataSource());
+}
+
+void
+HostMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
+    // Set the connectivity lost callback.
+    isc::db::DatabaseConnection::db_lost_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);
+
+    // Set the connectivity recovered callback.
+    isc::db::DatabaseConnection::db_recovered_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_recovered_callback, this, ph::_1);
+
+    // Set the connectivity failed callback.
+    isc::db::DatabaseConnection::db_failed_callback_ =
+        std::bind(&HostMgrDbLostCallbackTest::db_failed_callback, this, ph::_1);
+
+    std::string access = invalidConnectString();
+    std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1 retry-on-startup=true";
+    access += extra;
+    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
+
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+
+    // Create the HostMgr.
+    HostMgr::create();
+
+    ASSERT_THROW(HostMgr::addBackend(access), DbOpenErrorWithRetry);
+
+    dbr.reset();
+
+    ASSERT_FALSE(HostMgr::instance().getHostDataSource());
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(1, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_FALSE(HostMgr::instance().getHostDataSource());
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_EQ(2, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(0, db_failed_callback_called_);
+
+    ASSERT_FALSE(HostMgr::instance().getHostDataSource());
+
+    sleep(1);
+
+    io_service_->poll();
+
+    // Our lost and failed connectivity callback should have been invoked.
+    EXPECT_EQ(3, db_lost_callback_called_);
+    EXPECT_EQ(0, db_recovered_callback_called_);
+    EXPECT_EQ(1, db_failed_callback_called_);
+
+    ASSERT_FALSE(HostMgr::instance().getHostDataSource());
+}
+
+void
 HostMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     isc::db::DatabaseConnection::db_lost_callback_ =
         std::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, ph::_1);

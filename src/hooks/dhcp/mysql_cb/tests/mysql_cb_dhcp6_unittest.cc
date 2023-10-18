@@ -450,7 +450,7 @@ public:
         isc::dhcp::MySqlConfigBackendImpl::setIOService(io_service);
     }
 
-    /// @brief  Attempts to add a backend instance to the CB manager.
+    /// @brief Attempts to add a backend instance to the CB manager.
     ///
     /// @param access Connection access string containing the database
     /// connection parameters.
@@ -459,12 +459,52 @@ public:
     }
 
     /// @brief Fetches a collection of all the servers currently in
-    /// the CB database.  This function is used to check the operability
+    /// the CB database. This function is used to check the operability
     /// of the CB backend.
     ServerCollection getAllServers() {
         return (ConfigBackendDHCPv6Mgr::instance().getPool()->getAllServers6(BackendSelector()));
     }
 };
+
+TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testRetryOpenDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testRetryOpenDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+}
 
 TEST_F(MySqlConfigBackendDHCPv6DbLostCallbackTest, testNoCallbackOnOpenFailure) {
     MultiThreadingTest mt(false);

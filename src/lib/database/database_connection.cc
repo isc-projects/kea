@@ -18,6 +18,7 @@
 #include <boost/foreach.hpp>
 #include <vector>
 
+using namespace isc::asiolink;
 using namespace isc::util;
 using namespace std;
 
@@ -257,6 +258,7 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "on-fail") ||
+                   (keyword == "retry-on-startup") ||
                    (keyword == "trust-anchor") ||
                    (keyword == "cert-file") ||
                    (keyword == "key-file") ||
@@ -280,6 +282,8 @@ DatabaseConnection::toElementDbAccessString(const std::string& dbaccess) {
 DbCallback DatabaseConnection::db_lost_callback_ = 0;
 DbCallback DatabaseConnection::db_recovered_callback_ = 0;
 DbCallback DatabaseConnection::db_failed_callback_ = 0;
+bool DatabaseConnection::retry_ = false;
+IOServicePtr DatabaseConnection::io_service_ = IOServicePtr();
 
 }  // namespace db
 }  // namespace isc

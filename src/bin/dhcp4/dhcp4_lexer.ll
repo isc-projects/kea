@@ -593,6 +593,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"retry-on-startup\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_RETRY_ON_STARTUP(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("retry-on-startup", driver.loc_);
+    }
+}
+
 \"max-reconnect-tries\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:

@@ -1613,13 +1613,14 @@ public:
 
     /// @brief Returns PostgreSQL schema version of the open database
     ///
+    /// @param timer_name The DB reconnect timer name.
     /// @return Version number stored in the database, as a pair of unsigned
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.
     ///
     /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
-    std::pair<uint32_t, uint32_t> getVersion() const;
+    std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = "") const;
 
     /// @brief The parameters
     DatabaseConnection::ParameterMap parameters_;
@@ -2299,7 +2300,19 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
                                                PGSQL_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version = getVersion();
+
+    std::string timer_name = "";
+    bool retry = false;
+    if (parameters.count("retry-on-startup")) {
+        if (parameters.at("retry-on-startup") == "true") {
+            retry = true;
+        }
+    }
+    if (retry) {
+        timer_name = timer_name_;
+    }
+
+    std::pair<uint32_t, uint32_t> db_version = getVersion(timer_name);
     if (code_version != db_version) {
         isc_throw(DbOpenError,
                   "PostgreSQL schema version mismatch: need version: "
@@ -2318,7 +2331,7 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
 PgSqlHostContextPtr
 PgSqlHostDataSourceImpl::createContext() const {
     PgSqlHostContextPtr ctx(new PgSqlHostContext(parameters_,
-        IOServiceAccessorPtr(new IOServiceAccessor(&HostMgr::getIOService)),
+        IOServiceAccessorPtr(new IOServiceAccessor(&DatabaseConnection::getIOService)),
         &PgSqlHostDataSourceImpl::dbReconnect));
 
     // Open the database.
@@ -2616,10 +2629,14 @@ PgSqlHostDataSourceImpl::getHost(PgSqlHostContextPtr& ctx,
 }
 
 std::pair<uint32_t, uint32_t>
-PgSqlHostDataSourceImpl::getVersion() const {
+PgSqlHostDataSourceImpl::getVersion(const std::string& timer_name) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
-    return (PgSqlConnection::getVersion(parameters_));
+
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+    DbCallback cb(&PgSqlHostDataSourceImpl::dbReconnect);
+
+    return (PgSqlConnection::getVersion(parameters_, ac, cb, timer_name));
 }
 
 void
@@ -3298,8 +3315,8 @@ PgSqlHostDataSource::getDescription() const {
 }
 
 std::pair<uint32_t, uint32_t>
-PgSqlHostDataSource::getVersion() const {
-    return(impl_->getVersion());
+PgSqlHostDataSource::getVersion(const std::string& timer_name) const {
+    return(impl_->getVersion(timer_name));
 }
 
 void

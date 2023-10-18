@@ -414,7 +414,9 @@ public:
     virtual std::string getDescription() const override;
 
     /// @brief Returns backend version.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const override;
+    ///
+    /// @param timer_name The DB reconnect timer name.
+    virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& /* timer_name */ = "") const override;
 
     /// @brief Commit transactions
     virtual void commit() override;

@@ -328,7 +328,7 @@ ConcreteLeaseMgr::getDescription() const {
 }
 
 std::pair<uint32_t, uint32_t>
-ConcreteLeaseMgr::getVersion() const {
+ConcreteLeaseMgr::getVersion(const std::string& /* timer_name */) const {
     return (make_pair(uint32_t(0), uint32_t(0)));
 }
 

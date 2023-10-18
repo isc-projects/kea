@@ -209,7 +209,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
     args.push_back("ignored-path");
 
     // Create the process (do not start it yet).
-    process_.reset(new ProcessSpawn(LeaseMgr::getIOService(), executable, args));
+    process_.reset(new ProcessSpawn(DatabaseConnection::getIOService(), executable, args));
 
     // If we've been told to run it once now, invoke the callback directly.
     if (run_once_now) {
@@ -2113,7 +2113,7 @@ Memfile_LeaseMgr::getDescription() const {
 }
 
 std::pair<uint32_t, uint32_t>
-Memfile_LeaseMgr::getVersion() const {
+Memfile_LeaseMgr::getVersion(const std::string& /* timer_name */) const {
     std::string const& universe(conn_.getParameter("universe"));
     if (universe == "4") {
         return std::make_pair(MAJOR_VERSION_V4, MINOR_VERSION_V4);

@@ -20,7 +20,7 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 #include <dhcpsrv/testutils/test_utils.h>
-#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <testutils/gtest_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
@@ -117,7 +117,7 @@ public:
         extra_files_() {
 
         timer_mgr_->setIOService(io_service_);
-        LeaseMgr::setIOService(io_service_);
+        DatabaseConnection::setIOService(io_service_);
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";

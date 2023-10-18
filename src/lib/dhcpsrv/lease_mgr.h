@@ -805,6 +805,7 @@ public:
 
     /// @brief Returns backend version.
     ///
+    /// @param timer_name The DB reconnect timer name.
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
     ///
@@ -817,7 +818,7 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual VersionPair getVersion() const = 0;
+    virtual VersionPair getVersion(const std::string& timer_name = "") const = 0;
 
     /// @brief Commit Transactions
     ///
@@ -830,18 +831,6 @@ public:
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
-
-    /// @brief Sets IO service to be used by the Lease Manager.
-    ///
-    /// @param io_service IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
-        io_service_ = io_service;
-    }
-
-    /// @brief Returns pointer to the IO service.
-    static isc::asiolink::IOServicePtr& getIOService() {
-        return (io_service_);
-    }
 
     // -- The following are memfile only, but defined in the base LeaseMgr for convenience. --
 
@@ -1101,8 +1090,6 @@ protected:
                               const std::vector<uint8_t>& remote_id) = 0;
 
 private:
-    /// The IOService object, used for all ASIO operations.
-    static isc::asiolink::IOServicePtr io_service_;
 
     /// @brief Holds the setting whether the lease extended info tables
     /// are enabled or disabled. The default is disabled.

@@ -28,6 +28,7 @@
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <util/buffer.h>
 #include <util/boost_time_utils.h>
+#include <util/dhcp_space.h>
 #include <util/multi_threading_mgr.h>
 #include <util/triplet.h>
 #include <pgsql/pgsql_connection.h>
@@ -5016,7 +5017,8 @@ TaggedStatementArray tagged_statements = { {
 } // end anonymous namespace
 
 PgSqlConfigBackendDHCPv6Impl::PgSqlConfigBackendDHCPv6Impl(const DatabaseConnection::ParameterMap& parameters)
-    : PgSqlConfigBackendImpl(parameters, &PgSqlConfigBackendDHCPv6Impl::dbReconnect,
+    : PgSqlConfigBackendImpl(std::string(cStringDhcpSpace<DHCPv6>()), parameters,
+                             &PgSqlConfigBackendDHCPv6Impl::dbReconnect,
       PgSqlConfigBackendDHCPv6Impl::GET_LAST_INSERT_ID6) {
     // Prepare query statements. Those are will be only used to retrieve
     // information from the database, so they can be used even if the
@@ -5026,14 +5028,6 @@ PgSqlConfigBackendDHCPv6Impl::PgSqlConfigBackendDHCPv6Impl(const DatabaseConnect
 // @todo As part of enabling read-only CB access, statements need to
 // be limited:
 //                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
-
-    // Create unique timer name per instance.
-    timer_name_ = "PgSqlConfigBackend6[";
-    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    timer_name_ += "]DbReconnectTimer";
-
-    // Create ReconnectCtl for this connection.
-    conn_.makeReconnectCtl(timer_name_);
 }
 
 PgSqlConfigBackendDHCPv6Impl::~PgSqlConfigBackendDHCPv6Impl() {

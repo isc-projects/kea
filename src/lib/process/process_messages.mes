@@ -96,7 +96,13 @@ This message is printed when the Kea server is attempting to open a
 configuration database.  The database access string with password redacted
 is logged.
 
-% DCTL_PARSER_FAIL : %1
+% DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED Failed to connect to database: %1 with error: %2
+This is an informational message issued when the the server failed to connect to
+the configuration database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
+
+% DCTL_PARSER_FAIL Parser error: %1
 On receipt of a new configuration, the server failed to create a parser to
 decode the contents of the named configuration element, or the creation
 succeeded but the parsing actions and committal of changes failed.

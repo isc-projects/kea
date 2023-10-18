@@ -341,6 +341,12 @@ have been experienced. Any such errors should have preceding entries in the
 log with details. No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
+% DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED Failed to connect to database: %1 with error: %2
+This is an informational message issued when the the server failed to connect to
+the host database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
+
 % DHCPSRV_HOOK_LEASE4_RECOVER_SKIP DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.
 This debug message is printed when a callout installed on lease4_recover
 hook point set the next step status to SKIP. For this particular hook point, this
@@ -423,6 +429,12 @@ indicates a callback type. The second argument prints the subnet id.
 The third argument prints the lease for which the error has occurred.
 This log message variant contains no error text because it is triggered
 by an unknown exception.
+
+% DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED Failed to connect to database: %1 with error: %2
+This is an informational message issued when the the server failed to connect to
+the lease database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
 
 % DHCPSRV_LEASE_SANITY_FAIL The lease %1 with subnet-id %2 failed subnet-id checks (%3).
 This warning message is printed when the lease being loaded does not match the

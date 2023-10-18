@@ -832,18 +832,6 @@ public:
         return (ip_reservations_unique_);
     }
 
-    /// @brief Sets IO service to be used by the Host Manager.
-    ///
-    /// @param io_service IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
-        io_service_ = io_service;
-    }
-
-    /// @brief Returns pointer to the IO service.
-    static isc::asiolink::IOServicePtr& getIOService() {
-        return (io_service_);
-    }
-
 protected:
 
     /// @brief The negative caching flag.
@@ -901,9 +889,6 @@ private:
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.
     static boost::scoped_ptr<HostMgr>& getHostMgrPtr();
-
-    /// The IOService object, used for all ASIO operations.
-    static isc::asiolink::IOServicePtr io_service_;
 };
 
 }  // namespace dhcp

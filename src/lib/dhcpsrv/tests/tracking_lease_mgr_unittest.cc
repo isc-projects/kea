@@ -8,7 +8,7 @@
 
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/testutils/concrete_lease_mgr.h>
-#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <exceptions/exceptions.h>
 #include <functional>
 #include <gtest/gtest.h>

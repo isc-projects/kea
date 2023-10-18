@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
 #include <pgsql/pgsql_connection.h>
@@ -134,9 +135,16 @@ PgSqlConnection::~PgSqlConnection() {
 }
 
 std::pair<uint32_t, uint32_t>
-PgSqlConnection::getVersion(const ParameterMap& parameters) {
+PgSqlConnection::getVersion(const ParameterMap& parameters,
+                            const IOServiceAccessorPtr& ac,
+                            const DbCallback& cb,
+                            const string& timer_name) {
     // Get a connection.
-    PgSqlConnection conn(parameters);
+    PgSqlConnection conn(parameters, ac, cb);
+
+    if (!timer_name.empty()) {
+        conn.makeReconnectCtl(timer_name);
+    }
 
     // Open the database.
     conn.openDatabaseInternal(false);
@@ -294,6 +302,21 @@ PgSqlConnection::openDatabaseInternal(bool logging) {
         // to release it, but grab the error message first.
         std::string error_message = PQerrorMessage(new_conn);
         PQfinish(new_conn);
+
+        auto const& rec = reconnectCtl();
+        if (rec && DatabaseConnection::retry_) {
+            // Start the connection recovery.
+            startRecoverDbConnection();
+
+            std::ostringstream s;
+
+            s << " (scheduling retry " << rec->retriesLeft() << " in " << rec->retryInterval() << " milliseconds)";
+
+            error_message += s.str();
+
+            isc_throw(DbOpenErrorWithRetry, error_message);
+        }
+
         isc_throw(DbOpenError, error_message);
     }
 

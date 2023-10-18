@@ -916,6 +916,10 @@ isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
+    // Allow DB reconnect on startup. The database connection parameters specify
+    // respective details.
+    DbConnectionInitWithRetry retry;
+
     // Single stream instance used in all error clauses
     std::ostringstream err;
 
@@ -1174,11 +1178,8 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_P
     // CommandMgr uses IO service to run asynchronous socket operations.
     CommandMgr::instance().setIOService(getIOService());
 
-    // LeaseMgr uses IO service to run asynchronous timers.
-    LeaseMgr::setIOService(getIOService());
-
-    // HostMgr uses IO service to run asynchronous timers.
-    HostMgr::setIOService(getIOService());
+    // DatabaseConnection uses IO service to run asynchronous timers.
+    DatabaseConnection::setIOService(getIOService());
 
     // These are the commands always supported by the DHCPv6 server.
     // Please keep the list in alphabetic order.
@@ -1314,11 +1315,8 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("status-get");
         CommandMgr::instance().deregisterCommand("version-get");
 
-        // LeaseMgr uses IO service to run asynchronous timers.
-        LeaseMgr::setIOService(IOServicePtr());
-
-        // HostMgr uses IO service to run asynchronous timers.
-        HostMgr::setIOService(IOServicePtr());
+        // Reset DatabaseConnection IO service.
+        DatabaseConnection::setIOService(IOServicePtr());
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server
         // is shutting down anyway.

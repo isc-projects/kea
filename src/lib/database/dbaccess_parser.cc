@@ -61,7 +61,8 @@ DbAccessParser::parse(std::string& access_string,
     for (std::pair<std::string, ConstElementPtr> param : database_config->mapValue()) {
         try {
             if ((param.first == "persist") ||
-                (param.first == "readonly")) {
+                (param.first == "readonly") ||
+                (param.first == "retry-on-startup")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 

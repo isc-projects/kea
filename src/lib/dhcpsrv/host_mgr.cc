@@ -42,8 +42,6 @@ namespace dhcp {
 using namespace isc::asiolink;
 using namespace isc::db;
 
-IOServicePtr HostMgr::io_service_ = IOServicePtr();
-
 boost::scoped_ptr<HostMgr>&
 HostMgr::getHostMgrPtr() {
     static boost::scoped_ptr<HostMgr> host_mgr_ptr;

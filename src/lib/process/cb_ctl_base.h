@@ -9,6 +9,7 @@
 
 #include <database/audit_entry.h>
 #include <database/backend_selector.h>
+#include <database/database_connection.h>
 #include <database/server_selector.h>
 #include <process/config_base.h>
 #include <process/config_ctl_info.h>
@@ -142,9 +143,15 @@ public:
 
         // Iterate over the configured DBs and instantiate them.
         for (auto db : config_ctl->getConfigDatabases()) {
+            const std::string& redacted = db.redactedAccessString();
             LOG_INFO(dctl_logger, DCTL_OPEN_CONFIG_DB)
-                .arg(db.redactedAccessString());
-            getMgr().addBackend(db.getAccessString());
+                .arg(redacted);
+            try {
+                getMgr().addBackend(db.getAccessString());
+            } catch (const isc::db::DbOpenErrorWithRetry& err) {
+                LOG_INFO(dctl_logger, DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED)
+                        .arg(redacted).arg(err.what());
+            }
         }
 
         // Let the caller know we have opened DBs.

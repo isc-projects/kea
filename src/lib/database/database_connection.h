@@ -34,6 +34,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Exception thrown on failure to open database but permit retries
+class DbOpenErrorWithRetry : public Exception {
+public:
+    DbOpenErrorWithRetry(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief Exception thrown on failure to execute a database function
 class DbOperationError : public Exception {
 public:
@@ -215,6 +222,18 @@ public:
     /// @return a pointer to configuration
     static isc::data::ElementPtr toElementDbAccessString(const std::string& dbaccess);
 
+    /// @brief Sets IO service to be used by the Lease Manager.
+    ///
+    /// @param io_service IOService object, used for all ASIO operations.
+    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
+        io_service_ = io_service;
+    }
+
+    /// @brief Returns pointer to the IO service.
+    static isc::asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
     /// @brief Optional callback function to invoke if an opened connection is
     /// lost
     static DbCallback db_lost_callback_;
@@ -226,6 +245,14 @@ public:
     /// @brief Optional callback function to invoke if an opened connection
     /// recovery failed
     static DbCallback db_failed_callback_;
+
+    /// @brief Flag which indicated if retry database connection on fail should
+    /// be attempted.
+    ///
+    /// Allow only the first database connection attempt to fail and start
+    /// recovery. Sequential tries invoked by the dbReconnect callback should
+    /// not start yet another database connection attempt.
+    static bool retry_;
 
     /// @brief Throws an exception if the connection is not usable.
     /// @throw DbConnectionUnusable
@@ -243,6 +270,7 @@ public:
     }
 
 protected:
+
     /// @brief Sets the unusable flag to true.
     void markUnusable() { unusable_ = true; }
 
@@ -272,6 +300,27 @@ private:
 
     /// @brief Reconnect settings.
     util::ReconnectCtlPtr reconnect_ctl_;
+
+    /// The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr io_service_;
+};
+
+/// @brief RAII class to enable DB reconnect retries on server startup.
+class DbConnectionInitWithRetry {
+public:
+    /// @brief Constructor.
+    ///
+    /// Enable DB reconnect retries on server startup.
+    DbConnectionInitWithRetry() {
+        DatabaseConnection::retry_ = true;
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Disable DB reconnect retries.
+    ~DbConnectionInitWithRetry() {
+        DatabaseConnection::retry_ = false;
+    }
 };
 
 }  // namespace db

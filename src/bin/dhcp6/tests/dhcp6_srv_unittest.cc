@@ -60,6 +60,7 @@ using namespace isc::asiolink;
 using namespace isc::cb;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
@@ -248,11 +249,8 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     // CommandMgr uses IO service to run asynchronous socket operations.
     CommandMgr::instance().setIOService(srv.getIOService());
 
-    // LeaseMgr uses IO service to run asynchronous timers.
-    LeaseMgr::setIOService(srv.getIOService());
-
-    // HostMgr uses IO service to run asynchronous timers.
-    HostMgr::setIOService(srv.getIOService());
+    // DatabaseConnection uses IO service to run asynchronous timers.
+    DatabaseConnection::setIOService(srv.getIOService());
 
     Parser6Context parser;
     ConstElementPtr json;
@@ -286,11 +284,8 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     // Reset CommandMgr IO service.
     CommandMgr::instance().setIOService(IOServicePtr());
 
-    // Reset LeaseMgr IO service.
-    LeaseMgr::setIOService(IOServicePtr());
-
-    // Reset HostMgr IO service.
-    HostMgr::setIOService(IOServicePtr());
+    // Reset DatabaseConnection IO service.
+    DatabaseConnection::setIOService(IOServicePtr());
 }
 
 /// @brief Class which handles initialization of database

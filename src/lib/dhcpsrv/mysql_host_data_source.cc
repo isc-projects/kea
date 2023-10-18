@@ -2171,13 +2171,14 @@ public:
     /// The method is called by the constructor before opening the database
     /// to verify that the schema version is correct.
     ///
+    /// @param timer_name The DB reconnect timer name.
     /// @return Version number stored in the database, as a pair of unsigned
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database
     ///        has failed.
-    std::pair<uint32_t, uint32_t> getVersion() const;
+    std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = "") const;
 
     /// @brief Executes statements which inserts a row into one of the tables.
     ///
@@ -2882,7 +2883,19 @@ MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const DatabaseConnection::Param
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version = getVersion();
+
+    std::string timer_name = "";
+    bool retry = false;
+    if (parameters.count("retry-on-startup")) {
+        if (parameters.at("retry-on-startup") == "true") {
+            retry = true;
+        }
+    }
+    if (retry) {
+        timer_name = timer_name_;
+    }
+
+    std::pair<uint32_t, uint32_t> db_version = getVersion(timer_name);
     if (code_version != db_version) {
         isc_throw(DbOpenError,
                   "MySQL schema version mismatch: need version: "
@@ -2901,7 +2914,7 @@ MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const DatabaseConnection::Param
 MySqlHostContextPtr
 MySqlHostDataSourceImpl::createContext() const {
     MySqlHostContextPtr ctx(new MySqlHostContext(parameters_,
-        IOServiceAccessorPtr(new IOServiceAccessor(&HostMgr::getIOService)),
+        IOServiceAccessorPtr(new IOServiceAccessor(&DatabaseConnection::getIOService)),
         &MySqlHostDataSourceImpl::dbReconnect));
 
     // Open the database.
@@ -3030,11 +3043,14 @@ MySqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 }
 
 std::pair<uint32_t, uint32_t>
-MySqlHostDataSourceImpl::getVersion() const {
+MySqlHostDataSourceImpl::getVersion(const std::string& timer_name) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_HOST_DB_GET_VERSION);
 
-    return (MySqlConnection::getVersion(parameters_));
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+    DbCallback cb(&MySqlHostDataSourceImpl::dbReconnect);
+
+    return (MySqlConnection::getVersion(parameters_, ac, cb, timer_name));
 }
 
 void
@@ -4096,8 +4112,8 @@ MySqlHostDataSource::getDescription() const {
 }
 
 std::pair<uint32_t, uint32_t>
-MySqlHostDataSource::getVersion() const {
-    return(impl_->getVersion());
+MySqlHostDataSource::getVersion(const std::string& timer_name) const {
+    return(impl_->getVersion(timer_name));
 }
 
 void

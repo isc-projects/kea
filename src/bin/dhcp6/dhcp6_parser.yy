@@ -92,6 +92,7 @@ using namespace std;
   STOP_RETRY_EXIT "stop-retry-exit"
   SERVE_RETRY_EXIT "serve-retry-exit"
   SERVE_RETRY_CONTINUE "serve-retry-continue"
+  RETRY_ON_STARTUP "retry-on-startup"
   MAX_ROW_ERRORS "max-row-errors"
   TRUST_ANCHOR "trust-anchor"
   CERT_FILE "cert-file"
@@ -1024,6 +1025,7 @@ database_map_param: database_type
                   | max_reconnect_tries
                   | reconnect_wait_time
                   | on_fail
+                  | retry_on_startup
                   | max_row_errors
                   | trust_anchor
                   | cert_file
@@ -1148,6 +1150,12 @@ on_fail_mode: STOP_RETRY_EXIT { $$ = ElementPtr(new StringElement("stop-retry-ex
             | SERVE_RETRY_EXIT { $$ = ElementPtr(new StringElement("serve-retry-exit", ctx.loc2pos(@1))); }
             | SERVE_RETRY_CONTINUE { $$ = ElementPtr(new StringElement("serve-retry-continue", ctx.loc2pos(@1))); }
             ;
+
+retry_on_startup: RETRY_ON_STARTUP COLON BOOLEAN {
+    ctx.unique("retry-on-startup", ctx.loc2pos(@1));
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("retry-on-startup", n);
+};
 
 max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
     ctx.unique("max-row-errors", ctx.loc2pos(@1));

@@ -458,13 +458,14 @@ public:
 
     /// @brief Returns backend version.
     ///
+    /// @param timer_name The DB reconnect timer name.
     /// @return Version number stored in the database, as a pair of unsigned
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.
     ///
     /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = "") const;
 
     /// @brief Commit Transactions
     ///

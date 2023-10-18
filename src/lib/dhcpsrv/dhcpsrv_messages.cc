@@ -71,6 +71,7 @@ extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_SELECT_SKIP = "DHCPSRV_HOOK
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE6_EXTEND_SKIP = "DHCPSRV_HOOK_LEASE6_EXTEND_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE6_RECOVER_SKIP = "DHCPSRV_HOOK_LEASE6_RECOVER_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE6_SELECT_SKIP = "DHCPSRV_HOOK_LEASE6_SELECT_SKIP";
+extern const isc::log::MessageID DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED = "DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED";
 extern const isc::log::MessageID DHCPSRV_INVALID_ACCESS = "DHCPSRV_INVALID_ACCESS";
 extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL = "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL";
 extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED = "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED";
@@ -78,6 +79,7 @@ extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL = "DHC
 extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED = "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED";
 extern const isc::log::MessageID DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION = "DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION";
 extern const isc::log::MessageID DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION = "DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION";
+extern const isc::log::MessageID DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED = "DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED";
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FAIL = "DHCPSRV_LEASE_SANITY_FAIL";
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FAIL_DISCARD = "DHCPSRV_LEASE_SANITY_FAIL_DISCARD";
 extern const isc::log::MessageID DHCPSRV_LEASE_SANITY_FIXED = "DHCPSRV_LEASE_SANITY_FIXED";
@@ -355,6 +357,7 @@ const char* values[] = {
     "DHCPSRV_HOOK_LEASE6_EXTEND_SKIP", "DHCPv6 lease lifetime was not extended because a callout set the skip flag for message %1",
     "DHCPSRV_HOOK_LEASE6_RECOVER_SKIP", "DHCPv6 lease %1 was not recovered from declined state because a callout set the skip status.",
     "DHCPSRV_HOOK_LEASE6_SELECT_SKIP", "Lease6 (non-temporary) creation was skipped, because of callout skip flag.",
+    "DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED", "Failed to connect to database: %1 with error: %2",
     "DHCPSRV_INVALID_ACCESS", "invalid database access string: %1",
     "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL", "extended info for lease %1 failed checks (%2)",
     "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED", "extended info for lease %1 was upgraded",
@@ -362,6 +365,7 @@ const char* values[] = {
     "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED", "extended info for lease %1 was upgraded",
     "DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION", "exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3: %4",
     "DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION", "unknown exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3",
+    "DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED", "Failed to connect to database: %1 with error: %2",
     "DHCPSRV_LEASE_SANITY_FAIL", "The lease %1 with subnet-id %2 failed subnet-id checks (%3).",
     "DHCPSRV_LEASE_SANITY_FAIL_DISCARD", "The lease %1 with subnet-id %2 failed subnet-id checks (%3) and was dropped.",
     "DHCPSRV_LEASE_SANITY_FIXED", "The lease %1 with subnet-id %2 failed subnet-id checks, but was corrected to subnet-id %3.",

@@ -576,6 +576,19 @@ The possible values are:
    active while processing DHCP traffic. Change this only if the server is used
    exclusively as a configuration tool.
 
+::
+
+   "Dhcp4": { "lease-database": { "retry-on-startup" : true, ... }, ... }
+
+During server startup, the inability to connect to any of the configured
+backends is considered fatal only if ``retry-on-startup`` is set to ``false``.
+A fatal error is logged and the server exits, based on the idea that the
+configuration should be valid at startup. Exiting to the operating system allows
+nanny scripts to detect the problem.
+If ``retry-on-startup`` is set to ``true``, the server will start reconnection
+attempts even at server startup or on reconfigure events, and will honor the
+action specified in ``on-fail`` parameter.
+
 The host parameter is used by the MySQL and PostgreSQL backends.
 
 Finally, the credentials of the account under which the server will
@@ -797,6 +810,19 @@ The possible values are:
    (if configured) in the server shutting itself down. This includes cases when
    the lease database backend and the hosts database backend are connected to
    the same database instance.
+
+::
+
+   "Dhcp4": { "hosts-database": { "retry-on-startup" : true, ... }, ... }
+
+During server startup, the inability to connect to any of the configured
+backends is considered fatal only if ``retry-on-startup`` is set to ``false``.
+A fatal error is logged and the server exits, based on the idea that the
+configuration should be valid at startup. Exiting to the operating system allows
+nanny scripts to detect the problem.
+If ``retry-on-startup`` is set to ``true``, the server will start reconnection
+attempts even at server startup or on reconfigure events, and will honor the
+action specified in ``on-fail`` parameter.
 
 Finally, the credentials of the account under which the server will
 access the database should be set:

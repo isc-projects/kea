@@ -11,7 +11,7 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/testutils/concrete_lease_mgr.h>
-#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <testutils/gtest_utils.h>
 
 #include <iostream>

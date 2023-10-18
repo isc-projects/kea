@@ -106,10 +106,12 @@ public:
 
     /// @brief Constructor.
     ///
+    /// @param space The DHCP space (v4 or v6).
     /// @param parameters A data structure relating keywords and values
     /// concerned with the database.
     /// @param db_reconnect_callback The connection recovery callback.
-    explicit MySqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters,
+    explicit MySqlConfigBackendImpl(const std::string& space,
+                                    const db::DatabaseConnection::ParameterMap& parameters,
                                     const db::DbCallback db_reconnect_callback);
 
     /// @brief Destructor.

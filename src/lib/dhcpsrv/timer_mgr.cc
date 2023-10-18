@@ -88,7 +88,7 @@ public:
 
     /// @brief Sets IO service to be used by the Timer Manager.
     ///
-    /// @param io_service Pointer to the new IO service.
+    /// @param io_service Pointer to the IO service.
     void setIOService(const IOServicePtr& io_service);
 
     /// @brief Registers new timer in the @c TimerMgr.
@@ -106,7 +106,6 @@ public:
                        const asiolink::IntervalTimer::Callback& callback,
                        const long interval,
                        const asiolink::IntervalTimer::Mode& scheduling_mode);
-
 
     /// @brief Unregisters specified timer.
     ///
@@ -175,7 +174,6 @@ private:
                                const asiolink::IntervalTimer::Callback& callback,
                                const long interval,
                                const asiolink::IntervalTimer::Mode& scheduling_mode);
-
 
     /// @brief Unregisters specified timer.
     ///

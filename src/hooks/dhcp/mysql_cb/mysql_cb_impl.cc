@@ -5,11 +5,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <mysql_cb_impl.h>
 #include <mysql_cb_log.h>
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
 
 #include <mysql.h>
@@ -48,17 +50,43 @@ ScopedAuditRevision::~ScopedAuditRevision() {
 }
 
 MySqlConfigBackendImpl::
-MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
+MySqlConfigBackendImpl(const std::string& space,
+                       const DatabaseConnection::ParameterMap& parameters,
                        const DbCallback db_reconnect_callback)
     : conn_(parameters,
-            IOServiceAccessorPtr(new IOServiceAccessor(MySqlConfigBackendImpl::getIOService)),
+            IOServiceAccessorPtr(new IOServiceAccessor(&MySqlConfigBackendImpl::getIOService)),
             db_reconnect_callback), timer_name_(""),
       audit_revision_ref_count_(0), parameters_(parameters) {
+
+    // Create unique timer name per instance.
+    timer_name_ = "MySqlConfigBackend";
+    timer_name_ += space;
+    timer_name_ += "[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
+
+    // Create ReconnectCtl for this connection.
+    conn_.makeReconnectCtl(timer_name_);
+
     // Test schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
+
+    std::string timer_name = "";
+    bool retry = false;
+    if (parameters.count("retry-on-startup")) {
+        if (parameters.at("retry-on-startup") == "true") {
+            retry = true;
+        }
+    }
+    if (retry) {
+        timer_name = timer_name_;
+    }
+
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+
     std::pair<uint32_t, uint32_t> db_version =
-        MySqlConnection::getVersion(parameters);
+        MySqlConnection::getVersion(parameters, ac, db_reconnect_callback, timer_name);
     if (code_version != db_version) {
         isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "
                   << code_version.first << "." << code_version.second
@@ -828,7 +856,6 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     } else {
         code = (*(first_binding + 1))->getInteger<uint16_t>();
     }
-
 
     // Get formatted value if available.
     std::string formatted_value = (*(first_binding + 3))->getStringOrDefault("");
