@@ -9,6 +9,17 @@
         "heartbeat it can resume allocating new leases in the partner-down state."
     ],
     "cmd-comment": [ "This command takes no arguments." ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"ha-sync-complete-notify\",",
+        "    \"service\": [ <service affected: 'dhcp4' or 'dhcp6'> ],",
+        "    \"arguments\": {",
+        "        \"server-name\": <name of the partner server>,",
+        "        \"origin\": <an integer identifier of an origin to enable the DHCP service>,",
+        "        \"max-period\": <integer, in seconds>",
+        "    }",
+        "}"
+    ],
     "description": [ "See <xref linkend=\"command-ha-sync-complete-notify\"/>" ],
     "hook": "high_availability",
     "name": "ha-sync-complete-notify",

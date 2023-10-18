@@ -4,6 +4,15 @@
     "brief": [
         "This command resets the HA state machine of the server by transitioning it to the waiting state."
     ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"ha-reset\"",
+        "    \"service\": [ <service affected: 'dhcp4' or 'dhcp6'> ],",
+        "    \"arguments\": {",
+        "        \"server-name\": <name of the partner server>,",
+        "    }",
+        "}"
+    ],
     "description": "See <xref linkend=\"command-ha-reset\"/>",
     "hook": "high_availability",
     "name": "ha-reset",

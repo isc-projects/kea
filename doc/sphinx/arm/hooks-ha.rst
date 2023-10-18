@@ -1828,7 +1828,7 @@ stop serving any DHCP clients, so it can be safely shut down.
 
 The maintenance feature of the High Availability hook library addresses this
 situation. The :isccmd:`ha-maintenance-start` command was introduced to allow the
-administrator to put the pair of the active servers in a state in which one of
+administrator to put the pairs of the active servers in a state in which one of
 them is responding to all DHCP queries and the other one is awaiting shutdown.
 
 Suppose that the HA setup includes two active servers, ``server1`` and
@@ -1870,6 +1870,14 @@ transitioned to the ``partner-down`` state as a result of detecting that the
 partner is offline, canceling the maintenance is no longer possible. In that
 case, it is necessary to restart the other server and allow it to complete its
 normal state negotiation process.
+
+If the server has many relationships with different partners, the ``ha-maintenance-start``
+command attempts to transition all of the relationships into the
+``partner-in-maintenance`` state by sending the ``ha-mainteance-notify`` to all
+partner servers. If this step fails for any server an error is returned.
+In that case, send the ``ha-maintenance-cancel`` command to resume normal
+operation and fix the issue.
+
 
 Upgrading From Older HA Versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1977,7 +1985,8 @@ learn which scopes are available for the different HA modes of operation. The
        "command": "ha-scopes",
        "service": [ "dhcp4" ],
        "arguments": {
-           "scopes": [ "HA_server1", "HA_server2" ]
+           "scopes": [ "HA_server1", "HA_server2" ],
+           "server-name": "server2"
        }
    }
 
@@ -1990,9 +1999,14 @@ and "HA_server2" scopes. To disable all scopes specify an empty list:
        "command": "ha-scopes",
        "service": [ "dhcp4 "],
        "arguments": {
-           "scopes": [ ]
+           "scopes": [ ],
+           "server-name": "server2"
        }
    }
+
+The optional ``server-name`` parameter specifies a name of one of the partners belonging
+to the HA relationship this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in the configuration.
 
 .. isccmd:: ha-continue
 .. _command-ha-continue:
@@ -2008,8 +2022,16 @@ command structure is simply:
 
    {
        "command": "ha-continue",
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
+       "arguments": {
+           "scopes": [ ],
+           "server-name": "server2"
+       }
    }
+
+The optional ``server-name`` parameter specifies a name of one of the partners belonging
+to the HA relationship this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in the configuration.
 
 .. isccmd:: ha-heartbeat
 .. _command-ha-heartbeat:
@@ -2029,8 +2051,16 @@ no arguments:
 
    {
        "command": "ha-heartbeat",
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
+       "arguments": {
+           "scopes": [ ],
+           "server-name": "server2"
+       }
    }
+
+The optional ``server-name`` parameter specifies a name of one of the partners belonging
+to the HA relationship this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in the configuration.
 
 Upon successful communication with the server, a response similar to this should
 be returned:
@@ -2253,10 +2283,10 @@ status of the backup servers.
 The ``ha-maintenance-start`` Command
 ------------------------------------
 
-This command is used to initiate the transition of the server's partner into the
+This command is used to initiate the transition of the server's partners into the
 ``in-maintenance`` state and the transition of the server receiving the command
-into the ``partner-in-maintenance`` state. See the :ref:`ha-maintenance` section
-for details.
+into the ``partner-in-maintenance`` state in each HA relationship. See the
+:ref:`ha-maintenance` section for details.
 
 ::
 
@@ -2274,7 +2304,7 @@ The ``ha-maintenance-cancel`` Command
 This command is used to cancel the maintenance previously initiated using the
 :isccmd:`ha-maintenance-start` command. The server receiving this command will first
 send :isccmd:`ha-maintenance-notify`, with the ``cancel`` flag set to ``true``, to its
-partner. Next, the server reverts from the ``partner-in-maintenance`` state to
+partners. Next, the server reverts from the ``partner-in-maintenance`` state to
 its previous state. See the :ref:`ha-maintenance` section for details.
 
 ::
@@ -2301,9 +2331,14 @@ previous state. See the :ref:`ha-maintenance` section for details.
        "command": "ha-maintenance-notify",
        "service": [ "dhcp4" ],
        "arguments": {
-           "cancel": false
+           "cancel": false,
+           "server-name": "server2"
        }
    }
+
+The optional ``server-name`` parameter specifies a name of one of the partners belonging
+to the HA relationship this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in the configuration.
 
 .. warning::
 
@@ -2330,16 +2365,21 @@ connection after a temporary connection failure. It is also required when the
 A server administrator may send this command to reset a misbehaving state
 machine.
 
-This command includes no arguments:
-
 ::
 
    {
        "command": "ha-reset",
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
+       "arguments": {
+           "server-name": "server2"
+       }
    }
 
-And elicits the response:
+The optional ``server-name`` parameter specifies a name of one of the partners belonging
+to the HA relationship this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in the configuration.
+
+It elicits the response:
 
 ::
 
@@ -2365,16 +2405,26 @@ test to its partner server. If the connection is still unavailable, the server
 in the ``partner-down`` state enables its own DHCP service to continue
 responding to clients.
 
-This command includes no arguments:
-
 ::
 
    {
        "command": "ha-sync-complete-notify",
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
+       "arguments": {
+           "origin": 1100,
+           "server-name": "server2"
+       }
    }
 
-And elicits the response:
+The optional ``server-name`` parameter specifies a name of one of the partners belonging
+to the HA relationship this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in the configuration.
+
+The `origin` is used to select the HA service for which the receiving server should
+enable the DHCP service when it receives this notification. This is the same origin the
+sending server used previously to disable the DHCP service before synchronization.
+
+It elicits the response:
 
 ::
 

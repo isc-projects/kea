@@ -4,6 +4,15 @@
     "brief": [
         "This command resumes the operation of a paused HA state machine."
     ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"ha-continue\",",
+        "    \"service\": [ <service affected: 'dhcp4' or 'dhcp6'> ],",
+        "    \"arguments\": {",
+        "        \"server-name\": <name of the partner server>,",
+        "    }",
+        "}"
+    ],
     "description": "See <xref linkend=\"command-ha-continue\"/>",
     "hook": "high_availability",
     "name": "ha-continue",

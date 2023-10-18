@@ -7,6 +7,10 @@
     "cmd-syntax": [
         "{",
         "    \"command\": \"ha-heartbeat\"",
+        "    \"service\": [ <service affected: 'dhcp4' or 'dhcp6'> ],",
+        "    \"arguments\": {",
+        "        \"server-name\": <name of the partner server>,",
+        "    }",
         "}"
     ],
     "description": "See <xref linkend=\"ha-server-states\"/>",
