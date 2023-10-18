@@ -1963,6 +1963,7 @@ TEST_F(HAConfigTest, ipv6Url) {
     EXPECT_EQ(impl->getConfig()->getThisServerConfig()->getUrl().toText(), "http://[2001:db8::1]:8080/");
 }
 
+// Check that hot-standby mode is required for multiple relationships.
 TEST_F(HAConfigTest, hubAndSpokeNotHotStandbyConfig) {
     testInvalidConfig(
         "["
@@ -2002,6 +2003,7 @@ TEST_F(HAConfigTest, hubAndSpokeNotHotStandbyConfig) {
         "multiple HA relationships are only supported for 'hot-standby' mode");
 }
 
+// Check that the server names must be unique between relationships.
 TEST_F(HAConfigTest, hubAndSpokeRepeatingThisServerName) {
     testInvalidConfig(
         "["
