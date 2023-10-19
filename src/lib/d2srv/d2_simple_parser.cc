@@ -237,16 +237,7 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
     dhcp_ddns::NameChangeFormat ncr_format = dhcp_ddns::FMT_JSON;
 
     ip_address = SimpleParser::getAddress(config, "ip-address");
-
-    if ((ip_address.toText() == "0.0.0.0") ||
-        (ip_address.toText() == "::")) {
-        isc_throw(D2CfgError, "IP address cannot be \""
-                  << ip_address << "\""
-                  << " (" << config->get("ip-address")->getPosition() << ")");
-    }
-
     port = SimpleParser::getUint32(config, "port");
-
     dns_server_timeout = SimpleParser::getUint32(config, "dns-server-timeout");
 
     ncr_protocol = getProtocol(config, "ncr-protocol");

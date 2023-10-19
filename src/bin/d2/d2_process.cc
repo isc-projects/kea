@@ -408,8 +408,10 @@ D2Process::reconfigureQueueMgr() {
         /// Warn the user if the server address is not the loopback.
         /// @todo Remove this once we provide a secure mechanism.
         std::string ip_address = d2_params->getIpAddress().toText();
-        if (ip_address != "127.0.0.1" && ip_address != "::1") {
-            LOG_WARN(d2_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
+        if (ip_address == "0.0.0.0" || ip_address == "::") {
+            LOG_WARN(d2_logger, DHCP_DDNS_LISTENING_ON_ALL_INTERFACES).arg(ip_address);
+        } else if (ip_address != "127.0.0.1" && ip_address != "::1") {
+           LOG_WARN(d2_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
         }
 
         // Instantiate the listener.
