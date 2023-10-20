@@ -1329,14 +1329,14 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
                 if (v4) {
                     Lease4Collection leases =
                         LeaseMgrFactory::instance().getLeases4((*subnet_id)->intValue());
-                    for (auto lease : leases) {
+                    for (const auto& lease : leases) {
                         ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
                     }
                 } else {
                     Lease6Collection leases =
                         LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue());
-                    for (auto lease : leases) {
+                    for (const auto& lease : leases) {
                         ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
                     }
@@ -1347,13 +1347,13 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
             // There is no 'subnets' argument so let's return all leases.
             if (v4) {
                 Lease4Collection leases = LeaseMgrFactory::instance().getLeases4();
-                for (auto lease : leases) {
+                for (const auto& lease : leases) {
                     ElementPtr lease_json = lease->toElement();
                     leases_json->add(lease_json);
                 }
             } else {
                 Lease6Collection leases = LeaseMgrFactory::instance().getLeases6();
-                for (auto lease : leases) {
+                for (const auto& lease : leases) {
                     ElementPtr lease_json = lease->toElement();
                     leases_json->add(lease_json);
                 }
@@ -1456,7 +1456,7 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
                                                        LeasePageSize(page_limit_value));
 
             // Convert leases into JSON list.
-            for (auto lease : leases) {
+            for (const auto& lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
@@ -1467,7 +1467,7 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
                 LeaseMgrFactory::instance().getLeases6(*from_address,
                                                        LeasePageSize(page_limit_value));
             // Convert leases into JSON list.
-            for (auto lease : leases) {
+            for (const auto& lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
@@ -1526,7 +1526,7 @@ LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
         Lease4Collection leases =
             LeaseMgrFactory::instance().getLease4(hwaddr);
         ElementPtr leases_json = Element::createList();
-        for (auto lease : leases) {
+        for (const auto& lease : leases) {
             ElementPtr lease_json = lease->toElement();
             leases_json->add(lease_json);
         }
@@ -1576,7 +1576,7 @@ LeaseCmdsImpl::leaseGetByClientIdHandler(CalloutHandle& handle) {
         Lease4Collection leases =
             LeaseMgrFactory::instance().getLease4(*clientid);
         ElementPtr leases_json = Element::createList();
-        for (auto lease : leases) {
+        for (const auto& lease : leases) {
             ElementPtr lease_json = lease->toElement();
             leases_json->add(lease_json);
         }
@@ -1626,7 +1626,7 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
         Lease6Collection leases =
             LeaseMgrFactory::instance().getLeases6(duid_);
         ElementPtr leases_json = Element::createList();
-        for (auto lease : leases) {
+        for (const auto& lease : leases) {
             ElementPtr lease_json = lease->toElement();
             leases_json->add(lease_json);
         }
@@ -1685,7 +1685,7 @@ LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
             Lease4Collection leases =
                 LeaseMgrFactory::instance().getLeases4(hostname_);
 
-            for (auto lease : leases) {
+            for (const auto& lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
@@ -1693,7 +1693,7 @@ LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
             Lease6Collection leases =
                 LeaseMgrFactory::instance().getLeases6(hostname_);
 
-            for (auto lease : leases) {
+            for (const auto& lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
@@ -1836,7 +1836,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             auto leases_list = deleted_leases->listValue();
 
             // Iterate over leases to be deleted.
-            for (auto lease_params : leases_list) {
+            for (const auto& lease_params : leases_list) {
                 // Parsing the lease may throw and it means that the lease
                 // information is malformed.
                 Parameters p = getParameters(true, lease_params);
@@ -1853,7 +1853,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
 
             // Iterate over all leases.
             auto leases_list = leases->listValue();
-            for (auto lease_params : leases_list) {
+            for (const auto& lease_params : leases_list) {
 
                 Lease6Parser parser;
                 bool force_update;
@@ -1872,7 +1872,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
         if (!parsed_deleted_list.empty()) {
 
             // Iterate over leases to be deleted.
-            for (auto lease_params_pair : parsed_deleted_list) {
+            for (const auto& lease_params_pair : parsed_deleted_list) {
 
                 // This part is outside of the try-catch because an exception
                 // indicates that the command is malformed.
@@ -1924,7 +1924,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
 
             // Iterate over all leases.
-            for (auto lease : parsed_leases_list) {
+            for (const auto& lease : parsed_leases_list) {
 
                 auto result = CONTROL_RESULT_SUCCESS;
                 std::ostringstream text;
@@ -2269,7 +2269,7 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
             const Subnet4Collection* subs = subnets->getAll();
 
             // Go over all subnets and wipe leases in each of them.
-            for (auto sub : *subs) {
+            for (const auto& sub : *subs) {
                 num += LeaseMgrFactory::instance().wipeLeases4(sub->getID());
                 ids << " " << sub->getID();
                 StatsMgr::instance().setValue(
@@ -2401,7 +2401,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             const Subnet6Collection* subs = subnets->getAll();
 
             // Go over all subnets and wipe leases in each of them.
-            for (auto sub : *subs) {
+            for (const auto& sub : *subs) {
                 num += LeaseMgrFactory::instance().wipeLeases6(sub->getID());
                 ids << " " << sub->getID();
                 StatsMgr::instance().setValue(

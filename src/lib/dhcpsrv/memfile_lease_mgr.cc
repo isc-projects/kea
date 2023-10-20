@@ -3321,7 +3321,7 @@ Memfile_LeaseMgr::buildExtendedInfoTables6() {
     size_t modified = 0;
     size_t processed = 0;
 
-    for (auto lease : storage6_) {
+    for (const auto& lease : storage6_) {
         ++leases;
         try {
             if (upgradeLease6ExtendedInfo(lease, check)) {

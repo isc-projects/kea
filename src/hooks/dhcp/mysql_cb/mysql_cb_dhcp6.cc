@@ -1412,20 +1412,20 @@ public:
                                MySqlBinding::createTimestamp(subnet->getModificationTime()));
 
         // (Re)create pools.
-        for (auto pool : subnet->getPools(Lease::TYPE_NA)) {
+        for (const auto& pool : subnet->getPools(Lease::TYPE_NA)) {
             createPool6(server_selector, boost::dynamic_pointer_cast<Pool6>(pool),
                         subnet);
         }
 
         // (Re)create pd pools.
-        for (auto pd_pool : subnet->getPools(Lease::TYPE_PD)) {
+        for (const auto& pd_pool : subnet->getPools(Lease::TYPE_PD)) {
             createPdPool6(server_selector, boost::dynamic_pointer_cast<Pool6>(pd_pool),
                           subnet);
         }
 
         // (Re)create options.
         auto option_spaces = subnet->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (const auto& option_space : option_spaces) {
             OptionContainerPtr options = subnet->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -1461,7 +1461,7 @@ public:
 
         uint64_t pool_id = mysql_insert_id(conn_.mysql_);
         auto option_spaces = pool->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (const auto& option_space : option_spaces) {
             OptionContainerPtr options = pool->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -1512,7 +1512,7 @@ public:
 
         uint64_t pd_pool_id = mysql_insert_id(conn_.mysql_);
         auto option_spaces = pd_pool->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (const auto& option_space : option_spaces) {
             OptionContainerPtr options = pd_pool->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -2137,7 +2137,7 @@ public:
 
         // (Re)create options.
         auto option_spaces = shared_network->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (const auto& option_space : option_spaces) {
             OptionContainerPtr options = shared_network->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -3148,7 +3148,7 @@ public:
                                MySqlBinding::createTimestamp(client_class->getModificationTime()));
 
         // Iterate over the captured dependencies and try to insert them into the database.
-        for (auto dependency : dependencies) {
+        for (const auto& dependency : dependencies) {
             try {
                 MySqlBindingCollection in_dependency_bindings = {
                     MySqlBinding::createString(client_class->getName()),
@@ -3174,7 +3174,7 @@ public:
         if (client_class->getCfgOptionDef()) {
             auto option_defs = client_class->getCfgOptionDef()->getContainer();
             auto option_spaces = option_defs.getOptionSpaceNames();
-            for (auto option_space : option_spaces) {
+            for (const auto& option_space : option_spaces) {
                 OptionDefContainerPtr defs = option_defs.getItems(option_space);
                 for (auto def = defs->begin(); def != defs->end(); ++def) {
                     createUpdateOptionDef6(server_selector, *def, client_class->getName());
@@ -3184,7 +3184,7 @@ public:
 
         // (Re)create options.
         auto option_spaces = client_class->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (const auto& option_space : option_spaces) {
             OptionContainerPtr options = client_class->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -3349,7 +3349,7 @@ public:
             }
 
             // Iterate over the configured DBs and instantiate them.
-            for (auto db : config_ctl->getConfigDatabases()) {
+            for (const auto& db : config_ctl->getConfigDatabases()) {
                 const std::string& access = db.getAccessString();
                 auto parameters = db.getParameters();
                 if (ConfigBackendDHCPv6Mgr::instance().delBackend(parameters["type"], access, true)) {

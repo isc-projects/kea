@@ -3622,7 +3622,7 @@ PgSqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
 
         ++pages;
         start_addr = leases.back()->addr_;
-        for (auto lease : leases) {
+        for (const auto& lease : leases) {
             try {
                 bool modified = upgradeLease6ExtendedInfo(lease, check);
                 if (modified) {
