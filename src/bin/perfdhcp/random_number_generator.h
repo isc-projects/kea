@@ -67,7 +67,7 @@ public:
         }
 
         // Init with the current time
-        rng_.seed(time(NULL));
+        rng_.seed(time(0));
     }
 
     /// \brief Generate uniformly distributed integer
