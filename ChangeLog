@@ -1,7 +1,7 @@
 2187.	[func]		tmark
-	To facilitate use in containers the restriction from listening
+	To facilitate use in containers, the restriction from listening
 	on 0.0.0.0 or :: addresses has been removed from kea-dhcp-ddns.
-	The server will now issue a warning of configured to use either
+	The server will now issue a warning if configured to use either
 	address.
 	(Gitlab #3116)
 
