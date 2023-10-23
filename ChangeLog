@@ -1,3 +1,8 @@
+2190.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.5.3
+	development release.
+	(Gitlab #3118)
+
 2189.	[doc]		tomek
 	Security reporting process described in a Github-friendly format.
 	There is no new information, mostly pointers to already existing
