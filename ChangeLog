@@ -35,7 +35,7 @@ Kea 2.5.3 (development) released on October 25, 2023
 	(Gitlab #2918)
 
 2184.	[bug]		razvan
-	Fixed a bug in evaluated expression parser which was not propelry
+	Fixed a bug in evaluated expression parser which was not properly
 	handling escaped null characters.
 	(Gitlab #3086)
 
