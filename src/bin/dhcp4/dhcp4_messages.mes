@@ -372,6 +372,14 @@ and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
 
+% DHCP4_DISCOVER %1: server is processing DHCPDISCOVER with hint=%2
+This is a debug message that indicates the processing of a received DHCPDISCOVER
+message. The first argument contains the client and the transaction
+identification information. The second argument may hold the hint for the server
+about the address that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
+
 % DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command
 This is the info message logged when the DHCPv4 server starts reconfiguration
 as a result of receiving SIGHUP signal or config-reload command.
@@ -536,29 +544,6 @@ state and is requesting an IPv4 address it is using to be allocated for it.
 The first argument includes the client and transaction identification
 information. The second argument specifies the requested IPv4 address.
 
-% DHCP4_LEASE_OFFER %1: lease %2 will be offered
-This informational message indicates that the server has found the lease to be
-offered to the client. It is up to the client to choose one server out of
-those which offered leases and continue allocation with that server.
-The first argument specifies the client and the transaction identification
-information. The second argument specifies the IPv4 address to be offered.
-
-% DHCP4_DISCOVER %1: server is processing DHCPDISCOVER with hint=%2
-This is a debug message that indicates the processing of a received DHCPDISCOVER
-message. The first argument contains the client and the transaction
-identification information. The second argument may hold the hint for the server
-about the address that the client would like to have allocated.
-If there is no hint, the argument should provide the text indicating
-that the hint hasn't been sent.
-
-% DHCP4_REQUEST %1: server is processing DHCPREQUEST with hint=%2
-This is a debug message that indicates the processing of a received DHCPREQUEST
-message. The first argument contains the client and the transaction
-identification information. The second argument may hold the hint for the server
-about the address that the client would like to have allocated.
-If there is no hint, the argument should provide the text indicating
-that the hint hasn't been sent.
-
 % DHCP4_LEASE_ALLOC %1: lease %2 has been allocated for %3 seconds
 This informational message indicates that the server successfully granted a
 lease in response to client's DHCPREQUEST message. The lease information will
@@ -566,6 +551,13 @@ be sent to the client in the DHCPACK message. The first argument contains the
 client and the transaction identification information. The second argument
 contains the allocated IPv4 address. The third argument is the validity
 lifetime.
+
+% DHCP4_LEASE_OFFER %1: lease %2 will be offered
+This informational message indicates that the server has found the lease to be
+offered to the client. It is up to the client to choose one server out of
+those which offered leases and continue allocation with that server.
+The first argument specifies the client and the transaction identification
+information. The second argument specifies the IPv4 address to be offered.
 
 % DHCP4_LEASE_REUSE %1: lease %2 has been reused for %3 seconds
 This informational message indicates that the server successfully reused a
@@ -915,6 +907,14 @@ the 'client identifier' or 'chaddr' doesn't match between the client
 and the lease. The first argument includes the client and the
 transaction identification information. The second argument specifies
 the leased address.
+
+% DHCP4_REQUEST %1: server is processing DHCPREQUEST with hint=%2
+This is a debug message that indicates the processing of a received DHCPREQUEST
+message. The first argument contains the client and the transaction
+identification information. The second argument may hold the hint for the server
+about the address that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
 
 % DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
 This is a message informing that host reservations lookup is performed before

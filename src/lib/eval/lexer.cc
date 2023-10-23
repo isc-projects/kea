@@ -1863,7 +1863,7 @@ YY_RULE_SETUP
 #line 247 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1867 "lexer.cc"
+#line 1866 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
