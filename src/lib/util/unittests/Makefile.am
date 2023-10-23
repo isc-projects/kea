@@ -13,9 +13,6 @@ libutil_unittests_la_SOURCES += textdata.h
 libutil_unittests_la_SOURCES += wiredata.h wiredata.cc
 libutil_unittests_la_SOURCES += interprocess_util.h interprocess_util.cc
 
-# For now, this isn't needed for libutil_unittests
-EXTRA_DIST = mock_socketsession.h
-
 libutil_unittests_la_CPPFLAGS = $(AM_CPPFLAGS)
 libutil_unittests_la_CPPFLAGS += $(GTEST_INCLUDES)
 
@@ -24,5 +21,8 @@ libutil_unittests_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
 libutil_unittests_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libutil_unittests_la_LIBADD += $(GTEST_LDADD)
 endif
+
+# For now, this isn't needed for libutil_unittests
+EXTRA_DIST = mock_socketsession.h
 
 CLEANFILES = *.gcno *.gcda
