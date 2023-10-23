@@ -45,6 +45,7 @@ extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT = "DHCP_
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_TIMEOUT = "DHCP_DDNS_FORWARD_REPLACE_TIMEOUT";
 extern const isc::log::MessageID DHCP_DDNS_FWD_REQUEST_IGNORED = "DHCP_DDNS_FWD_REQUEST_IGNORED";
 extern const isc::log::MessageID DHCP_DDNS_INVALID_RESPONSE = "DHCP_DDNS_INVALID_RESPONSE";
+extern const isc::log::MessageID DHCP_DDNS_LISTENING_ON_ALL_INTERFACES = "DHCP_DDNS_LISTENING_ON_ALL_INTERFACES";
 extern const isc::log::MessageID DHCP_DDNS_NOT_ON_LOOPBACK = "DHCP_DDNS_NOT_ON_LOOPBACK";
 extern const isc::log::MessageID DHCP_DDNS_NO_ELIGIBLE_JOBS = "DHCP_DDNS_NO_ELIGIBLE_JOBS";
 extern const isc::log::MessageID DHCP_DDNS_NO_FWD_MATCH_ERROR = "DHCP_DDNS_NO_FWD_MATCH_ERROR";
@@ -134,6 +135,7 @@ const char* values[] = {
     "DHCP_DDNS_FORWARD_REPLACE_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping replace for FQDN %2 to DNS server %3",
     "DHCP_DDNS_FWD_REQUEST_IGNORED", "Request ID %1: Forward updates are disabled, the forward portion of request will be ignored: %2",
     "DHCP_DDNS_INVALID_RESPONSE", "received response to DNS Update message is malformed: %1",
+    "DHCP_DDNS_LISTENING_ON_ALL_INTERFACES", "the DHCP-DDNS server has been configured to listen on %1. This is an insecure configuration supported for testing purposes only",
     "DHCP_DDNS_NOT_ON_LOOPBACK", "the DHCP-DDNS server has been configured to listen on %1 which is not the local loopback.  This is an insecure configuration supported for testing purposes only",
     "DHCP_DDNS_NO_ELIGIBLE_JOBS", "although there are queued requests, there are pending transactions for each, Queue count: %1  Transaction count: %2",
     "DHCP_DDNS_NO_FWD_MATCH_ERROR", "Request ID %1: the configured list of forward DDNS domains does not contain a match for: %2  The request has been discarded.",

@@ -404,17 +404,8 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
 /// -# ncr_protocol must be valid
 /// -# ncr_format must be valid
 TEST_F(D2CfgMgrTest, invalidEntry) {
-    // Cannot use IPv4 ANY address
-    std::string config = makeParamsConfigString ("0.0.0.0", 777, 333,
-                                           "UDP", "JSON");
-    LOGIC_ERROR(config, "IP address cannot be \"0.0.0.0\" (<string>:1:17)");
-
-    // Cannot use IPv6 ANY address
-    config = makeParamsConfigString ("::", 777, 333, "UDP", "JSON");
-    LOGIC_ERROR(config, "IP address cannot be \"::\" (<string>:1:17)");
-
     // Cannot use port  0
-    config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
+    std::string config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
     SYNTAX_ERROR(config, "<string>:1.40: port must be greater than zero but less than 65536");
 
     // Cannot use dns server timeout of 0
@@ -1075,6 +1066,38 @@ TEST_F(D2CfgMgrTest, comments) {
     ASSERT_EQ(1, srv_ctx->size());
     ASSERT_TRUE(srv_ctx->get("version"));
     EXPECT_EQ("1", srv_ctx->get("version")->str());
+}
+
+/// @brief Tests a basic valid configuration for D2Param.
+TEST_F(D2CfgMgrTest, listenOnANYAddresses) {
+    // Verify that ip_address 0.0.0.0 is valid.
+    std::string config = makeParamsConfigString ("0.0.0.0", 777, 333,
+                                           "UDP", "JSON");
+    RUN_CONFIG_OK(config);
+
+    EXPECT_EQ(isc::asiolink::IOAddress("0.0.0.0"),
+              d2_params_->getIpAddress());
+
+    // Verify the configuration summary.
+    EXPECT_EQ("listening on 0.0.0.0, port 777, using UDP",
+              d2_params_->getConfigSummary());
+
+    EXPECT_EQ(777, d2_params_->getPort());
+    EXPECT_EQ(333, d2_params_->getDnsServerTimeout());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params_->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params_->getNcrFormat());
+
+    // Verify that ip_address :: valid.
+    config = makeParamsConfigString ("::", 777, 333, "UDP", "JSON");
+    RUN_CONFIG_OK(config);
+
+    // Verify that the global scalars have the proper values.
+    EXPECT_EQ(isc::asiolink::IOAddress("::"),
+              d2_params_->getIpAddress());
+
+    // Verify the configuration summary.
+    EXPECT_EQ("listening on ::, port 777, using UDP",
+              d2_params_->getConfigSummary());
 }
 
 } // end of anonymous namespace

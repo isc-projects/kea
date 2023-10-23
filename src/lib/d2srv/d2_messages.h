@@ -46,6 +46,7 @@ extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT;
 extern const isc::log::MessageID DHCP_DDNS_FORWARD_REPLACE_TIMEOUT;
 extern const isc::log::MessageID DHCP_DDNS_FWD_REQUEST_IGNORED;
 extern const isc::log::MessageID DHCP_DDNS_INVALID_RESPONSE;
+extern const isc::log::MessageID DHCP_DDNS_LISTENING_ON_ALL_INTERFACES;
 extern const isc::log::MessageID DHCP_DDNS_NOT_ON_LOOPBACK;
 extern const isc::log::MessageID DHCP_DDNS_NO_ELIGIBLE_JOBS;
 extern const isc::log::MessageID DHCP_DDNS_NO_FWD_MATCH_ERROR;

@@ -439,3 +439,11 @@ server.
 % DHCP_DDNS_UPDATE_RESPONSE_RECEIVED Request ID %1: to server: %2 status: %3
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.
+
+% DHCP_DDNS_LISTENING_ON_ALL_INTERFACES the DHCP-DDNS server has been configured to listen on %1. This is an insecure configuration supported for testing purposes only
+This is a warning message issued when the DHCP-DDNS server is configured to
+listen at either `0.0.0.0` or `::`. It is possible for a malicious attacker to send
+bogus NameChangeRequests to it and change entries in the DNS. For this reason,
+listening on all interfaces should only be used when deploying in containers
+or for testing purposes. A future version of Kea will disable this ability by
+default.
