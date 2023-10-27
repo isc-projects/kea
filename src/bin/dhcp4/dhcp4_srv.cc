@@ -3940,7 +3940,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
 }
 
 void
-Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
+Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& /* callout_handle */, Pkt4Ptr& query,
                          Lease4Ptr lease, bool lease_exists) {
     // We need to disassociate the lease from the client. Once we move a lease
     // to declined state, it is no longer associated with the client in any
@@ -3964,7 +3964,7 @@ Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query
     }
 
     // Bump up the statistics.  If the lease does not exist (i.e. offer-lifetime == 0) we
-    // need to increment assigned address stats, otherwise the accounting wll be off.
+    // need to increment assigned address stats, otherwise the accounting will be off.
     // This saves us from having to determine later, when declined leases are reclaimed,
     // whether or not we need to decrement assigned stats.  In other words, this keeps
     // a declined lease always counted also as an assigned lease, regardless of how
