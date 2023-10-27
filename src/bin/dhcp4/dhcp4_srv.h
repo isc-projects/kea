@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -810,6 +810,36 @@ protected:
     void setSendResponsesToSource(bool value) {
         test_send_responses_to_source_ = value;
     }
+
+    /// @brief Renders a lease declined after the server has detected, via ping-check
+    /// or other means, that its address is already in-use.
+    ///
+    /// This function is invoked during the unpark callback for the lease4-offer
+    /// hook point, if a hook callout has set the handle status to NEXT_STEP_DROP.
+    /// It will create/update the lease to DECLINED state in the lease database,
+    /// update the appropriate stats, and @todo implement a new hook point,
+    /// lease4-server-declined-lease (name subject to change).
+    ///
+    /// @param callout_handle - current callout handle
+    /// @param query - DHCPDISCOVER which instigated the declination.
+    /// @param lease - lease to decline (i.e lease that would have offered)
+    /// @param lease_exists - true if the lease already exists in the database
+    /// (as is the case when offer-lifetime is > 0)
+    void serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
+                       Lease4Ptr lease, bool lease_exists);
+
+    /// @brief Exception safe wrapper around serverDecline()
+    ///
+    /// In MT mode this wrapper is used to safely invoke serverDecline() as a
+    /// DHCP worker thread task.
+    ///
+    /// @param callout_handle - current callout handle
+    /// @param query - DHCPDISCOVER which instigated the declination.
+    /// @param lease - lease to decline (i.e lease that would have offered)
+    /// @param lease_exists - true if the lease already exists in the database
+    /// (as is the case when offer-lifetime is > 0)
+    void serverDeclineNoThrow(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
+                              Lease4Ptr lease, bool lease_exists);
 
 public:
 

@@ -1056,3 +1056,20 @@ option (if present).
 % DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv6 server over inter-process communication.
+
+% DHCP4_SERVER_INITIATED_DECLINE_FAILED %1: error on server-initiated decline lease for address %2: %3
+This error message indicates that the software failed to decline a
+lease from the lease database due to an error during a database
+operation. The first argument includes the client and the transaction
+identification information. The second argument holds the IPv4 address
+which decline was attempted. The last one contains the reason for
+failure.
+
+% DHCP4_SERVER_INITIATED_DECLINE Lease for addr %1 has been found to be already be in use. The lease will be unavailable for %3 seconds.
+This informational message is printed when the server has detected via
+ICMP ECHO (i.e. ping check) or other means that a lease which should be
+free to offer is actually in use. This message may indicate a misconfiguration
+in a network or more likely a device that is using an address that it is not
+supposed to use. The server will fully recover from this situation, but if
+the underlying problem of a misconfigured or rogue device is not solved, this
+address may be declined again in the future.

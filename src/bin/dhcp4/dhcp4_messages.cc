@@ -162,6 +162,8 @@ extern const isc::log::MessageID DHCP4_RESPONSE_FQDN_DATA = "DHCP4_RESPONSE_FQDN
 extern const isc::log::MessageID DHCP4_RESPONSE_HOSTNAME_DATA = "DHCP4_RESPONSE_HOSTNAME_DATA";
 extern const isc::log::MessageID DHCP4_RESPONSE_HOSTNAME_GENERATE = "DHCP4_RESPONSE_HOSTNAME_GENERATE";
 extern const isc::log::MessageID DHCP4_SERVER_FAILED = "DHCP4_SERVER_FAILED";
+extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE = "DHCP4_SERVER_INITIATED_DECLINE";
+extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_FAILED = "DHCP4_SERVER_INITIATED_DECLINE_FAILED";
 extern const isc::log::MessageID DHCP4_SHUTDOWN = "DHCP4_SHUTDOWN";
 extern const isc::log::MessageID DHCP4_SHUTDOWN_REQUEST = "DHCP4_SHUTDOWN_REQUEST";
 extern const isc::log::MessageID DHCP4_SRV_CONSTRUCT_ERROR = "DHCP4_SRV_CONSTRUCT_ERROR";
@@ -340,6 +342,8 @@ const char* values[] = {
     "DHCP4_RESPONSE_HOSTNAME_DATA", "%1: including Hostname option in the server's response: %2",
     "DHCP4_RESPONSE_HOSTNAME_GENERATE", "%1: server has generated hostname %2 for the client",
     "DHCP4_SERVER_FAILED", "server failed: %1",
+    "DHCP4_SERVER_INITIATED_DECLINE", "Lease for addr %1 has been found to be already be in use. The lease will be unavailable for %3 seconds.",
+    "DHCP4_SERVER_INITIATED_DECLINE_FAILED", "%1: error on server-initiated decline lease for address %2: %3",
     "DHCP4_SHUTDOWN", "server shutdown",
     "DHCP4_SHUTDOWN_REQUEST", "shutdown of server requested",
     "DHCP4_SRV_CONSTRUCT_ERROR", "error creating Dhcpv4Srv object, reason: %1",

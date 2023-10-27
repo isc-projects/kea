@@ -1511,7 +1511,33 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                 // executed when the hook library unparks the packet.
                 HooksManager::park(
                     hook_label, query,
-                    [this, callout_handle, query, rsp, callout_handle_state]() mutable {
+                    [this, callout_handle, query, rsp, callout_handle_state, hook_idx, ctx]() mutable {
+                        if (hook_idx == Hooks.hook_index_lease4_offer_) {
+                            auto status = callout_handle->getStatus();
+                            if (status == CalloutHandle::NEXT_STEP_DROP) {
+                                Lease4Ptr lease = ctx->new_lease_;
+                                bool lease_exists = (ctx->offer_lft_ > 0);
+                                if (MultiThreadingMgr::instance().getMode()) {
+                                    typedef function<void()> CallBack;
+                                    // We need to pass in the lease and flag as the callback handle state
+                                    // gets reset prior to the invocation of the on_completion_ callback.
+                                    boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(
+                                        std::bind(&Dhcpv4Srv::serverDeclineNoThrow, this,
+                                                  callout_handle, query, lease, lease_exists));
+                                    callout_handle_state->on_completion_ = [call_back]() {
+                                        MultiThreadingMgr::instance().getThreadPool().add(call_back);
+                                    };
+                                } else {
+                                    serverDecline(callout_handle, query, lease, lease_exists);
+                                }
+
+                                // Discard the response and return.
+                                rsp.reset();
+                                return;
+                            }
+                        }
+
+                        // Send the response to the client.
                         if (MultiThreadingMgr::instance().getMode()) {
                             typedef function<void()> CallBack;
                             boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(
@@ -3912,6 +3938,125 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     LOG_INFO(lease4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
         .arg(decline->getLabel()).arg(lease->valid_lft_);
 }
+
+void
+Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
+                         Lease4Ptr lease, bool lease_exists) {
+    // We need to disassociate the lease from the client. Once we move a lease
+    // to declined state, it is no longer associated with the client in any
+    // way.
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
+
+    // Add or update the lease in the database.
+    try {
+        if (lease_exists) {
+            LeaseMgrFactory::instance().updateLease4(lease);
+        } else {
+            LeaseMgrFactory::instance().addLease(lease);
+        }
+    } catch (const Exception& ex) {
+        // Update failed.
+        LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_FAILED)
+            .arg(query->getLabel())
+            .arg(lease->addr_.toText())
+            .arg(ex.what());
+        return;
+    }
+
+    // Bump up the statistics.  If the lease does not exist (i.e. offer-lifetime == 0) we
+    // need to increment assigned address stats, otherwise the accounting wll be off.
+    // This saves us from having to determine later, when declined leases are reclaimed,
+    // whether or not we need to decrement assigned stats.  In other words, this keeps
+    // a declined lease always counted also as an assigned lease, regardless of how
+    // it was declined, until it is reclaimed at which point both groups of stats
+    // are decremented.
+
+    // Per subnet declined addresses counter.
+    StatsMgr::instance().addValue(
+        StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
+        static_cast<int64_t>(1));
+
+    if (!lease_exists) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
+            static_cast<int64_t>(1));
+    }
+
+    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+    if (subnet) {
+        const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+        if (pool) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", subnet->getID(),
+                                       StatsMgr::generateName("pool", pool->getID(), "declined-addresses")),
+                static_cast<int64_t>(1));
+            if (!lease_exists) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(), "assigned-addresses")),
+                    static_cast<int64_t>(1));
+            }
+        }
+    }
+
+    // Global declined addresses counter.
+    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+    if (!lease_exists) {
+        StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(1));
+    }
+
+
+    /*  (comment it out so picky tools don't flag this as dead code
+    //
+    /// @todo #3110, HA will implement a handler for this hook point to
+    /// propagate an update of the lease to peers.
+    //
+    // Let's check if there are hooks installed for server decline hook point.
+    // If they are, let's pass the lease and client's packet.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_server_decline)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(decline);
+
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
+        // Pass the original packet
+        callout_handle->setArgument("query4", query);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease4", lease);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease4_server_decline_,
+                                   *callout_handle);
+
+        // Check if callouts decided to skip the next processing step.
+        // If any of them did, we will drop the packet.
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
+            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP4_HOOK_SERVER_DECLINE_SKIP)
+                .arg(query->getLabel()).arg(lease->addr_.toText());
+            return;
+        }
+    }
+    */
+
+    LOG_INFO(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE).arg(lease->addr_.toText())
+        .arg(query->getLabel()).arg(lease->valid_lft_);
+}
+
+void
+Dhcpv4Srv::serverDeclineNoThrow(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
+                                Lease4Ptr lease, bool lease_exists) {
+    try {
+        serverDecline(callout_handle, query, lease, lease_exists);
+    } catch (...) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+    }
+}
+
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& context) {
