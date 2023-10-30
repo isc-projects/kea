@@ -1315,11 +1315,23 @@ ssl_key = {cert_dir}/kea-client.key
 
     if system in ['debian', 'fedora', 'centos', 'rhel']:
         execute('sudo systemctl enable mariadb.service')
-        execute('sudo systemctl restart mariadb.service')
+        exit_code = execute('sudo systemctl restart mariadb.service', raise_error=False)
+        if exit_code != 0:
+            log.error('Command "sudo systemctl restart mariadb.service" failed. Here is the journal:')
+            execute('sudo journalctl -xu mariadb.service', raise_error=False)
+            log.error('And here are the logs:')
+            execute('cat /var/log/mysql/error.log', raise_error=False)
+            sys.exit(exit_code)
 
     elif system == 'ubuntu':
         execute('sudo systemctl enable mysql.service')
-        execute('sudo systemctl restart mysql.service')
+        exit_code = execute('sudo systemctl restart mysql.service', raise_error=False)
+        if exit_code != 0:
+            log.error('Command "sudo systemctl restart mysql.service" failed. Here is the journal:')
+            execute('sudo journalctl -xu mysql.service', raise_error=False)
+            log.error('And here are the logs:')
+            execute('cat /var/log/mysql/error.log', raise_error=False)
+            sys.exit(exit_code)
 
     elif system == 'freebsd':
         cmd = "echo 'SET PASSWORD = \"\";' "
@@ -1419,13 +1431,11 @@ def _restart_postgresql(system, revision):
         exit_code = execute('sudo systemctl restart postgresql.service', raise_error=False)
         if exit_code != 0:
             log.error('Command "sudo systemctl restart postgresql.service" failed. Here is the journal:')
-            _, output = execute('sudo journalctl -xu postgresql.service', capture=True)
-            log.error(output)
-            log.error('And here are logs:')
-            _, output = execute("sudo -u postgres psql -A -t -c 'SELECT pg_current_logfile()'", capture=True)
+            _, output = execute('sudo journalctl -xu postgresql.service', raise_error=False)
+            log.error('And here are the logs:')
+            _, output = execute("sudo -u postgres psql -A -t -c 'SELECT pg_current_logfile()'", capture=True, quiet=True)
             logfile = os.path.basename(output.strip())
-            _, output = execute(f'sudo find /var -type f -name "{logfile}" -exec cat {{}} \;', capture=True, raise_error=False)
-            log.error(output)
+            _, output = execute(f'sudo find /var -type f -name "{logfile}" -exec cat {{}} \;', raise_error=False)
             sys.exit(exit_code)
 
 
