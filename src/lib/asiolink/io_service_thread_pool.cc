@@ -164,7 +164,12 @@ IoServiceThreadPool::setState(State state) {
     case State::PAUSED: {
         // Stop IOService.
         if (!io_service_->stopped()) {
-            io_service_->poll();
+            try {
+                io_service_->poll();
+            } catch (...) {
+                // Catch all exceptions.
+                // Logging is not available.
+            }
             io_service_->stop();
         }
 
@@ -180,7 +185,12 @@ IoServiceThreadPool::setState(State state) {
     case State::STOPPED: {
         // Stop IOService.
         if (!io_service_->stopped()) {
-            io_service_->poll();
+            try {
+                io_service_->poll();
+            } catch (...) {
+                // Catch all exceptions.
+                // Logging is not available.
+            }
             io_service_->stop();
         }
 
@@ -215,8 +225,13 @@ IoServiceThreadPool::threadWork() {
                 }
             }
 
-            // Run the IOService.
-            io_service_->run();
+            try {
+                // Run the IOService.
+                io_service_->run();
+            } catch (...) {
+                // Catch all exceptions.
+                // Logging is not available.
+            }
 
             {
                 std::unique_lock<std::mutex> lck(mutex_);

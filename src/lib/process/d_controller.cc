@@ -837,7 +837,13 @@ DControllerBase::~DControllerBase() {
     }
 
     io_signal_set_.reset();
-    getIOService()->poll();
+    try {
+        getIOService()->poll();
+    } catch (...) {
+        // Don't want to throw exceptions from the destructor. The process
+        // is shutting down anyway.
+        ;
+    }
 }
 
 std::string
