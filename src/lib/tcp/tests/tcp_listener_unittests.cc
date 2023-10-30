@@ -150,7 +150,7 @@ public:
     /// @param timeout Optional value specifying for how long the io service
     /// should be ran.
     void runIOService(long timeout = 0) {
-        io_service_.get_io_service().reset();
+        io_service_.getIOService().reset();
 
         if (timeout > 0) {
             run_io_service_timer_.setup(std::bind(&TcpListenerTest::timeoutHandler,
@@ -159,7 +159,7 @@ public:
                                         IntervalTimer::ONE_SHOT);
         }
         io_service_.run();
-        io_service_.get_io_service().reset();
+        io_service_.getIOService().reset();
         io_service_.poll();
     }
 

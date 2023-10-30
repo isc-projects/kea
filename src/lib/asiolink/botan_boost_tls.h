@@ -108,7 +108,7 @@ typedef Botan::TLS::Stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 template <typename Callback, typename TlsStreamImpl>
 TlsStreamBase<Callback, TlsStreamImpl>::
 TlsStreamBase(IOService& service, TlsContextPtr context)
-    : TlsStreamImpl(service.get_io_service(), context->getContext()),
+    : TlsStreamImpl(service.getIOService(), context->getContext()),
       role_(context->getRole()) {
 }
 

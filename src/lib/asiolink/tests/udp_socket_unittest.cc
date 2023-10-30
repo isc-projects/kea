@@ -230,7 +230,7 @@ TEST(UDPSocket, SequenceTest) {
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
     // the client to send to as the endpoint object in the constructor.
-    boost::asio::ip::udp::socket server(service.get_io_service(),
+    boost::asio::ip::udp::socket server(service.getIOService(),
         server_endpoint.getASIOEndpoint());
     server.set_option(socket_base::reuse_address(true));
 
@@ -257,8 +257,8 @@ TEST(UDPSocket, SequenceTest) {
     EXPECT_FALSE(client_cb.getCalled());
 
     // Execute the two callbacks.
-    service.run_one();
-    service.run_one();
+    service.runOne();
+    service.runOne();
 
     EXPECT_TRUE(client_cb.getCalled());
     EXPECT_EQ(0, client_cb.getCode());
@@ -286,8 +286,8 @@ TEST(UDPSocket, SequenceTest) {
         server_remote_endpoint.getASIOEndpoint(), server_cb);
 
     // Expect two callbacks to run.
-    service.run_one();
-    service.run_one();
+    service.runOne();
+    service.runOne();
 
     EXPECT_TRUE(client_cb.getCalled());
     EXPECT_EQ(0, client_cb.getCode());

@@ -344,7 +344,7 @@ TEST(TLSSocket, sequenceTest) {
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
     // Stream used for server.
-    TlsStreamImpl server(service.get_io_service(), server_ctx->getContext());
+    TlsStreamImpl server(service.getIOService(), server_ctx->getContext());
 
     // Step 1.  Create the connection between the client and the server.  Set
     // up the server to accept incoming connections and have the client open
@@ -354,7 +354,7 @@ TEST(TLSSocket, sequenceTest) {
     server_cb.queued() = TLSCallback::ACCEPT;
     server_cb.called() = TLSCallback::NONE;
     server_cb.setCode(42);  // Some error
-    tcp::acceptor acceptor(service.get_io_service(),
+    tcp::acceptor acceptor(service.getIOService(),
                            tcp::endpoint(tcp::v4(), SERVER_PORT));
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.async_accept(server.lowest_layer(), server_cb);
@@ -369,7 +369,7 @@ TEST(TLSSocket, sequenceTest) {
     // Run the open and the accept callback and check that they ran.
     while ((server_cb.called() == TLSCallback::NONE) ||
            (client_cb.called() == TLSCallback::NONE)) {
-        service.run_one();
+        service.runOne();
     }
     EXPECT_EQ(TLSCallback::ACCEPT, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
@@ -398,7 +398,7 @@ TEST(TLSSocket, sequenceTest) {
 
     while ((server_cb.called() == TLSCallback::NONE) ||
            (client_cb.called() == TLSCallback::NONE)) {
-        service.run_one();
+        service.runOne();
     }
     EXPECT_EQ(TLSCallback::HANDSHAKE, client_cb.called());
     EXPECT_EQ(0, client_cb.getCode());
@@ -419,7 +419,7 @@ TEST(TLSSocket, sequenceTest) {
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
     while (client_cb.called() == TLSCallback::NONE) {
-        service.run_one();
+        service.runOne();
     }
 
     // Synchronously read the data from the server.;
@@ -486,7 +486,7 @@ TEST(TLSSocket, sequenceTest) {
     bool server_complete = false;
     bool client_complete = false;
     while (!server_complete || !client_complete) {
-        service.run_one();
+        service.runOne();
 
         // Has the server run?
         if (!server_complete) {

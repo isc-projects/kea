@@ -147,7 +147,7 @@ public:
     /// Main server processing step. Receives one incoming packet, calls
     /// the processing packet routing and (if necessary) transmits
     /// a response.
-    void run_one();
+    void runOne();
 
     /// @brief Process a single incoming DHCPv6 packet and sends the response.
     ///

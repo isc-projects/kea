@@ -65,9 +65,9 @@ NetconfProcess::run() {
 
 size_t
 NetconfProcess::runIO() {
-    size_t cnt = getIoService()->get_io_service().poll();
+    size_t cnt = getIOService()->getIOService().poll();
     if (!cnt) {
-        cnt = getIoService()->get_io_service().run_one();
+        cnt = getIOService()->getIOService().run_one();
     }
     return (cnt);
 }

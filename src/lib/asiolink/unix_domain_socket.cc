@@ -26,7 +26,7 @@ public:
     ///
     /// @param io_service IO service to be used by the socket class.
     UnixDomainSocketImpl(IOService& io_service)
-        : socket_(io_service.get_io_service()) {
+        : socket_(io_service.getIOService()) {
     }
 
     /// @brief Destructor.

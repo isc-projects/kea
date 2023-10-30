@@ -407,7 +407,7 @@ public:
     /// @param io_service IO service to be stopped on error.
     /// @param tls_context TLS context.
     TestHttpClient(IOService& io_service, TlsContextPtr tls_context)
-        : io_service_(io_service.get_io_service()),
+        : io_service_(io_service.getIOService()),
           stream_(io_service_, tls_context->getContext()),
           buf_(), response_() {
     }
@@ -693,7 +693,7 @@ public:
     /// @param timeout Optional value specifying for how long the io service
     /// should be ran.
     void runIOService(long timeout = 0) {
-        io_service_.get_io_service().reset();
+        io_service_.getIOService().reset();
 
         if (timeout > 0) {
             run_io_service_timer_.setup(std::bind(&HttpsListenerTest::timeoutHandler,
@@ -701,7 +701,7 @@ public:
                                         timeout, IntervalTimer::ONE_SHOT);
         }
         io_service_.run();
-        io_service_.get_io_service().reset();
+        io_service_.getIOService().reset();
         io_service_.poll();
     }
 
@@ -1194,7 +1194,7 @@ TEST_F(HttpsListenerTest, invalidIdleTimeout) {
 // This test verifies that listener can't be bound to the port to which
 // other server is bound.
 TEST_F(HttpsListenerTest, addressInUse) {
-    tcp::acceptor acceptor(io_service_.get_io_service());
+    tcp::acceptor acceptor(io_service_.getIOService());
     // Use other port than SERVER_PORT to make sure that this TCP connection
     // doesn't affect subsequent tests.
     tcp::endpoint endpoint(address::from_string(SERVER_ADDRESS),

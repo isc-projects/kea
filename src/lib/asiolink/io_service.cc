@@ -45,7 +45,7 @@ public:
     /// This method return control to the caller as soon as the
     /// first handler has completed.  (If no handlers are ready when
     /// it is run, it will block until one is.)
-    void run_one() {
+    void runOne() {
         io_service_.run_one();
     };
 
@@ -88,7 +88,7 @@ public:
     /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    boost::asio::io_service& get_io_service() {
+    boost::asio::io_service& getIOService() {
         return (io_service_);
     }
 
@@ -116,8 +116,8 @@ IOService::run() {
 }
 
 void
-IOService::run_one() {
-    io_impl_->run_one();
+IOService::runOne() {
+    io_impl_->runOne();
 }
 
 void
@@ -146,8 +146,8 @@ IOService::stopWork() {
 }
 
 boost::asio::io_service&
-IOService::get_io_service() {
-    return (io_impl_->get_io_service());
+IOService::getIOService() {
+    return (io_impl_->getIOService());
 }
 
 void

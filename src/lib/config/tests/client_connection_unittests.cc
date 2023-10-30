@@ -116,7 +116,7 @@ TEST_F(ClientConnectionTest, success) {
     });
     // Run the connection.
     while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+        io_service_.runOne();
     }
 }
 
@@ -153,7 +153,7 @@ TEST_F(ClientConnectionTest, timeout) {
     }, ClientConnection::Timeout(1000));
 
     while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+        io_service_.runOne();
     }
 }
 
@@ -176,7 +176,7 @@ TEST_F(ClientConnectionTest, connectionError) {
     });
 
     while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+        io_service_.runOne();
     }
 }
 

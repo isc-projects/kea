@@ -226,9 +226,9 @@ public:
         // Run as long as the timeout hasn't occurred and the interrupting
         // condition is not specified or not met.
         while (!stopped && (!cond || !cond())) {
-            io_service->run_one();
+            io_service->runOne();
         }
-        io_service->get_io_service().reset();
+        io_service->getIOService().reset();
     }
 
     /// @brief This test verifies that the timer used to fetch the configuration

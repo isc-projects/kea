@@ -259,7 +259,7 @@ void
 NetconfAgentTest::fakeServer() {
     // Acceptor.
     boost::asio::local::stream_protocol::acceptor
-        acceptor(io_service_->get_io_service());
+        acceptor(io_service_->getIOService());
     EXPECT_NO_THROW_LOG(acceptor.open());
     boost::asio::local::stream_protocol::endpoint
         endpoint(unixSocketFilePath());
@@ -268,7 +268,7 @@ NetconfAgentTest::fakeServer() {
     EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
     EXPECT_NO_THROW_LOG(acceptor.listen());
     boost::asio::local::stream_protocol::socket
-        socket(io_service_->get_io_service());
+        socket(io_service_->getIOService());
 
     // Ready.
     signalReady();
@@ -291,7 +291,7 @@ NetconfAgentTest::fakeServer() {
                               accepted = true;
                           });
     while (!accepted && !timeout) {
-        io_service_->run_one();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
 
@@ -305,7 +305,7 @@ NetconfAgentTest::fakeServer() {
                              received = cnt;
                          });
     while (!received && !timeout) {
-        io_service_->run_one();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
     rbuf.resize(received);
@@ -334,7 +334,7 @@ NetconfAgentTest::fakeServer() {
                           sent = cnt;
                       });
     while (!sent && !timeout) {
-        io_service_->run_one();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
 

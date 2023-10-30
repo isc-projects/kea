@@ -41,10 +41,10 @@ DStubProcess::run() {
     // To use run(), the "managing" layer must issue an io_service::stop
     // or the call to run will continue to block, and shutdown will not
     // occur.
-    asiolink::IOServicePtr& io_service = getIoService();
+    asiolink::IOServicePtr& io_service = getIOService();
     while (!shouldShutdown()) {
         try {
-            io_service->run_one();
+            io_service->runOne();
         } catch (const std::exception& ex) {
             isc_throw (DProcessBaseError,
                 std::string("Process run method failed: ") + ex.what());

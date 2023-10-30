@@ -170,7 +170,7 @@ TimerMgrTest::doWait(const long timeout, const bool /*call_receive*/) {
         io_service_->stop();
     }, timeout, IntervalTimer::ONE_SHOT);
     io_service_->run();
-    io_service_->get_io_service().reset();
+    io_service_->getIOService().reset();
 }
 
 void

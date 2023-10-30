@@ -134,7 +134,7 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
     EXPECT_TRUE(listener->isIoPending());
 
     // Verify that IO pending is false, after cancel event occurs.
-    EXPECT_NO_THROW(io_service.run_one());
+    EXPECT_NO_THROW(io_service.runOne());
     EXPECT_FALSE(listener->isIoPending());
 
     // Verify that attempting to stop listening when we are not is ok.
@@ -197,7 +197,7 @@ public:
 
         // Create a UDP socket through which our "sender" will send the NCR.
         boost::asio::ip::udp::socket
-            udp_socket(io_service_.get_io_service(), boost::asio::ip::udp::v4());
+            udp_socket(io_service_.getIOService(), boost::asio::ip::udp::v4());
 
         // Create an endpoint pointed at the listener.
         boost::asio::ip::udp::endpoint
@@ -252,7 +252,7 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
         ASSERT_NO_THROW(sendNcr(valid_msgs[i]));
 
         // Execute no more then one event, which should be receive complete.
-        EXPECT_NO_THROW(io_service_.run_one());
+        EXPECT_NO_THROW(io_service_.runOne());
 
         // Verify the "application" status value for a successful complete.
         EXPECT_EQ(NameChangeListener::SUCCESS, result_);
@@ -268,7 +268,7 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
     EXPECT_FALSE(listener_->amListening());
 
     // Verify that IO pending is false, after cancel event occurs.
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_.runOne());
     EXPECT_FALSE(listener_->isIoPending());
 }
 
@@ -446,7 +446,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Loop for the number of valid messages. So long as there is at least
     // on NCR in the queue, select-fd indicate ready to read. Invoke
-    // IOService::run_one. This should complete the send of exactly one
+    // IOService::runOne. This should complete the send of exactly one
     // message and the queue count should decrement accordingly.
     for (int i = num_msgs; i > 0; i--) {
         // Make sure select_fd does evaluates to ready via select and
@@ -574,7 +574,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 
     // Loop for the number of valid messages. So long as there is at least
     // on NCR in the queue, select-fd indicate ready to read. Invoke
-    // IOService::run_one. This should complete the send of exactly one
+    // IOService::runOne. This should complete the send of exactly one
     // message and the queue count should decrement accordingly.
     for (int i = num_msgs; i > 0; i--) {
         // Make sure select_fd does evaluates to ready via select and
@@ -1098,7 +1098,7 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
 
     // Execute callbacks until we have sent and received all of messages.
     while (sender_->getQueueSize() > 0 || (received_ncrs_.size() < num_msgs)) {
-        EXPECT_NO_THROW(io_service_.run_one());
+        EXPECT_NO_THROW(io_service_.runOne());
     }
 
     // Send queue should be empty.
@@ -1116,7 +1116,7 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     EXPECT_FALSE(listener_->amListening());
 
     // Verify that IO pending is false, after cancel event occurs.
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_.runOne());
     EXPECT_FALSE(listener_->isIoPending());
 
     // Verify that we can gracefully stop sending.
@@ -1152,7 +1152,7 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
 
     // Execute callbacks until we have sent and received all of messages.
     while (sender_->getQueueSize() > 0 || (received_ncrs_.size() < num_msgs)) {
-        EXPECT_NO_THROW(io_service_.run_one());
+        EXPECT_NO_THROW(io_service_.runOne());
     }
 
     // Send queue should be empty.
@@ -1171,7 +1171,7 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     EXPECT_FALSE(listener_->amListening());
 
     // Verify that IO pending is false, after cancel event occurs.
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_.runOne());
     EXPECT_FALSE(listener_->isIoPending());
 
     // Verify that we can gracefully stop sending.

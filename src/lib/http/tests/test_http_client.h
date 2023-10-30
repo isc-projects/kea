@@ -34,7 +34,7 @@ public:
     explicit TestHttpClient(IOService& io_service,
                             const std::string& server_address = "127.0.0.1",
                             uint16_t port = 18123)
-        : io_service_(io_service.get_io_service()), socket_(io_service_),
+        : io_service_(io_service.getIOService()), socket_(io_service_),
           buf_(), response_(), server_address_(server_address),
           server_port_(port), receive_done_(false) {
     }

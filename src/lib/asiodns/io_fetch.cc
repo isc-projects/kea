@@ -123,7 +123,7 @@ struct IOFetchData {
         msgbuf(new OutputBuffer(512)),
         received(buff),
         callback(cb),
-        timer(service.get_io_service()),
+        timer(service.getIOService()),
         protocol(proto),
         cumulative(0),
         expected(0),

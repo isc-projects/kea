@@ -61,7 +61,7 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
         // Receive message from the IPC socket.
         pkt = ipc.receive();
 
-        // from Dhcpv4Srv::run_one() after receivePacket()
+        // From Dhcpv4Srv::runOne() after receivePacket()
         if (pkt) {
             LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_DHCP4O6_PACKET_RECEIVED)
                 .arg(static_cast<int>(pkt->getType()))
@@ -101,7 +101,7 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
     // Extract the DHCPv4 packet with DHCPv6 packet attached
     Pkt4Ptr query(new Pkt4o6(msg->getData(), pkt));
 
-    // From Dhcpv4Srv::run_one() processing and after
+    // From Dhcpv4Srv::runOne() processing and after
     Pkt4Ptr rsp;
 
     ControlledDhcpv4Srv::getInstance()->processPacket(query, rsp, false);

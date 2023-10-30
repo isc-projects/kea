@@ -93,7 +93,7 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
     // Create the low level socket.
     try {
         asio_socket_.reset(new boost::asio::ip::udp::
-                           socket(io_service.get_io_service(),
+                           socket(io_service.getIOService(),
                                   (ip_address_.isV4() ? boost::asio::ip::udp::v4() :
                                    boost::asio::ip::udp::v6())));
 
@@ -233,7 +233,7 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
     // Create the low level socket.
     try {
         asio_socket_.reset(new boost::asio::ip::udp::
-                           socket(io_service.get_io_service(),
+                           socket(io_service.getIOService(),
                                   (ip_address_.isV4() ? boost::asio::ip::udp::v4() :
                                    boost::asio::ip::udp::v6())));
 

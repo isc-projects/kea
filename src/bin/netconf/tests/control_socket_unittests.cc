@@ -211,14 +211,14 @@ void
 UnixControlSocketTest::reflectServer() {
     // Acceptor.
     boost::asio::local::stream_protocol::acceptor
-        acceptor(io_service_.get_io_service());
+        acceptor(io_service_.getIOService());
     EXPECT_NO_THROW_LOG(acceptor.open());
     boost::asio::local::stream_protocol::endpoint
         endpoint(unixSocketFilePath());
     EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
     EXPECT_NO_THROW_LOG(acceptor.listen());
     boost::asio::local::stream_protocol::socket
-        socket(io_service_.get_io_service());
+        socket(io_service_.getIOService());
 
     // Ready.
     signalReady();
@@ -241,7 +241,7 @@ UnixControlSocketTest::reflectServer() {
                               accepted = true;
                           });
     while (!accepted && !timeout) {
-        io_service_.run_one();
+        io_service_.runOne();
     }
     ASSERT_FALSE(ec);
 
@@ -255,7 +255,7 @@ UnixControlSocketTest::reflectServer() {
                              received = cnt;
                          });
     while (!received && !timeout) {
-        io_service_.run_one();
+        io_service_.runOne();
     }
     ASSERT_FALSE(ec);
     rbuf.resize(received);
@@ -274,7 +274,7 @@ UnixControlSocketTest::reflectServer() {
                           sent = cnt;
                       });
     while (!sent && !timeout) {
-        io_service_.run_one();
+        io_service_.runOne();
     }
     ASSERT_FALSE(ec);
 
@@ -562,7 +562,7 @@ public:
             signalReady();
             // Until stop() is called run IO service.
             while (!isStopping()) {
-                io_service_.run_one();
+                io_service_.runOne();
             }
             // Main thread signalled that the thread should
             // terminate. Launch any outstanding IO service
@@ -580,13 +580,13 @@ public:
 
     /// @brief Stop listener.
     ///
-    /// Post an empty action to finish current run_one.
+    /// Post an empty action to finish current runOne.
     void stop() {
         // Notify the thread that it should terminate.
         signalStopping();
         // If the thread is blocked on running the IO
         // service, post the empty handler to cause
-        // run_one to return.
+        // runOne to return.
         io_service_.post([]() { return; });
         // We asked that the thread stops. Let's wait
         // for it to signal that it has stopped.

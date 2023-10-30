@@ -116,11 +116,11 @@ TEST_F(ProcessSpawnTest, spawnWithArgs) {
     setTestTime(1000);
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -149,11 +149,11 @@ TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVars) {
     setTestTime(1000);
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -180,11 +180,11 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     setTestTime(1000);
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -196,11 +196,11 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     setTestTime(1000);
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -233,11 +233,11 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     setTestTime(1000);
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -253,11 +253,11 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     setTestTime(1000);
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -334,11 +334,11 @@ TEST_F(ProcessSpawnTest, isRunning) {
     setTestTime(1000);
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();

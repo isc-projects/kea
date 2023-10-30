@@ -68,7 +68,7 @@ private:
 IOSignalSetImpl::IOSignalSetImpl(IOServicePtr io_service,
                                  IOSignalHandler handler)
     : io_service_(io_service),
-      signal_set_(io_service_->get_io_service()),
+      signal_set_(io_service_->getIOService()),
       handler_(handler) {
 }
 

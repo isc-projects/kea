@@ -122,10 +122,10 @@ TEST_F(IOSignalTest, singleSignalTest) {
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -147,10 +147,10 @@ TEST_F(IOSignalTest, singleSignalTest) {
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();

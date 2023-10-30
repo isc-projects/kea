@@ -588,7 +588,8 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     }
 }
 
-int Dhcpv6Srv::run() {
+int
+Dhcpv6Srv::run() {
 #ifdef ENABLE_AFL
     // Set up structures needed for fuzzing.
     Fuzz fuzzer(6, server_port_);
@@ -603,7 +604,7 @@ int Dhcpv6Srv::run() {
     while (!shutdown_) {
 #endif // ENABLE_AFL
         try {
-            run_one();
+            runOne();
             getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
@@ -627,7 +628,8 @@ int Dhcpv6Srv::run() {
     return (getExitValue());
 }
 
-void Dhcpv6Srv::run_one() {
+void
+Dhcpv6Srv::runOne() {
     // client's message and server's response
     Pkt6Ptr query;
 
@@ -766,7 +768,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         }
 
         // Callouts decided to drop the received packet
-        // The response (rsp) is null so the caller (run_one) will
+        // The response (rsp) is null so the caller (runOne) will
         // immediately return too.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
             LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP6_HOOK_BUFFER_RCVD_DROP)

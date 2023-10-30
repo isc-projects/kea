@@ -314,8 +314,7 @@ TEST_F(IntervalTimerTest, intervalModeTest) {
     // we've hit our goals.  It won't return zero unless is out of
     // work or the service has been stopped by the test timer.
     int cnt = 0;
-    while (((cnt = io_service_.get_io_service().run_one()) > 0)
-           && (repeater_count < 5)) {
+    while (((cnt = io_service_.getIOService().run_one()) > 0) && (repeater_count < 5)) {
         // deliberately empty
     };
 
@@ -342,7 +341,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
 
     // Run until a single event handler executes.  This should be our
     // one-shot expiring.
-    io_service_.run_one();
+    io_service_.runOne();
 
     // Verify the timer expired once.
     ASSERT_EQ(one_shot_count, 1);
@@ -352,7 +351,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
 
     // Run until a single event handler executes.  This should be our
     // one-shot expiring.
-    io_service_.run_one();
+    io_service_.runOne();
 
     // Verify the timer expired once.
     ASSERT_EQ(one_shot_count, 2);
@@ -364,8 +363,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
     // we've hit our goals.  It won't return zero unless is out of
     // work or the service has been stopped by the test timer.
     int cnt = 0;
-    while ((cnt = io_service_.get_io_service().run_one())
-            && (one_shot_count < 4)) {
+    while ((cnt = io_service_.getIOService().run_one()) && (one_shot_count < 4)) {
         // deliberately empty
     };
 

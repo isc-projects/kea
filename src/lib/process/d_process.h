@@ -171,7 +171,7 @@ public:
     /// @brief Fetches the controller's IOService.
     ///
     /// @return a reference to the controller's IOService.
-    asiolink::IOServicePtr& getIoService() {
+    asiolink::IOServicePtr& getIOService() {
         return (io_service_);
     }
 

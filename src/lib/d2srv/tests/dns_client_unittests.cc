@@ -392,7 +392,7 @@ public:
         // responses. The reuse address option is set so as both sockets can
         // use the same address. This new socket is bound to the test address
         // and port, where requests will be sent.
-        socket_.reset(new udp::socket(service_.get_io_service(),
+        socket_.reset(new udp::socket(service_.getIOService(),
                                       boost::asio::ip::udp::v4()));
         socket_->set_option(socket_base::reuse_address(true));
         socket_->bind(udp::endpoint(address::from_string(TEST_ADDRESS),
@@ -443,8 +443,8 @@ public:
 
         // Since the callback, operator(), calls stop() on the io_service,
         // we must reset it in order for subsequent calls to run() or
-        // run_one() to work.
-        service_.get_io_service().reset();
+        // runOne() to work.
+        service_.getIOService().reset();
     }
 
     /// @brief Performs a single request-response exchange with or without TSIG.
@@ -465,7 +465,7 @@ public:
         ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
         // Setup our "loopback" server.
-        udp::socket udp_socket(service_.get_io_service(), boost::asio::ip::udp::v4());
+        udp::socket udp_socket(service_.getIOService(), boost::asio::ip::udp::v4());
         udp_socket.set_option(socket_base::reuse_address(true));
         udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
                                       TEST_PORT));
@@ -495,8 +495,8 @@ public:
 
         // Since the callback, operator(), calls stop() on the io_service,
         // we must reset it in order for subsequent calls to run() or
-        // run_one() to work.
-        service_.get_io_service().reset();
+        // runOne() to work.
+        service_.getIOService().reset();
     }
 };
 

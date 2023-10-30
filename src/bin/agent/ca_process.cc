@@ -88,9 +88,9 @@ CtrlAgentProcess::run() {
 
 size_t
 CtrlAgentProcess::runIO() {
-    size_t cnt = getIoService()->get_io_service().poll();
+    size_t cnt = getIOService()->getIOService().poll();
     if (!cnt) {
-        cnt = getIoService()->get_io_service().run_one();
+        cnt = getIOService()->getIOService().run_one();
     }
     return (cnt);
 }
@@ -164,7 +164,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             // Create http listener. It will open up a TCP socket and be
             // prepared to accept incoming connection.
             HttpListenerPtr http_listener
-                (new HttpListener(*getIoService(), server_address,
+                (new HttpListener(*getIOService(), server_address,
                                   server_port, tls_context, rcf,
                                   HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                   HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
@@ -208,7 +208,7 @@ CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
         }
         // We have stopped listeners but there may be some pending handlers
         // related to these listeners. Need to invoke these handlers.
-        getIoService()->get_io_service().poll();
+        getIOService()->getIOService().poll();
         // Finally, we're ready to remove no longer used listeners.
         http_listeners_.erase(http_listeners_.begin(),
                               http_listeners_.end() - leaving);

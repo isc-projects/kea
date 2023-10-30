@@ -161,10 +161,10 @@ public:
     ///
     /// This method first polls IOService to run any ready handlers.  If no
     /// handlers are ready, it starts the internal time to run for the given
-    /// amount of time and invokes service's run_one method.  This method
+    /// amount of time and invokes service's runOne method.  This method
     /// blocks until at least one handler executes or the IO Service is stopped.
     /// Upon completion of this method the timer is cancelled.  Should the
-    /// timer expires prior to run_one returning, the timesUp handler will be
+    /// timer expires prior to runOne returning, the timesUp handler will be
     /// invoked which stops the IO service and fails the test.
     ///
     /// Note that this method closely mimics the runIO method in D2Process.

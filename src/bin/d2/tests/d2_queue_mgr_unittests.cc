@@ -300,7 +300,7 @@ TEST_F (QueueMgrUDPTest, stateModel) {
 
     // Stopping requires IO cancel, which result in a callback.
     // So process one event and verify we are STOPPED.
-    io_service_->run_one();
+    io_service_->runOne();
     EXPECT_EQ(D2QueueMgr::STOPPED, queue_mgr_->getMgrState());
 
     // Verify that we can re-enter the RUNNING from STOPPED by starting the
@@ -317,7 +317,7 @@ TEST_F (QueueMgrUDPTest, stateModel) {
 
     // Stopping requires IO cancel, which result in a callback.
     // So process one event and verify we are STOPPED.
-    io_service_->run_one();
+    io_service_->runOne();
     EXPECT_EQ(D2QueueMgr::STOPPED, queue_mgr_->getMgrState());
 
     // Verify that we can remove the listener in the STOPPED state and
@@ -370,8 +370,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
 
         // running two should do the send then the receive
-        io_service_->run_one();
-        io_service_->run_one();
+        io_service_->runOne();
+        io_service_->runOne();
 
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
@@ -401,8 +401,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
 
         // running two should do the send then the receive
-        EXPECT_NO_THROW(io_service_->run_one());
-        EXPECT_NO_THROW(io_service_->run_one());
+        EXPECT_NO_THROW(io_service_->runOne());
+        EXPECT_NO_THROW(io_service_->runOne());
         EXPECT_EQ(i+1, queue_mgr_->getQueueSize());
     }
 
@@ -418,11 +418,11 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     // Send another. The send should succeed.
     ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
-    EXPECT_NO_THROW(io_service_->run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
 
     // Now execute the receive which should not throw but should move us
     // to STOPPED_QUEUE_FULL state.
-    EXPECT_NO_THROW(io_service_->run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
     EXPECT_EQ(D2QueueMgr::STOPPED_QUEUE_FULL, queue_mgr_->getMgrState());
 
     // Verify queue size did not increase beyond max.
@@ -447,10 +447,10 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     // Verify that we can again receive requests.
     // Send should be fine.
     ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
-    EXPECT_NO_THROW(io_service_->run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
 
     // Receive should succeed.
-    EXPECT_NO_THROW(io_service_->run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
     EXPECT_EQ(1, queue_mgr_->getQueueSize());
 }
 

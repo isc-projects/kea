@@ -248,7 +248,7 @@ public:
         }, ms, IntervalTimer::ONE_SHOT);
 
         io_service_->run();
-        io_service_->get_io_service().reset();
+        io_service_->getIOService().reset();
     }
 
     /// @brief Waits for the specified process to finish.
@@ -275,7 +275,7 @@ public:
         }, 1, IntervalTimer::REPEATING);
 
         io_service_->run();
-        io_service_->get_io_service().reset();
+        io_service_->getIOService().reset();
         return (!elapsed);
     }
 

@@ -561,7 +561,7 @@ TEST_F(D2ProcessTest, canShutdown) {
 TEST_F(D2ProcessTest, normalShutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
-    isc::asiolink::IntervalTimer timer(*getIoService());
+    isc::asiolink::IntervalTimer timer(*getIOService());
     timer.setup(std::bind(&D2ProcessTest::genShutdownCallback, this),
                 2 * 1000);
 
@@ -585,7 +585,7 @@ TEST_F(D2ProcessTest, normalShutdown) {
 TEST_F(D2ProcessTest, fatalErrorShutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // the exception.  (Note IntervalTimer setup is in milliseconds).
-    isc::asiolink::IntervalTimer timer(*getIoService());
+    isc::asiolink::IntervalTimer timer(*getIOService());
     timer.setup(std::bind(&D2ProcessTest::genFatalErrorCallback, this),
                 2 * 1000);
 

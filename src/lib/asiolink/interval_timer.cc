@@ -102,7 +102,7 @@ private:
 };
 
 IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
-    interval_(0), timer_(io_service.get_io_service()),
+    interval_(0), timer_(io_service.getIOService()),
     mode_(IntervalTimer::REPEATING) {
 }
 

@@ -122,7 +122,7 @@ CfgIfaceTest::doWait(const long timeout) {
         io_service_->stop();
     }, timeout, asiolink::IntervalTimer::ONE_SHOT);
     io_service_->run();
-    io_service_->get_io_service().reset();
+    io_service_->getIOService().reset();
 }
 
 // This test checks that the interface names can be explicitly selected

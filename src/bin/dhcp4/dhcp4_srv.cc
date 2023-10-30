@@ -1020,7 +1020,7 @@ Dhcpv4Srv::run() {
     while (!shutdown_) {
 #endif // ENABLE_AFL
         try {
-            run_one();
+            runOne();
             getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
@@ -1045,7 +1045,7 @@ Dhcpv4Srv::run() {
 }
 
 void
-Dhcpv4Srv::run_one() {
+Dhcpv4Srv::runOne() {
     // client's message and server's response
     Pkt4Ptr query;
 
@@ -1176,7 +1176,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
                                    *callout_handle);
 
         // Callouts decided to drop the received packet.
-        // The response (rsp) is null so the caller (run_one) will
+        // The response (rsp) is null so the caller (runOne) will
         // immediately return too.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
             LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING,

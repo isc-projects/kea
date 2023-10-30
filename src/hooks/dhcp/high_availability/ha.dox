@@ -152,7 +152,7 @@ bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
         try {
-            run_one();
+            runOne();
             getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
@@ -171,7 +171,7 @@ Dhcpv4Srv::run() {
 }
 @endcode
 
-The @c run_one() call includes a @c select() invocation with a timeout of
+The @c runOne() call includes a @c select() invocation with a timeout of
 1 second. The @c poll() is not invoked for at most 1 second while the server
 is performing this blocking @c select(). Future Kea releases should mitigate
 this problem by introducing some mechanisms for concurrent reception and

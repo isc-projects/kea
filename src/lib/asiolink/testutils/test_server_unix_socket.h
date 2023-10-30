@@ -37,7 +37,7 @@ class ConnectionPool;
 /// It is possible to make multiple connections to the server side
 /// socket simultaneously.
 ///
-/// The test should perform IOService::run_one until it finds that
+/// The test should perform IOService::runOne until it finds that
 /// the number of responses sent by the server is greater than
 /// expected. The number of responses sent so far can be retrieved
 /// using @ref TestServerUnixSocket::getResponseNum.

@@ -973,9 +973,9 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     srv_->fakeReceive(msg_copy);
 
     try {
-        // Invoke run_one instead of run, because we want to avoid triggering
+        // Invoke runOne instead of run, because we want to avoid triggering
         // IO service.
-        srv_->run_one();
+        srv_->runOne();
     } catch (...) {
         // Suppress errors, as the DHCPv6 server does.
     }

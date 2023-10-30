@@ -262,7 +262,7 @@ TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
 
 template <typename C>
 TCPSocket<C>::TCPSocket(IOService& service) :
-    socket_ptr_(new boost::asio::ip::tcp::socket(service.get_io_service())),
+    socket_ptr_(new boost::asio::ip::tcp::socket(service.getIOService())),
     socket_(*socket_ptr_)
 {
 }

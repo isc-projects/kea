@@ -324,7 +324,7 @@ TEST(TCPSocket, sequenceTest) {
     TCPEndpoint server_endpoint(server_address, SERVER_PORT);
                                             // Endpoint describing server
     TCPEndpoint server_remote_endpoint;     // Address where server received message from
-    tcp::socket server_socket(service.get_io_service());
+    tcp::socket server_socket(service.getIOService());
                                             // Socket used for server
 
     // Step 1.  Create the connection between the client and the server.  Set
@@ -335,7 +335,7 @@ TEST(TCPSocket, sequenceTest) {
     server_cb.queued() = TCPCallback::ACCEPT;
     server_cb.called() = TCPCallback::NONE;
     server_cb.setCode(42);  // Some error
-    tcp::acceptor acceptor(service.get_io_service(),
+    tcp::acceptor acceptor(service.getIOService(),
                             tcp::endpoint(tcp::v4(), SERVER_PORT));
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.async_accept(server_socket, server_cb);
@@ -348,8 +348,8 @@ TEST(TCPSocket, sequenceTest) {
     client.open(&server_endpoint, client_cb);
 
     // Run the open and the accept callback and check that they ran.
-    service.run_one();
-    service.run_one();
+    service.runOne();
+    service.runOne();
 
     EXPECT_EQ(TCPCallback::ACCEPT, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
@@ -377,7 +377,7 @@ TEST(TCPSocket, sequenceTest) {
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
-    service.run_one();
+    service.runOne();
 
     // Synchronously read the data from the server.;
     serverRead(server_socket, server_cb);
@@ -442,7 +442,7 @@ TEST(TCPSocket, sequenceTest) {
     bool server_complete = false;
     bool client_complete = false;
     while (!server_complete || !client_complete) {
-        service.run_one();
+        service.runOne();
 
         // Has the server run?
         if (!server_complete) {

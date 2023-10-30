@@ -32,8 +32,8 @@ TEST(IOService, post) {
     // They have not yet been called
     EXPECT_TRUE(called.empty());
     // Process two events
-    service.run_one();
-    service.run_one();
+    service.runOne();
+    service.runOne();
     // Both events were called in the right order
     ASSERT_EQ(2, called.size());
     EXPECT_EQ(1, called[0]);

@@ -248,7 +248,7 @@ public:
 
         // We have some cancelled operations for which we need to invoke the
         // handlers with the operation_aborted error code.
-        getIOService()->get_io_service().reset();
+        getIOService()->getIOService().reset();
         getIOService()->poll();
 
         EXPECT_EQ(expected_responses, server_socket_->getResponseNum());
@@ -413,7 +413,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
 
     // We have some cancelled operations for which we need to invoke the
     // handlers with the operation_aborted error code.
-    getIOService()->get_io_service().reset();
+    getIOService()->getIOService().reset();
     getIOService()->poll();
 
     // Answer of 3 is specific to the stub response we send when the

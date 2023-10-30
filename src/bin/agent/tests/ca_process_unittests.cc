@@ -67,7 +67,7 @@ TEST(CtrlAgentProcess, construction) {
 TEST_F(CtrlAgentProcessTest, shutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
-    IntervalTimer timer(*getIoService());
+    IntervalTimer timer(*getIOService());
     timer.setup(std::bind(&CtrlAgentProcessTest::genShutdownCallback, this),
                 200);
 

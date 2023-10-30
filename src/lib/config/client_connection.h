@@ -63,7 +63,7 @@ class ClientConnectionImpl;
 ///            }
 /// );
 /// while (!cb_invoked) {
-///     io_service.run_one();
+///     io_service.runOne();
 /// }
 /// @endcode
 ///

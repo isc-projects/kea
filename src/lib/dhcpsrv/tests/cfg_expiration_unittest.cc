@@ -328,7 +328,7 @@ public:
         }, timeout_ms, IntervalTimer::ONE_SHOT);
 
         io_service_->run();
-        io_service_->get_io_service().reset();
+        io_service_->getIOService().reset();
     }
 
     /// @brief Setup timers according to the configuration and run them

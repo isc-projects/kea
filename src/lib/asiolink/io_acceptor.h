@@ -39,7 +39,7 @@ public:
     /// @param io_service Reference to the IO service.
     explicit IOAcceptor(IOService& io_service)
         : IOSocket(),
-          acceptor_(new typename ProtocolType::acceptor(io_service.get_io_service())) {
+          acceptor_(new typename ProtocolType::acceptor(io_service.getIOService())) {
     }
 
     /// @brief Destructor.

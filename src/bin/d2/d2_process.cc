@@ -58,13 +58,13 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     // been received.  This means that until we receive the configuration,
     // D2 will neither receive nor process NameChangeRequests.
     // Pass in IOService for NCR IO event processing.
-    queue_mgr_.reset(new D2QueueMgr(getIoService()));
+    queue_mgr_.reset(new D2QueueMgr(getIOService()));
 
     // Instantiate update manager.
     // Pass in both queue manager and configuration manager.
     // Pass in IOService for DNS update transaction IO event processing.
     D2CfgMgrPtr tmp = getD2CfgMgr();
-    update_mgr_.reset(new D2UpdateMgr(queue_mgr_, tmp, getIoService()));
+    update_mgr_.reset(new D2UpdateMgr(queue_mgr_, tmp, getIOService()));
 
     // Initialize stats manager.
     D2Stats::init();
@@ -73,7 +73,7 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
 void
 D2Process::init() {
     // CommandMgr uses IO service to run asynchronous socket operations.
-    isc::config::CommandMgr::instance().setIOService(getIoService());
+    isc::config::CommandMgr::instance().setIOService(getIOService());
 };
 
 void
@@ -131,24 +131,22 @@ size_t
 D2Process::runIO() {
     // We want to block until at least one handler is called.  We'll use
     // boost::asio::io_service directly for two reasons. First off
-    // asiolink::IOService::run_one is a void and boost::asio::io_service::stopped
+    // asiolink::IOService::runOne is a void and boost::asio::io_service::stopped
     // is not present in older versions of boost.  We need to know if any
     // handlers ran or if the io_service was stopped.  That latter represents
     // some form of error and the application cannot proceed with a stopped
     // service.  Secondly, asiolink::IOService does not provide the poll
     // method.  This is a handy method which runs all ready handlers without
     // blocking.
-    asiolink::IOServicePtr& io = getIoService();
-    boost::asio::io_service& asio_io_service = io->get_io_service();
 
     // Poll runs all that are ready. If none are ready it returns immediately
     // with a count of zero.
-    size_t cnt = asio_io_service.poll();
+    size_t cnt = getIOService()->getIOService().poll();
     if (!cnt) {
         // Poll ran no handlers either none are ready or the service has been
         // stopped.  Either way, call run_one to wait for a IO event. If the
         // service is stopped it will return immediately with a cnt of zero.
-        cnt = asio_io_service.run_one();
+        cnt = getIOService()->getIOService().run_one();
     }
 
     return (cnt);
@@ -283,7 +281,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     if (HooksManager::calloutsPresent(Hooks.hooks_index_d2_srv_configured_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
-        callout_handle->setArgument("io_context", getIoService());
+        callout_handle->setArgument("io_context", getIOService());
         callout_handle->setArgument("json_config", config_set);
         callout_handle->setArgument("server_config",
                                     getD2CfgMgr()->getD2CfgContext());
