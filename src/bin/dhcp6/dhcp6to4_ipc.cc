@@ -145,8 +145,11 @@ void Dhcp6to4Ipc::handler(int /* fd */) {
             callout_handle->getArgument("response6", pkt);
         }
 
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
-            .arg(static_cast<int>(pkt->getType())).arg(pkt->toText());
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_DHCP4O6_RESPONSE_DATA)
+            .arg(pkt->getLabel())
+            .arg(pkt->getName())
+            .arg(static_cast<int>(pkt->getType()))
+            .arg(pkt->toText());
 
         // Forward packet to the client.
         IfaceMgr::instance().send(pkt);

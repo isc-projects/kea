@@ -1355,8 +1355,10 @@ Dhcpv6Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
             .arg(rsp->getIface());
 
         LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
-            .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
-
+            .arg(rsp->getLabel())
+            .arg(rsp->getName())
+            .arg(static_cast<int>(rsp->getType()))
+            .arg(rsp->toText());
         sendPacket(rsp);
 
         // Update statistics accordingly for sent packet.

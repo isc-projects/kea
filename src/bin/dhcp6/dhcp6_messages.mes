@@ -936,8 +936,19 @@ etc. The exact reason for rejecting the packet is included in the message.
 This is a message informing that host reservations lookup is performed before
 lease lookup when multi-threading is enabled overwriting configured value.
 
-% DHCP6_RESPONSE_DATA responding with packet type %1 data is %2
-A debug message listing the data returned to the client.
+% DHCP6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
+A debug message including the detailed data about the packet being sent
+to the client. The first argument contains the client and the transaction
+identification information. The second and third argument contains the
+packet name and type respectively. The fourth argument contains detailed
+packet information.
+
+% DHCP6_DHCP4O6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
+A debug message including the detailed data about the packet being sent
+to the client. The first argument contains the client and the transaction
+identification information. The second and third argument contains the
+packet name and type respectively. The fourth argument contains detailed
+packet information.
 
 % DHCP6_SERVER_FAILED server failed: %1
 The IPv6 DHCP server has encountered a fatal error and is terminating.

@@ -1287,12 +1287,13 @@ TEST_F(Pkt6Test, toText) {
     ASSERT_EQ(2, msg->relay_info_.size());
 
     string expected =
-        "localAddr=[ff05::1:3]:547 remoteAddr=[fe80::1234]:547\n"
-        "msgtype=1(SOLICIT), transid=0x6b4fe2\n"
-        "type=00001, len=00014: 00:01:00:01:18:b0:33:41:00:00:21:5c:18:a9\n"
-        "type=00003(IA_NA), len=00012: iaid=1, t1=4294967295, t2=4294967295\n"
-        "type=00006, len=00006: 23(uint16) 242(uint16) 243(uint16)\n"
-        "type=00008, len=00002: 0 (uint16)\n"
+        "local_address=[ff05::1:3]:547, remote_address=[fe80::1234]:547,\n"
+        "msg_type=SOLICIT (1), trans_id=0x6b4fe2,\n"
+        "options:\n"
+        "  type=00001, len=00014: 00:01:00:01:18:b0:33:41:00:00:21:5c:18:a9\n"
+        "  type=00003(IA_NA), len=00012: iaid=1, t1=4294967295, t2=4294967295\n"
+        "  type=00006, len=00006: 23(uint16) 242(uint16) 243(uint16)\n"
+        "  type=00008, len=00002: 0 (uint16)\n"
         "2 relay(s):\n"
         "relay[0]: msg-type=12(RELAY_FORWARD), hop-count=1,\n"
         "link-address=2001:888:db8:1::, peer-address=fe80::200:21ff:fe5c:18a9, 2 option(s)\n"
@@ -1963,7 +1964,7 @@ TEST_F(Pkt6Test, makeLabel) {
                                                  HTYPE_ETHER)));
 
     // Specify DUID and no HW Address.
-    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], tid=0x123",
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], [no hwaddr info], tid=0x123",
               Pkt6::makeLabel(duid, 0x123, HWAddrPtr()));
 
     // Specify HW Address and no DUID.
@@ -1976,7 +1977,7 @@ TEST_F(Pkt6Test, makeLabel) {
               Pkt6::makeLabel(duid, 0x123, hwaddr));
 
     // Specify neither DUID nor HW Address.
-    EXPECT_EQ("duid=[no info], tid=0x0",
+    EXPECT_EQ("duid=[no info], [no hwaddr info], tid=0x0",
               Pkt6::makeLabel(DuidPtr(), 0x0, HWAddrPtr()));
 }
 
@@ -1988,7 +1989,7 @@ TEST_F(Pkt6Test, makeLabelWithoutTransactionId) {
                                                  HTYPE_ETHER)));
 
     // Specify DUID and no HW Address.
-    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03]",
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], [no hwaddr info]",
               Pkt6::makeLabel(duid, HWAddrPtr()));
 
     // Specify HW Address and no DUID.
@@ -2001,7 +2002,7 @@ TEST_F(Pkt6Test, makeLabelWithoutTransactionId) {
               Pkt6::makeLabel(duid, hwaddr));
 
     // Specify neither DUID nor HW Address.
-    EXPECT_EQ("duid=[no info]", Pkt6::makeLabel(DuidPtr(), HWAddrPtr()));
+    EXPECT_EQ("duid=[no info], [no hwaddr info]", Pkt6::makeLabel(DuidPtr(), HWAddrPtr()));
 }
 
 // This test verifies that it is possible to obtain the packet
@@ -2009,7 +2010,7 @@ TEST_F(Pkt6Test, makeLabelWithoutTransactionId) {
 TEST_F(Pkt6Test, getLabel) {
     // Create a packet.
     Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x2312));
-    EXPECT_EQ("duid=[no info], tid=0x2312",
+    EXPECT_EQ("duid=[no info], [no hwaddr info], tid=0x2312",
               pkt->getLabel());
 
     DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
@@ -2022,7 +2023,7 @@ TEST_F(Pkt6Test, getLabel) {
     Pkt6Ptr pkt_clone = packAndClone(pkt);
     ASSERT_NO_THROW(pkt_clone->unpack());
 
-    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], tid=0x2312",
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], [no hwaddr info], tid=0x2312",
               pkt_clone->getLabel());
 
 }
@@ -2035,7 +2036,7 @@ TEST_F(Pkt6Test, getLabelEmptyClientId) {
 
     // Add empty client identifier option.
     pkt.addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID)));
-    EXPECT_EQ("duid=[no info], tid=0x2312", pkt.getLabel());
+    EXPECT_EQ("duid=[no info], [no hwaddr info], tid=0x2312", pkt.getLabel());
 }
 
 // Verifies that when the VIVSO, 17, has length that is too

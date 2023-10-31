@@ -1289,8 +1289,8 @@ TEST_F(Pkt4Test, toText) {
     pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
     pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
 
-    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68, "
-              "msg_type=DHCPDISCOVER (1), transid=0x9ef,\n"
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
+              "msg_type=DHCPDISCOVER (1), trans_id=0x9ef,\n"
               "options:\n"
               "  type=053, len=001: 1 (uint8)\n"
               "  type=087, len=011: \"lorem ipsum\" (string)\n"
@@ -1305,8 +1305,8 @@ TEST_F(Pkt4Test, toText) {
     pkt.delOption(87);
     pkt.delOption(53);
 
-    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68, "
-              "msg_type=(missing), transid=0x9ef, "
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
+              "msg_type=(missing), trans_id=0x9ef,\n"
               "message contains no options",
               pkt.toText());
 

@@ -62,6 +62,7 @@ extern const isc::log::MessageID DHCP6_DEVELOPMENT_VERSION;
 extern const isc::log::MessageID DHCP6_DHCP4O6_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP6_DHCP4O6_RECEIVE_FAIL;
 extern const isc::log::MessageID DHCP6_DHCP4O6_RECEIVING;
+extern const isc::log::MessageID DHCP6_DHCP4O6_RESPONSE_DATA;
 extern const isc::log::MessageID DHCP6_DHCP4O6_SEND_FAIL;
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION;
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_FAIL;

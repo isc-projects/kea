@@ -98,7 +98,6 @@ Pkt4::pack() {
         buffer_out_.writeUint32(siaddr_.toUint32());
         buffer_out_.writeUint32(giaddr_.toUint32());
 
-
         if ((hw_len > 0) && (hw_len <= MAX_CHADDR_LEN)) {
             // write up to 16 bytes of the hardware address (CHADDR field is 16
             // bytes long in DHCPv4 message).
@@ -398,6 +397,7 @@ Pkt4::getLabel() const {
     }
 
     label << suffix;
+
     return (label.str());
 }
 
@@ -411,7 +411,7 @@ Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id,
     // Append transaction id.
     label << ", tid=0x" << hex << transid << dec;
 
-    return label.str();
+    return (label.str());
 }
 
 std::string
@@ -421,42 +421,45 @@ Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id) {
           << "], cid=[" << (client_id ? client_id->toText() : "no info")
           << "]";
 
-    return label.str();
+    return (label.str());
 }
 
 std::string
 Pkt4::toText() const {
-    stringstream output;
-    output << "local_address=" << local_addr_ << ":" << local_port_
-        << ", remote_address=" << remote_addr_
-        << ":" << remote_port_ << ", msg_type=";
+    stringstream tmp;
+
+    // First print the basics
+    tmp << "local_address=" << local_addr_ << ":" << local_port_
+        << ", remote_address=" << remote_addr_ << ":" << remote_port_ << "," << endl;
+
+    tmp << "msg_type=";
 
     // Try to obtain message type.
     uint8_t msg_type = getType();
     if (msg_type != DHCP_NOTYPE) {
-        output << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
+        tmp << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
     } else {
         // Message Type option is missing.
-        output << "(missing)";
+        tmp << "(missing)";
     }
 
-    output << ", transid=0x" << hex << transid_ << dec;
+    tmp << ", trans_id=0x" << hex << transid_ << dec;
 
     if (!options_.empty()) {
-        output << "," << std::endl << "options:";
+        tmp << "," << endl << "options:";
         for (const auto& opt : options_) {
             try {
-                output << std::endl << opt.second->toText(2);
+                tmp << endl << opt.second->toText(2);
             } catch (...) {
-                output << "(unknown)" << std::endl;
+                tmp << "(unknown)" << endl;
             }
         }
 
     } else {
-        output << ", message contains no options";
+        tmp << "," << endl << "message contains no options";
     }
 
-    return (output.str());
+    return (tmp.str());
 }
 
 void

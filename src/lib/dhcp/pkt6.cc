@@ -375,7 +375,6 @@ uint16_t Pkt6::directLen() const {
     return (length);
 }
 
-
 void
 Pkt6::pack() {
     switch (proto_) {
@@ -709,15 +708,11 @@ Pkt6::makeLabel(const DuidPtr duid, const HWAddrPtr& hwaddr) {
     std::stringstream label;
     // DUID should be present at all times, so explicitly inform when
     // it is no present (no info).
-    label << "duid=[" << (duid ? duid->toText() : "no info")
-          << "]";
-
     // HW address is typically not carried in the DHCPv6 messages
     // and can be extracted using various, but not fully reliable,
-    // techniques. If it is not present, don't print anything.
-    if (hwaddr) {
-        label << ", [" << hwaddr->toText() << "]";
-    }
+    // techniques.
+    label << "duid=[" << (duid ? duid->toText() : "no info")
+          << "], [" << (hwaddr ? hwaddr->toText() : "no hwaddr info") << "]";
 
     return (label.str());
 }
@@ -735,28 +730,38 @@ Pkt6::toText() const {
     stringstream tmp;
 
     // First print the basics
-    tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
-        << " remoteAddr=[" << remote_addr_ << "]:" << remote_port_ << endl;
-    tmp << "msgtype=" << static_cast<int>(msg_type_) << "(" << getName(msg_type_)
-        << "), transid=0x" <<
-        hex << transid_ << dec << endl;
+    tmp << "local_address=[" << local_addr_ << "]:" << local_port_
+        << ", remote_address=[" << remote_addr_ << "]:" << remote_port_ << "," << endl;
 
-    // Then print the options
-    for (const auto& opt : options_) {
-        tmp << opt.second->toText() << std::endl;
+    tmp << "msg_type=" << getName(msg_type_) << " (" << static_cast<int>(msg_type_) << ")";
+    tmp << ", trans_id=0x" << hex << transid_ << dec;
+
+    if (!options_.empty()) {
+        tmp << "," << endl << "options:";
+        for (const auto& opt : options_) {
+            try {
+                tmp << endl << opt.second->toText(2);
+            } catch (...) {
+                tmp << "(unknown)" << endl;
+            }
+        }
+
+    } else {
+        tmp << "," << endl << "message contains no options";
     }
 
     // Finally, print the relay information (if present)
     if (!relay_info_.empty()) {
-        tmp << relay_info_.size() << " relay(s):" << endl;
+        tmp << endl << relay_info_.size() << " relay(s):" << endl;
         int cnt = 0;
         for (const auto& relay : relay_info_) {
             tmp << "relay[" << cnt++ << "]: " << relay.toText();
         }
     } else {
-        tmp << "No relays traversed." << endl;
+        tmp << endl << "No relays traversed." << endl;
     }
-    return tmp.str();
+
+    return (tmp.str());
 }
 
 DuidPtr
