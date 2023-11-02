@@ -4043,8 +4043,9 @@ Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& /* callout_handle */, Pkt4Ptr&
     }
     */
 
-    LOG_INFO(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE).arg(lease->addr_.toText())
-        .arg(query->getLabel()).arg(lease->valid_lft_);
+    LOG_INFO(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE)
+            .arg(lease->addr_.toText())
+            .arg(lease->valid_lft_);
 }
 
 void

@@ -1065,7 +1065,7 @@ identification information. The second argument holds the IPv4 address
 which decline was attempted. The last one contains the reason for
 failure.
 
-% DHCP4_SERVER_INITIATED_DECLINE Lease for addr %1 has been found to be already be in use. The lease will be unavailable for %3 seconds.
+% DHCP4_SERVER_INITIATED_DECLINE Lease for addr %1 has been found to be already be in use. The lease will be unavailable for %2 seconds.
 This informational message is printed when the server has detected via
 ICMP ECHO (i.e. ping check) or other means that a lease which should be
 free to offer is actually in use. This message may indicate a misconfiguration
