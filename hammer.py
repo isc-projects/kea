@@ -1286,6 +1286,13 @@ def _configure_mysql(system, revision, features):
     if 'tls' in features:
         if not os.path.isdir(cert_dir):
             execute('sudo mkdir -p {}'.format(cert_dir))
+        # Some systems, usually old ones, might require a cerain PKCS format
+        # of the key. Try to regenerate it here, but don't stop if it fails.
+        # If the key is wrong, it will fail later anyway.
+        exit_code = execute('openssl rsa -in src/lib/asiolink/testutils/ca/kea-server.key ' \
+                                       '-out src/lib/asiolink/testutils/ca/kea-server.key', raise_error=False)
+        if exit_code != 0:
+            log.warning(f'openssl command failed with exit code {exit_code}, but continuing...')
         for file in [
             './src/lib/asiolink/testutils/ca/kea-ca.crt',
             './src/lib/asiolink/testutils/ca/kea-client.crt',
