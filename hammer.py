@@ -1637,9 +1637,8 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             packages.extend(['rpm-build', 'python3-devel'])
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'texlive', 'texlive-collection-latexextra'])
-            if int(revision) >= 31:
-                packages.extend(['python3-sphinx_rtd_theme python3-sphinx-tabs'])
+            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme',
+                             'texlive', 'texlive-collection-latexextra'])
 
         if 'mysql' in features:
             execute('sudo dnf remove -y community-mysql-devel || true')
@@ -1686,6 +1685,9 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
             packages.append('boost169-devel')
 
+        if 'docs' in features:
+            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme'])
+
         if 'native-pkg' in features:
             packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
 
@@ -1725,12 +1727,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
 
         install_pkgs(packages, env=env, check_times=check_times)
 
-        if 'docs' in features:
-            execute('python3 -m venv ~/venv',
-                    env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme sphinx-tabs',
-                    env=env, timeout=120, check_times=check_times)
-
     # prepare rhel
     elif system == 'rhel':
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
@@ -1741,6 +1737,15 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             # Install newer version of Boost in case users want to opt-in with:
             # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
             packages.append('boost169-devel')
+
+        if 'docs' in features:
+            # Conflict on the packaging python module between pip and rpm-build.
+            # So create venv instead of installing through package manager.
+            # kea-packaging points Kea to the venv using --with-sphinx.
+            execute('python3 -m venv ~/venv',
+                    env=env, timeout=60, check_times=check_times)
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+                    env=env, timeout=120, check_times=check_times)
 
         if 'native-pkg' in features:
             packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
@@ -1777,32 +1782,22 @@ def prepare_system_local(features, check_times, ignore_errors_for):
 
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
-        if 'docs' in features:
-            execute('python3 -m venv ~/venv',
-                    env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme sphinx-tabs',
-                    env=env, timeout=120, check_times=check_times)
-
     # prepare ubuntu
     elif system == 'ubuntu':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
-                    'libboost-system-dev', 'gnupg', 'libpcap-dev', 'python3-venv']
+                    'libboost-system-dev', 'gnupg', 'libpcap-dev']
+
+        if 'docs' in features:
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
+                             'texlive', 'texlive-latex-extra'])
 
         if 'unittest' in features:
             if revision.startswith('16.'):
                 _install_gtest_sources()
             else:
                 packages.append('googletest')
-
-        if 'docs' in features:
-            if float(revision) < 22.04:
-                packages.extend(['virtualenv'])
-            else:
-                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
-                                 'python3-sphinx-tabs', 'tex-gyre',
-                                 'texlive', 'texlive-latex-extra'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1836,19 +1831,16 @@ def prepare_system_local(features, check_times, ignore_errors_for):
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
-        if 'docs' in features:
-            if float(revision) < 22.04:
-                execute('python3 -m venv ~/venv',
-                        env=env, timeout=60, check_times=check_times)
-                execute('~/venv/bin/pip install sphinx-tabs',
-                        env=env, timeout=120, check_times=check_times)
-
     # prepare debian
     elif system == 'debian':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
                     'liblog4cplus-dev', 'libboost-system-dev', 'gnupg']
+
+        if 'docs' in features:
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
+                             'texlive', 'texlive-latex-extra'])
 
         if 'unittest' in features:
             if revision == '8':
@@ -1861,19 +1853,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             packages.extend(['cmake', 'libpcre2-dev'])
             if revision == '12':
                 packages.extend(['doxygen', 'graphviz', 'pkg-config'])
-
-        if 'docs' in features:
-            if int(revision) <= 8:
-                packages.extend(['virtualenv'])
-            else:
-                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
-                                 'texlive', 'texlive-latex-extra'])
-            if int(revision) >= 11:
-                packages.extend(['python3-sphinx-tabs'])
-            if revision == '9':
-                packages.extend(['texlive-generic-extra'])
-            if int(revision) >= 12:
-                packages.extend(['tex-gyre'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1909,16 +1888,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
-        if 'docs' in features:
-            if int(revision) <= 10:
-                execute('python3 -m venv ~/venv',
-                        env=env, timeout=60, check_times=check_times)
-                execute('~/venv/bin/pip install sphinx-tabs',
-                        env=env, timeout=120, check_times=check_times)
-                if int(revision) <= 8:
-                    execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
-                            env=env, timeout=120, check_times=check_times)
-
     # prepare freebsd
     elif system == 'freebsd':
         # Packages are already upgraded by default when installing a package,
@@ -1935,7 +1904,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             pyv = _get_package_version('python')
             pyv = pyv.split('_')[0].replace('.', '')
             log.info(">>>>> Detected Sphinx packages version: py%s-sphinx", pyv)
-            packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme', f'py{pyv}-sphinx-tabs'])
+            packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme'])
 
         if 'mysql' in features:
             if revision.startswith(('11', '12')):
@@ -1985,14 +1954,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                     'gzip']
 
         if 'docs' in features:
-            if revision == '3.10':
-                packages.extend(['py-sphinx', 'py-sphinx_rtd_theme'])
-            elif revision == '3.11':
-                packages.extend(['py3-sphinx'])
-            elif float(revision) < 3.16:
-                packages.extend(['py3-sphinx', 'py3-sphinx_rtd_theme'])
-            else:
-                packages.extend(['py3-pip'])
+            packages.extend(['py3-sphinx py3-sphinx_rtd_theme'])
 
         if 'unittest' in features:
             _install_gtest_sources()
@@ -2017,11 +1979,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
-
-        # work around outdated sphinx packages on alpine 3.16
-        if 'docs' in features:
-            if float(revision) >= 3.16:
-                execute('sudo pip3 install -U sphinx sphinx_rtd_theme sphinx_tabs')
 
         # check for existence of 'vagrant' user and 'abuild' group before adding him to the group
         try:
@@ -2141,8 +2098,6 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             raise NotImplementedError('no implementation for %s' % system)
     if 'docs' in features and not system == 'rhel':
         cmd += ' --enable-generate-docs'
-        if system == 'debian' and revision == '8' or system == 'centos' and revision in ['7', '8']:
-            cmd += ' --with-sphinx=~/venv/bin/sphinx-build'
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
     if 'gssapi' in features:
