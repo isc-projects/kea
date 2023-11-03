@@ -76,11 +76,13 @@ easier to install Kea using native packages.
    Cloudsmith repository page under ``Packages``, or it can be retrieved
    using ``apk``/``apt``/``dnf``.
 
-.. tabs::
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
 
-    .. tab:: Debian/Ubuntu
+    * - Debian/Ubuntu
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ apt search isc-kea
 
@@ -89,83 +91,89 @@ easier to install Kea using native packages.
             transitional packages. The working server packages are
             ``isc-kea-dhcp4`` and ``isc-kea-dhcp6``.
 
-    .. tab:: Fedora/RedHat
+    * - Fedora/RedHat
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ dnf search 'isc-kea*'
 
-    .. tab:: Alpine
+    * - Alpine
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ apk search isc-kea
 
 6. Install the metapackage containing all the tools, libraries, servers,
    documentation, and open source hooks:
 
-.. tabs::
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
 
-    .. tab:: Debian/Ubuntu
+    * - Debian/Ubuntu
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ sudo apt install isc-kea
 
-    .. tab:: Fedora/RedHat
+    * - Fedora/RedHat
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ sudo dnf install isc-kea
 
-    .. tab:: Alpine
+    * - Alpine
 
-        .. code-block:: console
+      - .. code-block:: console
 
             # apk add isc-kea
 
 or specific packages:
 
-.. tabs::
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
 
-    .. tab:: Debian/Ubuntu
+    * - Debian/Ubuntu
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ sudo apt install isc-kea-dhcp6
 
-    .. tab:: Fedora/RedHat
+    * - Fedora/RedHat
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ sudo dnf install isc-kea-dhcp6
 
-    .. tab:: Alpine
+    * - Alpine
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ apk add isc-kea-dhcp6
 
 or every single Kea-related package, including development headers, debug
 symbols, and premium hooks (if available):
 
-.. tabs::
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
 
-    .. tab:: Debian/Ubuntu
+    * - Debian/Ubuntu
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ sudo apt install 'isc-kea*'
 
-    .. tab:: Fedora/RedHat
+    * - Fedora/RedHat
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ sudo dnf install 'isc-kea*'
 
-    .. tab:: Alpine
+    * - Alpine
 
-        Installing packages via globbing (``*``) is not available for Alpine,
+      - Installing packages via globbing (``*``) is not available for Alpine,
         but it can be simulated with the following command:
 
         .. code-block:: console
@@ -174,25 +182,25 @@ symbols, and premium hooks (if available):
 
 or all packages with a specified version number:
 
-.. tabs::
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
 
-    .. tab:: Debian/Ubuntu
+    * - Debian/Ubuntu
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ sudo apt install 'isc-kea*=2.4.0-isc20230921141113'
 
-    .. tab:: Fedora/RedHat
+    * - Fedora/RedHat
 
-        .. code-block:: console
+      - .. code-block:: console
 
             $ sudo dnf install 'isc-kea*2.4.0-isc20230921141113*'
 
-    .. tab:: Alpine
+    * - Alpine
 
-        .. code-block:: console
-
-        Installing packages via globbing (``*``) is not available for Alpine,
+      - Installing packages via globbing (``*``) is not available for Alpine,
         but it can be simulated with the following command:
 
         .. code-block:: console

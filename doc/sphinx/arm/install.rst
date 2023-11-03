@@ -190,10 +190,9 @@ the system:
    texlive with its extensions, and Doxygen, if using the
    ``--enable-generate-docs`` configuration option to create the documentation.
    Specifically, with Fedora, ``python3-sphinx``, ``python3-sphinx_rtd_theme``,
-   ``python3-sphinx-tabs``, ``texlive``, and ``texlive-collection-latexextra``
-   are necessary.
+   ``texlive``, and ``texlive-collection-latexextra`` are necessary.
    With Ubuntu, ``python3-sphinx``, ``python3-sphinx-rtd-theme``,
-   ``python3-sphinx-tabs``, ``texlive``, and ``texlive-latex-extra`` are needed.
+   ``texlive``, and ``texlive-latex-extra`` are needed.
    If LaTeX packages are missing, Kea skips PDF generation and produces only
    HTML documents.
 

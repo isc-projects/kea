@@ -59,7 +59,6 @@ dashed_version_series='-'.join(version.split('.')[0:2])
 extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
-    'sphinx_tabs.tabs',
 ]
 
 # The suffix(es) of source filenames.
