@@ -50,65 +50,65 @@ import xml.etree.ElementTree as ET
 #     ...
 # }
 SYSTEMS = {
-    'fedora': [
-        ( '27', False ),
-        ( '28', False ),
-        ( '29', False ),
-        ( '30', False ),
-        ( '31', False ),
-        ( '32', False ),
-        ( '33', False ),
-        ( '34', False ),
-        ( '35', False ),
-        ( '36', False ),
-        ( '37', True  ),
-        ( '38', True  ),
-    ],
-    'centos': [
-        ( '7', False ),
-        ( '8', True  ),
-        ( '9', True  ),
-    ],
-    'rhel': [
-        ( '8', True  ),
-        ( '9', True  ),
-    ],
-    'ubuntu': [
-        ( '16.04', False ),
-        ( '18.04', True  ),
-        ( '18.10', False ),
-        ( '19.04', False ),
-        ( '19.10', False ),
-        ( '20.04', True  ),
-        ( '20.10', False ),
-        ( '21.04', False ),
-        ( '22.04', True  ),
-    ],
-    'debian': [
-        (  '8', False ),
-        (  '9', False ),
-        ( '10', True  ),
-        ( '11', True  ),
-        ( '12', True  ),
-    ],
-    'freebsd': [
-        ( '11.2', False ),
-        ( '11.4', False ),
-        ( '12.0', True  ),
-        ( '12.1', True  ),
-        ( '13.0', True  ),
-    ],
-    'alpine': [
-        ( '3.10', False ),
-        ( '3.11', False ),
-        ( '3.12', False ),
-        ( '3.13', False ),
-        ( '3.14', False ),
-        ( '3.15', True  ),
-        ( '3.16', True  ),
-        ( '3.17', True  ),
-    ],
-    'arch': []
+    'fedora': {
+        '27': False,
+        '28': False,
+        '29': False,
+        '30': False,
+        '31': False,
+        '32': False,
+        '33': False,
+        '34': False,
+        '35': False,
+        '36': False,
+        '37': True,
+        '38': True,
+    },
+    'centos': {
+        '7': False,
+        '8': False,
+        '9': False,
+    },
+    'rhel': {
+        '8': True,
+        '9': True,
+    },
+    'ubuntu': {
+        '16.04': False,
+        '18.04': True,
+        '18.10': False,
+        '19.04': False,
+        '19.10': False,
+        '20.04': True,
+        '20.10': False,
+        '21.04': False,
+        '22.04': True,
+    },
+    'debian': {
+         '8': False,
+         '9': False,
+        '10': True,
+        '11': True,
+        '12': True,
+    },
+    'freebsd': {
+        '11.2': False,
+        '11.4': False,
+        '12.0': False,
+        '12.1': False,
+        '13.0': True,
+    },
+    'alpine': {
+        '3.10': False,
+        '3.11': False,
+        '3.12': False,
+        '3.13': False,
+        '3.14': False,
+        '3.15': False,
+        '3.16': True,
+        '3.17': True,
+    },
+    'arch': {}
 }
 
 # pylint: disable=C0326
@@ -2990,12 +2990,20 @@ def _print_summary(results, features):
 def _check_system_revision(system, revision):
     if revision == 'all':
         return
-    revs = SYSTEMS[system]
+    if system not in SYSTEMS.keys():
+        msg = "hammer.py error: argument -s/--system: invalid choice: '%s' (choose from '%s')"
+        msg = msg % (revision, "', '".join(SYSTEMS.keys()))
+        log.error(msg)
+        sys.exit(1)
+    revs = SYSTEMS[system].keys()
     if revision not in revs:
         msg = "hammer.py error: argument -r/--revision: invalid choice: '%s' (choose from '%s')"
         msg = msg % (revision, "', '".join(revs))
-        print(msg)
+        log.error(msg)
         sys.exit(1)
+    if not SYSTEMS[system][revision]:
+        log.warning(f'{system} ${revision} is no longer officially supported. ' \
+                     'The script will continue in a best-effort manner.')
 
 
 def _prepare_ccache_dir(ccache_dir, system, revision):
@@ -3123,7 +3131,7 @@ def build_cmd(args):
     for provider in providers:
         for system in systems:
             if args.revision == 'all':
-                revisions = SYSTEMS[system]
+                revisions = SYSTEMS[system].keys()
             else:
                 revisions = [args.revision]
 
