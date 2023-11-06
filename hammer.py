@@ -1776,11 +1776,11 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'postgresql-server'])
-            if revision == '9':
-                packages.append('postgresql-server-devel ')
+            packages.extend(['postgresql', 'postgresql-server', 'postgresql-server-devel'])
+            if int(revision) <= 8:
+                packages.append('libpq-devel')
             else:
-                packages.append('postgresql-devel')
+                packages.append('postgresql-private-devel')
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
