@@ -34,13 +34,17 @@ struct MultiThreadingMgrTest : ::testing::Test {
     /// @param count The thread queue size.
     /// @param running The running threads count.
     /// @param in_cs Flag which indicates if running inside critical section.
+    /// @param enabled Flag which indicates if thread pool is started and running.
+    /// @param paused Flag which indicates if thread pool is started and paused.
     void checkState(bool mode, size_t size, size_t count, size_t running,
-                    bool in_cs = false) {
+                    bool in_cs = false, bool enabled = true, bool paused = false) {
         EXPECT_EQ(MultiThreadingMgr::instance().getMode(), mode);
         EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), size);
         EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), count);
         EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().size(), running);
         EXPECT_EQ(MultiThreadingMgr::instance().isInCriticalSection(), in_cs);
+        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().enabled(), enabled);
+        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().paused(), paused);
     }
 };
 

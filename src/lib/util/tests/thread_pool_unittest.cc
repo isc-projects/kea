@@ -559,10 +559,7 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
     uint32_t thread_count;
     CallBack call_back;
     ThreadPool<CallBack> thread_pool;
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
 
     items_count = 4;
     thread_count = 4;
@@ -575,38 +572,23 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
 
     // calling resume should do nothing if not started
     EXPECT_NO_THROW(thread_pool.resume());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
 
     // do it once again to check if it works
     EXPECT_NO_THROW(thread_pool.resume());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
 
     // calling pause should do nothing if not started
     EXPECT_NO_THROW(thread_pool.pause());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
 
     // do it once again to check if it works
     EXPECT_NO_THROW(thread_pool.pause());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
 
     // calling resume should do nothing if not started
     EXPECT_NO_THROW(thread_pool.resume());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
@@ -615,38 +597,23 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
         EXPECT_TRUE(ret);
     }
 
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, items_count, 0);
 
     // calling pause should do nothing if not started
     EXPECT_NO_THROW(thread_pool.pause());
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, items_count, 0);
 
     // calling resume should do nothing if not started
     EXPECT_NO_THROW(thread_pool.resume());
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, items_count, 0);
 
     // calling pause should do nothing if not started
     EXPECT_NO_THROW(thread_pool.pause());
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, items_count, 0);
 
     // calling start should create the threads and should keep the queued items
     EXPECT_NO_THROW(thread_pool.start(thread_count));
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
+    checkState(thread_pool, items_count, thread_count);
 
     // calling resume should resume threads
     EXPECT_NO_THROW(thread_pool.resume());
@@ -655,10 +622,7 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
 
     // wait for all items to be processed
     waitTasks(thread_count, items_count);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
+    checkState(thread_pool, 0, thread_count);
     // as each thread pool thread is still waiting on main to unblock, each
     // thread should have been registered in ids list
     checkIds(items_count);
@@ -673,17 +637,11 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
 
     // do it once again to check if it works
     EXPECT_NO_THROW(thread_pool.resume());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
+    checkState(thread_pool, 0, thread_count);
 
     // calling stop should clear all threads and should keep queued items
     EXPECT_NO_THROW(thread_pool.stop());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
 
     items_count = 64;
     thread_count = 16;
@@ -702,10 +660,7 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
         EXPECT_TRUE(ret);
     }
 
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, items_count, 0);
 
     // calling start should create the threads and should keep the queued items
     EXPECT_NO_THROW(thread_pool.start(thread_count));
@@ -714,10 +669,7 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
 
     // wait for all items to be processed
     waitTasks(thread_count, items_count);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
+    checkState(thread_pool, 0, thread_count);
     // all items should have been processed
     ASSERT_EQ(count(), items_count);
 
@@ -726,17 +678,11 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
 
     // calling pause should pause threads
     EXPECT_NO_THROW(thread_pool.pause());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
+    checkState(thread_pool, 0, thread_count);
 
     // do it once again to check if it works
     EXPECT_NO_THROW(thread_pool.pause());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
+    checkState(thread_pool, 0, thread_count);
 
     // prepare setup
     reset(thread_count);
@@ -748,10 +694,7 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
         EXPECT_TRUE(ret);
     }
 
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
+    checkState(thread_pool, items_count, thread_count);
 
     // calling resume should resume threads
     EXPECT_NO_THROW(thread_pool.resume());
@@ -760,10 +703,7 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
 
     // wait for all items to be processed
     waitTasks(thread_count, items_count);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
+    checkState(thread_pool, 0, thread_count);
     // all items should have been processed
     ASSERT_EQ(count(), items_count);
 
@@ -772,10 +712,7 @@ TEST_F(ThreadPoolTest, pauseAndResume) {
 
     // calling stop should clear all threads and should keep queued items
     EXPECT_NO_THROW(thread_pool.stop());
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
 }
 
 /// @brief test ThreadPool max queue size

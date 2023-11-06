@@ -393,8 +393,7 @@ private:
                 wait_cv_.notify_all();
             }
             // Wait for push or disable functions.
-            cv_.wait(lock, [&]() {return (!enabled_ || !queue_.empty());});
-            pause_cv_.wait(lock, [&]() {return (!enabled_ || !paused_);});
+            cv_.wait(lock, [&]() {return (!enabled_ || (!queue_.empty() && !paused_));});
             ++working_;
             if (!enabled_) {
                 return (Item());
@@ -463,7 +462,7 @@ private:
         void resume() {
             std::unique_lock<std::mutex> lock(mutex_);
             paused_ = false;
-            pause_cv_.notify_all();
+            cv_.notify_all();
         }
 
         /// @brief get queue length statistic
@@ -512,7 +511,6 @@ private:
                 enabled_ = false;
             }
             // Notify pop so that it can exit.
-            pause_cv_.notify_all();
             cv_.notify_all();
         }
 
@@ -549,9 +547,6 @@ private:
 
         /// @brief condition variable used to wait for all threads to be paused
         std::condition_variable wait_threads_cv_;
-
-        /// @brief condition variable used to pause threads
-        std::condition_variable pause_cv_;
 
         /// @brief the state of the queue
         /// The 'enabled' state corresponds to true value
