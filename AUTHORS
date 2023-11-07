@@ -27,7 +27,7 @@ Primary developers:
  - Vicky Risk (documentation)
  - Suzanne Goldlust (documentation)
  - Andrei Pavel (build system, documentation, hammer, netconf, perfdhcp,
-                 release engineering, shell scripts, testing, limits,
+                 radius, release engineering, shell scripts, testing, limits,
                  statistics)
  - Peter Davies (documentation)
  - Slawek Figiel (documentation, host reservations)

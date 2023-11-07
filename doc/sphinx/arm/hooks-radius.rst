@@ -334,25 +334,25 @@ takes many parameters. For example, this configuration could be used:
 
      "Dhcp4": {
 
-     # Your regular DHCPv4 configuration parameters here.
+     // Your regular DHCPv4 configuration parameters here.
 
      "hooks-libraries": [
      {
-         # Note that RADIUS requires host-cache for proper operation,
-         # so that library is loaded as well.
+         // Note that RADIUS requires host-cache for proper operation,
+         // so that library is loaded as well.
          "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
      },
      {
          "library": "/usr/local/lib/kea/hooks/libdhcp_radius.so",
          "parameters": {
 
-             # Specify where FreeRADIUS dictionary could be located
+             // Specify where FreeRADIUS dictionary could be located
              "dictionary": "/usr/local/etc/freeradius/dictionary",
 
-             # Specify which address to use to communicate with RADIUS servers
+             // Specify which address to use to communicate with RADIUS servers
              "bindaddr": "*",
              ...
-             # more RADIUS parameters here
+             // more RADIUS parameters here
          }
      } ],
      ...
@@ -367,63 +367,71 @@ sources.
 The RADIUS hook library supports the following global configuration
 flags, which correspond to FreeRADIUS client library options:
 
--  ``bindaddr`` (default ``*``) - specifies the address to be used by the
-   hook library in communication with RADIUS servers. The ``*`` special
+-  ``bindaddr`` (default ``"*"``) - specifies the address to be used by the
+   hook library in communication with RADIUS servers. The ``"*"`` special
    value tells the kernel to choose the address.
 
 -  ``canonical-mac-address`` (default ``false``) - specifies whether MAC
    addresses in attributes follow the canonical RADIUS format (lowercase
    pairs of hexadecimal digits separated by ``-``).
 
--  ``client-id-pop0`` (default ``false``) - used with ``flex-id``, removes the
-   leading zero (or pair of zeroes in DHCPv6) type in ``client-id``
-   (``duid`` in DHCPv6). Implied by ``client-id-printable``.
+-  ``client-id-pop0`` (default ``false``) - is used with
+   :ischooklib:`libdhcp_flex_id.so`. Removes the leading zero (or pair of zeroes
+   in DHCPv6) type in the client id (duid in DHCPv6). See
+   ``client-id-printable`` for any value implications when used in conjunction
+   with it.
 
 -  ``client-id-printable`` (default ``false``) - checks whether the
    ``client-id``/``duid`` content is printable and uses it as is instead of in
    hexadecimal. Implies ``client-id-pop0`` and ``extract-duid`` as 0 and 255 are
    not printable.
 
--  ``deadtime`` (default ``0``) - is a mechanism to try unresponsive servers
-   after responsive servers. Its value specifies the number of seconds
-   after which a server is considered not to have answered, so 0
-   disables the mechanism. As the asynchronous communication does not
-   use locks or atomics, it is recommended not to use this
-   feature when running in this mode.
+ - ``deadtime`` (default ``0``) - is a mechanism that helps in sorting the
+   servers such that the servers that have proved responsive so far are inquired
+   first, and the servers that have proved unresponsive are left at the end. The
+   deadtime value specifies the number of seconds after which a server is
+   considered unresponsive. 0 disables the mechanism.
 
 -  ``dictionary`` (default set by configure at build time) - is the
    attribute and value dictionary. Note that it is a critical parameter.
    Dictionary examples can be found in the FreeRADIUS repository under the etc/
    directory.
 
--  ``extract-duid`` (default ``true``) - extracts the embedded ``duid`` from an
-   RFC 4361-compliant DHCPv4 ``client-id``. Implied by ``client-id-printable``.
+-  ``extract-duid`` (default ``true``) - extracts the embedded duid from an
+   RFC-4361-compliant DHCPv4 client id. See ``client-id-printable`` for any
+   value implications when used in conjunction with it.
 
--  ``identifier-type4`` (default ``client-id``) - specifies the identifier
+-  ``identifier-type4`` (default ``"client-id"``) - specifies the identifier
    type to build the User-Name attribute. It should be the same as the
-   host identifier, and when :ischooklib:`libdhcp_flex_id.so` is used the
-   ``replace-client-id`` must be set to ``true``; ``client-id`` is used with
-   ``client-id-pop0``.
+   host identifier. When :ischooklib:`libdhcp_flex_id.so` is used, then
+   ``replace-client-id`` must be set to ``true`` and ``client-id`` must be used
+   with ``client-id-pop0`` enabled.
 
--  ``identifier-type6`` (default ``duid``) - specifies the identifier type to
+-  ``identifier-type6`` (default ``"duid"``) - specifies the identifier type to
    build the User-Name attribute. It should be the same as the host
-   identifier, and when :ischooklib:`libdhcp_flex_id.so` is used the
-   ``replace-client-id`` must be set to ``true``; ``duid`` is used with
-   ``client-id-pop0``.
+   identifier. When :ischooklib:`libdhcp_flex_id.so` is used, then
+   ``replace-client-id`` must be set to ``true`` and ``duid`` must be used with
+   ``client-id-pop0`` enabled.
 
--  ``realm`` (default ``""``) - is the default realm.
+-  ``reselect-subnet-address`` (default ``false``) - enables subnet reselection
+   according to the value of the Framed-IP-Address or, respectively,
+   the Framed-IPv6-Address attribute from the RADIUS access response. With this
+   flag enabled, if the IP address is not in range of the currently selected
+   subnet, but is in range of another subnet that is selectable with regards to
+   other criteria, the latter subnet is selected and used further in the lease
+   assignment process.
 
--  ``reselect-subnet-address`` (default ``false``) - uses the Kea reserved
-   address/RADIUS Framed-IP-Address or Framed-IPv6-Address to reselect
-   subnets where the address is not in the subnet range.
-
--  ``reselect-subnet-pool`` (default ``false``) - uses the Kea
-   ``client-class``/RADIUS Frame-Pool to reselect subnets where no available
-   pool can be found.
+-  ``reselect-subnet-pool`` (default ``false``) - enables subnet reselection
+   according to the value of the Framed-Pool attribute from the RADIUS access
+   response. With this flag enabled, if the currently selected subnet is not
+   guarded by the client class represented by the attribute value, but there is
+   another selectable subnet that is guarded by it, the latter subnet is
+   selected and used further in the lease assignment process.
+   This reselection is attempted first, and if successful, it prevents the
+   function of reselect-subnet-address from coming into effect.
 
 -  ``retries`` (default ``3``) - is the number of retries before trying the
-   next server. Note that it is not supported for asynchronous
-   communication.
+   next server. Not supported for asynchronous communication.
 
 -  ``session-history`` (default ``""``) - is the name of the file providing
    persistent storage for accounting session history.
@@ -431,32 +439,22 @@ flags, which correspond to FreeRADIUS client library options:
 -  ``timeout`` (default ``10``) - is the number of seconds during which a
    response is awaited.
 
-When ``reselect-subnet-pool`` or ``reselect-subnet-address`` is set to
-``true`` at the reception of RADIUS Access-Accept, the selected subnet is
-checked against the ``client-class`` name or the reserved address; if it
-does not match, another subnet is selected among matching subnets.
-
 Two services are supported:
 
--  ``access`` - the authentication service.
+-  access - the authorization service.
 
--  ``accounting`` - the accounting service.
+-  accounting - the accounting service.
 
 Configuration of services is divided into two parts:
 
--  Servers that define RADIUS servers that the library is expected to
+-  Servers that define RADIUS services that the library is expected to
    contact. Each server may have the following items specified:
 
-   -  ``name`` - specifies the IP address of the server (it is
-      possible to use a name which will be resolved, but it is not
-      recommended).
+   -  ``name`` - specifies the IP address of the server. A domain name may be
+      used and will be resolved at runtime.
 
-   -  ``port`` (default RADIUS authentication or accounting service) -
-      specifies the UDP port of the server. Note that the
-      FreeRADIUS client library by default uses ports 1812
-      (authorization) and 1813 (accounting). Some server implementations
-      use 1645 (authorization) and 1646 (accounting). The
-      ``port`` parameter may be used to adjust as needed.
+   -  ``port`` - specifies the UDP port of the server. By default, it is 1812
+      for access and 1813 for accounting.
 
    -  ``secret`` - authenticates messages.
 
@@ -497,67 +495,68 @@ following snippet could be used:
 
 ::
 
-   "parameters": {
+    {
+      "parameters": {
 
-       # Other RADIUS parameters here
+        // Other RADIUS parameters here
 
-       "access": {
+        "access": {
 
-           # This starts the list of access servers
-           "servers": [
-           {
-               # These are parameters for the first (and only) access server
-               "name": "127.0.0.1",
-               "port": 1812,
-               "secret": "xyz123"
-           }
-           # Additional access servers could be specified here
-           ],
+          // This starts the list of access servers
+          "servers": [
+            {
+              // These are parameters for the first (and only) access server
+              "name": "127.0.0.1",
+              "port": 1812,
+              "secret": "xyz123"
+            }
+          // Additional access servers could be specified here
+          ],
 
-           # This defines a list of additional attributes Kea will send to each
-           # access server in Access-Request.
-           "attributes": [
-           {
-               # This attribute is identified by name (must be present in the
-               # dictionary) and has static value (i.e. the same value will be
-               # sent to every server for every packet)
-               "name": "Password",
-               "data": "mysecretpassword"
-           },
-           {
-               # It is also possible to specify an attribute using its type,
-               # rather than a name. 77 is Connect-Info. The value is specified
-               # using hex. Again, this is a static value. It will be sent the
-               # same for every packet and to every server.
-               "type": 77,
-               "raw": "65666a6a71"
-           },
-           {
-               # This example shows how an expression can be used to send dynamic
-               # value. The expression (see Section 13) may take any value from
-               # the incoming packet or even its metadata (e.g. the interface
-               # it was received over from)
+          // This defines a list of additional attributes Kea will send to each
+          // access server in Access-Request.
+          "attributes": [
+            {
+              // This attribute is identified by name (must be present in the
+              // dictionary) and has static value (i.e. the same value will be
+              // sent to every server for every packet)
+              "name": "Password",
+              "data": "mysecretpassword"
+            },
+            {
+              // It is also possible to specify an attribute using its type,
+              // rather than a name. 77 is Connect-Info. The value is specified
+              // using hex. Again, this is a static value. It will be sent the
+              // same for every packet and to every server.
+              "type": 77,
+              "raw": "65666a6a71"
+            },
+            {
+               // This example shows how an expression can be used to send dynamic
+               // value. The expression (see Section 13) may take any value from
+               // the incoming packet or even its metadata (e.g. the interface
+               // it was received over from)
                "name": "Configuration-Token",
                "expr": "hexstring(pkt4.mac,':')"
-           }
-           ] # End of attributes
-       }, # End of access
+            }
+          ] // End of attributes
+        }, // End of access
 
-       # Accounting parameters.
-       "accounting": {
-           # This starts the list of accounting servers
-           "servers": [
-           {
-               # These are parameters for the first (and only) accounting server
-               "name": "127.0.0.1",
-               "port": 1813,
-               "secret": "sekret"
-           }
-           # Additional accounting servers could be specified here
-           ]
-       }
-
-   }
+        // Accounting parameters.
+        "accounting": {
+          // This starts the list of accounting servers
+          "servers": [
+            {
+              // These are parameters for the first (and only) accounting server
+              "name": "127.0.0.1",
+              "port": 1813,
+              "secret": "sekret"
+            }
+            // Additional accounting servers could be specified here
+          ]
+        }
+      }
+    }
 
 Customization is sometimes required for certain attributes by devices belonging
 to various vendors. This is a great way to leverage the expression evaluation
@@ -599,8 +598,8 @@ And here's how to specify period-separated hexadecimal notation (``dead.beef.caf
    }
 
 
-For the RADIUS hook library to operate properly in DHCPv4,
-the Host Cache hook library must also be loaded. The reason for this
+For :ischooklib:`libdhcp_radius.so` to operate properly in DHCPv4,
+:ischooklib:`libdhcp_host_cache.so` must also be loaded. The reason for this
 is somewhat complex. In a typical deployment, the DHCP clients send
 their packets via DHCP relay, which inserts certain Relay Agent
 Information options, such as ``circuit-id`` or ``remote-id``. The values of
@@ -617,7 +616,7 @@ later when sending accounting messages.
 This mechanism is implemented based on user context in host
 reservations. (See :ref:`user-context` and :ref:`user-context-hooks` for
 details.) The host-cache mechanism allows the information retrieved by
-RADIUS to be stored and later used for sending accounting and access
+RADIUS to be stored and later used for sending access and accounting
 queries to the RADIUS server. In other words, the host-cache mechanism
 is mandatory, unless administrators do not want RADIUS communication for messages
 other than Discover and the first Request from each client.
@@ -628,3 +627,10 @@ other than Discover and the first Request from each client.
    ``early-global-reservations-lookup`` global parameter i.e.
    setting the parameter to ``true`` raises an error when the
    hook library is loaded.
+
+.. note::
+
+   Currently the RADIUS hook library is incompatible with the
+   multi-subnet shared networks that have host reservations other
+   than global. Loading the RADIUS hook library in a Kea DHCP server
+   that has this configuration raises an error.
