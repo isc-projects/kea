@@ -13,6 +13,7 @@ rst_arm_sources += arm/dhcp4-srv.rst
 rst_arm_sources += arm/dhcp6-srv.rst
 rst_arm_sources += arm/ext-gss-tsig.rst
 rst_arm_sources += arm/ext-netconf.rst
+rst_arm_sources += arm/ext-radius.rst
 rst_arm_sources += arm/hammer.rst
 rst_arm_sources += arm/hooks-bootp.rst
 rst_arm_sources += arm/hooks-cb-cmds.rst

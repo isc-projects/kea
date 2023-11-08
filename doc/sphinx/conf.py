@@ -105,6 +105,7 @@ exclude_patterns = [
     'arm/hammer.rst',
     'arm/ext-netconf.rst',
     'arm/ext-gss-tsig.rst',
+    'arm/ext-radius.rst',
     'grammar/grammar-ca-parser.rst',
     'grammar/grammar-d2-parser.rst',
     'grammar/grammar-dhcp4-parser.rst',

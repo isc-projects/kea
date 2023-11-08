@@ -8,3 +8,4 @@ capabilities and how to configure them.
 
 .. include:: ext-netconf.rst
 .. include:: ext-gss-tsig.rst
+.. include:: ext-radius.rst
