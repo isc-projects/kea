@@ -219,7 +219,7 @@ private:
         sigaddset(&sset, SIGHUP);
         sigaddset(&sset, SIGTERM);
         pthread_sigmask(SIG_BLOCK, &sset, &osset);
-        queue_.enable();
+        queue_.enable(thread_count);
         try {
             for (uint32_t i = 0; i < thread_count; ++i) {
                 threads_.push_back(boost::make_shared<std::thread>(&ThreadPool::run, this));
@@ -285,18 +285,6 @@ private:
         ~ThreadPoolQueue() {
             disable();
             clear();
-        }
-
-        /// @brief register thread so that it can be taken into account
-        void registerThread() {
-            std::lock_guard<std::mutex> lock(mutex_);
-            ++working_;
-        }
-
-        /// @brief unregister thread so that it can be ignored
-        void unregisterThread() {
-            std::lock_guard<std::mutex> lock(mutex_);
-            --working_;
         }
 
         /// @brief set maximum number of work items in the queue
@@ -394,10 +382,10 @@ private:
             }
             // Wait for push or disable functions.
             cv_.wait(lock, [&]() {return (!enabled_ || (!queue_.empty() && !paused_));});
-            ++working_;
             if (!enabled_) {
                 return (Item());
             }
+            ++working_;
             size_t length = queue_.size();
             stat10 = stat10 * CEXP10 + (1 - CEXP10) * length;
             stat100 = stat100 * CEXP100 + (1 - CEXP100) * length;
@@ -496,9 +484,12 @@ private:
         /// @brief enable the queue
         ///
         /// Sets the queue state to 'enabled'
-        void enable() {
+        ///
+        /// @param thread_count number of working threads
+        void enable(uint32_t thread_count) {
             std::lock_guard<std::mutex> lock(mutex_);
             enabled_ = true;
+            working_ = thread_count;
         }
 
         /// @brief disable the queue
@@ -577,12 +568,7 @@ private:
 
     /// @brief run function of each thread
     void run() {
-        bool work = queue_.enabled();
-        if (!work) {
-            return;
-        }
-        queue_.registerThread();
-        for (; work; work = queue_.enabled()) {
+        for (bool work = true; work; work = queue_.enabled()) {
             WorkItemPtr item = queue_.pop();
             if (item) {
                 try {
@@ -592,7 +578,6 @@ private:
                 }
             }
         }
-        queue_.unregisterThread();
     }
 
     /// @brief list of worker threads

@@ -37,7 +37,7 @@ struct MultiThreadingMgrTest : ::testing::Test {
     /// @param enabled Flag which indicates if thread pool is started and running.
     /// @param paused Flag which indicates if thread pool is started and paused.
     void checkState(bool mode, size_t size, size_t count, size_t running,
-                    bool in_cs = false, bool enabled = true, bool paused = false) {
+                    bool in_cs = false, bool enabled = false, bool paused = false) {
         EXPECT_EQ(MultiThreadingMgr::instance().getMode(), mode);
         EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), size);
         EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), count);
@@ -114,13 +114,13 @@ TEST_F(MultiThreadingMgrTest, applyConfig) {
     checkState(false, 0, 0, 0);
     // enable MT with 16 threads and queue size 256
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 16, 256));
-    checkState(true, 16, 256, 16);
+    checkState(true, 16, 256, 16, false, true);
     // disable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 16, 256));
     checkState(false, 0, 0, 0);
     // enable MT with auto scaling
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 0, 0));
-    checkState(true, MultiThreadingMgr::detectThreadCount(), 0, MultiThreadingMgr::detectThreadCount());
+    checkState(true, MultiThreadingMgr::detectThreadCount(), 0, MultiThreadingMgr::detectThreadCount(), false, true);
     // disable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 0, 0));
     checkState(false, 0, 0, 0);
@@ -158,32 +158,32 @@ TEST_F(MultiThreadingMgrTest, criticalSection) {
     checkState(false, 0, 0, 0);
     // apply multi-threading configuration with 16 threads and queue size 256
     MultiThreadingMgr::instance().apply(true, 16, 256);
-    checkState(true, 16, 256, 16);
+    checkState(true, 16, 256, 16, false, true);
     // use scope to test constructor and destructor
     {
         MultiThreadingCriticalSection cs;
-        checkState(true, 16, 256, 0, true);
+        checkState(true, 16, 256, 16, true, true, true);
         // use scope to test constructor and destructor
         {
             MultiThreadingCriticalSection inner_cs;
-            checkState(true, 16, 256, 0, true);
+            checkState(true, 16, 256, 16, true, true, true);
         }
-        checkState(true, 16, 256, 0, true);
+        checkState(true, 16, 256, 16, true, true, true);
     }
-    checkState(true, 16, 256, 16);
+    checkState(true, 16, 256, 16, false, true);
     // use scope to test constructor and destructor
     {
         MultiThreadingCriticalSection cs;
-        checkState(true, 16, 256, 0, true);
+        checkState(true, 16, 256, 16, true, true, true);
         // apply multi-threading configuration with 64 threads and queue size 4
         MultiThreadingMgr::instance().apply(true, 64, 4);
         checkState(true, 64, 4, 0, true);
     }
-    checkState(true, 64, 4, 64);
+    checkState(true, 64, 4, 64, false, true);
     // use scope to test constructor and destructor
     {
         MultiThreadingCriticalSection cs;
-        checkState(true, 64, 4, 0, true);
+        checkState(true, 64, 4, 64, true, true, true);
         // apply multi-threading configuration with 0 threads
         MultiThreadingMgr::instance().apply(false, 64, 256);
         checkState(false, 0, 0, 0, true);
@@ -209,7 +209,7 @@ TEST_F(MultiThreadingMgrTest, criticalSection) {
         MultiThreadingMgr::instance().apply(true, 64, 256);
         checkState(true, 64, 256, 0, true);
     }
-    checkState(true, 64, 256, 64);
+    checkState(true, 64, 256, 64, false, true);
     // apply multi-threading configuration with 0 threads
     MultiThreadingMgr::instance().apply(false, 0, 0);
     checkState(false, 0, 0, 0);
