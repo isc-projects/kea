@@ -17,11 +17,30 @@ using namespace isc;
 
 /// @brief Fixture used to reset multi-threading before and after each test.
 struct MultiThreadingMgrTest : ::testing::Test {
+    /// @brief Constructor.
     MultiThreadingMgrTest() {
         MultiThreadingMgr::instance().apply(false, 0, 0);
     }
+
+    /// @brief Destructor.
     ~MultiThreadingMgrTest() {
         MultiThreadingMgr::instance().apply(false, 0, 0);
+    }
+
+    /// @brief Check thread pool state.
+    ///
+    /// @param mode The multi-threading mode.
+    /// @param size The thread pool size.
+    /// @param count The thread queue size.
+    /// @param running The running threads count.
+    /// @param in_cs Flag which indicates if running inside critical section.
+    void checkState(bool mode, size_t size, size_t count, size_t running,
+                    bool in_cs = false) {
+        EXPECT_EQ(MultiThreadingMgr::instance().getMode(), mode);
+        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), size);
+        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), count);
+        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().size(), running);
+        EXPECT_EQ(MultiThreadingMgr::instance().isInCriticalSection(), in_cs);
     }
 };
 
@@ -88,64 +107,24 @@ TEST_F(MultiThreadingMgrTest, detectThreadCount) {
 
 /// @brief Verifies that apply settings works.
 TEST_F(MultiThreadingMgrTest, applyConfig) {
-    // get the thread pool
-    auto& thread_pool = MultiThreadingMgr::instance().getThreadPool();
-    // MT should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
-    // default thread count is 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    // thread pool should be stopped
-    EXPECT_EQ(thread_pool.size(), 0);
+    checkState(false, 0, 0, 0);
     // enable MT with 16 threads and queue size 256
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 16, 256));
-    // MT should be enabled
-    EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
-    // thread count should be 16
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 16);
-    // queue size should be 256
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
-    // thread pool should be started
-    EXPECT_EQ(thread_pool.size(), 16);
+    checkState(true, 16, 256, 16);
     // disable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 16, 256));
-    // MT should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
-    // thread count should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    // queue size should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
-    // thread pool should be stopped
-    EXPECT_EQ(thread_pool.size(), 0);
+    checkState(false, 0, 0, 0);
     // enable MT with auto scaling
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 0, 0));
-    // MT should be enabled
-    EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
-    // thread count should be detected automatically
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), MultiThreadingMgr::detectThreadCount());
-    // thread pool should be started
-    EXPECT_EQ(thread_pool.size(), MultiThreadingMgr::detectThreadCount());
+    checkState(true, MultiThreadingMgr::detectThreadCount(), 0, MultiThreadingMgr::detectThreadCount());
     // disable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 0, 0));
-    // MT should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
-    // thread count should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    // thread pool should be stopped
-    EXPECT_EQ(thread_pool.size(), 0);
+    checkState(false, 0, 0, 0);
 }
 
 /// @brief Verifies that the critical section flag works.
 TEST_F(MultiThreadingMgrTest, criticalSectionFlag) {
-    // get the thread pool
-    auto& thread_pool = MultiThreadingMgr::instance().getThreadPool();
-    // MT should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
-    // critical section should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().isInCriticalSection());
-    // thread count should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    // thread pool should be stopped
-    EXPECT_EQ(thread_pool.size(), 0);
+    checkState(false, 0, 0, 0);
     // exit critical section
     EXPECT_THROW(MultiThreadingMgr::instance().exitCriticalSection(), InvalidOperation);
     // critical section should be disabled
@@ -156,14 +135,7 @@ TEST_F(MultiThreadingMgrTest, criticalSectionFlag) {
     EXPECT_TRUE(MultiThreadingMgr::instance().isInCriticalSection());
     // enable MT with 16 threads and queue size 256
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(true, 16, 256));
-    // MT should be enabled
-    EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
-    // thread count should be 16
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 16);
-    // queue size should be 256
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
-    // thread pool should be stopped
-    EXPECT_EQ(thread_pool.size(), 0);
+    checkState(true, 16, 256, 0, true);
     // exit critical section
     EXPECT_NO_THROW(MultiThreadingMgr::instance().exitCriticalSection());
     // critical section should be disabled
@@ -174,164 +146,69 @@ TEST_F(MultiThreadingMgrTest, criticalSectionFlag) {
     EXPECT_FALSE(MultiThreadingMgr::instance().isInCriticalSection());
     // disable MT
     EXPECT_NO_THROW(MultiThreadingMgr::instance().apply(false, 0, 0));
-    // MT should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
-    // thread count should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    // queue size should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
-    // thread pool should be stopped
-    EXPECT_EQ(thread_pool.size(), 0);
+    checkState(false, 0, 0, 0);
 }
 
 /// @brief Verifies that the critical section works.
 TEST_F(MultiThreadingMgrTest, criticalSection) {
-    // get the thread pool instance
-    auto& thread_pool = MultiThreadingMgr::instance().getThreadPool();
-    // thread pool should be stopped
-    EXPECT_EQ(thread_pool.size(), 0);
+    checkState(false, 0, 0, 0);
     // apply multi-threading configuration with 16 threads and queue size 256
     MultiThreadingMgr::instance().apply(true, 16, 256);
-    // thread count should match
-    EXPECT_EQ(thread_pool.size(), 16);
-    // thread count should be 16
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 16);
-    // queue size should be 256
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
+    checkState(true, 16, 256, 16);
     // use scope to test constructor and destructor
     {
         MultiThreadingCriticalSection cs;
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 16
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 16);
-        // queue size should be 256
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
+        checkState(true, 16, 256, 0, true);
         // use scope to test constructor and destructor
         {
             MultiThreadingCriticalSection inner_cs;
-            // thread pool should be stopped
-            EXPECT_EQ(thread_pool.size(), 0);
-            // thread count should be 16
-            EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 16);
-            // queue size should be 256
-            EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
+            checkState(true, 16, 256, 0, true);
         }
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 16
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 16);
-        // queue size should be 256
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
+        checkState(true, 16, 256, 0, true);
     }
-    // thread count should match
-    EXPECT_EQ(thread_pool.size(), 16);
-    // thread count should be 16
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 16);
-    // queue size should be 256
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
+    checkState(true, 16, 256, 16);
     // use scope to test constructor and destructor
     {
         MultiThreadingCriticalSection cs;
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 16
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 16);
-        // queue size should be 256
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
+        checkState(true, 16, 256, 0, true);
         // apply multi-threading configuration with 64 threads and queue size 4
         MultiThreadingMgr::instance().apply(true, 64, 4);
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 64
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 64);
-        // queue size should be 4
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 4);
+        checkState(true, 64, 4, 0, true);
     }
-    // thread count should match
-    EXPECT_EQ(thread_pool.size(), 64);
-    // thread count should be 64
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 64);
-    // queue size should be 4
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 4);
+    checkState(true, 64, 4, 64);
     // use scope to test constructor and destructor
     {
         MultiThreadingCriticalSection cs;
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 64
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 64);
-        // queue size should be 4
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 4);
+        checkState(true, 64, 4, 0, true);
         // apply multi-threading configuration with 0 threads
         MultiThreadingMgr::instance().apply(false, 64, 256);
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 0
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-        // queue size should be 0
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
+        checkState(false, 0, 0, 0, true);
     }
-    // thread count should match
-    EXPECT_EQ(thread_pool.size(), 0);
-    // thread count should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    // queue size should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
+    checkState(false, 0, 0, 0);
     // use scope to test constructor and destructor
     {
         MultiThreadingCriticalSection cs;
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 0
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-        // queue size should be 0
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
+        checkState(false, 0, 0, 0, true);
         // use scope to test constructor and destructor
         {
             MultiThreadingCriticalSection inner_cs;
-            // thread pool should be stopped
-            EXPECT_EQ(thread_pool.size(), 0);
-            // thread count should be 0
-            EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-            // queue size should be 0
-            EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
+            checkState(false, 0, 0, 0, true);
         }
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 0
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-        // queue size should be 0
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
+        checkState(false, 0, 0, 0, true);
     }
-    // thread count should match
-    EXPECT_EQ(thread_pool.size(), 0);
-    // thread count should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    // queue size should be 0
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
+    checkState(false, 0, 0, 0);
     // use scope to test constructor and destructor
     {
         MultiThreadingCriticalSection cs;
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
+        checkState(false, 0, 0, 0, true);
         // apply multi-threading configuration with 64 threads
         MultiThreadingMgr::instance().apply(true, 64, 256);
-        // thread pool should be stopped
-        EXPECT_EQ(thread_pool.size(), 0);
-        // thread count should be 64
-        EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 64);
-        // queue size should be 256
-        EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
+        checkState(true, 64, 256, 0, true);
     }
-    // thread count should match
-    EXPECT_EQ(thread_pool.size(), 64);
-    // thread count should be 64
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 64);
-    // queue size should be 256
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 256);
+    checkState(true, 64, 256, 64);
     // apply multi-threading configuration with 0 threads
     MultiThreadingMgr::instance().apply(false, 0, 0);
+    checkState(false, 0, 0, 0);
 }
 
 /// @brief Checks that the lock works only when multi-threading is enabled and

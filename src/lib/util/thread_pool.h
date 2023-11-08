@@ -417,15 +417,13 @@ private:
         void clear() {
             std::lock_guard<std::mutex> lock(mutex_);
             queue_ = QueueContainer();
-            working_ = 0;
-            wait_cv_.notify_all();
         }
 
         /// @brief enable the queue
         ///
         /// Sets the queue state to 'enabled'
         ///
-        /// @param number of working threads
+        /// @param thread_count number of working threads
         void enable(uint32_t thread_count) {
             std::lock_guard<std::mutex> lock(mutex_);
             enabled_ = true;
@@ -466,7 +464,7 @@ private:
         /// @brief condition variable used to wait for all items to be processed
         std::condition_variable wait_cv_;
 
-        /// @brief the sate of the queue
+        /// @brief the state of the queue
         /// The 'enabled' state corresponds to true value
         /// The 'disabled' state corresponds to false value
         std::atomic<bool> enabled_;
@@ -490,7 +488,7 @@ private:
 
     /// @brief run function of each thread
     void run() {
-        while (queue_.enabled()) {
+        for (bool work = true; work; work = queue_.enabled()) {
             WorkItemPtr item = queue_.pop();
             if (item) {
                 try {

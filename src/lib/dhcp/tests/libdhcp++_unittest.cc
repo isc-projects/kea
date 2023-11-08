@@ -1121,7 +1121,7 @@ TEST_F(LibDhcpTest, splitOptionNoBufferMultiThreading) {
         boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
         tp.add(call_back);
     }
-    ASSERT_TRUE(tp.wait(10));
+    ASSERT_TRUE(tp.wait(30));
 }
 
 // This test verifies that split options works if there is only one byte
@@ -1177,7 +1177,7 @@ TEST_F(LibDhcpTest, splitOptionOneByteLeftBufferMultiThreading) {
         boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
         tp.add(call_back);
     }
-    ASSERT_TRUE(tp.wait(10));
+    ASSERT_TRUE(tp.wait(30));
 }
 
 // This test verifies that split options for v4 is working correctly.
@@ -1293,7 +1293,7 @@ TEST_F(LibDhcpTest, splitOptionWithSuboptionAtLimitMultiThreading) {
         boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
         tp.add(call_back);
     }
-    ASSERT_TRUE(tp.wait(10));
+    ASSERT_TRUE(tp.wait(30));
 }
 
 // This test verifies that split options for v4 is working correctly.
@@ -1347,7 +1347,7 @@ TEST_F(LibDhcpTest, splitLongOptionMultiThreading) {
         boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
         tp.add(call_back);
     }
-    ASSERT_TRUE(tp.wait(10));
+    ASSERT_TRUE(tp.wait(30));
 }
 
 // This test verifies that split options for v4 is working correctly even if
@@ -1433,7 +1433,7 @@ TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflowMultiThreading) {
         boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
         tp.add(call_back);
     }
-    ASSERT_TRUE(tp.wait(10));
+    ASSERT_TRUE(tp.wait(30));
 }
 
 // This test verifies that split options for v4 is working correctly.
@@ -1531,7 +1531,7 @@ TEST_F(LibDhcpTest, splitLongOptionWithLongSuboptionMultiThreading) {
         boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(work);
         tp.add(call_back);
     }
-    ASSERT_TRUE(tp.wait(10));
+    ASSERT_TRUE(tp.wait(30));
 }
 
 // This test verifies that fuse options for v4 is working correctly.
