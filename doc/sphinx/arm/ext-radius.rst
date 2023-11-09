@@ -442,4 +442,55 @@ Somewhat tangential to lease allocation, and not shown in the diagrams above,
 is the ``command_processed`` callout, which sends Accounting-Request messagess
 when a lease command is received.
 
+Differences Between RADIUS Hook Libraries Prior To 2.4.0 and As Of 2.6.0
+------------------------------------------------------------------------
 
+The RADIUS hook library in 2.4.0 and prior versions relied on freeradius-client
+to function. Starting with 2.6.0 and onwards, the RADIUS hook library is
+standalone with its own RADIUS client implementation and its own RADIUS
+dictionary. There are differences:
+
+.. list-table::
+    :header-rows: 1
+
+    * - Feature
+
+      - Old
+
+      - New
+
+    * - Support for attribute data types
+
+      - string, ipaddr, ipv4prefix, integer, integer64, date, ifid, ipv6addr, ipv6prefix, tlv, abinary, byte, ether, short, signed, octets
+
+      - string, ipaddr, integer, date, ipv6addr, ipv6prefix
+
+    * - Names of standard attributes
+
+      - Taken from the FreeRADIUS dictionary.
+
+      - Taken from the Kea RADIUS dictioanry, names may be different, but there is an aliasing mechanism built into the library e.g. ``Password`` becomes ``User-Password``.
+
+    * - Support for including dictionaries inside dictionaries
+
+      - Yes
+
+      - No
+
+    * - Support for vendor attributes
+
+      - Yes
+
+      - No
+
+    * - Case Sensitivity for Attribute Names
+
+      - Case-sensitive
+
+      - Case-insensitive
+
+    * - Case Sensitivity for Attribute Values
+
+      - Case-sensitive
+
+      - Case-insensitive
