@@ -110,7 +110,7 @@ This diagram illustrates the different lease states, including the ``free`` one,
 Checking for Host Reservations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The allocation engine checks for host reservations after selecting a subnet; this diagram shows the details of that operation. Subnet selection is based on network topology. Host reservations are primarily for assigning options, and options are evaluated after subnet selection. However, if client classes are added in the host reservation, those are also evaluated against the selected subnet in a further check (added in Kea 1.7.10). Kea includes several options to skip checking for host reservations, which can make this process much more efficient if reservations are not being used.
+The allocation engine checks for host reservations after selecting a subnet. The following diagram shows the details of that operation. Subnet selection is based on network topology. Host reservations are primarily for assigning options, and options are evaluated after subnet selection. However, if client classes are added in the host reservation, those are also evaluated against the selected subnet in a further check. Kea includes several options to skip checking for host reservations, which can make this process much more efficient if reservations are not being used.
 
 .. note::
 
@@ -152,3 +152,8 @@ How Kea Recognizes the Same Client In Different DHCP Messages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. figure:: uml/recognizing-same-client.*
+
+RADIUS workflows for lease allocation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: uml/radius.*

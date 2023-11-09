@@ -5,8 +5,8 @@ RADIUS
 
 .. _radius-overview:
 
-Overview
---------
+RADIUS Overview
+---------------
 
 This hook library allows Kea to interact with two types of RADIUS
 services: access and accounting. Although the most common DHCP and RADIUS
@@ -47,8 +47,8 @@ specified for a particular class.
 
 .. _hooks-radius-config:
 
-RADIUS Hook Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
+RADIUS Hook Library Configuration
+---------------------------------
 
 The RADIUS hook is a library that must be loaded by either :iscman:`kea-dhcp4` or
 :iscman:`kea-dhcp6` servers. Unlike some other available hook libraries, this one
@@ -358,3 +358,15 @@ other than Discover and the first Request from each client.
    multi-subnet shared networks that have host reservations other
    than global. Loading the RADIUS hook library in a Kea DHCP server
    that has this configuration raises an error.
+
+RADIUS workflows for lease allocation
+-------------------------------------
+
+The following diagrams show a high level view of how RADIUS assists with the
+lease allocation process in :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`.
+
+.. figure:: ../uml/radius.*
+
+Somewhat tangential to lease allocation, and not shown in the diagrams above,
+is the ``command_processed`` callout, which sends Accounting-Request messagess
+when a lease command is received.
