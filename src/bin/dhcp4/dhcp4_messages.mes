@@ -1073,3 +1073,9 @@ in a network or more likely a device that is using an address that it is not
 supposed to use. The server will fully recover from this situation, but if
 the underlying problem of a misconfigured or rogue device is not solved, this
 address may be declined again in the future.
+
+% DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING hook callouts did not set an argument as expected %1 for %2
+This debug message is printed when none of the callouts installed on the
+lease4_offer hook point set an expected argument in the callout status.
+This is a programming error in the installed hook libraries.  Details of
+the argument and the query in process at the time are provided log arguments.

@@ -1502,6 +1502,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                                                                   static_cast<int64_t>(1));
                         rsp.reset();
                         return;
+
                     }
                 }
 
@@ -1513,8 +1514,17 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                     hook_label, query,
                     [this, callout_handle, query, rsp, callout_handle_state, hook_idx, ctx]() mutable {
                         if (hook_idx == Hooks.hook_index_lease4_offer_) {
-                            auto status = callout_handle->getStatus();
-                            if (status == CalloutHandle::NEXT_STEP_DROP) {
+                            bool offer_address_in_use = false;
+                            try {
+                                callout_handle->getArgument("offer-address-in-use", offer_address_in_use);
+                            } catch (const NoSuchArgument& ex) {
+                                /// @todo consider logging this
+                                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                                          DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING)
+                                          .arg(query->getLabel());
+                            }
+
+                            if (offer_address_in_use) {
                                 Lease4Ptr lease = ctx->new_lease_;
                                 bool lease_exists = (ctx->offer_lft_ > 0);
                                 if (MultiThreadingMgr::instance().getMode()) {

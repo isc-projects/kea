@@ -84,6 +84,7 @@ extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_SEND_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_DDNS_UPDATE;
 extern const isc::log::MessageID DHCP4_HOOK_DECLINE_SKIP;
+extern const isc::log::MessageID DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING;
 extern const isc::log::MessageID DHCP4_HOOK_LEASE4_OFFER_DROP;
 extern const isc::log::MessageID DHCP4_HOOK_LEASE4_OFFER_PARK;
 extern const isc::log::MessageID DHCP4_HOOK_LEASE4_OFFER_PARKING_LOT_FULL;
