@@ -52,35 +52,37 @@ RADIUS Hook Library Configuration
 
 The RADIUS hook is a library that must be loaded by either :iscman:`kea-dhcp4` or
 :iscman:`kea-dhcp6` servers. Unlike some other available hook libraries, this one
-takes many parameters. For example, this configuration could be used:
+takes many parameters. For example, this configuration can be used:
 
 ::
 
-     "Dhcp4": {
+    {
+      "Dhcp4": {
 
-     // Your regular DHCPv4 configuration parameters here.
+        // Your regular DHCPv4 configuration parameters goes here.
 
-     "hooks-libraries": [
-     {
-         // Note that RADIUS requires host-cache for proper operation,
-         // so that library is loaded as well.
-         "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
-     },
-     {
-         "library": "/usr/local/lib/kea/hooks/libdhcp_radius.so",
-         "parameters": {
+        "hooks-libraries": [
+          {
+            // Note that RADIUS requires host-cache for proper operation,
+            // so that library is loaded as well.
+            "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
+          },
+          {
+            "library": "/usr/local/lib/kea/hooks/libdhcp_radius.so",
+            "parameters": {
 
-             // Specify where FreeRADIUS dictionary could be located
-             "dictionary": "/usr/local/etc/freeradius/dictionary",
+              // Specify where the dictionary is located.
+              "dictionary": "/etc/kea/radius/dictionary",
 
-             // Specify which address to use to communicate with RADIUS servers
-             "bindaddr": "*",
-             ...
-             // more RADIUS parameters here
-         }
-     } ],
-     ...
-     }
+              // Specify which address to use to communicate with RADIUS servers
+              "bindaddr": "*"
+
+              // More RADIUS parameters go here.
+            }
+          }
+        ]
+      }
+    }
 
 RADIUS is a complicated environment. As such, it is not feasible
 to provide a default configuration that works for everyone.
@@ -89,7 +91,7 @@ features. Please see ``doc/examples/kea4/hooks-radius.json`` in the Kea
 sources.
 
 The RADIUS hook library supports the following global configuration
-flags, which correspond to FreeRADIUS client library options:
+flags:
 
 -  ``bindaddr`` (default ``"*"``) - specifies the address to be used by the
    hook library in communication with RADIUS servers. The ``"*"`` special
@@ -116,10 +118,9 @@ flags, which correspond to FreeRADIUS client library options:
    deadtime value specifies the number of seconds after which a server is
    considered unresponsive. 0 disables the mechanism.
 
--  ``dictionary`` (default set by configure at build time) - is the
+-  ``dictionary`` (default ``"/etc/kea/radius/dictionary"``) - is the
    attribute and value dictionary. Note that it is a critical parameter.
-   Dictionary examples can be found in the FreeRADIUS repository under the etc/
-   directory.
+   A dictionary is provided by Kea and is set by default.
 
 -  ``extract-duid`` (default ``true``) - extracts the embedded duid from an
    RFC-4361-compliant DHCPv4 client id. See ``client-id-printable`` for any
@@ -198,8 +199,7 @@ Configuration of services is divided into two parts:
       provided, and the attribute must be defined in the dictionary.
 
    -  ``data`` - the first of three ways to specify the attribute
-      content. The data entry is parsed by the FreeRADIUS library, so
-      values defined in the dictionary of the attribute may be used.
+      content.
 
    -  ``raw`` - the second of three ways to specify the attribute
       content; it specifies the content in hexadecimal. Note that it
@@ -213,9 +213,9 @@ Configuration of services is divided into two parts:
       is restricted to the access service.
 
 For example, to specify a single access server available on localhost
-that uses "xyz123" as a secret, and tell Kea to send three additional
-attributes (Password, Connect-Info, and Configuration-Token), the
-following snippet could be used:
+that uses ``"xyz123"`` as a secret, and tell Kea to send three additional
+attributes (``User-Password``, ``Connect-Info``, and ``Configuration-Token``),
+the following snippet could be used:
 
 ::
 
@@ -244,7 +244,7 @@ following snippet could be used:
               // This attribute is identified by name (must be present in the
               // dictionary) and has static value (i.e. the same value will be
               // sent to every server for every packet)
-              "name": "Password",
+              "name": "User-Password",
               "data": "mysecretpassword"
             },
             {
@@ -359,7 +359,78 @@ other than Discover and the first Request from each client.
    than global. Loading the RADIUS hook library in a Kea DHCP server
    that has this configuration raises an error.
 
-RADIUS workflows for lease allocation
+RADIUS Server Setup Example
+---------------------------
+
+The RADIUS hook library requires at least one RADIUS server to function. One
+popular open-source implementation is FreeRADIUS. This is how it can be
+set up to enable basic functionality in Kea.
+
+1. Install FreeRADIUS through the package manager or from the tarballs available
+   on [the freeradius.org download page](https://freeradius.org/releases/).
+
+2. Establish the FreeRADIUS configuration directory. It's commonly
+   ``/etc/freeradius``, but it may be ``/etc/raddb``.
+
+3. Generate certificaes. Go to ``/etc/freeradius/certs``.
+   Run ``./bootstrap`` or ``make``.
+   Wait until finished. It should take a few seconds.
+
+4. Check that the server is able to start.
+   Running with the ``-X`` flag is a good way to display potential errors.
+   Run ``radiusd -X`` or ``freeradius -X``, whichever is available.
+   It should display ``Ready to process requests`` on the final line.
+
+5. If the Kea DHCP server and the RADIUS server are on different machines,
+   edit ``/etc/freeradius/clients.conf`` with the proper address under
+   ``ipadddr``. Ths file is also where the secret is set, which needs to match
+   the one set in the hook library's configuration.
+
+6. If RADIUS is used for the purpose of authorizing DHCP clients, each DHCP
+   client needs to have an entry in the authorize file, which can be commonly
+   found at:
+
+   - ``/etc/raddb/mods-config/files/authorize``
+   - ``/etc/freeradius/3.0/mods-config/files/authorize``
+   - ``/etc/freeradius/users`` (for RADIUS 2.x series)
+
+   Entries need to have the password set which needs to match the password
+   configured in the configuration of the RADIUS hook library under the
+   ``User-Password`` attribute. Each entry can have zero, one or multiple
+   attributes.
+
+   In the following example, there are 6 entries with the password set to the
+   client ID, which would need to be dynamically set in the hook library's
+   configuration. Here's how the entries can look like:
+
+    .. code-block::
+
+        01:00:0c:01:02:03:04    Cleartext-password := "00:0c:01:02:03:04"
+
+        01:00:0c:01:02:03:05    Cleartext-password := "00:0c:01:02:03:05"
+            Framed-IP-Address = "192.0.2.5"
+
+        01:00:0c:01:02:03:06    Cleartext-password := "00:0c:01:02:03:06"
+            Framed-IP-Address = "192.0.2.6"
+            Framed-Pool = "classical"
+
+        00:03:00:01:00:0c:01:02:03:07    Cleartext-password := "00:0c:01:02:03:07"
+
+        00:03:00:01:00:0c:01:02:03:08    Cleartext-password := "00:0c:01:02:03:08"
+            Framed-IPv6-Address = "2001:db8::8"
+
+        00:03:00:01:00:0c:01:02:03:09    Cleartext-password := "00:0c:01:02:03:09"
+            Framed-IPv6-Address = "2001:db8::9"
+            Framed-Pool = "classroom"
+
+7. Accounting should work out of the box with Kea, but customizations are
+   possible in the accounting file, which can be commonly found at:
+
+   - ``/etc/radius-config/mods-config/files/accounting``
+   - ``/etc/freeradius/3.0/mods-config/files/accounting``
+
+
+RADIUS Workflows for Lease Allocation
 -------------------------------------
 
 The following diagrams show a high level view of how RADIUS assists with the
@@ -370,3 +441,5 @@ lease allocation process in :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`.
 Somewhat tangential to lease allocation, and not shown in the diagrams above,
 is the ``command_processed`` callout, which sends Accounting-Request messagess
 when a lease command is received.
+
+
