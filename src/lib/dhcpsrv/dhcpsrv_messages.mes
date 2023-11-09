@@ -128,6 +128,13 @@ backends may still contain multiple reservations for the same IP addresses
 causing problems with lease allocation for certain addresses. Please ensure
 that all such duplicates are removed.
 
+% DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED the "ip-reservations-unique" flag is set to false and multiple reservations for the IP address: %1 in subnet: %2 are not allowed causing error: %3
+This warning message is issued when the DHCP server is configured to not allow
+multiple reservations for the same IP address. However, the host database
+backends contains multiple reservations for the IP addresses which logged as
+the first argument, in the subnet logged as second argument, causing problems
+with lease allocation logged as third argument.
+
 % DHCPSRV_CFGMGR_NEW_SUBNET4 a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
 been extended to include the specified IPv4 subnet.

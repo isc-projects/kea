@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -42,6 +43,7 @@
 #include <vector>
 
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
@@ -123,9 +125,18 @@ getIPv6Resrv(const SubnetID& subnet_id, const IOAddress& address) {
     // the mode in which non-unique reservations are allowed the backends which
     // don't support it are not used and we can safely call getAll6.
     if (CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique()) {
-        auto host = HostMgr::instance().get6(subnet_id, address);
-        if (host) {
-            reserved.push_back(host);
+        try {
+            // Reservations are unique. It is safe to call get6 to get the unique host.
+            auto host = HostMgr::instance().get6(subnet_id, address);
+            if (host) {
+                reserved.push_back(host);
+            }
+        } catch (const MultipleRecords& ex) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED)
+                .arg(address)
+                .arg(subnet_id)
+                .arg(ex.what());
+            throw;
         }
     } else {
         auto hosts = HostMgr::instance().getAll6(subnet_id, address);
@@ -3340,10 +3351,18 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
         // don't support it are not used and we can safely call getAll4.
         ConstHostCollection hosts;
         if (CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getIPReservationsUnique()) {
-            // Reservations are unique. It is safe to call get4 to get the unique host.
-            ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
-            if (host) {
-                hosts.push_back(host);
+            try {
+                // Reservations are unique. It is safe to call get4 to get the unique host.
+                ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
+                if (host) {
+                    hosts.push_back(host);
+                }
+            } catch (const MultipleRecords& ex) {
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED)
+                    .arg(address)
+                    .arg(ctx.subnet_->getID())
+                    .arg(ex.what());
+                throw;
             }
         } else {
             // Reservations can be non-unique. Need to get all reservations for that address.
