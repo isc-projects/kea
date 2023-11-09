@@ -1,3 +1,9 @@
+2191.	[doc]		andrei
+	The new RADIUS hook library is now operational. Documentation has
+	been updated. A section about differences to the old RADIUS hook
+	library is included.
+	(Gitlab #2442)
+
 Kea 2.5.3 (development) released on October 25, 2023
 
 2190.	[build]		razvan
