@@ -1518,7 +1518,6 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                             try {
                                 callout_handle->getArgument("offer-address-in-use", offer_address_in_use);
                             } catch (const NoSuchArgument& ex) {
-                                /// @todo consider logging this
                                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                                           DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING)
                                           .arg(query->getLabel());
@@ -4015,14 +4014,14 @@ Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& /* callout_handle */, Pkt4Ptr&
         StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(1));
     }
 
-
     /*  (comment it out so picky tools don't flag this as dead code
     //
     /// @todo #3110, HA will implement a handler for this hook point to
     /// propagate an update of the lease to peers.
     //
     // Let's check if there are hooks installed for server decline hook point.
-    // If they are, let's pass the lease and client's packet.
+    // If they are, let's pass the lease and client's packet.  Note this code
+    // has never been compiled, it is just an initial draft.
     if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_server_decline)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(decline);
 
