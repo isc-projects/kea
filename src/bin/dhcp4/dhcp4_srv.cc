@@ -1603,8 +1603,8 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
 }
 
 void
-Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                               Pkt4Ptr& query, Pkt4Ptr& rsp) {
+Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr callout_handle,
+                               Pkt4Ptr query, Pkt4Ptr rsp) {
     try {
             processPacketPktSend(callout_handle, query, rsp);
             processPacketBufferSend(callout_handle, rsp);
