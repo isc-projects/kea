@@ -138,6 +138,18 @@ flags:
    ``replace-client-id`` must be set to ``true`` and ``duid`` must be used with
    ``client-id-pop0`` enabled.
 
+ - ``nas-ports`` (default ``[]``), specifies the NAS port to use in place of
+   a subnet ID (default behavior). It is an array of maps, each map having two
+   elements at most: a port entry (the NAS port value to use) and either a
+   subnet-id entry (the subnet ID to substitute), or a subnet-prefix
+   which is resolved into a subnet and its subnet ID is added, or a
+   shared-network-name which is resolved into a shared-network and its
+   subnets are added. When the subnet-id is 0 or the port is alone,
+   the default substitution is specified i.e. for a subnet ID not in
+   the list this default NAS port value will be used.
+
+-  ``realm`` (default ``""``) - is the default realm.
+
 -  ``reselect-subnet-address`` (default ``false``) - enables subnet reselection
    according to the value of the Framed-IP-Address or, respectively,
    the Framed-IPv6-Address attribute from the RADIUS access response. With this
