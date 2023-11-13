@@ -2518,8 +2518,9 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     elif system in ['fedora', 'centos', 'rhel']:
         execute('mv pkgs/* %s' % pkgs_dir)
     elif system in ['alpine']:
-        #execute('mv kea-src/* %s' % pkgs_dir)
-        execute('mv kea-pkg/* %s' % pkgs_dir)
+        # Don't move files if the source and the target locations are the same.
+        if pkgs_dir != 'kea-pkg':
+            execute('mv kea-pkg/* %s' % pkgs_dir)
     elif system in ['arch']:
         pass
     else:
