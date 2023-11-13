@@ -93,9 +93,8 @@ public:
     /// update or deletion.
     ///
     /// The first argument is a pointer to the lease for which the callback
-    /// is invoked. The second argument indicates whether or not the callback
-    /// is invoked in the thread-safe context.
-    typedef std::function<void(LeasePtr, bool)> CallbackFn;
+    /// is invoked.
+    typedef std::function<void(LeasePtr)> CallbackFn;
 
     /// @brief A structure representing a registered callback.
     ///
@@ -105,15 +104,19 @@ public:
     /// callback registered for the particular owner, subnet identifier
     /// and the lease type.
     typedef struct {
-        /// Callback type (i.e., lease add, update, delete).
+        /// @brief Callback type (i.e., lease add, update, delete).
         CallbackType type;
-        /// An entity owning callback registration (e.g., FLQ allocator).
+
+        /// @brief An entity owning callback registration (e.g., FLQ allocator).
         std::string owner;
+
         /// Subnet identifier associated with the callback.
         SubnetID subnet_id;
-        /// Lease types for which the callback should be invoked.
+
+        /// @brief Lease types for which the callback should be invoked.
         Lease::Type lease_type;
-        /// Callback function.
+
+        /// @brief Callback function.
         CallbackFn fn;
     } Callback;
 
@@ -197,9 +200,7 @@ protected:
     /// The callbacks execution order is not guaranteed.
     ///
     /// @param lease new lease instance.
-    /// @param mt_safe a boolean flag indicating whether the callbacks are
-    /// invoked in the MT-safe context.
-    void trackAddLease(const LeasePtr& lease, bool mt_safe);
+    void trackAddLease(const LeasePtr& lease);
 
     /// @brief Invokes the callbacks when a lease is updated.
     ///
@@ -209,9 +210,7 @@ protected:
     /// The callbacks execution order is not guaranteed.
     ///
     /// @param lease updated lease instance.
-    /// @param mt_safe a boolean flag indicating whether the callbacks are
-    /// invoked in the MT-safe context.
-    void trackUpdateLease(const LeasePtr& lease, bool mt_safe);
+    void trackUpdateLease(const LeasePtr& lease);
 
     /// @brief Invokes the callbacks when a lease is deleted.
     ///
@@ -221,9 +220,7 @@ protected:
     /// The callbacks execution order is not guaranteed.
     ///
     /// @param lease deleted lease instance.
-    /// @param mt_safe a boolean flag indicating whether the callbacks are
-    /// invoked in the MT-safe context.
-    void trackDeleteLease(const LeasePtr& lease, bool mt_safe);
+    void trackDeleteLease(const LeasePtr& lease);
 
 public:
 
@@ -283,9 +280,7 @@ protected:
     ///
     /// @param type callback type.
     /// @param lease lease instance for which the callbacks are invoked.
-    /// @param mt_safe a boolean flag indicating whether the callbacks are
-    /// invoked in the MT-safe context.
-    void runCallbacks(CallbackType type, const LeasePtr& lease, bool mt_safe);
+    void runCallbacks(CallbackType type, const LeasePtr& lease);
 
     /// @brief Runs registered callbacks of the particular type for a subnet id.
     ///
@@ -294,10 +289,8 @@ protected:
     /// @param type callback type.
     /// @param subnet_id subnet identifier for which the callbacks are invoked.
     /// @param lease lease instance for which the callbacks are invoked.
-    /// @param mt_safe a boolean flag indicating whether the callbacks are
-    /// invoked in the MT-safe context.
     void runCallbacksForSubnetID(CallbackType type, SubnetID subnet_id,
-                                 const LeasePtr& lease, bool mt_safe);
+                                 const LeasePtr& lease);
 
     /// @brief The multi-index container holding registered callbacks.
     CallbackContainerPtr callbacks_;

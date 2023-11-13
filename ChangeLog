@@ -1,3 +1,7 @@
+2167.	[bug]		razvan
+	Fixed a race condition in free lease queue allocator.
+	(Gitlab #3111, #3143)
+
 Kea 2.4.0 (stable) released on July 05, 2023
 
 2166.	[build]		mgodzina

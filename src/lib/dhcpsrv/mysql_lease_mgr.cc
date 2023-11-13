@@ -2338,7 +2338,7 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 
     // Run installed callbacks.
     if (hasCallbacks()) {
-        trackAddLease(lease, false);
+        trackAddLease(lease);
     }
 
     return (result);
@@ -2366,7 +2366,7 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
     // Run installed callbacks.
     if (hasCallbacks()) {
-        trackAddLease(lease, false);
+        trackAddLease(lease);
     }
 
     return (result);
@@ -3242,7 +3242,7 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     // Run installed callbacks.
     if (hasCallbacks()) {
-        trackUpdateLease(lease, false);
+        trackUpdateLease(lease);
     }
 }
 
@@ -3302,7 +3302,7 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     // Run installed callbacks.
     if (hasCallbacks()) {
-        trackUpdateLease(lease, false);
+        trackUpdateLease(lease);
     }
 }
 
@@ -3366,7 +3366,7 @@ MySqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
         if (hasCallbacks()) {
-            trackDeleteLease(lease, false);
+            trackDeleteLease(lease);
         }
         return (true);
     }
@@ -3427,7 +3427,7 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
         if (hasCallbacks()) {
-            trackDeleteLease(lease, false);
+            trackDeleteLease(lease);
         }
         return (true);
     }

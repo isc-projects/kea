@@ -4260,8 +4260,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
 /// IPv4 lease is added.
 TEST_F(MemfileLeaseMgrTest, trackAddLease4) {
     startBackend(V4);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackAddLease4(false, true);
+    testTrackAddLease4(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4269,16 +4268,14 @@ TEST_F(MemfileLeaseMgrTest, trackAddLease4) {
 TEST_F(MemfileLeaseMgrTest, trackAddLease4MultiThreading) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackAddLease4(false, true);
+    testTrackAddLease4(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
 /// IPv6 address lease is added.
 TEST_F(MemfileLeaseMgrTest, trackAddLeaseNA) {
     startBackend(V6);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackAddLeaseNA(false, true);
+    testTrackAddLeaseNA(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4286,16 +4283,14 @@ TEST_F(MemfileLeaseMgrTest, trackAddLeaseNA) {
 TEST_F(MemfileLeaseMgrTest, trackAddLeaseNAMultiThreading) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackAddLeaseNA(false, true);
+    testTrackAddLeaseNA(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
 /// IPv6 prefix lease is added.
 TEST_F(MemfileLeaseMgrTest, trackAddLeasePD) {
     startBackend(V6);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackAddLeasePD(false, true);
+    testTrackAddLeasePD(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4303,16 +4298,14 @@ TEST_F(MemfileLeaseMgrTest, trackAddLeasePD) {
 TEST_F(MemfileLeaseMgrTest, trackAddLeasePDMultiThreading) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackAddLeasePD(false, true);
+    testTrackAddLeasePD(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
 /// IPv4 lease is added.
 TEST_F(MemfileLeaseMgrTest, trackUpdateLease4) {
     startBackend(V4);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackUpdateLease4(false, true);
+    testTrackUpdateLease4(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4320,16 +4313,14 @@ TEST_F(MemfileLeaseMgrTest, trackUpdateLease4) {
 TEST_F(MemfileLeaseMgrTest, trackUpdateLease4MultiThreading) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackUpdateLease4(false, true);
+    testTrackUpdateLease4(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
 /// IPv6 address lease is updated.
 TEST_F(MemfileLeaseMgrTest, trackUpdateLeaseNA) {
     startBackend(V6);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackUpdateLeaseNA(false, true);
+    testTrackUpdateLeaseNA(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4337,16 +4328,14 @@ TEST_F(MemfileLeaseMgrTest, trackUpdateLeaseNA) {
 TEST_F(MemfileLeaseMgrTest, trackUpdateLeaseNAMultiThreading) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackUpdateLeaseNA(false, true);
+    testTrackUpdateLeaseNA(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
 /// IPv6 prefix lease is updated.
 TEST_F(MemfileLeaseMgrTest, trackUpdateLeasePD) {
     startBackend(V6);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackUpdateLeasePD(false, true);
+    testTrackUpdateLeasePD(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4354,16 +4343,14 @@ TEST_F(MemfileLeaseMgrTest, trackUpdateLeasePD) {
 TEST_F(MemfileLeaseMgrTest, trackUpdateLeasePDMultiThreading) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackUpdateLeasePD(false, true);
+    testTrackUpdateLeasePD(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
 /// IPv4 lease is added.
 TEST_F(MemfileLeaseMgrTest, trackDeleteLease4) {
     startBackend(V4);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackDeleteLease4(false, true);
+    testTrackDeleteLease4(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4371,16 +4358,14 @@ TEST_F(MemfileLeaseMgrTest, trackDeleteLease4) {
 TEST_F(MemfileLeaseMgrTest, trackDeleteLease4MultiThreading) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackDeleteLease4(false, true);
+    testTrackDeleteLease4(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
 /// IPv6 address lease is deleted.
 TEST_F(MemfileLeaseMgrTest, trackDeleteLeaseNA) {
     startBackend(V6);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackDeleteLeaseNA(false, true);
+    testTrackDeleteLeaseNA(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4388,16 +4373,14 @@ TEST_F(MemfileLeaseMgrTest, trackDeleteLeaseNA) {
 TEST_F(MemfileLeaseMgrTest, trackDeleteLeaseNAMultiThreading) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackDeleteLeaseNA(false, true);
+    testTrackDeleteLeaseNA(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
 /// IPv6 prefix lease is deleted.
 TEST_F(MemfileLeaseMgrTest, trackDeleteLeasePD) {
     startBackend(V6);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackDeleteLeasePD(false, true);
+    testTrackDeleteLeasePD(false);
 }
 
 /// @brief Checks if the backends call the callbacks when an
@@ -4405,8 +4388,7 @@ TEST_F(MemfileLeaseMgrTest, trackDeleteLeasePD) {
 TEST_F(MemfileLeaseMgrTest, trackDeleteLeasePDMultiThreading) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
-    // Expect that lease is not locked and the MT-safe context.
-    testTrackDeleteLeasePD(false, true);
+    testTrackDeleteLeasePD(false);
 }
 
 /// @brief Checks that the lease manager can be recreated and its

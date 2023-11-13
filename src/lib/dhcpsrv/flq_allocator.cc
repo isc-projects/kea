@@ -166,16 +166,13 @@ FreeLeaseQueueAllocator::initAfterConfigureInternal() {
     auto& lease_mgr = LeaseMgrFactory::instance();
     lease_mgr.registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, FLQ_OWNER, subnet->getID(), pool_type_,
                                std::bind(&FreeLeaseQueueAllocator::addLeaseCallback, this,
-                                         std::placeholders::_1,
-                                         std::placeholders::_2));
+                                         std::placeholders::_1));
     lease_mgr.registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, FLQ_OWNER, subnet->getID(), pool_type_,
                                std::bind(&FreeLeaseQueueAllocator::updateLeaseCallback, this,
-                                         std::placeholders::_1,
-                                         std::placeholders::_2));
+                                         std::placeholders::_1));
     lease_mgr.registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, FLQ_OWNER, subnet->getID(), pool_type_,
                                std::bind(&FreeLeaseQueueAllocator::deleteLeaseCallback, this,
-                                         std::placeholders::_1,
-                                         std::placeholders::_2));
+                                         std::placeholders::_1));
 }
 
 template<typename LeaseCollectionType>
@@ -298,12 +295,8 @@ FreeLeaseQueueAllocator::getLeasePool(const LeasePtr& lease) const {
 }
 
 void
-FreeLeaseQueueAllocator::addLeaseCallback(LeasePtr lease, bool mt_safe) {
-    if (!mt_safe) {
-        MultiThreadingLock lock(mutex_);
-        addLeaseCallbackInternal(lease);
-        return;
-    }
+FreeLeaseQueueAllocator::addLeaseCallback(LeasePtr lease) {
+    MultiThreadingLock lock(mutex_);
     addLeaseCallbackInternal(lease);
 }
 
@@ -316,16 +309,12 @@ FreeLeaseQueueAllocator::addLeaseCallbackInternal(LeasePtr lease) {
     if (!pool) {
         return;
     }
-   getPoolState(pool)->deleteFreeLease(lease->addr_);
+    getPoolState(pool)->deleteFreeLease(lease->addr_);
 }
 
 void
-FreeLeaseQueueAllocator::updateLeaseCallback(LeasePtr lease, bool mt_safe) {
-    if (!mt_safe) {
-        MultiThreadingLock lock(mutex_);
-        updateLeaseCallbackInternal(lease);
-        return;
-    }
+FreeLeaseQueueAllocator::updateLeaseCallback(LeasePtr lease) {
+    MultiThreadingLock lock(mutex_);
     updateLeaseCallbackInternal(lease);
 }
 
@@ -344,12 +333,8 @@ FreeLeaseQueueAllocator::updateLeaseCallbackInternal(LeasePtr lease) {
 }
 
 void
-FreeLeaseQueueAllocator::deleteLeaseCallback(LeasePtr lease, bool mt_safe) {
-    if (!mt_safe) {
-        MultiThreadingLock lock(mutex_);
-        deleteLeaseCallbackInternal(lease);
-        return;
-    }
+FreeLeaseQueueAllocator::deleteLeaseCallback(LeasePtr lease) {
+    MultiThreadingLock lock(mutex_);
     deleteLeaseCallbackInternal(lease);
 }
 

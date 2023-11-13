@@ -1065,7 +1065,7 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
 
     // Run installed callbacks.
     if (hasCallbacks()) {
-        trackAddLease(lease, true);
+        trackAddLease(lease);
     }
 
     return (true);
@@ -1114,7 +1114,7 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
 
     // Run installed callbacks.
     if (hasCallbacks()) {
-        trackAddLease(lease, true);
+        trackAddLease(lease);
     }
 
     return (true);
@@ -1800,7 +1800,7 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
 
     // Run installed callbacks.
     if (hasCallbacks()) {
-        trackUpdateLease(lease, true);
+        trackUpdateLease(lease);
     }
 }
 
@@ -1880,7 +1880,7 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
 
     // Run installed callbacks.
     if (hasCallbacks()) {
-        trackUpdateLease(lease, true);
+        trackUpdateLease(lease);
     }
 }
 
@@ -1929,7 +1929,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
 
         // Run installed callbacks.
         if (hasCallbacks()) {
-            trackDeleteLease(lease, true);
+            trackDeleteLease(lease);
         }
 
         return (true);
@@ -1988,7 +1988,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
 
         // Run installed callbacks.
         if (hasCallbacks()) {
-            trackDeleteLease(lease, true);
+            trackDeleteLease(lease);
         }
 
         return (true);

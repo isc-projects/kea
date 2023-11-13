@@ -2992,9 +2992,9 @@ GenericLeaseMgrTest::makeLease6(const Lease::Type& type,
 
 void
 GenericLeaseMgrTest::logCallback(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id,
-                                 LeasePtr lease, bool mt_safe) {
+                                 LeasePtr lease) {
     auto locked = (lmptr_ ? lmptr_->isLocked(lease) : false);
-    logs_.push_back(Log{type, subnet_id, lease, mt_safe, locked});
+    logs_.push_back(Log{type, subnet_id, lease, locked});
 }
 
 int
@@ -4244,16 +4244,14 @@ GenericLeaseMgrTest::testClassLeaseCount6(Lease::Type ltype) {
 }
 
 void
-GenericLeaseMgrTest::testTrackAddLease4(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackAddLease4(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
                              SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease. It should trigger the callback.
     Lease4Ptr lease = initializeLease4(straddress4_[1]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4268,31 +4266,20 @@ GenericLeaseMgrTest::testTrackAddLease4(bool expect_locked, bool expect_mt_safe)
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
 void
-GenericLeaseMgrTest::testTrackAddLeaseNA(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackAddLeaseNA(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
                              SUBNET_ID_GLOBAL, Lease::TYPE_NA,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease. It should trigger the callback.
     Lease6Ptr lease = initializeLease6(straddress6_[0]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4307,31 +4294,20 @@ GenericLeaseMgrTest::testTrackAddLeaseNA(bool expect_locked, bool expect_mt_safe
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
 void
-GenericLeaseMgrTest::testTrackAddLeasePD(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackAddLeasePD(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_ADD_LEASE, "flq",
                              SUBNET_ID_GLOBAL, Lease::TYPE_PD,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease. It should trigger the callback.
     Lease6Ptr lease = initializeLease6(straddress6_[2]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4346,22 +4322,13 @@ GenericLeaseMgrTest::testTrackAddLeasePD(bool expect_locked, bool expect_mt_safe
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
 void
-GenericLeaseMgrTest::testTrackUpdateLease4(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackUpdateLease4(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq",
                              SUBNET_ID_GLOBAL,
@@ -4369,9 +4336,7 @@ GenericLeaseMgrTest::testTrackUpdateLease4(bool expect_locked, bool expect_mt_sa
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_UPDATE_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease.
     Lease4Ptr lease = initializeLease4(straddress4_[1]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4389,31 +4354,20 @@ GenericLeaseMgrTest::testTrackUpdateLease4(bool expect_locked, bool expect_mt_sa
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
 void
-GenericLeaseMgrTest::testTrackUpdateLeaseNA(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackUpdateLeaseNA(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq",
                              SUBNET_ID_GLOBAL, Lease::TYPE_NA,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_UPDATE_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease.
     Lease6Ptr lease = initializeLease6(straddress6_[0]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4431,31 +4385,20 @@ GenericLeaseMgrTest::testTrackUpdateLeaseNA(bool expect_locked, bool expect_mt_s
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
 void
-GenericLeaseMgrTest::testTrackUpdateLeasePD(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackUpdateLeasePD(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_UPDATE_LEASE, "flq",
                              SUBNET_ID_GLOBAL, Lease::TYPE_PD,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_UPDATE_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease.
     Lease6Ptr lease = initializeLease6(straddress6_[2]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4473,31 +4416,20 @@ GenericLeaseMgrTest::testTrackUpdateLeasePD(bool expect_locked, bool expect_mt_s
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
 void
-GenericLeaseMgrTest::testTrackDeleteLease4(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackDeleteLease4(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq",
                              SUBNET_ID_GLOBAL, Lease::TYPE_V4,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_DELETE_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease.
     Lease4Ptr lease = initializeLease4(straddress4_[1]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4515,31 +4447,20 @@ GenericLeaseMgrTest::testTrackDeleteLease4(bool expect_locked, bool expect_mt_sa
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
 void
-GenericLeaseMgrTest::testTrackDeleteLeaseNA(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackDeleteLeaseNA(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq",
                              SUBNET_ID_GLOBAL, Lease::TYPE_NA,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_DELETE_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease.
     Lease6Ptr lease = initializeLease6(straddress6_[0]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4557,31 +4478,20 @@ GenericLeaseMgrTest::testTrackDeleteLeaseNA(bool expect_locked, bool expect_mt_s
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
 }
 
 void
-GenericLeaseMgrTest::testTrackDeleteLeasePD(bool expect_locked, bool expect_mt_safe) {
+GenericLeaseMgrTest::testTrackDeleteLeasePD(bool expect_locked) {
     // Register a callback for all subnets.
     lmptr_->registerCallback(TrackingLeaseMgr::TRACK_DELETE_LEASE, "flq",
                              SUBNET_ID_GLOBAL, Lease::TYPE_PD,
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_DELETE_LEASE,
-                                       SUBNET_ID_GLOBAL,
-                                       ph::_1,
-                                       ph::_2));
+                                       SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease.
     Lease6Ptr lease = initializeLease6(straddress6_[2]);
     EXPECT_TRUE(lmptr_->addLease(lease));
@@ -4599,15 +4509,6 @@ GenericLeaseMgrTest::testTrackDeleteLeasePD(bool expect_locked, bool expect_mt_s
     } else {
         EXPECT_FALSE(logs_[0].locked);
     }
-    // This flag should be set to true for the Memfile backends.
-    // It should be false for other backends. If the backends do
-    // not provide the MT-safe context, the callbacks must protect
-    // against the concurrent access on their own.
-    if (expect_mt_safe) {
-        EXPECT_TRUE(logs_[0].mt_safe);
-    } else {
-        EXPECT_FALSE(logs_[0].mt_safe);
-    }
 
     // The lease locks should have been released.
     EXPECT_FALSE(lmptr_->isLocked(lease));
@@ -4621,9 +4522,7 @@ GenericLeaseMgrTest::testRecreateWithCallbacks(const std::string& access) {
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                       0,
-                                       ph::_1,
-                                       ph::_2));
+                                       0, ph::_1));
 
     // Recreate the lease manager with the callbacks.
     ASSERT_NO_THROW(LeaseMgrFactory::recreate(access, true));
@@ -4645,9 +4544,7 @@ GenericLeaseMgrTest::testRecreateWithoutCallbacks(const std::string& access) {
                              std::bind(&GenericLeaseMgrTest::logCallback,
                                        this,
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
-                                       0,
-                                       ph::_1,
-                                       ph::_2));
+                                       0, ph::_1));
 
     // Recreate the lease manager without the callbacks.
     ASSERT_NO_THROW(LeaseMgrFactory::recreate(access, false));
