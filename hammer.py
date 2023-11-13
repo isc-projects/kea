@@ -1858,7 +1858,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
-                             'texlive', 'texlive-latex-extra'])
+                             'tex-gyre', 'texlive', 'texlive-latex-extra'])
 
         if 'unittest' in features:
             if revision == '8':
