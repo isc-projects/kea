@@ -59,7 +59,6 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
             if (element.first == "interfaces") {
                 parseInterfacesList(cfg, element.second);
                 continue;
-
             }
 
             if (element.first == "dhcp-socket-type") {

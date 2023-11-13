@@ -86,7 +86,7 @@ private:
 class NakedControlledDhcpv4Srv: public ControlledDhcpv4Srv {
     // "Naked" DHCPv4 server, exposes internal fields
 public:
-    NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(0) {
+    NakedControlledDhcpv4Srv() : ControlledDhcpv4Srv(0) {
         CfgMgr::instance().setFamily(AF_INET);
     }
 
@@ -103,13 +103,16 @@ public:
     /// @brief Path to the UNIX socket being used to communicate with the server
     std::string socket_path_;
 
+    /// @brief List of interfaces (defaults to "*").
+    std::string interfaces_;
+
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedControlledDhcpv4Srv> server_;
 
     /// @brief Default constructor
     ///
     /// Sets socket path to its default value.
-    CtrlChannelDhcpv4SrvTest() {
+    CtrlChannelDhcpv4SrvTest() : interfaces_("\"*\"") {
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
             socket_path_ = string(env) + "/kea4.sock";
@@ -117,6 +120,9 @@ public:
             socket_path_ = sandbox.join("kea4.sock");
         }
         reset();
+        IfaceMgr::instance().setTestMode(false);
+        IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
+                                               IfaceMgr::instancePtr().get(), ph::_1));
     }
 
     /// @brief Destructor
@@ -129,6 +135,12 @@ public:
         CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
         server_.reset();
+        IfaceMgr::instance().setTestMode(false);
+        IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
+                                               IfaceMgr::instancePtr().get(), ph::_1));
+        IfaceMgr::instance().clearIfaces();
+        IfaceMgr::instance().closeSockets();
+        IfaceMgr::instance().detectIfaces();
     };
 
     /// @brief Returns pointer to the server's IO service.
@@ -147,7 +159,9 @@ public:
         std::string header =
             "{"
             "    \"interfaces-config\": {"
-            "        \"interfaces\": [ \"*\" ]"
+            "        \"interfaces\": [";
+
+        std::string body = "]"
             "    },"
             "    \"expired-leases-processing\": {"
             "         \"reclaim-timer-wait-time\": 60,"
@@ -175,8 +189,7 @@ public:
 
         // Fill in the socket-name value with socket_path_  to
         // make the actual configuration text.
-        std::string config_txt = header + socket_path_  + footer;
-
+        std::string config_txt = header + interfaces_ + body + socket_path_  + footer;
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
 
         ConstElementPtr config;
@@ -209,7 +222,6 @@ public:
         // Now check that the socket was indeed open.
         ASSERT_GT(isc::config::CommandMgr::instance().getControlSocketFD(), -1);
     }
-
 
     /// @brief Reset hooks data
     ///
@@ -817,7 +829,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     sendUnixCommand(os.str(), response);
 
     // Verify the configuration was successful. The config contains random
-    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
     // hash will be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there
     // - verify the "text": "Configuration successful." is there
@@ -885,7 +897,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     EXPECT_FALSE(fileExists(socket_path_));
 
     // With no command channel, should still receive the response. The config contains random
-    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
     // hash will be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there
     // - verify the "text": "Configuration successful." is there
@@ -1030,7 +1042,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
     sendUnixCommand(os.str(), response);
 
     // Verify the configuration was successful. The config contains random
-    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
     // hash will be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there
     // - verify the "text": "Configuration successful." is there
@@ -1508,6 +1520,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFilename) {
 
     sendUnixCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }", response);
+
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
 }
@@ -1591,8 +1604,85 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadValid) {
 
     // This command should reload test8.json config.
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
     // Verify the configuration was successful. The config contains random
-    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(2, subnets->size());
+
+    ::remove("test8.json");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is loaded correctly.
+TEST_F(CtrlChannelDhcpv4SrvTest, configReloadDetectInterfaces) {
+    interfaces_ = "\"eth0\"";
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
+    auto detectIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectIfaces);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test8.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp4\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"eth1\" ]"
+        "    },"
+        "    \"subnet4\": ["
+        "        { \"id\": 1, \"subnet\": \"192.0.2.0/24\" },"
+        "        { \"id\": 2, \"subnet\": \"192.0.3.0/24\" }"
+        "     ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+    ofstream f("test8.json", ios::trunc);
+    f << cfg_txt;
+    f.close();
+
+    IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
+                                                    "AA:BB:CC:DD:EE:FF");
+    auto detectUpdateIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth1->addAddress(IOAddress("192.0.2.3"));
+            eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+            eth1->addAddress(IOAddress("3001:db8:100::1"));
+            IfaceMgr::instance().addInterface(eth1);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectUpdateIfaces);
+
+    // This command should reload test8.json config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
     // hash will be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there
     // - verify the "text": "Configuration successful." is there

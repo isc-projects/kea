@@ -322,6 +322,10 @@ void configureCommandChannel() {
     }
 }
 
+/// @brief Process a DHCPv4 confguration and return an answer stating if the
+/// configuration is valid, or specifying details about the error otherwise.
+///
+/// @param config_set the configuration being processed
 isc::data::ConstElementPtr
 processDhcp4Config(isc::data::ConstElementPtr config_set) {
     // Before starting any subnet operations, let's reset the subnet-id counter,
@@ -442,14 +446,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
             parameter_name = "host-reservation-identifiers";
             HostReservationIdsParser4 parser;
             parser.parse(hr_identifiers);
-        }
-
-        ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
-        if (ifaces_config) {
-            parameter_name = "interfaces-config";
-            IfacesConfigParser parser(AF_INET, true);
-            CfgIfacePtr cfg_iface = srv_config->getCfgIface();
-            parser.parse(cfg_iface, ifaces_config);
         }
 
         ConstElementPtr sanity_checks = mutable_cfg->get("sanity-checks");
@@ -809,9 +805,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 }
             }
         } else {
-            string parameter_name;
-            ElementPtr mutable_cfg;
-
             // disable multi-threading (it will be applied by new configuration)
             // this must be done in order to properly handle MT to ST transition
             // when 'multi-threading' structure is missing from new config and
@@ -825,9 +818,12 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             TimerMgr::instance()->unregisterTimers();
             server.discardPackets();
             server.getCBControl()->reset();
+        }
 
+        if (status_code == CONTROL_RESULT_SUCCESS) {
+            string parameter_name;
+            ElementPtr mutable_cfg;
             try {
-
                 // Get the staging configuration.
                 srv_config = CfgMgr::instance().getStagingCfg();
 
@@ -839,7 +835,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
                 if (ifaces_config) {
                     parameter_name = "interfaces-config";
-                    IfacesConfigParser parser(AF_INET, false);
+                    IfacesConfigParser parser(AF_INET, check_only);
                     CfgIfacePtr cfg_iface = srv_config->getCfgIface();
                     cfg_iface->reset();
                     parser.parse(cfg_iface, ifaces_config);

@@ -191,14 +191,14 @@ public:
     /// - multicast always to true
     /// - broadcast always to false
     ///
-    /// If one needs to modify the default flag settings, the setIfaceFlags
-    /// function should be used.
-    ///
     /// @param name A name of the interface to be created.
     /// @param ifindex An index of the interface to be created.
+    /// @param mac The mac of the interface.
     ///
     /// @return An object representing interface.
-    static IfacePtr createIface(const std::string& name, const unsigned int ifindex);
+    static IfacePtr createIface(const std::string& name,
+                                const unsigned int ifindex,
+                                const std::string& mac = "08:08:08:08:08:08");
 
     /// @brief Creates a default (example) set of fake interfaces.
     void createIfaces();
@@ -258,7 +258,6 @@ public:
     /// @param iface_name Interface name.
     bool unicastOpen(const std::string& iface_name) const;
 
-
 private:
     /// @brief Currently used packet filter for DHCPv4.
     PktFilterPtr packet_filter4_;
@@ -267,8 +266,8 @@ private:
     PktFilter6Ptr packet_filter6_;
 };
 
-};
-};
-};
+} // end of namespace isc::dhcp::test
+} // end of namespace isc::dhcp
+} // end of namespace isc
 
 #endif // IFACE_MGR_TEST_CONFIG_H

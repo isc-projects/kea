@@ -31,8 +31,10 @@ namespace dhcp {
 /// This is a BSD specific interface detection method.
 void
 IfaceMgr::detectIfaces(bool update_only) {
-    if (isTestMode() && update_only) {
-        return;
+    if (detect_callback_) {
+        if (!detect_callback_(update_only)) {
+            return;
+        }
     }
 
     struct ifaddrs* iflist = 0;// The whole interface list

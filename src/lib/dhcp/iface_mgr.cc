@@ -45,6 +45,7 @@ using namespace isc::asiolink;
 using namespace isc::util;
 using namespace isc::util::io;
 using namespace isc::util::io::internal;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dhcp {
@@ -185,8 +186,7 @@ bool Iface::delSocket(const uint16_t sockfd) {
 IfaceMgr::IfaceMgr()
     : packet_filter_(new PktFilterInet()),
       packet_filter6_(new PktFilterInet6()),
-      test_mode_(false),
-      allow_loopback_(false) {
+      test_mode_(false), allow_loopback_(false) {
 
     // Ensure that PQMs have been created to guarantee we have
     // default packet queues in place.
@@ -196,6 +196,8 @@ IfaceMgr::IfaceMgr()
     } catch (const std::exception& ex) {
         isc_throw(Unexpected, "Failed to create PacketQueueManagers: " << ex.what());
     }
+
+    detect_callback_ = std::bind(&IfaceMgr::checkDetectIfaces, this, ph::_1);
 
     try {
 
@@ -475,44 +477,6 @@ IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
     }
     // There are no open sockets found for the specified family.
     return (false);
-}
-
-void IfaceMgr::stubDetectIfaces() {
-    string ifaceName;
-    const string v4addr("127.0.0.1"), v6addr("::1");
-
-    // This is a stub implementation for interface detection. Actual detection
-    // is faked by detecting loopback interface (lo or lo0). It will eventually
-    // be removed once we have actual implementations for all supported systems.
-
-    if (if_nametoindex("lo") > 0) {
-        ifaceName = "lo";
-        // this is Linux-like OS
-    } else if (if_nametoindex("lo0") > 0) {
-        ifaceName = "lo0";
-        // this is BSD-like OS
-    } else {
-        // we give up. What OS is this, anyway? Solaris? Hurd?
-        isc_throw(NotImplemented,
-                  "Interface detection on this OS is not supported.");
-    }
-
-    IfacePtr iface(new Iface(ifaceName, if_nametoindex(ifaceName.c_str())));
-    iface->flag_up_ = true;
-    iface->flag_running_ = true;
-
-    // Note that we claim that this is not a loopback. iface_mgr tries to open a
-    // socket on all interfaces that are up, running and not loopback. As this is
-    // the only interface we were able to detect, let's pretend this is a normal
-    // interface.
-    iface->flag_loopback_ = false;
-    iface->flag_multicast_ = true;
-    iface->flag_broadcast_ = true;
-    iface->setHWType(HWTYPE_ETHERNET);
-
-    iface->addAddress(IOAddress(v4addr));
-    iface->addAddress(IOAddress(v6addr));
-    addInterface(iface);
 }
 
 bool
@@ -835,7 +799,6 @@ IfacePtr
 IfaceCollection::getIface(const unsigned int ifindex) {
     return (getIfaceInternal(ifindex, MultiThreadingMgr::instance().getMode()));
 }
-
 
 IfacePtr
 IfaceCollection::getIface(const std::string& ifname) {
@@ -1881,7 +1844,6 @@ IfaceMgr::getSocket(const isc::dhcp::Pkt6Ptr& pkt) {
         isc_throw(IfaceNotFound, "Tried to find socket for non-existent interface");
     }
 
-
     const Iface::SocketCollection& socket_collection = iface->getSockets();
 
     Iface::SocketCollection::const_iterator candidate = socket_collection.end();
@@ -2013,6 +1975,14 @@ Iface::clearErrors() {
 Iface::ErrorBuffer const&
 Iface::getErrors() const {
     return errors_;
+}
+
+bool
+IfaceMgr::checkDetectIfaces(bool update_only) {
+    if (test_mode_ && update_only) {
+        return (false);
+    }
+    return (true);
 }
 
 } // end of namespace isc::dhcp

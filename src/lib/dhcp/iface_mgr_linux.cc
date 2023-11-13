@@ -414,8 +414,10 @@ namespace dhcp {
 /// Uses the socket-based netlink protocol to retrieve the list of interfaces
 /// from the Linux kernel.
 void IfaceMgr::detectIfaces(bool update_only) {
-    if (isTestMode() && update_only) {
-        return;
+    if (detect_callback_) {
+        if (!detect_callback_(update_only)) {
+            return;
+        }
     }
 
     // Copies of netlink messages about links will be stored here.

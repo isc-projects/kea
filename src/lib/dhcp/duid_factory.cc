@@ -296,7 +296,7 @@ DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
     // used for generating DUID-LLT.
     if (identifier.empty()) {
         isc_throw(Unexpected, "unable to find suitable interface for "
-                  " generating a DUID-LLT");
+                  "generating a DUID-LLT");
     }
 }
 

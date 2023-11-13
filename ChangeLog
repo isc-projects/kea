@@ -1,3 +1,8 @@
+2168.	[bug]		andrei
+	Fixed interface redetection which had stopped working since
+	Kea 2.3.6.
+	(Gitlab #3017, #3145)
+
 2167.	[bug]		razvan
 	Fixed a race condition in free lease queue allocator.
 	(Gitlab #3111, #3143)

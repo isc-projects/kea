@@ -31,8 +31,10 @@ namespace dhcp {
 /// only, as earlier versions did not support getifaddrs() API.
 void
 IfaceMgr::detectIfaces(bool update_only) {
-    if (isTestMode() && update_only) {
-        return;
+    if (detect_callback_) {
+        if (!detect_callback_(update_only)) {
+            return;
+        }
     }
 
     struct ifaddrs* iflist = 0;// The whole interface list
