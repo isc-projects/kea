@@ -1502,7 +1502,6 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                                                                   static_cast<int64_t>(1));
                         rsp.reset();
                         return;
-
                     }
                 }
 
@@ -1540,8 +1539,6 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                                     serverDecline(callout_handle, query, lease, lease_exists);
                                 }
 
-                                // Discard the response and return.
-                                rsp.reset();
                                 return;
                             }
                         }
