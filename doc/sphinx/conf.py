@@ -125,6 +125,9 @@ exclude_patterns = [
     'arm/hooks-user-chk.rst',
 ]
 
+# Report broken references.
+nitpicky = True
+
 # Leave quotes and dashes unchanged and don't convert them to typographically
 # correct entities.
 smartquotes = False

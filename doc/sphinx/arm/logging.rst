@@ -263,8 +263,7 @@ libraries), or hook libraries (open source or premium).
    | ``kea-dhcp6.dhcp6``              |                                       |                                |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.dhcpsrv``,           | core                                  | The base loggers for the       |
-   | ``kea-dhcp6.dhcpsrv``            |                                       | :ischooklib:`libkea-dhcpsrv`   |
-   |                                  |                                       | library.                       |
+   | ``kea-dhcp6.dhcpsrv``            |                                       | ``libkea-dhcpsrv.so`` library. |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.eval``,              | core                                  | Used to log messages           |
    | ``kea-dhcp6.eval``               |                                       | relating to the                |
@@ -908,8 +907,8 @@ A complete list of logging parameters supported by Kea is shown in the table bel
    | ``%%``    | Outputs a literal percent sign                                         |
    +-----------+------------------------------------------------------------------------+
 
-Padding and truncation are also possible with modifiers preceeding the component.  This is 
-done by placing a number and other modifier characters between the component and the % 
+Padding and truncation are also possible with modifiers preceeding the component.  This is
+done by placing a number and other modifier characters between the component and the %
 sign. There are five ways of modifying the output shown by example here.
 
   - ``%20p``
@@ -934,7 +933,7 @@ sign. There are five ways of modifying the output shown by example here.
 
 Supported parameters depend on the liblog4cplus version used to compile Kea.  This can
 be checked by executing ``kea-dhcp4 -W | grep -i log4cplus`` which will produce output
-like this: ``LOG4CPLUS_VERSION:  2.0.5``.  Consult the documentation in the 
+like this: ``LOG4CPLUS_VERSION:  2.0.5``.  Consult the documentation in the
 `log4cplus wiki <https://github.com/log4cplus/log4cplus/wiki>`__ for further information
 about the version you have installed.
 

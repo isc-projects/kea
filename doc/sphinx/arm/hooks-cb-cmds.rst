@@ -47,7 +47,7 @@ There are 5 types of commands supported by this library:
    :isccmd:`remote-global-parameter4-del`.
 
 -  ``get`` - fetch the selected object from the database, e.g.
-   :isccmd:`remote-subnet4-get`.
+   :isccmd:`remote-subnet4-get-by-id`.
 
 -  ``get-all`` - fetch all objects of the particular type from the
    database, e.g. :isccmd:`remote-option-def4-get-all`.

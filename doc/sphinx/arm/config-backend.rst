@@ -241,8 +241,7 @@ servers.
 To differentiate between different Kea server configurations, a
 list of the server tags used by the servers must be stored in the
 database. For the DHCPv4 and DHCPv6 servers, it can be done using the
-:isccmd:`command-remote-server4-set` and
-:isccmd:`command-remote-server6-set` commands. The
+:isccmd:`remote-server4-set` and :isccmd:`remote-server6-set` commands. The
 server tags can then be used to associate the configuration information with
 the servers. However, it is important to note that some DHCP
 configuration elements may be associated with multiple server tags (known
