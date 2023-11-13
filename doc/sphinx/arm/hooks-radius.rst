@@ -11,9 +11,9 @@
     for the old library, go to :ischooklib:`libdhcp_old_radius.so`.
 
 This hook library allows the Kea DHCP servers to use the RADIUS protocol to
-authorize DHCP clients for access to client classes or leases or to keep a
-journal of DHCP traffic through the accounting service. For details on RADIUS
-in Kea, please see :ref:`radius`.
+authorize DHCP clients through the access service or for DHCP lease journaling
+through the accounting service. For details on RADIUS in Kea, please see
+:ref:`radius`.
 
 .. note::
 
@@ -72,7 +72,7 @@ The RADIUS hook is a library that must be loaded by either :iscman:`kea-dhcp4` o
 :iscman:`kea-dhcp6` servers. Unlike some other available hook libraries, this one
 takes many parameters. For example, this configuration can be used:
 
-::
+.. parsed-literal::
 
     {
       "Dhcp4": {
@@ -113,7 +113,7 @@ flags:
 
 -  ``bindaddr`` (default ``"*"``) - specifies the address to be used by the
    hook library in communication with RADIUS servers. The ``"*"`` special
-   value tells the kernel to choose the address.
+   value tells the kernel to choose the address at hook library load time.
 
 -  ``canonical-mac-address`` (default ``false``) - specifies whether MAC
    addresses in attributes follow the canonical RADIUS format (lowercase
@@ -130,7 +130,7 @@ flags:
    hexadecimal. Implies ``client-id-pop0`` and ``extract-duid`` as 0 and 255 are
    not printable.
 
- - ``deadtime`` (default ``0``) - is a mechanism that helps in sorting the
+-  ``deadtime`` (default ``0``) - is a mechanism that helps in sorting the
    servers such that the servers that have proved responsive so far are inquired
    first, and the servers that have proved unresponsive are left at the end. The
    deadtime value specifies the number of seconds after which a server is
@@ -156,15 +156,14 @@ flags:
    ``replace-client-id`` must be set to ``true`` and ``duid`` must be used with
    ``client-id-pop0`` enabled.
 
- - ``nas-ports`` (default ``[]``), specifies the NAS port to use in place of
+-  ``nas-ports`` (default ``[]``), specifies the NAS port to use in place of
    a subnet ID (default behavior). It is an array of maps, each map having two
-   elements at most: a port entry (the NAS port value to use) and either a
-   subnet-id entry (the subnet ID to substitute), or a subnet-prefix
-   which is resolved into a subnet and its subnet ID is added, or a
-   shared-network-name which is resolved into a shared-network and its
-   subnets are added. When the subnet-id is 0 or the port is alone,
-   the default substitution is specified i.e. for a subnet ID not in
-   the list this default NAS port value will be used.
+   elements at most: the mandatory NAS port value, and, optionally, a selector
+   consisting of either a subnet id, a subnet prefix, or a shared-network name.
+   If the selector is applied to the packet, the NAS port is used instead of the
+   subnet id. When the subnet id is 0 or missing, the specified NAS port acts as
+   a default. Its substition happens for all packets that did not match a
+   selector.
 
 -  ``realm`` (default ``""``) - is the default realm.
 
@@ -186,7 +185,7 @@ flags:
    function of reselect-subnet-address from coming into effect.
 
 -  ``retries`` (default ``3``) - is the number of retries before trying the
-   next server. Not supported for asynchronous communication.
+   next server.
 
 -  ``session-history`` (default ``""``) - is the name of the file providing
    persistent storage for accounting session history.
@@ -196,9 +195,9 @@ flags:
 
 Two services are supported:
 
--  access - the authorization service.
+-  ``access`` - the authorization service.
 
--  accounting - the accounting service.
+-  ``accounting`` - the accounting service.
 
 Configuration of services is divided into two parts:
 
@@ -206,15 +205,14 @@ Configuration of services is divided into two parts:
    contact. Each server may have the following items specified:
 
    -  ``name`` - specifies the IP address of the server. A domain name may be
-      used and will be resolved at runtime.
+      used and will be resolved at hook library load time.
 
    -  ``port`` - specifies the UDP port of the server. By default, it is 1812
       for access and 1813 for accounting.
 
    -  ``secret`` - authenticates messages.
 
-   There may be up to eight servers. Note that when no server is
-   specified, the service is disabled.
+   When no server is specified, the service is disabled.
 
 -  Attributes which define additional information that the Kea server
    sends to a RADIUS server. The parameter must be identified either
@@ -228,26 +226,22 @@ Configuration of services is divided into two parts:
    -  ``type`` - the type of the attribute. Either the type or the name must be
       provided, and the attribute must be defined in the dictionary.
 
-   -  ``data`` - the first of three ways to specify the attribute
-      content.
+   -  ``data`` - the first of three ways to specify the attribute content.
+      It specifies the textual representation of the attribute content.
 
-   -  ``raw`` - the second of three ways to specify the attribute
-      content; it specifies the content in hexadecimal. Note that it
-      does not work with integer-content attributes (date, integer, and
-      IPv4 address); a string-content attribute (string, IPv6 address,
-      and IPv6 prefix) is required.
+   -  ``raw`` - the second of three ways to specify the attribute content.
+      It specifies the content in hexadecimal.
 
-   -  ``expr`` - the last way to specify the attribute content. It
-      specifies an evaluation expression which must return a not-empty
-      string when evaluated with the DHCP query packet. Currently this
-      is restricted to the access service.
+   -  ``expr`` - the last of the three ways to specify the attribute content.
+      It specifies an evaluation expression on the DHCP query packet.
+      Currently this is restricted to the access service.
 
 For example, to specify a single access server available on localhost
 that uses ``"xyz123"`` as a secret, and tell Kea to send three additional
 attributes (``User-Password``, ``Connect-Info``, and ``Configuration-Token``),
 the following snippet could be used:
 
-::
+.. parsed-literal::
 
     {
       "parameters": {
@@ -256,7 +250,7 @@ the following snippet could be used:
 
         "access": {
 
-          // This starts the list of access servers
+          // This starts the list of access servers.
           "servers": [
             {
               // These are parameters for the first (and only) access server
@@ -264,7 +258,7 @@ the following snippet could be used:
               "port": 1812,
               "secret": "xyz123"
             }
-          // Additional access servers could be specified here
+          // Additional access servers could be specified here.
           ],
 
           // This defines a list of additional attributes Kea will send to each
@@ -273,7 +267,7 @@ the following snippet could be used:
             {
               // This attribute is identified by name (must be present in the
               // dictionary) and has static value (i.e. the same value will be
-              // sent to every server for every packet)
+              // sent to every server for every packet).
               "name": "User-Password",
               "data": "mysecretpassword"
             },
@@ -286,10 +280,10 @@ the following snippet could be used:
               "raw": "65666a6a71"
             },
             {
-               // This example shows how an expression can be used to send dynamic
-               // value. The expression (see Section 13) may take any value from
-               // the incoming packet or even its metadata (e.g. the interface
-               // it was received over from)
+               // This example shows how an expression can be used to send dynamic value.
+               // The expression (see :ref:`classification-using-expressions`) may take any
+               // value from the incoming packet or even its metadata e.g. the
+               // interface it was received over from.
                "name": "Configuration-Token",
                "expr": "hexstring(pkt4.mac,':')"
             }
@@ -298,7 +292,7 @@ the following snippet could be used:
 
         // Accounting parameters.
         "accounting": {
-          // This starts the list of accounting servers
+          // This starts the list of accounting servers.
           "servers": [
             {
               // These are parameters for the first (and only) accounting server
@@ -306,7 +300,7 @@ the following snippet could be used:
               "port": 1813,
               "secret": "sekret"
             }
-            // Additional accounting servers could be specified here
+            // Additional accounting servers could be specified here.
           ]
         }
       }
@@ -315,7 +309,7 @@ the following snippet could be used:
 Customization is sometimes required for certain attributes by devices belonging
 to various vendors. This is a great way to leverage the expression evaluation
 mechanism. For example, MAC addresses which might be used as a convenience
-value for the User-Name attribute are most likely to appear in colon-hexadecimal
+value for the ``User-Password`` attribute are most likely to appear in colon-hexadecimal
 notation (``de:ad:be:ef:ca:fe``), but they might need to be expressed in
 hyphen-hexadecimal notation (``de-ad-be-ef-ca-fe``). Here's how to specify that:
 
@@ -326,7 +320,7 @@ hyphen-hexadecimal notation (``de-ad-be-ef-ca-fe``). Here's how to specify that:
          "access": {
             "attributes": [
                {
-                  "name": "User-Name",
+                  "name": "User-Password",
                   "expr": "hexstring(pkt4.mac, '-')"
                }
             ]
@@ -343,7 +337,7 @@ And here's how to specify period-separated hexadecimal notation (``dead.beef.caf
          "access": {
             "attributes": [
                {
-                  "name": "User-Name",
+                  "name": "User-Password",
                   "expr": "concat(concat(concat(substring(hexstring(pkt4.mac, ''), 0, 4), '.'), concat(substring(hexstring(pkt4.mac, ''), 4, 4), '.'), concat(substring(hexstring(pkt4.mac, ''), 8, 4), '.'))"
                }
             ]
@@ -402,7 +396,7 @@ set up to enable basic functionality in Kea.
 2. Establish the FreeRADIUS configuration directory. It's commonly
    ``/etc/freeradius``, but it may be ``/etc/raddb``.
 
-3. Generate certificaes. Go to ``/etc/freeradius/certs``.
+3. Generate certificates. Go to ``/etc/freeradius/certs``.
    Run ``./bootstrap`` or ``make``.
    Wait until finished. It should take a few seconds.
 
@@ -413,7 +407,7 @@ set up to enable basic functionality in Kea.
 
 5. If the Kea DHCP server and the RADIUS server are on different machines,
    edit ``/etc/freeradius/clients.conf`` with the proper address under
-   ``ipadddr``. Ths file is also where the secret is set, which needs to match
+   ``ipadddr``. This file is also where the secret is set, which needs to match
    the one set in the hook library's configuration.
 
 6. If RADIUS is used for the purpose of authorizing DHCP clients, each DHCP
@@ -469,16 +463,16 @@ lease allocation process in :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`.
 .. figure:: ../uml/radius.*
 
 Somewhat tangential to lease allocation, and not shown in the diagrams above,
-is the ``command_processed`` callout, which sends Accounting-Request messagess
+is the ``command_processed`` callout, which sends Accounting-Request messages
 when a lease command is received.
 
 Differences Between RADIUS Hook Libraries Prior To 2.4.0 and As Of 2.6.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The RADIUS hook library in 2.4.0 and prior versions relied on freeradius-client
-to function. Starting with 2.6.0 and onwards, the RADIUS hook library is
-standalone with its own RADIUS client implementation and its own RADIUS
-dictionary. There are differences:
+The RADIUS hook library in 2.4.0 and prior versions relied on the FreeRADIUS
+client library to function. Starting with 2.6.0 and onwards, the RADIUS hook
+library is standalone with its own RADIUS client implementation and its own
+RADIUS dictionary. There are differences:
 
 .. list-table::
     :header-rows: 1
@@ -489,38 +483,56 @@ dictionary. There are differences:
 
       - New
 
-    * - Support for attribute data types
+    * - Support for Attribute Data Types
 
       - string, ipaddr, ipv4prefix, integer, integer64, date, ifid, ipv6addr, ipv6prefix, tlv, abinary, byte, ether, short, signed, octets
 
-      - string, ipaddr, integer, date, ipv6addr, ipv6prefix
+      - string (can simulate any other unsupported data type too), ipaddr, integer, date (interpreted as integer), ipv6addr, ipv6prefix
 
-    * - Names of standard attributes
+    * - Names of Standard Attributes
 
       - Taken from the FreeRADIUS dictionary.
 
-      - Taken from the Kea RADIUS dictioanry, names may be different, but there is an aliasing mechanism built into the library e.g. ``Password`` becomes ``User-Password``.
+      - Taken from the Kea RADIUS dictionary and the IANA registry. There is an aliasing mechanism built into the library that ensures backward compatibility e.g. ``Password`` translates to the standard name of the attribute ``User-Password``.
 
-    * - Support for including dictionaries inside dictionaries
+    * - Resolution of RADIUS Server Domain Names
+
+      - At run time.
+
+      - At hook library load time.
+
+    * - Automatic Deduction of Source Address for Reaching RADIUS Servers (configured with ``bindaddr: "*"``)
+
+      - At run time.
+
+      - At hook library load time.
+
+    * - RADIUS Server Limit per Service
+
+      - 8
+
+      - Unlimited
+
+    * - Support for Including Dictionaries Inside Dictionaries
 
       - Yes
 
       - No
 
-    * - Support for vendor attributes
+    * - Support for Vendor Attributes
 
       - Yes
 
       - No
 
-    * - Case Sensitivity for Attribute Names
-
-      - Case-sensitive
+    * - Attribute Names and Attribute Values
 
       - Case-insensitive
 
-    * - Case Sensitivity for Attribute Values
-
       - Case-sensitive
 
-      - Case-insensitive
+    * - Integer Values
+
+      - Do not require an attribute definition.
+
+      - Must have an associated attribute definition in the dictionary.
