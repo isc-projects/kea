@@ -1519,7 +1519,8 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                             } catch (const NoSuchArgument& ex) {
                                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                                           DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING)
-                                          .arg(query->getLabel());
+                                          .arg(query->getLabel())
+                                          .arg(ex.what());
                             }
 
                             if (offer_address_in_use) {
