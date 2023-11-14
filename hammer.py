@@ -2318,6 +2318,11 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         execute('rm -rf %s' % rpm_root_path)
     execute('mkdir -p %s/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}' % rpm_root_path)
 
+    if system == 'centos' and revision == '7':
+        # we need to remove macro that is not yet available on centos 7
+        # it's a hack that we don't need anywhere else
+        execute("sed -i -E 's/export LDFLAGS=\"%\{build_ldflags\} -fno-lto\"//' kea.spec", cwd=os.path.join(src_path, 'rpm'), check_times=check_times, dry_run=dry_run)
+
     # get rpm.spec from tarball
     rpm_dir = os.path.join(src_path, 'rpm')
     for f in os.listdir(rpm_dir):
