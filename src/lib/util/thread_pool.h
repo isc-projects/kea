@@ -156,20 +156,22 @@ struct ThreadPool {
         queue_.resume();
     }
 
-    /// @brief return the state of the queue
+    /// @brief return the enable state of the queue
     ///
-    /// Returns the state of the queue
+    /// The 'enabled' state corresponds to true value
+    /// The 'disabled' state corresponds to false value
     ///
-    /// @return the state
+    /// @return the enable state of the queue
     bool enabled() {
         return (queue_.enabled());
     }
 
-    /// @brief return the state of the threads
+    /// @brief return the pause state of the queue
     ///
-    /// Returns the state of the threads
+    /// The 'paused' state corresponds to true value
+    /// The 'resumed' state corresponds to false value
     ///
-    /// @return the state
+    /// @return the pause state of the queue
     bool paused() {
         return (queue_.paused());
     }
@@ -366,6 +368,8 @@ private:
         /// If the queue is 'enabled', this function returns the first element in
         /// the queue or blocks the calling thread if there are no work items
         /// available.
+        /// If the queue is 'paused', this function blocks the calling thread until
+        /// the queue is 'resumed'.
         /// Before a work item is returned statistics are updated.
         ///
         /// @return the first work item from the queue or an empty element.
@@ -505,20 +509,22 @@ private:
             cv_.notify_all();
         }
 
-        /// @brief return the state of the queue
+        /// @brief return the enable state of the queue
         ///
-        /// Returns the state of the queue
+        /// The 'enabled' state corresponds to true value
+        /// The 'disabled' state corresponds to false value
         ///
-        /// @return the state
+        /// @return the enable state of the queue
         bool enabled() {
             return (enabled_);
         }
 
-        /// @brief return the state of the threads
+        /// @brief return the pause state of the queue
         ///
-        /// Returns the state of the threads
+        /// The 'paused' state corresponds to true value
+        /// The 'resumed' state corresponds to false value
         ///
-        /// @return the state
+        /// @return the pause state of the queue
         bool paused() {
             return (paused_);
         }
@@ -539,7 +545,7 @@ private:
         /// @brief condition variable used to wait for all threads to be paused
         std::condition_variable wait_threads_cv_;
 
-        /// @brief the state of the queue
+        /// @brief the enable state of the queue
         /// The 'enabled' state corresponds to true value
         /// The 'disabled' state corresponds to false value
         std::atomic<bool> enabled_;
