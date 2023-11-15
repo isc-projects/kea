@@ -525,15 +525,15 @@ loaded by the correct process per the table below.
    |                                                           |              | which packets receive a response. The limit can be applied   |
    |                                                           |              | per-client class or per-subnet.                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Ping Check <hooks-ping-check>`                      | ISC support  | With this hook library, :iscman:`kea-dhcp4` server can       |
-   |                                                           | customers    | perform ping checks of candidate lease addresses before      |
-   |                                                           |              | offering them to clients.                                    |
-   |                                                           |              | This library is under development and not yet functional.    |
-   +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`MySQL Configuration Backend <hooks-cb-mysql>`       | Kea open     | This hook library is an implementation of the Kea            |
    |                                                           | source       | Configuration Backend for MySQL. It uses a MySQL database as |
    |                                                           |              | a repository for the Kea configuration information. Kea      |
    |                                                           |              | servers use this library to fetch their configurations.      |
+   +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
+   | :ref:`Ping Check <hooks-ping-check>`                      | ISC support  | With this hook library, :iscman:`kea-dhcp4` server can       |
+   |                                                           | customers    | perform ping checks of candidate lease addresses before      |
+   |                                                           |              | offering them to clients.                                    |
+   |                                                           |              | This library is under development and not yet functional.    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`PostgreSQL Configuration Backend <hooks-cb-pgsql>`  | Kea open     | This hook library is an implementation of the Kea            |
    |                                                           | source       | Configuration Backend for PostgreSQL. It uses a PostgreSQL   |
@@ -614,8 +614,8 @@ sections.
 .. include:: hooks-lease-query.rst
 .. include:: hooks-legal-log.rst
 .. include:: hooks-limits.rst
-.. include:: hooks-ping-check.rst
 .. include:: hooks-cb-mysql.rst
+.. include:: hooks-ping-check.rst
 .. include:: hooks-cb-pgsql.rst
 .. include:: hooks-radius.rst
 .. include:: hooks-rbac.rst
