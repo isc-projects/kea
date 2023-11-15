@@ -131,16 +131,18 @@ The following configuration excerpt illustrates global level configuration:
 
 .. code-block:: javascript
 
-    "hooks-libraries": [{
-        "library": "lib/kea/hooks/libdhcp_ping_check.so",
-        "parameters": {
-            "enable-ping-check" : true,
-            "min-ping-requests" : 1,
-            "reply-timeout" : 100,
-            "ping-cltt-secs" : 60,
-            "ping-channel-threads" : 0
-        }
-    },
+    {
+        "hooks-libraries": [{
+            "library": "lib/kea/hooks/libdhcp_ping_check.so",
+            "parameters": {
+                "enable-ping-check" : true,
+                "min-ping-requests" : 1,
+                "reply-timeout" : 100,
+                "ping-cltt-secs" : 60,
+                "ping-channel-threads" : 0
+            }
+        }]
+    }
 
 The following excerpt demonstrates subnet level configuration:
 
@@ -151,17 +153,15 @@ The following excerpt demonstrates subnet level configuration:
         "subnet": "192.0.2.0/24",
         "pools": [{
             "pool": "192.0.2.10 - 192.0.2.20"
-        } ],
+        }],
 
-        // This is a subnet-specific user context.
         "user-context": {
             "enable-ping-check" : true,
             "min-ping-requests" : 2,
             "reply-timeout" : 250,
-            "ping-cltt-secs" : 120,
-        },
-    }],
-    ...
+            "ping-cltt-secs" : 120
+        }
+    }]
    }
 
 .. note::
