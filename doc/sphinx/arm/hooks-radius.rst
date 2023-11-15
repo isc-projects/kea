@@ -427,25 +427,25 @@ set up to enable basic functionality in Kea.
    client ID, which would need to be dynamically set in the hook library's
    configuration. Here's how the entries can look like:
 
-    .. code-block::
+   ::
 
-        01:00:0c:01:02:03:04    Cleartext-password := "00:0c:01:02:03:04"
+       01:00:0c:01:02:03:04    Cleartext-password := "00:0c:01:02:03:04"
 
-        01:00:0c:01:02:03:05    Cleartext-password := "00:0c:01:02:03:05"
-            Framed-IP-Address = "192.0.2.5"
+       01:00:0c:01:02:03:05    Cleartext-password := "00:0c:01:02:03:05"
+           Framed-IP-Address = "192.0.2.5"
 
-        01:00:0c:01:02:03:06    Cleartext-password := "00:0c:01:02:03:06"
-            Framed-IP-Address = "192.0.2.6"
-            Framed-Pool = "classical"
+       01:00:0c:01:02:03:06    Cleartext-password := "00:0c:01:02:03:06"
+           Framed-IP-Address = "192.0.2.6"
+           Framed-Pool = "classical"
 
-        00:03:00:01:00:0c:01:02:03:07    Cleartext-password := "00:0c:01:02:03:07"
+       00:03:00:01:00:0c:01:02:03:07    Cleartext-password := "00:0c:01:02:03:07"
 
-        00:03:00:01:00:0c:01:02:03:08    Cleartext-password := "00:0c:01:02:03:08"
-            Framed-IPv6-Address = "2001:db8::8"
+       00:03:00:01:00:0c:01:02:03:08    Cleartext-password := "00:0c:01:02:03:08"
+           Framed-IPv6-Address = "2001:db8::8"
 
-        00:03:00:01:00:0c:01:02:03:09    Cleartext-password := "00:0c:01:02:03:09"
-            Framed-IPv6-Address = "2001:db8::9"
-            Framed-Pool = "classroom"
+       00:03:00:01:00:0c:01:02:03:09    Cleartext-password := "00:0c:01:02:03:09"
+           Framed-IPv6-Address = "2001:db8::9"
+           Framed-Pool = "classroom"
 
 7. Accounting should work out of the box with Kea, but customizations are
    possible in the accounting file, which can be commonly found at:

@@ -502,7 +502,7 @@ loaded by the correct process per the table below.
    |                                                           |              | (JSON over UNIX sockets) and the Control Agent (JSON over    |
    |                                                           |              | RESTful interface).                                          |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Lease Commands <hooks-lease-cmds>`                  | Kea open     | This hook library offers a number of  commands used to       |
+   | :ref:`Lease Commands <hooks-lease-cmds>`                  | Kea open     | This hook library offers a number of commands used to        |
    |                                                           | source       | manage leases. Kea can store lease information in various    |
    |                                                           |              | backends: memfile, MySQL, PostgreSQL. This library provides  |
    |                                                           |              | a unified interface to manipulate leases in an unified, safe |
