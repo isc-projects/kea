@@ -93,8 +93,10 @@ return to step 1.
 4. Any of the following occur:
 
     a. Receipt of an ICMP DESTINATION UNREACHABLE message
-    b. ICMP ECHO REQUEST send fails due to a network error
-    c. ICMP ECHO REQUEST send fails with Socket buffer full error
+    b. ICMP ECHO REQUEST send fails due to a network error (e.g. network is unreachable)
+    c. ICMP ECHO REQUEST send fails due to a permissions error (e.g. lease address
+    is a broadcast address)
+    d. ICMP ECHO REQUEST send fails with socket buffer full error
 
     In each of these instances the address could not be checked and is treated as
     available.
