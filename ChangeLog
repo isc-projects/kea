@@ -1,3 +1,8 @@
+2169.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.4.1
+	stable release.
+	(Gitlab #3153)
+
 2168.	[bug]		andrei
 	Fixed interface redetection which had stopped working since
 	Kea 2.3.6.
