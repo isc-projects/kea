@@ -526,7 +526,7 @@ TEST_F(ThreadPoolTest, wait) {
     checkState(thread_pool, 0, 0);
 
     items_count = 16;
-    thread_count = 16;
+    thread_count = 256;
     // prepare setup
     reset(thread_count);
 
@@ -546,8 +546,8 @@ TEST_F(ThreadPoolTest, wait) {
 
     // calling stop should clear all threads and should keep queued items
     EXPECT_NO_THROW(thread_pool.stop());
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    checkState(thread_pool, 0, 0);
+
     // wait for all items to be processed
     ASSERT_TRUE(thread_pool.wait(1));
     checkState(thread_pool, 0, 0);
