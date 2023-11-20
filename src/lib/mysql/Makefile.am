@@ -1,6 +1,8 @@
 SUBDIRS = . testutils tests
 
-AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS  =
+AM_CPPFLAGS += -DKEA_ADMIN=\"@prefix@/sbin/kea-admin\"
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)

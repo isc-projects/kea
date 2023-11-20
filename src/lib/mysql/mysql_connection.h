@@ -275,6 +275,29 @@ public:
                const DbCallback& cb = DbCallback(),
                const std::string& timer_name = std::string());
 
+    /// @brief Retrieve schema version, validate it against the hardcoded
+    ///     version, and attempt to initialize the schema if there is an
+    ///     error during retrieval.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///     concerned with the database.
+    ///
+    /// @throw isc::db::ScehamInitializationFailed if the initialization fails
+    static void
+    ensureSchemaVersion(const ParameterMap& parameters,
+                        const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
+                        const DbCallback& cb = DbCallback(),
+                        const std::string& timer_name = std::string());
+
+    /// @brief Initialize schema.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///     concerned with the database.
+    ///
+    /// @throw isc::db::ScehamInitializationFailed if the initialization fails
+    static void
+    initializeSchema(const ParameterMap& parameters);
+
     /// @brief Prepare Single Statement
     ///
     /// Creates a prepared statement from the text given and adds it to the

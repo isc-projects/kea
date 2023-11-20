@@ -6,6 +6,8 @@
 
 #include <config.h>
 
+#include <asiolink/io_service.h>
+#include <asiolink/process_spawn.h>
 #include <database/database_connection.h>
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
@@ -15,11 +17,12 @@
 #include <boost/lexical_cast.hpp>
 
 #include <algorithm>
-#include <stdint.h>
-#include <string>
+#include <cstdint>
 #include <limits>
+#include <string>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace std;
 
 namespace isc {
@@ -364,6 +367,101 @@ MySqlConnection::getVersion(const ParameterMap& parameters,
         // Send the exception to the caller.
         throw;
     }
+}
+
+void
+MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
+                                     const IOServiceAccessorPtr& ac,
+                                     const DbCallback& cb,
+                                     const string& timer_name) {
+    pair<uint32_t, uint32_t> schema_version;
+    try {
+        schema_version = getVersion(parameters, ac, cb, timer_name);
+    } catch (DbOpenError const& exception) {
+        // Do nothing for open errors. We first need to establish a connection,
+        // and only afterwards can we initialize the schema if it still fails.
+        // Let it fail, or retry if retry is configured.
+    } catch (exception const& exception) {
+        // This may fail for a variety of reasons. We don't have to necessarily
+        // check for the error that is most common in situations where the
+        // database is not initialized which would sound something like
+        // "table schema_version does not exist". If the error had another
+        // cause, it will fail again during initialization or during the
+        // subsequent version retrieval and that is fine.
+        initializeSchema(parameters);
+
+        // Retrieve again because the initial retrieval failed.
+        schema_version = getVersion(parameters, ac, cb, timer_name);
+    }
+
+    // Check that the versions match.
+    pair<uint32_t, uint32_t> const expected_version(MYSQL_SCHEMA_VERSION_MAJOR,
+                                                    MYSQL_SCHEMA_VERSION_MINOR);
+    if (schema_version != expected_version) {
+        isc_throw(DbOpenError, "MySQL schema version mismatch: expected version: "
+                                   << expected_version.first << "." << expected_version.second
+                                   << ", found version: " << schema_version.first << "."
+                                   << schema_version.second);
+    }
+}
+
+void
+MySqlConnection::initializeSchema(const ParameterMap& parameters) {
+    IOServicePtr io_service(new IOService());
+    ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters);
+    DB_LOG_INFO(MYSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
+    pid_t const pid(kea_admin.spawn());
+    io_service->runOne();
+    if (kea_admin.isRunning(pid)) {
+        // TODO: implement synchronous process spawning. Otherwise kea-admin is not waited by the
+        // parent process, and it becomes a zombie, even though its work is finished. Uncomment the
+        // following throw when that is done.
+        // isc_throw(SchemaInitializationFailed, "kea-admin still running");
+    }
+    int const exit_code(kea_admin.getExitStatus(pid));
+    if (exit_code != 0) {
+        isc_throw(SchemaInitializationFailed, "Expected exit code 0. Got " << exit_code);
+    }
+}
+
+vector<string> MySqlConnection::toKeaAdminParameters(ParameterMap const& params) {
+    vector<string> result{"mysql"};
+    for (auto const& p : params) {
+        string const& keyword(p.first);
+        string const& value(p.second);
+
+        // These Kea parameters are the same as the kea-admin parameters.
+        if (keyword == "user" ||
+            keyword == "password" ||
+            keyword == "host" ||
+            keyword == "port" ||
+            keyword == "name"||
+            keyword == "connect-timeout") {
+            result.push_back("--" + keyword);
+            result.push_back(value);
+            continue;
+        }
+
+        // These Kea parameters do not have a direct kea-admin equivalent.
+        // But they do have a mariadb client flag equivalent.
+        // We pass them to kea-admin using the --extra flag.
+        static unordered_map<string, string> conversions{
+            {"cihper-list", "ssl-cipher"},
+            {"cert-file", "ssl-cert"},
+            {"key-file", "ssl-key"},
+            {"trust-anchor", "ssl-ca"},
+        };
+        bool extra_flag_added(false);
+        if (conversions.count(keyword)) {
+            if (!extra_flag_added) {
+                result.push_back("--extra");
+                extra_flag_added = true;
+            }
+            result.push_back("--" + conversions.at(keyword));
+            result.push_back(value);
+        }
+    }
+    return result;
 }
 
 // Prepared statement setup.  The textual form of an SQL statement is stored
