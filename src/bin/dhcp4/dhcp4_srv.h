@@ -359,8 +359,8 @@ public:
     /// @param callout_handle pointer to the callout handle.
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response.
-    void sendResponseNoThrow(hooks::CalloutHandlePtr callout_handle,
-                             Pkt4Ptr query, Pkt4Ptr rsp);
+    void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
+                             Pkt4Ptr& query, Pkt4Ptr& rsp);
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
